@@ -444,7 +444,7 @@ struct component : untyped_component {
             if (implicit_name && (ecs_get_scope(world) != 0)) {
                 /* If the type is a template type, make sure to ignore ':'
                  * inside the template parameter list. */
-                const char *start = strchr(n, '<'), *last_elem = NULL;
+                const char *start = strchr(n, '<'), *last_elem = nullptr;
                 if (start) {
                     const char *ptr = start;
                     while (ptr[0] && (ptr[0] != ':') && (ptr > n)) {

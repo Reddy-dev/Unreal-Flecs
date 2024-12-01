@@ -203,7 +203,7 @@ struct table {
     void* get(flecs::id_t id) const {
         const int32_t index = column_index(id);
         if (index == -1) {
-            return NULL;
+            return nullptr;
         }
         return get_column(index);
     }

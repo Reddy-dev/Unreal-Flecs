@@ -787,7 +787,7 @@ struct entity_with_delegate_impl<arg_list<Args ...>> {
         const flecs::world w(world);
 
         ArrayType ptrs;
-        ecs_table_t *table = NULL;
+        ecs_table_t *table = nullptr;
 
         // When not deferred take the fast path.
         if (!w.is_deferred()) {
@@ -824,7 +824,7 @@ struct entity_with_delegate_impl<arg_list<Args ...>> {
                 ecs_type_t ids;
                 ids.array = added.ptr();
                 ids.count = static_cast<ecs_size_t>(elem);
-                ecs_commit(world, id, r, next, &ids, NULL);
+                ecs_commit(world, id, r, next, &ids, nullptr);
                 table = next;
             }
 

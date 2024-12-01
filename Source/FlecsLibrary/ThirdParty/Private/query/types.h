@@ -176,7 +176,7 @@ typedef struct {
 /* And up context */
 typedef struct {
     union {
-        ecs_query_and_ctx_t and;
+        ecs_query_and_ctx_t ctx_and;
         ecs_query_union_ctx_t union_;
     } is;
     ecs_table_t *table;
@@ -209,7 +209,7 @@ typedef struct {
 
 /* Trav context */
 typedef struct {
-    ecs_query_and_ctx_t and;
+    ecs_query_and_ctx_t ctx_and;
     int32_t index;
     int32_t offset;
     int32_t count;
@@ -257,7 +257,7 @@ typedef struct {
 
 /* *From operator iterator context */
 typedef struct {
-    ecs_query_and_ctx_t and;
+    ecs_query_and_ctx_t ctx_and;
     ecs_type_t *type;
     int32_t first_id_index;
     int32_t cur_id_index;
@@ -282,7 +282,7 @@ typedef struct {
 
 typedef struct ecs_query_op_ctx_t {
     union {
-        ecs_query_and_ctx_t and;
+        ecs_query_and_ctx_t ctx_and;
         ecs_query_xfrom_ctx_t xfrom;
         ecs_query_up_ctx_t up;
         ecs_query_trav_ctx_t trav;

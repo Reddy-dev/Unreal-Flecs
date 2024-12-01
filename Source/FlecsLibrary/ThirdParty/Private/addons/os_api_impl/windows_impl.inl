@@ -34,7 +34,8 @@ ecs_os_thread_t win_thread_new(
     thread->arg= arg;
     thread->callback = callback;
     thread->thread = CreateThread(
-        NULL, 0, (LPTHREAD_START_ROUTINE)flecs_win_thread, thread, 0, NULL);
+        nullptr, 0, (LPTHREAD_START_ROUTINE)flecs_win_thread, thread, 0,
+        nullptr);
     return (ecs_os_thread_t)(uintptr_t)thread;
 }
 
@@ -48,7 +49,7 @@ void* win_thread_join(
         ecs_err("win_thread_join: WaitForSingleObject failed");
     }
     ecs_os_free(thread);
-    return NULL;
+    return nullptr;
 }
 
 static
@@ -185,8 +186,8 @@ void win_sleep(
 
     ft.QuadPart = -((int64_t)sec * 10000000 + (int64_t)nanosec / 100);
 
-    const HANDLE timer = CreateWaitableTimer(NULL, TRUE, NULL);
-    SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0);
+    const HANDLE timer = CreateWaitableTimer(nullptr, TRUE, nullptr);
+    SetWaitableTimer(timer, &ft, 0, nullptr, nullptr, 0);
     WaitForSingleObject(timer, INFINITE);
     CloseHandle(timer);
 }
