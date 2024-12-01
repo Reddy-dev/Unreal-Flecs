@@ -6,7 +6,9 @@ public class FlecsLibrary : ModuleRules
 {
     public FlecsLibrary(ReadOnlyTargetRules Target) : base(Target)
     {
-        PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+        PCHUsage = ModuleRules.PCHUsageMode.UseSharedPCHs;
+
+        IWYUSupport = IWYUSupport.None;
         
         CppStandard = CppStandardVersion.Cpp20;
         CStandard = CStandardVersion.Latest;
