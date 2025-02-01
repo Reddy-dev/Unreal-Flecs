@@ -492,8 +492,8 @@ void flecs_override_copy(
     ecs_table_t *table,
     const ecs_table_record_t *tr,
     const ecs_type_info_t *ti,
-    void *dst,
-    const void *src,
+    void * restrict dst,
+    const void * restrict src,
     int32_t offset,
     int32_t count)
 {

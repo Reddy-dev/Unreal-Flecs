@@ -1639,8 +1639,8 @@ void flecs_copy_id(
     ecs_record_t *r,
     ecs_id_t id,
     size_t size,
-    void *dst_ptr,
-    void *src_ptr,
+    void * restrict dst_ptr,
+    void * restrict src_ptr,
     const ecs_type_info_t *ti)
 {
     ecs_check(dst_ptr != NULL, ECS_INVALID_PARAMETER, NULL);

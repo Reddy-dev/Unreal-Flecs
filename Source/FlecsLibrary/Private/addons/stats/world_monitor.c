@@ -29,8 +29,8 @@ void flecs_world_stats_set_t(
 
 static
 void flecs_world_stats_copy_last(
-    void *stats, 
-    void *src) 
+    void * restrict stats, 
+    void * restrict src) 
 {
     ecs_world_stats_copy_last(stats, src);
 }

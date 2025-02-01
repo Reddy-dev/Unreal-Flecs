@@ -1121,7 +1121,7 @@ void flecs_default_ctor(
 }
 
 static inline
-void flecs_default_copy_ctor(void *dst_ptr, const void *src_ptr,
+void flecs_default_copy_ctor(void * restrict dst_ptr, const void * restrict src_ptr,
     int32_t count, const ecs_type_info_t *ti)
 {
     const ecs_type_hooks_t *cl = &ti->hooks;
@@ -1130,7 +1130,7 @@ void flecs_default_copy_ctor(void *dst_ptr, const void *src_ptr,
 }
 
 static inline
-void flecs_default_move_ctor(void *dst_ptr, void *src_ptr,
+void flecs_default_move_ctor(void * restrict dst_ptr, void * restrict src_ptr,
     int32_t count, const ecs_type_info_t *ti)
 {
     const ecs_type_hooks_t *cl = &ti->hooks;
@@ -1139,7 +1139,7 @@ void flecs_default_move_ctor(void *dst_ptr, void *src_ptr,
 }
 
 static inline
-void flecs_default_ctor_w_move_w_dtor(void *dst_ptr, void *src_ptr,
+void flecs_default_ctor_w_move_w_dtor(void * restrict dst_ptr, void * restrict src_ptr,
     int32_t count, const ecs_type_info_t *ti)
 {
     const ecs_type_hooks_t *cl = &ti->hooks;
@@ -1149,7 +1149,7 @@ void flecs_default_ctor_w_move_w_dtor(void *dst_ptr, void *src_ptr,
 }
 
 static inline
-void flecs_default_move_ctor_w_dtor(void *dst_ptr, void *src_ptr,
+void flecs_default_move_ctor_w_dtor(void * restrict dst_ptr, void * restrict src_ptr,
     int32_t count, const ecs_type_info_t *ti)
 {
     const ecs_type_hooks_t *cl = &ti->hooks;
@@ -1158,7 +1158,7 @@ void flecs_default_move_ctor_w_dtor(void *dst_ptr, void *src_ptr,
 }
 
 static inline
-void flecs_default_move(void *dst_ptr, void *src_ptr,
+void flecs_default_move(void * restrict dst_ptr, void * restrict src_ptr,
     int32_t count, const ecs_type_info_t *ti)
 {
     const ecs_type_hooks_t *cl = &ti->hooks;
@@ -1166,7 +1166,7 @@ void flecs_default_move(void *dst_ptr, void *src_ptr,
 }
 
 static inline
-void flecs_default_dtor(void *dst_ptr, void *src_ptr,
+void flecs_default_dtor(void * restrict dst_ptr, void * restrict src_ptr,
     int32_t count, const ecs_type_info_t *ti)
 {
     /* When there is no move, destruct the destination component & memcpy the
@@ -1178,7 +1178,7 @@ void flecs_default_dtor(void *dst_ptr, void *src_ptr,
 }
 
 static inline
-void flecs_default_move_w_dtor(void *dst_ptr, void *src_ptr,
+void flecs_default_move_w_dtor(void * restrict dst_ptr, void * restrict src_ptr,
     int32_t count, const ecs_type_info_t *ti)
 {
     /* If a component has a move, the move will take care of memcpying the data
@@ -1211,8 +1211,8 @@ void flecs_dtor_illegal(
 
 ECS_NORETURN static
 void flecs_copy_illegal(
-    void *dst,
-    const void *src,
+    void * restrict dst,
+    const void * restrict src,
     int32_t count,
     const ecs_type_info_t *ti)
 {
@@ -1224,8 +1224,8 @@ void flecs_copy_illegal(
 
 ECS_NORETURN static
 void flecs_move_illegal(
-    void * dst,
-    void * src,
+    void * restrict dst,
+    void * restrict src,
     int32_t count,
     const ecs_type_info_t *ti) {
     (void)dst; /* silence unused warning */
@@ -1236,8 +1236,8 @@ void flecs_move_illegal(
 
 ECS_NORETURN static
 void flecs_copy_ctor_illegal(
-    void *dst,
-    const void *src,
+    void * restrict dst,
+    const void * restrict src,
     int32_t count,
     const ecs_type_info_t *ti)
 {
@@ -1249,8 +1249,8 @@ void flecs_copy_ctor_illegal(
 
 ECS_NORETURN static
 void flecs_move_ctor_illegal(
-    void *dst,
-    void *src,
+    void * restrict dst,
+    void * restrict src,
     int32_t count,
     const ecs_type_info_t *ti)
 {
@@ -1782,8 +1782,8 @@ void ecs_set_entity_range(
       id_start = flecs_entities_max_id(world) + 1;
     }
 
-    uint32_t start = (uint32_t)id_start;
-    uint32_t end = (uint32_t)id_end;
+    const uint32_t start = (uint32_t)id_start;
+    const uint32_t end = (uint32_t)id_end;
 
     flecs_entities_max_id(world) = start - 1;
 
@@ -1798,7 +1798,7 @@ bool ecs_enable_range_check(
     bool enable)
 {
     flecs_poly_assert(world, ecs_world_t);    
-    bool old_value = world->range_check_enabled;
+    const bool old_value = world->range_check_enabled;
     world->range_check_enabled = enable;
     return old_value;
 }

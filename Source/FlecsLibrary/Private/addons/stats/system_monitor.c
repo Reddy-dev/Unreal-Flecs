@@ -53,8 +53,8 @@ void flecs_system_stats_set_t(
 
 static
 void flecs_system_stats_copy_last(
-    void *stats, 
-    void *src) 
+    void * restrict stats, 
+    void * restrict src) 
 {
     ecs_system_stats_copy_last(stats, src);
 }

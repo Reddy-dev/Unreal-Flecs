@@ -428,8 +428,8 @@ void flecs_rtt_array_move(
  * type for all the elements */
 static
 void flecs_rtt_array_copy(
-    void *dst_ptr,
-    const void *src_ptr,
+    void * restrict dst_ptr,
+    const void * restrict src_ptr,
     int32_t count, /* note: "count" is how many arrays to copy, not how
                       many elements are in the array */
     const ecs_type_info_t *type_info)
@@ -510,7 +510,7 @@ void flecs_rtt_init_default_hooks_array(
  *
  */
 
-static
+static inline
 void flecs_rtt_free_lifecycle_vector_ctx(
     void *ctx)
 {
@@ -561,8 +561,8 @@ void flecs_rtt_vector_dtor(
 /* Generic vector move hook. */
 static
 void flecs_rtt_vector_move(
-    void *dst_ptr,
-    void *src_ptr,
+    void * restrict dst_ptr,
+    void * restrict src_ptr,
     int32_t count,
     const ecs_type_info_t *type_info)
 {

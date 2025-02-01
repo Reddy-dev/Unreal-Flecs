@@ -421,8 +421,8 @@ enum
 /* Copy convenience macro */
 #define ECS_COPY_IMPL(type, dst_var, src_var, ...)\
     void type##_##copy(\
-        void *_dst_ptr,\
-        const void *_src_ptr,\
+        void * restrict _dst_ptr,\
+        const void * restrict _src_ptr,\
         int32_t _count,\
         const ecs_type_info_t *type_info)\
     {\
@@ -442,8 +442,8 @@ enum
 /* Move convenience macro */
 #define ECS_MOVE_IMPL(type, dst_var, src_var, ...)\
     void type##_##move(\
-        void *_dst_ptr,\
-        void *_src_ptr,\
+        void * restrict _dst_ptr,\
+        void * restrict _src_ptr,\
         int32_t _count,\
         const ecs_type_info_t *type_info)\
     {\

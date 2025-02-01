@@ -127,8 +127,8 @@ error:
 int ecs_value_copy_w_type_info(
     const ecs_world_t *world,
     const ecs_type_info_t *ti,
-    void* dst,
-    const void *src)
+    void* restrict dst,
+    const void * restrict src)
 {
     flecs_poly_assert(world, ecs_world_t);
     ecs_check(ti != NULL, ECS_INVALID_PARAMETER, NULL);
@@ -163,8 +163,8 @@ error:
 int ecs_value_move_w_type_info(
     const ecs_world_t *world,
     const ecs_type_info_t *ti,
-    void* dst,
-    void *src)
+    void* restrict dst,
+    void * restrict src)
 {
     flecs_poly_assert(world, ecs_world_t);
     ecs_check(ti != NULL, ECS_INVALID_PARAMETER, NULL);
@@ -185,8 +185,8 @@ error:
 int ecs_value_move(
     const ecs_world_t *world,
     ecs_entity_t type,
-    void* dst,
-    void *src)
+    void* restrict dst,
+    void * restrict src)
 {
     flecs_poly_assert(world, ecs_world_t);
     const ecs_type_info_t *ti = ecs_get_type_info(world, type);
@@ -199,8 +199,8 @@ error:
 int ecs_value_move_ctor_w_type_info(
     const ecs_world_t *world,
     const ecs_type_info_t *ti,
-    void* dst,
-    void *src)
+    void* restrict dst,
+    void * restrict src)
 {
     flecs_poly_assert(world, ecs_world_t);
     ecs_check(ti != NULL, ECS_INVALID_PARAMETER, NULL);
@@ -221,8 +221,8 @@ error:
 int ecs_value_move_ctor(
     const ecs_world_t *world,
     ecs_entity_t type,
-    void* dst,
-    void *src)
+    void* restrict dst,
+    void * restrict src)
 {
     flecs_poly_assert(world, ecs_world_t);
     const ecs_type_info_t *ti = ecs_get_type_info(world, type);
