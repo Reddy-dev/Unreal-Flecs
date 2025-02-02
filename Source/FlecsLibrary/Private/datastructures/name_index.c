@@ -16,8 +16,8 @@ uint64_t flecs_name_index_hash(
 
 static inline
 int flecs_name_index_compare(
-    const void *ptr1, 
-    const void *ptr2)
+    const void * restrict ptr1, 
+    const void * restrict ptr2)
 {
     const ecs_hashed_string_t *str1 = ptr1;
     const ecs_hashed_string_t *str2 = ptr2;

@@ -447,8 +447,8 @@ bool ecs_map_next(
 }
 
 void ecs_map_copy(
-    ecs_map_t *dst,
-    const ecs_map_t *src)
+    ecs_map_t * restrict dst,
+    const ecs_map_t * restrict src)
 {
     if (ecs_map_is_init(dst)) {
         ecs_assert(ecs_map_count(dst) == 0, ECS_INVALID_PARAMETER, NULL);

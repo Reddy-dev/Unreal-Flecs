@@ -416,8 +416,8 @@ void ecs_strbuf_appendstr(
 }
 
 void ecs_strbuf_mergebuff(
-    ecs_strbuf_t *b,
-    ecs_strbuf_t *src)
+    ecs_strbuf_t * restrict b,
+    ecs_strbuf_t * restrict src)
 {
     if (src->content) {
         ecs_strbuf_appendstr(b, src->content);
@@ -472,8 +472,8 @@ void ecs_strbuf_reset(
 
 void ecs_strbuf_list_push(
     ecs_strbuf_t *b,
-    const char *list_open,
-    const char *separator)
+    const char * restrict list_open,
+    const char * restrict separator)
 {
     ecs_assert(b != NULL, ECS_INVALID_PARAMETER, NULL);
     ecs_assert(list_open != NULL, ECS_INVALID_PARAMETER, NULL);

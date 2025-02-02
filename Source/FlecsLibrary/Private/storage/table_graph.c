@@ -159,8 +159,8 @@ int flecs_type_new_with(
 static
 int flecs_type_new_filtered(
     ecs_world_t *world,
-    ecs_type_t *dst,
-    const ecs_type_t *src,
+    ecs_type_t * restrict dst,
+    const ecs_type_t * restrict src,
     ecs_id_t wildcard,
     int32_t at)
 {
@@ -193,8 +193,8 @@ int flecs_type_new_filtered(
 static
 int flecs_type_new_without(
     ecs_world_t *world,
-    ecs_type_t *dst,
-    const ecs_type_t *src,
+    ecs_type_t * restrict dst,
+    const ecs_type_t * restrict src,
     ecs_id_t without)
 {
     const ecs_id_t *src_array = src->array;
@@ -522,8 +522,8 @@ void flecs_table_init_node(
 static inline
 void flecs_init_table(
     ecs_world_t *world,
-    ecs_table_t *table,
-    ecs_table_t *prev)
+    ecs_table_t * restrict table,
+    ecs_table_t * restrict prev)
 {
     table->flags = 0;
     table->dirty_state = NULL;
@@ -659,8 +659,8 @@ void flecs_diff_insert_removed(
 static
 void flecs_compute_table_diff(
     ecs_world_t *world,
-    ecs_table_t *node,
-    ecs_table_t *next,
+    ecs_table_t * restrict node,
+    ecs_table_t * restrict next,
     ecs_graph_edge_t *edge,
     ecs_id_t id)
 {
@@ -968,10 +968,10 @@ ecs_table_t* flecs_find_table_without(
 
 static inline
 void flecs_table_init_edge(
-    ecs_table_t *table,
+    ecs_table_t * restrict table,
     ecs_graph_edge_t *edge,
     ecs_id_t id,
-    ecs_table_t *to)
+    ecs_table_t * restrict to)
 {
     ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
     ecs_assert(edge != NULL, ECS_INTERNAL_ERROR, NULL);
@@ -987,10 +987,10 @@ void flecs_table_init_edge(
 static inline
 void flecs_init_edge_for_add(
     ecs_world_t *world,
-    ecs_table_t *table,
+    ecs_table_t * restrict table,
     ecs_graph_edge_t *edge,
     ecs_id_t id,
-    ecs_table_t *to)
+    ecs_table_t * restrict to)
 {
     flecs_table_init_edge(table, edge, id, to);
 
@@ -1016,10 +1016,10 @@ void flecs_init_edge_for_add(
 static inline
 void flecs_init_edge_for_remove(
     ecs_world_t *world,
-    ecs_table_t *table,
+    ecs_table_t * restrict table,
     ecs_graph_edge_t *edge,
     ecs_id_t id,
-    ecs_table_t *to)
+    ecs_table_t * restrict to)
 {
     flecs_table_init_edge(table, edge, id, to);
 

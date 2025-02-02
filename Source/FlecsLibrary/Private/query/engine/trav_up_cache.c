@@ -167,8 +167,8 @@ ecs_trav_up_t* flecs_query_get_up_cache(
     ecs_table_t *table,
     ecs_id_t with,
     ecs_entity_t trav,
-    ecs_id_record_t *idr_with,
-    ecs_id_record_t *idr_trav)
+    ecs_id_record_t * restrict idr_with,
+    ecs_id_record_t * restrict idr_trav)
 {
     if (cache->with && cache->with != with) {
         flecs_query_up_cache_fini(cache);

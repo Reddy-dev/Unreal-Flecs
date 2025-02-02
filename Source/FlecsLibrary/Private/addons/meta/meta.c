@@ -121,8 +121,8 @@ static void flecs_constants_dtor(
 }
 
 static void flecs_constants_copy(
-    ecs_map_t *dst,
-    const ecs_map_t *src)
+    ecs_map_t * restrict dst,
+    const ecs_map_t * restrict src)
 {
     ecs_map_copy(dst, src);
 

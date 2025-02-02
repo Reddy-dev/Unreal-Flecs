@@ -379,8 +379,8 @@ ecs_entity_t ecs_vector_init(
 
 static
 bool flecs_member_range_overlaps(
-    const ecs_member_value_range_t *range,
-    const ecs_member_value_range_t *with)
+    const ecs_member_value_range_t * restrict range,
+    const ecs_member_value_range_t * restrict with)
 {
     if (ECS_EQ(with->min, with->max)) {
         return false;

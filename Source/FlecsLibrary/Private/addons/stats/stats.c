@@ -92,8 +92,8 @@ void flecs_counter_print(
 }
 
 void ecs_metric_reduce(
-    ecs_metric_t *dst,
-    const ecs_metric_t *src,
+    ecs_metric_t * restrict dst,
+    const ecs_metric_t * restrict src,
     int32_t t_dst,
     int32_t t_src)
 {
@@ -337,16 +337,16 @@ error:
 }
 
 void ecs_world_stats_reduce(
-    ecs_world_stats_t *dst,
-    const ecs_world_stats_t *src)
+    ecs_world_stats_t * restrict dst,
+    const ecs_world_stats_t * restrict src)
 {
     flecs_stats_reduce(ECS_METRIC_FIRST(dst), ECS_METRIC_LAST(dst), 
         ECS_METRIC_FIRST(src), (dst->t = t_next(dst->t)), src->t);
 }
 
 void ecs_world_stats_reduce_last(
-    ecs_world_stats_t *dst,
-    const ecs_world_stats_t *src,
+    ecs_world_stats_t * restrict dst,
+    const ecs_world_stats_t * restrict src,
     int32_t count)
 {
     flecs_stats_reduce_last(ECS_METRIC_FIRST(dst), ECS_METRIC_LAST(dst), 
@@ -361,8 +361,8 @@ void ecs_world_stats_repeat_last(
 }
 
 void ecs_world_stats_copy_last(
-    ecs_world_stats_t *dst,
-    const ecs_world_stats_t *src)
+    ecs_world_stats_t * restrict dst,
+    const ecs_world_stats_t *restrict src)
 {
     flecs_stats_copy_last(ECS_METRIC_FIRST(dst), ECS_METRIC_LAST(dst),
         ECS_METRIC_FIRST(src), dst->t, t_next(src->t));
@@ -388,16 +388,16 @@ error:
 }
 
 void ecs_query_cache_stats_reduce(
-    ecs_query_stats_t *dst,
-    const ecs_query_stats_t *src)
+    ecs_query_stats_t * restrict dst,
+    const ecs_query_stats_t * restrict src)
 {
     flecs_stats_reduce(ECS_METRIC_FIRST(dst), ECS_METRIC_LAST(dst), 
         ECS_METRIC_FIRST(src), (dst->t = t_next(dst->t)), src->t);
 }
 
 void ecs_query_cache_stats_reduce_last(
-    ecs_query_stats_t *dst,
-    const ecs_query_stats_t *src,
+    ecs_query_stats_t * restrict dst,
+    const ecs_query_stats_t * restrict src,
     int32_t count)
 {
     flecs_stats_reduce_last(ECS_METRIC_FIRST(dst), ECS_METRIC_LAST(dst), 
@@ -412,8 +412,8 @@ void ecs_query_cache_stats_repeat_last(
 }
 
 void ecs_query_cache_stats_copy_last(
-    ecs_query_stats_t *dst,
-    const ecs_query_stats_t *src)
+    ecs_query_stats_t * restrict dst,
+    const ecs_query_stats_t * restrict src)
 {
     flecs_stats_copy_last(ECS_METRIC_FIRST(dst), ECS_METRIC_LAST(dst),
         ECS_METRIC_FIRST(src), dst->t, t_next(src->t));
@@ -460,8 +460,8 @@ void ecs_system_stats_reduce(
 }
 
 void ecs_system_stats_reduce_last(
-    ecs_system_stats_t *dst,
-    const ecs_system_stats_t *src,
+    ecs_system_stats_t * restrict dst,
+    const ecs_system_stats_t * restrict src,
     int32_t count)
 {
     ecs_query_cache_stats_reduce_last(&dst->query, &src->query, count);
@@ -479,8 +479,8 @@ void ecs_system_stats_repeat_last(
 }
 
 void ecs_system_stats_copy_last(
-    ecs_system_stats_t *dst,
-    const ecs_system_stats_t *src)
+    ecs_system_stats_t * restrict dst,
+    const ecs_system_stats_t * restrict src)
 {
     ecs_query_cache_stats_copy_last(&dst->query, &src->query);
     dst->task = src->task;
@@ -607,8 +607,8 @@ void ecs_pipeline_stats_fini(
 }
 
 void ecs_pipeline_stats_reduce(
-    ecs_pipeline_stats_t *dst,
-    const ecs_pipeline_stats_t *src)
+    ecs_pipeline_stats_t * restrict dst,
+    const ecs_pipeline_stats_t * restrict src)
 {
     int32_t system_count = ecs_vec_count(&src->systems);
     ecs_vec_init_if_t(&dst->systems, ecs_entity_t);
@@ -636,8 +636,8 @@ void ecs_pipeline_stats_reduce(
 }
 
 void ecs_pipeline_stats_reduce_last(
-    ecs_pipeline_stats_t *dst,
-    const ecs_pipeline_stats_t *src,
+    ecs_pipeline_stats_t * restrict dst,
+    const ecs_pipeline_stats_t * restrict src,
     int32_t count)
 {
     int32_t i, sync_count = ecs_vec_count(&src->sync_points);

@@ -43,8 +43,8 @@ typedef struct ecs_rtt_vector_ctx_t {
 /* Generic copy assign hook */
 static
 void flecs_rtt_default_copy(
-    void *dst_ptr,
-    const void *src_ptr,
+    void * restrict dst_ptr,
+    const void * restrict src_ptr,
     int32_t count,
     const ecs_type_info_t *type_info)
 {
@@ -54,8 +54,8 @@ void flecs_rtt_default_copy(
 /* Generic move assign hook */
 static
 void flecs_rtt_default_move(
-    void *dst_ptr,
-    void *src_ptr,
+    void * restrict dst_ptr,
+    void * restrict src_ptr,
     int32_t count,
     const ecs_type_info_t *type_info)
 {
@@ -125,8 +125,8 @@ void flecs_rtt_struct_dtor(
  * the type was created. */
 static
 void flecs_rtt_struct_move(
-    void *dst_ptr,
-    void *src_ptr,
+    void * restrict dst_ptr,
+    void * restrict src_ptr,
     int32_t count,
     const ecs_type_info_t *type_info)
 {
@@ -156,8 +156,8 @@ void flecs_rtt_struct_move(
  * the type was created. */
 static
 void flecs_rtt_struct_copy(
-    void *dst_ptr,
-    const void *src_ptr,
+    void * restrict dst_ptr,
+    const void * restrict src_ptr,
     int32_t count,
     const ecs_type_info_t *type_info)
 {
@@ -408,8 +408,8 @@ void flecs_rtt_array_dtor(
  * type for all the elements */
 static
 void flecs_rtt_array_move(
-    void *dst_ptr,
-    void *src_ptr,
+    void * restrict dst_ptr,
+    void * restrict src_ptr,
     int32_t count, /* note: "count" is how many arrays to move, not how
                       many elements are in the array */
     const ecs_type_info_t *type_info)
@@ -580,8 +580,8 @@ void flecs_rtt_vector_move(
 /* Generic vector copy hook. It makes a deep copy of vector contents */
 static
 void flecs_rtt_vector_copy(
-    void *dst_ptr,
-    const void *src_ptr,
+    void * restrict dst_ptr,
+    const void * restrict src_ptr,
     int32_t count,
     const ecs_type_info_t *type_info)
 {

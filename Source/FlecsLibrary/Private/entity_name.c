@@ -246,8 +246,8 @@ error:
 
 static inline
 bool flecs_is_root_path(
-    const char *path,
-    const char *prefix)
+    const char * restrict path,
+    const char * restrict prefix)
 {
     if (prefix) {
         return !ecs_os_strncmp(path, prefix, ecs_os_strlen(prefix));
@@ -460,7 +460,7 @@ error:
 ecs_entity_t ecs_lookup_path_w_sep(
     const ecs_world_t *world,
     ecs_entity_t parent,
-    const char *path,
+    const char * restrict path,
     const char *sep,
     const char *prefix,
     bool recursive)

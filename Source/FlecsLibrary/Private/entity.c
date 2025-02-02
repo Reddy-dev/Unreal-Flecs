@@ -303,10 +303,10 @@ static inline
 void flecs_instantiate_children(
     ecs_world_t *world,
     ecs_entity_t base,
-    ecs_table_t *table,
+    ecs_table_t * restrict table,
     int32_t row,
     int32_t count,
-    ecs_table_t *child_table,
+    ecs_table_t * restrict child_table,
     const ecs_instantiate_ctx_t *ctx)
 {
     if (!ecs_table_count(child_table)) {
@@ -689,8 +689,8 @@ void flecs_union_on_remove(
 static inline
 void flecs_notify_on_add(
     ecs_world_t *world,
-    ecs_table_t *table,
-    ecs_table_t *other_table,
+    ecs_table_t * restrict table,
+    ecs_table_t * restrict other_table,
     int32_t row,
     int32_t count,
     const ecs_table_diff_t *diff,
@@ -734,8 +734,8 @@ void flecs_notify_on_add(
 
 void flecs_notify_on_remove(
     ecs_world_t *world,
-    ecs_table_t *table,
-    ecs_table_t *other_table,
+    ecs_table_t * restrict table,
+    ecs_table_t * restrict other_table,
     int32_t row,
     int32_t count,
     const ecs_table_diff_t *diff)
@@ -776,8 +776,8 @@ void flecs_notify_on_remove(
 static inline
 void flecs_update_name_index(
     ecs_world_t *world,
-    ecs_table_t *src, 
-    ecs_table_t *dst, 
+    ecs_table_t * restrict src, 
+    ecs_table_t * restrict dst, 
     int32_t offset, 
     int32_t count) 
 {
@@ -942,8 +942,8 @@ void flecs_update_component_monitor_w_array(
 static inline
 void flecs_update_component_monitors(
     ecs_world_t *world,
-    ecs_type_t *added,
-    ecs_type_t *removed)
+    ecs_type_t * restrict added,
+    ecs_type_t * restrict removed)
 {
     flecs_update_component_monitor_w_array(world, added);
     flecs_update_component_monitor_w_array(world, removed);

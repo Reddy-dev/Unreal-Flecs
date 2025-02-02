@@ -323,8 +323,8 @@ int ecs_meta_member(
 
 static
 const char* flecs_meta_parse_member(
-    const char *start,
-    char *token_out)
+    const char * restrict start,
+    char * restrict token_out)
 {
     const char *ptr;
     char ch;

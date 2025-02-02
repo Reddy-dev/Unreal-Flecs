@@ -126,7 +126,7 @@ int flecs_entity_compare(
     return (e1 > e2) - (e1 < e2);
 }
 
-int flecs_id_qsort_cmp(const void *a, const void *b) {
+int flecs_id_qsort_cmp(const void * restrict a, const void * restrict b) {
     const ecs_id_t id_a = *(const ecs_id_t*)a;
     const ecs_id_t id_b = *(const ecs_id_t*)b;
     return (id_a > id_b) - (id_a < id_b);
@@ -313,8 +313,8 @@ char* flecs_chresc(
 }
 
 const char* flecs_chrparse(
-    const char *in, 
-    char *out) 
+    const char * restrict in, 
+    char * restrict out) 
 {
     const char *result = in + 1;
     char ch;
@@ -376,10 +376,10 @@ error:
 }
 
 ecs_size_t flecs_stresc(
-    char *out, 
+    char * restrict out, 
     ecs_size_t n, 
     char delimiter, 
-    const char *in) 
+    const char * restrict in) 
 {
     const char *ptr = in;
     ecs_assert(ptr, ECS_INTERNAL_ERROR, NULL);
@@ -428,8 +428,8 @@ char* flecs_astresc(
 }
 
 const char* flecs_parse_digit(
-    const char *ptr,
-    char *token)
+    const char * restrict ptr,
+    char * restrict token)
 {
     char *tptr = token;
     char ch = ptr[0];

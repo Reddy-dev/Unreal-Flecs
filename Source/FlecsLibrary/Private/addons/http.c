@@ -335,9 +335,9 @@ static
 int http_getnameinfo(
     const struct sockaddr* addr,
     ecs_size_t addr_len,
-    char *host,
+    char * restrict host,
     ecs_size_t host_len,
-    char *port,
+    char * restrict port,
     ecs_size_t port_len,
     int flags)
 {
@@ -527,7 +527,7 @@ uint64_t http_request_key_hash(const void *ptr) {
 }
 
 static
-int http_request_key_compare(const void *ptr_1, const void *ptr_2) {
+int http_request_key_compare(const void * restrict ptr_1, const void * restrict ptr_2) {
     const ecs_http_request_key_t *type_1 = ptr_1;
     const ecs_http_request_key_t *type_2 = ptr_2;
 
@@ -957,11 +957,11 @@ void* http_server_send_queue(void* arg) {
 
 static
 void http_append_send_headers(
-    ecs_strbuf_t *hdrs,
+    ecs_strbuf_t * restrict hdrs,
     int code, 
-    const char* status, 
-    const char* content_type,  
-    ecs_strbuf_t *extra_headers,
+    const char* restrict status, 
+    const char* restrict content_type,  
+    ecs_strbuf_t * restrict extra_headers,
     ecs_size_t content_len,
     bool preflight)
 {
@@ -1722,9 +1722,9 @@ int ecs_http_server_http_request(
 
 int ecs_http_server_request(
     ecs_http_server_t* srv,
-    const char *method,
-    const char *req,
-    const char *body,
+    const char * restrict method,
+    const char * restrict req,
+    const char * restrict body,
     ecs_http_reply_t *reply_out)
 {
     ecs_check(srv != NULL, ECS_INVALID_PARAMETER, NULL);
