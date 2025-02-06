@@ -2,7 +2,6 @@
 
 // ReSharper disable CppTooWideScopeInitStatement
 #include "FlecsEntityHandle.h"
-#include "Collections/FlecsComponentCollection.h"
 #include "Collections/FlecsComponentCollectionObject.h"
 #include "Components/FlecsWorldPtrComponent.h"
 #include "Networking/FlecsNetworkIdComponent.h"
@@ -58,56 +57,11 @@ void FFlecsEntityHandle::AddCollection(UObject* Collection) const
 {
     solid_check(::IsValid(Collection));
     UFlecsComponentCollectionObject* ComponentCollection = CastChecked<UFlecsComponentCollectionObject>(Collection);
-    ComponentCollection->ApplyCollection_Internal(const_cast<FFlecsEntityHandle&>(*this), GetFlecsWorld());
+    ComponentCollection->ApplyCollection_Internal(*this, GetFlecsWorld());
 }
 
 FFlecsEntityHandle FFlecsEntityHandle::GetTagEntity(const FGameplayTag& InTag) const
 {
     return GetFlecsWorld()->GetTagEntity(InTag);
-}
-
-void FFlecsEntityHandle::ObtainFlecsWorld()
-{
-    TRACE_CPUPROFILER_EVENT_SCOPE(FFlecsEntityHandle::ObtainFlecsWorld);
-    
-    if (!GWorld || !GWorld->IsGameWorld())
-    {
-        return;
-    }
-    
-    if (GetEntity().world() == nullptr)
-    {
-        const UFlecsWorldSubsystem* FlecsWorldSubsystem = GWorld->GetSubsystem<UFlecsWorldSubsystem>();
-        solid_check(::IsValid(FlecsWorldSubsystem));
-
-        SetEntity(flecs::entity(FlecsWorldSubsystem->GetDefaultWorld()->World, GetEntity().id()));
-    }
-}
-
-void FFlecsEntityHandle::PostScriptConstruct()
-{
-    TRACE_CPUPROFILER_EVENT_SCOPE(FFlecsEntityHandle::PostScriptConstruct);
-    
-    if (GetEntity().id() == 0)
-    {
-        return;
-    }
-    
-    if UNLIKELY_IF(!GWorld  || !GWorld->IsGameWorld())
-    {
-        return;
-    }
-    
-    if (GetEntity().world() == nullptr)
-    {
-        UFlecsWorldSubsystem* FlecsWorldSubsystem = GWorld->GetSubsystem<UFlecsWorldSubsystem>();
-        solid_check(::IsValid(FlecsWorldSubsystem));
-        
-        FlecsWorldSubsystem->ListenBeginPlay(FOnWorldBeginPlay::FDelegate::CreateLambda(
-            [this, FlecsWorldSubsystem](MAYBE_UNUSED UWorld* InWorld)
-        {
-            SetEntity(flecs::entity(FlecsWorldSubsystem->GetDefaultWorld()->World, GetEntity().id()));
-        }));
-    }
 }
 

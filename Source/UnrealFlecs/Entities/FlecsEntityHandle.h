@@ -152,7 +152,10 @@ public:
 	}
 
 	template <typename T>
-	SOLID_INLINE NO_DISCARD bool Has() const { return GetEntity().has<T>(); }
+	SOLID_INLINE NO_DISCARD bool Has() const
+	{
+		return GetEntity().has<T>();
+	}
 
 	SOLID_INLINE NO_DISCARD bool Has(const UScriptStruct* StructType) const
 	{
@@ -175,6 +178,14 @@ public:
 	{
 		Add(GetTagEntity(InTag));
 	}
+
+	SOLID_INLINE void Add(const FGameplayTagContainer& InTags) const
+	{
+		for (const FGameplayTag& Tag : InTags)
+		{
+			Add(Tag);
+		}
+	}
 	
 	template <typename T>
 	SOLID_INLINE void Add() const
@@ -195,6 +206,22 @@ public:
 	SOLID_INLINE void Remove(const FGameplayTag& InTag) const
 	{
 		Remove(GetTagEntity(InTag));
+	}
+
+	SOLID_INLINE void Remove(const FGameplayTagContainer& InTags, const bool bMustHaveAll = false) const
+	{
+		for (const FGameplayTag& Tag : InTags)
+		{
+			if (!bMustHaveAll)
+			{
+				if (!Has(Tag))
+				{
+					continue;
+				}
+			}
+			
+			Remove(Tag);
+		}
 	}
 
 	template <typename T>
@@ -1116,59 +1143,6 @@ private:
 	{
 		return Entity.world();
 	}
-
-	void ObtainFlecsWorld();
-
-public:
-	void PostScriptConstruct();
-
-	bool Serialize(FArchive& Ar)
-	{
-		uint64 RawId = GetFlecsId();
-		Ar << RawId;
-
-		if (Ar.IsLoading())
-		{
-			Entity = flecs::entity(RawId);
-			ObtainFlecsWorld();
-		}
-		
-		return true;
-	}
-	
-	bool ImportTextItem(const TCHAR*& Buffer,
-		MAYBE_UNUSED int32 PortFlags, MAYBE_UNUSED UObject* Parent, FOutputDevice* ErrorText)
-	{
-		FString Token;
-		
-		if UNLIKELY_IF(!FParse::Token(Buffer, Token, true))
-		{
-			ErrorText->Logf(TEXT("FFlecsEntityHandle::ImportTextItem: Failed to parse token from input"));
-			return false;
-		}
-
-		if LIKELY_IF(Token.StartsWith(TEXT("EntityId=")))
-		{
-			const FString EntityIdString = Token.RightChop(9);
-			Entity = flecs::entity(FCString::Strtoui64(*EntityIdString, nullptr, 10));
-
-			ObtainFlecsWorld();
-			
-			return true;
-		}
-		else
-		{
-			ErrorText->Logf(TEXT("FFlecsEntityHandle::ImportTextItem: Invalid format"));
-			return false;
-		}
-	}
-
-	bool ExportTextItem(FString& ValueStr, const FFlecsEntityHandle& DefaultValue,
-		MAYBE_UNUSED UObject* Parent, MAYBE_UNUSED int32 PortFlags, MAYBE_UNUSED UObject* ExportRootScope) const
-	{
-		ValueStr += FString::Printf(TEXT("EntityId=%llu"), static_cast<uint64>(GetFlecsId()));
-		return true;
-	}
 	
 }; // struct FFlecsEntityHandle
 
@@ -1177,10 +1151,6 @@ struct TStructOpsTypeTraits<FFlecsEntityHandle> : public TStructOpsTypeTraitsBas
 {
 	enum
 	{
-		WithPostScriptConstruct = true,
 		WithNetSerializer = true,
-		WithImportTextItem = true,
-		WithExportTextItem = true,
-		WithSerializer = true,
 	}; // enum
 }; // struct TStructOpsTypeTraits<FFlecsEntityHandle>

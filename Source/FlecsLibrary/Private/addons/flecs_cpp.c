@@ -143,8 +143,8 @@ char* ecs_cpp_get_constant_name(
     size_t func_name_len,
     size_t func_back_len)
 {
-    const ecs_size_t f_len = flecs_uto(ecs_size_t, func_name_len);
-    const ecs_size_t fb_len = flecs_uto(ecs_size_t, func_back_len);
+    ecs_size_t f_len = flecs_uto(ecs_size_t, func_name_len);
+    ecs_size_t fb_len = flecs_uto(ecs_size_t, func_back_len);
     const char *start = flecs_cpp_func_rchr(func_name, f_len, fb_len, ' ');
     start = flecs_cpp_func_max(start, flecs_cpp_func_rchr(
         func_name, f_len, fb_len, ')'));
@@ -154,8 +154,8 @@ char* ecs_cpp_get_constant_name(
         func_name, f_len, fb_len, ','));
     ecs_assert(start != NULL, ECS_INVALID_PARAMETER, func_name);
     start ++;
-
-    const ecs_size_t len = flecs_uto(ecs_size_t, 
+    
+    ecs_size_t len = flecs_uto(ecs_size_t, 
         (f_len - (start - func_name) - fb_len));
     ecs_os_memcpy_n(constant_name, start, char, len);
     constant_name[len] = '\0';
@@ -172,14 +172,14 @@ const char* ecs_cpp_trim_module(
     ecs_world_t *world,
     const char *type_name)
 {
-    const ecs_entity_t scope = ecs_get_scope(world);
+    ecs_entity_t scope = ecs_get_scope(world);
     if (!scope) {
         return type_name;
     }
 
     char *path = ecs_get_path_w_sep(world, 0, scope, "::", NULL);
     if (path) {
-        const ecs_size_t len = ecs_os_strlen(path);
+        ecs_size_t len = ecs_os_strlen(path);
         if (!ecs_os_strncmp(path, type_name, len)) {
             // Type is a child of current parent, trim name of parent
             type_name += len;
@@ -192,7 +192,7 @@ const char* ecs_cpp_trim_module(
             type_name += 2;
         } else {
             // Type is not a child of current parent, trim entire path
-            const char *ptr = strrchr(type_name, ':');
+            char *ptr = strrchr(type_name, ':');
             if (ptr) {
                 type_name = ptr + 1;
             }
@@ -286,8 +286,6 @@ ecs_entity_t ecs_cpp_component_find(
         ecs_assert(ent == 0 || (ent == id), 
             ECS_INCONSISTENT_COMPONENT_ID, symbol);
     }
-
-    ecs_os_perf_trace_pop("flecs.cpp.component_register");
 
     return ent;
 }
@@ -407,7 +405,7 @@ ecs_entity_t ecs_cpp_enum_constant_register(
     world = flecs_suspend_readonly(world, &readonly_state);
 
     const char *parent_name = ecs_get_name(world, parent);
-    const ecs_size_t parent_name_len = ecs_os_strlen(parent_name);
+    ecs_size_t parent_name_len = ecs_os_strlen(parent_name);
     if (!ecs_os_strncmp(name, parent_name, parent_name_len)) {
         name += parent_name_len;
         if (name[0] == '_') {
@@ -415,7 +413,7 @@ ecs_entity_t ecs_cpp_enum_constant_register(
         }
     }
 
-    const ecs_entity_t prev = ecs_set_scope(world, parent);
+    ecs_entity_t prev = ecs_set_scope(world, parent);
     id = ecs_entity(world, {
         .id = id,
         .name = name
@@ -475,7 +473,7 @@ const ecs_member_t* ecs_cpp_last_member(
         return 0;
     }
 
-    const ecs_member_t *m = ecs_vec_get_t(&st->members, ecs_member_t, 
+    ecs_member_t *m = ecs_vec_get_t(&st->members, ecs_member_t, 
         ecs_vec_count(&st->members) - 1);
     ecs_assert(m != NULL, ECS_INTERNAL_ERROR, NULL);
 

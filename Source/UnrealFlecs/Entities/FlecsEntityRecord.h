@@ -36,11 +36,11 @@ struct UNREALFLECS_API FFlecsRecordPairSlot
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Component Tree",
 		meta = (EditCondition = "PairNodeType == EFlecsPairNodeType::ScriptStruct", EditConditionHides))
-	FInstancedStruct ScriptStruct;
+	FInstancedStruct PairScriptStruct;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Component Tree",
 		meta = (EditCondition = "PairNodeType == EFlecsPairNodeType::EntityHandle", EditConditionHides))
-	FFlecsEntityHandle EntityHandle;
+	FFlecsId EntityHandle;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Component Tree",
 		meta = (EditCondition = "PairNodeType == EFlecsPairNodeType::FGameplayTag", EditConditionHides))
@@ -52,7 +52,7 @@ struct UNREALFLECS_API FFlecsRecordPairSlot
 		{
 		case EFlecsPairNodeType::ScriptStruct:
 			{
-				return PairNodeType == Other.PairNodeType && ScriptStruct == Other.ScriptStruct;
+				return PairNodeType == Other.PairNodeType && PairScriptStruct == Other.PairScriptStruct;
 			}
 		case EFlecsPairNodeType::EntityHandle:
 			{
@@ -116,19 +116,19 @@ struct UNREALFLECS_API FFlecsRecordPair
 						{
 							if (PairValueType == EFlecsValuePairType::First)
 							{
-								InEntityHandle.SetPair(First.ScriptStruct.GetScriptStruct(),
-									First.ScriptStruct.GetMemory(), Second.ScriptStruct.GetScriptStruct());
+								InEntityHandle.SetPair(First.PairScriptStruct.GetScriptStruct(),
+									First.PairScriptStruct.GetMemory(), Second.PairScriptStruct.GetScriptStruct());
 							}
 						}
 					break;
 					case EFlecsPairNodeType::EntityHandle:
 						{
-							InEntityHandle.AddPair(First.ScriptStruct.GetScriptStruct(), Second.EntityHandle);
+							InEntityHandle.AddPair(First.PairScriptStruct.GetScriptStruct(), Second.EntityHandle);
 						}
 					break;
 					case EFlecsPairNodeType::FGameplayTag:
 						{
-							InEntityHandle.AddPair(First.ScriptStruct.GetScriptStruct(), Second.GameplayTag);
+							InEntityHandle.AddPair(First.PairScriptStruct.GetScriptStruct(), Second.GameplayTag);
 						}
 					break;
 				}
@@ -140,9 +140,9 @@ struct UNREALFLECS_API FFlecsRecordPair
 				{
 					case EFlecsPairNodeType::ScriptStruct:
 						{
-							InEntityHandle.AddPair(First.EntityHandle, Second.ScriptStruct.GetScriptStruct());
-							InEntityHandle.SetPairSecond(First.EntityHandle, Second.ScriptStruct.GetScriptStruct(),
-								Second.ScriptStruct.GetMemory());
+							InEntityHandle.AddPair(First.EntityHandle, Second.PairScriptStruct.GetScriptStruct());
+							InEntityHandle.SetPairSecond(First.EntityHandle, Second.PairScriptStruct.GetScriptStruct(),
+								Second.PairScriptStruct.GetMemory());
 						}
 					break;
 					case EFlecsPairNodeType::EntityHandle:
@@ -164,9 +164,9 @@ struct UNREALFLECS_API FFlecsRecordPair
 				{
 					case EFlecsPairNodeType::ScriptStruct:
 						{
-							InEntityHandle.AddPair(First.GameplayTag, Second.ScriptStruct.GetScriptStruct());
-							InEntityHandle.SetPairSecond(First.GameplayTag, Second.ScriptStruct.GetScriptStruct(),
-								Second.ScriptStruct.GetMemory());
+							InEntityHandle.AddPair(First.GameplayTag, Second.PairScriptStruct.GetScriptStruct());
+							InEntityHandle.SetPairSecond(First.GameplayTag, Second.PairScriptStruct.GetScriptStruct(),
+								Second.PairScriptStruct.GetMemory());
 						}
 					break;
 					case EFlecsPairNodeType::EntityHandle:
@@ -188,62 +188,6 @@ struct UNREALFLECS_API FFlecsRecordPair
 }; // struct FFlecsPair
 
 USTRUCT(BlueprintType)
-struct UNREALFLECS_API FFlecsTraitTypeInfo final
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Component Tree")
-	EFlecsComponentNodeType NodeType = EFlecsComponentNodeType::ScriptStruct;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Component Tree",
-		meta = (EditCondition = "NodeType == EFlecsComponentNodeType::ScriptStruct", EditConditionHides))
-	FInstancedStruct ScriptStruct;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Component Tree",
-		meta = (EditCondition = "NodeType == EFlecsComponentNodeType::EntityHandle", EditConditionHides))
-	FFlecsEntityHandle EntityHandle;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Component Tree",
-		meta = (EditCondition = "NodeType == EFlecsComponentNodeType::FGameplayTag", EditConditionHides))
-	FGameplayTag GameplayTag;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Component Tree",
-		meta = (EditCondition = "NodeType == EFlecsComponentNodeType::Pair", EditConditionHides))
-	FFlecsRecordPair Pair;
-	
-	FORCEINLINE NO_DISCARD bool operator==(const FFlecsTraitTypeInfo& Other) const
-	{
-		switch (NodeType)
-		{
-		case EFlecsComponentNodeType::ScriptStruct:
-			{
-				return NodeType == Other.NodeType && ScriptStruct == Other.ScriptStruct;
-			}
-		case EFlecsComponentNodeType::EntityHandle:
-			{
-				return NodeType == Other.NodeType && EntityHandle == Other.EntityHandle;
-			}
-		case EFlecsComponentNodeType::FGameplayTag:
-			{
-				return NodeType == Other.NodeType && GameplayTag == Other.GameplayTag;
-			}
-		case EFlecsComponentNodeType::Pair:
-			{
-				return NodeType == Other.NodeType && Pair == Other.Pair;
-			}
-		}
-
-		UNREACHABLE
-	}
-
-	FORCEINLINE NO_DISCARD bool operator!=(const FFlecsTraitTypeInfo& Other) const
-	{
-		return !(*this == Other);
-	}
-	
-}; // struct FFlecsTraitTypeInfo
-
-USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsComponentTypeInfo final
 {
 	GENERATED_BODY()
@@ -257,7 +201,7 @@ struct UNREALFLECS_API FFlecsComponentTypeInfo final
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Component Tree",
 		meta = (EditCondition = "NodeType == EFlecsComponentNodeType::EntityHandle", EditConditionHides))
-	FFlecsEntityHandle EntityHandle;
+	FFlecsId EntityHandle;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Component Tree",
 		meta = (EditCondition = "NodeType == EFlecsComponentNodeType::FGameplayTag", EditConditionHides))

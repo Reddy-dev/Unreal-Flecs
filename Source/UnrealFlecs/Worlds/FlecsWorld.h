@@ -8,7 +8,6 @@
 #include "CoreMinimal.h"
 #include "flecs.h"
 #include "AssetRegistry/AssetRegistryModule.h"
-#include "Collections/FlecsComponentCollection.h"
 #include "Components/FlecsModuleComponent.h"
 #include "Components/FlecsPrimaryAssetComponent.h"
 #include "Components/FlecsUObjectComponent.h"
@@ -201,8 +200,6 @@ public:
 		RegisterComponentType<FFlecsModuleComponent>();
 		RegisterComponentType<FFlecsModuleInitEvent>();
 		RegisterComponentType<FFlecsDependenciesComponent>();
-		
-		RegisterComponentType<FFlecsComponentCollection>();
 
 		RegisterComponentType<FFlecsEntityRecord>();
 	}
@@ -352,7 +349,7 @@ public:
 			{
 				const FFlecsEntityHandle ModuleEntity = Iter.entity(IterIndex);
 				
-				DependenciesComponentQuery.each([&](
+				DependenciesComponentQuery.each([InModuleComponent, ModuleEntity, this](
 					flecs::iter& DependenciesIter, const size_t DependenciesIterIndex,
 					FFlecsDependenciesComponent& DependenciesComponent)
 				{
@@ -379,7 +376,7 @@ public:
 			.with<FFlecsUObjectComponent>().second(flecs::Wildcard).filter()
 			.each([this](flecs::iter& Iter, const size_t IterIndex)
 			{
-				FFlecsUObjectComponent& InUObjectComponent = Iter.field_at<FFlecsUObjectComponent>(1, IterIndex);
+				const FFlecsUObjectComponent& InUObjectComponent = Iter.field_at<FFlecsUObjectComponent>(1, IterIndex);
 				
 				for (int32 Index = ProgressModules.Num(); Index > 0; --Index)
 				{
@@ -482,7 +479,8 @@ public:
 			solid_check(IsValid(DependencyModuleObject));
 
 			ModuleEntity.AddPair(flecs::DependsOn, DependencyEntity);
-			InFunction(DependencyModuleObject, this, DependencyEntity);
+			std::invoke(InFunction, DependencyModuleObject, this, DependencyEntity);
+			//InFunction(DependencyModuleObject, this, DependencyEntity);
 		}
 	}
 
