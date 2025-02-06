@@ -432,6 +432,7 @@ ecs_entity_t ecs_cpp_enum_constant_register(
 
     flecs_resume_readonly(world, &readonly_state);
 
+#ifdef FLECS_META
     if (ecs_should_log(0)) {
         ecs_value_t v = { .type = value_type, .ptr = value };
         char *str = NULL;
@@ -457,6 +458,8 @@ ecs_entity_t ecs_cpp_enum_constant_register(
     ecs_err("enum reflection not supported without FLECS_META addon");
     return 0;
 #endif
+
+    return id;
 }
 
 #ifdef FLECS_META
