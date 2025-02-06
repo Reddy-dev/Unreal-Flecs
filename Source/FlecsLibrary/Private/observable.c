@@ -255,8 +255,8 @@ static
 void flecs_emit_propagate_id(
     ecs_world_t *world,
     ecs_iter_t *it,
-    ecs_id_record_t *idr,
-    ecs_id_record_t *cur,
+    ecs_id_record_t * restrict idr,
+    ecs_id_record_t * restrict cur,
     ecs_entity_t trav,
     ecs_event_id_record_t **iders,
     int32_t ider_count)
@@ -323,8 +323,8 @@ static
 void flecs_emit_propagate(
     ecs_world_t *world,
     ecs_iter_t *it,
-    ecs_id_record_t *idr,
-    ecs_id_record_t *tgt_idr,
+    ecs_id_record_t * restrict idr,
+    ecs_id_record_t * restrict tgt_idr,
     ecs_entity_t propagate_trav,
     ecs_event_id_record_t **iders,
     int32_t ider_count)
@@ -580,14 +580,14 @@ void flecs_emit_forward_up(
 static
 void flecs_emit_forward_id(
     ecs_world_t *world,
-    const ecs_event_record_t *er,
-    const ecs_event_record_t *er_onset,
+    const ecs_event_record_t * restrict er,
+    const ecs_event_record_t * restrict er_onset,
     const ecs_type_t *emit_ids,
     ecs_iter_t *it,
-    ecs_table_t *table,
+    ecs_table_t * restrict table,
     ecs_id_record_t *idr,
     ecs_entity_t tgt,
-    ecs_table_t *tgt_table,
+    ecs_table_t * restrict tgt_table,
     int32_t column,
     ecs_entity_t trav)
 {
@@ -686,16 +686,16 @@ void flecs_emit_forward_id(
 static inline
 void flecs_emit_forward_and_cache_id(
     ecs_world_t *world,
-    const ecs_event_record_t *er,
-    const ecs_event_record_t *er_onset,
+    const ecs_event_record_t * restrict er,
+    const ecs_event_record_t * restrict er_onset,
     const ecs_type_t *emit_ids,
     ecs_iter_t *it,
-    ecs_table_t *table,
+    ecs_table_t * restrict table,
     ecs_id_record_t *idr,
     ecs_entity_t tgt,
-    ecs_record_t *tgt_record,
-    ecs_table_t *tgt_table,
-    const ecs_table_record_t *tgt_tr,
+    ecs_record_t * restrict tgt_record,
+    ecs_table_t * restrict tgt_table,
+    const ecs_table_record_t * restrict tgt_tr,
     int32_t column,
     ecs_vec_t *reachable_ids,
     ecs_entity_t trav)

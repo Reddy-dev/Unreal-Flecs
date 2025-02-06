@@ -21,7 +21,7 @@ uint64_t flecs_type_hash(const void *ptr) {
 }
 
 static inline
-int flecs_type_compare(const void *ptr_1, const void *ptr_2) {
+int flecs_type_compare(const void * restrict ptr_1, const void * restrict ptr_2) {
     ecs_os_perf_trace_push("flecs.type_compare");
     
     const ecs_type_t *type_1 = ptr_1;
@@ -126,8 +126,8 @@ int flecs_type_count_matches(
 static
 int flecs_type_new_with(
     ecs_world_t *world,
-    ecs_type_t *dst,
-    const ecs_type_t *src,
+    ecs_type_t * restrict dst,
+    const ecs_type_t * restrict src,
     ecs_id_t with)
 {
     const ecs_id_t *src_array = src->array;
@@ -493,9 +493,9 @@ void flecs_table_disconnect_edge(
 static inline
 void flecs_table_remove_edge(
     ecs_world_t *world,
-    ecs_graph_edges_t *edges,
+    ecs_graph_edges_t * restrict edges,
     ecs_id_t id,
-    ecs_graph_edge_t *edge)
+    ecs_graph_edge_t * restrict edge)
 {
     ecs_assert(edges != NULL, ECS_INTERNAL_ERROR, NULL);
     ecs_assert(edges->hi != NULL, ECS_INTERNAL_ERROR, NULL);

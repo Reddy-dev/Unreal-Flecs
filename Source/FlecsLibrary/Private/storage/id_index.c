@@ -62,9 +62,9 @@ void flecs_id_record_elem_remove(
 static
 void flecs_insert_id_elem(
     ecs_world_t *world,
-    ecs_id_record_t *idr,
+    ecs_id_record_t * restrict idr,
     ecs_id_t wildcard,
-    ecs_id_record_t *widr)
+    ecs_id_record_t * restrict widr)
 {
     ecs_assert(ecs_id_is_wildcard(wildcard), ECS_INTERNAL_ERROR, NULL);
     if (!widr) {
