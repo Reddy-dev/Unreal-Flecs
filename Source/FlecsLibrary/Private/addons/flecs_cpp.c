@@ -398,7 +398,6 @@ ecs_entity_t ecs_cpp_enum_constant_register(
     ecs_entity_t value_type,
     size_t value_size)
 {
-#ifdef FLECS_META
     ecs_os_perf_trace_push("flecs.cpp.enum_constant_register");
     
     ecs_suspend_readonly_state_t readonly_state;
