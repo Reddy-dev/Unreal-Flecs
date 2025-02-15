@@ -130,15 +130,41 @@ struct FLECS_API type_impl_data {
     size_t s_alignment;
     bool s_allow_tag;
 };
-
+    
 FLECSLIBRARY_API extern robin_hood::unordered_map<std::string, type_impl_data> g_type_to_impl_data;
+
+    template <typename T>
+    inline std::string get_type_name_impl()
+    {
+        if constexpr (!Solid::IsStaticStruct<T>() && Solid::IsBaseStructure<T>())
+        {
+            return std::string(StringCast<char>(*TBaseStructure<T>::Get()->GetStructCPPName()).Get());
+        }
+        else
+        {
+            return std::string(_::type_name<T>());
+        }
+    }
+
+    template <typename T>
+    inline const char* get_symbol_name_impl()
+    {
+        if constexpr (!Solid::IsStaticStruct<T>() && Solid::IsBaseStructure<T>())
+        {
+            return StringCast<char>(*TBaseStructure<T>::Get()->GetStructCPPName()).Get();
+        }
+        else
+        {
+            return _::symbol_name<T>();
+        }
+    }
 
     template <typename T>
     inline type_impl_data& get_or_create_type_data(bool allow_tag) 
     {
         ecs_os_perf_trace_push("flecs.type_impl.init");
         
-        std::string key = std::string(_::type_name<T>());  // => Solid::type_name<T>()
+        std::string key = get_type_name_impl<T>();
     
         auto it = g_type_to_impl_data.find(key);
         if (it != g_type_to_impl_data.end()) {
@@ -170,7 +196,7 @@ FLECSLIBRARY_API extern robin_hood::unordered_map<std::string, type_impl_data> g
     template <typename T>
     inline type_impl_data* get_type_data_if_any()
     {
-        std::string key = std::string(_::type_name<T>());
+        const std::string key =  get_type_name_impl<T>();
         auto it = g_type_to_impl_data.find(key);
         if (it != g_type_to_impl_data.end()) {
             return &it->second;
@@ -229,7 +255,7 @@ struct type_impl {
                 world,
                 id,
                 n,
-                symbol_name<T>(),    // The symbol name for T
+                get_symbol_name_impl<T>(),
                 td.s_size,
                 td.s_alignment,
                 implicit_name,
@@ -240,7 +266,7 @@ struct type_impl {
                 symbol = ecs_get_symbol(world, c);
             }
             if (!symbol) {
-                symbol = symbol_name<T>();
+                symbol = get_symbol_name_impl<T>();
             }
             
             c = ecs_cpp_component_register(
@@ -248,7 +274,7 @@ struct type_impl {
                 c,
                 c,
                 name,
-                flecs::_::type_name<T>(),
+                get_type_name_impl<T>().c_str(),
                 symbol,
                 td.s_size,
                 td.s_alignment,
@@ -266,8 +292,13 @@ struct type_impl {
                 
                 static_cast<FFlecsTypeMapComponent*>(P_world.get_binding_ctx())
                     ->ScriptStructMap.emplace(scriptStruct, entity_id);
+
+                ecs_suspend_readonly_state_t readonly_state;
+                world = flecs_suspend_readonly(world, &readonly_state);
                 
                 entity_id.set<FFlecsScriptStructComponent>({ scriptStruct });
+
+                flecs_resume_readonly(world, &readonly_state);
             }
 
             ecs_set_with(world, prev_with);
@@ -332,8 +363,7 @@ struct type_impl {
         }
         #endif
         
-        ecs_assert(c != 0, ECS_NOT_A_COMPONENT, "component not found, %s", 
-            _::type_name<T>());
+        ecs_assert(c != 0, ECS_NOT_A_COMPONENT, NULL);
         
         ecs_os_perf_trace_pop("flecs.type_impl.id");
         return c;
@@ -368,7 +398,7 @@ struct type_impl {
         
     static void reset()
     {
-        std::string key = _::type_name<T>();
+        std::string key = get_type_name_impl<T>();;
         g_type_to_impl_data.erase(key);
     }
 };
@@ -457,10 +487,10 @@ struct component : untyped_component {
         bool allow_tag = true,
         flecs::id_t id = 0)
     {
-        const char *n = name;
+        std::string n;
         bool implicit_name = false;
-        if (!n) {
-            n = _::type_name<T>();
+        if (name == nullptr) {
+            n = _::get_type_name_impl<T>();
 
             // Keep track of whether name was explicitly set. If not, and the
             // component was already registered, just use the registered name.
@@ -469,7 +499,11 @@ struct component : untyped_component {
             // the C++ namespace though it is good practice to keep them the same */
             implicit_name = true;
         }
-
+        else
+        {
+            n = std::string(name);
+        }
+        
         // If component is registered by module, ensure it's registered in the
         // scope of the module.
         flecs::entity_t module = ecs_get_scope(world);
@@ -479,7 +513,8 @@ struct component : untyped_component {
         if (module && implicit_name) {
             // If the type is a template type, make sure to ignore
             // inside the template parameter list.
-            const char *start = strchr(n, '<');
+            //strchr(n, '<');
+            const char *start = std::strchr(n.c_str(), '<');
             const char *last_elem = nullptr;
             if (start) {
                 const char *ptr = start;
@@ -498,7 +533,7 @@ struct component : untyped_component {
 
         world_ = world;
         id_ = _::type<T>::register_id(
-            world, name, allow_tag, id, true, implicit_name, n, module);
+            world, name, allow_tag, id, true, implicit_name, n.c_str(), module);
     }
 
     /** Register on_add hook. */
