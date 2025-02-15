@@ -95,6 +95,7 @@ public class FlecsLibrary : ModuleRules
                 "Engine",
                 "Slate",
                 "SlateCore",
+                "AutomationTest",
             }
         );
     }

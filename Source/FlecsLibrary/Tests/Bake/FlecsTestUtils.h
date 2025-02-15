@@ -5,10 +5,13 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "CoreMinimal.h"
+#include "Misc/AutomationTest.h"
+#include "flecs.h"
 
 #define test_assert(cond) \
-	checkf((cond), TEXT(#cond)) \
-	TestTrue(#cond, (cond))
+	check((cond)) \
+	if (FAutomationTestBase* CurrentTest = FAutomationTestFramework::Get().GetCurrentTest()) \
+		CurrentTest->TestTrue(#cond, (cond))
 
 #define test_bool(v1, v2) \
 	if (FAutomationTestBase* CurrentTest = FAutomationTestFramework::Get().GetCurrentTest()) \
