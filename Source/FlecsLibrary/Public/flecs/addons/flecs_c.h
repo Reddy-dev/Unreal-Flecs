@@ -222,6 +222,27 @@
     ECS_QUERY_DEFINE(world, name, __VA_ARGS__);\
     (void)name
 
+#ifdef __cplusplus
+
+/** Shorthand for creating an entity with ecs_entity_init().
+ *
+ * Example:
+ *
+ * @code
+ * ecs_entity(world, {
+ *   .name = "MyEntity"
+ * });
+ * @endcode
+ */
+    #define ecs_entity(world, ...)\
+        ([&]() {\
+            ecs_entity_desc_t desc = __VA_ARGS__;\
+            return ecs_entity_init(world, &desc);\
+        }())
+    
+
+#else
+
 /** Shorthand for creating an entity with ecs_entity_init().
  *
  * Example:
@@ -234,6 +255,8 @@
  */
 #define ecs_entity(world, ...)\
     ecs_entity_init(world, &(ecs_entity_desc_t) __VA_ARGS__ )
+
+#endif
 
 /** Shorthand for creating a component with ecs_component_init().
  *
@@ -363,8 +386,17 @@
 #define ecs_set_ptr(world, entity, component, ptr)\
     ecs_set_id(world, entity, ecs_id(component), sizeof(component), ptr)
 
-#define ecs_set(world, entity, component, ...)\
+#ifdef __cplusplus
+    #define ecs_set(world, entity, component, ...)\
+        ([&]() {\
+            component value = __VA_ARGS__;\
+            ecs_set_id(world, entity, ecs_id(component), sizeof(component), &value);\
+        }())
+        
+#else
+    #define ecs_set(world, entity, component, ...)\
     ecs_set_id(world, entity, ecs_id(component), sizeof(component), &(component)__VA_ARGS__)
+#endif
 
 #define ecs_set_pair(world, subject, First, second, ...)\
     ecs_set_id(world, subject,\
@@ -597,9 +629,17 @@
  * @defgroup flecs_c_components Component API
  * @{
  */
+#ifdef __cplusplus
+    #define ecs_set_hooks(world, T, ...)\
+        ([&]() {\
+            ecs_type_hooks_t hooks = __VA_ARGS__;\
+            ecs_set_hooks_id(world, ecs_id(T), &hooks);\
+        }())
 
+#else
 #define ecs_set_hooks(world, T, ...)\
     ecs_set_hooks_id(world, ecs_id(T), &(ecs_type_hooks_t)__VA_ARGS__)
+#endif
 
 #define ecs_get_hooks(world, T)\
     ecs_get_hooks_id(world, ecs_id(T));
