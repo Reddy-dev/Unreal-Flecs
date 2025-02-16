@@ -12,13 +12,13 @@ BEGIN_DEFINE_SPEC(FAddFlecsTestsSpec,
 void Add_component(void) {
     ecs_world_t *world = ecs_mini();
 
-    ECS_COMPONENT(world, Position);
+    ECS_COMPONENT(world, flecs_test_Position);
 
     ecs_entity_t e = ecs_new(world);
     test_assert(e != 0);
 
-    ecs_add(world, e, Position);
-    test_assert(ecs_has(world, e, Position));
+    ecs_add(world, e, flecs_test_Position);
+    test_assert(ecs_has(world, e, flecs_test_Position));
     
     ecs_fini(world);
 }
@@ -26,16 +26,16 @@ void Add_component(void) {
 void Add_component_again(void) {
     ecs_world_t *world = ecs_mini();
 
-    ECS_COMPONENT(world, Position);
+    ECS_COMPONENT(world, flecs_test_Position);
 
     ecs_entity_t e = ecs_new(world);
     test_assert(e != 0);
 
-    ecs_add(world, e, Position);
-    test_assert(ecs_has(world, e, Position));
+    ecs_add(world, e, flecs_test_Position);
+    test_assert(ecs_has(world, e, flecs_test_Position));
 
-    ecs_add(world, e, Position);
-    test_assert(ecs_has(world, e, Position));
+    ecs_add(world, e, flecs_test_Position);
+    test_assert(ecs_has(world, e, flecs_test_Position));
     
     ecs_fini(world);
 }
@@ -43,19 +43,19 @@ void Add_component_again(void) {
 void Add_2_components(void) {
     ecs_world_t *world = ecs_mini();
 
-    ECS_COMPONENT(world, Position);
-    ECS_COMPONENT(world, Velocity);
+    ECS_COMPONENT(world, flecs_test_Position);
+    ECS_COMPONENT(world, flecs_test_Velocity);
 
     ecs_entity_t e = ecs_new(world);
     test_assert(e != 0);
 
-    ecs_add(world, e, Position);
-    test_assert(ecs_has(world, e, Position));
-    test_assert(!ecs_has(world, e, Velocity));
+    ecs_add(world, e, flecs_test_Position);
+    test_assert(ecs_has(world, e, flecs_test_Position));
+    test_assert(!ecs_has(world, e, flecs_test_Velocity));
 
-    ecs_add(world, e, Velocity);
-    test_assert(ecs_has(world, e, Position));
-    test_assert(ecs_has(world, e, Velocity));
+    ecs_add(world, e, flecs_test_Velocity);
+    test_assert(ecs_has(world, e, flecs_test_Position));
+    test_assert(ecs_has(world, e, flecs_test_Velocity));
     
     ecs_fini(world);
 }
@@ -63,21 +63,21 @@ void Add_2_components(void) {
 void Add_2_components_again(void) {
     ecs_world_t *world = ecs_mini();
 
-    ECS_COMPONENT(world, Position);
-    ECS_COMPONENT(world, Velocity);
+    ECS_COMPONENT(world, flecs_test_Position);
+    ECS_COMPONENT(world, flecs_test_Velocity);
 
     ecs_entity_t e = ecs_new(world);
     test_assert(e != 0);
 
-    ecs_add(world, e, Position);
-    ecs_add(world, e, Velocity);
-    test_assert(ecs_has(world, e, Position));
-    test_assert(ecs_has(world, e, Velocity));
+    ecs_add(world, e, flecs_test_Position);
+    ecs_add(world, e, flecs_test_Velocity);
+    test_assert(ecs_has(world, e, flecs_test_Position));
+    test_assert(ecs_has(world, e, flecs_test_Velocity));
 
-    ecs_add(world, e, Position);
-    ecs_add(world, e, Velocity);
-    test_assert(ecs_has(world, e, Position));
-    test_assert(ecs_has(world, e, Velocity));
+    ecs_add(world, e, flecs_test_Position);
+    ecs_add(world, e, flecs_test_Velocity);
+    test_assert(ecs_has(world, e, flecs_test_Position));
+    test_assert(ecs_has(world, e, flecs_test_Velocity));
     
     ecs_fini(world);
 }
@@ -85,24 +85,24 @@ void Add_2_components_again(void) {
 void Add_2_components_overlap(void) {
     ecs_world_t *world = ecs_mini();
 
-    ECS_COMPONENT(world, Position);
-    ECS_COMPONENT(world, Velocity);
-    ECS_COMPONENT(world, Mass);
+    ECS_COMPONENT(world, flecs_test_Position);
+    ECS_COMPONENT(world, flecs_test_Velocity);
+    ECS_COMPONENT(world, flecs_test_Mass);
 
     ecs_entity_t e = ecs_new(world);
     test_assert(e != 0);
 
-    ecs_add(world, e, Position);
-    ecs_add(world, e, Velocity);
-    test_assert(ecs_has(world, e, Position));
-    test_assert(ecs_has(world, e, Velocity));
-    test_assert(!ecs_has(world, e, Mass));
+    ecs_add(world, e, flecs_test_Position);
+    ecs_add(world, e, flecs_test_Velocity);
+    test_assert(ecs_has(world, e, flecs_test_Position));
+    test_assert(ecs_has(world, e, flecs_test_Velocity));
+    test_assert(!ecs_has(world, e, flecs_test_Mass));
 
-    ecs_add(world, e, Velocity);
-    ecs_add(world, e, Mass);
-    test_assert(ecs_has(world, e, Position));
-    test_assert(ecs_has(world, e, Velocity));
-    test_assert(ecs_has(world, e, Mass));
+    ecs_add(world, e, flecs_test_Velocity);
+    ecs_add(world, e, flecs_test_Mass);
+    test_assert(ecs_has(world, e, flecs_test_Position));
+    test_assert(ecs_has(world, e, flecs_test_Velocity));
+    test_assert(ecs_has(world, e, flecs_test_Mass));
     
     ecs_fini(world);
 }
@@ -110,16 +110,16 @@ void Add_2_components_overlap(void) {
 void Add_component_to_nonempty(void) {
     ecs_world_t *world = ecs_mini();
 
-    ECS_COMPONENT(world, Position);
-    ECS_COMPONENT(world, Velocity);
+    ECS_COMPONENT(world, flecs_test_Position);
+    ECS_COMPONENT(world, flecs_test_Velocity);
 
-    ecs_entity_t e = ecs_new_w(world, Position);
+    ecs_entity_t e = ecs_new_w(world, flecs_test_Position);
     test_assert(e != 0);
-    test_assert(ecs_has(world, e, Position));
+    test_assert(ecs_has(world, e, flecs_test_Position));
 
-    ecs_add(world, e, Velocity);
-    test_assert(ecs_has(world, e, Position));
-    test_assert(ecs_has(world, e, Velocity));
+    ecs_add(world, e, flecs_test_Velocity);
+    test_assert(ecs_has(world, e, flecs_test_Position));
+    test_assert(ecs_has(world, e, flecs_test_Velocity));
 
     ecs_fini(world);
 }
@@ -127,14 +127,14 @@ void Add_component_to_nonempty(void) {
 void Add_component_to_nonempty_again(void) {
     ecs_world_t *world = ecs_mini();
 
-    ECS_COMPONENT(world, Position);
+    ECS_COMPONENT(world, flecs_test_Position);
 
-    ecs_entity_t e = ecs_new_w(world, Position);
+    ecs_entity_t e = ecs_new_w(world, flecs_test_Position);
     test_assert(e != 0);
-    test_assert(ecs_has(world, e, Position));
+    test_assert(ecs_has(world, e, flecs_test_Position));
 
-    ecs_add(world, e, Position);
-    test_assert(ecs_has(world, e, Position));
+    ecs_add(world, e, flecs_test_Position);
+    test_assert(ecs_has(world, e, flecs_test_Position));
 
     ecs_fini(world);
 }
@@ -142,18 +142,18 @@ void Add_component_to_nonempty_again(void) {
 void Add_component_to_nonempty_overlap(void) {
     ecs_world_t *world = ecs_mini();
 
-    ECS_COMPONENT(world, Position);
-    ECS_COMPONENT(world, Velocity);
+    ECS_COMPONENT(world, flecs_test_Position);
+    ECS_COMPONENT(world, flecs_test_Velocity);
 
-    ECS_ENTITY(world, e, Position, Velocity);
+    ECS_ENTITY(world, e, flecs_test_Position, flecs_test_Velocity);
     test_assert(e != 0);
-    test_assert(ecs_has(world, e, Position));
-    test_assert(ecs_has(world, e, Velocity));
+    test_assert(ecs_has(world, e, flecs_test_Position));
+    test_assert(ecs_has(world, e, flecs_test_Velocity));
 
-    ecs_add(world, e, Position);
+    ecs_add(world, e, flecs_test_Position);
 
-    test_assert(ecs_has(world, e, Position));
-    test_assert(ecs_has(world, e, Velocity));
+    test_assert(ecs_has(world, e, flecs_test_Position));
+    test_assert(ecs_has(world, e, flecs_test_Velocity));
 
     ecs_fini(world);
 }

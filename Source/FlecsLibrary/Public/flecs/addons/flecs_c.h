@@ -398,15 +398,35 @@
     ecs_set_id(world, entity, ecs_id(component), sizeof(component), &(component)__VA_ARGS__)
 #endif
 
+#ifdef __cplusplus
+    #define ecs_set_pair(world, subject, First, second, ...)\
+        ([&]() {\
+            First value = __VA_ARGS__;\
+            ecs_set_id(world, subject,\
+                ecs_pair(ecs_id(First), second),\
+                sizeof(First), &value);\
+        }())
+#else
 #define ecs_set_pair(world, subject, First, second, ...)\
     ecs_set_id(world, subject,\
         ecs_pair(ecs_id(First), second),\
         sizeof(First), &(First)__VA_ARGS__)
+#endif
 
+#ifdef __cplusplus
+    #define ecs_set_pair_second(world, subject, first, Second, ...)\
+        ([&]() {\
+            Second value = __VA_ARGS__;\
+            ecs_set_id(world, subject,\
+                ecs_pair(first, ecs_id(Second)),\
+                sizeof(Second), &value);\
+        }())
+#else
 #define ecs_set_pair_second(world, subject, first, Second, ...)\
     ecs_set_id(world, subject,\
         ecs_pair(first, ecs_id(Second)),\
         sizeof(Second), &(Second)__VA_ARGS__)
+#endif
 
 #define ecs_set_override(world, entity, T, ...)\
     ecs_add_id(world, entity, ECS_AUTO_OVERRIDE | ecs_id(T));\

@@ -12,7 +12,7 @@
 #define HEAD
 #define LINE "\n"
 
-typedef struct Probe {
+typedef struct flecs_test_Probe {
 	ecs_entity_t system;
 	ecs_entity_t event;
 	ecs_id_t event_id;
@@ -28,44 +28,44 @@ typedef struct Probe {
 	ecs_flags32_t up_fields;
 	ecs_flags32_t row_fields;
 	void *param;
-} Probe;
+} flecs_test_Probe;
 
-typedef struct IterData {
+typedef struct flecs_test_IterData {
 	ecs_entity_t component;
 	ecs_entity_t component_2;
 	ecs_entity_t component_3;
 	ecs_entity_t new_entities[MAX_ENTITIES];
 	int32_t entity_count;
-} IterData;
+} flecs_test_IterData;
 
-typedef struct Position {
+typedef struct flecs_test_Position {
 	float x;
 	float y;
-} Position;
+} flecs_test_Position;
 
-typedef struct Velocity {
+typedef struct flecs_test_Velocity {
 	float x;
 	float y;
-} Velocity;
+} flecs_test_Velocity;
 
-typedef float Mass;
+typedef float flecs_test_Mass;
 
-typedef float Rotation;
+typedef float flecs_test_Rotation;
 
-typedef struct Color {
+typedef struct flecs_test_Color {
 	float r;
 	float g;
 	float b;
 	float a;
 } Color;
 
-typedef struct Self {
+typedef struct flecs_test_Self {
 	ecs_entity_t value;
-} Self;
+} flecs_test_Self;
 
 inline void probe_system_w_ctx(
 	ecs_iter_t *it,
-	Probe *ctx)
+	flecs_test_Probe *ctx)
 {
 	if (!ctx) {
 		return;
@@ -117,14 +117,14 @@ inline void probe_system_w_ctx(
 
 inline void probe_iter(ecs_iter_t *it)
 {
-	Probe *ctx = static_cast<Probe*>(ecs_get_ctx(it->world));
+	flecs_test_Probe *ctx = static_cast<flecs_test_Probe*>(ecs_get_ctx(it->world));
 	if (!ctx) {
-		ctx = static_cast<Probe*>(it->ctx);
+		ctx = static_cast<flecs_test_Probe*>(it->ctx);
 	}
 	probe_system_w_ctx(it, ctx);
 }
 
-inline void probe_has_entity(Probe *probe, ecs_entity_t e)
+inline void probe_has_entity(flecs_test_Probe *probe, ecs_entity_t e)
 {
 	int i;
 	for (i = 0; i < probe->count; i ++) {
