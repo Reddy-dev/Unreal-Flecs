@@ -156,7 +156,7 @@ public:
 				= FFlecsDefaultEntityEngine::Get().CreateDefaultEntity(DefaultEntity, DefaultWorld->World);
 
 			UN_LOGF(LogFlecsCore, Log,
-				"Created default entity %s with id %d", NewDefaultEntity.name().c_str(), NewDefaultEntity.id());
+				"Created default entity %s with id %d", *DefaultEntity.EntityName, NewDefaultEntity.id());
 		}
 
 		const IConsoleManager& ConsoleManager = IConsoleManager::Get();
