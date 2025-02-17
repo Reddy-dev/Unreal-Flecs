@@ -151,9 +151,10 @@ public:
 		
 		for (const FFlecsDefaultMetaEntity& DefaultEntity : DefaultEntities)
 		{
-
-			flecs::entity NewDefaultEntity
-				= FFlecsDefaultEntityEngine::Get().CreateDefaultEntity(DefaultEntity, DefaultWorld->World);
+			#if UNLOG_ENABLED
+			flecs::entity NewDefaultEntity =
+			#endif // UNLOG_ENABLED
+				FFlecsDefaultEntityEngine::Get().CreateDefaultEntity(DefaultEntity, DefaultWorld->World);
 
 			UN_LOGF(LogFlecsCore, Log,
 				"Created default entity %s with id %d", *DefaultEntity.EntityName, NewDefaultEntity.id());
