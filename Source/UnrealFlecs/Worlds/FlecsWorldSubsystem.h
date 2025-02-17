@@ -151,13 +151,12 @@ public:
 		
 		for (const FFlecsDefaultMetaEntity& DefaultEntity : DefaultEntities)
 		{
-			FString EntityName = DefaultEntity.EntityName;
-			const FFlecsId EntityId = DefaultEntityIds[EntityName];
-				
-			DefaultWorld->CreateEntityWithRecordWithId(DefaultEntity.EntityRecord, EntityId);
+
+			flecs::entity NewDefaultEntity
+				= FFlecsDefaultEntityEngine::Get().CreateDefaultEntity(DefaultEntity, DefaultWorld->World);
 
 			UN_LOGF(LogFlecsCore, Log,
-				"Created default entity %s with id %d", *EntityName, EntityId.GetId());
+				"Created default entity %s with id %d", NewDefaultEntity.name().c_str(), NewDefaultEntity.id());
 		}
 
 		const IConsoleManager& ConsoleManager = IConsoleManager::Get();
