@@ -48,11 +48,12 @@ TSharedRef<SWidget> SGraphPinFlecsId::GetDefaultValueWidget()
 		.InitialSelectedItem(InitialSelectedItem)
 		.NoneEntityText(FName(TEXT("None")))
 		.PropertyHandle(nullptr)
+		.Visibility(this, &SGraphPin::GetDefaultValueVisibility)
 		.OnEntitySelected(FOnFlecsEntitySelected::CreateLambda([this](const FFlecsId NewEntity)
 		{
 			if (GraphPinObj)
 			{
-				FString NewDefaultValue = FString::Printf(TEXT("FlecsId=%llu"), NewEntity.Id);
+				const FString NewDefaultValue = FString::Printf(TEXT("FlecsId=%llu"), NewEntity.Id);
 				GraphPinObj->GetSchema()->TrySetDefaultValue(*GraphPinObj, NewDefaultValue);
 			}
 		}));
