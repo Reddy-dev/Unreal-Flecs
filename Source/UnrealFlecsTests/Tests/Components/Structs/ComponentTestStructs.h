@@ -10,6 +10,8 @@ struct FTestComponent_RegisterComponentTest
 	int32 Value;
 }; // struct FTestComponent
 
+REGISTER_FLECS_COMPONENT(FTestComponent_RegisterComponentTest);
+
 USTRUCT()
 struct FUStructTestComponent_RegisterComponentTest
 {
@@ -19,6 +21,8 @@ struct FUStructTestComponent_RegisterComponentTest
 	int32 Value;
 }; // struct FUStructTestComponent
 
+REGISTER_FLECS_COMPONENT(FUStructTestComponent_RegisterComponentTest);
+
 USTRUCT()
 struct FUStructTestComponent_Inherited : public FUStructTestComponent_RegisterComponentTest
 {
@@ -27,6 +31,8 @@ struct FUStructTestComponent_Inherited : public FUStructTestComponent_RegisterCo
 	UPROPERTY()
 	int32 Value2;
 }; // struct FUStructTestComponent_Inherited
+
+REGISTER_FLECS_COMPONENT(FUStructTestComponent_Inherited);
 
 
 

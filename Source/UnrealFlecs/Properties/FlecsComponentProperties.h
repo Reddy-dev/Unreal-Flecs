@@ -10,6 +10,7 @@
 #include "flecs.h"
 #include "Standard/robin_hood.h"
 #include "SolidMacros/Macros.h"
+#include "SolidMacros/Concepts/SolidConcepts.h"
 #include "Unlog/Unlog.h"
 
 namespace UnrealFlecs
@@ -42,7 +43,7 @@ public:
 	FORCEINLINE void RegisterComponentProperties(const std::string& Name,
 		UScriptStruct* Struct,
 		const uint32 Size, const uint16 Alignment,
-		const UnrealFlecs::FlecsComponentFunctionPtr& RegistrationFunction)
+		const UnrealFlecs::FlecsComponentFunctionPtr* RegistrationFunction)
 	{
 		UNLOG_CATEGORY_SCOPED(LogFlecsComponentProperties);
 		
@@ -50,7 +51,7 @@ public:
 		{
 			.Name = Name, .Struct = Struct,
 			.Size = Size, .Alignment = Alignment,
-			.RegistrationFunction = RegistrationFunction
+			.RegistrationFunction = RegistrationFunction ? *RegistrationFunction : nullptr
 		};
 		
 		OnComponentPropertiesRegistered.ExecuteIfBound(ComponentProperties[Name]);
@@ -73,7 +74,33 @@ public:
 	
 }; // struct FFlecsComponentPropertiesRegistry
 
-#define REGISTER_FLECS_COMPONENT(Name, RegistrationFunction) \
+#define INTERNAL_FLECS_REGISTER_FLECS_COMPONENT_LAMBDA(Name, RegistrationFunction) \
+	namespace \
+	{ \
+		struct FFlecs_AutoRegister_##Name \
+		{ \
+			FFlecs_AutoRegister_##Name() \
+			{ \
+				FCoreDelegates::OnPostEngineInit.AddLambda([]() \
+				{ \
+					UnrealFlecs::FlecsComponentFunctionPtr RegistrationFunctionRef = RegistrationFunction; \
+					if constexpr (Solid::IsScriptStruct<Name>()) \
+					{ \
+						FFlecsComponentPropertiesRegistry::Get().RegisterComponentProperties( \
+						#Name, TBaseStructure<Name>::Get(), sizeof(Name), alignof(Name), &RegistrationFunctionRef); \
+					} \
+					else \
+					{ \
+						FFlecsComponentPropertiesRegistry::Get().RegisterComponentProperties( \
+						#Name, nullptr, sizeof(Name), alignof(Name), &RegistrationFunctionRef); \
+					} \
+				}); \
+			} \
+		}; \
+		static FFlecs_AutoRegister_##Name AutoRegister_##Name; \
+	}
+
+#define INTERNAL_FLECS_REGISTER_FLECS_COMPONENT_NO_LAMBDA(Name) \
 	namespace \
 	{ \
 		struct FFlecs_AutoRegister_##Name \
@@ -85,15 +112,29 @@ public:
 					if constexpr (Solid::IsScriptStruct<Name>()) \
 					{ \
 						FFlecsComponentPropertiesRegistry::Get().RegisterComponentProperties( \
-						#Name, TBaseStructure<Name>::Get(), sizeof(Name), alignof(Name), RegistrationFunction); \
+						#Name, TBaseStructure<Name>::Get(), sizeof(Name), alignof(Name), nullptr); \
 					} \
 					else \
 					{ \
 						FFlecsComponentPropertiesRegistry::Get().RegisterComponentProperties( \
-						#Name, nullptr, sizeof(Name), alignof(Name), RegistrationFunction); \
+						#Name, nullptr, sizeof(Name), alignof(Name), nullptr); \
 					} \
 				}); \
 			} \
 		}; \
 		static FFlecs_AutoRegister_##Name AutoRegister_##Name; \
-	} 
+	}
+
+#define REGISTER_FLECS_COMPONENT_1(Name) \
+    INTERNAL_FLECS_REGISTER_FLECS_COMPONENT_NO_LAMBDA(Name)
+
+#define REGISTER_FLECS_COMPONENT_2(Name, RegistrationFunction) \
+    INTERNAL_FLECS_REGISTER_FLECS_COMPONENT_LAMBDA(Name, RegistrationFunction)
+
+#define INTERNAL_UNREAL_FLECS_COUNT_ARGS_IMPL(_1, _2, N, ...) N
+#define INTERNAL_UNREAL_FLECS_COUNT_ARGS(...) \
+    FORCE_EXPAND(INTERNAL_UNREAL_FLECS_COUNT_ARGS_IMPL(__VA_ARGS__, 2, 1))
+
+#define REGISTER_FLECS_COMPONENT(...) \
+    FORCE_EXPAND(ECS_CONCAT(REGISTER_FLECS_COMPONENT_, INTERNAL_UNREAL_FLECS_COUNT_ARGS(__VA_ARGS__))(__VA_ARGS__))
+	

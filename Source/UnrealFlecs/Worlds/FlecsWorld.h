@@ -296,7 +296,10 @@ public:
 						const FFlecsComponentProperties* Properties = FFlecsComponentPropertiesRegistry::Get().
 							GetComponentProperties(StructSymbolCStr);
 
-						std::invoke(Properties->RegistrationFunction, Iter.world(), InUntypedComponent);
+						if (Properties->RegistrationFunction)
+						{
+							std::invoke(Properties->RegistrationFunction, Iter.world(), InUntypedComponent);
+						}
 					}
 					#if UNLOG_ENABLED
 					else
