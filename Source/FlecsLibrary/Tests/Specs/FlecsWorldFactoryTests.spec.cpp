@@ -368,6 +368,21 @@ void WorldFactory_module(void) {
 
 END_DEFINE_SPEC(FFlecsWorldFactoryTestsSpec);
 
+/*"id": "WorldFactory",
+"testcases": [
+"entity",
+"entity_w_name",
+"entity_w_id",
+"prefab",
+"prefab_w_name",
+"system",
+"system_w_name",
+"system_w_expr",
+"query",
+"query_w_expr",
+"module"
+]*/
+
 void FFlecsWorldFactoryTestsSpec::Define()
 {
 	It("WorldFactory_entity", [this]() { WorldFactory_entity(); });

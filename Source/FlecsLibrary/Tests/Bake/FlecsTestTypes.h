@@ -406,6 +406,48 @@ struct Position {
         ecs.component<T3>();
         ecs.component<Rel>();
         ecs.component<test::Foo>();
+        ecs.component<Struct_w_string>();
+        ecs.component<Struct_w_vector>();
+        ecs.component<Pod::Child>();
+        ecs.component<Tag0>();
+        ecs.component<Tag1>();
+        ecs.component<Tag2>();
+        ecs.component<Tag3>();
+        ecs.component<Tag4>();
+        ecs.component<Tag5>();
+        ecs.component<Tag6>();
+        ecs.component<Tag7>();
+        ecs.component<Tag8>();
+        ecs.component<Tag9>();
+        ecs.component<Tag10>();
+        ecs.component<Tag11>();
+        ecs.component<Tag12>();
+        ecs.component<Tag13>();
+        ecs.component<Tag14>();
+        ecs.component<Tag15>();
+        ecs.component<Tag16>();
+        ecs.component<Tag17>();
+        ecs.component<Tag18>();
+        ecs.component<Tag19>();
+        ecs.component<Tag20>();
+        ecs.component<Tag21>();
+        ecs.component<Tag22>();
+        ecs.component<Tag23>();
+        ecs.component<Tag24>();
+        ecs.component<Tag25>();
+        ecs.component<Tag26>();
+        ecs.component<Tag27>();
+        ecs.component<Tag28>();
+        ecs.component<Tag29>();
+        ecs.component<Tag30>();
+        ecs.component<Tag31>();
+        ecs.component<Tag32>();
+        ecs.component<Template<int>>();
+        ecs.component<Template<float>>();
+        ecs.component<Template<double>>();
+        ecs.component<Template<Position>>();
+        ecs.component<Template<Velocity>>();
+        ecs.component<Template<Mass>>();
     }
 
 #endif // WITH_AUTOMATION_TESTS

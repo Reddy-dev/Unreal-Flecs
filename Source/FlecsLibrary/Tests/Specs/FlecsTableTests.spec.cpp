@@ -1051,6 +1051,42 @@ void Table_get_T_enum(void) {
 
 END_DEFINE_SPEC(FFlecsTableTestsSpec);
 
+/*"id": "Table",
+"testcases": [
+"each",
+"each_locked",
+"each_without_entity",
+"each_without_entity_locked",
+"iter",
+"iter_locked",
+"iter_without_components",
+"iter_without_components_locked",
+"multi_get",
+"multi_get_locked",
+"multi_set",
+"multi_set_locked",
+"count",
+"has_id",
+"has_T",
+"has_pair_r_t",
+"has_pair_R_t",
+"has_pair_R_T",
+"get_id",
+"get_T",
+"get_T_enum",
+"get_pair_r_t",
+"get_pair_R_t",
+"get_pair_R_T",
+"range_get_id",
+"range_get_T",
+"range_get_pair_r_t",
+"range_get_pair_R_t",
+"range_get_pair_R_T",
+"get_depth",
+"get_depth_w_type",
+"iter_type"
+]*/
+
 void FFlecsTableTestsSpec::Define()
 {
 	It("Table_each", [&]() { Table_each(); });

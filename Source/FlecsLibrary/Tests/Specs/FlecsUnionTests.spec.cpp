@@ -283,6 +283,16 @@ void Union_switch_enum_type(void) {
 
 END_DEFINE_SPEC(FFlecsUnionTestsSpec);
 
+/*"id": "Union",
+"testcases": [
+"add_case",
+"get_case",
+"add_case_w_type",
+"add_switch_w_type",
+"add_remove_switch_w_type",
+"switch_enum_type"
+]*/
+
 void FFlecsUnionTestsSpec::Define()
 {
 	It("Union_add_case", [this]() { Union_add_case(); });

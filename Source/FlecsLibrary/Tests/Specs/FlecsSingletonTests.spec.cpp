@@ -689,6 +689,30 @@ void Singleton_get_target() {
 
 END_DEFINE_SPEC(FFlecsSingletonTestsSpec);
 
+/*"id": "Singleton",
+"testcases": [
+"set_get_singleton",
+"ensure_singleton",
+"get_mut_singleton",
+"emplace_singleton",
+"modified_singleton",
+"add_singleton",
+"remove_singleton",
+"has_singleton",
+"singleton_system",
+"get_singleton",
+"type_id_from_world",
+"set_lambda",
+"get_lambda",
+"get_write_lambda",
+"get_set_singleton_pair_R_T",
+"get_set_singleton_pair_R_t",
+"add_remove_singleton_pair_R_T",
+"add_remove_singleton_pair_R_t",
+"add_remove_singleton_pair_r_t",
+"get_target"
+]*/
+
 void FFlecsSingletonTestsSpec::Define()
 {
 	It("Singleton_set_get_singleton", [&]() { Singleton_set_get_singleton(); });

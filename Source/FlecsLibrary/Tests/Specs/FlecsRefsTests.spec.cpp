@@ -758,6 +758,36 @@ void Refs_untyped_runtime_component_ref(void) {
 
 END_DEFINE_SPEC(FFlecsRefsTestsSpec);
 
+/*"id": "Refs",
+    "testcases": [
+    "get_ref_by_ptr",
+    "get_ref_by_method",
+    "ref_after_add",
+    "ref_after_remove",
+    "ref_after_set",
+    "ref_before_set",
+    "non_const_ref",
+    "pair_ref",
+    "pair_ref_w_pair_type",
+    "pair_ref_w_pair_type_second",
+    "pair_ref_w_entity",
+    "pair_ref_second",
+    "from_stage",
+    "default_ctor",
+    "ctor_from_entity",
+    "implicit_operator_bool",
+    "try_get",
+    "try_get_after_delete",
+    "has",
+    "bool_operator",
+    "base_type",
+    "empty_base_type",
+    "get_component",
+    "untyped_get_ref_by_method",
+    "untyped_pair_ref",
+    "untyped_runtime_component_ref"
+]*/
+
 void FFlecsRefsTestsSpec::Define()
 {
 	It("Refs_get_ref_by_ptr", [this]() { Refs_get_ref_by_ptr(); });

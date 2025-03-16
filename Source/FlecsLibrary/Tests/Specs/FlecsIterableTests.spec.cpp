@@ -272,6 +272,14 @@ void Iterable_worker_iter(void) {
 
 END_DEFINE_SPEC(FFlecsIterableTestsSpec);
 
+/*"id": "Iterable",
+"testcases": [
+    "page_each",
+    "page_iter",
+    "worker_each",
+    "worker_iter"
+]*/
+
 void FFlecsIterableTestsSpec::Define()
 {
 	It("Iterable_page_each", [&]() { Iterable_page_each(); });

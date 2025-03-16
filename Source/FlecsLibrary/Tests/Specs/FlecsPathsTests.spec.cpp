@@ -604,6 +604,35 @@ void Paths_id_from_str_invalid_pair(void) {
 
 END_DEFINE_SPEC(FFlecsPathsTestsSpec);
 
+/*"id": "Paths",
+	"testcases": [
+	"name",
+	"path_depth_1",
+	"path_depth_2",
+	"entity_lookup_name",
+	"entity_lookup_depth_1",
+	"entity_lookup_depth_2",
+	"entity_lookup_from_0",
+	"entity_lookup_from_0_w_world",
+	"alias_component",
+	"alias_scoped_component",
+	"alias_scoped_component_w_name",
+	"alias_entity",
+	"alias_entity_by_name",
+	"alias_entity_by_scoped_name",
+	"alias_entity_empty",
+	"id_from_str_0_entity",
+	"id_from_str_entity_from_str",
+	"id_from_str_unresolved_entity_from_str",
+	"id_from_str_scoped_entity_from_str",
+	"id_from_str_template_entity_from_str",
+	"id_from_str_pair_from_str",
+	"id_from_str_unresolved_pair_from_str",
+	"id_from_str_wildcard_pair_from_str",
+	"id_from_str_any_pair_from_str",
+	"id_from_str_invalid_pair"
+]*/
+
 void FFlecsPathsTestsSpec::Define()
 {
 	It("Paths_name", [this]() { Paths_name(); });
