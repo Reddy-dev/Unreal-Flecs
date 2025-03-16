@@ -5,6 +5,32 @@
 #include "Bake/FlecsTestUtils.h"
 #include "Bake/FlecsTestTypes.h"
 
+struct Base {
+    int x;
+};
+
+struct Derived : public Base {
+    Derived() { }
+
+    Derived(int x_, int y_) {
+        x = x_;
+        y = y_;
+    }
+
+    int y;
+};
+
+struct BaseEmpty { };
+struct DerivedFromEmpty : public BaseEmpty {
+    DerivedFromEmpty() { }
+
+    DerivedFromEmpty(int y_) {
+        y = y_;
+    }
+
+    int y;
+};
+
 BEGIN_DEFINE_SPEC(FFlecsRefsTestsSpec,
                   "FlecsLibrary.Refs",
                   EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter);
@@ -633,21 +659,6 @@ void Refs_bool_operator(void) {
     }
 }
 
-struct Base {
-    int x;
-};
-
-struct Derived : public Base {
-    Derived() { }
-
-    Derived(int x_, int y_) {
-        x = x_;
-        y = y_;
-    }
-
-    int y;
-};
-
 void Refs_base_type(void) {
     flecs::world world;
     RegisterTestTypeComponents(world);
@@ -659,17 +670,6 @@ void Refs_base_type(void) {
     flecs::ref<Base> r = e.get_ref_w_id<Base>(world.id<Derived>());
     test_int(r->x, 10);
 }
-
-struct BaseEmpty { };
-struct DerivedFromEmpty : public BaseEmpty {
-    DerivedFromEmpty() { }
-
-    DerivedFromEmpty(int y_) {
-        y = y_;
-    }
-
-    int y;
-};
 
 void Refs_empty_base_type(void) {
     flecs::world world;
