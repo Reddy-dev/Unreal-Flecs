@@ -82,7 +82,6 @@ BEGIN_DEFINE_SPEC(FFlecsDocTestsSpec,
 void Doc_set_brief()
 {
 	flecs::world ecs;
-	flecs::tests::RegisterTestTypeComponents(ecs);
 
 	auto e = ecs.entity("Foo");
 
@@ -96,7 +95,6 @@ void Doc_set_brief()
 void Doc_set_name()
 {
 	flecs::world ecs;
-	flecs::tests::RegisterTestTypeComponents(ecs);
 
 	auto e = ecs.entity("Foo");
 
@@ -110,7 +108,6 @@ void Doc_set_name()
 void Doc_set_link()
 {
 	flecs::world ecs;
-	flecs::tests::RegisterTestTypeComponents(ecs);
 
 	auto e = ecs.entity("Foo");
 
@@ -124,7 +121,6 @@ void Doc_set_link()
 void Doc_set_color()
 {
 	flecs::world ecs;
-	flecs::tests::RegisterTestTypeComponents(ecs);
 
 	auto e = ecs.entity("Foo");
 
@@ -151,7 +147,6 @@ void Doc_set_uuid()
 void Doc_get_name_no_doc_name()
 {
 	flecs::world ecs;
-	flecs::tests::RegisterTestTypeComponents(ecs);
 
 	auto e = ecs.entity("Foo");
 

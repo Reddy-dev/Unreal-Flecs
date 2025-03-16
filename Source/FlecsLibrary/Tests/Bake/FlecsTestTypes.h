@@ -8,9 +8,14 @@
 #include "flecs.h"
 #include "FlecsTestUtils.h"
 
-namespace flecs::tests
-{
-	    struct Position {
+namespace test {
+    struct Foo {
+        float x;
+        float y;
+    };
+}
+
+struct Position {
         float x;
         float y;
          };
@@ -400,9 +405,7 @@ namespace flecs::tests
         ecs.component<T2>();
         ecs.component<T3>();
         ecs.component<Rel>();
-        
+        ecs.component<test::Foo>();
     }
-    
-} // namespace flecs::tests
 
 #endif // WITH_AUTOMATION_TESTS

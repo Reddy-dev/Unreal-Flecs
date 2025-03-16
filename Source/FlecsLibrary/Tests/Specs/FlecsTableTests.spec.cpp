@@ -5,8 +5,6 @@
 #include "Bake/FlecsTestUtils.h"
 #include "Bake/FlecsTestTypes.h"
 
-using namespace flecs::tests;
-
 BEGIN_DEFINE_SPEC(FFlecsTableTestsSpec,
                   "FlecsLibrary.Table",
                   EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter);
@@ -696,7 +694,6 @@ void Table_count(void) {
 
 void Table_has_id(void) {
     flecs::world ecs;
-    RegisterTestTypeComponents(ecs);
     
     flecs::entity t1 = ecs.entity();
     flecs::entity t2 = ecs.entity();
@@ -741,7 +738,6 @@ void Table_has_T(void) {
 
 void Table_has_pair_r_t(void) {
     flecs::world ecs;
-    RegisterTestTypeComponents(ecs);
     
     flecs::entity r = ecs.entity();
     flecs::entity t1 = ecs.entity();
@@ -988,7 +984,6 @@ void Table_get_pair_R_T(void) {
 
 void Table_get_depth(void) {
     flecs::world world;
-    RegisterTestTypeComponents(world);
 
     flecs::entity e1 = world.entity();
     flecs::entity e2 = world.entity().child_of(e1);
