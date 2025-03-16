@@ -8,7 +8,8 @@
 
 #define test_assert(cond) \
 	checkf((cond), TEXT(#cond)) \
-	TestTrue(#cond, (cond))
+	if (FAutomationTestBase* CurrentTest = FAutomationTestFramework::Get().GetCurrentTest()) \
+		CurrentTest->TestTrue(TEXT(#cond), (cond))
 
 #define test_bool(v1, v2) \
 	if (FAutomationTestBase* CurrentTest = FAutomationTestFramework::Get().GetCurrentTest()) \
