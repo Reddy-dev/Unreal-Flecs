@@ -364,13 +364,23 @@ namespace flecs::tests
         std::vector<int> value;
     };
 
-    void RegisterTestTypeComponents(flecs::world& ecs) {
+    struct Tgt { };
+
+    struct R { };
+    struct T1 { };
+    struct T2 { };
+    struct T3 { };
+
+    struct Rel { };
+
+    static inline void RegisterTestTypeComponents(flecs::world& ecs) {
         ecs.component<Position>();
         ecs.component<Velocity>();
         ecs.component<Mass>();
         ecs.component<Rotation>();
         ecs.component<Tag>();
         ecs.component<Self>();
+        ecs.component<Number>();
         ecs.component<Pod>();
         ecs.component<NoDefaultCtor>();
         ecs.component<DefaultInit>();
@@ -384,6 +394,13 @@ namespace flecs::tests
         ecs.component<FlecsCtorDefaultCtor>();
         ecs.component<FlecsCtorValueCtor>();
         ecs.component<CountNoDefaultCtor>();
+        ecs.component<Tgt>();
+        ecs.component<R>();
+        ecs.component<T1>();
+        ecs.component<T2>();
+        ecs.component<T3>();
+        ecs.component<Rel>();
+        
     }
     
 } // namespace flecs::tests

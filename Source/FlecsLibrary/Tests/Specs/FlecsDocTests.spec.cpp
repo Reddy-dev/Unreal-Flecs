@@ -6,7 +6,7 @@
 #include "Bake/FlecsTestTypes.h"
 
 BEGIN_DEFINE_SPEC(FFlecsDocTestsSpec,
-                  "FlecsLibrary.DocTests",
+                  "FlecsLibrary.Doc",
                   EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter);
 
 /*void Doc_set_brief(void) {
