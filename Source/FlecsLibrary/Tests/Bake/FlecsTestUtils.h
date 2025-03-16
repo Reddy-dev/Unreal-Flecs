@@ -28,7 +28,7 @@
 
 #define test_str(v1, v2) \
 	if (FAutomationTestBase* CurrentTest = FAutomationTestFramework::Get().GetCurrentTest()) \
-		CurrentTest->TestEqual(TEXT(#v1 " == " #v2), FString(v1), FString(v2))
+		CurrentTest->TestEqual(TEXT(#v1 " == " #v2), std::string(v1), std::string(v2))
 
 #define test_null(v) \
 	if (FAutomationTestBase* CurrentTest = FAutomationTestFramework::Get().GetCurrentTest()) \
