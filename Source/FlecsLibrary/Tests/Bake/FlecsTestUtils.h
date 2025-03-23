@@ -26,6 +26,10 @@
 	if (FAutomationTestBase* CurrentTest = FAutomationTestFramework::Get().GetCurrentTest()) \
 		CurrentTest->TestEqual(TEXT(#v1 " == " #v2), static_cast<uint64>(v1), static_cast<uint64>(v2))
 
+#define test_flt(v1, v2) \
+	if (FAutomationTestBase* CurrentTest = FAutomationTestFramework::Get().GetCurrentTest()) \
+		CurrentTest->TestEqual(TEXT(#v1 " == " #v2), static_cast<float>(v1), static_cast<float>(v2))
+
 #define test_str(v1, v2) \
 	if (FAutomationTestBase* CurrentTest = FAutomationTestFramework::Get().GetCurrentTest()) \
 		CurrentTest->TestEqual(TEXT(#v1 " == " #v2), std::string(v1), std::string(v2))
