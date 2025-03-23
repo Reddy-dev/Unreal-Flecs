@@ -1378,6 +1378,7 @@ void Entity_get_parent(void) {
 
 void Entity_is_component_enabled(void) {
 	flecs::world world;
+	RegisterTestTypeComponents(world);
 
 	world.component<Position>().add(flecs::CanToggle);
 
@@ -1559,6 +1560,7 @@ void Entity_get_type(void) {
 
 void Entity_get_nonempty_type(void) {
 	flecs::world world;
+	RegisterTestTypeComponents(world);
 
 	auto entity = world.entity()
 		.add<Position>();
@@ -1576,6 +1578,7 @@ void Entity_get_nonempty_type(void) {
 void Entity_set_no_copy(void) {
 	flecs::world world;
 	RegisterTestTypeComponents(world);
+	Pod::copy_invoked = 0;
 
 	auto e = world.entity()
 		.set<Pod>({10});
@@ -1587,10 +1590,10 @@ void Entity_set_no_copy(void) {
 	test_int(p->value, 10);
 }
 
-
 void Entity_set_copy(void) {
 	flecs::world world;
 	RegisterTestTypeComponents(world);
+	Pod::copy_invoked = 0;
 
 	Pod val(10);
 
@@ -1823,7 +1826,7 @@ void Entity_set_override_pair_w_tgt_id(void) {
 
 void Entity_set_override_pair_w_rel_tag(void) {
 	flecs::world world;
-
+	world.component<Position>();
 	world.component<Tgt>().add(flecs::OnInstantiate, flecs::Inherit);
 
 	auto base = world.entity()
