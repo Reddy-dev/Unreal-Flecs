@@ -22,7 +22,7 @@ enum class PipelineStepEnum
 };
 
 BEGIN_DEFINE_SPEC(FFlecsSystemTestsSpec,
-                  "FlecsLibrary.FlecsSystemTests",
+                  "FlecsLibrary.System",
                   EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter);
 
 /*void System_iter(void) {
