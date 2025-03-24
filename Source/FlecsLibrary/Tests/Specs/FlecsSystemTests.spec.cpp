@@ -1,4 +1,4 @@
-﻿#if WITH_AUTOMATION_TESTS
+﻿#if WITH_AUTOMATION_TESTS && defined(FLECS_TESTS)
 
 #include "Misc/AutomationTest.h"
 #include "flecs.h"
