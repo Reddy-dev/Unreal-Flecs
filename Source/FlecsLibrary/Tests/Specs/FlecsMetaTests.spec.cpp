@@ -984,7 +984,7 @@ void Meta_ser_deser_flecs_entity(void) {
     test_assert(v == e2);
 }
 
-/*void Meta_world_ser_deser_flecs_entity(void) {
+void Meta_world_ser_deser_flecs_entity(void) {
     flecs::world world;
 
     world.component<CppEntity>()
@@ -1010,7 +1010,7 @@ void Meta_ser_deser_flecs_entity(void) {
         test_assert(ptr != nullptr);
         test_str(world.to_json(ptr).c_str(), "{\"entity\":\"ent1\"}");
     }
-}*/
+}
 
 void Meta_opaque_vector_w_builder(void) {
     flecs::world world;
