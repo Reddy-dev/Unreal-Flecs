@@ -17,7 +17,7 @@ void IFlecsModuleInterface::ImportModule(flecs::world& InWorld)
 	World = ToFlecsWorld(InWorld);
 	solid_check(World.IsValid());
 
-	UFlecsWorld* FlecsWorld = this->World.Get();
+	UFlecsWorld* FlecsWorld = World.Get();
 	const UWorld* GameWorld = FlecsWorld->GetWorld();
 
 	FlecsWorld->EndScope([this, &FlecsWorld]()

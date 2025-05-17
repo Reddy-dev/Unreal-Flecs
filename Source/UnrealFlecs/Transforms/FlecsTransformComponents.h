@@ -176,8 +176,6 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Transform")
 	FFlecsScaleComponent Scale;
-
-	virtual void ApplyCollectionToEntity_Implementation(FFlecsEntityHandle& Entity) override final;
 	
 }; // class UFlecsTransformCollection
 

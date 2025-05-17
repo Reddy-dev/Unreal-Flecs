@@ -1,7 +1,6 @@
 ﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
 
 #include "FlecsComponentCollectionObject.h"
-#include "Worlds/FlecsWorld.h"
 #include "Worlds/FlecsWorldSubsystem.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsComponentCollectionObject)
@@ -15,18 +14,7 @@ UFlecsComponentCollectionObject::UFlecsComponentCollectionObject(const FObjectIn
 {
 }
 
-void UFlecsComponentCollectionObject::ApplyCollection_Internal(FFlecsEntityHandle Entity, UFlecsWorld* InFlecsWorld)
+void UFlecsComponentCollectionObject::Apply()
 {
-	FlecsWorld = InFlecsWorld;
-	
-	ApplyCollectionToEntity(Entity);
-}
-
-UFlecsWorld* UFlecsComponentCollectionObject::GetFlecsWorld() const
-{
-	return FlecsWorld.Get();
-}
-
-void UFlecsComponentCollectionObject::ApplyCollectionToEntity_Implementation(FFlecsEntityHandle& Entity)
-{
+	BP_OnApply();
 }

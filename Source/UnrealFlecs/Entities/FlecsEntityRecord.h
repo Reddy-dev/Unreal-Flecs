@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Collections/FlecsCollectionItemBuilder.h"
 #include "Collections/FlecsComponentCollectionObject.h"
 #include "StructUtils/InstancedStruct.h"
 #include "Entities/FlecsEntityHandle.h"
@@ -352,6 +353,9 @@ struct UNREALFLECS_API FFlecsEntityRecord
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Entity Record")
 	TArray<FFlecsRecordSubEntity> SubEntities;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Entity Record")
+	FFlecsCollectionItemBuilder CollectionBuilder;
 
 	NO_DISCARD FORCEINLINE bool operator==(const FFlecsEntityRecord& Other) const
 	{
