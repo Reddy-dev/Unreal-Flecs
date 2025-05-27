@@ -2,7 +2,8 @@
 
 #include "FlecsTransformComponents.h"
 
-#include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsTransformComponents)
+/*
+ *#include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsTransformComponents)
 
 UFlecsTransform3dCollection::UFlecsTransform3dCollection(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -11,3 +12,4 @@ UFlecsTransform3dCollection::UFlecsTransform3dCollection(const FObjectInitialize
 	Rotation = FFlecsRotationComponent();
 	Scale = FFlecsScaleComponent();
 }
+*/

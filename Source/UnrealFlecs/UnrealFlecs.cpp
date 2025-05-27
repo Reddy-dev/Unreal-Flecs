@@ -1,7 +1,6 @@
 ﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
 
 #include "UnrealFlecs.h"
-
 #include "Entities/FlecsDefaultEntityEngineSubsystem.h"
 #include "Worlds/FlecsOSAPI.h"
 #include "Versioning/UnrealFlecsVersion.h"

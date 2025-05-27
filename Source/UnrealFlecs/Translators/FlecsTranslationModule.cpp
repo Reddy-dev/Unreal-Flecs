@@ -9,9 +9,7 @@
 void UFlecsTranslationModule::InitializeModule(UFlecsWorld* InWorld, const FFlecsEntityHandle& InModuleEntity)
 {
 	InWorld->RegisterComponentType<FFlecsTranslationPropertyTrait>();
-	InWorld->RegisterComponentType<FFlecsToUnreal>();
-	InWorld->RegisterComponentType<FUnrealToFlecs>();
-	InWorld->RegisterComponentType<FFlecsToBoth>();
+	InWorld->RegisterComponentType<EFlecsTranslationType>();
 }
 
 void UFlecsTranslationModule::DeinitializeModule(UFlecsWorld* InWorld)

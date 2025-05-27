@@ -283,8 +283,8 @@ protected:
 		{
 			const FFlecsEntityHandle TagEntity =
 				flecs::entity(InFlecsWorld->World,
-					StringCast<char>(*Tag.ToString()).Get(),
-					".", ".");
+					StringCast<char>(*Tag.ToString()).Get(), ".", ".");
+			
 			TagEntity.Set<FGameplayTag>(Tag);
 		}
 	}

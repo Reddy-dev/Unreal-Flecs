@@ -29,7 +29,8 @@ void FComponentCollectionTestSpec::Define()
 
 	Describe("Component Collection Basic", [this]()
 	{
-		It("Should be able to add a Component Collection", [this]()
+		#if 0
+		xIt("Should be able to add a Component Collection", [this]()
 		{
 			FFlecsEntityHandle TestEntity = Fixture.FlecsWorld->CreateEntity();
 				
@@ -44,6 +45,7 @@ void FComponentCollectionTestSpec::Define()
 			TestEqual("Entity Location Component is correct",
 				TestEntity.Get<FFlecsLocationComponent>().Location, FVector(1.f, 2.f, 3.f));
 		});
+		#endif // #if 0
 	});
 }
 

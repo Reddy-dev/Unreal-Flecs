@@ -16,13 +16,12 @@ UUnrealFlecsObject::UUnrealFlecsObject(const FObjectInitializer& ObjectInitializ
 {
 }
 
-void UUnrealFlecsObject::InitializeFlecsObject(UFlecsWorld* InFlecsWorld)
+void UUnrealFlecsObject::InitializeFlecsObject(const TSolidNonNullPtr<UFlecsWorld> InFlecsWorld)
 {
-	solid_check(IsValid(InFlecsWorld));
 	FlecsWorld = InFlecsWorld;
 
 	ObjectEntityHandle = CreateObjectEntity();
-	ObjectEntityHandle.Set<FFlecsUObjectComponent>({ this });
+	ObjectEntityHandle.SetPairFirst<FFlecsUObjectComponent, FFlecsUObjectTag>({ this });
 	
 	UFlecsWorldSubsystem* FlecsWorldSubsystem = FlecsWorld->GetContext();
 	solid_check(IsValid(FlecsWorldSubsystem));

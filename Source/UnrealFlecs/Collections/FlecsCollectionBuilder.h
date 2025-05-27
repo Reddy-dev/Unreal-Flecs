@@ -6,47 +6,65 @@
 #include "Entities/FlecsEntityHandle.h"
 #include "SolidMacros/Macros.h"
 #include "SolidMacros/Concepts/SolidConcepts.h"
-#include "FlecsCollectionItemBuilder.generated.h"
+#include "Types/SolidNonNullPtr.h"
+#include "FlecsCollectionBuilder.generated.h"
 
-USTRUCT(BlueprintType)
+struct FFlecsComponentCollection;
+
+USTRUCT()
 struct UNREALFLECS_API FFlecsCollectionItem
 {
 	GENERATED_BODY()
 
 	NO_DISCARD FORCEINLINE friend uint32 GetTypeHash(const FFlecsCollectionItem& InItem)
 	{
-		return GetTypeHash(InItem.ComponentName);
+		if (InItem.Second.IsEmpty())
+		{
+			return GetTypeHash(InItem.First);
+		}
+		else
+		{
+			return HashCombineFast(GetTypeHash(InItem.First), GetTypeHash(InItem.Second));
+		}
 	}
 
 public:
 	UPROPERTY()
-	FString ComponentName;
+	FString First;
+
+	UPROPERTY()
+	FString Second;
 
 	UPROPERTY()
 	TArray<uint8> ComponentData;
+	
 }; // struct FFlecsCollectionItem
 
-USTRUCT(BlueprintType)
-struct UNREALFLECS_API FFlecsCollectionItemBuilder
+USTRUCT()
+struct UNREALFLECS_API FFlecsCollectionBuilder
 {
 	GENERATED_BODY()
 
 	friend class UFlecsComponentCollectionObject;
 
 public:
-	FFlecsCollectionItemBuilder()
+	FFlecsCollectionBuilder(const bool bInIsSlotEntity = false)
+		: bIsSlotEntity(bInIsSlotEntity)
 	{
 	}
 
-	void ApplyToEntity(const FFlecsEntityHandle& InEntityHandle, UFlecsWorld* InWorld) const;
+	void ApplyToEntity(const FFlecsEntityHandle& InEntityHandle, TSolidNonNullPtr<UFlecsWorld> InWorld) const;
+	NO_DISCARD bool ValidateData(FFlecsComponentCollection& InComponentCollection) const;
 
 	template <typename T>
 	FORCEINLINE void AddComponent(const T& InComponent)
 	{
 		FFlecsCollectionItem NewItem;
-		NewItem.ComponentName = GetComponentName<T>();
-		NewItem.ComponentData = TArray<uint8>(reinterpret_cast<const uint8*>(&InComponent),
+		NewItem.First = GetFirst<T>();
+		
+		NewItem.ComponentData = TArray(reinterpret_cast<const uint8*>(&InComponent),
 			sizeof(T));
+		
 		CollectionItems.Add(NewItem);
 	}
 
@@ -54,15 +72,16 @@ public:
 	FORCEINLINE void AddComponent()
 	{
 		FFlecsCollectionItem NewItem;
-		NewItem.ComponentName = GetComponentName<T>();
+		NewItem.First = GetFirst<T>();
 		CollectionItems.Add(NewItem);
 	}
 
-	FORCEINLINE void AddComponent(const UScriptStruct* StructType, const void* InComponent = nullptr)
+	FORCEINLINE void AddComponent(const TSolidNonNullPtr<UScriptStruct> StructType, const void* InComponent = nullptr)
 	{
 		solid_check(IsValid(StructType));
+		
 		FFlecsCollectionItem NewItem;
-		NewItem.ComponentName = GetComponentName(StructType);
+		NewItem.First = GetFirst(StructType);
 		
 		if (InComponent)
 		{
@@ -78,7 +97,7 @@ public:
 	{
 		const FFlecsCollectionItem* Item = CollectionItems.FindByPredicate([&](const FFlecsCollectionItem& InItem)
 		{
-			return InItem.ComponentName == GetComponentName<T>();
+			return InItem.First == GetFirst<T>();
 		});
 
 		solid_check(Item);
@@ -90,43 +109,45 @@ public:
 	{
 		const FFlecsCollectionItem* Item = CollectionItems.FindByPredicate([&](const FFlecsCollectionItem& InItem)
 		{
-			return InItem.ComponentName == GetComponentName<T>();
+			return InItem.First == GetFirst<T>();
 		});
 
 		solid_check(Item);
 		return *reinterpret_cast<const T*>(Item->ComponentData.GetData());
 	}
 
-	NO_DISCARD FORCEINLINE void* GetComponent(const FString& InComponentName) const
+	NO_DISCARD FORCEINLINE void* GetComponent(const FString& InFirst) const
 	{
 		return (void*)CollectionItems.FindByPredicate([&](const FFlecsCollectionItem& Item)
 		{
-			return Item.ComponentName == InComponentName;
+			return Item.First == InFirst;
 		})->ComponentData.GetData();
 	}
 
-	NO_DISCARD FORCEINLINE void* GetComponent(const UScriptStruct* StructType) const
+	NO_DISCARD FORCEINLINE void* GetComponent(const TSolidNonNullPtr<UScriptStruct> StructType) const
 	{
-		return GetComponent(GetComponentName(StructType));
+		solid_check(IsValid(StructType));
+		return GetComponent(GetFirst(StructType));
 	}
 
-	NO_DISCARD FORCEINLINE bool HasComponent(const FString& InComponentName) const
+	NO_DISCARD FORCEINLINE bool HasComponent(const FString& InFirst) const
 	{
 		return CollectionItems.ContainsByPredicate([&](const FFlecsCollectionItem& Item)
 		{
-			return Item.ComponentName == InComponentName;
+			return Item.First == InFirst;
 		});
 	}
 
 	template <typename T>
 	NO_DISCARD FORCEINLINE bool HasComponent() const
 	{
-		return HasComponent(GetComponentName<T>());
+		return HasComponent(GetFirst<T>());
 	}
 
-	NO_DISCARD FORCEINLINE bool HasComponent(const UScriptStruct* StructType) const
+	NO_DISCARD FORCEINLINE bool HasComponent(const TSolidNonNullPtr<UScriptStruct> StructType) const
 	{
-		return HasComponent(GetComponentName(StructType));
+		solid_check(IsValid(StructType));
+		return HasComponent(GetFirst(StructType));
 	}
 
 	FORCEINLINE void Clear()
@@ -134,33 +155,34 @@ public:
 		CollectionItems.Empty();
 	}
 
-	FORCEINLINE void RemoveComponent(const FString& InComponentName)
+	FORCEINLINE void RemoveComponent(const FString& InFirst)
 	{
 		CollectionItems.RemoveAll([&](const FFlecsCollectionItem& Item)
 		{
-			return Item.ComponentName == InComponentName;
+			return Item.First == InFirst;
 		});
 	}
 
-	FORCEINLINE void RemoveComponent(const UScriptStruct* StructType)
+	FORCEINLINE void RemoveComponent(const TSolidNonNullPtr<UScriptStruct> StructType)
 	{
-		RemoveComponent(GetComponentName(StructType));
+		solid_check(IsValid(StructType));
+		RemoveComponent(GetFirst(StructType));
 	}
 
 	template <typename T>
 	FORCEINLINE void RemoveComponent()
 	{
-		RemoveComponent(GetComponentName<T>());
+		RemoveComponent(GetFirst<T>());
 	}
 
-	FORCEINLINE void AddComponentRequirement(const FString& InComponentName)
+	FORCEINLINE void AddComponentRequirement(const FString& InFirst)
 	{
-		ComponentRequirements.Add(InComponentName);
+		ComponentRequirements.Add(InFirst);
 	}
 
-	FORCEINLINE void AddComponentExclusion(const FString& InComponentName)
+	FORCEINLINE void AddComponentExclusion(const FString& InFirst)
 	{
-		ComponentExclusions.Add(InComponentName);
+		ComponentExclusions.Add(InFirst);
 	}
 
 	FORCEINLINE void ClearComponentRequirements()
@@ -185,26 +207,16 @@ public:
 		ClearComponentRequirementsAndExclusions();
 	}
 
-	FORCEINLINE void RemoveComponentRequirement(const FString& InComponentName)
+	FORCEINLINE void RemoveComponentRequirement(const FString& InFirst)
 	{
-		ComponentRequirements.Remove(InComponentName);
+		ComponentRequirements.Remove(InFirst);
 	}
 
-	FORCEINLINE void RemoveComponentExclusion(const FString& InComponentName)
+	FORCEINLINE void RemoveComponentExclusion(const FString& InFirst)
 	{
-		ComponentExclusions.Remove(InComponentName);
+		ComponentExclusions.Remove(InFirst);
 	}
 
-	FORCEINLINE void SetNewEntity(const bool bInNewEntity)
-	{
-		bNewEntity = bInNewEntity;
-	}
-
-	NO_DISCARD FORCEINLINE bool IsNewEntity() const
-	{
-		return bNewEntity;
-	}
-	
 private:
 	UPROPERTY()
 	TArray<FFlecsCollectionItem> CollectionItems;
@@ -216,25 +228,25 @@ private:
 	TSet<FString> ComponentExclusions;
 
 	UPROPERTY()
-	bool bNewEntity = false;
-
+	bool bIsSlotEntity;
+	
 	template <typename T>
-	NO_DISCARD FORCEINLINE FString GetComponentName() const
+	NO_DISCARD FORCEINLINE FString GetFirst() const
 	{
 		return nameof(T);
 	}
 
-	NO_DISCARD FORCEINLINE FString GetComponentName(const UScriptStruct* StructType) const
+	NO_DISCARD FORCEINLINE FString GetFirst(const UScriptStruct* StructType) const
 	{
 		solid_check(IsValid(StructType));
 		return StructType->GetStructCPPName();
 	}
 
 	template <Solid::TBaseStructureConcept T>
-	NO_DISCARD FORCEINLINE FString GetComponentName() const
+	NO_DISCARD FORCEINLINE FString GetFirst() const
 	{
-		return GetComponentName(TBaseStructure<T>::Get());
+		return GetFirst(TBaseStructure<T>::Get());
 	}
 	
-}; // struct FFlecsCollectionItemBuilder
+}; // struct FFlecsCollectionBuilder
 

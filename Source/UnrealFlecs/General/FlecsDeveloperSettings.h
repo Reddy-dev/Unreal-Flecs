@@ -16,7 +16,7 @@ public:
 	bool bEnableFlecs = true;
 
 	UPROPERTY(EditAnywhere, Config, Category = "Flecs", meta = (ConsoleVariable = "Flecs.UseTaskThreads"))
-	bool bUseTaskThreads = true;
+	bool bUseTaskThreads = false;
 
 	UPROPERTY(EditAnywhere, Config, Category = "Flecs",
 		meta = (EditCondition = "bUseTaskThreads", ConsoleVariable = "Flecs.TaskThreadCount"))

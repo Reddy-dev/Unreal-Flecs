@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Collections/FlecsComponentCollectionObject.h"
+//#include "Collections/FlecsComponentCollectionObject.h"
 #include "SolidMacros/Macros.h"
 #include "Standard/Hashing.h"
 #include "FlecsTransformComponents.generated.h"
@@ -160,7 +160,8 @@ public:
 
 DEFINE_STD_HASH(FFlecsScaleComponent)
 
-UCLASS(BlueprintType, EditInlineNew)
+/*
+ *UCLASS(BlueprintType, EditInlineNew)
 class UNREALFLECS_API UFlecsTransform3dCollection : public UFlecsComponentCollectionObject
 {
 	GENERATED_BODY()
@@ -178,4 +179,6 @@ public:
 	FFlecsScaleComponent Scale;
 	
 }; // class UFlecsTransformCollection
+*/
+
 

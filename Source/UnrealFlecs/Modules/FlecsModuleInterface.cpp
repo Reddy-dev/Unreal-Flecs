@@ -18,7 +18,9 @@ void IFlecsModuleInterface::ImportModule(flecs::world& InWorld)
 	solid_check(World.IsValid());
 
 	UFlecsWorld* FlecsWorld = World.Get();
+	
 	const UWorld* GameWorld = FlecsWorld->GetWorld();
+	solid_check(IsValid(GameWorld));
 
 	FlecsWorld->EndScope([this, &FlecsWorld]()
 	{
@@ -27,7 +29,7 @@ void IFlecsModuleInterface::ImportModule(flecs::world& InWorld)
 			ModuleEntity = FlecsWorld->CreateEntity(Execute_GetModuleName(_getUObject()));
 			
 			ModuleEntity.Add(flecs::Module);
-			ModuleEntity.SetPair<FFlecsUObjectComponent, FFlecsModuleComponentTag>(FFlecsUObjectComponent{ _getUObject() });
+			ModuleEntity.SetPairFirst<FFlecsUObjectComponent, FFlecsModuleComponentTag>(FFlecsUObjectComponent{ _getUObject() });
 			
 			ModuleEntity.Set<FFlecsModuleComponent>({ _getUObject()->GetClass() });
 		});
@@ -62,7 +64,7 @@ void IFlecsModuleInterface::DeinitializeModule_Internal()
 {
 	ModuleEntity.Disable();
 
-	if (World.IsValid())
+	if LIKELY_IF(World.IsValid())
 	{
 		UFlecsWorld* FlecsWorld = World.Get();
 		

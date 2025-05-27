@@ -1845,7 +1845,7 @@ public:
 
 		return RegisterScriptEnum(ScriptEnum);
 		
-		#else
+		#else // FLECS_CPP_NO_AUTO_REGISTRATION
 
 		solid_checkf(HasScriptEnum(ScriptEnum), TEXT("Script enum %s is not registered"),
 			*ScriptEnum->GetName());

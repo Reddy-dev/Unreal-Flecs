@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Collections/FlecsCollectionItemBuilder.h"
-#include "Collections/FlecsComponentCollectionObject.h"
+#include "Collections/FlecsCollectionBuilder.h"
+#include "Collections/FlecsComponentCollection.h"
 #include "StructUtils/InstancedStruct.h"
 #include "Entities/FlecsEntityHandle.h"
 #include "Properties/FlecsComponentProperties.h"
@@ -124,7 +124,7 @@ struct UNREALFLECS_API FFlecsRecordPair
 						{
 							if (PairValueType == EFlecsValuePairType::First)
 							{
-								InEntityHandle.SetPair(First.PairScriptStruct.GetScriptStruct(),
+								InEntityHandle.SetPairFirst(First.PairScriptStruct.GetScriptStruct(),
 									First.PairScriptStruct.GetMemory(), Second.PairScriptStruct.GetScriptStruct());
 							}
 						}
@@ -272,9 +272,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Entity Record")
 	TArray<FFlecsComponentTypeInfo> Components;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced, Category = "Entity Record")
-	TArray<TObjectPtr<UFlecsComponentCollectionObject>> Collections;
-
 	NO_DISCARD FORCEINLINE bool operator==(const FFlecsRecordSubEntity& Other) const
 	{
 		return Name == Other.Name && Components == Other.Components;
@@ -324,11 +321,6 @@ public:
 				break;
 			}
 		}
-
-		for (UFlecsComponentCollectionObject* Collection : Collections)
-		{
-			InEntityHandle.AddCollection(Collection);
-		}
 	}
 	
 }; // struct FFlecsRecordSubEntity
@@ -348,14 +340,10 @@ struct UNREALFLECS_API FFlecsEntityRecord
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Entity Record")
 	TArray<FFlecsComponentTypeInfo> Components;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced, Category = "Entity Record")
-	TArray<TObjectPtr<UFlecsComponentCollectionObject>> Collections;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Entity Record")
 	TArray<FFlecsRecordSubEntity> SubEntities;
-
-	UPROPERTY(BlueprintReadWrite, Category = "Entity Record")
-	FFlecsCollectionItemBuilder CollectionBuilder;
+	
+	FFlecsComponentCollection CollectionBuilder;
 
 	NO_DISCARD FORCEINLINE bool operator==(const FFlecsEntityRecord& Other) const
 	{
@@ -473,11 +461,6 @@ struct UNREALFLECS_API FFlecsEntityRecord
 			}
 		}
 
-		for (UFlecsComponentCollectionObject* Collection : Collections)
-		{
-			InEntityHandle.AddCollection(Collection);
-		}
-
 		for (const FFlecsRecordSubEntity& SubEntity : SubEntities)
 		{
 			FFlecsEntityHandle NewEntityHandle = InEntityHandle
@@ -490,6 +473,15 @@ struct UNREALFLECS_API FFlecsEntityRecord
 	}
 	
 }; // struct FFlecsEntityRecord
+
+template <>
+struct TStructOpsTypeTraits<FFlecsEntityRecord> : public TStructOpsTypeTraitsBase2<FFlecsEntityRecord>
+{
+	enum
+	{
+	}; // enum
+	
+}; // struct TStructOpsTypeTraits<FFlecsEntityRecord>
 
 REGISTER_FLECS_COMPONENT(FFlecsEntityRecord, [](flecs::world InWorld, flecs::untyped_component InComponent)
 	{

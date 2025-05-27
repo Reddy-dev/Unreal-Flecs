@@ -2,7 +2,6 @@
 
 // ReSharper disable CppTooWideScopeInitStatement
 #include "FlecsEntityHandle.h"
-#include "Collections/FlecsComponentCollectionObject.h"
 #include "Components/FlecsWorldPtrComponent.h"
 #include "Networking/FlecsNetworkIdComponent.h"
 #include "Worlds/FlecsWorld.h"
@@ -10,20 +9,14 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsEntityHandle)
 
-FFlecsEntityHandle FFlecsEntityHandle::GetNullHandle(const UFlecsWorld* InWorld)
+FFlecsEntityHandle FFlecsEntityHandle::GetNullHandle(const TSolidNonNullPtr<UFlecsWorld> InWorld)
 {
-    solid_checkf(::IsValid(InWorld), TEXT("Flecs World not found"));
     return flecs::entity::null(InWorld->World);
 }
 
-FFlecsEntityHandle::FFlecsEntityHandle(const UFlecsWorld* InWorld, const FFlecsId InEntity)
+FFlecsEntityHandle::FFlecsEntityHandle(const TSolidNonNullPtr<UFlecsWorld> InWorld, const FFlecsId InEntity)
 {
     SetEntity(flecs::entity(InWorld->World, InEntity));
-}
-
-FFlecsEntityHandle::FFlecsEntityHandle(const flecs::world_t* InWorld, const FFlecsId InEntity)
-{
-    SetEntity(flecs::entity(InWorld, InEntity));
 }
 
 UFlecsWorld* FFlecsEntityHandle::GetFlecsWorld() const
@@ -59,12 +52,12 @@ FFlecsEntityHandle FFlecsEntityHandle::ObtainComponentTypeEnum(const UEnum* Enum
     return GetFlecsWorld()->ObtainComponentTypeEnum(EnumType);
 }
 
-void FFlecsEntityHandle::AddCollection(UObject* Collection) const
-{
-    solid_check(::IsValid(Collection));
-    UFlecsComponentCollectionObject* ComponentCollection = CastChecked<UFlecsComponentCollectionObject>(Collection);
-   // ComponentCollection->ApplyCollection_Internal(*this, GetFlecsWorld());
-}
+// void FFlecsEntityHandle::AddCollection(UObject* Collection) const
+// {
+//     solid_check(::IsValid(Collection));
+//     UFlecsComponentCollectionObject* ComponentCollection = CastChecked<UFlecsComponentCollectionObject>(Collection);
+//    // ComponentCollection->ApplyCollection_Internal(*this, GetFlecsWorld());
+// }
 
 FFlecsEntityHandle FFlecsEntityHandle::GetTagEntity(const FGameplayTag& InTag) const
 {
