@@ -176,15 +176,17 @@ FFlecsEntityHandle UFlecsCollectionWorldSubsystem::RegisterCollectionClass(const
 	return Prefab;
 }
 
-/*FFlecsEntityHandle UFlecsCollectionWorldSubsystem::RegisterCollectionClass(
-	const TSolidNotNull<TScriptInterface<IFlecsCollectionInterface>*> InInterfaceObject,
-	FFlecsCollectionBuilder& OutBuilder)
+FFlecsEntityHandle UFlecsCollectionWorldSubsystem::RegisterCollectionClass(
+	const TSolidNotNull<TScriptInterface<IFlecsCollectionInterface>*> InInterfaceObject)
 {
-	const TSolidNotNull<const UClass*> ImplementingClass = InInterfaceObject->GetObject()->GetClass();
-	solid_check(ImplementingClass->ImplementsInterface(UFlecsCollectionInterface::StaticClass()));
-
+	FFlecsCollectionDefinition Definition;
 	
-}*/
+	FFlecsCollectionBuilder CollectionBuilder = FFlecsCollectionBuilder::Create(Definition);
+	// @TODO: how safe is this to be called on a CDO?
+	InInterfaceObject->GetInterface()->BuildCollection(CollectionBuilder);
+
+	return RegisterCollectionClass(InInterfaceObject->GetObject()->GetClass(), CollectionBuilder);
+}
 
 FFlecsEntityHandle UFlecsCollectionWorldSubsystem::GetPrefabByAsset(const UFlecsCollectionDataAsset* Asset) const
 {

@@ -38,13 +38,7 @@ public:
 
 	FFlecsEntityHandle RegisterCollectionDefinition(const FName& InName, const FFlecsCollectionDefinition& InDefinition);
 	FFlecsEntityHandle RegisterCollectionClass(const TSolidNotNull<UClass*> InClass, const FFlecsCollectionBuilder& InBuilder);
-	//FFlecsEntityHandle RegisterCollectionClass(const TSolidNotNull<TScriptInterface<IFlecsCollectionInterface>*> InInterfaceObject, FFlecsCollectionBuilder& OutBuilder);
-
-	template <Solid::TStaticStructConcept T>
-	FORCEINLINE FFlecsEntityHandle RegisterTypedCollection()
-	{
-		return RegisterCollectionStruct(T::StaticStruct());
-	}
+	FFlecsEntityHandle RegisterCollectionClass(const TSolidNotNull<TScriptInterface<IFlecsCollectionInterface>*> InInterfaceObject);
 
 	template <Solid::TStaticClassConcept T>
 	FORCEINLINE FFlecsEntityHandle RegisterTypedCollection()
@@ -102,7 +96,7 @@ private:
 	NO_DISCARD FFlecsEntityHandle CreatePrefabEntity(const FString& Name, const FFlecsEntityRecord& Record) const;
 	NO_DISCARD FFlecsEntityHandle CreatePrefabEntity(const TSolidNotNull<UClass*> InClass,
 		const FFlecsEntityRecord& Record) const;
-
+	
 	UPROPERTY()
 	TMap<FFlecsCollectionId, FFlecsEntityHandle> RegisteredCollections;
 
