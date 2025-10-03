@@ -705,15 +705,12 @@ void flecs_world_allocators_init(
     ecs_map_params_init(&a->ptr, &world->allocator);
     ecs_map_params_init(&a->query_table_list, &world->allocator);
 
-    flecs_ballocator_init_t(&a->query_table, ecs_query_cache_table_t);
     flecs_ballocator_init_n(&a->graph_edge_lo, ecs_graph_edge_t, FLECS_HI_COMPONENT_ID);
     flecs_ballocator_init_t(&a->graph_edge, ecs_graph_edge_t);
-    flecs_ballocator_init_t(&a->id_record, ecs_component_record_t);
-    flecs_ballocator_init_t(&a->pair_id_record, ecs_pair_record_t);
-    flecs_ballocator_init_n(&a->id_record_chunk, ecs_component_record_t, FLECS_SPARSE_PAGE_SIZE);
+    flecs_ballocator_init_t(&a->component_record, ecs_component_record_t);
+    flecs_ballocator_init_t(&a->pair_record, ecs_pair_record_t);
     flecs_ballocator_init_t(&a->table_diff, ecs_table_diff_t);
     flecs_ballocator_init_n(&a->sparse_chunk, int32_t, FLECS_SPARSE_PAGE_SIZE);
-    flecs_ballocator_init_t(&a->hashmap, ecs_hashmap_t);
     flecs_table_diff_builder_init(world, &world->allocators.diff_builder);
 }
 
@@ -723,17 +720,12 @@ void flecs_world_allocators_fini(
 {
     ecs_world_allocators_t *a = &world->allocators;
 
-    ecs_map_params_fini(&a->ptr);
-    ecs_map_params_fini(&a->query_table_list);
-    flecs_ballocator_fini(&a->query_table);
     flecs_ballocator_fini(&a->graph_edge_lo);
     flecs_ballocator_fini(&a->graph_edge);
-    flecs_ballocator_fini(&a->id_record);
-    flecs_ballocator_fini(&a->pair_id_record);
-    flecs_ballocator_fini(&a->id_record_chunk);
+    flecs_ballocator_fini(&a->component_record);
+    flecs_ballocator_fini(&a->pair_record);
     flecs_ballocator_fini(&a->table_diff);
     flecs_ballocator_fini(&a->sparse_chunk);
-    flecs_ballocator_fini(&a->hashmap);
     flecs_table_diff_builder_fini(world, &world->allocators.diff_builder);
 
     flecs_allocator_fini(&world->allocator);
@@ -822,9 +814,101 @@ static const char *flecs_addons_info[] = {
 NULL
 };
 
+static const char *flecs_compiler_flags[] = {
+#ifdef FLECS_DEBUG
+    "FLECS_DEBUG",
+#endif
+#ifdef FLECS_NDEBUG
+    "FLECS_NDEBUG",
+#endif
+#ifdef FLECS_SANITIZE
+    "FLECS_SANITIZE",
+#endif
+#ifdef FLECS_CONFIG_HEADER
+    "FLECS_CONFIG_HEADER",
+#endif
+#ifdef FLECS_ACCURATE_COUNTERS
+    "FLECS_ACCURATE_COUNTERS",
+#endif
+#ifdef FLECS_DISABLE_COUNTERS
+    "FLECS_DISABLE_COUNTERS",
+#endif
+#ifdef FLECS_DEBUG_INFO
+    "FLECS_DEBUG_INFO",
+#endif
+#ifdef FLECS_DEFAULT_TO_UNCACHED_QUERIES
+    "FLECS_DEFAULT_TO_UNCACHED_QUERIES",
+#endif
+#ifdef FLECS_SOFT_ASSERT
+    "FLECS_SOFT_ASSERT",
+#endif
+#ifdef FLECS_KEEP_ASSERT
+    "FLECS_KEEP_ASSERT",
+#endif
+#ifdef FLECS_CPP_NO_AUTO_REGISTRATION
+    "FLECS_CPP_NO_AUTO_REGISTRATION",
+#endif
+#ifdef FLECS_CPP_NO_ENUM_REFLECTION
+    "FLECS_CPP_NO_ENUM_REFLECTION",
+#endif
+#ifdef FLECS_NO_ALWAYS_INLINE
+    "FLECS_NO_ALWAYS_INLINE",
+#endif
+#ifdef FLECS_CUSTOM_BUILD
+    "FLECS_CUSTOM_BUILD",
+#endif
+#ifdef FLECS_LOW_FOOTPRINT
+    "FLECS_LOW_FOOTPRINT",
+#endif
+#ifdef FLECS_PERF_TRACE
+    "FLECS_PERF_TRACE",
+#endif
+#ifdef FLECS_USE_OS_ALLOC
+    "FLECS_USE_OS_ALLOC",
+#endif
+#ifdef FLECS_HI_COMPONENT_ID
+    "FLECS_HI_COMPONENT_ID=" ECS_STRINGIFY(FLECS_HI_COMPONENT_ID),
+#endif
+#ifdef FLECS_HI_ID_RECORD_ID
+    "FLECS_HI_ID_RECORD_ID=" ECS_STRINGIFY(FLECS_HI_ID_RECORD_ID),
+#endif
+#ifdef FLECS_ENTITY_PAGE_BITS
+    "FLECS_ENTITY_PAGE_BITS=" ECS_STRINGIFY(FLECS_ENTITY_PAGE_BITS),
+#endif
+#ifdef FLECS_SPARSE_PAGE_BITS
+    "FLECS_SPARSE_PAGE_BITS=" ECS_STRINGIFY(FLECS_SPARSE_PAGE_BITS),
+#endif
+#ifdef FLECS_ID_DESC_MAX
+    "FLECS_ID_DESC_MAX=" ECS_STRINGIFY(FLECS_ID_DESC_MAX),
+#endif
+#ifdef FLECS_EVENT_DESC_MAX
+    "FLECS_EVENT_DESC_MAX=" ECS_STRINGIFY(FLECS_EVENT_DESC_MAX),
+#endif
+#ifdef FLECS_VARIABLE_COUNT_MAX
+    "FLECS_VARIABLE_COUNT_MAX=" ECS_STRINGIFY(FLECS_VARIABLE_COUNT_MAX),
+#endif
+#ifdef FLECS_TERM_COUNT_MAX
+    "FLECS_TERM_COUNT_MAX=" ECS_STRINGIFY(FLECS_TERM_COUNT_MAX),
+#endif
+#ifdef FLECS_TERM_ARG_COUNT_MAX
+    "FLECS_TERM_ARG_COUNT_MAX=" ECS_STRINGIFY(FLECS_TERM_ARG_COUNT_MAX),
+#endif
+#ifdef FLECS_QUERY_VARIABLE_COUNT_MAX
+    "FLECS_QUERY_VARIABLE_COUNT_MAX=" ECS_STRINGIFY(FLECS_QUERY_VARIABLE_COUNT_MAX),
+#endif
+#ifdef FLECS_QUERY_SCOPE_NESTING_MAX
+    "FLECS_QUERY_SCOPE_NESTING_MAX=" ECS_STRINGIFY(FLECS_QUERY_SCOPE_NESTING_MAX),
+#endif
+#ifdef FLECS_DAG_DEPTH_MAX
+    "FLECS_DAG_DEPTH_MAX=" ECS_STRINGIFY(FLECS_DAG_DEPTH_MAX),
+#endif
+NULL
+};
+
 static const ecs_build_info_t flecs_build_info = {
     .compiler = flecs_compiler_info,
     .addons = flecs_addons_info,
+    .flags = flecs_compiler_flags,
 #ifdef FLECS_DEBUG
     .debug = true,
 #endif
@@ -913,6 +997,12 @@ ecs_world_t *ecs_mini(void) {
     ecs_world_t *world = ecs_os_calloc_t(ecs_world_t);
     ecs_assert(world != NULL, ECS_OUT_OF_MEMORY, NULL);
     flecs_poly_init(world, ecs_world_t);
+
+    if (ecs_os_has_time()) {
+        ecs_time_t now;
+        ecs_os_get_time(&now);
+        world->info.creation_time = now.sec;
+    }
 
     world->flags |= EcsWorldInit;
 

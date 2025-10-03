@@ -188,6 +188,8 @@ void flecs_component_record_init_dont_fragment(
     }
 
     flecs_component_init_sparse(world, cr);
+
+    ecs_vec_init_t(&world->allocator, &cr->dont_fragment_tables, uint64_t, 0);
 }
 
 static
@@ -208,6 +210,27 @@ void flecs_component_record_fini_dont_fragment(
         cr->non_fragmenting.next->non_fragmenting.prev = 
             cr->non_fragmenting.prev;
     }
+
+    int32_t i, count = ecs_vec_count(&cr->dont_fragment_tables);
+    uint64_t *tables = ecs_vec_first(&cr->dont_fragment_tables);
+    for (i = 0; i < count; i ++) {
+        uint64_t table_id = tables[i];
+        ecs_table_t *table = NULL;
+        if (table_id) {
+            table = flecs_sparse_get_t(
+                &world->store.tables, ecs_table_t, table_id);
+        } else {
+            table = &world->store.root;
+        }
+
+        if (table) {
+            flecs_table_clear_edges_for_id(world, table, cr->id);
+        } else {
+            /* Table was deleted */
+        }
+    }
+
+    ecs_vec_fini_t(&world->allocator, &cr->dont_fragment_tables, uint64_t);
 }
 
 void flecs_component_record_init_exclusive(
@@ -256,7 +279,7 @@ ecs_component_record_t* flecs_component_new(
     ecs_component_record_t *cr, *cr_t = NULL;
     ecs_id_t hash = flecs_component_hash(id);
     cr = flecs_bcalloc_w_dbg_info(
-        &world->allocators.id_record, "ecs_component_record_t");
+        &world->allocators.component_record, "ecs_component_record_t");
 
     if (hash >= FLECS_HI_ID_RECORD_ID) {
         ecs_map_insert_ptr(&world->id_index_hi, hash, cr);
@@ -275,7 +298,7 @@ ecs_component_record_t* flecs_component_new(
     ecs_entity_t rel = 0, tgt = 0, role = id & ECS_ID_FLAGS_MASK;
     if (is_pair) {
         cr->pair = flecs_bcalloc_w_dbg_info(
-            &world->allocators.pair_id_record, "ecs_pair_record_t");
+            &world->allocators.pair_record, "ecs_pair_record_t");
         cr->pair->reachable.current = -1;
 
         flecs_ordered_children_init(world, cr);
@@ -355,6 +378,16 @@ ecs_component_record_t* flecs_component_new(
                         "cannot add '(IsA, %s)': '%s' has the Final trait",
                             flecs_errstr(ecs_get_path(world, tgt)),
                             flecs_errstr_1(ecs_get_path(world, tgt)));
+                }
+
+                ecs_component_record_t *cr_tgt = flecs_components_get(world, tgt);
+                if (cr_tgt && cr_tgt->keep_alive) {
+                    if (!ecs_has_id(world, tgt, EcsInheritable)) {
+                        ecs_throw(ECS_INVALID_OPERATION, 
+                            "cannot add '(IsA, %s)': '%s' is already queried for",
+                                    flecs_errstr(ecs_get_path(world, tgt)),
+                                    flecs_errstr_1(ecs_get_path(world, tgt)));
+                    }
                 }
             }
         }
@@ -575,7 +608,7 @@ void flecs_component_free(
         flecs_name_index_free(cr->pair->name_index);
         ecs_vec_fini_t(&world->allocator, &cr->pair->reachable.ids, 
             ecs_reachable_elem_t);
-        flecs_bfree_w_dbg_info(&world->allocators.pair_id_record, 
+        flecs_bfree_w_dbg_info(&world->allocators.pair_record, 
                 cr->pair, "ecs_pair_record_t");
     }
 
@@ -590,7 +623,7 @@ void flecs_component_free(
     ecs_os_free(cr->str);
 #endif
 
-    flecs_bfree_w_dbg_info(&world->allocators.id_record, 
+    flecs_bfree_w_dbg_info(&world->allocators.component_record, 
         cr, "ecs_component_record_t");
 
     if (ecs_should_log_1()) {
@@ -704,8 +737,7 @@ ecs_hashmap_t* flecs_component_name_index_ensure(
     ecs_assert(cr->pair != NULL, ECS_INTERNAL_ERROR, NULL);
     ecs_hashmap_t *map = cr->pair->name_index;
     if (!map) {
-        map = cr->pair->name_index = 
-            flecs_name_index_new(world, &world->allocator);
+        map = cr->pair->name_index = flecs_name_index_new(&world->allocator);
     }
 
     return map;
