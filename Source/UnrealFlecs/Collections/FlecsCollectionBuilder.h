@@ -16,7 +16,7 @@ struct UNREALFLECS_API FFlecsPairBuilder
 {
 	FFlecsRecordPair Pair;
 	
-	FORCEINLINE FFlecsPairBuilder& ValueIs(EFlecsValuePairType InType)
+	FORCEINLINE FFlecsPairBuilder& ValueIs(const EFlecsValuePairType InType)
 	{
 		Pair.PairValueType = InType;
 		return *this;

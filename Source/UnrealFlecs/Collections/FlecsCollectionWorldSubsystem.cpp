@@ -164,7 +164,7 @@ FFlecsEntityHandle UFlecsCollectionWorldSubsystem::RegisterCollectionClass(const
 		{
 			UE_LOGFMT(LogFlecsWorld, Error,
 				"UFlecsCollectionWorldSubsystem::RegisterCollectionClass: Failed to resolve collection reference on class '{Class}'",
-				*InClass->GetName());
+				InClass->GetName());
 			continue;
 		}
 
@@ -345,4 +345,9 @@ FFlecsEntityHandle UFlecsCollectionWorldSubsystem::CreatePrefabEntity(const TSol
 		.Add<FFlecsCollectionPrefabTag>();
 
 	return Prefab;
+}
+
+bool UFlecsCollectionWorldSubsystem::ClassImplementsCollectionInterface(const TSolidNotNull<UClass*> InClass) const
+{
+	return InClass->ImplementsInterface(UFlecsCollectionInterface::StaticClass());
 }

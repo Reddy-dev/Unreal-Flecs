@@ -92,4 +92,4 @@ struct TStructOpsTypeTraits<FUWorldPtrComponent> : public TStructOpsTypeTraitsBa
 	{
 		
 	};
-};
+}; // struct TStructOpsTypeTraits<FUWorldPtrComponent>

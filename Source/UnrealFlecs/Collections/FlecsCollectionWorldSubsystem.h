@@ -20,7 +20,7 @@ namespace Unreal::Flecs::Collections
 	concept TCollectionBuilderFunc = requires(FuncType Func, FFlecsCollectionBuilder& Builder)
 	{
 		{ Func(Builder) } -> std::same_as<void>;
-	};
+	}; // concept TCollectionBuilderFunc
 	
 } // namespace Unreal::Flecs::Collections
 
@@ -43,6 +43,8 @@ public:
 	template <Solid::TStaticClassConcept T>
 	FORCEINLINE FFlecsEntityHandle RegisterTypedCollection()
 	{
+		static_assert(TIsDerivedFrom<T, IFlecsCollectionInterface>::Value,
+		              "T must implement IFlecsCollectionInterface");
 		return RegisterCollectionClass(T::StaticClass());
 	}
 	
@@ -67,6 +69,7 @@ public:
 		FFlecsCollectionDefinition Definition;
 
 		FFlecsCollectionBuilder Builder = FFlecsCollectionBuilder::Create(Definition);
+		
 		InBuildFunc(Builder);
 
 		return RegisterCollectionDefinition(Builder.IdName, Definition);
@@ -97,6 +100,8 @@ private:
 	NO_DISCARD FFlecsEntityHandle CreatePrefabEntity(const TSolidNotNull<UClass*> InClass,
 		const FFlecsEntityRecord& Record) const;
 	
+	NO_DISCARD bool ClassImplementsCollectionInterface(const TSolidNotNull<UClass*> InClass) const;
+
 	UPROPERTY()
 	TMap<FFlecsCollectionId, FFlecsEntityHandle> RegisteredCollections;
 
