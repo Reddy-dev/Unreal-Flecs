@@ -85,8 +85,7 @@ UFlecsWorld* UFlecsWorld::GetDefaultWorld(const UObject* WorldContextObject)
 {
 	solid_check(WorldContextObject);
 
-	const TSolidNotNull<const UWorld*> GameWorld
-		= GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::Assert);
+	const TSolidNotNull<const UWorld*> GameWorld = GEngine->GetWorldFromContextObjectChecked(WorldContextObject);
 	
 	const TSolidNotNull<const UFlecsWorldSubsystem*> WorldSubsystem = GameWorld->GetSubsystem<UFlecsWorldSubsystem>();
 	
@@ -356,8 +355,7 @@ void UFlecsWorld::InitializeSystems()
 					{
 						FFlecsComponentHandle InUntypedComponent = EntityHandle.GetUntypedComponent_Unsafe();
 						
-						const FFlecsComponentProperties& Properties
-							= FFlecsComponentPropertiesRegistry::Get()
+						const FFlecsComponentProperties& Properties = FFlecsComponentPropertiesRegistry::Get()
 							.GetComponentProperties(StructSymbol);
 
 						std::invoke(Properties.RegistrationFunction, Iter.world(), InUntypedComponent);
@@ -548,7 +546,7 @@ FFlecsEntityHandle UFlecsWorld::CreateEntityWithPrefab(const FFlecsEntityHandle&
 FFlecsEntityHandle UFlecsWorld::CreateEntityWithRecord(const FFlecsEntityRecord& InRecord, const FString& Name) const
 {
 	const FFlecsEntityHandle Entity = CreateEntity(Name);
-	InRecord.ApplyRecordToEntity(Entity);
+	InRecord.ApplyRecordToEntity(this, Entity);
 	return Entity;
 }
 
@@ -556,7 +554,7 @@ FFlecsEntityHandle UFlecsWorld::CreateEntityWithRecordWithId(const FFlecsEntityR
 	const FFlecsId InId) const
 {
 	const FFlecsEntityHandle Entity = CreateEntityWithId(InId);
-	InRecord.ApplyRecordToEntity(Entity);
+	InRecord.ApplyRecordToEntity(this, Entity);
 	return Entity;
 }
 
@@ -1466,17 +1464,17 @@ FFlecsEntityHandle UFlecsWorld::CreatePrefabWithRecord(const FFlecsEntityRecord&
 	const FFlecsEntityHandle Prefab = World.prefab(StringCast<char>(*Name).Get());
 	solid_checkf(Prefab.IsPrefab(), TEXT("Entity is not a prefab"));
 		
-	InRecord.ApplyRecordToEntity(Prefab);
+	InRecord.ApplyRecordToEntity(this, Prefab);
 	Prefab.Set<FFlecsEntityRecord>(InRecord);
 		
-	#if WITH_EDITOR
+#if WITH_EDITOR
 
 	if (!Name.IsEmpty())
 	{
 		Prefab.SetDocName(Name);
 	}
 
-	#endif // WITH_EDITOR
+#endif // WITH_EDITOR
 		
 	return Prefab;
 }
@@ -1488,7 +1486,20 @@ FFlecsEntityHandle UFlecsWorld::CreatePrefab(const FString& Name) const
 
 FFlecsEntityHandle UFlecsWorld::CreatePrefab(const TSolidNotNull<UClass*> InClass) const
 {
-	const FFlecsEntityHandle PrefabEntity = ObtainTypedEntity(InClass).Add(flecs::Prefab);
+	const FFlecsEntityHandle PrefabEntity = ObtainTypedEntity(InClass)
+		.Add(flecs::Prefab);
+		
+	return PrefabEntity;
+}
+
+FFlecsEntityHandle UFlecsWorld::CreatePrefabWithRecord(const FFlecsEntityRecord& InRecord,
+	const TSolidNotNull<UClass*> InClass) const
+{
+	const FFlecsEntityHandle PrefabEntity = CreatePrefab(InClass);
+	solid_checkf(PrefabEntity.IsPrefab(), TEXT("Entity is not a prefab"));
+
+	InRecord.ApplyRecordToEntity(this, PrefabEntity);
+	PrefabEntity.Set<FFlecsEntityRecord>(InRecord);
 		
 	return PrefabEntity;
 }
@@ -1549,6 +1560,7 @@ void UFlecsWorld::AddReferencedObjects(UObject* InThis, FReferenceCollector& Col
 	Super::AddReferencedObjects(InThis, Collector);
 
 	const TSolidNotNull<UFlecsWorld*> This = CastChecked<UFlecsWorld>(InThis);
+	solid_check(IsValid(This));
 
 	if UNLIKELY_IF(!This->TypeMapComponent || !This->bIsInitialized)
 	{

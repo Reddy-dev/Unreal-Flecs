@@ -17,6 +17,7 @@
 namespace Unreal::Flecs
 {
 	using FFlecsComponentFunction = std::function<void(flecs::world, FFlecsComponentHandle&)>;
+	
 } // namespace Unreal::Flecs
 
 struct UNREALFLECS_API FFlecsComponentProperties
@@ -55,7 +56,7 @@ public:
 
 	NO_DISCARD const FFlecsComponentProperties& GetComponentProperties(const FString& Name) const;
 
-	robin_hood::unordered_flat_map<std::string, FFlecsComponentProperties> ComponentProperties;
+	robin_hood::unordered_map<std::string, FFlecsComponentProperties> ComponentProperties;
 	FOnComponentPropertiesRegistered OnComponentPropertiesRegistered;
 	
 }; // struct FFlecsComponentPropertiesRegistry
