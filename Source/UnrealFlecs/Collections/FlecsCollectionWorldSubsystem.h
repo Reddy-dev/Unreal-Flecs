@@ -100,7 +100,7 @@ private:
 	NO_DISCARD FFlecsEntityHandle CreatePrefabEntity(const TSolidNotNull<UClass*> InClass,
 		const FFlecsEntityRecord& Record) const;
 	
-	NO_DISCARD bool ClassImplementsCollectionInterface(const TSolidNotNull<UClass*> InClass) const;
+	NO_DISCARD bool ClassImplementsCollectionInterface(const TSolidNotNull<const UClass*> InClass) const;
 
 	UPROPERTY()
 	TMap<FFlecsCollectionId, FFlecsEntityHandle> RegisteredCollections;

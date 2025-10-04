@@ -30,7 +30,7 @@ void UFlecsCollectionWorldSubsystem::Initialize(FSubsystemCollectionBase& Collec
 			CollectionScopeEntity = FlecsWorld->CreateEntity("CollectionScope")
 				.Add(flecs::Module);
 	
-			UE_LOGFMT(LogFlecsWorld, Verbose, "UCollectionsModule registered");
+			UE_LOG(LogFlecsWorld, Verbose, TEXT("UCollectionsModule registered"));
 		}
 		else
 		{
@@ -43,7 +43,7 @@ void UFlecsCollectionWorldSubsystem::Initialize(FSubsystemCollectionBase& Collec
 				CollectionScopeEntity = InWorld->CreateEntity("CollectionScope")
 					.Add(flecs::Module);
 	
-				UE_LOGFMT(LogFlecsWorld, Verbose, "UCollectionsModule registered");
+				UE_LOG(LogFlecsWorld, Verbose, TEXT("UCollectionsModule registered"));
 			});
 		}
 		
@@ -60,7 +60,7 @@ void UFlecsCollectionWorldSubsystem::Initialize(FSubsystemCollectionBase& Collec
 	CollectionScopeEntity = FlecsWorld->CreateEntity("CollectionScope")
 		.Add(flecs::Module);
 	
-	UE_LOGFMT(LogFlecsWorld, Verbose, "UCollectionsModule registered");
+	UE_LOG(LogFlecsWorld, Verbose, TEXT("UCollectionsModule registered"));
 }
 
 void UFlecsCollectionWorldSubsystem::Deinitialize()
@@ -182,6 +182,7 @@ FFlecsEntityHandle UFlecsCollectionWorldSubsystem::RegisterCollectionClass(
 	FFlecsCollectionDefinition Definition;
 	
 	FFlecsCollectionBuilder CollectionBuilder = FFlecsCollectionBuilder::Create(Definition);
+	
 	// @TODO: how safe is this to be called on a CDO?
 	InInterfaceObject->GetInterface()->BuildCollection(CollectionBuilder);
 
@@ -221,7 +222,7 @@ FFlecsEntityHandle UFlecsCollectionWorldSubsystem::EnsurePrefabShell(const FFlec
 		return *Existing;
 	}
 	
-	const TSolidNotNull<UFlecsWorld*> FlecsWorld = GetFlecsWorld();
+	const TSolidNotNull<UFlecsWorld*> FlecsWorld = GetFlecsWorldChecked();
 	
 	const FFlecsEntityHandle Prefab = FlecsWorld->CreateEntity(Id.NameId.ToString())
 		.SetParent(CollectionScopeEntity)
@@ -286,14 +287,14 @@ FFlecsEntityHandle UFlecsCollectionWorldSubsystem::ResolveCollectionReference(co
 
 void UFlecsCollectionWorldSubsystem::ExpandChildCollectionReferences(const FFlecsEntityHandle& InCollectionEntity)
 {
-	const TSolidNotNull<UFlecsWorld*> FlecsWorld = GetFlecsWorld();
+	const TSolidNotNull<UFlecsWorld*> FlecsWorld = GetFlecsWorldChecked();
 
 	FlecsWorld->Defer([this, FlecsWorld, &InCollectionEntity]()
 	{
 		FlecsWorld->World.query_builder<FFlecsCollectionReferenceComponent*>() // 0 (Optional)
 			.with(flecs::ChildOf, InCollectionEntity) // 1
 			.with<FFlecsCollectionSlotTag>().optional() // 2
-			.each([&](flecs::iter Iter, size_t Index, FFlecsCollectionReferenceComponent* ReferenceComponent) // 3
+			.each([&](flecs::iter& Iter, size_t Index, FFlecsCollectionReferenceComponent* ReferenceComponent) // 3
 			{
 				const FFlecsEntityHandle ChildEntityHandle = Iter.entity(Index);
 
@@ -328,7 +329,7 @@ void UFlecsCollectionWorldSubsystem::ExpandChildCollectionReferences(const FFlec
 
 FFlecsEntityHandle UFlecsCollectionWorldSubsystem::CreatePrefabEntity(const FString& Name, const FFlecsEntityRecord& Record) const
 {
-	const TSolidNotNull<UFlecsWorld*> FlecsWorld = GetFlecsWorld();
+	const TSolidNotNull<UFlecsWorld*> FlecsWorld = GetFlecsWorldChecked();
 	
 	const FFlecsEntityHandle Prefab = FlecsWorld->CreatePrefabWithRecord(Record, Name)
 		.Add<FFlecsCollectionPrefabTag>();
@@ -339,7 +340,7 @@ FFlecsEntityHandle UFlecsCollectionWorldSubsystem::CreatePrefabEntity(const FStr
 FFlecsEntityHandle UFlecsCollectionWorldSubsystem::CreatePrefabEntity(const TSolidNotNull<UClass*> InClass,
 	const FFlecsEntityRecord& Record) const
 {
-	const TSolidNotNull<UFlecsWorld*> FlecsWorld = GetFlecsWorld();
+	const TSolidNotNull<UFlecsWorld*> FlecsWorld = GetFlecsWorldChecked();
 	
 	const FFlecsEntityHandle Prefab = FlecsWorld->CreatePrefabWithRecord(Record, InClass)
 		.Add<FFlecsCollectionPrefabTag>();
@@ -347,7 +348,7 @@ FFlecsEntityHandle UFlecsCollectionWorldSubsystem::CreatePrefabEntity(const TSol
 	return Prefab;
 }
 
-bool UFlecsCollectionWorldSubsystem::ClassImplementsCollectionInterface(const TSolidNotNull<UClass*> InClass) const
+bool UFlecsCollectionWorldSubsystem::ClassImplementsCollectionInterface(const TSolidNotNull<const UClass*> InClass) const
 {
 	return InClass->ImplementsInterface(UFlecsCollectionInterface::StaticClass());
 }

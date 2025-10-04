@@ -26,6 +26,12 @@ public:
 		return FlecsWorldRef.Get();
 	}
 
+	NO_DISCARD FORCEINLINE UFlecsWorld* GetFlecsWorldChecked() const
+	{
+		solid_checkf(FlecsWorldRef.IsValid(), TEXT("FlecsWorld is not valid!"));
+		return FlecsWorldRef.Get();
+	}
+
 	UPROPERTY()
 	TWeakObjectPtr<UFlecsWorld> FlecsWorldRef;
 	
