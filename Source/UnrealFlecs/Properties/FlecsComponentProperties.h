@@ -16,7 +16,7 @@
 
 namespace Unreal::Flecs
 {
-	using FFlecsComponentFunction = std::function<void(flecs::world, FFlecsComponentHandle&)>;
+	using FFlecsComponentFunction = std::function<void(flecs::world, const FFlecsComponentHandle&)>;
 	
 } // namespace Unreal::Flecs
 
@@ -61,7 +61,7 @@ public:
 	
 }; // struct FFlecsComponentPropertiesRegistry
 
-// std::function<void(flecs::world, FFlecsComponentHandle&)>
+// std::function<void(flecs::world, const FFlecsComponentHandle&)>
 #define REGISTER_FLECS_COMPONENT(Name, RegistrationFunction) \
 	namespace \
 	{ \

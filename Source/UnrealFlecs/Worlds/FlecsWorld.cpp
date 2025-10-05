@@ -526,7 +526,7 @@ FFlecsEntityHandle UFlecsWorld::CreateEntity(const FString& Name) const
 	return World.entity(Unreal::Flecs::ToCString(Name));
 }
 
-FFlecsEntityHandle UFlecsWorld::ObtainTypedEntity(TSolidNotNull<UClass*> InClass) const
+FFlecsEntityHandle UFlecsWorld::ObtainTypedEntity(const TSolidNotNull<UClass*> InClass) const
 {
 	const FFlecsEntityHandle EntityHandle = World.entity(RegisterScriptClassType(InClass));
 	return EntityHandle;

@@ -156,7 +156,7 @@ public:
 		return EntityHandle;
 	}
 
-	FFlecsEntityHandle ObtainTypedEntity(TSolidNotNull<UClass*> InClass) const;
+	FFlecsEntityHandle ObtainTypedEntity(const TSolidNotNull<UClass*> InClass) const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
 	FFlecsEntityHandle CreateEntityWithId(const FFlecsId InId) const;

@@ -95,3 +95,16 @@ REGISTER_FLECS_COMPONENT(FFlecsCollectionSlotTag,
 			.AddPair(flecs::OnInstantiate, flecs::DontInherit);
 	});
 
+USTRUCT(BlueprintInternalUseOnly)
+struct UNREALFLECS_API FFlecsCollectionStructInterface
+{
+	GENERATED_BODY()
+
+public:
+	FORCEINLINE FFlecsCollectionStructInterface() = default;
+	virtual ~FFlecsCollectionStructInterface() = default;
+
+	
+	
+}; // struct FFlecsCollectionStructInterface
+

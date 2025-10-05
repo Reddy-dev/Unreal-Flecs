@@ -35,6 +35,10 @@ class UFlecsWorld;
 
 namespace Unreal::Flecs
 {
+	/* @TODO: Documentation
+	 * Global NetSerialize function pointer(also there is an option for a local override using the FFlecs
+	 **/
+	
 	using FEntityNetSerializeFunction
 		= std::function<bool(FFlecsEntityHandle&, TSolidNotNull<UFlecsWorld*>, FArchive&, UPackageMap*, bool&)>;
 
@@ -882,6 +886,17 @@ public:
 		return *this;
 	}
 
+	NO_DISCARD SOLID_INLINE bool IsA(const FFlecsId InPrefab) const
+	{
+		return HasPair(flecs::IsA, InPrefab);
+	}
+
+	template <typename T>
+	NO_DISCARD SOLID_INLINE bool IsA() const
+	{
+		return HasPairSecond<T>(flecs::IsA);
+	}
+
 	SOLID_INLINE const FSelfType& MarkSlot() const
 	{
 		GetEntity().slot();
@@ -911,6 +926,56 @@ public:
 	NO_DISCARD SOLID_INLINE FFlecsEntityView ToView() const
 	{
 		return FFlecsEntityView(GetEntity().view());
+	}
+
+	SOLID_INLINE const FSelfType& AddCollection(const FFlecsId InCollection) const
+	{
+		AddPair(flecs::IsA, InCollection);
+		return *this;
+	}
+
+	SOLID_INLINE const FSelfType& AddCollection(UClass* InCollection) const
+	{
+		return AddCollection(ObtainTypeClass(InCollection));
+	}
+
+	template <Solid::TStaticClassConcept T>
+	SOLID_INLINE const FSelfType& AddCollection() const
+	{
+		return AddCollection(T::StaticClass());
+	}
+
+	NO_DISCARD SOLID_INLINE bool HasCollection(const FFlecsId InCollection) const
+	{
+		return IsA(InCollection);
+	}
+
+	NO_DISCARD SOLID_INLINE bool HasCollection(UClass* InCollection) const
+	{
+		return HasCollection(ObtainTypeClass(InCollection));
+	}
+
+	template <Solid::TStaticClassConcept T>
+	NO_DISCARD SOLID_INLINE bool HasCollection() const
+	{
+		return HasCollection(T::StaticClass());
+	}
+
+	SOLID_INLINE const FSelfType& RemoveCollection(const FFlecsId InCollection) const
+	{
+		RemovePair(flecs::IsA, InCollection);
+		return *this;
+	}
+
+	SOLID_INLINE const FSelfType& RemoveCollection(UClass* InCollection) const
+	{
+		return RemoveCollection(ObtainTypeClass(InCollection));
+	}
+
+	template <Solid::TStaticClassConcept T>
+	SOLID_INLINE const FSelfType& RemoveCollection() const
+	{
+		return RemoveCollection(T::StaticClass());
 	}
 	
 protected:

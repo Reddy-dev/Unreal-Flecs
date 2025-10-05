@@ -291,7 +291,7 @@ void UFlecsCollectionWorldSubsystem::ExpandChildCollectionReferences(const FFlec
 
 	FlecsWorld->Defer([this, FlecsWorld, &InCollectionEntity]()
 	{
-		FlecsWorld->World.query_builder<FFlecsCollectionReferenceComponent*>() // 0 (Optional)
+		FlecsWorld->World.query_builder<FFlecsCollectionReferenceComponent*>() // 0 (FFlecsCollectionReferenceComponent)
 			.with(flecs::ChildOf, InCollectionEntity) // 1
 			.with<FFlecsCollectionSlotTag>().optional() // 2
 			.each([&](flecs::iter& Iter, size_t Index, FFlecsCollectionReferenceComponent* ReferenceComponent) // 3
