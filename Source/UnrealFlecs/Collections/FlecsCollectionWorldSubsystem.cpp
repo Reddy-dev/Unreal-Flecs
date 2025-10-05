@@ -21,7 +21,8 @@ void UFlecsCollectionWorldSubsystem::Initialize(FSubsystemCollectionBase& Collec
 #if WITH_AUTOMATION_TESTS
 	if (GIsAutomationTesting)
 	{
-		const TSolidNotNull<const UFlecsWorldSubsystem*> WorldSubsystem = GetWorld()->GetSubsystem<UFlecsWorldSubsystem>();
+		const TSolidNotNull<const UFlecsWorldSubsystem*> WorldSubsystem = GetWorld()->GetSubsystemChecked<UFlecsWorldSubsystem>();
+		
 		if (WorldSubsystem->HasValidFlecsWorld())
 		{
 			const TSolidNotNull<UFlecsWorld*> FlecsWorld = GetFlecsWorld();
