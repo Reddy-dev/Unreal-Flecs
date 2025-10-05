@@ -52,12 +52,13 @@ void FFlecsDefaultEntityEngine::Initialize()
 	DefaultEntityWorld = MakeUnique<flecs::world>();
 	
 	DefaultEntityWorld->progress();
-	
+
+	// @TODO: verify if or terms increment term index or not cause i forget
 	DefaultEntityQuery = DefaultEntityWorld->query_builder<>()
+		.with(flecs::Trait).or_() // 0
+		.with(flecs::PairIsTag).or_() // 1
+		.with_name_component() // 2
 		.without<flecs::Component>()
-		.with(flecs::Trait).or_()
-		.with(flecs::PairIsTag).or_()
-		.with_name_component()
 		.build();
 
 	DefaultEntityWorld->progress();
