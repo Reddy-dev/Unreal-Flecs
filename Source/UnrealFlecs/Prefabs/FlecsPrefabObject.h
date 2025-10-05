@@ -3,9 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
+#include "UObject/Object.h"
+
 #include "Entities/FlecsEntityHandle.h"
 #include "Interfaces/FlecsEntityInterface.h"
-#include "UObject/Object.h"
+
 #include "FlecsPrefabObject.generated.h"
 
 class UFlecsWorld;

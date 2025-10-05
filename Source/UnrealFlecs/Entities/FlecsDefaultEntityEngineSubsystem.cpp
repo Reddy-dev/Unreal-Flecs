@@ -3,6 +3,8 @@
 // ReSharper disable CppExpressionWithoutSideEffects
 #include "FlecsDefaultEntityEngineSubsystem.h"
 
+#include "Logging/StructuredLog.h"
+
 #include "FlecsDefaultEntitiesDeveloperSettings.h"
 
 #include "Logs/FlecsCategories.h"

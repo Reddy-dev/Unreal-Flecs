@@ -2,6 +2,8 @@
 
 #include "FlecsEntityActorComponent.h"
 
+#include "Engine/World.h"
+
 #include "Net/UnrealNetwork.h"
 #include "Net/Core/PushModel/PushModel.h"
 
@@ -103,7 +105,7 @@ void UFlecsEntityActorComponent::CreateActorEntity(const TSolidNotNull<const UFl
 	EntityHandle = InWorld->CreateEntityWithRecord(EntityRecord);
 
 	// @TODO: Should this be the Component or the Owner?
-	EntityHandle.SetPairFirst<FFlecsUObjectComponent, FFlecsActorTag>(FFlecsUObjectComponent{ GetOwner() });
+	EntityHandle.SetPairFirst<FFlecsUObjectComponent, FFlecsActorTag>(FFlecsUObjectComponent(GetOwner()));
 	
 	UE_CLOGFMT(EntityHandle.HasName(), LogFlecsEntity, Log,
 		"Created Actor Entity: {EntityName}", EntityHandle.GetName());

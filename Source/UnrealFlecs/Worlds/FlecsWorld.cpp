@@ -2,7 +2,16 @@
 
 #include "FlecsWorld.h"
 
+#include "Engine/Engine.h"
+#include "Misc/AutomationTest.h"
+
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "AssetRegistry/AssetBundleData.h"
+#include "AssetRegistry/AssetData.h"
+
+#include "Math/TransformCalculus2D.h"
+#include "Math/Color.h"
+#include "Math/MathFwd.h"
 
 #include "FlecsWorldSubsystem.h"
 
@@ -28,6 +37,7 @@
 #include "General/FlecsObjectRegistrationInterface.h"
 
 #include "Pipelines/FlecsGameLoopInterface.h"
+#include "UObject/UObjectIterator.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsWorld)
 
@@ -87,7 +97,7 @@ UFlecsWorld* UFlecsWorld::GetDefaultWorld(const UObject* WorldContextObject)
 
 	const TSolidNotNull<const UWorld*> GameWorld = GEngine->GetWorldFromContextObjectChecked(WorldContextObject);
 	
-	const TSolidNotNull<const UFlecsWorldSubsystem*> WorldSubsystem = GameWorld->GetSubsystem<UFlecsWorldSubsystem>();
+	const TSolidNotNull<const UFlecsWorldSubsystem*> WorldSubsystem = GameWorld->GetSubsystemChecked<UFlecsWorldSubsystem>();
 	
 	return WorldSubsystem->GetDefaultWorld();
 }

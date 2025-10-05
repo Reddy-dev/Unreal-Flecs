@@ -1,8 +1,9 @@
 ﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
 
+#include "Misc/AutomationTest.h"
+
 #if WITH_AUTOMATION_TESTS
 
-#include "Misc/AutomationTest.h"
 #include "Fixtures/FlecsWorldFixture.h"
 #include "Fixtures/Commands/FlecsWorldTestCommands.h"
 #include "Worlds/FlecsWorld.h"

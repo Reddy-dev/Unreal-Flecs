@@ -43,9 +43,11 @@ public:
 	
 }; // struct FFlecsDefaultEntityEngine
 
+// Should be put in your .h file
 #define DECLARE_DEFAULT_ENTITY(DefaultEntityName) \
 	extern FFlecsId DefaultEntityName;
 
+// Should be put in your .cpp file
 #define DEFINE_DEFAULT_ENTITY(DefaultEntityName, InEntityId, Lambda) \
 	FFlecsId DefaultEntityName = static_cast<flecs::id_t>(InEntityId); \
 	namespace \

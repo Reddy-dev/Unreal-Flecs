@@ -3,6 +3,8 @@
 // ReSharper disable CppExpressionWithoutSideEffects
 #include "FlecsModuleInterface.h"
 
+#include "Engine/World.h"
+
 #include "Logs/FlecsCategories.h"
 
 #include "Worlds/FlecsWorld.h"
@@ -54,7 +56,7 @@ void IFlecsModuleInterface::ImportModule(const flecs::world& InWorld)
 		.entity(ModuleEntity)
 		.emit();
 
-	const TSolidNotNull<UFlecsWorldSubsystem*> WorldSubsystem = GameWorld->GetSubsystem<UFlecsWorldSubsystem>();
+	const TSolidNotNull<UFlecsWorldSubsystem*> WorldSubsystem = GameWorld->GetSubsystemChecked<UFlecsWorldSubsystem>();
 
 	WorldSubsystem->ListenBeginPlay(
 		FFlecsOnWorldBeginPlay::FDelegate::CreateLambda(

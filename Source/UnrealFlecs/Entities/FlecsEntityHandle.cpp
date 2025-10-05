@@ -3,6 +3,8 @@
 // ReSharper disable CppTooWideScopeInitStatement
 #include "FlecsEntityHandle.h"
 
+#include "Logging/StructuredLog.h"
+
 #include "Logs/FlecsCategories.h"
 
 #include "Worlds/FlecsWorld.h"

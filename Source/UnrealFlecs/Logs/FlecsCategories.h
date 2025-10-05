@@ -4,6 +4,9 @@
 
 #include "CoreMinimal.h"
 
+#include "Logging/LogMacros.h"
+#include "Logging/StructuredLog.h"
+
 UNREALFLECS_API DECLARE_LOG_CATEGORY_EXTERN(LogFlecsCore, Log, All);
 UNREALFLECS_API DECLARE_LOG_CATEGORY_EXTERN(LogFlecsJournal, Log, All);
 UNREALFLECS_API DECLARE_LOG_CATEGORY_EXTERN(LogFlecsWorld, Log, All);

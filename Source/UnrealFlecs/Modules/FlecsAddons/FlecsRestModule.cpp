@@ -2,6 +2,10 @@
 
 // ReSharper disable CppExpressionWithoutSideEffects
 #include "FlecsRestModule.h"
+
+#include "Engine/EngineBaseTypes.h"
+#include "Engine/World.h"
+
 #include "Worlds/FlecsWorld.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsRestModule)

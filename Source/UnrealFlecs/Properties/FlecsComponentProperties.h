@@ -8,6 +8,7 @@
 #include "flecs.h"
 
 #include "CoreMinimal.h"
+#include "Misc/CoreDelegates.h"
 
 #include "SolidMacros/Macros.h"
 #include "Standard/robin_hood.h"

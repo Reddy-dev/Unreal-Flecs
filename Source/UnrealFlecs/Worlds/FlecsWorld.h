@@ -43,7 +43,7 @@ struct UNREALFLECS_API FFlecsBeginPlaySingletonComponent
 }; // struct FFlecsBeginPlaySingletonComponent
 
 REGISTER_FLECS_COMPONENT(FFlecsBeginPlaySingletonComponent,
-	[](flecs::world InWorld, FFlecsComponentHandle& InComponent)
+	[](flecs::world InWorld, const FFlecsComponentHandle& InComponent)
 	{
 		InComponent
 			.Add(flecs::Singleton);

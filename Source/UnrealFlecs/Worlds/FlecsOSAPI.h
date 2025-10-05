@@ -4,11 +4,18 @@
 
 #include <condition_variable>
 
-#include "CoreMinimal.h"
-#include "Experimental/Async/ConditionVariable.h"
 #include "flecs/os_api.h"
-#include "Logs/FlecsCategories.h"
+
+#include "CoreMinimal.h"
+
+#include "Async/TaskGraphInterfaces.h"
+#include "Experimental/Async/ConditionVariable.h"
+
+#include "HAL/Runnable.h"
+#include "HAL/RunnableThread.h"
+
 #include "SolidMacros/Macros.h"
+#include "Logs/FlecsCategories.h"
 
 DECLARE_STATS_GROUP(TEXT("FlecsOS"), STATGROUP_FlecsOS, STATCAT_Advanced);
 DECLARE_CYCLE_STAT(TEXT("FlecsOS::TaskThread"), STAT_FlecsOS, STATGROUP_FlecsOS);
@@ -103,7 +110,7 @@ struct FFlecsThreadWrapper
 
 struct FFlecsTask
 {
-	static constexpr ENamedThreads::Type TaskThread = ENamedThreads::AnyHiPriThreadNormalTask;
+	static constexpr ENamedThreads::Type TaskThread = ENamedThreads::Type::AnyHiPriThreadHiPriTask;
 	
 	FGraphEventRef TaskEvent;
 

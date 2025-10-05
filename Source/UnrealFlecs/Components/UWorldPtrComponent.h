@@ -4,6 +4,9 @@
 
 #include "CoreMinimal.h"
 
+#include "UObject/Object.h"
+#include "Engine/World.h"
+
 #include "SolidMacros/Macros.h"
 
 #include "UWorldPtrComponent.generated.h"

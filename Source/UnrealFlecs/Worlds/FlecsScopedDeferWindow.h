@@ -3,6 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
+#include "UObject/WeakObjectPtr.h"
+
 #include "Types/SolidNotNull.h"
 
 class UFlecsWorld;

@@ -2,12 +2,15 @@
 
 #include "FlecsCollectionWorldSubsystem.h"
 
+#include "Engine/World.h"
+#include "Misc/AutomationTest.h"
+
 #include "Logs/FlecsCategories.h"
 
+#include "Worlds/FlecsWorldSubsystem.h"
 #include "FlecsCollectionTypes.h"
 #include "FlecsCollectionDataAsset.h"
 #include "FlecsCollectionInterface.h"
-#include "Worlds/FlecsWorldSubsystem.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsCollectionWorldSubsystem)
 

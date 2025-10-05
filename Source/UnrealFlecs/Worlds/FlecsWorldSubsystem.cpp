@@ -2,6 +2,8 @@
 
 #include "Worlds/FlecsWorldSubsystem.h"
 
+#include "Engine/Engine.h"
+#include "UnrealEngine.h"
 #include "GameplayTagsManager.h"
 
 #include "Logs/FlecsCategories.h"

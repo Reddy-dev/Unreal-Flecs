@@ -4,8 +4,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
 #include "Entities/FlecsEntityRecord.h"
+
 #include "General/FlecsPrimaryDataAsset.h"
+
 #include "FlecsPrefabAsset.generated.h"
 
 USTRUCT(BlueprintType)

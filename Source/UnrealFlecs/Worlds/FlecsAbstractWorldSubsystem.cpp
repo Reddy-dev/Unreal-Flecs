@@ -2,6 +2,8 @@
 
 #include "FlecsAbstractWorldSubsystem.h"
 
+#include "Subsystems/SubsystemCollection.h"
+
 #include "FlecsWorldSubsystem.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsAbstractWorldSubsystem)

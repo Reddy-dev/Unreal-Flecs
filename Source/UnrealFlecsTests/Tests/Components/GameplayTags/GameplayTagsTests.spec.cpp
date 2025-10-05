@@ -1,8 +1,9 @@
 ﻿
+#include "Misc/AutomationTest.h"
+
 #if WITH_AUTOMATION_TESTS
 
 #include "GameplayTagContainer.h"
-#include "Misc/AutomationTest.h"
 #include "Fixtures/FlecsWorldFixture.h"
 #include "Tests/FlecsTestTypes.h"
 #include "Worlds/FlecsWorld.h"

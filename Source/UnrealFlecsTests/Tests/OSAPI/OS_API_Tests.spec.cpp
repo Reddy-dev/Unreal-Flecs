@@ -1,9 +1,10 @@
 ﻿
+#include "Misc/AutomationTest.h"
+
 #if WITH_AUTOMATION_TESTS
 
 #include "flecs.h"
 
-#include "Misc/AutomationTest.h"
 #include "HAL/PlatformProcess.h"
 #include "Worlds/FlecsOSAPI.h"
 
