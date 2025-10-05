@@ -190,6 +190,7 @@ struct UNREALFLECS_API FFlecsRecordSubEntity
 	GENERATED_BODY()
 
 public:
+	// Name only applies if the entity doesn't already have a name.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component Tree")
 	FString Name;
 
