@@ -21,7 +21,7 @@ UUnrealFlecsObject::UUnrealFlecsObject(const FObjectInitializer& ObjectInitializ
 {
 }
 
-void UUnrealFlecsObject::InitializeFlecsObject(TSolidNotNull<UFlecsWorld*> InFlecsWorld)
+void UUnrealFlecsObject::InitializeFlecsObject(const TSolidNotNull<UFlecsWorld*> InFlecsWorld)
 {
 	FlecsWorld = InFlecsWorld;
 

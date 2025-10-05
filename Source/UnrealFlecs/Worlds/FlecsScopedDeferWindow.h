@@ -10,6 +10,8 @@
 
 class UFlecsWorld;
 
+// @TODO: Add Tests for this!
+
 struct UNREALFLECS_API FFlecsScopedDeferWindow
 {
 public:
@@ -19,20 +21,18 @@ public:
 	FFlecsScopedDeferWindow(const FFlecsScopedDeferWindow&) = delete;
 	FFlecsScopedDeferWindow& operator=(const FFlecsScopedDeferWindow&) = delete;
 
-	FORCEINLINE FFlecsScopedDeferWindow(FFlecsScopedDeferWindow&& Other)
+	FORCEINLINE FFlecsScopedDeferWindow(FFlecsScopedDeferWindow&& Other) noexcept
 		: FlecsWorld(MoveTemp(Other.FlecsWorld))
 	{
-		Other.FlecsWorld.Reset();
 	}
 
-	FORCEINLINE FFlecsScopedDeferWindow& operator=(FFlecsScopedDeferWindow&& Other)
+	FORCEINLINE FFlecsScopedDeferWindow& operator=(FFlecsScopedDeferWindow&& Other) noexcept
 	{
-		if (this != &Other)
+		if LIKELY_IF(this != &Other)
 		{
-			FlecsWorld = MoveTemp(Other.FlecsWorld);
-			Other.FlecsWorld.Reset();
+			Swap(*this, Other);
 		}
-		
+
 		return *this;
 	}
 
@@ -41,8 +41,14 @@ public:
 		return FlecsWorld.IsValid();
 	}
 
-	NO_DISCARD FORCEINLINE TSolidNotNull<const UFlecsWorld*> GetFlecsWorld() const
+	NO_DISCARD FORCEINLINE const UFlecsWorld* GetFlecsWorld() const
 	{
+		return FlecsWorld.Get();
+	}
+
+	NO_DISCARD FORCEINLINE const UFlecsWorld* GetFlecsWorldChecked() const
+	{
+		solid_checkf(FlecsWorld.IsValid(), TEXT("FlecsWorld is not valid!"));
 		return FlecsWorld.Get();
 	}
 	
