@@ -21,6 +21,7 @@ FFlecsDefaultEntityEngine::~FFlecsDefaultEntityEngine()
 {
 	if LIKELY_IF(DefaultEntityWorld.IsValid())
 	{
+		// we have to call this manually due to a bug with flecs::query destructor
 		DefaultEntityQuery.~query();
 	}
 }
