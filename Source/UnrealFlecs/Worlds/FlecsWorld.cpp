@@ -613,7 +613,7 @@ void UFlecsWorld::ImportModule(const TScriptInterface<IFlecsModuleInterface>& In
 {
 	solid_checkf(InModule, TEXT("Module is nullptr"));
 
-	// Doesn't use TSolidNotNull because DuplicateObject work weird with it
+	// Doesn't use TSolidNotNull because DuplicateObject works weird with it
 	const UObject* TemplateModuleObject = InModule.GetObject();
 	solid_check(IsValid(TemplateModuleObject));
 
