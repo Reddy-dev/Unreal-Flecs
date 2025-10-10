@@ -339,5 +339,4 @@ public:
 	FName IdName;
 	
 	FFlecsCollectionDefinition* CollectionDefinition;
-	
 }; // struct FFlecsCollectionBuilder

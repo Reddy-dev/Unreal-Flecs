@@ -17,6 +17,7 @@
 
 #include "FlecsScopedDeferWindow.h"
 #include "Entities/FlecsId.h"
+#include "Modules/FlecsDependenciesComponent.h"
 #include "Properties/FlecsComponentProperties.h"
 
 #include "FlecsWorld.generated.h"
@@ -51,7 +52,7 @@ REGISTER_FLECS_COMPONENT(FFlecsBeginPlaySingletonComponent,
 
 
 UCLASS(BlueprintType, NotBlueprintable)
-class UNREALFLECS_API UFlecsWorld final : public UObject
+class UNREALFLECS_API UFlecsWorld : public UObject
 {
 	GENERATED_BODY()
 
@@ -73,7 +74,9 @@ public:
 
 	void RegisterUnrealTypes() const;
 
-	// I hate this
+	/*
+	 * I hate this
+	 **/
 	template <typename FunctionType>
 	void UnlockIter_Internal(flecs::iter& Iter, FunctionType&& Function)
 	{
@@ -88,10 +91,7 @@ public:
 			{
 				const int32 SavedLockCount = internal_ecs_table_disable_lock(Iter.table());
 
-				for (size_t Index : Iter)
-				{
-					std::invoke(Function, Iter, Index);
-				}
+				std::invoke(Function, Iter);
 
 				internal_ecs_table_enable_lock(Iter.table(), SavedLockCount);
 			}
@@ -138,7 +138,7 @@ public:
 	void RegisterModuleDependency(
 		const TSolidNotNull<const UObject*> InModuleObject,
 		const TSubclassOf<UFlecsModuleInterface>& InDependencyClass,
-		const std::function<void(TSolidNotNull<UObject*>, TSolidNotNull<UFlecsWorld*>, FFlecsEntityHandle)>& InFunction);
+		const FFlecsDependencyFunctionDefinition::FDependencyFunctionType& InFunction);
 
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
 	void Reset();

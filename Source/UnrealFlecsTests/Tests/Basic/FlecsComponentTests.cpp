@@ -6,9 +6,10 @@
 
 #if WITH_AUTOMATION_TESTS
 
-#include "Tests/FlecsTestTypes.h"
-#include "Translators/FlecsTranslationSettingTraits.h"
 #include "Worlds/FlecsWorld.h"
+#include "Translators/FlecsTranslationSettingTraits.h"
+
+#include "Tests/FlecsTestTypes.h"
 
 /**
  * Layout of the tests:

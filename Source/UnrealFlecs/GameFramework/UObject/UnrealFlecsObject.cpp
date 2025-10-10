@@ -47,7 +47,7 @@ UFlecsWorld* UUnrealFlecsObject::GetFlecsWorld() const
 
 UWorld* UUnrealFlecsObject::GetWorld() const
 {
-	if (FlecsWorld.IsValid())
+	if LIKELY_IF(FlecsWorld.IsValid())
 	{
 		return FlecsWorld->GetWorld();
 	}

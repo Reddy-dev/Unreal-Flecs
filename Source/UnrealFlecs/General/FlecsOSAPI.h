@@ -4,6 +4,7 @@
 
 #include <condition_variable>
 
+#include "flecs.h"
 #include "flecs/os_api.h"
 
 #include "CoreMinimal.h"

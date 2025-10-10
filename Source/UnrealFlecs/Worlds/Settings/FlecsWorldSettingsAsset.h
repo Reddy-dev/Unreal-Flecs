@@ -3,9 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FlecsWorldInfoSettings.h"
+
 #include "Engine/DataAsset.h"
 #include "Misc/DataValidation.h"
+
+#include "FlecsWorldInfoSettings.h"
+
 #include "FlecsWorldSettingsAsset.generated.h"
 
 UCLASS(BlueprintType, Blueprintable)
@@ -25,9 +28,6 @@ public:
 
 #endif // WITH_EDITOR
 
-	FORCEINLINE virtual FPrimaryAssetId GetPrimaryAssetId() const override final
-	{
-		return FPrimaryAssetId("FlecsWorld", GetFName());
-	}
-	
+	virtual FPrimaryAssetId GetPrimaryAssetId() const override final;
+
 }; // class UFlecsWorldSettingsAsset

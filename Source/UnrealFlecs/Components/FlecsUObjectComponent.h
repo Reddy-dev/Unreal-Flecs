@@ -139,7 +139,7 @@ struct UNREALFLECS_API FFlecsNoDeleteUObject
 }; // struct FFlecsNoDeleteUObject
 
 REGISTER_FLECS_COMPONENT(FFlecsNoDeleteUObject,
-    [](flecs::world InWorld, const FFlecsComponentHandle& InComponent)
+    [](const flecs::world& InWorld, const FFlecsComponentHandle& InComponent)
     {
         InComponent
             .AddPair(flecs::OnInstantiate, flecs::DontInherit);

@@ -5,6 +5,7 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "Tests/FlecsTestTypes.h"
+
 #include "Worlds/FlecsWorld.h"
 #include "Worlds/FlecsWorldConverter.h"
 #include "Worlds/UnrealFlecsWorldTag.h"

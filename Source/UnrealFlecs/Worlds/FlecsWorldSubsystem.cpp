@@ -9,9 +9,8 @@
 #include "Logs/FlecsCategories.h"
 
 #include "FlecsWorld.h"
-#include "FlecsWorldSettings.h"
-#include "FlecsWorldSettingsAsset.h"
-
+#include "Settings/FlecsWorldSettings.h"
+#include "Settings/FlecsWorldSettingsAsset.h"
 #include "UnrealFlecsWorldTag.h"
 
 #include "Entities/FlecsDefaultEntitiesDeveloperSettings.h"
@@ -162,6 +161,7 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	            .Add(flecs::Singleton);
 
 	DefaultWorld->AddSingleton<FUnrealFlecsWorldTag>();
+	
 	DefaultWorld->SetSingleton<FFlecsWorldPtrComponent>(FFlecsWorldPtrComponent{ DefaultWorld });
 	DefaultWorld->SetSingleton<FUWorldPtrComponent>(FUWorldPtrComponent{ GetWorld() });
 
@@ -255,19 +255,22 @@ bool UFlecsWorldSubsystem::HasValidFlecsWorld() const
 UFlecsWorld* UFlecsWorldSubsystem::GetDefaultWorldStatic(const UObject* WorldContextObject)
 {
 	solid_check(WorldContextObject);
-		
-	return GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::Assert)->
-	                GetSubsystem<UFlecsWorldSubsystem>()->DefaultWorld;
+
+	const TSolidNotNull<const UWorld*> GameWorld = GEngine->GetWorldFromContextObjectChecked(WorldContextObject);
+	const TSolidNotNull<const UFlecsWorldSubsystem*> FlecsWorldSubsystem = GameWorld->GetSubsystemChecked<UFlecsWorldSubsystem>();
+	
+	return FlecsWorldSubsystem->DefaultWorld;
 }
 
 bool UFlecsWorldSubsystem::HasValidFlecsWorldStatic(const UObject* WorldContextObject)
 {
 	solid_check(WorldContextObject);
 		
-	if (GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::ReturnNull))
+	if LIKELY_IF(GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::ReturnNull))
 	{
-		return IsValid(GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::Assert)
-		                      ->GetSubsystem<UFlecsWorldSubsystem>()->DefaultWorld);
+		const TSolidNotNull<const UWorld*> GameWorld = GEngine->GetWorldFromContextObjectChecked(WorldContextObject);
+		const TSolidNotNull<const UFlecsWorldSubsystem*> FlecsWorldSubsystem = GameWorld->GetSubsystemChecked<UFlecsWorldSubsystem>();
+		return FlecsWorldSubsystem->HasValidFlecsWorld();
 	}
 	else
 	{

@@ -33,4 +33,9 @@ EDataValidationResult UFlecsWorldSettingsAsset::IsDataValid(FDataValidationConte
 
 #endif // WITH_EDITOR
 
+FPrimaryAssetId UFlecsWorldSettingsAsset::GetPrimaryAssetId() const
+{
+	return FPrimaryAssetId("FlecsWorld", GetFNameSafe(this));
+}
+
 #undef LOCTEXT_NAMESPACE

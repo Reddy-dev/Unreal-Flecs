@@ -5,6 +5,7 @@
 #include "flecs.h"
 
 #include "CoreMinimal.h"
+
 #include "FlecsMemberHandle.generated.h"
 
 // Avoid using this directly
@@ -55,7 +56,7 @@ public:
 	{
 		return !(*this == Other);
 	}
-
-private:
+	
 	const flecs::member_t* Member = nullptr;
+	
 }; // struct FFlecsMemberHandle

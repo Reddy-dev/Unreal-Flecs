@@ -15,4 +15,5 @@ class UNREALFLECS_API UFlecsGameLoopObject : public UObject, public IFlecsGameLo
 public:
 	UFlecsGameLoopObject();
 	UFlecsGameLoopObject(const FObjectInitializer& ObjectInitializer);
+	
 }; // class UFlecsGameLoopObject

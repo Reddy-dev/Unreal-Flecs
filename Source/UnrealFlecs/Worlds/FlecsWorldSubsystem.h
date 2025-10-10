@@ -16,10 +16,9 @@
 
 #include "Types/SolidNotNull.h"
 
-#include "FlecsWorldInfoSettings.h"
-
 #include "FlecsWorldSubsystem.generated.h"
 
+struct FFlecsWorldSettingsInfo;
 class UFlecsWorld;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FFlecsOnWorldCreated, TSolidNotNull<UFlecsWorld*>);

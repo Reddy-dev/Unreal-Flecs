@@ -13,7 +13,7 @@
 #include "Tests/AutomationCommon.h"
 #include "Tests/AutomationEditorCommon.h"
 
-#include "Worlds/FlecsWorldInfoSettings.h"
+#include "Worlds/Settings/FlecsWorldInfoSettings.h"
 #include "Worlds/FlecsWorldSubsystem.h"
 #include "Worlds/FlecsWorld.h"
 #include "Pipelines/FlecsDefaultGameLoop.h"

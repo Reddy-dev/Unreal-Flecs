@@ -18,6 +18,7 @@ void UFlecsCollectionWorldSubsystem::Initialize(FSubsystemCollectionBase& Collec
 {
 	Super::Initialize(Collection);
 
+	// Automation Testing specific initialization flow
 #if WITH_AUTOMATION_TESTS
 	if (GIsAutomationTesting)
 	{
@@ -38,7 +39,7 @@ void UFlecsCollectionWorldSubsystem::Initialize(FSubsystemCollectionBase& Collec
 		}
 		else
 		{
-			Unreal::Flecs::GOnFlecsWorldInitialized.AddLambda([this](const TSolidNotNull<UFlecsWorld*> InWorld)
+			Unreal::Flecs::GOnFlecsWorldInitialized.AddLambda([this](const TSolidNotNull<const UFlecsWorld*> InWorld)
 			{
 				InWorld->RegisterComponentType<FFlecsCollectionPrefabTag>();
 				InWorld->RegisterComponentType<FFlecsCollectionReferenceComponent>();
@@ -55,7 +56,7 @@ void UFlecsCollectionWorldSubsystem::Initialize(FSubsystemCollectionBase& Collec
 	}
 #endif // WITH_AUTOMATION_TESTS
 
-	const TSolidNotNull<UFlecsWorld*> FlecsWorld = GetFlecsWorld();
+	const TSolidNotNull<const UFlecsWorld*> FlecsWorld = GetFlecsWorldChecked();
 
 	FlecsWorld->RegisterComponentType<FFlecsCollectionPrefabTag>();
 	FlecsWorld->RegisterComponentType<FFlecsCollectionReferenceComponent>();
@@ -69,7 +70,7 @@ void UFlecsCollectionWorldSubsystem::Initialize(FSubsystemCollectionBase& Collec
 
 void UFlecsCollectionWorldSubsystem::Deinitialize()
 {
-	if (MAYBE_UNUSED UFlecsWorld* FlecsWorld = GetFlecsWorld())
+	if (MAYBE_UNUSED const UFlecsWorld* FlecsWorld = GetFlecsWorld())
 	{
 		if LIKELY_IF(CollectionScopeEntity.IsValid())
 		{
@@ -226,7 +227,7 @@ FFlecsEntityHandle UFlecsCollectionWorldSubsystem::EnsurePrefabShell(const FFlec
 		return *Existing;
 	}
 	
-	const TSolidNotNull<UFlecsWorld*> FlecsWorld = GetFlecsWorldChecked();
+	const TSolidNotNull<const UFlecsWorld*> FlecsWorld = GetFlecsWorldChecked();
 	
 	const FFlecsEntityHandle Prefab = FlecsWorld->CreateEntity(Id.NameId.ToString())
 		.SetParent(CollectionScopeEntity)
@@ -291,7 +292,7 @@ FFlecsEntityHandle UFlecsCollectionWorldSubsystem::ResolveCollectionReference(co
 
 void UFlecsCollectionWorldSubsystem::ExpandChildCollectionReferences(const FFlecsEntityHandle& InCollectionEntity)
 {
-	const TSolidNotNull<UFlecsWorld*> FlecsWorld = GetFlecsWorldChecked();
+	const TSolidNotNull<const UFlecsWorld*> FlecsWorld = GetFlecsWorldChecked();
 
 	FlecsWorld->Defer([this, FlecsWorld, &InCollectionEntity]()
 	{
@@ -333,7 +334,7 @@ void UFlecsCollectionWorldSubsystem::ExpandChildCollectionReferences(const FFlec
 
 FFlecsEntityHandle UFlecsCollectionWorldSubsystem::CreatePrefabEntity(const FString& Name, const FFlecsEntityRecord& Record) const
 {
-	const TSolidNotNull<UFlecsWorld*> FlecsWorld = GetFlecsWorldChecked();
+	const TSolidNotNull<const UFlecsWorld*> FlecsWorld = GetFlecsWorldChecked();
 	
 	const FFlecsEntityHandle Prefab = FlecsWorld->CreatePrefabWithRecord(Record, Name)
 		.Add<FFlecsCollectionPrefabTag>();
@@ -344,7 +345,7 @@ FFlecsEntityHandle UFlecsCollectionWorldSubsystem::CreatePrefabEntity(const FStr
 FFlecsEntityHandle UFlecsCollectionWorldSubsystem::CreatePrefabEntity(const TSolidNotNull<UClass*> InClass,
 	const FFlecsEntityRecord& Record) const
 {
-	const TSolidNotNull<UFlecsWorld*> FlecsWorld = GetFlecsWorldChecked();
+	const TSolidNotNull<const UFlecsWorld*> FlecsWorld = GetFlecsWorldChecked();
 	
 	const FFlecsEntityHandle Prefab = FlecsWorld->CreatePrefabWithRecord(Record, InClass)
 		.Add<FFlecsCollectionPrefabTag>();
