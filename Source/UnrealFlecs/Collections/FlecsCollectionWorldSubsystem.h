@@ -24,6 +24,7 @@ namespace Unreal::Flecs::Collections
 	
 } // namespace Unreal::Flecs::Collections
 
+// @TODO: fix this shit dont use rn
 UCLASS()
 class UNREALFLECS_API UFlecsCollectionWorldSubsystem final : public UFlecsAbstractWorldSubsystem
 {
