@@ -6,6 +6,6 @@
 
 FFlecsCollectionBuilder& FFlecsSubEntityBuilder::End() const
 {
-	solid_checkf(ParentBuilder, TEXT("ParentBuilder is null"));
+	solid_cassumef(ParentBuilder, TEXT("ParentBuilder is null"));
 	return *ParentBuilder;
 }

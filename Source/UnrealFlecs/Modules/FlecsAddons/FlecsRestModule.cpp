@@ -12,7 +12,7 @@
 
 void UFlecsRestModule::InitializeModule(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsEntityHandle& InModuleEntity)
 {
-	// End the scope as we dont want to import a module inside another module's scope
+	// End the scope as we don't want to import a module inside another module's scope
 	InWorld->EndScope([this, InWorld]()
 	{
 #ifdef FLECS_REST
@@ -35,8 +35,7 @@ void UFlecsRestModule::InitializeModule(TSolidNotNull<UFlecsWorld*> InWorld, con
 		InWorld->SetSingleton<flecs::Rest>(flecs::Rest{ .port = RestPort });
 		
 		RestEntity = InWorld->ObtainSingletonEntity<flecs::Rest>();
-		solid_checkf(RestEntity.IsValid(),
-			TEXT("Flecs REST module failed to create REST singleton entity on port %d."), RestPort);
+		ensureAlwaysMsgf(RestEntity.IsValid(), TEXT("Failed to create Flecs Rest entity with port %d"), RestPort);
 
 		#ifdef FLECS_STATS
 
@@ -53,13 +52,14 @@ void UFlecsRestModule::InitializeModule(TSolidNotNull<UFlecsWorld*> InWorld, con
 
 void UFlecsRestModule::DeinitializeModule(TSolidNotNull<UFlecsWorld*> InWorld)
 {
+	// @TODO: Add Tests for destroying this module during runtime
 #ifdef FLECS_REST
 
 #ifdef FLECS_STATS
 	
 	if (StatsEntity.IsValid())
 	{
-		StatsEntity.Disable();
+		StatsEntity.Destroy();
 	}
 
 #endif // FLECS_STATS
@@ -69,7 +69,7 @@ void UFlecsRestModule::DeinitializeModule(TSolidNotNull<UFlecsWorld*> InWorld)
 		return;
 	}
 	
-	RestEntity.Disable();
+	RestEntity.Destroy();
 
 #endif // FLECS_REST
 }

@@ -27,6 +27,11 @@ EDataValidationResult UFlecsWorldSettingsAsset::IsDataValid(FDataValidationConte
 		
 		Result = CombineDataValidationResults(Result, EDataValidationResult::Invalid);
 	}
+	else
+	{
+		const EDataValidationResult GameLoopValidation = WorldSettings.GameLoop->IsDataValid(Context);
+		Result = CombineDataValidationResults(Result, GameLoopValidation);
+	}
 	
 	return Result;
 }

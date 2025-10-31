@@ -82,6 +82,7 @@ struct UNREALFLECS_API FFlecsPairBuilder
 	
 }; // struct FFlecsPairBuilder
 
+// @TODO: Add support for nested collections
 USTRUCT()
 struct UNREALFLECS_API FFlecsSubEntityBuilder
 {

@@ -21,6 +21,13 @@ namespace Unreal::Flecs::Collections
 	{
 		{ Func(Builder) } -> std::same_as<void>;
 	}; // concept TCollectionBuilderFunc
+
+	template <typename ConfigType, typename FuncType>
+	concept TCollectionBuilderFuncWithConfig =
+	requires(FuncType Func, FFlecsCollectionBuilder& Builder, const ConfigType& Config)
+	{
+		{ Func(Builder, Config) } -> std::same_as<void>;
+	};
 	
 } // namespace Unreal::Flecs::Collections
 
@@ -68,7 +75,7 @@ public:
 
 		FFlecsCollectionBuilder Builder = FFlecsCollectionBuilder::Create(Definition);
 		
-		InBuildFunc(Builder);
+		std::invoke(std::forward<FuncType>(InBuildFunc), Builder);
 
 		return RegisterCollectionDefinition(Builder.IdName, Definition);
 	}
@@ -82,10 +89,14 @@ public:
 		FFlecsCollectionDefinition Definition;
 		
 		FFlecsCollectionBuilder Builder = FFlecsCollectionBuilder::Create(Definition);
-		InBuildFunc(Builder);
+		std::invoke(std::forward<FuncType>(InBuildFunc), Builder);
 		
 		return RegisterCollectionClass(InClass, Builder);
 	}
+
+	static void ApplyCollectionToEntity(
+		const FFlecsEntityHandle& InCollectionEntity,
+		const FFlecsEntityHandle& InTargetEntity);
 
 private:
 	// Ensure a shell entity exists for the collection (without any components, just the id)
@@ -103,6 +114,7 @@ private:
 	
 	NO_DISCARD bool ClassImplementsCollectionInterface(const TSolidNotNull<const UClass*> InClass) const;
 
+	// @TODO: maybe make this a view for safety
 	UPROPERTY()
 	TMap<FFlecsCollectionId, FFlecsEntityHandle> RegisteredCollections;
 

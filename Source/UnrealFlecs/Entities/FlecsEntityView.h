@@ -11,6 +11,7 @@
 #include "FlecsEntityHandleTypes.h"
 #include "FlecsCommonHandle.h"
 #include "FlecsArchetype.h"
+#include "JsonUtils/RapidJsonUtils.h"
 
 #include "FlecsEntityView.generated.h"
 
@@ -688,6 +689,32 @@ public:
 		return GetEntityView().enabled(FFlecsEntityView::GetInputId(*this, InValue));
 	}
 
+	template <typename TFirst, typename TSecond>
+	NO_DISCARD SOLID_INLINE bool IsEnabledPair() const
+	{
+		return GetEntityView().enabled<TFirst, TSecond>();
+	}
+
+	template <typename TFirst, Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond>
+	NO_DISCARD SOLID_INLINE bool IsEnabledPair(const TSecond& InSecond) const
+	{
+		return GetEntityView().enabled<TFirst>(FFlecsEntityView::GetInputId(*this, InSecond));
+	}
+
+	template <Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst,
+		Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond>
+	NO_DISCARD SOLID_INLINE bool IsEnabledPair(const TFirst& InFirst, const TSecond& InSecond) const
+	{
+		return GetEntityView().enabled(FFlecsEntityView::GetInputId(*this, InFirst),
+			FFlecsEntityView::GetInputId(*this, InSecond));
+	}
+
+	template <typename TSecond, Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst>
+	NO_DISCARD SOLID_INLINE bool IsEnabledPairSecond(const TFirst& InFirst) const
+	{
+		return GetEntityView().enabled_second<TSecond>(FFlecsEntityView::GetInputId(*this, InFirst));
+	}
+
 	NO_DISCARD SOLID_INLINE FString GetName() const
 	{
 		return FString(GetEntityView().name().c_str(), static_cast<int32>(GetEntity().name().length()));
@@ -712,11 +739,6 @@ public:
 	NO_DISCARD SOLID_INLINE THandle Clone(const bool bCloneValue = true, const FFlecsId DestinationId = 0) const
 	{
 		return GetEntityView().clone(bCloneValue, DestinationId);
-	}
-
-	NO_DISCARD SOLID_INLINE FString ToJson() const
-	{
-		return FString(GetEntityView().to_json().c_str());
 	}
 
 	NO_DISCARD SOLID_INLINE FString ToJson(const ecs_entity_to_json_desc_t& InDesc) const

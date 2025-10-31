@@ -118,6 +118,7 @@ FFlecsEntityHandle UFlecsCollectionWorldSubsystem::RegisterCollectionClass(const
 	const FFlecsCollectionBuilder& InBuilder)
 {
 	const FString CPPClassName = InClass->GetPrefixCPP() + InClass->GetName();
+	
 	const FFlecsCollectionId Id = FFlecsCollectionId(CPPClassName);
 	if (const FFlecsEntityHandle* Existing = RegisteredCollections.Find(Id))
 	{
@@ -126,6 +127,9 @@ FFlecsEntityHandle UFlecsCollectionWorldSubsystem::RegisterCollectionClass(const
 	
 	const FFlecsEntityHandle Prefab
 		= CreatePrefabEntity(CPPClassName, InBuilder.GetCollectionDefinition().Record);
+	solid_checkf(Prefab.IsValid(),
+		TEXT("UFlecsCollectionWorldSubsystem::RegisterCollectionClass: Failed to create prefab entity for class '%s'"),
+		*InClass->GetName());
 	
 	RegisteredCollections.Add(Id, Prefab);
 	
@@ -197,6 +201,12 @@ FFlecsEntityHandle UFlecsCollectionWorldSubsystem::GetPrefabByClass(const TSubcl
 FFlecsEntityHandle UFlecsCollectionWorldSubsystem::GetCollectionScope() const
 {
 	return CollectionScopeEntity;
+}
+
+void UFlecsCollectionWorldSubsystem::ApplyCollectionToEntity(const FFlecsEntityHandle& InCollectionEntity,
+	const FFlecsEntityHandle& InTargetEntity)
+{
+	InTargetEntity.AddPair(flecs::IsA, InCollectionEntity);
 }
 
 FFlecsEntityHandle UFlecsCollectionWorldSubsystem::EnsurePrefabShell(const FFlecsCollectionId& Id)
@@ -282,9 +292,9 @@ void UFlecsCollectionWorldSubsystem::ExpandChildCollectionReferences(const FFlec
 			{
 				const FFlecsEntityHandle ChildEntityHandle = Iter.entity(Index);
 
-				for (const FFlecsCollectionReference& CollectionReference : ReferenceComponent->Collections)
+				if (ReferenceComponent)
 				{
-					if (ReferenceComponent)
+					for (const FFlecsCollectionReference& CollectionReference : ReferenceComponent->Collections)
 					{
 						const FFlecsEntityHandle Resolved = ResolveCollectionReference(CollectionReference);
 					
@@ -299,7 +309,7 @@ void UFlecsCollectionWorldSubsystem::ExpandChildCollectionReferences(const FFlec
 						ChildEntityHandle.AddPair(flecs::IsA, Resolved);
 					}
 				}
-
+				
 				if (Iter.is_set(2))
 				{
 					ChildEntityHandle.MarkSlot();

@@ -69,7 +69,7 @@ bool FFlecsEntityHandle::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOut
             return std::invoke(
                 NetSerializeDefinition.NetSerializeFunction,
                 *this,
-                GetFlecsWorld(),
+                GetFlecsWorldChecked(),
                 Ar,
                 Map,
                 bOutSuccess);
@@ -77,8 +77,7 @@ bool FFlecsEntityHandle::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOut
         else
         {
             UE_LOGFMT(LogFlecsEntity, Warning,
-                "Trying to net serialize entity with a nullptr NetSerialize function ptr in "
-                "its FFlecsNetworkSerializeDefinitionComponent for Entity {EntityId}, will try global Net Serialize function",);
+                "Trying to net serialize entity with a nullptr NetSerialize function ptr in its FFlecsNetworkSerializeDefinitionComponent for Entity {EntityId}, will try global Net Serialize function",);
         }
     }
     
@@ -87,7 +86,7 @@ bool FFlecsEntityHandle::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOut
         return std::invoke(
             *Unreal::Flecs::GNetSerializeFunctionPtr,
             *this,
-            GetFlecsWorld(),
+            GetFlecsWorldChecked(),
             Ar,
             Map,
             bOutSuccess);

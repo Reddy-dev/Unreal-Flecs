@@ -694,7 +694,7 @@ void UFlecsWorld::ImportModule(const TScriptInterface<IFlecsModuleInterface>& In
 	ImportedModules.Last()->ImportModule(World);
 }
 
-bool UFlecsWorld::IsModuleImported(const TSubclassOf<UObject> InModule, const bool bAllowChildren) const
+bool UFlecsWorld::IsModuleImported(const TSubclassOf<UObject>& InModule, const bool bAllowChildren) const
 {
 	solid_check(InModule);
 
@@ -713,7 +713,7 @@ bool UFlecsWorld::IsModuleImported(const TSubclassOf<UObject> InModule, const bo
 	return false;
 }
 
-FFlecsEntityHandle UFlecsWorld::GetModuleEntity(const TSubclassOf<UObject> InModule, const bool bAllowChildren) const
+FFlecsEntityHandle UFlecsWorld::GetModuleEntity(const TSubclassOf<UObject>& InModule, const bool bAllowChildren) const
 {
 	solid_check(InModule);
 		
@@ -726,7 +726,7 @@ FFlecsEntityHandle UFlecsWorld::GetModuleEntity(const TSubclassOf<UObject> InMod
 	return ModuleEntity;
 }
 
-UObject* UFlecsWorld::GetModule(const TSubclassOf<UObject> InModule, const bool bAllowChildren) const
+UObject* UFlecsWorld::GetModule(const TSubclassOf<UObject>& InModule, const bool bAllowChildren) const
 {
 	solid_check(IsValid(InModule));
 		
@@ -1435,7 +1435,7 @@ FFlecsEntityHandle UFlecsWorld::RegisterScriptClassType(TSolidNotNull<UClass*> S
 	return ScriptClassEntity;
 }
 
-bool UFlecsWorld::HasScriptClass(const TSubclassOf<UObject> InClass) const
+bool UFlecsWorld::HasScriptClass(const TSubclassOf<UObject>& InClass) const
 {
 	solid_check(InClass);
 		
@@ -1448,7 +1448,7 @@ bool UFlecsWorld::HasScriptClass(const TSubclassOf<UObject> InClass) const
 	return false;
 }
 
-FFlecsEntityHandle UFlecsWorld::GetScriptClassEntity(const TSubclassOf<UObject> InClass) const
+FFlecsEntityHandle UFlecsWorld::GetScriptClassEntity(const TSubclassOf<UObject>& InClass) const
 {
 	solid_check(InClass);
 		

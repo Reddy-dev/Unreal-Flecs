@@ -243,12 +243,18 @@ public:
 	 * @return The native flecs world.
 	 */
 	NO_DISCARD flecs::world GetNativeFlecsWorld() const;
+
+	/**
+	 * @brief Get the UnrealFlecs world, returns nullptr if the world is not an UnrealFlecs world.
+	 * @return The UnrealFlecs world or nullptr.
+	 */
+	NO_DISCARD UFlecsWorld* GetFlecsWorld() const;
 	
 	/**
 	 * @brief Get the UnrealFlecs world, will assert if the world is not an UnrealFlecs world.
 	 * @return The UnrealFlecs world.
 	 */
-	NO_DISCARD TSolidNotNull<UFlecsWorld*> GetFlecsWorld() const;
+	NO_DISCARD TSolidNotNull<UFlecsWorld*> GetFlecsWorldChecked() const;
 	
 	/**
 	 * @brief Check if the world is an UnrealFlecs world.
@@ -292,8 +298,19 @@ public:
 		return ObtainTypeClass(ClassType).ToHandle<THandleType>(GetNativeFlecsWorld());
 	}
 
+	/**
+	 * @brief Obtain the flecs id representing a class type. Relies on the class being registered in an UnrealFlecs world.
+	 * @param ClassType The class type to obtain.
+	 * @return The flecs id representing the class type.
+	 */
 	NO_DISCARD FFlecsId ObtainTypeClass(const TSolidNotNull<UClass*> ClassType) const;
 
+	/**
+	 * @brief Convert a gameplay tag to a flecs entity. Relies on the tag being in an UnrealFlecs world.
+	 * @param InTag The gameplay tag to convert.
+	 * @tparam THandleType The handle type to return. Must satisfy TFlecsEntityHandleTypeConcept.
+	 * @return The flecs entity representing the tag.
+	 */
 	template <Unreal::Flecs::TFlecsEntityHandleTypeConcept THandleType>
 	NO_DISCARD SOLID_INLINE THandleType GetTagEntity(const FGameplayTag& InTag) const
 	{
@@ -302,7 +319,7 @@ public:
 	}
 
 	/**
-	 * @brief Convert a gameplay tag to a flecs entity.
+	 * @brief Convert a gameplay tag to a flecs entity. Relies on the tag being in an UnrealFlecs world.
 	 * @param InTag The gameplay tag to convert.
 	 * @return The flecs entity representing the tag.
 	 */

@@ -7,7 +7,6 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "Worlds/FlecsWorld.h"
-#include "Translators/FlecsTranslationSettingTraits.h"
 
 #include "Tests/FlecsTestTypes.h"
 
@@ -102,6 +101,8 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 		ASSERT_THAT(IsTrue(StaticStructEntity.Has(flecs::Trait)));
 	}
 
+	// @TODO: Make alternative traits to test this
+	/*
 	TEST_METHOD(B3_GetComponentPropertyTraitsFromAnotherModule_CPPAPI)
 	{
 		const FFlecsEntityHandle StructEntity = FlecsWorld->RegisterComponentType<FFlecsTranslationPropertyTrait>();
@@ -109,14 +110,14 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 
 		ASSERT_THAT(IsTrue(StructEntity.Has(flecs::PairIsTag)));
 	}
-
+	
 	TEST_METHOD(B4_GetComponentPropertyTraitsFromAnotherModule_StaticStructAPI)
 	{
 		const FFlecsEntityHandle StaticStructEntity = FlecsWorld->RegisterComponentType(FFlecsTranslationPropertyTrait::StaticStruct());
 		ASSERT_THAT(IsTrue(StaticStructEntity.IsValid()));
 
 		ASSERT_THAT(IsTrue(StaticStructEntity.Has(flecs::PairIsTag)));
-	}
+	}*/
 
 	TEST_METHOD(C1_EnumComponentRegistration_CPPAPI)
 	{

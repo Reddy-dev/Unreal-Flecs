@@ -20,6 +20,7 @@
 #include "FlecsEntityHandleTypes.h"
 #include "FlecsEntityView.h"
 #include "FlecsId.h"
+#include "Serialization/JsonSerializer.h"
 
 #include "FlecsEntityHandle.generated.h"
 
@@ -203,7 +204,7 @@ public:
 	template <typename T>
 	SOLID_INLINE const FSelfType& Set(T&& InValue) const
 	{
-		GetEntity().set(MoveTempIfPossible(InValue));
+		GetEntity().set<T>(std::forward<T>(InValue));
 		return *this;
 	}
 	
@@ -242,9 +243,12 @@ public:
 
 	SOLID_INLINE const FSelfType& Set(const FInstancedStruct& InValue) const
 	{
-		Set(FFlecsEntityHandle::GetInputId(*this, InValue.GetScriptStruct()),
-			InValue.GetScriptStruct()->GetStructureSize(),
-			InValue.GetMemory());
+		const TSolidNotNull<const UScriptStruct*> ScriptStruct = InValue.GetScriptStruct();
+		const TSolidNotNull<const void*> Memory = InValue.GetMemory();
+		
+		Set(FFlecsEntityHandle::GetInputId(*this, ScriptStruct),
+			ScriptStruct->GetStructureSize(), Memory);
+		
 		return *this;
 	}
 	
@@ -588,9 +592,9 @@ public:
 		return *this;
 	}
 
-	SOLID_INLINE FString FromJson(const FString& InJson) const
+	SOLID_INLINE FString FromJson(const FString& InJsonString) const
 	{
-		return GetEntity().from_json(StringCast<char>(*InJson).Get());
+		return FString(GetEntity().from_json(StringCast<char>(*InJsonString).Get()));
 	}
 	
 	bool NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess);
@@ -914,7 +918,7 @@ public:
 	template <typename TFunction>
 	SOLID_INLINE const FSelfType& Scope(const TFunction& InFunction) const
 	{
-		GetEntity().scope(std::forward<TFunction>(InFunction));
+		GetEntity().scope(InFunction);
 		return *this;
 	}
 
@@ -940,7 +944,7 @@ public:
 		return AddCollection(T::StaticClass());
 	}
 
-	// Note this doesnt remove overridden components
+	// Note: this doesnt remove overridden components
 	SOLID_INLINE const FSelfType& RemoveCollection(const FFlecsId InCollection, const bool bRemoveOverriden = false) const
 	{
 		RemovePair(flecs::IsA, InCollection);

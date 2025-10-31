@@ -11,7 +11,7 @@
 
 #include "FlecsWorldSettingsAsset.generated.h"
 
-UCLASS(BlueprintType, Blueprintable)
+UCLASS(BlueprintType, Blueprintable, CollapseCategories)
 class UNREALFLECS_API UFlecsWorldSettingsAsset : public UDataAsset
 {
 	GENERATED_BODY()
@@ -19,7 +19,7 @@ class UNREALFLECS_API UFlecsWorldSettingsAsset : public UDataAsset
 public:
 	UFlecsWorldSettingsAsset();
 		
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ShowOnlyInnerProperties))
 	FFlecsWorldSettingsInfo WorldSettings;
 
 #if WITH_EDITOR

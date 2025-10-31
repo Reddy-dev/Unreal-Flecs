@@ -2,6 +2,8 @@
 
 #include "FlecsCommonHandle.h"
 
+#include "Engine/World.h"
+
 #include "Worlds/FlecsWorld.h"
 #include "Worlds/FlecsWorldConverter.h"
 #include "Worlds/UnrealFlecsWorldTag.h"
@@ -23,7 +25,17 @@ flecs::world FFlecsCommonHandle::GetNativeFlecsWorld() const
 	return Entity.world();
 }
 
-TSolidNotNull<UFlecsWorld*> FFlecsCommonHandle::GetFlecsWorld() const
+UFlecsWorld* FFlecsCommonHandle::GetFlecsWorld() const
+{
+	if UNLIKELY_IF(!IsUnrealFlecsWorld())
+	{
+		return nullptr;
+	}
+	
+	return Unreal::Flecs::ToUnrealFlecsWorld(GetEntity().world());
+}
+
+TSolidNotNull<UFlecsWorld*> FFlecsCommonHandle::GetFlecsWorldChecked() const
 {
 	solid_checkf(IsUnrealFlecsWorld(), TEXT("Entity is not in an Unreal Flecs World"));
 	return Unreal::Flecs::ToUnrealFlecsWorld(GetEntity().world());
@@ -38,31 +50,34 @@ TSolidNotNull<UWorld*> FFlecsCommonHandle::GetOuterWorld() const
 {
 	solid_checkf(IsUnrealFlecsWorld(), TEXT("Entity is not in an Unreal Flecs World"));
 	solid_checkf(::IsValid(GetFlecsWorld()), TEXT("Flecs World not found"));
-	return GetFlecsWorld()->GetWorld();
+	
+	UWorld* World = GetFlecsWorld()->GetWorld();
+	solid_checkf(::IsValid(World), TEXT("Outer UWorld not found"));
+	return World;
 }
 
 FString FFlecsCommonHandle::GetWorldName() const
 {
-	return GetFlecsWorld()->GetWorldName();
+	return GetFlecsWorldChecked()->GetWorldName();
 }
 
 FFlecsId FFlecsCommonHandle::ObtainComponentTypeStruct(const TSolidNotNull<const UScriptStruct*> StructType) const
 {
-	return GetFlecsWorld()->ObtainComponentTypeStruct(StructType);
+	return GetFlecsWorldChecked()->ObtainComponentTypeStruct(StructType);
 }
 
 FFlecsId FFlecsCommonHandle::ObtainComponentTypeEnum(const TSolidNotNull<const UEnum*> EnumType) const
 {
-	return GetFlecsWorld()->ObtainComponentTypeEnum(EnumType);
+	return GetFlecsWorldChecked()->ObtainComponentTypeEnum(EnumType);
 }
 
 FFlecsId FFlecsCommonHandle::ObtainTypeClass(const TSolidNotNull<UClass*> ClassType) const
 {
-	return GetFlecsWorld()->ObtainTypedEntity(ClassType);
+	return GetFlecsWorldChecked()->ObtainTypedEntity(ClassType);
 }
 
 FFlecsId FFlecsCommonHandle::GetTagEntity(const FGameplayTag& InTag) const
 {
-	return GetFlecsWorld()->GetTagEntity(InTag);
+	return GetFlecsWorldChecked()->GetTagEntity(InTag);
 }
 

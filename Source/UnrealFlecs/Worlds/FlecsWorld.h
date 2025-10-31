@@ -416,7 +416,7 @@ public:
 	 * @return True if the module is imported, false otherwise
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	bool IsModuleImported(const TSubclassOf<UObject> InModule, const bool bAllowChildren = false) const;
+	bool IsModuleImported(const TSubclassOf<UObject>& InModule, const bool bAllowChildren = false) const;
 
 	template <Solid::TStaticClassConcept T>
 	NO_DISCARD bool IsModuleImported(const bool bAllowChildren = false) const
@@ -430,7 +430,7 @@ public:
 	 * @return The entity handle of the module, or an invalid handle if the module is not imported
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	FFlecsEntityHandle GetModuleEntity(const TSubclassOf<UObject> InModule, const bool bAllowChildren = false) const;
+	FFlecsEntityHandle GetModuleEntity(const TSubclassOf<UObject>& InModule, const bool bAllowChildren = false) const;
 
 	/**
 	 * @brief Get the entity handle of the module with the given class
@@ -450,7 +450,7 @@ public:
 	 * @return 
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	UObject* GetModule(const TSubclassOf<UObject> InModule, const bool bAllowChildren = false) const;
+	UObject* GetModule(const TSubclassOf<UObject>& InModule, const bool bAllowChildren = false) const;
 
 	template <Solid::TStaticClassConcept T>
 	NO_DISCARD TSolidNotNull<T*> GetModule(const bool bAllowChildren = false) const
@@ -754,10 +754,10 @@ public:
 	FFlecsEntityHandle RegisterScriptClassType(TSolidNotNull<UClass*> ScriptClass) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	bool HasScriptClass(const TSubclassOf<UObject> InClass) const;
+	bool HasScriptClass(const TSubclassOf<UObject>& InClass) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	FFlecsEntityHandle GetScriptClassEntity(const TSubclassOf<UObject> InClass) const;
+	FFlecsEntityHandle GetScriptClassEntity(const TSubclassOf<UObject>& InClass) const;
 	
 	/*
 	 FFlecsEntityHandle RegisterComponentBitmaskType(const UEnum* ScriptEnum) const
