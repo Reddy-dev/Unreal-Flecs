@@ -39,6 +39,7 @@
 #include "General/FlecsObjectRegistrationInterface.h"
 
 #include "Pipelines/FlecsGameLoopInterface.h"
+#include "Pipelines/UnrealFlecsPhaseTag.h"
 #include "Types/SolidCppStructOps.h"
 #include "UObject/UObjectIterator.h"
 
@@ -390,6 +391,8 @@ void UFlecsWorld::InitializeDefaultComponents() const
 	RegisterComponentType<FFlecsDependenciesComponent>();
 
 	RegisterComponentType<FFlecsEntityRecord>();
+
+	RegisterComponentType<FUnrealFlecsPhaseTag>();
 
 	RegisterComponentType<FFlecsNetworkSerializeDefinitionComponent>()
 		.Add(flecs::Sparse);

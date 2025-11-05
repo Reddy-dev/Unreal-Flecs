@@ -928,7 +928,7 @@ public:
 	template <typename TFunction>
 	SOLID_INLINE const FSelfType& Scope(const TFunction& InFunction) const
 	{
-		GetEntity().scope(std::forward<TFunction>(InFunction));
+		GetEntity().scope(FLECS_FWD(InFunction));
 		return *this;
 	}
 

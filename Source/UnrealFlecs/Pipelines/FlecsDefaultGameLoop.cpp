@@ -1,6 +1,8 @@
 ﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
 
 #include "FlecsDefaultGameLoop.h"
+
+#include "UnrealFlecsPhaseTag.h"
 #include "Worlds/FlecsWorld.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsDefaultGameLoop)
