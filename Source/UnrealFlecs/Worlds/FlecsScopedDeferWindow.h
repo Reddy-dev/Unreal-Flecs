@@ -23,8 +23,8 @@ public:
 	FFlecsScopedDeferWindow() = delete;
 
 	FORCEINLINE FFlecsScopedDeferWindow(FFlecsScopedDeferWindow&& Other) noexcept
+		: FlecsWorld(Other.FlecsWorld)
 	{
-		FlecsWorld = Other.FlecsWorld;
 		Other.FlecsWorld.Reset();
 	}
 

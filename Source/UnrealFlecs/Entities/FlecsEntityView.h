@@ -304,10 +304,7 @@ public:
 	requires (std::is_same_v<TFirst, TActual> && Unreal::Flecs::Accessors::IsConstRef(AccessorType))
 	NO_DISCARD SOLID_INLINE const TActual& GetPairFirst() const
 	{
-		solid_checkf((HasPair<TFirst, TSecond>()),
-			TEXT("Entity does not have pair with %hs and %hs"),
-			nameof(TFirst).data(),
-			nameof(TSecond).data());
+		solid_check((HasPair<TFirst, TSecond>()));
 		
 		return GetEntityView().get<TFirst, TSecond>();
 	}
@@ -317,10 +314,7 @@ public:
 	requires (std::is_same_v<TFirst, TActual> && Unreal::Flecs::Accessors::IsMutRef(AccessorType))
 	NO_DISCARD SOLID_INLINE TActual& GetPairFirst() const
 	{
-		solid_checkf((HasPair<TFirst, TSecond>()),
-			TEXT("Entity does not have pair with %hs and %hs"),
-			nameof(TFirst).data(),
-			nameof(TSecond).data());
+		solid_check((HasPair<TFirst, TSecond>()));
 		
 		return GetEntityView().get_mut<TFirst, TSecond>();
 	}
@@ -330,10 +324,7 @@ public:
 	requires (Unreal::Flecs::Accessors::IsConstRef(AccessorType))
 	NO_DISCARD SOLID_INLINE const TFirst& GetPairFirst(const TSecond& InSecond) const
 	{
-		solid_checkf(HasPair<TFirst>(InSecond),
-			TEXT("Entity does not have pair with %hs and %s"),
-			nameof(TFirst).data(),
-			*InSecond.ToString());
+		solid_check((HasPair<TFirst>(InSecond)));
 		
 		return GetEntityView().get<TFirst>(FFlecsEntityView::GetInputId(*this, InSecond));
 	}
@@ -344,9 +335,8 @@ public:
 	NO_DISCARD SOLID_INLINE TFirst& GetPairFirst(const TSecond& InSecond) const
 	{
 		solid_checkf(HasPair<TFirst>(InSecond),
-			TEXT("Entity does not have pair with %hs and %s"),
-			nameof(TFirst).data(),
-			*InSecond.ToString());
+			TEXT("Entity does not have pair with %hs"),
+			nameof(TFirst).data());
 		
 		return GetEntityView().get_mut<TFirst>(FFlecsEntityView::GetInputId(*this, InSecond));
 	}
@@ -404,10 +394,7 @@ public:
 	requires (std::is_same_v<TSecond, TActual> && Unreal::Flecs::Accessors::IsConstRef(AccessorType))
 	NO_DISCARD SOLID_INLINE const TActual& GetPairSecond() const
 	{
-		solid_checkf((HasPairSecond<TFirst, TSecond>()),
-			TEXT("Entity does not have pair with %hs and %hs"),
-			nameof(TFirst).data(),
-			nameof(TSecond).data());
+		solid_check((HasPairSecond<TFirst, TSecond>()));
 		
 		return GetEntityView().get_second<TFirst, TSecond>();
 	}
@@ -417,10 +404,7 @@ public:
 	requires (std::is_same_v<TSecond, TActual> && Unreal::Flecs::Accessors::IsMutRef(AccessorType))
 	NO_DISCARD SOLID_INLINE TActual& GetPairSecond() const
 	{
-		solid_checkf((HasPairSecond<TFirst, TSecond>()),
-			TEXT("Entity does not have pair with %hs and %hs"),
-			nameof(TFirst).data(),
-			nameof(TSecond).data());
+		solid_check((HasPairSecond<TFirst, TSecond>()));
 		
 		return GetEntityView().get_mut_second<TFirst, TSecond>();
 	}
@@ -430,10 +414,7 @@ public:
 	requires (Unreal::Flecs::Accessors::IsConstRef(AccessorType))
 	NO_DISCARD SOLID_INLINE const TSecond& GetPairSecond(const TFirst& InFirst) const
 	{
-		solid_checkf(HasPairSecond<TSecond>(InFirst),
-			TEXT("Entity does not have pair with %hs and %s"),
-			nameof(TSecond).data(),
-			*InFirst.ToString());
+		solid_check((HasPairSecond<TSecond>(InFirst)));
 		
 		return GetEntityView().get_second<TSecond>(FFlecsEntityView::GetInputId(*this, InFirst));
 	}
@@ -443,10 +424,7 @@ public:
 	requires (Unreal::Flecs::Accessors::IsMutRef(AccessorType))
 	NO_DISCARD SOLID_INLINE TSecond& GetPairSecond(const TFirst& InFirst) const
 	{
-		solid_checkf(HasPairSecond<TSecond>(InFirst),
-			TEXT("Entity does not have pair with %hs and %s"),
-			nameof(TSecond).data(),
-			*InFirst.ToString());
+		solid_check((HasPairSecond<TSecond>(InFirst)));
 		
 		return GetEntityView().get_mut_second<TSecond>(FFlecsEntityView::GetInputId(*this, InFirst));
 	}
@@ -509,6 +487,8 @@ public:
 		Unreal::Flecs::TFlecsEntityFunctionDataTypeWithEnumNoValueConcept TFirst>
 	NO_DISCARD SOLID_INLINE THandle GetPairTarget(const TFirst& InFirstTypeValue, const int32 Index = 0) const
 	{
+		solid_check(HasPair(FFlecsEntityView::GetInputId(*this, InFirstTypeValue), flecs::Wildcard));
+		
 		return GetEntityView().target(FFlecsEntityView::GetInputId(*this, InFirstTypeValue), Index);
 	}
 

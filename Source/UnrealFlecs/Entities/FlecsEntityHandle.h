@@ -20,7 +20,6 @@
 #include "FlecsEntityHandleTypes.h"
 #include "FlecsEntityView.h"
 #include "FlecsId.h"
-#include "Serialization/JsonSerializer.h"
 
 #include "FlecsEntityHandle.generated.h"
 
@@ -202,9 +201,10 @@ public:
 	}
 
 	template <typename T>
-	SOLID_INLINE const FSelfType& Set(T&& InValue) const
+	requires (std::is_move_constructible_v<T> && !std::is_lvalue_reference_v<T>)
+	SOLID_INLINE const FSelfType& Set(T&& InValue) const  // NOLINT(cppcoreguidelines-missing-std-forward)
 	{
-		GetEntity().set<T>(std::forward<T>(InValue));
+		GetEntity().set(FLECS_FWD(InValue));
 		return *this;
 	}
 	
@@ -243,12 +243,9 @@ public:
 
 	SOLID_INLINE const FSelfType& Set(const FInstancedStruct& InValue) const
 	{
-		const TSolidNotNull<const UScriptStruct*> ScriptStruct = InValue.GetScriptStruct();
-		const TSolidNotNull<const void*> Memory = InValue.GetMemory();
-		
-		Set(FFlecsEntityHandle::GetInputId(*this, ScriptStruct),
-			ScriptStruct->GetStructureSize(), Memory);
-		
+		Set(FFlecsEntityHandle::GetInputId(*this, InValue.GetScriptStruct()),
+			InValue.GetScriptStruct()->GetStructureSize(),
+			InValue.GetMemory());
 		return *this;
 	}
 	
@@ -259,6 +256,17 @@ public:
 			TEXT("Entity does not have component with type %hs"), nameof(T).data());
 
 		GetEntity().assign<T>(InValue);
+		return *this;
+	}
+
+	template <typename T>
+	requires (std::is_move_constructible_v<T> && !std::is_lvalue_reference_v<T>)
+	SOLID_INLINE const FSelfType& Assign(T&& InValue) const
+	{
+		solid_checkf(Has<T>(),
+			TEXT("Entity does not have component with type %hs"), nameof(T).data());
+
+		GetEntity().assign<T>(FLECS_FWD(InValue));
 		return *this;
 	}
 	
@@ -592,9 +600,9 @@ public:
 		return *this;
 	}
 
-	SOLID_INLINE FString FromJson(const FString& InJsonString) const
+	SOLID_INLINE FString FromJson(const FString& InJson) const
 	{
-		return FString(GetEntity().from_json(StringCast<char>(*InJsonString).Get()));
+		return GetEntity().from_json(StringCast<char>(*InJson).Get());
 	}
 	
 	bool NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess);
@@ -670,6 +678,8 @@ public:
 		GetEntity().remove_second<TSecond>(FFlecsEntityHandle::GetInputId(*this, InFirst));
 		return *this;
 	}
+
+	// @TODO: add r-value set apis for pairs
 	
 	template <typename TFirst, typename TSecond, typename TActual = typename flecs::pair<TFirst, TSecond>::type>
 	requires (std::is_same_v<TFirst, TActual>)
@@ -918,7 +928,7 @@ public:
 	template <typename TFunction>
 	SOLID_INLINE const FSelfType& Scope(const TFunction& InFunction) const
 	{
-		GetEntity().scope(InFunction);
+		GetEntity().scope(std::forward<TFunction>(InFunction));
 		return *this;
 	}
 

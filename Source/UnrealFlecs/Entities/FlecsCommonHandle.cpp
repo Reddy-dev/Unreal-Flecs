@@ -25,17 +25,7 @@ flecs::world FFlecsCommonHandle::GetNativeFlecsWorld() const
 	return Entity.world();
 }
 
-UFlecsWorld* FFlecsCommonHandle::GetFlecsWorld() const
-{
-	if UNLIKELY_IF(!IsUnrealFlecsWorld())
-	{
-		return nullptr;
-	}
-	
-	return Unreal::Flecs::ToUnrealFlecsWorld(GetEntity().world());
-}
-
-TSolidNotNull<UFlecsWorld*> FFlecsCommonHandle::GetFlecsWorldChecked() const
+TSolidNotNull<UFlecsWorld*> FFlecsCommonHandle::GetFlecsWorld() const
 {
 	solid_checkf(IsUnrealFlecsWorld(), TEXT("Entity is not in an Unreal Flecs World"));
 	return Unreal::Flecs::ToUnrealFlecsWorld(GetEntity().world());
@@ -63,12 +53,12 @@ FString FFlecsCommonHandle::GetWorldName() const
 
 FFlecsId FFlecsCommonHandle::ObtainComponentTypeStruct(const TSolidNotNull<const UScriptStruct*> StructType) const
 {
-	return GetFlecsWorldChecked()->ObtainComponentTypeStruct(StructType);
+	return GetFlecsWorldChecked()->GetScriptStructEntity(StructType);
 }
 
 FFlecsId FFlecsCommonHandle::ObtainComponentTypeEnum(const TSolidNotNull<const UEnum*> EnumType) const
 {
-	return GetFlecsWorldChecked()->ObtainComponentTypeEnum(EnumType);
+	return GetFlecsWorldChecked()->GetScriptEnumEntity(EnumType);
 }
 
 FFlecsId FFlecsCommonHandle::ObtainTypeClass(const TSolidNotNull<UClass*> ClassType) const

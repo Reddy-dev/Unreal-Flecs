@@ -132,8 +132,7 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 
 	SetTickableTickType(ETickableTickType::Always);
 
-	const std::vector<FFlecsDefaultMetaEntity> DefaultEntities
-		= FFlecsDefaultEntityEngine::Get().AddedDefaultEntities;
+	const std::vector<FFlecsDefaultMetaEntity>& DefaultEntities = FFlecsDefaultEntityEngine::Get().AddedDefaultEntities;
 		
 	TMap<FString, FFlecsId> DefaultEntityIds = FFlecsDefaultEntityEngine::Get().DefaultEntityOptions;
 		
@@ -143,14 +142,15 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	DefaultWorld = NewObject<UFlecsWorld>(this, WorldNameWithWorldContext);
 	solid_checkf(IsValid(DefaultWorld), TEXT("Failed to create Flecs world"));
 
+	// @TODO: Update this to either the FlecsWorldObject or the UWorld
+	DefaultWorld->SetContext(this);
+
 	const TSolidNotNull<UObject*> GameLoop = DuplicateObject<UObject>(Settings.GameLoop, DefaultWorld);
 
 	DefaultWorld->GameLoopInterface = GameLoop;
 
+	DefaultWorld->InitializeComponentPropertyObserver();
 	DefaultWorld->InitializeDefaultComponents();
-
-	// @TODO: Update this to either the FlecsWorldObject or the UWorld
-	DefaultWorld->SetContext(this);
 
 	DefaultWorld->RegisterComponentType<FUnrealFlecsWorldTag>()
 	            .Add(flecs::Singleton);
@@ -231,6 +231,7 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 #endif // WITH_EDITOR
 
 	DefaultWorld->GameLoopInterface->InitializeGameLoop(DefaultWorld);
+	DefaultWorld->bIsInitialized = true;
 	OnWorldCreatedDelegate.Broadcast(DefaultWorld);
 	Unreal::Flecs::GOnFlecsWorldInitialized.Broadcast(DefaultWorld);
 		
@@ -250,7 +251,7 @@ UFlecsWorld* UFlecsWorldSubsystem::GetDefaultWorld() const
 	return DefaultWorld;
 }
 
-UFlecsWorld* UFlecsWorldSubsystem::GetDefaultWorldChecked() const
+TSolidNotNull<UFlecsWorld*> UFlecsWorldSubsystem::GetDefaultWorldChecked() const
 {
 	solid_checkf(IsValid(DefaultWorld), TEXT("Default Flecs world is not valid"));
 	return DefaultWorld;
