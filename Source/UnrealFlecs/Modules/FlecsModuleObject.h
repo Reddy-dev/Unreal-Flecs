@@ -16,7 +16,7 @@ public:
 	UFlecsModuleObject();
 	UFlecsModuleObject(const FObjectInitializer& ObjectInitializer);
 
-	UPROPERTY(EditDefaultsOnly, Category = "Flecs Module",
+	UPROPERTY(VisibleAnywhere, Category = "Flecs Module",
 		meta = (NoElementDuplicate, MustImplement = "/Script/UnrealFlecs.FlecsModuleInterface"))
 	TArray<TSubclassOf<UObject>> HardModuleDependencies;
 	

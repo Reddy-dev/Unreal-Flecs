@@ -40,7 +40,7 @@ TArray<TSubclassOf<UObject>> UFlecsModuleSetDataAsset::GetModuleHardDependencies
 
 		const TArray<TSubclassOf<UObject>> ModuleHardDependencies = ModuleInterface->GetHardDependentModuleClasses();
 		
-		for (const TSubclassOf<UObject> HardDependencyClass : ModuleHardDependencies)
+		for (const TSubclassOf<UObject>& HardDependencyClass : ModuleHardDependencies)
 		{
 			if (!HardDependencies.Contains(HardDependencyClass))
 			{
@@ -56,7 +56,7 @@ TArray<TSubclassOf<UObject>> UFlecsModuleSetDataAsset::GetModuleHardDependencies
 
 EDataValidationResult UFlecsModuleSetDataAsset::IsDataValid(class FDataValidationContext& Context) const
 {
-	EDataValidationResult SuperResult = Super::IsDataValid(Context);
+	const EDataValidationResult SuperResult = Super::IsDataValid(Context);
 	
 	EDataValidationResult Result = EDataValidationResult::Valid;
 
@@ -80,7 +80,8 @@ EDataValidationResult UFlecsModuleSetDataAsset::IsDataValid(class FDataValidatio
 				NSLOCTEXT("Flecs",
 					"FlecsModuleSetDataAsset_NonModule",
 					"Module Set '{0}' has a non-module reference to '{1}'!"),
-					FText::FromName(GetFName()), FText::FromName(Module->GetFName())));
+					FText::FromName(GetFName()),
+					FText::FromName(Module->GetFName())));
 			
 			Result = EDataValidationResult::Invalid;
 			continue;
@@ -115,7 +116,7 @@ EDataValidationResult UFlecsModuleSetDataAsset::IsDataValid(class FDataValidatio
 						"FlecsModuleSetDataAsset_MissingHardDependency",
 						"Module Set '{0}' is missing hard dependency '{1}' required by module '{2}'!"),
 						FText::FromName(GetFName()),
-						FText::FromString(HardDependencyClass->GetClassPathName().ToString()),
+						FText::FromName(HardDependencyClass->GetDefaultObjectName()),
 						FText::FromName(Module->GetFName())));
 				
 				Result = EDataValidationResult::Invalid;
