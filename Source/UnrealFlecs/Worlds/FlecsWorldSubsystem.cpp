@@ -145,9 +145,26 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	// @TODO: Update this to either the FlecsWorldObject or the UWorld
 	DefaultWorld->SetContext(this);
 
-	const TSolidNotNull<UObject*> GameLoop = DuplicateObject<UObject>(Settings.GameLoop, DefaultWorld);
+	TConstArrayView<TObjectPtr<UObject>> InGameLoops = Settings.GameLoops;
 
-	DefaultWorld->GameLoopInterface = GameLoop;
+	TArray<TScriptInterface<IFlecsGameLoopInterface>>  DuplicatedGameLoops;
+	DuplicatedGameLoops.Reserve(InGameLoops.Num());
+
+	for (TObjectPtr<UObject> GameLoop : InGameLoops)
+	{
+		solid_checkf(GameLoop->GetClass()->ImplementsInterface(UFlecsGameLoopInterface::StaticClass()),
+		             TEXT("GameLoop %s does not implement UFlecsGameLoopInterface"), *GameLoop->GetName());
+			
+		UObject* DuplicatedGameLoop = DuplicateObject<UObject>(GameLoop, DefaultWorld);
+		
+		solid_cassumef(IsValid(DuplicatedGameLoop),
+		                TEXT("Failed to duplicate GameLoop %s for world %s"),
+		                *GameLoop->GetName(), *DefaultWorld->GetName());
+		
+		DuplicatedGameLoops.Add(DuplicatedGameLoop);
+	}
+	
+	DefaultWorld->GameLoopInterfaces = DuplicatedGameLoops;
 
 	DefaultWorld->InitializeComponentPropertyObserver();
 	DefaultWorld->InitializeDefaultComponents();
@@ -231,7 +248,11 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 #endif // WITH_EDITOR
 
 	
-	DefaultWorld->ImportModuleChecked(GameLoop);
+	for (const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface : DefaultWorld->GameLoopInterfaces)
+	{
+		DefaultWorld->ImportModuleChecked(GameLoopInterface);
+	}
+	
 	DefaultWorld->bIsInitialized = true;
 	OnWorldCreatedDelegate.Broadcast(DefaultWorld);
 	Unreal::Flecs::GOnFlecsWorldInitialized.Broadcast(DefaultWorld);

@@ -405,8 +405,9 @@ public:
 		return World.import<T>();
 	}
 
+	// @TODO: finish docs
 	/**
-	 * @brief Import a module to the world,
+	 * @brief Import a module to the world
 	 * @param InModule The module to import, must implement IFlecsModuleInterface
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
@@ -434,6 +435,7 @@ public:
 	/**
 	 * @brief Get the entity handle of the module with the given class
 	 * @param InModule The module class
+	 * @param bAllowChildren If true, will also check for child classes of the given class
 	 * @return The entity handle of the module, or an invalid handle if the module is not imported
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
@@ -460,7 +462,7 @@ public:
 	UObject* GetModule(const TSubclassOf<UObject> InModule, const bool bAllowChildren = false) const;
 
 	template <Solid::TStaticClassConcept T>
-	NO_DISCARD TSolidNotNull<T*> GetModule(const bool bAllowChildren = false) const
+	NO_DISCARD TSolidNotNull<T*> GetModuleChecked(const bool bAllowChildren = false) const
 	{
 		return CastChecked<T>(GetModule(T::StaticClass(), bAllowChildren));
 	}
@@ -765,7 +767,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Flecs")
 	FFlecsEntityHandle GetScriptClassEntity(const TSubclassOf<UObject> InClass) const;
-	
+
+	// @TODO: Re-implement bitmask registration
 	/*
 	 FFlecsEntityHandle RegisterComponentBitmaskType(const UEnum* ScriptEnum) const
 	{
@@ -1027,7 +1030,7 @@ public:
 	bool bIsInitialized = false;
 
 	UPROPERTY(Transient)
-	TScriptInterface<IFlecsGameLoopInterface> GameLoopInterface;
+	TArray<TScriptInterface<IFlecsGameLoopInterface>> GameLoopInterfaces;
 
 	UPROPERTY(Transient)
 	TArray<TScriptInterface<IFlecsModuleInterface>> ImportedModules;
