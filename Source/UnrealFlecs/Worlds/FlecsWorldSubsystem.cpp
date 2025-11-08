@@ -230,7 +230,8 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 
 #endif // WITH_EDITOR
 
-	DefaultWorld->GameLoopInterface->InitializeGameLoop(DefaultWorld);
+	
+	DefaultWorld->ImportModuleChecked(GameLoop);
 	DefaultWorld->bIsInitialized = true;
 	OnWorldCreatedDelegate.Broadcast(DefaultWorld);
 	Unreal::Flecs::GOnFlecsWorldInitialized.Broadcast(DefaultWorld);

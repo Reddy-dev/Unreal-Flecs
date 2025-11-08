@@ -49,7 +49,7 @@ static NO_DISCARD FORCEINLINE int flecs_priority_compare(
 
 #endif // FLECS_ENABLE_SYSTEM_PRIORITY
 
-void UFlecsTickerGameLoop::InitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWorld)
+void UFlecsTickerGameLoop::InitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsEntityHandle& InGameLoopEntity)
 {
 	InWorld->RegisterComponentType<FFlecsTickerSingletonComponent>();
 	InWorld->AddSingleton<FFlecsTickerSingletonComponent>();

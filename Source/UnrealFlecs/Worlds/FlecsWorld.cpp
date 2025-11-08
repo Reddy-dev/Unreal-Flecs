@@ -5,6 +5,7 @@
 
 #include "Engine/Engine.h"
 #include "Misc/AutomationTest.h"
+#include "UObject/UObjectIterator.h"
 
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetRegistry/AssetBundleData.h"
@@ -13,6 +14,8 @@
 #include "Math/TransformCalculus2D.h"
 #include "Math/Color.h"
 #include "Math/MathFwd.h"
+
+#include "Types/SolidCppStructOps.h"
 
 #include "FlecsWorldSubsystem.h"
 
@@ -39,8 +42,7 @@
 #include "General/FlecsObjectRegistrationInterface.h"
 
 #include "Pipelines/FlecsGameLoopInterface.h"
-#include "Types/SolidCppStructOps.h"
-#include "UObject/UObjectIterator.h"
+#include "Pipelines/FlecsGameLoopTag.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsWorld)
 
@@ -393,6 +395,8 @@ void UFlecsWorld::InitializeDefaultComponents() const
 
 	RegisterComponentType<FFlecsNetworkSerializeDefinitionComponent>()
 		.Add(flecs::Sparse);
+
+	RegisterComponentType<FFlecsGameLoopTag>();
 }
 
 void UFlecsWorld::InitializeFlecsRegistrationObjects()
@@ -840,6 +844,25 @@ void UFlecsWorld::ImportModule(const TScriptInterface<IFlecsModuleInterface>& In
 	ImportedModules.Last()->ImportModule(World);
 }
 
+void UFlecsWorld::ImportModuleChecked(const TScriptInterface<IFlecsModuleInterface>& InModule)
+{
+	solid_checkf(InModule, TEXT("Module is nullptr"));
+
+	FString FailureReason; // Unused
+	
+	solid_checkf(CanImportModule(InModule, FailureReason),
+	             TEXT("Cannot import module %s"), *InModule.GetObject()->GetName());
+
+	// Doesn't use TSolidNotNull because DuplicateObject works weird with it
+	const UObject* TemplateModuleObject = InModule.GetObject();
+	solid_check(IsValid(TemplateModuleObject));
+
+	const TSolidNotNull<UObject*> NewModuleObject = DuplicateObject(TemplateModuleObject, this);
+	ImportedModules.Add(NewModuleObject);
+		
+	ImportedModules.Last()->ImportModule(World);
+}
+
 bool UFlecsWorld::CanImportModule(const TScriptInterface<IFlecsModuleInterface>& InModule, FString& OutFailureReason) const
 {
 	solid_checkf(InModule, TEXT("Module is nullptr"));
@@ -850,6 +873,8 @@ bool UFlecsWorld::CanImportModule(const TScriptInterface<IFlecsModuleInterface>&
 		return false;
 	}
 
+	// @TODO: need to implement waiting for hard dependencies to be imported if they are in the import queue
+	/*
 	const TArray<TSubclassOf<UFlecsModuleInterface>> HardModuleDependencies = InModule->GetHardDependentModuleClasses();
 	
 	for (const TSubclassOf<UFlecsModuleInterface>& DependencyClass : HardModuleDependencies)
@@ -861,7 +886,7 @@ bool UFlecsWorld::CanImportModule(const TScriptInterface<IFlecsModuleInterface>&
 				*DependencyClass->GetName());
 			return false;
 		}
-	}
+	}*/
 
 	return true;
 }
