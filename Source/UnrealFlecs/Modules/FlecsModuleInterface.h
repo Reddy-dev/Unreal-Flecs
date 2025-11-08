@@ -53,7 +53,7 @@ public:
 	FString GetModuleName() const;
 	virtual FString GetModuleName_Implementation() const;
 
-	virtual TArray<TSubclassOf<UObject>> GetHardDependentModuleClasses() const;
+	virtual TArray<TSubclassOf<UFlecsModuleInterface>> GetHardDependentModuleClasses() const;
 
 	FORCEINLINE virtual FFlecsEntityHandle GetEntityHandle() const override final
 	{

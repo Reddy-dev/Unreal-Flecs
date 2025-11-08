@@ -23,7 +23,7 @@
 #include "FlecsWorld.generated.h"
 
 struct FFlecsEntityRecord;
-struct FFlecsDependenciesComponent;
+struct FFlecsSoftDependenciesComponent;
 struct FFlecsUObjectComponent;
 struct FFlecsModuleComponent;
 
@@ -1037,7 +1037,7 @@ public:
 
 	flecs::query<FFlecsModuleComponent> ModuleComponentQuery;
 	flecs::query<FFlecsUObjectComponent> ObjectComponentQuery;
-	flecs::query<FFlecsDependenciesComponent> DependenciesComponentQuery;
+	flecs::query<FFlecsSoftDependenciesComponent> DependenciesComponentQuery;
 
 	FFlecsTypeMapComponent* TypeMapComponent;
 

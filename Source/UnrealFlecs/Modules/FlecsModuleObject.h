@@ -3,9 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FlecsModuleInterface.h"
+#include "FlecsDependenciesComponent.h"
+
 #include "UObject/Object.h"
+
+#include "FlecsModuleInterface.h"
+
 #include "FlecsModuleObject.generated.h"
+
+class UFlecsWorld;
 
 UCLASS(Abstract, Blueprintable, BlueprintType, EditInlineNew, DefaultToInstanced, ClassGroup = (Flecs))
 class UNREALFLECS_API UFlecsModuleObject : public UObject, public IFlecsModuleInterface
@@ -16,31 +22,36 @@ public:
 	UFlecsModuleObject();
 	UFlecsModuleObject(const FObjectInitializer& ObjectInitializer);
 
-	UPROPERTY(VisibleAnywhere, Category = "Flecs Module",
+	UPROPERTY(EditDefaultsOnly, Category = "Flecs Module",
 		meta = (NoElementDuplicate, MustImplement = "/Script/UnrealFlecs.FlecsModuleInterface"))
-	TArray<TSubclassOf<UObject>> HardModuleDependencies;
+	TArray<TSubclassOf<UFlecsModuleInterface>> HardModuleDependencies;
 	
 	template <Solid::TStaticClassConcept T>
-	NO_DISCARD bool HasHardModuleDependency() const
+	NO_DISCARD bool HasModuleDependency() const
 	{
-		return HasHardModuleDependency(T::StaticClass());
+		return HasModuleDependency(T::StaticClass());
 	}
 
 	UFUNCTION()
-	bool HasHardModuleDependency(TSubclassOf<UObject> ModuleClass) const;
+	bool HasHardDependency(TSubclassOf<UFlecsModuleInterface> ModuleClass) const;
 
 	template <Solid::TStaticClassConcept T>
-	void AddHardModuleDependency()
+	void AddHardDependency()
 	{
-		AddModuleDependency(T::StaticClass());
+		AddDependency(T::StaticClass());
+	}
+	
+	void AddHardDependency(TSubclassOf<UFlecsModuleInterface> ModuleClass);
+	
+	void RegisterSoftDependency(const TSubclassOf<UFlecsModuleInterface> ModuleClass,
+		const FFlecsDependencyFunctionDefinition::FDependencyFunctionType& DependencyFunction);
+
+	template <Solid::TStaticClassConcept T>
+	FORCEINLINE void RegisterSoftDependency(const FFlecsDependencyFunctionDefinition::FDependencyFunctionType& DependencyFunction)
+	{
+		RegisterSoftDependency(T::StaticClass(), DependencyFunction);
 	}
 
-	UFUNCTION()
-	void AddHardModuleDependency(TSubclassOf<UObject> ModuleClass);
-
-	virtual TArray<TSubclassOf<UObject>> GetHardDependentModuleClasses() const override;
-
-private:
-	NO_DISCARD bool IsValidModuleClass(const TSubclassOf<UObject> ModuleClass) const;
+	virtual TArray<TSubclassOf<UFlecsModuleInterface>> GetHardDependentModuleClasses() const override;
 	
 }; // class UFlecsModuleObject

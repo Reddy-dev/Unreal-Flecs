@@ -33,7 +33,10 @@ public:
 	FORCEINLINE FFlecsSystem GetTickerSystem() const { return TickerSystem; }
 
 	UFUNCTION(BlueprintCallable, Category = "Flecs | Ticker")
-	FORCEINLINE FFlecsEntityHandle GetTickerSource() const { return TickerSystem.GetEntity(); }
+	FORCEINLINE FFlecsEntityHandle GetTickerSource() const
+	{
+		return TickerSystem.GetEntity();
+	}
 	
 	UPROPERTY()
 	double TickerAccumulator = 0.0;

@@ -387,7 +387,7 @@ void UFlecsWorld::InitializeDefaultComponents() const
 
 	RegisterComponentType<FFlecsModuleComponent>();
 	RegisterComponentType<FFlecsModuleInitEvent>();
-	RegisterComponentType<FFlecsDependenciesComponent>();
+	RegisterComponentType<FFlecsSoftDependenciesComponent>();
 
 	RegisterComponentType<FFlecsEntityRecord>();
 
@@ -580,7 +580,7 @@ void UFlecsWorld::InitializeSystems()
 			.cached()
 			.build();
 
-		DependenciesComponentQuery = World.query_builder<FFlecsDependenciesComponent>("DependenciesComponentQuery")
+		DependenciesComponentQuery = World.query_builder<FFlecsSoftDependenciesComponent>("DependenciesComponentQuery")
 			.cached()
 			.build();
 
@@ -660,7 +660,7 @@ void UFlecsWorld::InitializeSystems()
 			solid_check(ModuleEntity.IsValid());
 
 			InFlecsWorld->DependenciesComponentQuery.each([ModuleEntity, InFlecsWorld, ModuleObject]
-				(flecs::iter& DependenciesIter, size_t DependenciesIndex, FFlecsDependenciesComponent& DependenciesComponent)
+				(flecs::iter& DependenciesIter, size_t DependenciesIndex, FFlecsSoftDependenciesComponent& DependenciesComponent)
 				{
 					const FFlecsEntityHandle InEntity = DependenciesIter.entity(DependenciesIndex);
 											
@@ -710,7 +710,7 @@ void UFlecsWorld::RegisterModuleDependency(const TSolidNotNull<const UObject*> I
 	const FFlecsEntityHandle ModuleEntity = GetModuleEntity(InModuleObject->GetClass());
 	solid_check(ModuleEntity.IsValid());
 		
-	auto& [Dependencies] = ModuleEntity.Obtain<FFlecsDependenciesComponent>();
+	auto& [Dependencies] = ModuleEntity.Obtain<FFlecsSoftDependenciesComponent>();
 		
 	Dependencies.Add(InDependencyClass, FFlecsDependencyFunctionDefinition{.Function=InFunction});
 		
@@ -850,9 +850,9 @@ bool UFlecsWorld::CanImportModule(const TScriptInterface<IFlecsModuleInterface>&
 		return false;
 	}
 
-	const TArray<TSubclassOf<UObject>> HardModuleDependencies = InModule->GetHardDependentModuleClasses();
+	const TArray<TSubclassOf<UFlecsModuleInterface>> HardModuleDependencies = InModule->GetHardDependentModuleClasses();
 	
-	for (const TSubclassOf<UObject>& DependencyClass : HardModuleDependencies)
+	for (const TSubclassOf<UFlecsModuleInterface>& DependencyClass : HardModuleDependencies)
 	{
 		if (!IsModuleImported(DependencyClass))
 		{

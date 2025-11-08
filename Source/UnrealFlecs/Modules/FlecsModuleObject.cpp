@@ -3,6 +3,7 @@
 #include "FlecsModuleObject.h"
 
 #include "Logs/FlecsCategories.h"
+#include "Worlds/FlecsWorld.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsModuleObject)
 
@@ -15,34 +16,33 @@ UFlecsModuleObject::UFlecsModuleObject(const FObjectInitializer& ObjectInitializ
 {
 }
 
-bool UFlecsModuleObject::HasHardModuleDependency(const TSubclassOf<UObject> ModuleClass) const
+bool UFlecsModuleObject::HasHardDependency(const TSubclassOf<UFlecsModuleInterface> ModuleClass) const
 {
 	return HardModuleDependencies.Contains(ModuleClass);
 }
 
-void UFlecsModuleObject::AddHardModuleDependency(const TSubclassOf<UObject> ModuleClass)
+void UFlecsModuleObject::AddHardDependency(const TSubclassOf<UFlecsModuleInterface> ModuleClass)
 {
 	if UNLIKELY_IF(ensureAlwaysMsgf(!IsValid(ModuleClass), TEXT("ModuleClass is not valid!")))
 	{
 		return;
 	}
 
-	if UNLIKELY_IF(!IsValidModuleClass(ModuleClass))
-	{
-		UE_LOGFMT(LogFlecsWorld, Error,
-			"ModuleClass {ModuleName} does not implement UFlecsModuleInterface!", ModuleClass->GetName());
-		return;
-	}
-
 	HardModuleDependencies.AddUnique(ModuleClass);
 }
 
-TArray<TSubclassOf<UObject>> UFlecsModuleObject::GetHardDependentModuleClasses() const
+void UFlecsModuleObject::RegisterSoftDependency(const TSubclassOf<UFlecsModuleInterface> ModuleClass,
+	const FFlecsDependencyFunctionDefinition::FDependencyFunctionType& DependencyFunction)
 {
-	return HardModuleDependencies;
+	if UNLIKELY_IF(ensureAlwaysMsgf(!IsValid(ModuleClass), TEXT("ModuleClass is not valid!")))
+	{
+		return;
+	}
+	
+	GetFlecsWorld()->RegisterModuleDependency(this, ModuleClass, DependencyFunction);
 }
 
-bool UFlecsModuleObject::IsValidModuleClass(const TSubclassOf<UObject> ModuleClass) const
+TArray<TSubclassOf<UFlecsModuleInterface>> UFlecsModuleObject::GetHardDependentModuleClasses() const
 {
-	return ModuleClass->ImplementsInterface(UFlecsModuleInterface::StaticClass());
+	return HardModuleDependencies;
 }

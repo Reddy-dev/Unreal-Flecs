@@ -135,11 +135,11 @@ EDataValidationResult UFlecsWorldSettingsAsset::CheckForHardDependencies(FDataVa
 			continue;
 		}
 
-		const TSolidNotNull<const IFlecsModuleInterface*> ModuleInterface = Cast<IFlecsModuleInterface>(Module);
+		const TSolidNotNull<const IFlecsModuleInterface*> ModuleInterface = CastChecked<IFlecsModuleInterface>(Module);
 
-		const TArray<TSubclassOf<UObject>> HardDependencies = ModuleInterface->GetHardDependentModuleClasses();
+		const TArray<TSubclassOf<UFlecsModuleInterface>> HardDependencies = ModuleInterface->GetHardDependentModuleClasses();
 
-		for (const TSubclassOf<UObject> HardDependencyClass : HardDependencies)
+		for (const TSubclassOf<UFlecsModuleInterface> HardDependencyClass : HardDependencies)
 		{
 			bool bFoundDependency = false;
 

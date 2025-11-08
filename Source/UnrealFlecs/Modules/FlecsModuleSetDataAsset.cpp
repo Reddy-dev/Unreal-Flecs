@@ -38,9 +38,9 @@ TArray<TSubclassOf<UObject>> UFlecsModuleSetDataAsset::GetModuleHardDependencies
 
 		const TSolidNotNull<const IFlecsModuleInterface*> ModuleInterface = Cast<IFlecsModuleInterface>(Module);
 
-		const TArray<TSubclassOf<UObject>> ModuleHardDependencies = ModuleInterface->GetHardDependentModuleClasses();
+		const TArray<TSubclassOf<UFlecsModuleInterface>> ModuleHardDependencies = ModuleInterface->GetHardDependentModuleClasses();
 		
-		for (const TSubclassOf<UObject>& HardDependencyClass : ModuleHardDependencies)
+		for (const TSubclassOf<UFlecsModuleInterface>& HardDependencyClass : ModuleHardDependencies)
 		{
 			if (!HardDependencies.Contains(HardDependencyClass))
 			{
@@ -89,9 +89,9 @@ EDataValidationResult UFlecsModuleSetDataAsset::IsDataValid(class FDataValidatio
 
 		const TSolidNotNull<const IFlecsModuleInterface*> ModuleInterface = Cast<IFlecsModuleInterface>(Module);
 
-		const TArray<TSubclassOf<UObject>> HardDependencies = ModuleInterface->GetHardDependentModuleClasses();
+		const TArray<TSubclassOf<UFlecsModuleInterface>> HardDependencies = ModuleInterface->GetHardDependentModuleClasses();
 
-		for (const TSubclassOf<UObject> HardDependencyClass : HardDependencies)
+		for (const TSubclassOf<UFlecsModuleInterface> HardDependencyClass : HardDependencies)
 		{
 			bool bFoundDependency = false;
 
