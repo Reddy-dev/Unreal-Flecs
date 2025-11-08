@@ -22,6 +22,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs")
 	FFlecsWorldSettingsInfo WorldSettings;
 
+	virtual void PostLoad() override;
+
 #if WITH_EDITOR
 
 	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;

@@ -990,8 +990,13 @@ bool UFlecsWorld::ProgressGameLoop(const double DeltaTime)
 {
 	SCOPE_CYCLE_COUNTER(STAT_FlecsWorldProgress);
 
-	solid_check(GameLoopInterface);
-	return GameLoopInterface->Progress(DeltaTime, this);
+	return std::all_of(GameLoopInterfaces.begin(), GameLoopInterfaces.end(),
+		[DeltaTime, this](const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface)
+		{
+			solid_cassumef(GameLoopInterface, TEXT("Game loop interface is nullptr"));
+
+			return GameLoopInterface->Progress(DeltaTime, this);
+		});
 }
 
 bool UFlecsWorld::Progress(const double DeltaTime)

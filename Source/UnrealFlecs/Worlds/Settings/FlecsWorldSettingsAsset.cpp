@@ -19,13 +19,23 @@ UFlecsWorldSettingsAsset::UFlecsWorldSettingsAsset()
 	WorldSettings.WorldName = "DefaultFlecsWorld";
 }
 
+void UFlecsWorldSettingsAsset::PostLoad()
+{
+	Super::PostLoad();
+
+#if WITH_EDITOR
+	
+
+#endif // WITH_EDITOR
+}
+
 #if WITH_EDITOR
 
 EDataValidationResult UFlecsWorldSettingsAsset::IsDataValid(FDataValidationContext& Context) const
 {
 	EDataValidationResult Result = Super::IsDataValid(Context);
 	
-	if (!IsValid(WorldSettings.GameLoop))
+	/*if (!IsValid(WorldSettings.GameLoop))
 	{
 		Context.AddError(FText::Format(
 			LOCTEXT("InvalidGameLoop", "WorldSettings {PathName} has an invalid GameLoop reference."),
@@ -33,6 +43,30 @@ EDataValidationResult UFlecsWorldSettingsAsset::IsDataValid(FDataValidationConte
 			
 		
 		Result = EDataValidationResult::Invalid;
+	}*/
+
+	if (WorldSettings.GameLoops.IsEmpty())
+	{
+		Context.AddError(FText::Format(
+			LOCTEXT("NoGameLoops", "WorldSettings {PathName} has no GameLoops assigned."),
+			FText::FromString(GetPathName())));
+			
+		
+		Result = EDataValidationResult::Invalid;
+	}
+	else
+	{
+		for (const TObjectPtr<UObject> GameLoop : WorldSettings.GameLoops)
+		{
+			if (!IsValid(GameLoop))
+			{
+				Context.AddError(FText::Format(
+					LOCTEXT("InvalidGameLoopInArray", "WorldSettings {PathName} has an invalid GameLoop reference in its GameLoops array."),
+					FText::FromString(GetPathName())));
+				
+				Result = EDataValidationResult::Invalid;
+			}
+		}
 	}
 
 	TArray<TObjectPtr<UObject>> ImportedModules;
