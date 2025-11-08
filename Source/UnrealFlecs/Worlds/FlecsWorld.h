@@ -412,6 +412,8 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
 	void ImportModule(const TScriptInterface<IFlecsModuleInterface>& InModule);
 
+	void ImportModuleChecked(const TScriptInterface<IFlecsModuleInterface>& InModule);
+
 	NO_DISCARD bool CanImportModule(const TScriptInterface<IFlecsModuleInterface>& InModule, FString& OutFailureReason) const;
 
 	/**

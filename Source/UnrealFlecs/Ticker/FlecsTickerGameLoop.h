@@ -16,7 +16,7 @@ class UNREALFLECS_API UFlecsTickerGameLoop : public UFlecsGameLoopObject
 
 public:
 
-	virtual void InitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWorld) override;
+	virtual void InitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsEntityHandle& InGameLoopEntity) override;
 	virtual bool Progress(double DeltaTime, TSolidNotNull<UFlecsWorld*> InWorld) override;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ticker",
