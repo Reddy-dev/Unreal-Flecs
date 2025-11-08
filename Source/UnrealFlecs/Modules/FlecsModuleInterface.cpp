@@ -122,7 +122,7 @@ FString IFlecsModuleInterface::GetModuleName_Implementation() const
 	return _getUObject()->GetClass()->GetName();
 }
 
-TArray<TSubclassOf<UObject>> IFlecsModuleInterface::GetHardDependentModuleClasses() const
+TArray<TSubclassOf<UFlecsModuleInterface>> IFlecsModuleInterface::GetHardDependentModuleClasses() const
 {
 	return {};
 }

@@ -82,7 +82,8 @@ public:
 	{
 	}
 
-	SOLID_INLINE FFlecsEntityHandle(const flecs::world& InWorld, const FFlecsId InEntity) : FFlecsEntityView(InWorld, InEntity)
+	SOLID_INLINE FFlecsEntityHandle(const flecs::world& InWorld, const FFlecsId InEntity)
+		: FFlecsEntityView(InWorld, InEntity)
 	{
 	}
 
