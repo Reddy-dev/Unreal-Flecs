@@ -17,11 +17,6 @@ public:
 	virtual void InitializeModule(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsEntityHandle& InModuleEntity) override;
 	virtual void DeinitializeModule(TSolidNotNull<UFlecsWorld*> InWorld) override;
 
-	FORCEINLINE virtual FString GetModuleName_Implementation() const override
-	{
-		return "Flecs Rest Module";
-	}
-
 	UPROPERTY()
 	FFlecsEntityHandle RestEntity;
 
