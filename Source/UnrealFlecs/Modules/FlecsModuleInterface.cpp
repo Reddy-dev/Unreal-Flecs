@@ -15,7 +15,7 @@
 #include "Components/ObjectTypes/FFlecsModuleObject.h"
 #include "Components/FlecsUObjectComponent.h"
 
-#include "FlecsModuleInitEvent.h"
+#include "Pipelines/FlecsGameLoopInterface.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsModuleInterface)
 
@@ -80,6 +80,35 @@ void IFlecsModuleInterface::ImportModule(const flecs::world& InWorld)
 	
 	UE_LOGFMT(LogFlecsCore, Verbose,
 		"Imported module: {ModuleName}", IFlecsModuleInterface::Execute_GetModuleName(_getUObject()));
+
+	TArray<TSubclassOf<UObject>> HardDependencies = GetHardDependentModuleClasses();
+	for (const TSubclassOf<UObject> HardDependencyClass : HardDependencies)
+	{
+		solid_cassumef(HardDependencyClass,
+			TEXT("Hard dependency class is null in module: %s"),
+			*IFlecsModuleInterface::Execute_GetModuleName(_getUObject()));
+		
+		solid_checkf(HardDependencyClass->ImplementsInterface(UFlecsModuleInterface::StaticClass()),
+			TEXT("Hard dependency class does not implement FlecsModuleInterface"));
+
+		FFlecsEntityHandle DependentModuleEntity;
+		if (HardDependencyClass->ImplementsInterface(UFlecsGameLoopInterface::StaticClass()))
+		{
+			DependentModuleEntity = FlecsWorld->GetGameLoopEntity(HardDependencyClass);
+		}
+		else
+		{
+			DependentModuleEntity = FlecsWorld->GetModuleEntity(HardDependencyClass);
+		}
+		
+		// since it's a hard dependency, we should never hit this check
+		solid_checkf(DependentModuleEntity.IsValid(),
+			TEXT("Hard dependency module entity not found for class:  %s Required by module: %s"),
+			*HardDependencyClass->GetName(),
+			*IFlecsModuleInterface::Execute_GetModuleName(_getUObject()));
+
+		ModuleEntity.AddPair(flecs::DependsOn, DependentModuleEntity);
+	}
 }
 
 void IFlecsModuleInterface::DeinitializeModule_Internal()

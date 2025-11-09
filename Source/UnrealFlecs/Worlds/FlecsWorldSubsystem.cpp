@@ -218,6 +218,11 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 
 	DefaultWorld->WorldStart();
 
+	for (const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface : DefaultWorld->GameLoopInterfaces)
+	{
+		GameLoopInterface->ImportModule(DefaultWorld->World);
+	}
+
 	for (TSolidNotNull<UObject*> Module : Settings.Modules)
 	{
 		solid_check(Module->GetClass()->ImplementsInterface(UFlecsModuleInterface::StaticClass()));
@@ -246,12 +251,7 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	}
 
 #endif // WITH_EDITOR
-
 	
-	for (const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface : DefaultWorld->GameLoopInterfaces)
-	{
-		GameLoopInterface->ImportModule(DefaultWorld->World);
-	}
 	
 	DefaultWorld->bIsInitialized = true;
 	OnWorldCreatedDelegate.Broadcast(DefaultWorld);

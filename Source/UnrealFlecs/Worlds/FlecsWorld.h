@@ -465,6 +465,15 @@ public:
 		return CastChecked<T>(GetModule(T::StaticClass(), bAllowChildren));
 	}
 
+	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
+	bool HasGameLoop(const TSubclassOf<UObject> InGameLoop, const bool bAllowChildren = false) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
+	FFlecsEntityHandle GetGameLoopEntity(const TSubclassOf<UObject> InGameLoop, const bool bAllowChildren = false) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
+	UObject* GetGameLoop(const TSubclassOf<UObject> InGameLoop, const bool bAllowChildren = false) const;
+
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
 	bool BeginDefer() const;
 

@@ -35,7 +35,6 @@
 #include "General/FlecsDeveloperSettings.h"
 
 #include "Modules/FlecsDependenciesComponent.h"
-#include "Modules/FlecsModuleInitEvent.h"
 #include "Modules/FlecsModuleInterface.h"
 
 #include "General/FlecsGameplayTagManagerEntity.h"
@@ -389,7 +388,6 @@ void UFlecsWorld::InitializeDefaultComponents() const
 		.SetIsA<FFlecsActorComponentTag>();
 
 	RegisterComponentType<FFlecsModuleComponent>();
-	RegisterComponentType<FFlecsModuleInitEvent>();
 	RegisterComponentType<FFlecsSoftDependenciesComponent>();
 
 	RegisterComponentType<FFlecsEntityRecord>();
@@ -644,7 +642,7 @@ void UFlecsWorld::InitializeSystems()
 				return;
 			}
 			
-			if (!InModule.Has<FFlecsModuleComponent>())
+			if UNLIKELY_IF(!InModule.Has<FFlecsModuleComponent>())
 			{
 				UE_LOGFMT(LogFlecsWorld, Warning,
 					"Module entity {ModuleEntityId} does not have FFlecsModuleComponent",
@@ -652,7 +650,7 @@ void UFlecsWorld::InitializeSystems()
 				return;
 			}
 
-			if (!InModule.HasPair<FFlecsUObjectComponent, FFlecsModuleObjectTarget>())
+			if UNLIKELY_IF((!InModule.HasPair<FFlecsUObjectComponent, FFlecsModuleObjectTarget>()))
 			{
 				UE_LOGFMT(LogFlecsWorld, Warning,
 					"Module entity {ModuleEntityId} does not have FFlecsUObjectComponent pair",
@@ -690,16 +688,20 @@ void UFlecsWorld::InitializeSystems()
 					
 					if (CanImportModule(PendingModule, FailureReason))
 					{
-						ImportModule(PendingModule);
+						ImportedModules.Add(PendingModule);
+						ImportedModules.Last()->ImportModule(World);
+						
 						PendingImportedModules.RemoveAt(Index);
 					}
 				}
 		});
 
+		// @TODO: handle hard dependencies being removed?
+		// @TODO: do we have a module object tag type?
 		CreateObserver<const FFlecsUObjectComponent&>(TEXT("RemoveModuleComponentObserver"))
 			.event(flecs::OnRemove)
-			.with<FFlecsModuleComponent>().inout_none()
-			.term_at(0).second(flecs::Wildcard).filter() // FFlecsUObjectComponent
+			.with<FFlecsModuleComponent>().inout_none() // 1
+			.term_at(0).second<FFlecsModuleObjectTarget>().filter() // FFlecsUObjectComponent (0)
 			.each([this](flecs::entity InEntity, const FFlecsUObjectComponent& InUObjectComponent)
 			{
 				for (int32 Index = ImportedModules.Num() - 1; Index >= 0; --Index)
@@ -905,13 +907,28 @@ bool UFlecsWorld::CanImportModule(const TScriptInterface<IFlecsModuleInterface>&
 		{
 			continue;
 		}
-		
-		if (!IsModuleImported(DependencyClass))
+
+		const bool bIsGameLoop = DependencyClass->ImplementsInterface(UFlecsGameLoopInterface::StaticClass());
+
+		if (bIsGameLoop)
 		{
-			OutFailureReason = FString::Printf(TEXT("Module %s dependency %s is not imported"),
-				*InModule.GetObject()->GetName(),
-				*DependencyClass->GetName());
-			return false;
+			if (!HasGameLoop(DependencyClass))
+			{
+				OutFailureReason = FString::Printf(TEXT("Module %s dependency game loop %s is not present"),
+					*InModule.GetObject()->GetName(),
+					*DependencyClass->GetName());
+				return false;
+			}
+		}
+		else
+		{
+			if (!IsModuleImported(DependencyClass))
+			{
+				OutFailureReason = FString::Printf(TEXT("Module %s dependency %s is not imported"),
+					*InModule.GetObject()->GetName(),
+					*DependencyClass->GetName());
+				return false;
+			}
 		}
 	}
 
@@ -950,7 +967,7 @@ FFlecsEntityHandle UFlecsWorld::GetModuleEntity(const TSubclassOf<UObject> InMod
 	if UNLIKELY_IF(!ModuleEntity.IsValid())
 	{
 		UE_LOGFMT(LogFlecsWorld, Warning,
-			"Module %s is not imported", *InModule->GetName());
+			"Module {ModuleName} is not imported", *InModule->GetName());
 	}
 
 	return ModuleEntity;
@@ -966,6 +983,59 @@ UObject* UFlecsWorld::GetModule(const TSubclassOf<UObject> InModule, const bool 
 	             *InModule->GetName());
 	
 	return ModuleEntity.GetPairFirst<FFlecsUObjectComponent, FFlecsModuleObjectTarget>().GetObjectChecked();
+}
+
+bool UFlecsWorld::HasGameLoop(const TSubclassOf<UObject> InGameLoop, const bool bAllowChildren) const
+{
+	solid_check(InGameLoop);
+
+	for (const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface : GameLoopInterfaces)
+	{
+		if (GameLoopInterface.GetObject()->GetClass() == InGameLoop)
+		{
+			return true;
+		}
+		else if (bAllowChildren && GameLoopInterface.GetObject()->GetClass()->IsChildOf(InGameLoop))
+		{
+			return true;
+		}
+	}
+		
+	return false;
+}
+
+FFlecsEntityHandle UFlecsWorld::GetGameLoopEntity(const TSubclassOf<UObject> InGameLoop, const bool bAllowChildren) const
+{
+	solid_check(InGameLoop);
+	
+	for (const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface : GameLoopInterfaces)
+	{
+		if (GameLoopInterface.GetObject()->GetClass() == InGameLoop ||
+		    (bAllowChildren && GameLoopInterface.GetObject()->GetClass()->IsChildOf(InGameLoop)))
+		{
+			return GameLoopInterface->GetModuleEntity();
+		}
+	}
+
+	// @TODO: Log warning?
+	return FFlecsEntityHandle();
+}
+
+UObject* UFlecsWorld::GetGameLoop(const TSubclassOf<UObject> InGameLoop, const bool bAllowChildren) const
+{
+	solid_check(IsValid(InGameLoop));
+		
+	for (const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface : GameLoopInterfaces)
+	{
+		if (GameLoopInterface.GetObject()->GetClass() == InGameLoop ||
+		    (bAllowChildren && GameLoopInterface.GetObject()->GetClass()->IsChildOf(InGameLoop)))
+		{
+			return GameLoopInterface.GetObject();
+		}
+	}
+
+	// @TODO: Log warning?
+	return nullptr;
 }
 
 bool UFlecsWorld::BeginDefer() const
