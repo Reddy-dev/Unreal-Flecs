@@ -20,6 +20,7 @@
 #include "FlecsEntityHandleTypes.h"
 #include "FlecsEntityView.h"
 #include "FlecsId.h"
+#include "Logging/StructuredLog.h"
 
 #include "FlecsEntityHandle.generated.h"
 
@@ -959,6 +960,25 @@ public:
 	}
 	
 protected:
+
+	enum class EInternalJournalAction : uint8
+	{
+		Add,
+		Remove,
+		Set,
+		Assign,
+		Obtain,
+		Modified,
+		SetName,
+	}; // enum class InternalJournalAction
+
+	template <EInternalJournalAction Action, const bool bIsPair = false>
+	requires (!bIsPair)
+	SOLID_INLINE void JournalAction(const FFlecsId InId, const void* InData = nullptr, const uint32 InSize = 0) const
+	{
+		
+	}
+	
 	
 }; // struct FFlecsEntityHandle
 
