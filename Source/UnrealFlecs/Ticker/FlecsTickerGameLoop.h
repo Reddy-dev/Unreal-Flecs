@@ -51,9 +51,6 @@ public:
 	FFlecsSystem TickerSystem;
 
 	UPROPERTY()
-	FFlecsEntityHandle MainPipeline;
-
-	UPROPERTY()
 	FFlecsEntityHandle TickerPipeline;
 
 }; // class UFlecsTickerGameLoop

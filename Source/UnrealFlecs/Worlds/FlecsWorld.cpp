@@ -43,6 +43,7 @@
 
 #include "Pipelines/FlecsGameLoopInterface.h"
 #include "Pipelines/FlecsGameLoopTag.h"
+#include "Pipelines/FlecsOutsideMainLoopTag.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsWorld)
 
@@ -397,6 +398,9 @@ void UFlecsWorld::InitializeDefaultComponents() const
 		.Add(flecs::Sparse);
 
 	RegisterComponentType<FFlecsGameLoopTag>();
+
+	RegisterComponentType<FFlecsOutsideMainLoopTag>();
+	
 }
 
 void UFlecsWorld::InitializeFlecsRegistrationObjects()

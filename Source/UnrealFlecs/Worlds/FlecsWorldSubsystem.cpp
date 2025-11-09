@@ -250,7 +250,7 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	
 	for (const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface : DefaultWorld->GameLoopInterfaces)
 	{
-		DefaultWorld->ImportModuleChecked(GameLoopInterface);
+		GameLoopInterface->ImportModule(DefaultWorld->World);
 	}
 	
 	DefaultWorld->bIsInitialized = true;
