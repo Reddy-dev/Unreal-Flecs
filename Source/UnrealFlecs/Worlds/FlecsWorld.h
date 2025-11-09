@@ -406,7 +406,7 @@ public:
 	// @TODO: finish docs
 	/**
 	 * @brief Import a module to the world
-	 * @param InModule The module to import, must implement IFlecsModuleInterface
+	 * @param InModule The module to import, must implement IFlecsModuleInterface (will be duplicated when imported)
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
 	void ImportModule(const TScriptInterface<IFlecsModuleInterface>& InModule);

@@ -9,6 +9,9 @@
 
 class UFlecsWorld;
 
+/**
+ * @brief 
+ */
 UCLASS(BlueprintType)
 class UNREALFLECS_API UFlecsModuleSetDataAsset : public UDataAsset
 {
