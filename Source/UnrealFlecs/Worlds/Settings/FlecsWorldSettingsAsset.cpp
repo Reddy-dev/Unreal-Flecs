@@ -73,6 +73,7 @@ EDataValidationResult UFlecsWorldSettingsAsset::IsDataValid(FDataValidationConte
 	
 	ImportedModules.Append(WorldSettings.Modules);
 	ImportedModules.Append(WorldSettings.EditorModules);
+	ImportedModules.Append(WorldSettings.GameLoops);
 	
 	for (const UFlecsModuleSetDataAsset* ModuleSet : WorldSettings.ModuleSets)
 	{
