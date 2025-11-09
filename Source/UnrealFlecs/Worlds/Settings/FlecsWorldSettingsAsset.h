@@ -19,7 +19,7 @@ class UNREALFLECS_API UFlecsWorldSettingsAsset : public UDataAsset
 public:
 	UFlecsWorldSettingsAsset();
 		
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ShowOnlyInnerProperties))
 	FFlecsWorldSettingsInfo WorldSettings;
 
 	virtual void PostLoad() override;
