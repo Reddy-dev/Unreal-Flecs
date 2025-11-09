@@ -33,9 +33,7 @@ class IFlecsGameLoopInterface;
 class UFlecsWorldSubsystem;
 class UFlecsModuleInterface;
 
-DECLARE_MULTICAST_DELEGATE_TwoParams(FFlecsWorldModuleImportedDelegate,
-	TSolidNotNull<UFlecsWorld*> /*InWorld*/,
-	const FFlecsEntityHandle& /*InModuleEntity*/);
+DECLARE_MULTICAST_DELEGATE_OneParam(FFlecsWorldModuleImportedDelegate, const FFlecsEntityHandle& /*InModuleEntity*/);
 
 /**
  * @brief Component type that represents if the World has begun play.

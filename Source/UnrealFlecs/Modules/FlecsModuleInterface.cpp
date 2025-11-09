@@ -51,7 +51,7 @@ void IFlecsModuleInterface::ImportModule(const flecs::world& InWorld)
 		});
 	});
 
-	FlecsWorld->OnModuleImported.Broadcast(FlecsWorld, ModuleEntity);
+	FlecsWorld->OnModuleImported.Broadcast(ModuleEntity);
 
 	const TSolidNotNull<UFlecsWorldSubsystem*> WorldSubsystem = GameWorld->GetSubsystemChecked<UFlecsWorldSubsystem>();
 

@@ -637,8 +637,7 @@ void UFlecsWorld::InitializeSystems()
 				});
 			});*/
 
-		OnModuleImported.AddWeakLambda(this,
-			[](const TSolidNotNull<UFlecsWorld*> InFlecsWorld, const FFlecsEntityHandle InModule)
+		OnModuleImported.AddWeakLambda(this, [this](const FFlecsEntityHandle& InModule)
 		{
 			if UNLIKELY_IF(!ensureAlwaysMsgf(InModule.IsValid(), TEXT("Module entity is not alive")))
 			{
@@ -664,10 +663,10 @@ void UFlecsWorld::InitializeSystems()
 			const TSolidNotNull<UObject*> ModuleObject = InModule.GetPairFirst<FFlecsUObjectComponent>(flecs::Wildcard).GetObjectChecked();
 			solid_check(IsValid(ModuleObject));
 
-			const FFlecsEntityHandle ModuleEntity = InFlecsWorld->GetModuleEntity(ModuleObject->GetClass());
+			const FFlecsEntityHandle ModuleEntity = GetModuleEntity(ModuleObject->GetClass());
 			solid_check(ModuleEntity.IsValid());
 
-			InFlecsWorld->DependenciesComponentQuery.each([ModuleEntity, InFlecsWorld, ModuleObject]
+			DependenciesComponentQuery.each([this, ModuleEntity, ModuleObject]
 				(flecs::iter& DependenciesIter, size_t DependenciesIndex, FFlecsSoftDependenciesComponent& DependenciesComponent)
 				{
 					const FFlecsEntityHandle InEntity = DependenciesIter.entity(DependenciesIndex);
@@ -679,22 +678,20 @@ void UFlecsWorld::InitializeSystems()
 
 						InEntity.AddPair(flecs::DependsOn, ModuleEntity);
 
-						FunctionDefinition.Call(ModuleObject,
-							InFlecsWorld,
-							ModuleEntity);
+						FunctionDefinition.Call(ModuleObject, this, ModuleEntity);
 					}
 				});
 
-				for (int32 Index = InFlecsWorld->PendingImportedModules.Num(); Index >= 0; --Index)
+				for (int32 Index = PendingImportedModules.Num() - 1; Index >= 0; --Index)
 				{
-					const TScriptInterface<IFlecsModuleInterface>& PendingModule = InFlecsWorld->PendingImportedModules[Index];
+					const TScriptInterface<IFlecsModuleInterface>& PendingModule = PendingImportedModules[Index];
 					
 					FString FailureReason;
 					
-					if (InFlecsWorld->CanImportModule(PendingModule, FailureReason))
+					if (CanImportModule(PendingModule, FailureReason))
 					{
-						InFlecsWorld->ImportModule(PendingModule);
-						InFlecsWorld->PendingImportedModules.RemoveAt(Index);
+						ImportModule(PendingModule);
+						PendingImportedModules.RemoveAt(Index);
 					}
 				}
 		});
