@@ -262,7 +262,7 @@ void UFlecsWorld::InitializeDefaultComponents() const
 		
 	World.component<FString>()
 	     .opaque(flecs::String)
-	     .serialize([](const flecs::serializer* Serializer, const FString* Data)
+	     .serialize([](const flecs::serializer* Serializer, const FString* Data) -> int32
 	     {
 		     const TCHAR* CharArray = Data->GetCharArray().GetData();
 		     return Serializer->value(flecs::String, &CharArray);
@@ -274,7 +274,7 @@ void UFlecsWorld::InitializeDefaultComponents() const
 
 	World.component<FName>()
 	     .opaque(flecs::String)
-	     .serialize([](const flecs::serializer* Serializer, const FName* Data)
+	     .serialize([](const flecs::serializer* Serializer, const FName* Data) -> int32
 	     {
 		     const FString String = Data->ToString();
 		     const TCHAR* CharArray = String.GetCharArray().GetData();
@@ -287,7 +287,7 @@ void UFlecsWorld::InitializeDefaultComponents() const
 
 	World.component<FText>()
 	     .opaque(flecs::String)
-	     .serialize([](const flecs::serializer* Serializer, const FText* Data)
+	     .serialize([](const flecs::serializer* Serializer, const FText* Data) -> int32
 	     {
 		     const FString String = Data->ToString();
 		     TSolidNotNull<const TCHAR*> CharArray = String.GetCharArray().GetData();
@@ -300,7 +300,7 @@ void UFlecsWorld::InitializeDefaultComponents() const
 
 	World.component<FGameplayTag>()
 	     .opaque(flecs::Entity)
-	     .serialize([](const flecs::serializer* Serializer, const FGameplayTag* Data)
+	     .serialize([](const flecs::serializer* Serializer, const FGameplayTag* Data) -> int32
 	     {
 		     const FFlecsId TagEntity = ecs_lookup_path_w_sep(
 			     Serializer->world,
@@ -314,53 +314,56 @@ void UFlecsWorld::InitializeDefaultComponents() const
 	     });
 		
 	World.component<FObjectPtr>()
-	     .opaque(flecs::Uptr)
-	     .serialize([](const flecs::serializer* Serializer, const FObjectPtr* Data)
-	     {
-		     const UObject* Object = Data->Get();
-		     return Serializer->value(flecs::Uptr, std::addressof(Object));
-	     });
-		
+		 .opaque(flecs::Uptr)
+		 .serialize([](const flecs::serializer* Serializer, const FObjectPtr* Data) -> int32
+		 {
+			 const UObject* Object = Data->Get();
+			 const FString Path = Object ? Object->GetPathName() : "Null";
+			 const char* CharArray = StringCast<char>(*Path).Get();  // NOLINT(clang-diagnostic-dangling)
+			 return Serializer->value(flecs::String, &CharArray);  // NOLINT(bugprone-multi-level-implicit-pointer-conversion)
+		 });
+
 	World.component<FWeakObjectPtr>()
-	     .opaque(flecs::Uptr)
-	     .serialize([](const flecs::serializer* Serializer, const FWeakObjectPtr* Data)
-	     {
-		     const UObject* Object = Data->Get();
-		     return Serializer->value(flecs::Uptr, std::addressof(Object));
-	     })
-	     .assign_null([](FWeakObjectPtr* Data)
-	     {
-		     Data->Reset();
-	     });
+		 .opaque(flecs::Uptr)
+		 .serialize([](const flecs::serializer* Serializer, const FWeakObjectPtr* Data) -> int32
+		 {
+			 const UObject* Object = Data->Get();
+			 const FString Path = Object ? Object->GetPathName() : "Null";
+			 const char* CharArray = StringCast<char>(*Path).Get();  // NOLINT(clang-diagnostic-dangling)
+			 return Serializer->value(flecs::String, &CharArray); // NOLINT(bugprone-multi-level-implicit-pointer-conversion)
+		 })
+		 .assign_null([](FWeakObjectPtr* Data)
+		 {
+			 Data->Reset();
+		 });
 
 	World.component<FSoftObjectPtr>()
-	     .opaque(flecs::Uptr)
-	     .serialize([](const flecs::serializer* Serializer, const FSoftObjectPtr* Data)
-	     {
-		     const UObject* Object = Data->Get();
-		     return Serializer->value(flecs::Uptr, std::addressof(Object));
-	     })
-	     .assign_null([](FSoftObjectPtr* Data)
-	     {
-		     Data->Reset();
-	     });
+		 .opaque(flecs::Uptr)
+		 .serialize([](const flecs::serializer* Serializer, const FSoftObjectPtr* Data) -> int32
+		 {
+			 const UObject* Object = Data->Get();
+			 const FString Path = Object ? Object->GetPathName() : "Null";
+			 const char* CharArray = StringCast<char>(*Path).Get(); // NOLINT(clang-diagnostic-dangling)
+			 return Serializer->value(flecs::String, &CharArray); // NOLINT(bugprone-multi-level-implicit-pointer-conversion)
+		 })
+		 .assign_null([](FSoftObjectPtr* Data)
+		 {
+			 Data->Reset();
+		 });
 
 	World.component<TSubclassOf<UObject>>()
-	     .opaque(flecs::Uptr)
-	     .serialize([](const flecs::serializer* Serializer, const TSubclassOf<UObject>* Data)
-	     {
-		     const UClass* Class = Data->Get();
-		     return Serializer->value(flecs::Uptr, std::addressof(Class));
-	     })
-	     .assign_null([](TSubclassOf<UObject>* Data)
-	     {
-		     *Data = nullptr;
-	     });
-
-	/*World.component<FScriptArray>()
-	     .opaque<flecs::Vector>(flecs::meta::VectorType);*/
-	/* World.component<FScriptMap>()
-	     .opaque<flecs::Map>(flecs::meta::MapType); */
+		 .opaque(flecs::Uptr)
+		 .serialize([](const flecs::serializer* Serializer, const TSubclassOf<UObject>* Data) -> int32
+		 {
+			 const UClass* Class = Data->Get();
+			 const FString Path = Class ? Class->GetPathName() : "Null";
+			 const char* CharArray = StringCast<char>(*Path).Get();  // NOLINT(clang-diagnostic-dangling)
+			 return Serializer->value(flecs::String, &CharArray); // NOLINT(bugprone-multi-level-implicit-pointer-conversion)
+		 })
+		 .assign_null([](TSubclassOf<UObject>* Data)
+		 {
+			 *Data = nullptr;
+		 });
 
 	RegisterUnrealTypes();
 
@@ -1181,6 +1184,21 @@ void UFlecsWorld::RegisterMemberProperties(const TSolidNotNull<const UStruct*> I
 			InComponent.AddMember<TSubclassOf<UObject>>(Property->GetName(),
 			                                            0, Property->GetOffset_ForInternal());
 		}
+		/*else if (Property->IsA<FArrayProperty>())
+		{
+			InComponent.AddMember<FScriptArray>(Property->GetName(),
+			                                    0, Property->GetOffset_ForInternal());
+		}
+		else if (Property->IsA<FMapProperty>())
+		{
+			InComponent.AddMember<FScriptMap>(Property->GetName(),
+			                                  0, Property->GetOffset_ForInternal());
+		}
+		else if (Property->IsA<FSetProperty>())
+		{
+			InComponent.AddMember<FScriptSet>(Property->GetName(),
+			                                  0, Property->GetOffset_ForInternal());
+		}*/
 		else if (Property->IsA<FStructProperty>())
 		{
 			FFlecsEntityHandle StructComponent;
