@@ -262,6 +262,8 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 
 void UFlecsWorldSubsystem::SetWorld(UFlecsWorld* InWorld)
 {
+	solid_cassumef(InWorld, TEXT("InWorld cannot be null"));
+	
 	solid_checkf(IsValid(InWorld), TEXT("InWorld cannot be null"));
 	solid_checkf(!IsValid(DefaultWorld), TEXT("DefaultWorld is already set"));
 
@@ -275,7 +277,9 @@ UFlecsWorld* UFlecsWorldSubsystem::GetDefaultWorld() const
 
 TSolidNotNull<UFlecsWorld*> UFlecsWorldSubsystem::GetDefaultWorldChecked() const
 {
+	solid_cassumef(DefaultWorld, TEXT("Default Flecs world is not set"));
 	solid_checkf(IsValid(DefaultWorld), TEXT("Default Flecs world is not valid"));
+	
 	return DefaultWorld;
 }
 
