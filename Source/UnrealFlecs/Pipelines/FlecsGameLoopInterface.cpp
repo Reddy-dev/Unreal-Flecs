@@ -17,3 +17,8 @@ void IFlecsGameLoopInterface::InitializeModule(const TSolidNotNull<UFlecsWorld*>
 
 	InitializeGameLoop(InWorld, InModuleEntity);
 }
+
+bool IFlecsGameLoopInterface::IsMainLoop() const
+{
+	return false;
+}

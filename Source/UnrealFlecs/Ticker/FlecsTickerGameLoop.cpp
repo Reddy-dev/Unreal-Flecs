@@ -100,3 +100,8 @@ bool UFlecsTickerGameLoop::Progress(double DeltaTime, TSolidNotNull<UFlecsWorld*
 	
 	return true;
 }
+
+bool UFlecsTickerGameLoop::IsMainLoop() const
+{
+	return false;
+}

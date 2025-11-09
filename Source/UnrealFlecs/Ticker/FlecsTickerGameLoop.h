@@ -19,6 +19,8 @@ public:
 
 	virtual void InitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsEntityHandle& InGameLoopEntity) override;
 	virtual bool Progress(double DeltaTime, TSolidNotNull<UFlecsWorld*> InWorld) override;
+
+	virtual bool IsMainLoop() const override;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ticker",
 		meta = (Units = "Hz", ClampMin = "1", ClampMax = "240")) //EditCondition = "!bUsePhysicsTick"))

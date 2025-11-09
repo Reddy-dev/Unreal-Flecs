@@ -32,5 +32,7 @@ public:
 	
 	virtual bool Progress(double DeltaTime, TSolidNotNull<UFlecsWorld*> InWorld)
 		PURE_VIRTUAL(IFlecsGameLoopInterface::Progress, return false;)
+
+	virtual bool IsMainLoop() const;
 	
 }; // class IFlecsGameLoopInterface

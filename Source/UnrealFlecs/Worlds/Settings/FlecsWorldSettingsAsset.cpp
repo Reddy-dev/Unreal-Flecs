@@ -38,7 +38,7 @@ EDataValidationResult UFlecsWorldSettingsAsset::IsDataValid(FDataValidationConte
 	/*if (!IsValid(WorldSettings.GameLoop))
 	{
 		Context.AddError(FText::Format(
-			LOCTEXT("InvalidGameLoop", "WorldSettings {PathName} has an invalid GameLoop reference."),
+			LOCTEXT("InvalidGameLoop", "WorldSettings {0} has an invalid GameLoop reference."),
 			FText::FromString(GetPathName())));
 			
 		
@@ -48,19 +48,23 @@ EDataValidationResult UFlecsWorldSettingsAsset::IsDataValid(FDataValidationConte
 	if (WorldSettings.GameLoops.IsEmpty())
 	{
 		Context.AddError(FText::Format(
-			LOCTEXT("NoGameLoops", "WorldSettings {PathName} has no GameLoops assigned."),
+			LOCTEXT("NoGameLoops", "WorldSettings {0} has no GameLoops assigned."),
 			FText::FromString(GetPathName())));
 		
 		Result = EDataValidationResult::Invalid;
 	}
 	else
 	{
+		bool bHasMainLoop = false;
+		TArray<TObjectPtr<UObject>> MainLoops;
+		
 		for (const TObjectPtr<UObject> GameLoop : WorldSettings.GameLoops)
 		{
 			if (!IsValid(GameLoop))
 			{
 				Context.AddError(FText::Format(
-					LOCTEXT("InvalidGameLoopInArray", "WorldSettings {PathName} has an invalid GameLoop reference in its GameLoops array."),
+					LOCTEXT("InvalidGameLoopInArray",
+						"WorldSettings {0} has an invalid GameLoop reference in its GameLoops array."),
 					FText::FromString(GetPathName())));
 				
 				Result = EDataValidationResult::Invalid;
@@ -71,8 +75,40 @@ EDataValidationResult UFlecsWorldSettingsAsset::IsDataValid(FDataValidationConte
 			{
 				Context.AddError(FText::Format(
 					LOCTEXT("NonGameLoopInArray",
-						"WorldSettings {PathName} has a GameLoop reference in its GameLoops array that does not implement the FlecsGameLoopInterface."),
+						"WorldSettings {0} has a GameLoop reference in its GameLoops array that does not implement the FlecsGameLoopInterface."),
 					FText::FromString(GetPathName())));
+				
+				Result = EDataValidationResult::Invalid;
+			}
+
+			if (Cast<IFlecsGameLoopInterface>(GameLoop)->IsMainLoop())
+			{
+				bHasMainLoop = true;
+				MainLoops.AddUnique(GameLoop);
+			}
+		}
+
+		if (!bHasMainLoop)
+		{
+			Context.AddError(FText::Format(
+				LOCTEXT("NoMainLoop",
+					"WorldSettings {0} has no GameLoop marked as Main Loop in its GameLoops array."),
+				FText::FromString(GetPathName())));
+			
+			Result = EDataValidationResult::Invalid;
+		}
+
+		for (int32 Index = 0; Index < MainLoops.Num(); ++Index)
+		{
+			const TSolidNotNull<const UObject*> MainLoop = MainLoops[Index];
+			
+			if (MainLoops.Num() > 1)
+			{
+				Context.AddError(FText::Format(
+					LOCTEXT("MultipleMainLoops",
+						"WorldSettings {0} has multiple GameLoops marked as Main Loop in its GameLoops array. Found multiple instances of {1}."),
+					FText::FromString(GetPathName()),
+					FText::FromString(MainLoop->GetClass()->GetClassPathName().ToString())));
 				
 				Result = EDataValidationResult::Invalid;
 			}
@@ -90,7 +126,8 @@ EDataValidationResult UFlecsWorldSettingsAsset::IsDataValid(FDataValidationConte
 		if (!IsValid(ModuleSet))
 		{
 			Context.AddError(FText::Format(
-				LOCTEXT("InvalidModuleSet", "WorldSettings {PathName} has an invalid ModuleSet reference."),
+				LOCTEXT("InvalidModuleSet",
+					"WorldSettings {0} has an invalid ModuleSet reference."),
 				FText::FromString(GetPathName())));
 			
 			Result = EDataValidationResult::Invalid;
@@ -106,7 +143,7 @@ EDataValidationResult UFlecsWorldSettingsAsset::IsDataValid(FDataValidationConte
 		{
 			Context.AddError(FText::Format(
 				LOCTEXT("InvalidEditorModuleSet",
-					"WorldSettings {PathName} has an invalid EditorModuleSet reference."),
+					"WorldSettings {0} has an invalid EditorModuleSet reference."),
 				FText::FromString(GetPathName())));
 			
 			Result = EDataValidationResult::Invalid;
@@ -146,7 +183,7 @@ EDataValidationResult UFlecsWorldSettingsAsset::CheckForDuplicateModules(FDataVa
 		if (SeenModules.Contains(ModuleClass))
 		{
 			Context.AddError(FText::Format(
-				LOCTEXT("DuplicateModule", "WorldSettings {PathName} has duplicate module of class {ModuleClass}."),
+				LOCTEXT("DuplicateModule", "WorldSettings {0} has duplicate module of class {1}."),
 				FText::FromString(GetPathName()),
 				FText::FromString(ModuleClass->GetClassPathName().ToString())));
 			

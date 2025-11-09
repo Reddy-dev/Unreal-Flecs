@@ -65,3 +65,8 @@ bool UFlecsDefaultGameLoop::Progress(const double DeltaTime, const TSolidNotNull
 {
 	return InWorld->Progress(DeltaTime);
 }
+
+bool UFlecsDefaultGameLoop::IsMainLoop() const
+{
+	return true;
+}
