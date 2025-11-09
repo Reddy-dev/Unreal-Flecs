@@ -37,12 +37,14 @@ public:
 	UFUNCTION()
 	bool HasHardDependency(TSubclassOf<UObject> ModuleClass) const;
 
+	// Should be called in the constructor
 	template <Solid::TStaticClassConcept T>
 	void AddHardDependency()
 	{
-		AddDependency(T::StaticClass());
+		AddHardDependency(T::StaticClass());
 	}
-	
+
+	// Should be called in the constructor
 	void AddHardDependency(TSubclassOf<UObject> ModuleClass);
 	
 	void RegisterSoftDependency(const TSubclassOf<UObject> ModuleClass,
