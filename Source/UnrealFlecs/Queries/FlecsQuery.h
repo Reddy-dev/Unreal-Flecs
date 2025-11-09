@@ -100,6 +100,4 @@ public:
     
 }; // struct FFlecsQuery
 
-TYPENAME_OUTSIDE_TEMPLATE
-
 
