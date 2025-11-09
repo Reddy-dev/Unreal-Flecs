@@ -24,7 +24,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Flecs Module",
 		meta = (NoElementDuplicate, MustImplement = "/Script/UnrealFlecs.FlecsModuleInterface"))
-	TArray<TSubclassOf<UFlecsModuleInterface>> HardModuleDependencies;
+	TArray<TSubclassOf<UObject>> HardModuleDependencies;
 	
 	template <Solid::TStaticClassConcept T>
 	NO_DISCARD bool HasModuleDependency() const
@@ -33,7 +33,7 @@ public:
 	}
 
 	UFUNCTION()
-	bool HasHardDependency(TSubclassOf<UFlecsModuleInterface> ModuleClass) const;
+	bool HasHardDependency(TSubclassOf<UObject> ModuleClass) const;
 
 	template <Solid::TStaticClassConcept T>
 	void AddHardDependency()
@@ -41,9 +41,9 @@ public:
 		AddDependency(T::StaticClass());
 	}
 	
-	void AddHardDependency(TSubclassOf<UFlecsModuleInterface> ModuleClass);
+	void AddHardDependency(TSubclassOf<UObject> ModuleClass);
 	
-	void RegisterSoftDependency(const TSubclassOf<UFlecsModuleInterface> ModuleClass,
+	void RegisterSoftDependency(const TSubclassOf<UObject> ModuleClass,
 		const FFlecsDependencyFunctionDefinition::FDependencyFunctionType& DependencyFunction);
 
 	template <Solid::TStaticClassConcept T>
@@ -52,6 +52,6 @@ public:
 		RegisterSoftDependency(T::StaticClass(), DependencyFunction);
 	}
 
-	virtual TArray<TSubclassOf<UFlecsModuleInterface>> GetHardDependentModuleClasses() const override;
+	virtual TArray<TSubclassOf<UObject>> GetHardDependentModuleClasses() const override;
 	
 }; // class UFlecsModuleObject

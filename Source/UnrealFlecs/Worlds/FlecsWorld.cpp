@@ -684,6 +684,19 @@ void UFlecsWorld::InitializeSystems()
 							ModuleEntity);
 					}
 				});
+
+				for (int32 Index = InFlecsWorld->PendingImportedModules.Num(); Index >= 0; --Index)
+				{
+					const TScriptInterface<IFlecsModuleInterface>& PendingModule = InFlecsWorld->PendingImportedModules[Index];
+					
+					FString FailureReason;
+					
+					if (InFlecsWorld->CanImportModule(PendingModule, FailureReason))
+					{
+						InFlecsWorld->ImportModule(PendingModule);
+						InFlecsWorld->PendingImportedModules.RemoveAt(Index);
+					}
+				}
 		});
 
 		CreateObserver<const FFlecsUObjectComponent&>(TEXT("RemoveModuleComponentObserver"))
@@ -707,7 +720,7 @@ void UFlecsWorld::InitializeSystems()
 }
 
 void UFlecsWorld::RegisterModuleDependency(const TSolidNotNull<const UObject*> InModuleObject,
-                                           const TSubclassOf<UFlecsModuleInterface>& InDependencyClass,
+                                           const TSubclassOf<UObject>& InDependencyClass,
                                            const FFlecsDependencyFunctionDefinition::FDependencyFunctionType& InFunction)
 {
 	solid_check(InModuleObject->Implements<UFlecsModuleInterface>());
@@ -828,29 +841,41 @@ void UFlecsWorld::ImportModule(const TScriptInterface<IFlecsModuleInterface>& In
 {
 	solid_checkf(InModule, TEXT("Module is nullptr"));
 
-	FString FailureReason;
-	if (!CanImportModule(InModule, FailureReason))
+	if UNLIKELY_IF(IsModuleImported(InModule.GetObject()->GetClass()))
 	{
-		UE_LOGFMT(LogFlecsWorld, Warning,
-			"Cannot import module {ModuleName}: {FailureReason}",
-			InModule.GetObject()->GetName(),
-			FailureReason);
 		return;
 	}
 
 	// Doesn't use TSolidNotNull because DuplicateObject works weird with it
 	const UObject* TemplateModuleObject = InModule.GetObject();
 	solid_check(IsValid(TemplateModuleObject));
-
+	
 	const TSolidNotNull<UObject*> NewModuleObject = DuplicateObject(TemplateModuleObject, this);
-	ImportedModules.Add(NewModuleObject);
+
+	FString FailureReason;
+	if (!CanImportModule(NewModuleObject, FailureReason))
+	{
+		UE_LOGFMT(LogFlecsWorld, Log,
+			"Cannot import module {ModuleName}: {FailureReason}",
+			NewModuleObject->GetName(),
+			FailureReason);
 		
+		PendingImportedModules.AddUnique(NewModuleObject);
+		return;
+	}
+	
+	ImportedModules.Add(NewModuleObject);
 	ImportedModules.Last()->ImportModule(World);
 }
 
 void UFlecsWorld::ImportModuleChecked(const TScriptInterface<IFlecsModuleInterface>& InModule)
 {
 	solid_checkf(InModule, TEXT("Module is nullptr"));
+
+	if UNLIKELY_IF(IsModuleImported(InModule.GetObject()->GetClass()))
+	{
+		return;
+	}
 
 	FString FailureReason; // Unused
 	
@@ -871,18 +896,19 @@ bool UFlecsWorld::CanImportModule(const TScriptInterface<IFlecsModuleInterface>&
 {
 	solid_checkf(InModule, TEXT("Module is nullptr"));
 
-	if (IsModuleImported(InModule.GetObject()->GetClass()))
-	{
-		OutFailureReason = FString::Printf(TEXT("Module %s is already imported"), *InModule.GetObject()->GetName());
-		return false;
-	}
-
 	// @TODO: need to implement waiting for hard dependencies to be imported if they are in the import queue
-	/*
-	const TArray<TSubclassOf<UFlecsModuleInterface>> HardModuleDependencies = InModule->GetHardDependentModuleClasses();
 	
-	for (const TSubclassOf<UFlecsModuleInterface>& DependencyClass : HardModuleDependencies)
+	const TArray<TSubclassOf<UObject>> HardModuleDependencies = InModule->GetHardDependentModuleClasses();
+	
+	for (const TSubclassOf<UObject>& DependencyClass : HardModuleDependencies)
 	{
+		if (!ensureAlwaysMsgf(IsValid(DependencyClass),
+		                     TEXT("Module %s has an invalid hard dependency"),
+		                     *InModule.GetObject()->GetName()))
+		{
+			continue;
+		}
+		
 		if (!IsModuleImported(DependencyClass))
 		{
 			OutFailureReason = FString::Printf(TEXT("Module %s dependency %s is not imported"),
@@ -890,7 +916,7 @@ bool UFlecsWorld::CanImportModule(const TScriptInterface<IFlecsModuleInterface>&
 				*DependencyClass->GetName());
 			return false;
 		}
-	}*/
+	}
 
 	return true;
 }

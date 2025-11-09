@@ -16,14 +16,20 @@ UFlecsModuleObject::UFlecsModuleObject(const FObjectInitializer& ObjectInitializ
 {
 }
 
-bool UFlecsModuleObject::HasHardDependency(const TSubclassOf<UFlecsModuleInterface> ModuleClass) const
+bool UFlecsModuleObject::HasHardDependency(const TSubclassOf<UObject> ModuleClass) const
 {
 	return HardModuleDependencies.Contains(ModuleClass);
 }
 
-void UFlecsModuleObject::AddHardDependency(const TSubclassOf<UFlecsModuleInterface> ModuleClass)
+void UFlecsModuleObject::AddHardDependency(const TSubclassOf<UObject> ModuleClass)
 {
-	if UNLIKELY_IF(ensureAlwaysMsgf(!IsValid(ModuleClass), TEXT("ModuleClass is not valid!")))
+	if UNLIKELY_IF(!ensureAlwaysMsgf(IsValid(ModuleClass), TEXT("ModuleClass is not valid!")))
+	{
+		return;
+	}
+
+	if UNLIKELY_IF(!ensureAlwaysMsgf(ModuleClass->ImplementsInterface(UFlecsModuleInterface::StaticClass()),
+		TEXT("ModuleClass %s does not implement IFlecsModuleInterface!"), *ModuleClass->GetName()))
 	{
 		return;
 	}
@@ -31,10 +37,10 @@ void UFlecsModuleObject::AddHardDependency(const TSubclassOf<UFlecsModuleInterfa
 	HardModuleDependencies.AddUnique(ModuleClass);
 }
 
-void UFlecsModuleObject::RegisterSoftDependency(const TSubclassOf<UFlecsModuleInterface> ModuleClass,
+void UFlecsModuleObject::RegisterSoftDependency(const TSubclassOf<UObject> ModuleClass,
 	const FFlecsDependencyFunctionDefinition::FDependencyFunctionType& DependencyFunction)
 {
-	if UNLIKELY_IF(ensureAlwaysMsgf(!IsValid(ModuleClass), TEXT("ModuleClass is not valid!")))
+	if UNLIKELY_IF(!ensureAlwaysMsgf(IsValid(ModuleClass), TEXT("ModuleClass is not valid!")))
 	{
 		return;
 	}
@@ -42,7 +48,7 @@ void UFlecsModuleObject::RegisterSoftDependency(const TSubclassOf<UFlecsModuleIn
 	GetFlecsWorld()->RegisterModuleDependency(this, ModuleClass, DependencyFunction);
 }
 
-TArray<TSubclassOf<UFlecsModuleInterface>> UFlecsModuleObject::GetHardDependentModuleClasses() const
+TArray<TSubclassOf<UObject>> UFlecsModuleObject::GetHardDependentModuleClasses() const
 {
 	return HardModuleDependencies;
 }

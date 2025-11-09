@@ -9,6 +9,7 @@
 #include "Systems/FlecsSystem.h"
 #include "FlecsTickerGameLoop.generated.h"
 
+// This should not be used as the main pipeline in a world
 UCLASS(BlueprintType)
 class UNREALFLECS_API UFlecsTickerGameLoop : public UFlecsGameLoopObject
 {

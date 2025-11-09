@@ -143,7 +143,7 @@ public:
 	 */
 	void RegisterModuleDependency(
 		const TSolidNotNull<const UObject*> InModuleObject,
-		const TSubclassOf<UFlecsModuleInterface>& InDependencyClass,
+		const TSubclassOf<UObject>& InDependencyClass,
 		const FFlecsDependencyFunctionDefinition::FDependencyFunctionType& InFunction);
 
 	/**
@@ -1034,6 +1034,9 @@ public:
 
 	UPROPERTY(Transient)
 	TArray<TScriptInterface<IFlecsModuleInterface>> ImportedModules;
+
+	UPROPERTY(Transient)
+	TArray<TScriptInterface<IFlecsModuleInterface>> PendingImportedModules;
 	
 	TMap<const UClass*, TScriptInterface<IFlecsObjectRegistrationInterface>> RegisteredObjectTypes;
 

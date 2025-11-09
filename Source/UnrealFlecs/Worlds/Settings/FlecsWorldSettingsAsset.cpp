@@ -50,7 +50,6 @@ EDataValidationResult UFlecsWorldSettingsAsset::IsDataValid(FDataValidationConte
 		Context.AddError(FText::Format(
 			LOCTEXT("NoGameLoops", "WorldSettings {PathName} has no GameLoops assigned."),
 			FText::FromString(GetPathName())));
-			
 		
 		Result = EDataValidationResult::Invalid;
 	}
@@ -62,6 +61,17 @@ EDataValidationResult UFlecsWorldSettingsAsset::IsDataValid(FDataValidationConte
 			{
 				Context.AddError(FText::Format(
 					LOCTEXT("InvalidGameLoopInArray", "WorldSettings {PathName} has an invalid GameLoop reference in its GameLoops array."),
+					FText::FromString(GetPathName())));
+				
+				Result = EDataValidationResult::Invalid;
+				continue;
+			}
+
+			if (!GameLoop->Implements<UFlecsGameLoopInterface>())
+			{
+				Context.AddError(FText::Format(
+					LOCTEXT("NonGameLoopInArray",
+						"WorldSettings {PathName} has a GameLoop reference in its GameLoops array that does not implement the FlecsGameLoopInterface."),
 					FText::FromString(GetPathName())));
 				
 				Result = EDataValidationResult::Invalid;
@@ -170,13 +180,40 @@ EDataValidationResult UFlecsWorldSettingsAsset::CheckForHardDependencies(FDataVa
 			continue;
 		}
 
+		if (!Module->Implements<UFlecsModuleInterface>())
+		{
+			Context.AddError(FText::Format(
+				NSLOCTEXT("Flecs",
+					"FlecsModuleSetDataAsset_NonModule",
+					"Module Set '{0}' has a module '{1}' that does not implement the FlecsModuleInterface!"),
+					FText::FromName(GetFName()),
+					FText::FromName(Module->GetFName())));
+			
+			Result = EDataValidationResult::Invalid;
+			continue;
+		}
+
 		const TSolidNotNull<const IFlecsModuleInterface*> ModuleInterface = CastChecked<IFlecsModuleInterface>(Module);
 
-		const TArray<TSubclassOf<UFlecsModuleInterface>> HardDependencies = ModuleInterface->GetHardDependentModuleClasses();
+		const TArray<TSubclassOf<UObject>> HardDependencies = ModuleInterface->GetHardDependentModuleClasses();
 
-		for (const TSubclassOf<UFlecsModuleInterface> HardDependencyClass : HardDependencies)
+		for (const TSubclassOf<UObject> HardDependencyClass : HardDependencies)
 		{
 			bool bFoundDependency = false;
+
+			if (!HardDependencyClass->ImplementsInterface(UFlecsModuleInterface::StaticClass()))
+			{
+				Context.AddError(FText::Format(
+					NSLOCTEXT("Flecs",
+						"FlecsModuleSetDataAsset_NonModuleHardDependency",
+						"Module Set '{0}' has a module '{1}' with a hard dependency '{2}' that does not implement the FlecsModuleInterface!"),
+						FText::FromName(GetFName()),
+						FText::FromName(Module->GetFName()),
+						FText::FromName(HardDependencyClass->GetDefaultObjectName())));
+				
+				Result = EDataValidationResult::Invalid;
+				continue;
+			}
 
 			for (const UObject* OtherModule : ImportedModules)
 			{
@@ -194,7 +231,7 @@ EDataValidationResult UFlecsWorldSettingsAsset::CheckForHardDependencies(FDataVa
 
 			if UNLIKELY_IF(!bFoundDependency)
 			{
-				Context.AddError(FText::Format(
+				Context.AddWarning(FText::Format(
 					NSLOCTEXT("Flecs",
 						"FlecsModuleSetDataAsset_MissingHardDependency",
 						"Module Set '{0}' is missing hard dependency '{1}' required by module '{2}'!"),

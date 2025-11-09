@@ -38,9 +38,9 @@ TArray<TSubclassOf<UObject>> UFlecsModuleSetDataAsset::GetModuleHardDependencies
 
 		const TSolidNotNull<const IFlecsModuleInterface*> ModuleInterface = Cast<IFlecsModuleInterface>(Module);
 
-		const TArray<TSubclassOf<UFlecsModuleInterface>> ModuleHardDependencies = ModuleInterface->GetHardDependentModuleClasses();
+		const TArray<TSubclassOf<UObject>> ModuleHardDependencies = ModuleInterface->GetHardDependentModuleClasses();
 		
-		for (const TSubclassOf<UFlecsModuleInterface>& HardDependencyClass : ModuleHardDependencies)
+		for (const TSubclassOf<UObject>& HardDependencyClass : ModuleHardDependencies)
 		{
 			if (!HardDependencies.Contains(HardDependencyClass))
 			{
@@ -89,9 +89,9 @@ EDataValidationResult UFlecsModuleSetDataAsset::IsDataValid(class FDataValidatio
 
 		const TSolidNotNull<const IFlecsModuleInterface*> ModuleInterface = Cast<IFlecsModuleInterface>(Module);
 
-		const TArray<TSubclassOf<UFlecsModuleInterface>> HardDependencies = ModuleInterface->GetHardDependentModuleClasses();
+		const TArray<TSubclassOf<UObject>> HardDependencies = ModuleInterface->GetHardDependentModuleClasses();
 
-		for (const TSubclassOf<UFlecsModuleInterface> HardDependencyClass : HardDependencies)
+		for (const TSubclassOf<UObject> HardDependencyClass : HardDependencies)
 		{
 			bool bFoundDependency = false;
 
@@ -111,7 +111,7 @@ EDataValidationResult UFlecsModuleSetDataAsset::IsDataValid(class FDataValidatio
 
 			if UNLIKELY_IF(!bFoundDependency)
 			{
-				Context.AddError(FText::Format(
+				Context.AddWarning(FText::Format(
 					NSLOCTEXT("Flecs",
 						"FlecsModuleSetDataAsset_MissingHardDependency",
 						"Module Set '{0}' is missing hard dependency '{1}' required by module '{2}'!"),
