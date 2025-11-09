@@ -29,15 +29,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Flecs | Ticker")
 	FORCEINLINE void SetTickerRate(const int64 InRate) { TickerRate = InRate; }
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs | Ticker")
-	FORCEINLINE FFlecsSystem GetTickerSystem() const { return TickerSystem; }
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs | Ticker")
-	FORCEINLINE FFlecsEntityHandle GetTickerSource() const
-	{
-		return TickerSystem.GetEntity();
-	}
 	
 	UPROPERTY()
 	double TickerAccumulator = 0.0;
@@ -47,9 +38,6 @@ public:
 
 	// This is a Sparse component, so the memory is stable
 	FFlecsTickerSingletonComponent* TickerComponentPtr = nullptr;
-
-	UPROPERTY()
-	FFlecsSystem TickerSystem;
 
 	UPROPERTY()
 	FFlecsEntityHandle TickerPipeline;
