@@ -13,6 +13,8 @@
 
 class UFlecsWorld;
 
+// @TODO: add documentation for hard/soft dependencies
+
 UCLASS(Abstract, Blueprintable, BlueprintType, EditInlineNew, DefaultToInstanced, ClassGroup = (Flecs))
 class UNREALFLECS_API UFlecsModuleObject : public UObject, public IFlecsModuleInterface
 {
