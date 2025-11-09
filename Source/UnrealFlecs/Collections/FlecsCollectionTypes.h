@@ -67,7 +67,7 @@ public:
 	TSubclassOf<UObject> Class;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flecs",
-		meta = (EditCondition = "Mode == EFlecsCollectionReferenceMode::Id", EditConditionHides))
+		meta = (EditCondition = "Mode == EFlecsCollectionReferenceMode::Id", EditConditionHides, ShowOnlyInnerProperties))
 	FFlecsCollectionId Id;
 	
 }; // struct FFlecsCollectionReference
@@ -118,6 +118,22 @@ REGISTER_FLECS_COMPONENT(FFlecsCollectionSlotTag,
 	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
 	{
 		InComponentHandle
+			.AddPair(flecs::OnInstantiate, flecs::DontInherit);
+	});
+
+USTRUCT()
+struct UNREALFLECS_API FFlecsCollectionParamTypeRelationship
+{
+	GENERATED_BODY()
+}; // struct FFlecsCollectionParamTypeRelationship
+
+REGISTER_FLECS_COMPONENT(FFlecsCollectionParamTypeRelationship,
+	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
+	{
+		InComponentHandle
+			.Add(flecs::Relationship)
+			.Add(flecs::Exclusive)
+			.Add(flecs::Acyclic)
 			.AddPair(flecs::OnInstantiate, flecs::DontInherit);
 	});
 

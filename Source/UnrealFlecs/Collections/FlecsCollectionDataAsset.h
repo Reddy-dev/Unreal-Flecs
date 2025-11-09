@@ -27,6 +27,10 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Collections")
 	FFlecsEntityRecord Record;
 
+	// Must be a registered component type
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Config")
+	FInstancedStruct CollectionParameterData;
+
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
 	

@@ -28,6 +28,7 @@ void UFlecsCollectionWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull
 	FlecsWorld->RegisterComponentType<FFlecsCollectionPrefabTag>();
 	FlecsWorld->RegisterComponentType<FFlecsCollectionReferenceComponent>();
 	FlecsWorld->RegisterComponentType<FFlecsCollectionSlotTag>();
+	FlecsWorld->RegisterComponentType<FFlecsCollectionParamTypeRelationship>();
 
 	CollectionScopeEntity = FlecsWorld->CreateEntity("CollectionScope")
 		.Add(flecs::Module);
@@ -37,7 +38,7 @@ void UFlecsCollectionWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull
 
 void UFlecsCollectionWorldSubsystem::Deinitialize()
 {
-	if (MAYBE_UNUSED const UFlecsWorld* FlecsWorld = GetFlecsWorld())
+	if (IsFlecsWorldValid())
 	{
 		if LIKELY_IF(CollectionScopeEntity.IsValid())
 		{
@@ -60,6 +61,13 @@ FFlecsEntityHandle UFlecsCollectionWorldSubsystem::RegisterCollectionAsset(const
 
 	const FFlecsEntityHandle Prefab = CreatePrefabEntity(InAsset->GetName(), InAsset->Record);
 	RegisteredCollections.Add(Id, Prefab);
+
+	if (InAsset->CollectionParameterData.IsValid())
+	{
+		Prefab.SetPair<FFlecsCollectionParamTypeRelationship>(
+			InAsset->CollectionParameterData.GetScriptStruct(),
+			InAsset->CollectionParameterData.GetMemory());
+	}
 
 	for (const FFlecsCollectionReference& Reference : InAsset->Collections)
 	{

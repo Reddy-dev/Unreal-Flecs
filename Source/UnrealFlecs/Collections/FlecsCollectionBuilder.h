@@ -177,6 +177,7 @@ public:
 		return *this;
 	}
 
+	// @TODO: Re-enable when collections are supported in sub-entities
 	/*FORCEINLINE FFlecsSubEntityBuilder& ReferenceCollection(
 		const TSolidNotNull<UFlecsCollectionDataAsset*> InAsset, bool bMarkAsSlot)
 	{
@@ -297,34 +298,25 @@ public:
 
 	FORCEINLINE FFlecsCollectionBuilder& ReferenceCollection(const TSolidNotNull<UFlecsCollectionDataAsset*> InAsset)
 	{
-		FFlecsCollectionReference Ref;
-		Ref.Mode = EFlecsCollectionReferenceMode::Asset;
-		Ref.Asset = InAsset;
-		
-		GetCollectionDefinition().Collections.Add(Ref);
+		FFlecsCollectionReference Ref = FFlecsCollectionReference::FromAsset(InAsset);
+		GetCollectionDefinition().Collections.Add(MoveTemp(Ref));
 		
 		return *this;
 	}
 
 	FORCEINLINE FFlecsCollectionBuilder& ReferenceCollection(const FFlecsCollectionId& InId)
 	{
-		FFlecsCollectionReference Ref;
-		Ref.Mode = EFlecsCollectionReferenceMode::Id;
-		Ref.Id = InId;
-		
-		GetCollectionDefinition().Collections.Add(Ref);
+		FFlecsCollectionReference Ref = FFlecsCollectionReference::FromId(InId);
+		GetCollectionDefinition().Collections.Add(MoveTemp(Ref));
 		
 		return *this;
 	}
 
-	template <Solid::TClassConcept T>
+	template <Solid::TStaticClassConcept T>
 	FORCEINLINE FFlecsCollectionBuilder& ReferenceCollection()
 	{
-		FFlecsCollectionReference Ref;
-		Ref.Mode = EFlecsCollectionReferenceMode::UClass;
-		Ref.Class = T::StaticClass();
-
-		GetCollectionDefinition().Collections.Add(Ref);
+		FFlecsCollectionReference Ref = FFlecsCollectionReference::FromClass(T::StaticClass());
+		GetCollectionDefinition().Collections.Add(MoveTemp(Ref));
 
 		return *this;
 	}
