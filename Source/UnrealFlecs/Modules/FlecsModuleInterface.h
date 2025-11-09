@@ -13,6 +13,39 @@
 
 class UFlecsWorld;
 
+
+USTRUCT(BlueprintType)
+struct UNREALFLECS_API FFlecsModuleHardDependency
+{
+	GENERATED_BODY()
+
+	FORCEINLINE friend uint32 GetTypeHash(const FFlecsModuleHardDependency& Dependency)
+	{
+		return GetTypeHash(Dependency.ModuleClass);
+	}
+
+public:
+	
+	UPROPERTY(EditDefaultsOnly, meta = (MustImplement = "/Script/UnrealFlecs.FlecsModuleInterface"))
+	TSubclassOf<UObject> ModuleClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	bool bAllowChildClasses = false;
+
+	FORCEINLINE bool operator==(const FFlecsModuleHardDependency& Other) const
+	{
+		return ModuleClass == Other.ModuleClass;
+	}
+
+	FORCEINLINE bool operator!=(const FFlecsModuleHardDependency& Other) const
+	{
+		return !(*this == Other);
+	}
+	
+}; // struct FFlecsModuleHardDependency
+
+DEFINE_STD_HASH(FFlecsModuleHardDependency);
+
 // This class does not need to be modified.
 UINTERFACE(Blueprintable)
 class UNREALFLECS_API UFlecsModuleInterface : public UFlecsEntityInterface
@@ -53,7 +86,7 @@ public:
 	FString GetModuleName() const;
 	virtual FString GetModuleName_Implementation() const;
 
-	virtual TArray<TSubclassOf<UObject>> GetHardDependentModuleClasses() const;
+	virtual TArray<FFlecsModuleHardDependency> GetHardDependentModuleClasses() const;
 
 	FORCEINLINE virtual FFlecsEntityHandle GetEntityHandle() const override final
 	{
