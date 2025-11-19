@@ -44,10 +44,6 @@
 		{
 			"Name": "GameFeatures",
 			"Enabled": true
-		},
-		{
-			"Name": "SolidMacros",
-			"Enabled": true
 		}
 	],
 	"SupportURL": ""
