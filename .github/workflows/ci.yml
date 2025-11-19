@@ -1,3 +1,7 @@
 name: Build UnrealFlecs with UET
 
 on: [ push, pull_request ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
