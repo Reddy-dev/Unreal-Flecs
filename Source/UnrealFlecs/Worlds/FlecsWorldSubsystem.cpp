@@ -30,6 +30,12 @@
 
 FFlecsOnWorldInitializedGlobal Unreal::Flecs::GOnFlecsWorldInitialized;
 
+void FFlecsPhaseTickFunction::ExecuteTick(float DeltaTime, ELevelTick TickType, ENamedThreads::Type CurrentThread,
+	const FGraphEventRef& MyCompletionGraphEvent)
+{
+	
+}
+
 bool UFlecsWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
 	return Super::ShouldCreateSubsystem(Outer)
@@ -44,8 +50,6 @@ void UFlecsWorldSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	{
 		return;
 	}
-
-	SetTickableTickType(ETickableTickType::Always);
 
 	solid_check(IsValid(GetWorld()->GetWorldSettings()));
 	solid_checkf(GetWorld()->GetWorldSettings()->IsA<AFlecsWorldSettings>(),
@@ -100,12 +104,7 @@ void UFlecsWorldSubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
-TStatId UFlecsWorldSubsystem::GetStatId() const
-{
-	RETURN_QUICK_DECLARE_CYCLE_STAT(UFlecsWorldSubsystem, STATGROUP_Tickables);
-}
-
-void UFlecsWorldSubsystem::Tick(float DeltaTime)
+/*void UFlecsWorldSubsystem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
@@ -124,13 +123,11 @@ void UFlecsWorldSubsystem::Tick(float DeltaTime)
 	UE_CLOG(!bResult, LogFlecsCore, Error, TEXT("Failed to progress Flecs world"));
 
 #endif // WITH_EDITOR
-}
+}*/
 
 UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecsWorldSettingsInfo& Settings)
 {
 	solid_checkf(!Name.IsEmpty(), TEXT("World name cannot be NAME_None"));
-
-	SetTickableTickType(ETickableTickType::Always);
 
 	const std::vector<FFlecsDefaultMetaEntity>& DefaultEntities = FFlecsDefaultEntityEngine::Get().AddedDefaultEntities;
 		

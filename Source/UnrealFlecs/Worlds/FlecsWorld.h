@@ -11,6 +11,8 @@
 
 #include "CoreMinimal.h"
 
+#include "Engine/EngineBaseTypes.h"
+
 #include "SolidMacros/Macros.h"
 #include "Standard/Hashing.h"
 #include "Types/SolidNotNull.h"
@@ -565,7 +567,8 @@ public:
 	void SetContext(void* InContext) const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	bool ProgressGameLoop(const double DeltaTime = 0.0);
+	bool ProgressGameLoops(const ETickingGroup InTickingGroup,
+		const double DeltaTime = 0.0);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
 	bool Progress(const double DeltaTime = 0.0);

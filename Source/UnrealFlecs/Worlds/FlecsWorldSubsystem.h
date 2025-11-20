@@ -16,9 +16,13 @@
 
 #include "Types/SolidNotNull.h"
 
+#include "Pipelines/FlecsTickingGroup.h"
+
 #include "FlecsWorldSubsystem.generated.h"
 
 struct FFlecsWorldSettingsInfo;
+
+class UFlecsWorldSubsystem;
 class UFlecsWorld;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FFlecsOnWorldCreated, TSolidNotNull<UFlecsWorld*>);
@@ -33,10 +37,31 @@ namespace Unreal::Flecs
 	
 } // namespace Unreal::Flecs
 
-UCLASS(BlueprintType)
-class UNREALFLECS_API UFlecsWorldSubsystem final : public UTickableWorldSubsystem
+USTRUCT()
+struct FFlecsPhaseTickFunction : public FTickFunction
 {
 	GENERATED_BODY()
+	
+	UPROPERTY()
+	TObjectPtr<UFlecsWorldSubsystem> OwningSubsystem = nullptr;
+
+	EFlecsTickingGroup
+
+	virtual void ExecuteTick(float DeltaTime, ELevelTick TickType, ENamedThreads::Type CurrentThread,
+		const FGraphEventRef& MyCompletionGraphEvent) override;
+
+	virtual FString DiagnosticMessage() override
+	{
+		return TEXT("UFlecsWorldSubsystem::FFlecsPhaseTickFunction");
+	}
+	
+}; // struct FFlecsPhaseTickFunction
+
+UCLASS(BlueprintType)
+class UNREALFLECS_API UFlecsWorldSubsystem final : public UWorldSubsystem
+{
+	GENERATED_BODY()
+
 
 public:
 	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
@@ -46,10 +71,6 @@ public:
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 
 	virtual void Deinitialize() override;
-
-	virtual TStatId GetStatId() const override;
-
-	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION()
 	UFlecsWorld* CreateWorld(const FString& Name, const FFlecsWorldSettingsInfo& Settings);
@@ -77,6 +98,11 @@ public:
 	FFlecsOnWorldCreated OnWorldCreatedDelegate;
 	FFlecsOnWorldBeginPlay OnWorldBeginPlayDelegate;
 	FFlecsOnWorldDestroyed OnWorldDestroyedDelegate;
+
+	FFlecsPhaseTickFunction PrePhysicsTickFunction;
+	FFlecsPhaseTickFunction DuringPhysicsTickFunction;
+	FFlecsPhaseTickFunction PostPhysicsTickFunction;
+	FFlecsPhaseTickFunction PostUpdateWorkTickFunction;
 
 protected:
 	UPROPERTY(Transient)

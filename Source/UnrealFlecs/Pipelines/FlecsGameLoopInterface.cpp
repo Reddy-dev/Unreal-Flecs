@@ -3,6 +3,7 @@
 #include "FlecsGameLoopInterface.h"
 
 #include "FlecsGameLoopTag.h"
+#include "Ticker/FlecsFixedTickSystemTag.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsGameLoopInterface)
 
@@ -21,4 +22,9 @@ void IFlecsGameLoopInterface::InitializeModule(const TSolidNotNull<UFlecsWorld*>
 bool IFlecsGameLoopInterface::IsMainLoop() const
 {
 	return false;
+}
+
+uint8 IFlecsGameLoopInterface::GetTickingGroups() const
+{
+	return static_cast<uint8>(EFlecsTickingGroup::PrePhysics);
 }

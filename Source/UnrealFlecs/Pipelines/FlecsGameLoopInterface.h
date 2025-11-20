@@ -7,6 +7,7 @@
 #include "Types/SolidNotNull.h"
 
 #include "Modules/FlecsModuleInterface.h"
+#include "FlecsTickingGroup.h"
 
 #include "FlecsGameLoopInterface.generated.h"
 
@@ -30,9 +31,11 @@ public:
 	virtual void InitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsEntityHandle& InGameLoopEntity)
 		PURE_VIRTUAL(IFlecsGameLoopInterface::InitializeGameLoop,);
 	
-	virtual bool Progress(double DeltaTime, TSolidNotNull<UFlecsWorld*> InWorld)
+	virtual bool Progress(double DeltaTime, TSolidNotNull<UFlecsWorld*> InWorld, const EFlecsTickingGroup InTickGroup)
 		PURE_VIRTUAL(IFlecsGameLoopInterface::Progress, return false;)
 
 	virtual bool IsMainLoop() const;
+
+	virtual uint8 GetTickingGroups() const;
 	
 }; // class IFlecsGameLoopInterface

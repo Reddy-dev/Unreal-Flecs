@@ -63,7 +63,7 @@ void UFlecsDefaultGameLoop::InitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWor
 	InWorld->SetPipeline(MainPipeline);
 }
 
-bool UFlecsDefaultGameLoop::Progress(const double DeltaTime, const TSolidNotNull<UFlecsWorld*> InWorld)
+bool UFlecsDefaultGameLoop::Progress(const double DeltaTime, const TSolidNotNull<UFlecsWorld*> InWorld, const EFlecsTickingGroup TickingGroup)
 {
 	return InWorld->Progress(DeltaTime);
 }

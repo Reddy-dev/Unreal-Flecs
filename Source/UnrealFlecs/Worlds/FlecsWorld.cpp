@@ -523,6 +523,8 @@ void UFlecsWorld::RegisterUnrealTypes() const
 	RegisterComponentType<FFrameRate>();
 
 	RegisterComponentType<FInstancedStruct>();
+
+	RegisterComponentType<ETickingGroup>();
 }
 
 void UFlecsWorld::InitializeComponentPropertyObserver() const
@@ -1037,16 +1039,22 @@ void UFlecsWorld::SetContext(void* InContext) const
 	World.set_ctx(InContext);
 }
 
-bool UFlecsWorld::ProgressGameLoop(const double DeltaTime)
+bool UFlecsWorld::ProgressGameLoops(const ETickingGroup InTickingGroup, const double DeltaTime)
 {
+	solid_check(IsConvertibleToFlecsTickingGroup(InTickingGroup));
+	
 	SCOPE_CYCLE_COUNTER(STAT_FlecsWorldProgress);
 
 	return std::all_of(GameLoopInterfaces.begin(), GameLoopInterfaces.end(),
-		[DeltaTime, this](const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface)
+		[this, InTickingGroup, DeltaTime](const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface)
 		{
-			solid_cassumef(GameLoopInterface, TEXT("Game loop interface is nullptr"));
-
-			return GameLoopInterface->Progress(DeltaTime, this);
+			if (GameLoopInterface->GetTickingGroups() & InTickingGroup)
+			{
+				GameLoopInterface->Progress(DeltaTime, this,
+				ConvertEngineTickingGroupToFlecsTickingGroup(InTickingGroup));
+			}
+			
+			return true;
 		});
 }
 

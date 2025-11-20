@@ -13,7 +13,7 @@ class UNREALFLECS_API UFlecsDefaultGameLoop final : public UFlecsGameLoopObject
 
 public:
 	virtual void InitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsEntityHandle& InGameLoopEntity) override;
-	virtual bool Progress(double DeltaTime, TSolidNotNull<UFlecsWorld*> InWorld) override;
+	virtual bool Progress(double DeltaTime, TSolidNotNull<UFlecsWorld*> InWorld, const EFlecsTickingGroup TickingGroup) override;
 
 	virtual bool IsMainLoop() const override;
 
