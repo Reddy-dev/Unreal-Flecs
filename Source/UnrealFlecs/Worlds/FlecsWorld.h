@@ -567,7 +567,7 @@ public:
 	void SetContext(void* InContext) const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	bool ProgressGameLoops(const ETickingGroup InTickingGroup,
+	bool ProgressGameLoops(const FGameplayTag& InTickingGroup,
 		const double DeltaTime = 0.0);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")

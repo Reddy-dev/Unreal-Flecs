@@ -52,6 +52,13 @@
 // 	TEXT("Register the member type structs as components if not previously registered."),
 // 	ECVF_Default);
 
+static bool bAutoRegisterAddReferencedObjectsTrait = true;
+static FAutoConsoleVariableRef CVarAutoRegisterAddReferencedObjectsTrait(
+	TEXT("Flecs.AutoRegisterAddReferencedObjectsTrait"),
+	bAutoRegisterAddReferencedObjectsTrait,
+	TEXT("Automatically register the FFlecsAddReferencedObjectsTrait component type on types with UObject* members And/Or with custom AddReferencedObjects implementations."),
+	ECVF_Default);
+
 DECLARE_STATS_GROUP(TEXT("FlecsWorld"), STATGROUP_FlecsWorld, STATCAT_Advanced);
 
 DECLARE_CYCLE_STAT(TEXT("FlecsWorld::Progress"),
@@ -1039,7 +1046,11 @@ void UFlecsWorld::SetContext(void* InContext) const
 	World.set_ctx(InContext);
 }
 
-bool UFlecsWorld::ProgressGameLoops(const ETickingGroup InTickingGroup, const double DeltaTime)
+bool UFlecsWorld::ProgressGameLoops(const FGameplayTag& InTickingGroup, const double DeltaTime)
+{
+}
+
+/*bool UFlecsWorld::ProgressGameLoops(const ETickingGroup InTickingGroup, const double DeltaTime)
 {
 	solid_check(IsConvertibleToFlecsTickingGroup(InTickingGroup));
 	
@@ -1048,15 +1059,11 @@ bool UFlecsWorld::ProgressGameLoops(const ETickingGroup InTickingGroup, const do
 	return std::all_of(GameLoopInterfaces.begin(), GameLoopInterfaces.end(),
 		[this, InTickingGroup, DeltaTime](const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface)
 		{
-			if (GameLoopInterface->GetTickingGroups() & InTickingGroup)
-			{
-				GameLoopInterface->Progress(DeltaTime, this,
-				ConvertEngineTickingGroupToFlecsTickingGroup(InTickingGroup));
-			}
+			
 			
 			return true;
 		});
-}
+}*/
 
 bool UFlecsWorld::Progress(const double DeltaTime)
 {

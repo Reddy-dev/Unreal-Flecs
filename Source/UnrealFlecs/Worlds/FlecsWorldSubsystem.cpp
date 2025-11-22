@@ -30,8 +30,7 @@
 
 FFlecsOnWorldInitializedGlobal Unreal::Flecs::GOnFlecsWorldInitialized;
 
-void FFlecsPhaseTickFunction::ExecuteTick(float DeltaTime, ELevelTick TickType, ENamedThreads::Type CurrentThread,
-	const FGraphEventRef& MyCompletionGraphEvent)
+UFlecsWorldSubsystem::UFlecsWorldSubsystem()
 {
 	
 }
@@ -333,6 +332,16 @@ void UFlecsWorldSubsystem::ListenBeginPlay(const FFlecsOnWorldBeginPlay::FDelega
 	{
 		OnWorldBeginPlayDelegate.Add(Delegate);
 	}
+}
+
+void UFlecsWorldSubsystem::SetupTickFunctions(const TSolidNotNull<UFlecsWorld*> InFlecsWorld)
+{
+	
+}
+
+void UFlecsWorldSubsystem::SetupTickFunctionSettings(const TSolidNotNull<UFlecsWorld*> InFlecsWorld,
+	const FFlecsWorldTickFunction& InTickFunction)
+{
 }
 
 void UFlecsWorldSubsystem::RegisterAllGameplayTags(const TSolidNotNull<UFlecsWorld*> InFlecsWorld)

@@ -3,7 +3,9 @@
 #include "FlecsGameLoopInterface.h"
 
 #include "FlecsGameLoopTag.h"
+#include "FlecsTickGroupNativeTags.h"
 #include "Ticker/FlecsFixedTickSystemTag.h"
+#include "Phases/FlecsDefaultPhaseNativeTags.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsGameLoopInterface)
 
@@ -24,7 +26,7 @@ bool IFlecsGameLoopInterface::IsMainLoop() const
 	return false;
 }
 
-uint8 IFlecsGameLoopInterface::GetTickingGroups() const
+FGameplayTag IFlecsGameLoopInterface::GetTickFunctionTag() const
 {
-	return static_cast<uint8>(EFlecsTickingGroup::PrePhysics);
+	return FFlecsTickGroupNativeTags::Get().FlecsTickGroup_PrePhysics;
 }

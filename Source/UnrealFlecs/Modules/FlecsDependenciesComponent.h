@@ -38,7 +38,7 @@ struct UNREALFLECS_API FFlecsSoftDependenciesComponent
 	GENERATED_BODY()
 
 public:
-	TSortedMap<UClass*, FFlecsDependencyFunctionDefinition> DependencyFunctionPtrs;
+	TSortedMap<TWeakObjectPtr<UClass>, FFlecsDependencyFunctionDefinition> DependencyFunctionPtrs;
 	
 }; // struct FFlecsDependenciesComponent
 

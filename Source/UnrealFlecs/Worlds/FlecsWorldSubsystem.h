@@ -17,6 +17,7 @@
 #include "Types/SolidNotNull.h"
 
 #include "Pipelines/FlecsTickingGroup.h"
+#include "Tick/FlecsWorldTickFunction.h"
 
 #include "FlecsWorldSubsystem.generated.h"
 
@@ -37,33 +38,14 @@ namespace Unreal::Flecs
 	
 } // namespace Unreal::Flecs
 
-USTRUCT()
-struct FFlecsPhaseTickFunction : public FTickFunction
-{
-	GENERATED_BODY()
-	
-	UPROPERTY()
-	TObjectPtr<UFlecsWorldSubsystem> OwningSubsystem = nullptr;
-
-	EFlecsTickingGroup
-
-	virtual void ExecuteTick(float DeltaTime, ELevelTick TickType, ENamedThreads::Type CurrentThread,
-		const FGraphEventRef& MyCompletionGraphEvent) override;
-
-	virtual FString DiagnosticMessage() override
-	{
-		return TEXT("UFlecsWorldSubsystem::FFlecsPhaseTickFunction");
-	}
-	
-}; // struct FFlecsPhaseTickFunction
-
 UCLASS(BlueprintType)
 class UNREALFLECS_API UFlecsWorldSubsystem final : public UWorldSubsystem
 {
 	GENERATED_BODY()
 
-
 public:
+	UFlecsWorldSubsystem();
+	
 	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
 
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
@@ -99,10 +81,14 @@ public:
 	FFlecsOnWorldBeginPlay OnWorldBeginPlayDelegate;
 	FFlecsOnWorldDestroyed OnWorldDestroyedDelegate;
 
-	FFlecsPhaseTickFunction PrePhysicsTickFunction;
-	FFlecsPhaseTickFunction DuringPhysicsTickFunction;
-	FFlecsPhaseTickFunction PostPhysicsTickFunction;
-	FFlecsPhaseTickFunction PostUpdateWorkTickFunction;
+	FFlecsWorldTickFunction PrePhysicsTickFunction;
+	FFlecsWorldTickFunction DuringPhysicsTickFunction;
+	FFlecsWorldTickFunction PostPhysicsTickFunction;
+	FFlecsWorldTickFunction PostUpdateWorkTickFunction;
+
+	void SetupTickFunctions(const TSolidNotNull<UFlecsWorld*> InFlecsWorld);
+
+	void SetupTickFunctionSettings(const TSolidNotNull<UFlecsWorld*> InFlecsWorld, const FFlecsWorldTickFunction& InTickFunction);
 
 protected:
 	UPROPERTY(Transient)
