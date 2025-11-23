@@ -1,0 +1,5 @@
+﻿Reddy-dev/Solid-Macros@main:
+  - source: Source/SolidMacros/
+    dest: Source/SolidMacros/
+  - source: Source/SolidMacrosEditor/
+    dest: Source/SolidMacrosEditor/
