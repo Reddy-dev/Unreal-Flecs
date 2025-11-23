@@ -2491,6 +2491,154 @@ void System_priority_test(void) {
     #endif // FLECS_ENABLE_SYSTEM_PRIORITY
 }
 
+void System_interval_tick_source_no_catchup_big_delta(void) {
+    flecs::world ecs;
+    RegisterTestTypeComponents(ecs);
+    
+    flecs::timer t = ecs.timer().interval(0.5);
+    
+    flecs::Timer& timer = t.obtain<flecs::Timer>();
+    timer.time = 0;
+
+    int32_t sys_invoked = 0;
+
+    ecs.system()
+        .tick_source(t)
+        .run([&](flecs::iter& it) {
+            while (it.next()) {
+                sys_invoked ++;
+            }
+        });
+    
+    ecs.progress(2.0);
+    
+    test_int(1, sys_invoked);
+}
+
+void System_interval_tick_source_with_catchup_big_delta(void) {
+    flecs::world ecs;
+    RegisterTestTypeComponents(ecs);
+
+    flecs::timer t = ecs.timer().interval(0.5);
+    
+    flecs::Timer& timer = t.obtain<flecs::Timer>();
+    timer.time = 0;
+
+    int32_t sys_invoked = 0;
+
+    ecs.system()
+        .tick_source(t)
+        .allow_catchup()     // opt in to catchup behaviour
+        .run([&](flecs::iter& it) {
+            while (it.next()) {
+                sys_invoked ++;
+            }
+        });
+    
+    ecs.progress(2.0);
+    
+    test_int(4, sys_invoked);
+}
+
+void System_rate_tick_source_no_catchup_big_delta(void) {
+    flecs::world ecs;
+    RegisterTestTypeComponents(ecs);
+
+    int32_t sys_invoked = 0;
+
+    ecs.system()
+        .rate(2)
+        .run([&](flecs::iter& it) {
+            while (it.next()) {
+                sys_invoked ++;
+            }
+        });
+
+    ecs.progress(3.0);
+    test_int(sys_invoked, 3);
+}
+
+void System_rate_tick_source_with_catchup_big_delta(void) {
+    flecs::world ecs;
+    RegisterTestTypeComponents(ecs);
+
+    int32_t sys_invoked = 0;
+
+    ecs.system()
+        .rate(2)
+        .allow_catchup()
+        .run([&](flecs::iter& it) {
+            while (it.next()) {
+                sys_invoked ++;
+            }
+        });
+
+    ecs.progress(3.0);
+    test_int(sys_invoked, 6);
+}
+
+void System_nested_rate_tick_source_no_catchup_big_delta(void) {
+    flecs::world ecs;
+    RegisterTestTypeComponents(ecs);
+
+    flecs::timer t_3 = ecs.timer().rate(2); // 0.5s interval
+    flecs::timer t_6 = ecs.timer().rate(1, t_3); // 1s interval
+
+    int32_t sys_a_invoked = 0, sys_b_invoked = 0;
+
+    ecs.system()
+        .tick_source(t_3)
+        .run([&](flecs::iter& it) {
+            while (it.next()) {
+                sys_a_invoked ++;
+            }
+        });
+
+    ecs.system()
+        .tick_source(t_6)
+        .run([&](flecs::iter& it) {
+            while (it.next()) {
+                sys_b_invoked ++;
+            }
+        });
+
+    ecs.progress(3.0);
+    test_int(3, sys_a_invoked);
+    test_int(1, sys_b_invoked);
+}
+
+void System_nested_rate_tick_source_with_catchup_big_delta(void) {
+    flecs::world ecs;
+    RegisterTestTypeComponents(ecs);
+
+    flecs::timer t_3 = ecs.timer().rate(2); // 0.5s interval
+    flecs::timer t_6 = ecs.timer().rate(1, t_3); // 1s interval
+
+    int32_t sys_a_invoked = 0, sys_b_invoked = 0;
+
+    ecs.system()
+        .tick_source(t_3)
+        .allow_catchup()     // opt in to catchup behaviour
+        .run([&](flecs::iter& it) {
+            while (it.next()) {
+                sys_a_invoked ++;
+            }
+        });
+
+    ecs.system()
+        .tick_source(t_6)
+        .allow_catchup()     // opt in to catchup behaviour
+        .run([&](flecs::iter& it) {
+            while (it.next()) {
+                sys_b_invoked ++;
+            }
+        });
+
+    ecs.progress(3.0);
+    test_int(6, sys_a_invoked);
+    test_int(3, sys_b_invoked);
+}
+
 
 END_DEFINE_SPEC(FFlecsSystemTestsSpec);
 
@@ -2649,6 +2797,12 @@ void FFlecsSystemTestsSpec::Define()
     It("register_twice_w_each_run", [&] { System_register_twice_w_each_run(); });
     It("run_w_0_src_query", [&] { System_run_w_0_src_query(); });
     It("priority_test", [&] { System_priority_test(); });
+    It("interval_tick_source_no_catchup_big_delta", [&] { System_interval_tick_source_no_catchup_big_delta(); });
+    It("interval_tick_source_with_catchup_big_delta", [&] { System_interval_tick_source_with_catchup_big_delta(); });
+    It("rate_tick_source_no_catchup_big_delta", [&] { System_rate_tick_source_no_catchup_big_delta(); });
+    It("rate_tick_source_with_catchup_big_delta", [&] { System_rate_tick_source_with_catchup_big_delta(); });
+    It("nested_rate_tick_source_no_catchup_big_delta", [&] { System_nested_rate_tick_source_no_catchup_big_delta(); });
+    It("nested_rate_tick_source_with_catchup_big_delta", [&] { System_nested_rate_tick_source_with_catchup_big_delta(); });
 }
 
 #endif // WITH_AUTOMATION_TESTS

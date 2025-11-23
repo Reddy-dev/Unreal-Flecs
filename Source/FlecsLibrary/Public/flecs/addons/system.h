@@ -30,7 +30,7 @@ extern "C" {
 
 /** Component used to provide a tick source to systems */
 typedef struct EcsTickSource {
-    bool tick;                 /**< True if providing tick */
+    uint32_t tick;                 /**< how mant ticks the source has produced */
     ecs_ftime_t time_elapsed;  /**< Time elapsed since last tick */
 } EcsTickSource;
 
@@ -108,6 +108,11 @@ typedef struct ecs_system_desc_t {
     /** If true, system will have access to the actual world. Cannot be true at the
      * same time as multi_threaded. */
     bool immediate;
+
+    /** when true, allows the system to catch up on missed ticks when running
+     * with a tick source */
+    bool allow_catchup;
+    
 } ecs_system_desc_t;
 
 /** Create a system */
@@ -137,6 +142,10 @@ typedef struct ecs_system_t {
 
     /** Is system ran in immediate mode */
     bool immediate;
+
+    /** when true, allows the system to catch up on missed ticks when running
+     * with a tick source */
+    bool allow_catchup;
 
     /** Cached system name (for perf tracing) */
     const char *name;

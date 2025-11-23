@@ -32,6 +32,7 @@ ecs_entity_t flecs_run_system(
     flecs_poly_assert(world, ecs_world_t);
     ecs_ftime_t time_elapsed = delta_time;
     ecs_entity_t tick_source = system_data->tick_source;
+    uint32_t tick_count = 1;
 
     /* Support legacy behavior */
     if (!param) {
@@ -43,6 +44,10 @@ ecs_entity_t flecs_run_system(
 
         if (tick) {
             time_elapsed = tick->time_elapsed;
+
+            if (tick->tick > 1 && system_data->allow_catchup) {
+                tick_count = tick->tick;
+            }
 
             /* If timer hasn't fired we shouldn't run the system */
             if (!tick->tick) {
@@ -81,66 +86,93 @@ ecs_entity_t flecs_run_system(
 
     flecs_poly_assert(stage, ecs_stage_t);
 
-    /* Prepare the query iterator */
-    ecs_iter_t wit, qit = ecs_query_iter(thread_ctx, system_data->query);
-    ecs_iter_t *it = &qit;
+    ecs_entity_t last_interrupted = 0;
 
-    qit.system = system;
-    qit.delta_time = delta_time;
-    qit.delta_system_time = time_elapsed;
-    qit.param = param;
-    qit.ctx = system_data->ctx;
-    qit.callback_ctx = system_data->callback_ctx;
-    qit.run_ctx = system_data->run_ctx;
-
-    if (stage_count > 1 && system_data->multi_threaded) {
-        wit = ecs_worker_iter(it, stage_index, stage_count);
-        it = &wit;
+    ecs_ftime_t dt_per_iter = delta_time;
+    ecs_ftime_t sysdt_per_iter = time_elapsed;
+    if (tick_count > 1) {
+        dt_per_iter = delta_time / (ecs_ftime_t)tick_count;
+        sysdt_per_iter = time_elapsed / (ecs_ftime_t)tick_count;
     }
 
-    ecs_entity_t old_system = flecs_stage_set_system(stage, system);
-    ecs_iter_action_t action = system_data->action;
-    it->callback = action;
+    for (uint32_t iter = 0; iter < tick_count; iter ++) {
+        ecs_iter_t qit = ecs_query_iter(thread_ctx, system_data->query);
+        ecs_iter_t wit;
+        ecs_iter_t *it = &qit;
 
-    ecs_run_action_t run = system_data->run;
-    if (run) {
-        /* If system query matches nothing, the system run callback doesn't have
-         * anything to iterate, so the iterator resources don't get cleaned up
-         * automatically, so clean it up here. */
-        if (system_data->query->flags & EcsQueryMatchNothing) {
-            it->next = flecs_default_next_callback; /* Return once */
-            run(it);
-            ecs_iter_fini(&qit);
-        } else {
-            if (it == &qit && (qit.flags & EcsIterTrivialCached)) {
-                it->next = flecs_query_trivial_cached_next;
-            }
-            run(it);
+        qit.system = system;
+        qit.delta_time = (tick_source && system_data->allow_catchup)
+            ? dt_per_iter
+            : delta_time;              /* keep legacy behavior when not catching up */
+        qit.delta_system_time = (tick_source && system_data->allow_catchup)
+            ? sysdt_per_iter
+            : time_elapsed;
+        qit.param = param;
+        qit.ctx = system_data->ctx;
+        qit.callback_ctx = system_data->callback_ctx;
+        qit.run_ctx = system_data->run_ctx;
+
+        qit.interrupted_by = 0;
+
+        if (stage_count > 1 && system_data->multi_threaded) {
+            wit = ecs_worker_iter(it, stage_index, stage_count);
+            it = &wit;
+
+            it->interrupted_by = 0;
         }
-    } else {
-        if (system_data->query->term_count) {
-            if (it == &qit) {
-                if (qit.flags & EcsIterTrivialCached) {
-                    while (flecs_query_trivial_cached_next(&qit)) {
-                        action(&qit);
+
+        ecs_entity_t old_system = flecs_stage_set_system(stage, system);
+        ecs_iter_action_t action = system_data->action;
+        it->callback = action;
+
+        ecs_run_action_t run = system_data->run;
+        if (run) {
+            /* If system query matches nothing, the system run callback doesn't have
+             * anything to iterate, so the iterator resources don't get cleaned up
+             * automatically, so clean it up here. */
+            if (system_data->query->flags & EcsQueryMatchNothing) {
+                it->next = flecs_default_next_callback; /* Return once */
+                run(it);
+                ecs_iter_fini(&qit);
+            } else {
+                if (it == &qit && (qit.flags & EcsIterTrivialCached)) {
+                    it->next = flecs_query_trivial_cached_next;
+                }
+                run(it);
+            }
+        } else {
+            if (system_data->query->term_count) {
+                if (it == &qit) {
+                    if (qit.flags & EcsIterTrivialCached) {
+                        while (flecs_query_trivial_cached_next(&qit)) {
+                            action(&qit);
+                        }
+                    } else {
+                        while (ecs_query_next(&qit)) {
+                            action(&qit);
+                        }
                     }
                 } else {
-                    while (ecs_query_next(&qit)) {
-                        action(&qit);
+                    while (ecs_iter_next(it)) {
+                        action(it);
                     }
                 }
             } else {
-                while (ecs_iter_next(it)) {
-                    action(it);
-                }
+                action(&qit);
+                ecs_iter_fini(&qit);
             }
-        } else {
-            action(&qit);
-            ecs_iter_fini(&qit);
+        }
+
+        flecs_stage_set_system(stage, old_system);
+
+        if (it->interrupted_by) {
+            last_interrupted = it->interrupted_by;
+            
+            if (!(tick_source && system_data->allow_catchup && tick_count > 1)) {
+                break;
+            }
         }
     }
-
-    flecs_stage_set_system(stage, old_system);
 
     if (measure_time) {
         system_data->time_spent += (ecs_ftime_t)ecs_time_measure(&time_start);
@@ -148,7 +180,7 @@ ecs_entity_t flecs_run_system(
 
     ecs_os_perf_trace_pop(system_data->name);
 
-    return it->interrupted_by;
+    return last_interrupted;
 }
 
 
@@ -308,6 +340,8 @@ ecs_entity_t ecs_system_init(
         system->multi_threaded = desc->multi_threaded;
         system->immediate = desc->immediate;
 
+        system->allow_catchup = desc->allow_catchup;
+
         system->name = ecs_get_path(world, entity);
 
         if (flecs_system_init_timer(world, entity, desc)) {
@@ -392,6 +426,10 @@ ecs_entity_t ecs_system_init(
 
         if (desc->immediate) {
             system->immediate = desc->immediate;
+        }
+
+        if (desc->allow_catchup) {
+            system->allow_catchup = desc->allow_catchup;
         }
 
         if (flecs_system_init_timer(world, entity, desc)) {

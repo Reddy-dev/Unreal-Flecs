@@ -146,6 +146,11 @@ public:
         return *this;
     }
 
+    Base& allow_catchup(bool value = true) {
+        desc_->allow_catchup = value;
+        return *this;
+    }
+
     /** Set system context */
     Base& ctx(void *ptr) {
         desc_->ctx = ptr;

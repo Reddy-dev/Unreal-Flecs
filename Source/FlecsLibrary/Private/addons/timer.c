@@ -18,7 +18,7 @@ void ProgressTimers(ecs_iter_t *it) {
 
     int i;
     for (i = 0; i < it->count; i ++) {
-        tick_source[i].tick = false;
+        tick_source[i].tick = 0;
 
         if (!timer[i].active) {
             continue;
@@ -27,24 +27,36 @@ void ProgressTimers(ecs_iter_t *it) {
         const ecs_world_info_t *info = ecs_get_world_info(it->world);
         ecs_ftime_t time_elapsed = timer[i].time + info->delta_time_raw;
         ecs_ftime_t timeout = timer[i].timeout;
-        
-        if (time_elapsed >= timeout) {
-            ecs_ftime_t t = time_elapsed - timeout;
-            if (t > timeout) {
-                t = 0;
+
+        if (timeout <= 0) {
+            /* invalid / zero timeout, just keep accumulating */
+            timer[i].time += info->delta_time_raw;
+            continue;
+        }
+
+        uint32_t ticks = (uint32_t)(time_elapsed / timeout);
+            
+        if (ticks > 0) {
+            ecs_ftime_t remainder = time_elapsed - (ecs_ftime_t)ticks * timeout;
+            if (remainder < 0) {
+                remainder = 0;
             }
 
-            timer[i].time = t; /* Initialize with remainder */
-            tick_source[i].tick = true;
-            tick_source[i].time_elapsed = time_elapsed - timer[i].overshoot;
-            timer[i].overshoot = t;
+            timer[i].time = remainder;    /* remainder for next frame */
+            timer[i].overshoot = remainder;
+            timer[i].fired_count += (int32_t)ticks;
+
+            tick_source[i].tick = ticks;
+            /* total time represented by the ticks; per-tick dt is computed
+             * as time_elapsed / tick in flecs_run_system */
+            tick_source[i].time_elapsed = (ecs_ftime_t)ticks * timeout;
 
             if (timer[i].single_shot) {
                 timer[i].active = false;
             }
         } else {
-            timer[i].time = time_elapsed;
-        }  
+            timer[i].time += info->delta_time_raw;
+        }
     }
 }
 
@@ -58,31 +70,46 @@ void ProgressRateFilters(ecs_iter_t *it) {
         ecs_entity_t src = filter[i].src;
         bool inc = false;
 
+        tick_dst[i].tick = 0;
+
         filter[i].time_elapsed += it->delta_time;
+
+        uint32_t src_ticks = 0;
 
         if (src) {
             const EcsTickSource *tick_src = ecs_get(
                 it->world, src, EcsTickSource);
             if (tick_src) {
-                inc = tick_src->tick;
+                src_ticks = tick_src->tick;
             } else {
-                inc = true;
+                /* no tick source component, behave as if it ticked once */
+                src_ticks = 1;
             }
         } else {
-            inc = true;
+            /* frames as source: one "tick" per frame */
+            src_ticks = 1;
         }
 
-        if (inc) {
-            filter[i].tick_count ++;
-            bool triggered = !(filter[i].tick_count % filter[i].rate);
-            tick_dst[i].tick = triggered;
-            tick_dst[i].time_elapsed = filter[i].time_elapsed;
+        if (src_ticks == 0) {
+            tick_dst[i].tick = 0;
+            continue;
+        }
 
-            if (triggered) {
-                filter[i].time_elapsed = 0;
-            }            
+        uint32_t triggers_this_frame = 0;
+        
+        for (uint32_t t = 0; t < src_ticks; t ++) {
+            filter[i].tick_count ++;
+            if (!(filter[i].tick_count % filter[i].rate)) {
+                triggers_this_frame ++;
+            }
+        }
+
+        if (triggers_this_frame > 0) {
+            tick_dst[i].tick = triggers_this_frame;
+            tick_dst[i].time_elapsed = filter[i].time_elapsed;
+            filter[i].time_elapsed = 0;
         } else {
-            tick_dst[i].tick = false;
+            tick_dst[i].tick = 0;
         }
     }
 }
@@ -94,7 +121,7 @@ void ProgressTickSource(ecs_iter_t *it) {
     /* If tick source has no filters, tick unconditionally */
     int i;
     for (i = 0; i < it->count; i ++) {
-        tick_src[i].tick = true;
+        tick_src[i].tick = 1;
         tick_src[i].time_elapsed = it->delta_time;
     }
 }
