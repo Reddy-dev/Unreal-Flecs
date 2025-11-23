@@ -2528,7 +2528,7 @@ void System_interval_tick_source_with_catchup_big_delta(void) {
 
     ecs.system()
         .tick_source(t)
-        .allow_catchup()     // opt in to catchup behaviour
+        .allow_catchup()
         .run([&](flecs::iter& it) {
             while (it.next()) {
                 sys_invoked ++;
@@ -2581,8 +2581,8 @@ void System_nested_rate_tick_source_no_catchup_big_delta(void) {
     flecs::world ecs;
     RegisterTestTypeComponents(ecs);
 
-    flecs::timer t_3 = ecs.timer().rate(2); // 0.5s interval
-    flecs::timer t_6 = ecs.timer().rate(1, t_3); // 1s interval
+    flecs::timer t_3 = ecs.timer().rate(2);
+    flecs::timer t_6 = ecs.timer().rate(1, t_3);
 
     int32_t sys_a_invoked = 0, sys_b_invoked = 0;
 
@@ -2618,7 +2618,7 @@ void System_nested_rate_tick_source_with_catchup_big_delta(void) {
 
     ecs.system()
         .tick_source(t_3)
-        .allow_catchup()     // opt in to catchup behaviour
+        .allow_catchup()
         .run([&](flecs::iter& it) {
             while (it.next()) {
                 sys_a_invoked ++;
@@ -2627,7 +2627,7 @@ void System_nested_rate_tick_source_with_catchup_big_delta(void) {
 
     ecs.system()
         .tick_source(t_6)
-        .allow_catchup()     // opt in to catchup behaviour
+        .allow_catchup() 
         .run([&](flecs::iter& it) {
             while (it.next()) {
                 sys_b_invoked ++;
