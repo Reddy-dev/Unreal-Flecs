@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Sync SolidMacros folders to Solid-Macros (direct push)
-        uses: Redocly/repo-file-sync-action@main
+        uses: Reddy-dev/repo-file-sync-action@main
         with:
           GH_PAT: ${{ secrets.GH_PAT }}
           COMMIT_PREFIX: "[UnrealFlecs-SolidMacros Sync]"
