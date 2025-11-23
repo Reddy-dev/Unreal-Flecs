@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - Solid-Macros-Auto-Sync
   workflow_dispatch:
 
 jobs:
