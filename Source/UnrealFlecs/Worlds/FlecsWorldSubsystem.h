@@ -16,7 +16,6 @@
 
 #include "Types/SolidNotNull.h"
 
-#include "Pipelines/FlecsTickingGroup.h"
 #include "Tick/FlecsWorldTickFunction.h"
 
 #include "FlecsWorldSubsystem.generated.h"
