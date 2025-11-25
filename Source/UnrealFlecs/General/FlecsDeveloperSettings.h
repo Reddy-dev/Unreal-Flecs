@@ -9,7 +9,7 @@
 #include "FlecsDeveloperSettings.generated.h"
 
 UCLASS(MinimalAPI, BlueprintType, Config = Game, DefaultConfig, Category = "Flecs",
-	meta = (DisplayName = "Flecs World Settings"))
+	meta = (DisplayName = "Flecs Settings"))
 class UFlecsDeveloperSettings final : public UDeveloperSettings
 {
 	GENERATED_BODY()
