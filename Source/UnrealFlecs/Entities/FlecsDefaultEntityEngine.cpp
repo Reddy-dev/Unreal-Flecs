@@ -1,17 +1,19 @@
 ﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
 
 // ReSharper disable CppExpressionWithoutSideEffects
-#include "FlecsDefaultEntityEngineSubsystem.h"
+#include "FlecsDefaultEntityEngine.h"
 
 #include "Logging/StructuredLog.h"
-
-#include "FlecsDefaultEntitiesDeveloperSettings.h"
 
 #include "Logs/FlecsCategories.h"
 
 #include "Worlds/FlecsWorldSubsystem.h"
 
-FFlecsDefaultEntityEngine FFlecsDefaultEntityEngine::Instance;
+FFlecsDefaultEntityEngine& FFlecsDefaultEntityEngine::Get()
+{
+	static FFlecsDefaultEntityEngine Instance;
+	return Instance;
+}
 
 FFlecsDefaultEntityEngine::FFlecsDefaultEntityEngine()
 {
@@ -128,7 +130,7 @@ void FFlecsDefaultEntityEngine::Initialize()
 	bIsInitialized = true;
 }
 
-FFlecsId FFlecsDefaultEntityEngine::AddDefaultEntity(FFlecsDefaultMetaEntity DefaultEntity)
+FFlecsId FFlecsDefaultEntityEngine::AddDefaultEntity(const FFlecsDefaultMetaEntity& DefaultEntity)
 {
 	auto ContainsDefaultEntity = [this](const FString& EntityName) -> bool
 	{

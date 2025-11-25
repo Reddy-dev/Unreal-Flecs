@@ -5,10 +5,15 @@
 
 #include "Engine/EngineBaseTypes.h"
 #include "Engine/World.h"
+#include "Ticker/FlecsTickerGameLoop.h"
 
 #include "Worlds/FlecsWorld.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsRestModule)
+
+UFlecsRestModule::UFlecsRestModule()
+{
+}
 
 void UFlecsRestModule::InitializeModule(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsEntityHandle& InModuleEntity)
 {
@@ -21,14 +26,14 @@ void UFlecsRestModule::InitializeModule(TSolidNotNull<UFlecsWorld*> InWorld, con
 		
 		const TSolidNotNull<const UWorld*> UnrealWorld = InWorld->GetWorld();
 
-		#if WITH_EDITOR
+	#if WITH_EDITOR
 		
 		if (UnrealWorld->GetNetMode() == NM_Client)
 		{
 			ClientPieInstanceOffset = static_cast<uint16>(UE::GetPlayInEditorID());
 		}
 		
-		#endif // WITH_EDITOR
+	#endif // WITH_EDITOR
 		
 		const uint16 RestPort = ECS_REST_DEFAULT_PORT + ClientPieInstanceOffset;
 
@@ -38,14 +43,14 @@ void UFlecsRestModule::InitializeModule(TSolidNotNull<UFlecsWorld*> InWorld, con
 		solid_checkf(RestEntity.IsValid(),
 			TEXT("Flecs REST module failed to create REST singleton entity on port %d."), RestPort);
 
-		#ifdef FLECS_STATS
+	#ifdef FLECS_STATS
 
 		if (bImportStats)
 		{
 			StatsEntity = InWorld->ImportFlecsModule<flecs::stats>();
 		}
 
-		#endif // #ifdef FLECS_STATS
+	#endif // #ifdef FLECS_STATS
 
 #endif // #ifdef FLECS_REST
 	});
@@ -53,6 +58,7 @@ void UFlecsRestModule::InitializeModule(TSolidNotNull<UFlecsWorld*> InWorld, con
 
 void UFlecsRestModule::DeinitializeModule(TSolidNotNull<UFlecsWorld*> InWorld)
 {
+	// @TODO: Add Tests for destroying this module during runtime
 #ifdef FLECS_REST
 
 #ifdef FLECS_STATS

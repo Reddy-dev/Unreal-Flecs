@@ -11,6 +11,7 @@
 #include "FlecsAbstractWorldSubsystem.generated.h"
 
 // @TODO:Add Tests for this class!
+// @TODO: auto add a singleton component for each inheritor of this class?
 
 class UFlecsWorldSubsystem;
 
@@ -20,6 +21,8 @@ class UNREALFLECS_API UFlecsAbstractWorldSubsystem : public UWorldSubsystem
 	GENERATED_BODY()
 
 public:
+	UFlecsAbstractWorldSubsystem();
+	
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void OnFlecsWorldInitialized(const TSolidNotNull<UFlecsWorld*> InWorld);
 	virtual void Deinitialize() override;
@@ -28,6 +31,8 @@ public:
 
 	NO_DISCARD UFlecsWorldSubsystem* GetFlecsWorldSubsystem() const;
 	NO_DISCARD TSolidNotNull<UFlecsWorldSubsystem*> GetFlecsWorldSubsystemChecked() const;
+
+	NO_DISCARD bool IsFlecsWorldValid() const;
 
 	// Will return null if the world isn't valid or initialized yet.
 	NO_DISCARD UFlecsWorld* GetFlecsWorld() const;

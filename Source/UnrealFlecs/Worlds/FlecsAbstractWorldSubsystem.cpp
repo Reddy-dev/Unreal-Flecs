@@ -8,6 +8,10 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsAbstractWorldSubsystem)
 
+UFlecsAbstractWorldSubsystem::UFlecsAbstractWorldSubsystem()
+{
+}
+
 void UFlecsAbstractWorldSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
@@ -55,6 +59,11 @@ TSolidNotNull<UFlecsWorldSubsystem*> UFlecsAbstractWorldSubsystem::GetFlecsWorld
 {
 	solid_checkf(FlecsWorldRef.IsValid(), TEXT("FlecsWorldSubsystem is not valid!"));
 	return FlecsWorldSubsystemRef.Get();
+}
+
+bool UFlecsAbstractWorldSubsystem::IsFlecsWorldValid() const
+{
+	return FlecsWorldRef.IsValid();
 }
 
 UFlecsWorld* UFlecsAbstractWorldSubsystem::GetFlecsWorld() const

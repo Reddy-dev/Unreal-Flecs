@@ -2,10 +2,12 @@
 
 #include "UnrealFlecs.h"
 
+#include "Misc/CoreDelegates.h"
+
 #include "Versioning/UnrealFlecsVersion.h"
 
 #include "General/FlecsOSAPI.h"
-#include "Entities/FlecsDefaultEntityEngineSubsystem.h"
+#include "Entities/FlecsDefaultEntityEngine.h"
 
 #if !defined(SOLID_MACROS_VERSION) || SOLID_MACROS_VERSION != EXPECTED_SOLID_MACROS_VERSION
 #error "The Solid Macros version is not as expected. Please update the Solid Macros to the latest version."

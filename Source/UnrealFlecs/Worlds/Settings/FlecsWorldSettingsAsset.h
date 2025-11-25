@@ -18,13 +18,18 @@ class UNREALFLECS_API UFlecsWorldSettingsAsset : public UDataAsset
 
 public:
 	UFlecsWorldSettingsAsset();
+	UFlecsWorldSettingsAsset(const FObjectInitializer& ObjectInitializer);
 		
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ShowOnlyInnerProperties))
 	FFlecsWorldSettingsInfo WorldSettings;
+
+	virtual void PostLoad() override;
 
 #if WITH_EDITOR
 
 	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
+	EDataValidationResult CheckForDuplicateModules(FDataValidationContext& Context, TArrayView<TObjectPtr<UObject>> ImportedModules) const;
+	EDataValidationResult CheckForHardDependencies(FDataValidationContext& Context, TArrayView<TObjectPtr<UObject>> ImportedModules) const;
 
 #endif // WITH_EDITOR
 

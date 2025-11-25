@@ -19,6 +19,24 @@
 namespace Unreal::Flecs
 {
 	using FFlecsComponentFunction = std::function<void(flecs::world, const FFlecsComponentHandle&)>;
+
+	namespace internal
+	{
+		template <typename T>
+		FORCEINLINE UScriptStruct* GetScriptStructIf()
+		{
+			if constexpr (Solid::IsScriptStruct<T>())
+			{
+				return TBaseStructure<T>::Get();
+			}
+			else
+			{
+				return nullptr;
+			}
+		}
+		
+	} // namespace internal
+	
 } // namespace Unreal::Flecs
 
 struct UNREALFLECS_API FFlecsComponentProperties
@@ -62,9 +80,7 @@ public:
 	
 }; // struct FFlecsComponentPropertiesRegistry
 
-// @TODO: Consider adding Auto-Registration
-// std::function<void(flecs::world, const FFlecsComponentHandle&)>
-#define REGISTER_FLECS_COMPONENT(Name, RegistrationFunction) \
+#define INTERNAL_REGISTER_FLECS_COMPONENT_IMPL(Name, RegistrationFunction) \
 	namespace \
 	{ \
 		struct FFlecs_AutoRegister_##Name \
@@ -76,7 +92,8 @@ public:
 					if constexpr (Solid::IsScriptStruct<Name>()) \
 					{ \
 						FFlecsComponentPropertiesRegistry::Get().RegisterComponentProperties( \
-						#Name, TBaseStructure<Name>::Get(), sizeof(Name), alignof(Name), RegistrationFunction); \
+						#Name, Unreal::Flecs::internal::GetScriptStructIf<Name>(), \
+						sizeof(Name), alignof(Name), RegistrationFunction); \
 						\
 						if constexpr (std::is_move_constructible<Name>::value || std::is_move_assignable<Name>::value) \
 						{ \
@@ -93,3 +110,14 @@ public:
 		}; \
 		static FFlecs_AutoRegister_##Name AutoRegister_##Name; \
 	}
+
+#define INTERNAL_REGISTER_FLECS_COMPONENT_1(Name) \
+	INTERNAL_REGISTER_FLECS_COMPONENT_IMPL(Name, Unreal::Flecs::FFlecsComponentFunction{})
+
+#define INTERNAL_REGISTER_FLECS_COMPONENT_2(Name, RegistrationFunction) \
+	INTERNAL_REGISTER_FLECS_COMPONENT_IMPL(Name, RegistrationFunction)
+
+// @TODO: Consider adding Auto-Registration
+// std::function<void(flecs::world, const FFlecsComponentHandle&)>
+#define REGISTER_FLECS_COMPONENT(...) \
+	PREPROCESSOR_APPEND_VA_ARG_COUNT(INTERNAL_REGISTER_FLECS_COMPONENT_, ##__VA_ARGS__)(__VA_ARGS__)

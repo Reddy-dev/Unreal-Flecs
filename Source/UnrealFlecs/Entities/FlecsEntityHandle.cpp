@@ -3,6 +3,7 @@
 // ReSharper disable CppTooWideScopeInitStatement
 #include "FlecsEntityHandle.h"
 
+#include "Collections/FlecsCollectionWorldSubsystem.h"
 #include "Logging/StructuredLog.h"
 
 #include "Logs/FlecsCategories.h"
@@ -40,7 +41,7 @@ bool FFlecsEntityHandle::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOut
             return std::invoke(
                 NetSerializeDefinition.NetSerializeFunction,
                 *this,
-                GetFlecsWorld(),
+                GetFlecsWorldChecked(),
                 Ar,
                 Map,
                 bOutSuccess);
@@ -58,7 +59,7 @@ bool FFlecsEntityHandle::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOut
         return std::invoke(
             *Unreal::Flecs::GNetSerializeFunctionPtr,
             *this,
-            GetFlecsWorld(),
+            GetFlecsWorldChecked(),
             Ar,
             Map,
             bOutSuccess);
@@ -71,4 +72,61 @@ bool FFlecsEntityHandle::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOut
         bOutSuccess = false;
         return false;
     }
+}
+
+const FFlecsEntityHandle::FSelfType& FFlecsEntityHandle::AddCollection(const FFlecsId InCollection,
+    const FInstancedStruct& InParams) const
+{
+    solid_checkf(InCollection.IsValid(),
+        TEXT("Trying to add an invalid collection to an entity!"));
+    solid_checkf(GetNativeFlecsWorld().has<FFlecsCollectionSubsystemSingleton>(),
+        TEXT("Trying to add a collection to an entity, but the FlecsCollectionSubsystemSingleton is not registered in the world!"));
+    
+    const FFlecsCollectionSubsystemSingleton& CollectionSubsystemSingleton
+       = GetNativeFlecsWorld().get<FFlecsCollectionSubsystemSingleton>();
+
+    solid_checkf(CollectionSubsystemSingleton.WorldSubsystem.IsValid(),
+        TEXT("Trying to add a collection to an entity, but the FlecsCollectionWorldSubsystem is not initialized!"));
+
+    CollectionSubsystemSingleton.WorldSubsystem->AddCollectionToEntity(*this, InCollection, InParams);
+    return *this;
+}
+
+const FFlecsEntityHandle::FSelfType& FFlecsEntityHandle::AddCollection(const FFlecsCollectionReference& InCollectionRef,
+    const FInstancedStruct& InParams) const
+{
+    solid_checkf(GetNativeFlecsWorld().has<FFlecsCollectionSubsystemSingleton>(),
+        TEXT("Trying to add a collection to an entity, but the FlecsCollectionSubsystemSingleton is not registered in the world!"));
+    
+    const FFlecsCollectionSubsystemSingleton& CollectionSubsystemSingleton
+       = GetNativeFlecsWorld().get<FFlecsCollectionSubsystemSingleton>();
+
+    solid_checkf(CollectionSubsystemSingleton.WorldSubsystem.IsValid(),
+        TEXT("Trying to add a collection to an entity, but the FlecsCollectionWorldSubsystem is not initialized!"));
+
+    CollectionSubsystemSingleton.WorldSubsystem->AddCollectionToEntity(*this, InCollectionRef, InParams);
+    return *this;
+}
+
+const FFlecsEntityHandle::FSelfType& FFlecsEntityHandle::AddCollection(
+    const FFlecsCollectionInstancedReference& InCollectionRef) const
+{
+    return AddCollection(InCollectionRef.Collection, InCollectionRef.Parameters);
+}
+
+const FFlecsEntityHandle::FSelfType& FFlecsEntityHandle::RemoveCollection(const FFlecsId InCollection) const
+{
+    solid_checkf(InCollection.IsValid(),
+      TEXT("Trying to add an invalid collection to an entity!"));
+    solid_checkf(GetNativeFlecsWorld().has<FFlecsCollectionSubsystemSingleton>(),
+        TEXT("Trying to add a collection to an entity, but the FlecsCollectionSubsystemSingleton is not registered in the world!"));
+
+    const FFlecsCollectionSubsystemSingleton& CollectionSubsystemSingleton
+       = GetNativeFlecsWorld().get<FFlecsCollectionSubsystemSingleton>();
+
+    solid_checkf(CollectionSubsystemSingleton.WorldSubsystem.IsValid(),
+        TEXT("Trying to add a collection to an entity, but the FlecsCollectionWorldSubsystem is not initialized!"));
+
+    CollectionSubsystemSingleton.WorldSubsystem->RemoveCollectionFromEntity(*this, InCollection);
+    return *this;
 }

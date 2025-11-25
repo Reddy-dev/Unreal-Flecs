@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagsManager.h"
-#include "Entities/FlecsDefaultEntityEngineSubsystem.h"
+#include "Entities/FlecsDefaultEntityEngine.h"
 #include "Fixtures/FlecsWorldFixture.h"
 #include "UObject/Object.h"
 #include "Developer/CQTest/Public/CQTest.h"
@@ -13,14 +13,46 @@
 DECLARE_DEFAULT_ENTITY(TestEntityOption);
 DECLARE_DEFAULT_ENTITY(TestEntityOption2WithTrait);
 
+namespace Unreal::Flecs::test::internal
+{
+	DECLARE_DEFAULT_ENTITY(TestEntityOption3InNamespace);
+} // namespace Unreal::Flecs::test::internal
+
+DECLARE_DEFAULT_ENTITY(TestEntityOption4WithComponentValue);
+
 struct FFlecsTest_CPPStruct
 {
 }; // struct FFlecsTest_CPPStruct
 
 struct FFlecsTest_CPPStructValue
 {
-	int32 Value;
+	int32 Value = 1;
 }; // struct FFlecsTest_CPPStructWithNameAndValue
+
+struct FFlecsTest_CPPStruct_Traits
+{
+}; // struct FFlecsTest_CppStruct_Traits
+
+REGISTER_FLECS_COMPONENT(FFlecsTest_CPPStruct_Traits,
+	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
+	{
+		InComponentHandle
+			.Add(flecs::Trait)
+			.Add(flecs::PairIsTag);
+	});
+
+struct FFlecsTest_CPPStructValue_Traits
+{
+	uint32 Value = 0;
+}; // struct FFlecsTest_CPPStruct_Value
+
+REGISTER_FLECS_COMPONENT(FFlecsTest_CPPStructValue_Traits,
+	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
+	{
+		InComponentHandle
+			.Add(flecs::Trait)
+			.Add(flecs::PairIsTag);
+	});
 
 USTRUCT()
 struct FFlecsTestStruct_Tag
@@ -47,7 +79,7 @@ struct FFlecsTestStruct_Value
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs|Test")
-	int32 Value = 0;
+	int32 Value = 1;
 	
 }; // struct FFlecsTestStructWithNameAndValue
 
@@ -108,7 +140,28 @@ public:
 REGISTER_FLECS_COMPONENT(FFlecsTestStruct_WithPropertyTraits,
 	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
 	{
-		InComponentHandle.Add(flecs::Trait);
+		InComponentHandle
+			.Add(flecs::Trait)
+			.Add(flecs::PairIsTag);
+	});
+
+USTRUCT()
+struct FFlecsTestStructValue_WithPropertyTraits
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY()
+	uint32 Value = 0;
+	
+}; // struct FFlecsTestStruct_WithProperties
+
+REGISTER_FLECS_COMPONENT(FFlecsTestStructValue_WithPropertyTraits,
+	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
+	{
+		InComponentHandle
+			.Add(flecs::Trait)
+			.Add(flecs::PairIsTag);
 	});
 
 USTRUCT()
@@ -138,6 +191,26 @@ REGISTER_FLECS_COMPONENT(FFlecsTestStruct_PairIsTag,
 	{
 		InComponentHandle.Add(flecs::PairIsTag);
 	});
+
+USTRUCT()
+struct FFlecsTestStruct_EmptyRegistrationFunction
+{
+	GENERATED_BODY()
+}; // struct FFlecsTestStruct_EmptyRegistrationFunction
+
+REGISTER_FLECS_COMPONENT(FFlecsTestStruct_EmptyRegistrationFunction,
+	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
+	{
+		// Intentionally empty
+	});
+
+USTRUCT()
+struct FFlecsTestStruct_NoRegistrationLambda
+{
+	GENERATED_BODY()
+}; // struct FFlecsTestStruct_NoRegistrationLambda
+
+REGISTER_FLECS_COMPONENT(FFlecsTestStruct_NoRegistrationLambda);
 
 enum class ETestEnum : uint8
 {

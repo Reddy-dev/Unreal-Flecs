@@ -4,13 +4,9 @@
 
 #include "CoreMinimal.h"
 
-#include "Engine/DeveloperSettings.h"
+#include "FlecsId.h"
 
-#include "SolidMacros/Macros.h"
-
-#include "FlecsEntityRecord.h"
-
-#include "FlecsDefaultEntitiesDeveloperSettings.generated.h"
+#include "FlecsDefaultMetaEntityType.generated.h"
 
 namespace Unreal::Flecs
 {
@@ -43,24 +39,6 @@ struct UNREALFLECS_API FFlecsDefaultMetaEntity
 	}
 
 	FFlecsDefaultMetaEntity() = default;
-	FFlecsDefaultMetaEntity(const FString& EntityName,
-		const FFlecsEntityRecord& EntityRecord, const FFlecsId InEntityId)
-		: EntityName(EntityName)
-		, SetId(InEntityId)
-	{
-	}
 	
 }; // struct FFlecsEntityRecord
 
-UCLASS(BlueprintType, Config = Flecs, DefaultConfig, Category = "Flecs",
-	meta = (DisplayName = "Flecs Default Entities Developer Settings"))
-class UFlecsDefaultEntitiesDeveloperSettings final : public UDeveloperSettings
-{
-	GENERATED_BODY()
-
-public:
-	//@TODO: Implement this or add an equivalent feature.
-	//UPROPERTY(EditAnywhere, Config, Category = "Default Entities")
-	//TArray<FFlecsDefaultMetaEntity> DefaultEntities;
-
-}; // class UFlecsDefaultEntitiesDeveloperSettings

@@ -25,7 +25,7 @@ public:
 	 * @brief Enable task threads for Flecs.
 	 */
 	UPROPERTY(EditAnywhere, Config, Category = "Flecs", meta = (ConsoleVariable = "Flecs.UseTaskThreads"))
-	bool bUseTaskThreads = true;
+	bool bUseTaskThreads = false;
 
 	/**
 	 * @brief Number of threads to use for Flecs task processing.
@@ -52,11 +52,12 @@ public:
 		meta = (EditCondition = "bDeleteEmptyTablesOnGC", EditConditionHides, ClampMin = "0", UIMin = "0", ClampMax = "65535", UIMax = "65535"))
 	uint32 DeleteGeneration = 10;
 
-	// @TODO: maybe make a CVAR for this?
-	/**
-	 * @brief Enable shrinking Flecs memory usage during Unreal Garbage Collection.
-	 */
-	/*UPROPERTY(EditAnywhere, Config, Category = "Flecs")
-	bool bShrinkMemoryOnGC = false;*/
+	UNREALFLECS_API virtual void PostInitProperties() override;
+
+#if WITH_EDITOR
+
+	UNREALFLECS_API virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+
+#endif // WITH_EDITOR
 
 }; // class UFlecsDeveloperSettings

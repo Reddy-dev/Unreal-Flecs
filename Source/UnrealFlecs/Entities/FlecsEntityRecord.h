@@ -14,6 +14,8 @@
 
 #include "FlecsEntityRecord.generated.h"
 
+struct FFlecsEntityRecord;
+
 UENUM(BlueprintType)
 enum class EFlecsComponentNodeType : uint8
 {
@@ -33,10 +35,74 @@ enum class EFlecsPairNodeType : uint8
 	//ScriptEnum = 3,
 }; // enum class EFlecsPairNodeType
 
+namespace Unreal::Flecs
+{
+	template <typename T>
+	concept CRecordPairSlotType = std::is_convertible<T, FFlecsId>::value
+		|| std::is_convertible<T, FGameplayTag>::value
+		|| std::is_convertible<T, FInstancedStruct>::value;
+		
+	
+} // namespace Unreal::Flecs
+
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsRecordPairSlot
 {
 	GENERATED_BODY()
+
+	static NO_DISCARD FFlecsRecordPairSlot Make(const FInstancedStruct& InStruct)
+	{
+		FFlecsRecordPairSlot OutSlot;
+		OutSlot.PairNodeType = EFlecsPairNodeType::ScriptStruct;
+		OutSlot.PairScriptStruct = InStruct;
+		return OutSlot;
+	}
+
+	static NO_DISCARD FFlecsRecordPairSlot Make(const TSolidNotNull<const UScriptStruct*> InStructType)
+	{
+		FFlecsRecordPairSlot OutSlot;
+		OutSlot.PairNodeType = EFlecsPairNodeType::ScriptStruct;
+
+		FInstancedStruct NewInstancedStruct;
+		NewInstancedStruct.InitializeAs(InStructType);
+		
+		OutSlot.PairScriptStruct = MoveTemp(NewInstancedStruct);
+		return OutSlot;
+	}
+
+	template <Solid::TScriptStructConcept T>
+	static NO_DISCARD FFlecsRecordPairSlot Make()
+	{
+		FFlecsRecordPairSlot OutSlot;
+		OutSlot.PairNodeType = EFlecsPairNodeType::ScriptStruct;
+		OutSlot.PairScriptStruct = FInstancedStruct::Make<T>();
+		return OutSlot;
+	}
+
+	template <Solid::TScriptStructConcept T>
+	static NO_DISCARD FFlecsRecordPairSlot Make(const T& InValue)
+	{
+		FFlecsRecordPairSlot OutSlot;
+		OutSlot.PairNodeType = EFlecsPairNodeType::ScriptStruct;
+		OutSlot.PairScriptStruct = FInstancedStruct::Make<T>(InValue);
+		return OutSlot;
+	}
+	
+	static NO_DISCARD FFlecsRecordPairSlot Make(const FFlecsId InEntityHandle)
+	{
+		FFlecsRecordPairSlot OutSlot;
+		OutSlot.PairNodeType = EFlecsPairNodeType::EntityHandle;
+		OutSlot.EntityHandle = InEntityHandle;
+		return OutSlot;
+	}
+
+	static NO_DISCARD FFlecsRecordPairSlot Make(const FGameplayTag& InGameplayTag)
+	{
+		FFlecsRecordPairSlot OutSlot;
+		OutSlot.PairNodeType = EFlecsPairNodeType::FGameplayTag;
+		OutSlot.GameplayTag = InGameplayTag;
+		return OutSlot;
+	}
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component Tree")
 	EFlecsPairNodeType PairNodeType = EFlecsPairNodeType::ScriptStruct;
@@ -88,8 +154,9 @@ struct UNREALFLECS_API FFlecsRecordPairSlot
 UENUM(BlueprintType)
 enum class EFlecsValuePairType : uint8
 {
-	First = 0,
-	Second = 1,
+	None = 0,
+	First = 1,
+	Second = 2,
 }; // enum class EFlecsValuePairType
 
 USTRUCT(BlueprintType)
@@ -103,8 +170,14 @@ struct UNREALFLECS_API FFlecsRecordPair
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component Tree")
 	FFlecsRecordPairSlot Second;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component Tree")
-	EFlecsValuePairType PairValueType = EFlecsValuePairType::First;
+	// @TODO: make an edit condition for this?
+	/**
+	 * @brief Only needed if either First or Second are Instanced Structs
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component Tree",
+		meta = (EditCondition = "First.PairNodeType == EFlecsPairNodeType::ScriptStruct || Second.PairNodeType == EFlecsPairNodeType::ScriptStruct",
+		EditConditionHides))
+	EFlecsValuePairType PairValueType = EFlecsValuePairType::None;
 
 	NO_DISCARD FORCEINLINE bool operator==(const FFlecsRecordPair& Other) const
 	{
@@ -115,8 +188,38 @@ struct UNREALFLECS_API FFlecsRecordPair
 	{
 		return !(*this == Other);
 	}
-
+	
 	void AddToEntity(const FFlecsEntityHandle& InEntityHandle) const;
+
+private:
+	
+	template <Unreal::Flecs::CRecordPairSlotType T>
+	NO_DISCARD FFlecsRecordPairSlot MakeSlot(T&& InValue) const
+	{
+		FFlecsRecordPairSlot OutSlot;
+		
+		if constexpr (std::is_convertible<T, FInstancedStruct>::value)
+		{
+			OutSlot.PairNodeType = EFlecsPairNodeType::ScriptStruct;
+			OutSlot.PairScriptStruct = MoveTemp(InValue);
+		}
+		else if constexpr (std::is_convertible<T, FFlecsId>::value)
+		{
+			OutSlot.PairNodeType = EFlecsPairNodeType::EntityHandle;
+			OutSlot.EntityHandle = MoveTemp(InValue);
+		}
+		else if constexpr (std::is_convertible<T, FGameplayTag>::value)
+		{
+			OutSlot.PairNodeType = EFlecsPairNodeType::FGameplayTag;
+			OutSlot.GameplayTag = MoveTemp(InValue);
+		}
+		else
+		{
+			static_assert(false, "Type T is not a valid Record Pair Slot Type");
+		}
+		
+		return OutSlot;
+	}
 
 }; // struct FFlecsPair
 
@@ -185,43 +288,32 @@ struct UNREALFLECS_API FFlecsComponentTypeInfo final
 	
 }; // struct FFlecsComponentTypeInfo
 
-USTRUCT(BlueprintType)
-struct UNREALFLECS_API FFlecsRecordSubEntity
+USTRUCT(BlueprintInternalUseOnly)
+struct UNREALFLECS_API FFlecsEntityRecordFragment
 {
 	GENERATED_BODY()
 
 public:
-	// Name only applies if the entity doesn't already have a name.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component Tree")
-	FString Name;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Entity Record")
-	TArray<FFlecsComponentTypeInfo> Components;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Entity Record")
-	TArray<TInstancedStruct<FFlecsRecordSubEntity>> SubEntities;
-
-	NO_DISCARD FORCEINLINE bool operator==(const FFlecsRecordSubEntity& Other) const
+	FFlecsEntityRecordFragment() = default;
+	virtual ~FFlecsEntityRecordFragment()
 	{
-		return Name == Other.Name && Components == Other.Components;
 	}
 
-	NO_DISCARD FORCEINLINE bool operator!=(const FFlecsRecordSubEntity& Other) const
-	{
-		return !(*this == Other);
-	}
+	virtual void PreApplyRecordToEntity(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsEntityHandle& InEntityHandle) const {}
+	virtual void PostApplyRecordToEntity(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsEntityHandle& InEntityHandle) const {}
+	
+}; // struct FFlecsEntityRecordFragment
 
-	void ApplyRecordToEntity(const FFlecsEntityHandle& InEntityHandle) const;
-
-}; // struct FFlecsRecordSubEntity
-
+// @TODO: maybe align on a 64-byte boundary?
+// @TODO: make custom UI for FFlecsEntityRecord and make custom meta tags.
+// @TODO: add data validation.
 
 /**
  * @brief A record of a generic entity's components and sub-entities,
  * this can be applied to an actual entity to give it the same components/sub-entities.
  */
 USTRUCT(BlueprintType)
-struct UNREALFLECS_API FFlecsEntityRecord
+struct UNREALFLECS_API FFlecsEntityRecord final
 {
 	GENERATED_BODY()
 
@@ -231,11 +323,14 @@ struct UNREALFLECS_API FFlecsEntityRecord
 	TArray<FFlecsComponentTypeInfo> Components;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Entity Record")
-	TArray<FFlecsRecordSubEntity> SubEntities;
+	TArray<TInstancedStruct<FFlecsEntityRecord>> SubEntities;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Entity Record", meta = (ExcludeBaseStruct, NoElementDuplicate))
+	TArray<TInstancedStruct<FFlecsEntityRecordFragment>> Fragments;
 
 	NO_DISCARD FORCEINLINE bool operator==(const FFlecsEntityRecord& Other) const
 	{
-		return Components == Other.Components;
+		return Components == Other.Components && SubEntities == Other.SubEntities && Fragments == Other.Fragments;
 	}
 
 	NO_DISCARD FORCEINLINE bool operator!=(const FFlecsEntityRecord& Other) const
@@ -265,6 +360,17 @@ struct UNREALFLECS_API FFlecsEntityRecord
 		return *this;
 	}
 
+	template <Solid::TScriptStructConcept T>
+	FORCEINLINE FFlecsEntityRecord& AddComponent(T&& InComponent)
+	{
+		FFlecsComponentTypeInfo NewComponent;
+		NewComponent.NodeType = EFlecsComponentNodeType::ScriptStruct;
+		NewComponent.ScriptStruct = FInstancedStruct::Make<T>(MoveTemp(InComponent));
+		Components.Add(NewComponent);
+
+		return *this;
+	}
+
 	FORCEINLINE FFlecsEntityRecord& AddComponent(const FFlecsId InEntityHandle)
 	{
 		FFlecsComponentTypeInfo NewComponent;
@@ -285,6 +391,36 @@ struct UNREALFLECS_API FFlecsEntityRecord
 		return *this;
 	}
 
+	FORCEINLINE FFlecsEntityRecord& AddComponent(FGameplayTag&& InGameplayTag)
+	{
+		FFlecsComponentTypeInfo NewComponent;
+		NewComponent.NodeType = EFlecsComponentNodeType::FGameplayTag;
+		NewComponent.GameplayTag = MoveTemp(InGameplayTag);
+		Components.Add(NewComponent);
+
+		return *this;
+	}
+
+	FORCEINLINE FFlecsEntityRecord& AddComponent(const FSolidEnumSelector& InScriptEnum)
+	{
+		FFlecsComponentTypeInfo NewComponent;
+		NewComponent.NodeType = EFlecsComponentNodeType::ScriptEnum;
+		NewComponent.ScriptEnum = InScriptEnum;
+		Components.Add(NewComponent);
+
+		return *this;
+	}
+
+	FORCEINLINE FFlecsEntityRecord& AddComponent(FSolidEnumSelector&& InScriptEnum)
+	{
+		FFlecsComponentTypeInfo NewComponent;
+		NewComponent.NodeType = EFlecsComponentNodeType::ScriptEnum;
+		NewComponent.ScriptEnum = MoveTemp(InScriptEnum);
+		Components.Add(NewComponent);
+
+		return *this;
+	}
+
 	FORCEINLINE FFlecsEntityRecord& AddComponent(const FFlecsRecordPair& InPair)
 	{
 		FFlecsComponentTypeInfo NewComponent;
@@ -295,12 +431,22 @@ struct UNREALFLECS_API FFlecsEntityRecord
 		return *this;
 	}
 
-	FORCEINLINE int32 AddSubEntity(const FFlecsRecordSubEntity& InSubEntity)
+	FORCEINLINE FFlecsEntityRecord& AddComponent(FFlecsRecordPair&& InPair)
 	{
-		return SubEntities.Add(InSubEntity);
+		FFlecsComponentTypeInfo NewComponent;
+		NewComponent.NodeType = EFlecsComponentNodeType::Pair;
+		NewComponent.Pair = MoveTemp(InPair);
+		Components.Add(NewComponent);
+
+		return *this;
 	}
 
-	FORCEINLINE void RemoveSubEntity(const uint32 InIndex)
+	FORCEINLINE int32 AddSubEntity(const FFlecsEntityRecord& InSubEntity)
+	{
+		return SubEntities.Add(TInstancedStruct<FFlecsEntityRecord>::Make(InSubEntity));
+	}
+
+	FORCEINLINE void RemoveSubEntity(const int32 InIndex)
 	{
 		solid_checkf(SubEntities.IsValidIndex(InIndex), TEXT("Index is out of bounds"));
 		SubEntities.RemoveAt(InIndex);
@@ -321,16 +467,110 @@ struct UNREALFLECS_API FFlecsEntityRecord
 		return SubEntities.Num();
 	}
 
-	FORCEINLINE const FFlecsRecordSubEntity& GetSubEntity(const uint32 InIndex) const
+	NO_DISCARD FORCEINLINE TConstStructView<FFlecsEntityRecord> GetSubEntity(const int32 InIndex) const
 	{
 		solid_checkf(SubEntities.IsValidIndex(InIndex), TEXT("Index is out of bounds"));
 		return SubEntities[InIndex];
 	}
 
-	FORCEINLINE FFlecsRecordSubEntity& GetSubEntity(const uint32 InIndex)
+	NO_DISCARD FORCEINLINE TStructView<FFlecsEntityRecord> GetSubEntity(const int32 InIndex)
 	{
 		solid_checkf(SubEntities.IsValidIndex(InIndex), TEXT("Index is out of bounds"));
 		return SubEntities[InIndex];
+	}
+
+	template <Solid::TScriptStructConcept TFragmentType>
+	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
+	FORCEINLINE int32 AddFragment(const TFragmentType& InFragment)
+	{
+		if UNLIKELY_IF(!ensureAlwaysMsgf(!HasFragment<TFragmentType>(),
+			TEXT("Fragment of type %s already exists in Entity Record, adding duplicate fragment."),
+			*TBaseStructure<TFragmentType>::Get()->GetName()))
+		{
+			return INDEX_NONE;
+		}
+		
+		return Fragments.Add(TInstancedStruct<FFlecsEntityRecordFragment>::Make<TFragmentType>(InFragment));
+	}
+
+	template <Solid::TScriptStructConcept TFragmentType, typename... TArgs>
+	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
+	FORCEINLINE int32 AddFragment(TArgs&&... InArgs)
+	{
+		if UNLIKELY_IF(!ensureAlwaysMsgf(!HasFragment<TFragmentType>(),
+			TEXT("Fragment of type %s already exists in Entity Record, adding duplicate fragment."),
+			*TBaseStructure<TFragmentType>::Get()->GetName()))
+		{
+			return INDEX_NONE;
+		}
+		
+		return Fragments.Add(TInstancedStruct<FFlecsEntityRecordFragment>::Make<TFragmentType>(Forward<TArgs>(InArgs)...));
+	}
+
+	template <Solid::TScriptStructConcept TFragmentType>
+	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
+	FORCEINLINE int32 AddFragment()
+	{
+		if UNLIKELY_IF(!ensureAlwaysMsgf(!HasFragment<TFragmentType>(),
+			TEXT("Fragment of type %s already exists in Entity Record, adding duplicate fragment."),
+			*TBaseStructure<TFragmentType>::Get()->GetName()))
+		{
+			return INDEX_NONE;
+		}
+		
+		return Fragments.Add(TInstancedStruct<FFlecsEntityRecordFragment>::Make<TFragmentType>());
+	}
+
+	FORCEINLINE int32 AddFragment(const TInstancedStruct<FFlecsEntityRecordFragment>& InFragment)
+	{
+		solid_checkf(InFragment.IsValid(), TEXT("InFragment must be valid"));
+		
+		if UNLIKELY_IF(!ensureAlwaysMsgf(!HasFragment(InFragment.GetScriptStruct()),
+			TEXT("Fragment of type %s already exists in Entity Record, adding duplicate fragment."),
+			*InFragment.GetScriptStruct()->GetName()))
+		{
+			return INDEX_NONE;
+		}
+		
+		return Fragments.Add(InFragment);
+	}
+
+	NO_DISCARD FORCEINLINE bool HasFragment(const TSolidNotNull<const UScriptStruct*> InFragmentType) const
+	{
+		return Fragments.ContainsByPredicate(
+			[InFragmentType](const TInstancedStruct<FFlecsEntityRecordFragment>& Fragment)
+			{
+				return Fragment.GetScriptStruct() == InFragmentType;
+			});
+	}
+
+	template <Solid::TScriptStructConcept TFragmentType>
+	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
+	NO_DISCARD FORCEINLINE bool HasFragment() const
+	{
+		return HasFragment(TBaseStructure<TFragmentType>::Get());
+	}
+	
+	NO_DISCARD FORCEINLINE bool HasFragments() const
+	{
+		return !Fragments.IsEmpty();
+	}
+
+	NO_DISCARD FORCEINLINE int32 GetFragmentCount() const
+	{
+		return Fragments.Num();
+	}
+
+	NO_DISCARD FORCEINLINE TConstStructView<FFlecsEntityRecordFragment> GetFragment(const int32 InIndex) const
+	{
+		solid_checkf(Fragments.IsValidIndex(InIndex), TEXT("Index is out of bounds"));
+		return Fragments[InIndex];
+	}
+
+	NO_DISCARD FORCEINLINE TStructView<FFlecsEntityRecordFragment> GetFragment(const int32 InIndex)
+	{
+		solid_checkf(Fragments.IsValidIndex(InIndex), TEXT("Index is out of bounds"));
+		return Fragments[InIndex];
 	}
 
 	void ApplyRecordToEntity(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsEntityHandle& InEntityHandle) const;
@@ -338,8 +578,50 @@ struct UNREALFLECS_API FFlecsEntityRecord
 }; // struct FFlecsEntityRecord
 
 REGISTER_FLECS_COMPONENT(FFlecsEntityRecord,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponent)
+	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
 	{
-		InComponent
+		InComponentHandle
 			.AddPair(flecs::OnInstantiate, flecs::DontInherit);
 	});
+
+// @TODO: add additional settings
+USTRUCT(BlueprintType, DisplayName = "Named Entity Fragment")
+struct UNREALFLECS_API FFlecsNamedEntityRecordFragment : public FFlecsEntityRecordFragment
+{
+	GENERATED_BODY()
+
+public:
+	FORCEINLINE FFlecsNamedEntityRecordFragment() = default;
+	
+	FORCEINLINE FFlecsNamedEntityRecordFragment(const FString& InName)
+		: Name(InName)
+	{
+	}
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Entity Record Fragment")
+	FString Name;
+
+	virtual void PreApplyRecordToEntity(
+			const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsEntityHandle& InEntityHandle) const override;
+	
+}; // struct FFlecsNamedEntityRecordFragment
+
+USTRUCT(BlueprintType)
+struct UNREALFLECS_API FFlecsEntityRecordComponent
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Entity Record")
+	FFlecsEntityRecord EntityRecord;
+	
+}; // struct FFlecsEntityRecordComponent
+
+REGISTER_FLECS_COMPONENT(FFlecsEntityRecordComponent,
+	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
+	{
+		InComponentHandle
+			.AddPair(flecs::OnInstantiate, flecs::DontInherit);
+	});
+
+	

@@ -12,6 +12,7 @@
 #include "CoreMinimal.h"
 
 #include "SolidMacros/Macros.h"
+#include "Standard/Hashing.h"
 #include "Types/SolidNotNull.h"
 #include "Concepts/SolidConcepts.h"
 
@@ -23,7 +24,7 @@
 #include "FlecsWorld.generated.h"
 
 struct FFlecsEntityRecord;
-struct FFlecsDependenciesComponent;
+struct FFlecsSoftDependenciesComponent;
 struct FFlecsUObjectComponent;
 struct FFlecsModuleComponent;
 
@@ -32,6 +33,8 @@ class IFlecsModuleInterface;
 class IFlecsGameLoopInterface;
 class UFlecsWorldSubsystem;
 class UFlecsModuleInterface;
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FFlecsWorldModuleImportedDelegate, const FFlecsEntityHandle& /*InModuleEntity*/);
 
 /**
  * @brief Component type that represents if the World has begun play.
@@ -139,7 +142,7 @@ public:
 	 */
 	void RegisterModuleDependency(
 		const TSolidNotNull<const UObject*> InModuleObject,
-		const TSubclassOf<UFlecsModuleInterface>& InDependencyClass,
+		const TSubclassOf<UObject>& InDependencyClass,
 		const FFlecsDependencyFunctionDefinition::FDependencyFunctionType& InFunction);
 
 	/**
@@ -268,6 +271,13 @@ public:
 	UFlecsWorld* SetSingleton(const T& Value) const
 	{
 		World.set<T>(Value);
+		return GetSelf();
+	}
+
+	template <typename T>
+	UFlecsWorld* SetSingleton(T&& Value) const
+	{
+		World.set<T>(FLECS_FWD(Value));
 		return GetSelf();
 	}
 
@@ -401,12 +411,17 @@ public:
 		return World.import<T>();
 	}
 
+	// @TODO: finish docs
 	/**
-	 * @brief Import a module to the world,
-	 * @param InModule The module to import, must implement IFlecsModuleInterface
+	 * @brief Import a module to the world
+	 * @param InModule The module to import, must implement IFlecsModuleInterface (will be duplicated when imported)
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
 	void ImportModule(const TScriptInterface<IFlecsModuleInterface>& InModule);
+
+	void ImportModuleChecked(const TScriptInterface<IFlecsModuleInterface>& InModule);
+
+	NO_DISCARD bool CanImportModule(const TScriptInterface<IFlecsModuleInterface>& InModule, FString& OutFailureReason) const;
 
 	/**
 	 * @brief Check if a module with the given class is imported in the world
@@ -426,6 +441,7 @@ public:
 	/**
 	 * @brief Get the entity handle of the module with the given class
 	 * @param InModule The module class
+	 * @param bAllowChildren If true, will also check for child classes of the given class
 	 * @return The entity handle of the module, or an invalid handle if the module is not imported
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
@@ -452,10 +468,19 @@ public:
 	UObject* GetModule(const TSubclassOf<UObject> InModule, const bool bAllowChildren = false) const;
 
 	template <Solid::TStaticClassConcept T>
-	NO_DISCARD TSolidNotNull<T*> GetModule(const bool bAllowChildren = false) const
+	NO_DISCARD TSolidNotNull<T*> GetModuleChecked(const bool bAllowChildren = false) const
 	{
 		return CastChecked<T>(GetModule(T::StaticClass(), bAllowChildren));
 	}
+
+	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
+	bool HasGameLoop(const TSubclassOf<UObject> InGameLoop, const bool bAllowChildren = false) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
+	FFlecsEntityHandle GetGameLoopEntity(const TSubclassOf<UObject> InGameLoop, const bool bAllowChildren = false) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
+	UObject* GetGameLoop(const TSubclassOf<UObject> InGameLoop, const bool bAllowChildren = false) const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
 	bool BeginDefer() const;
@@ -757,7 +782,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Flecs")
 	FFlecsEntityHandle GetScriptClassEntity(const TSubclassOf<UObject> InClass) const;
-	
+
+	// @TODO: Re-implement bitmask registration
 	/*
 	 FFlecsEntityHandle RegisterComponentBitmaskType(const UEnum* ScriptEnum) const
 	{
@@ -1019,10 +1045,13 @@ public:
 	bool bIsInitialized = false;
 
 	UPROPERTY(Transient)
-	TScriptInterface<IFlecsGameLoopInterface> GameLoopInterface;
+	TArray<TScriptInterface<IFlecsGameLoopInterface>> GameLoopInterfaces;
 
 	UPROPERTY(Transient)
 	TArray<TScriptInterface<IFlecsModuleInterface>> ImportedModules;
+
+	UPROPERTY(Transient)
+	TArray<TScriptInterface<IFlecsModuleInterface>> PendingImportedModules;
 	
 	TMap<const UClass*, TScriptInterface<IFlecsObjectRegistrationInterface>> RegisteredObjectTypes;
 
@@ -1031,12 +1060,16 @@ public:
 
 	flecs::query<FFlecsModuleComponent> ModuleComponentQuery;
 	flecs::query<FFlecsUObjectComponent> ObjectComponentQuery;
-	flecs::query<FFlecsDependenciesComponent> DependenciesComponentQuery;
+	flecs::query<FFlecsSoftDependenciesComponent> DependenciesComponentQuery;
 
 	FFlecsTypeMapComponent* TypeMapComponent;
 
 	FDelegateHandle ShrinkMemoryGCDelegateHandle;
 	FDelegateHandle DeleteEmptyTablesGCDelegateHandle;
+
+	FFlecsWorldModuleImportedDelegate OnModuleImported;
+
+	robin_hood::unordered_flat_map<FGameplayTag, FFlecsId> TagEntityMap;
 
 private:
 	

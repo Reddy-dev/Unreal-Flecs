@@ -16,7 +16,10 @@
 #include "HAL/RunnableThread.h"
 
 #include "SolidMacros/Macros.h"
+#include "Types/SolidNotNull.h"
+
 #include "Logs/FlecsCategories.h"
+#include "Tasks/Task.h"
 
 DECLARE_STATS_GROUP(TEXT("FlecsOS"), STATGROUP_FlecsOS, STATCAT_Advanced);
 DECLARE_CYCLE_STAT(TEXT("FlecsOS::TaskThread"), STAT_FlecsOS, STATGROUP_FlecsOS);
@@ -24,28 +27,11 @@ DECLARE_CYCLE_STAT(TEXT("FlecsOS::TaskThread"), STAT_FlecsOS, STATGROUP_FlecsOS)
 class FFlecsRunnable final : public FRunnable
 {
 public:
-	FORCEINLINE FFlecsRunnable(ecs_os_thread_callback_t InCallback, void* InData)
-		: Callback(InCallback)
-		, Data(InData)
-		, bStopped(false)
-	{
-	}
+	FFlecsRunnable(ecs_os_thread_callback_t InCallback, void* InData);
 
-	FORCEINLINE virtual uint32 Run() override
-	{
-		while (!bStopped.load())
-		{
-			Callback(Data);
-			break;
-		}
-		
-		return 0;
-	}
+	virtual uint32 Run() override;
 
-	FORCEINLINE virtual void Stop() override
-	{
-		bStopped.store(true);
-	}
+	virtual void Stop() override;
 
 private:
 	ecs_os_thread_callback_t Callback;
@@ -61,92 +47,70 @@ struct FFlecsThreadWrapper
 	FRunnableThread* RunnableThread = nullptr;
 	std::atomic<bool> bJoined { false };
 
-	FORCEINLINE FFlecsThreadWrapper(ecs_os_thread_callback_t Callback, void* Data)
-	{
-		Runnable = new FFlecsRunnable(Callback, Data);
-		RunnableThread = FRunnableThread::Create(
-			Runnable, TEXT("FlecsThreadWrapper"), 0, TaskThread);
-	}
+	FFlecsThreadWrapper(ecs_os_thread_callback_t Callback, void* Data);
 
-	FORCEINLINE ~FFlecsThreadWrapper()
-	{
-		if (!bJoined.load() && RunnableThread)
-		{
-			Stop();
-			Join();
+	~FFlecsThreadWrapper();
 
-			delete RunnableThread;
-			RunnableThread = nullptr;
-		}
-	}
+	void Stop() const;
 
-	FORCEINLINE void Stop() const
-	{
-		if (Runnable)
-		{
-			Runnable->Stop();
-		}
-	}
+	void Join();
 
-	FORCEINLINE void Join()
-	{
-		if (!bJoined.exchange(true))
-		{
-			if (RunnableThread)
-			{
-				RunnableThread->WaitForCompletion();
-				delete RunnableThread;
-				RunnableThread = nullptr;
-			}
-			
-			if (Runnable)
-			{
-				delete Runnable;
-				Runnable = nullptr;
-			}
-		}
-	}
-	
 }; // struct FFlecsThreadWrapper
 
 struct FFlecsThreadTask
 {
-	static constexpr ENamedThreads::Type TaskThread = ENamedThreads::Type::AnyHiPriThreadHiPriTask;
+	static constexpr UE::Tasks::ETaskPriority TaskThreadPriority = UE::Tasks::ETaskPriority::High;
 	
-	FGraphEventRef TaskEvent;
+	UE::Tasks::TTask<void> TaskEvent;
 
-	FORCEINLINE FFlecsThreadTask(const ecs_os_thread_callback_t Callback, void* Data)
+#if WITH_EDITOR
+
+	static std::atomic<uint32> TaskCounter;
+
+	static NO_DISCARD uint32 GetNextTaskID()
 	{
-		TaskEvent = FFunctionGraphTask::CreateAndDispatchWhenReady(
-			[Callback, Data]()
-			{
-				Callback(Data);
-			},
-			GET_STATID(STAT_FlecsOS), nullptr, TaskThread);
+		return TaskCounter.fetch_add(1, std::memory_order_relaxed);
 	}
 
-	FORCEINLINE ~FFlecsThreadTask()
+	static uint32 ReleaseTaskID()
 	{
-		if (TaskEvent.IsValid())
-		{
-			TaskEvent->Wait();
-		}
+		return TaskCounter.fetch_sub(1, std::memory_order_relaxed);
 	}
 
-	FORCEINLINE void Wait() const
+	static NO_DISCARD uint32 GetActiveTaskCount()
 	{
-		if (TaskEvent.IsValid())
-		{
-			FTaskGraphInterface::Get().WaitUntilTaskCompletes(TaskEvent);
-		}
+		return TaskCounter.load(std::memory_order_relaxed);
+	}
+
+#else
+	
+	static constexpr uint32 GetNextTaskID()
+	{
+		return 0;
+	}
+	static constexpr uint32 ReleaseTaskID()
+	{
+		return 0;
 	}
 	
+	static constexpr uint32 GetActiveTaskCount()
+	{
+		return 0;
+	}
+	
+#endif // WITH_EDITOR
+
+	FFlecsThreadTask(const ecs_os_thread_callback_t Callback, void* Data);
+
+	~FFlecsThreadTask();
+
+	void Wait() const;
+
 }; // struct FFlecsThreadTask
 
 struct FFlecsConditionWrapper
 {
 	UE::FConditionVariable ConditionalVariable;
-	FCriticalSection* Mutex;
 }; // struct ConditionWrapper
 
 struct FOSApiInitializer
@@ -179,62 +143,59 @@ struct FOSApiInitializer
 
 		os_api.mutex_lock_ = [](ecs_os_mutex_t Mutex)
 		{
-			solid_checkf(Mutex, TEXT("Mutex is nullptr"));
-			FCriticalSection* MutexPtr = reinterpret_cast<FCriticalSection*>(Mutex);
+			solid_cassumef(Mutex, TEXT("Mutex is nullptr"));
+			
+			const TSolidNotNull<FCriticalSection*> MutexPtr = reinterpret_cast<FCriticalSection*>(Mutex);
 			MutexPtr->Lock();
 		};
 
 		os_api.mutex_unlock_ = [](ecs_os_mutex_t Mutex)
 		{
-			FCriticalSection* MutexPtr = reinterpret_cast<FCriticalSection*>(Mutex);
+			solid_cassumef(Mutex, TEXT("Mutex is nullptr"));
+			
+			const TSolidNotNull<FCriticalSection*> MutexPtr = reinterpret_cast<FCriticalSection*>(Mutex);
 			MutexPtr->Unlock();
 		};
 
 		os_api.cond_new_ = []() -> ecs_os_cond_t
 		{
 			FFlecsConditionWrapper* Wrapper = new FFlecsConditionWrapper();
-			Wrapper->Mutex = new FCriticalSection();
 			return reinterpret_cast<ecs_os_cond_t>(Wrapper);
 		};
 
 		os_api.cond_free_ = [](ecs_os_cond_t Cond)
 		{
-			if LIKELY_IF(Cond)
-			{
-				FFlecsConditionWrapper* Wrapper = reinterpret_cast<FFlecsConditionWrapper*>(Cond);
-				delete Wrapper->Mutex;
-				Wrapper->Mutex = nullptr;
-				delete Wrapper;
-			}
+			solid_cassumef(Cond, TEXT("Condition variable is nullptr"));
+			FFlecsConditionWrapper* Wrapper = reinterpret_cast<FFlecsConditionWrapper*>(Cond);
+			
+			delete Wrapper;
 		};
 
 		os_api.cond_signal_ = [](ecs_os_cond_t Cond)
 		{
-			if LIKELY_IF(Cond)
-			{
-				FFlecsConditionWrapper* Wrapper = reinterpret_cast<FFlecsConditionWrapper*>(Cond);
-				Wrapper->ConditionalVariable.NotifyOne();
-			}
+			solid_cassumef(Cond, TEXT("Condition variable is nullptr"));
+			
+			const TSolidNotNull<FFlecsConditionWrapper*> Wrapper = reinterpret_cast<FFlecsConditionWrapper*>(Cond);
+			Wrapper->ConditionalVariable.NotifyOne();
 		};
 
 		os_api.cond_broadcast_ = [](ecs_os_cond_t Cond)
 		{
-			if LIKELY_IF(Cond)
-			{
-				FFlecsConditionWrapper* Wrapper = reinterpret_cast<FFlecsConditionWrapper*>(Cond);
-				Wrapper->ConditionalVariable.NotifyAll();
-			}
+			solid_cassumef(Cond, TEXT("Condition variable is nullptr"));
+			
+			const TSolidNotNull<FFlecsConditionWrapper*> Wrapper = reinterpret_cast<FFlecsConditionWrapper*>(Cond);
+			Wrapper->ConditionalVariable.NotifyAll();
 		};
 
 		os_api.cond_wait_ = [](ecs_os_cond_t Cond, ecs_os_mutex_t Mutex)
 		{
-			if LIKELY_IF(Cond && Mutex)
-			{
-				FFlecsConditionWrapper* Wrapper = reinterpret_cast<FFlecsConditionWrapper*>(Cond);
-				FCriticalSection* CritSection = reinterpret_cast<FCriticalSection*>(Mutex);
+			solid_cassumef(Cond, TEXT("Condition variable is nullptr"));
+			solid_cassumef(Mutex, TEXT("Mutex is nullptr"));
+			
+			const TSolidNotNull<FFlecsConditionWrapper*> Wrapper = reinterpret_cast<FFlecsConditionWrapper*>(Cond);
+			const TSolidNotNull<FCriticalSection*> CritSection = reinterpret_cast<FCriticalSection*>(Mutex);
 
-				Wrapper->ConditionalVariable.Wait(*CritSection);
-			}
+			Wrapper->ConditionalVariable.Wait(*CritSection);
 		};
 
 		os_api.thread_new_ = [](ecs_os_thread_callback_t Callback, void* Data) -> ecs_os_thread_t
@@ -317,29 +278,33 @@ struct FOSApiInitializer
                 		UE_LOGFMT(LogFlecsCore, Fatal,
                 			"Flecs - File: {FileName}, Line: {LineNumber}, Message: {Message}",
 							File, Line, Message);
+
+                		break;
 	                }
-                    break;
                 case -3: // Error
 	                {
                 		UE_LOGFMT(LogFlecsCore, Error,
 							"Flecs - File: {FileName}, Line: {LineNumber}, Message: {Message}",
 							File, Line, Message);
+
+                		break;
 	                }
-                    break;
                 case -2: // Warning
 	                {
                 		UE_LOGFMT(LogFlecsCore, Warning,
                 			"Flecs - File: {FileName}, Line: {LineNumber}, Message: {Message}",
                 				File, Line, Message);
+
+                		break;
 	                }
-                    break;
             	case 0: // Verbose
             		{
             			UE_LOGFMT(LogFlecsCore, Verbose,
             				"Flecs - File: {FileName}, Line: {LineNumber}, Message: {Message}",
 							File, Line, Message);
+
+                		break;
             		}
-                    break;
             	case 4: // Bookmark/Journal
             		{
             			TRACE_BOOKMARK(TEXT("Flecs - File: %s, Line: %d, Message: %s"),
@@ -347,15 +312,17 @@ struct FOSApiInitializer
             			UE_LOGFMT(LogFlecsJournal, VeryVerbose,
             				"Flecs - File: {FileName}, Line: {LineNumber}, Message: {Message}",
             				File, Line, Message);
+
+                		break;
             		}
-					break;
                 default: // Info and Debug
             		{
             			UE_LOGFMT(LogFlecsCore, Log,
 							"Flecs - File: {FileName}, Line: {LineNumber}, Message: {Message}",
 							File, Line, Message);
+
+                		break;
             		}
-                    break;
             }
 #endif // UNLOG_ENABLED
         };

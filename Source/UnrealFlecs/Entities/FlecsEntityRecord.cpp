@@ -17,137 +17,118 @@ void FFlecsRecordPair::AddToEntity(const FFlecsEntityHandle& InEntityHandle) con
 				{
 					case EFlecsPairNodeType::ScriptStruct:
 						{
-							if (PairValueType == EFlecsValuePairType::First)
+							if (PairValueType == EFlecsValuePairType::None)
 							{
-								InEntityHandle.SetPairFirst(First.PairScriptStruct.GetScriptStruct(),
-								                            First.PairScriptStruct.GetMemory(),
-								                            Second.PairScriptStruct.GetScriptStruct());
+								InEntityHandle.AddPair(First.PairScriptStruct.GetScriptStruct(),
+													   Second.PairScriptStruct.GetScriptStruct());
 							}
-							else
+							else if (PairValueType == EFlecsValuePairType::First)
 							{
-								// @TODO
-								if UNLIKELY_IF(!ensure(First.PairScriptStruct.GetScriptStruct()->GetStructureSize() <= 1))
-								{
-									return;
-								}
+								InEntityHandle.SetPair(First.PairScriptStruct.GetScriptStruct(),
+													   First.PairScriptStruct.GetMemory(),
+													   Second.PairScriptStruct.GetScriptStruct());
 							}
+							else if (PairValueType == EFlecsValuePairType::Second)
+							{
+								InEntityHandle.SetPair(First.PairScriptStruct.GetScriptStruct(),
+													   Second.PairScriptStruct.GetMemory(),
+													   Second.PairScriptStruct.GetScriptStruct());
+							}
+							break;
 						}
-						break;
 					case EFlecsPairNodeType::EntityHandle:
 						{
 							InEntityHandle.AddPair(First.PairScriptStruct.GetScriptStruct(),
 							                       Second.EntityHandle);
+							break;
 						}
-						break;
 					case EFlecsPairNodeType::FGameplayTag:
 						{
 							InEntityHandle.AddPair(First.PairScriptStruct.GetScriptStruct(),
 							                       Second.GameplayTag);
+							break;
 						}
-						break;
 				}
+				break;
 			}
-			break;
 		case EFlecsPairNodeType::EntityHandle:
 			{
 				switch (Second.PairNodeType)
 				{
 					case EFlecsPairNodeType::ScriptStruct:
 						{
-							InEntityHandle.SetPairSecond(First.EntityHandle,
-							                             Second.PairScriptStruct.GetScriptStruct(),
-							                             Second.PairScriptStruct.GetMemory());
+							solid_checkf(PairValueType != EFlecsValuePairType::First,
+											 TEXT("EFlecsValuePairType::First is not supported when the first pair node is an Entity Handle"));
+							
+							if (PairValueType == EFlecsValuePairType::None)
+							{
+								InEntityHandle.AddPair(First.EntityHandle,
+													   Second.PairScriptStruct.GetScriptStruct());
+							}
+							else
+							{
+								InEntityHandle.SetPair(First.EntityHandle,
+													Second.PairScriptStruct.GetMemory(),
+														 Second.PairScriptStruct.GetScriptStruct());
+							}
+
+							break;
 						}
-						break;
 					case EFlecsPairNodeType::EntityHandle:
 						{
 							InEntityHandle.AddPair(First.EntityHandle, Second.EntityHandle);
+
+							break;
 						}
-						break;
 					case EFlecsPairNodeType::FGameplayTag:
 						{
 							InEntityHandle.AddPair(First.EntityHandle, Second.GameplayTag);
+
+							break;
 						}
-						break;
 				}
+
+				break;
 			}
-			break;
 		case EFlecsPairNodeType::FGameplayTag:
 			{
 				switch (Second.PairNodeType)
 				{
 					case EFlecsPairNodeType::ScriptStruct:
 						{
-							InEntityHandle.SetPairSecond(First.GameplayTag,
-							                             Second.PairScriptStruct.GetScriptStruct(),
-							                             Second.PairScriptStruct.GetMemory());
+							solid_checkf(PairValueType != EFlecsValuePairType::First,
+											 TEXT("EFlecsValuePairType::First is not supported when the first pair node is a Gameplay Tag"));
+							
+							if (PairValueType == EFlecsValuePairType::None)
+							{
+								InEntityHandle.AddPair(First.GameplayTag,
+													   Second.PairScriptStruct.GetScriptStruct());
+							}
+							else if (PairValueType == EFlecsValuePairType::Second)
+							{
+								InEntityHandle.SetPair(First.GameplayTag,
+													Second.PairScriptStruct.GetMemory(),
+														 Second.PairScriptStruct.GetScriptStruct());
+							}
+
+							break;
 						}
-						break;
 					case EFlecsPairNodeType::EntityHandle:
 						{
 							InEntityHandle.AddPair(First.GameplayTag, Second.EntityHandle);
+
+							break;
 						}
-						break;
 					case EFlecsPairNodeType::FGameplayTag:
 						{
 							InEntityHandle.AddPair(First.GameplayTag, Second.GameplayTag);
+
+							break;
 						}
-						break;
 				}
+
+				break;
 			}
-			break;
-	}
-}
-
-void FFlecsRecordSubEntity::ApplyRecordToEntity(const FFlecsEntityHandle& InEntityHandle) const
-{
-	solid_checkf(InEntityHandle.IsValid(), TEXT("Entity Handle is not valid"));
-
-	if (!Name.IsEmpty() && !InEntityHandle.HasName())
-	{
-		InEntityHandle.SetName(Name);
-	}
-
-	for (const auto&
-	     [NodeType, ScriptStruct, ScriptEnum,
-		     EntityHandle, GameplayTag, Pair] : Components)
-	{
-		switch (NodeType)
-		{
-			case EFlecsComponentNodeType::ScriptStruct:
-				{
-					InEntityHandle.Set(ScriptStruct);
-				}
-				break;
-			case EFlecsComponentNodeType::ScriptEnum:
-				{
-					InEntityHandle.Add(ScriptEnum.Class, ScriptEnum.Value);
-				}
-			case EFlecsComponentNodeType::EntityHandle:
-				{
-					InEntityHandle.Add(EntityHandle);
-				}
-				break;
-			case EFlecsComponentNodeType::FGameplayTag:
-				{
-					InEntityHandle.Add(GameplayTag);	
-				}
-				break;
-			case EFlecsComponentNodeType::Pair:
-				{
-					Pair.AddToEntity(InEntityHandle);
-				}
-				break;
-		}
-	}
-
-	for (const TInstancedStruct<FFlecsRecordSubEntity>& SubEntity : SubEntities)
-	{
-		FFlecsEntityHandle NewEntityHandle = InEntityHandle.GetFlecsWorld()->CreateEntity()
-			.SetParent(InEntityHandle);
-		
-		SubEntity.Get<FFlecsRecordSubEntity>().ApplyRecordToEntity(NewEntityHandle);
-		InEntityHandle.Add(NewEntityHandle);
 	}
 }
 
@@ -155,7 +136,12 @@ void FFlecsEntityRecord::ApplyRecordToEntity(const TSolidNotNull<const UFlecsWor
 {
 	solid_checkf(InEntityHandle.IsValid(), TEXT("Entity Handle is not valid"));
 
-	InFlecsWorld->Defer([this, &InEntityHandle, InFlecsWorld]()
+	for (const TInstancedStruct<FFlecsEntityRecordFragment>& Fragment : Fragments)
+	{
+		Fragment.Get<FFlecsEntityRecordFragment>().PreApplyRecordToEntity(InFlecsWorld, InEntityHandle);
+	}
+
+	//InFlecsWorld->Defer([this, &InEntityHandle, InFlecsWorld]()
 	{
 		for (const auto& [NodeType, ScriptStruct, ScriptEnum,
 			 EntityHandle, GameplayTag, Pair] : Components)
@@ -174,38 +160,59 @@ void FFlecsEntityRecord::ApplyRecordToEntity(const TSolidNotNull<const UFlecsWor
 						}
 							
 						InEntityHandle.Set(ScriptStruct);
+
+						break;
 					}
-					break;
 				case EFlecsComponentNodeType::ScriptEnum:
 					{
 						InEntityHandle.Add(ScriptEnum.Class, ScriptEnum.Value);
+
+						break;
 					}
-					break;
 				case EFlecsComponentNodeType::EntityHandle:
 					{
 						InEntityHandle.Add(EntityHandle);
+
+						break;
 					}
-					break;
 				case EFlecsComponentNodeType::FGameplayTag:
 					{
-						InEntityHandle.Add(GameplayTag);	
+						InEntityHandle.Add(GameplayTag);
+
+						break;
 					}
-					break;
 				case EFlecsComponentNodeType::Pair:
 					{
 						Pair.AddToEntity(InEntityHandle);
+
+						break;
 					}
-					break;
 			}
 		}
-
-		for (const FFlecsRecordSubEntity& SubEntity : SubEntities)
+		
+		for (const TInstancedStruct<FFlecsEntityRecord>& SubEntityRecord : SubEntities)
 		{
+			if UNLIKELY_IF(!ensure(SubEntityRecord.IsValid()))
+			{
+				continue;
+			}
+			
 			FFlecsEntityHandle NewEntityHandle = InFlecsWorld->CreateEntity()
 				.SetParent(InEntityHandle);
 			
-			SubEntity.ApplyRecordToEntity(NewEntityHandle);
+			SubEntityRecord.Get<FFlecsEntityRecord>().ApplyRecordToEntity(InFlecsWorld, NewEntityHandle);
 			InEntityHandle.Add(NewEntityHandle);
 		}
-	});
+	}//);
+
+	for (const TInstancedStruct<FFlecsEntityRecordFragment>& Fragment : Fragments)
+	{
+		Fragment.Get<FFlecsEntityRecordFragment>().PostApplyRecordToEntity(InFlecsWorld, InEntityHandle);
+	}
+}
+
+void FFlecsNamedEntityRecordFragment::PreApplyRecordToEntity(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld,
+	const FFlecsEntityHandle& InEntityHandle) const
+{
+	InEntityHandle.SetName(Name);
 }

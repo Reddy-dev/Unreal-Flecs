@@ -110,12 +110,52 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 		ASSERT_THAT(IsTrue(StructEntity.Has(flecs::PairIsTag)));
 	}
 
-	TEST_METHOD(B4_GetComponentPropertyTraitsFromAnotherModule_StaticStructAPI)
+	TEST_METHOD(B4_GetComponentPropertyTraits_CPPOnlyType_CPPAPI)
+	{
+		const FFlecsEntityHandle StructEntity = FlecsWorld->RegisterComponentType<FFlecsTest_CPPStruct_Traits>();
+		ASSERT_THAT(IsTrue(StructEntity.IsValid()));
+
+		ASSERT_THAT(IsTrue(StructEntity.Has(flecs::Trait)));
+	}
+
+	TEST_METHOD(B5_GetComponentPropertyTraitsFromAnotherModule_StaticStructAPI)
 	{
 		const FFlecsEntityHandle StaticStructEntity = FlecsWorld->RegisterComponentType(FFlecsTranslationPropertyTrait::StaticStruct());
 		ASSERT_THAT(IsTrue(StaticStructEntity.IsValid()));
 
 		ASSERT_THAT(IsTrue(StaticStructEntity.Has(flecs::PairIsTag)));
+	}
+
+	TEST_METHOD(B6_GetComponentWithEmptyRegistrationFunctionNoTraits_StaticStructAPI)
+	{
+		const FFlecsEntityHandle StaticStructEntity = FlecsWorld->RegisterComponentType(FFlecsTestStruct_EmptyRegistrationFunction::StaticStruct());
+		ASSERT_THAT(IsTrue(StaticStructEntity.IsValid()));
+
+		ASSERT_THAT(IsFalse(StaticStructEntity.Has(flecs::Trait)));
+	}
+
+	TEST_METHOD(B7_GetComponentWithEmptyRegistrationFunctionNoTraits_CPPAPI)
+	{
+		const FFlecsEntityHandle StructEntity = FlecsWorld->RegisterComponentType<FFlecsTestStruct_EmptyRegistrationFunction>();
+		ASSERT_THAT(IsTrue(StructEntity.IsValid()));
+
+		ASSERT_THAT(IsFalse(StructEntity.Has(flecs::Trait)));
+	}
+
+	TEST_METHOD(B8_GetComponentWithNoRegistrationLambdaNoTraits_StaticStructAPI)
+	{
+		const FFlecsEntityHandle StaticStructEntity = FlecsWorld->RegisterComponentType(FFlecsTestStruct_NoRegistrationLambda::StaticStruct());
+		ASSERT_THAT(IsTrue(StaticStructEntity.IsValid()));
+
+		ASSERT_THAT(IsFalse(StaticStructEntity.Has(flecs::Trait)));
+	}
+
+	TEST_METHOD(B9_GetComponentWithNoRegistrationLambdaNoTraits_CPPAPI)
+	{
+		const FFlecsEntityHandle StructEntity = FlecsWorld->RegisterComponentType<FFlecsTestStruct_NoRegistrationLambda>();
+		ASSERT_THAT(IsTrue(StructEntity.IsValid()));
+
+		ASSERT_THAT(IsFalse(StructEntity.Has(flecs::Trait)));
 	}
 
 	TEST_METHOD(C1_EnumComponentRegistration_CPPAPI)
@@ -368,7 +408,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A3_UnrealFlecsBasicComponentTests,
 		const auto& [Value] = TestEntity.Get<FFlecsTestStruct_Value>();
 		ASSERT_THAT(IsTrue(Value == 42));
 
-		const void* ValuePtr = TestEntity.GetPtr(FFlecsTestStruct_Value::StaticStruct());
+		const void* ValuePtr = TestEntity.TryGet(FFlecsTestStruct_Value::StaticStruct());
 		ASSERT_THAT(IsTrue(ValuePtr != nullptr));
 		const TSolidNotNull<const FFlecsTestStruct_Value*> ValuePtrTyped = static_cast<const FFlecsTestStruct_Value*>(ValuePtr);
 		ASSERT_THAT(IsTrue(ValuePtrTyped->Value == 42));
@@ -391,7 +431,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A3_UnrealFlecsBasicComponentTests,
 		const auto& [Value] = TestEntity.Get<FFlecsTestStruct_Value>();
 		ASSERT_THAT(IsTrue(Value == 42));
 
-		const void* ValuePtr = TestEntity.GetPtr(FFlecsTestStruct_Value::StaticStruct());
+		const void* ValuePtr = TestEntity.TryGet(FFlecsTestStruct_Value::StaticStruct());
 		ASSERT_THAT(IsTrue(ValuePtr != nullptr));
 		
 		const TSolidNotNull<const FFlecsTestStruct_Value*> ValuePtrTyped = static_cast<const FFlecsTestStruct_Value*>(ValuePtr);
@@ -415,7 +455,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A3_UnrealFlecsBasicComponentTests,
 		const auto& [Value] = TestEntity.Get<FFlecsTestStruct_Value>();
 		ASSERT_THAT(IsTrue(Value == 42));
 
-		const void* ValuePtr = TestEntity.GetPtr(FFlecsTestStruct_Value::StaticStruct());
+		const void* ValuePtr = TestEntity.TryGet(FFlecsTestStruct_Value::StaticStruct());
 		ASSERT_THAT(IsTrue(ValuePtr != nullptr));
 		
 		const TSolidNotNull<const FFlecsTestStruct_Value*> ValuePtrTyped = static_cast<const FFlecsTestStruct_Value*>(ValuePtr);
@@ -437,7 +477,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A3_UnrealFlecsBasicComponentTests,
 		const auto& [Value] = TestEntity.Get<FFlecsTestStruct_Value>();
 		ASSERT_THAT(IsTrue(Value == 42));
 
-		const void* ValuePtr = TestEntity.GetPtr(FFlecsTestStruct_Value::StaticStruct());
+		const void* ValuePtr = TestEntity.TryGet(FFlecsTestStruct_Value::StaticStruct());
 		ASSERT_THAT(IsTrue(ValuePtr != nullptr));
 		
 		const TSolidNotNull<const FFlecsTestStruct_Value*> ValuePtrTyped = static_cast<const FFlecsTestStruct_Value*>(ValuePtr);
@@ -461,7 +501,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A3_UnrealFlecsBasicComponentTests,
 		const auto& [Value] = TestEntity.Get<FFlecsTestStruct_Value>();
 		ASSERT_THAT(IsTrue(Value == 42));
 
-		const void* ValuePtr = TestEntity.GetPtr(FFlecsTestStruct_Value::StaticStruct());
+		const void* ValuePtr = TestEntity.TryGet(FFlecsTestStruct_Value::StaticStruct());
 		ASSERT_THAT(IsTrue(ValuePtr != nullptr));
 		
 		const TSolidNotNull<const FFlecsTestStruct_Value*> ValuePtrTyped = static_cast<const FFlecsTestStruct_Value*>(ValuePtr);
@@ -475,7 +515,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A3_UnrealFlecsBasicComponentTests,
 
 	TEST_METHOD(B6_BasicComponentAddAssignRemove_Add_CPPAPI_Assign_CPPAPI_Remove_CPPAPI)
 	{
-		static constexpr int32 StartingValue = 0;
+		static constexpr int32 StartingValue = 1;
 		
 		TestEntity.Add<FFlecsTestStruct_Value>();
 		ASSERT_THAT(IsTrue(TestEntity.Has(ValuedComponentEntity)));
@@ -490,7 +530,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A3_UnrealFlecsBasicComponentTests,
 		const auto& [Value] = TestEntity.Get<FFlecsTestStruct_Value>();
 		ASSERT_THAT(IsTrue(Value == 42));
 
-		const void* ValuePtr = TestEntity.GetPtr(FFlecsTestStruct_Value::StaticStruct());
+		const void* ValuePtr = TestEntity.TryGet(FFlecsTestStruct_Value::StaticStruct());
 		ASSERT_THAT(IsTrue(ValuePtr != nullptr));
 		
 		const TSolidNotNull<const FFlecsTestStruct_Value*> ValuePtrTyped = static_cast<const FFlecsTestStruct_Value*>(ValuePtr);
@@ -504,7 +544,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A3_UnrealFlecsBasicComponentTests,
 
 	TEST_METHOD(B7_BasicComponentAddAssignRemove_Add_StaticStructAPI_Assign_StaticStructAPI_Remove_StaticStructAPI)
 	{
-		static constexpr int32 StartingValue = 0;
+		static constexpr int32 StartingValue = 1;
 
 		static constexpr FFlecsTestStruct_Value DefaultValue{ .Value = 42 };
 		
@@ -521,7 +561,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A3_UnrealFlecsBasicComponentTests,
 		const auto& [Value] = TestEntity.Get<FFlecsTestStruct_Value>();
 		ASSERT_THAT(IsTrue(Value == 42));
 
-		const void* ValuePtr = TestEntity.GetPtr(FFlecsTestStruct_Value::StaticStruct());
+		const void* ValuePtr = TestEntity.TryGet(FFlecsTestStruct_Value::StaticStruct());
 		ASSERT_THAT(IsTrue(ValuePtr != nullptr));
 		
 		const TSolidNotNull<const FFlecsTestStruct_Value*> ValuePtrTyped = static_cast<const FFlecsTestStruct_Value*>(ValuePtr);
@@ -535,7 +575,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A3_UnrealFlecsBasicComponentTests,
 
 	TEST_METHOD(B8_BasicComponentAddAssignRemove_Add_EntityAPI_Assign_EntityAPI_Remove_EntityAPI)
 	{
-		static constexpr int32 StartingValue = 0;
+		static constexpr int32 StartingValue = 1;
 
 		static constexpr FFlecsTestStruct_Value DefaultValue{ .Value = 42 };
 		
@@ -552,7 +592,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A3_UnrealFlecsBasicComponentTests,
 		const auto& [Value] = TestEntity.Get<FFlecsTestStruct_Value>();
 		ASSERT_THAT(IsTrue(Value == 42));
 
-		const void* ValuePtr = TestEntity.GetPtr(FFlecsTestStruct_Value::StaticStruct());
+		const void* ValuePtr = TestEntity.TryGet(FFlecsTestStruct_Value::StaticStruct());
 		ASSERT_THAT(IsTrue(ValuePtr != nullptr));
 		
 		const TSolidNotNull<const FFlecsTestStruct_Value*> ValuePtrTyped = static_cast<const FFlecsTestStruct_Value*>(ValuePtr);

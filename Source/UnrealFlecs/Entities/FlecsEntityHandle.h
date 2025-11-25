@@ -25,6 +25,10 @@
 #include "FlecsEntityHandle.generated.h"
 
 struct FFlecsEntityHandle;
+
+struct FFlecsCollectionReference;
+struct FFlecsCollectionInstancedReference;
+
 class UFlecsWorld;
 
 /**
@@ -49,6 +53,11 @@ public:
 		return FFlecsEntityHandle(flecs::entity::null());
 	}
 
+	static NO_DISCARD SOLID_INLINE FFlecsEntityHandle Invalid()
+	{
+		return FFlecsEntityHandle(flecs::entity::null());
+	}
+
 	 static NO_DISCARD FFlecsEntityHandle GetNullHandle(const TSolidNotNull<const UFlecsWorld*> InWorld);
 
 public:
@@ -62,7 +71,8 @@ public:
 	{
 	}
 
-	SOLID_INLINE FFlecsEntityHandle(const flecs::world& InWorld, const FFlecsId InEntity) : FFlecsEntityView(InWorld, InEntity)
+	SOLID_INLINE FFlecsEntityHandle(const flecs::world& InWorld, const FFlecsId InEntity)
+		: FFlecsEntityView(InWorld, InEntity)
 	{
 	}
 
@@ -190,11 +200,6 @@ public:
 	
 	SOLID_INLINE const FSelfType& Set(const FFlecsId InId, const uint32 InSize, const void* InValue) const
 	{
-		if (!Has(InId))
-		{
-			Add(InId);
-		}
-		
 		GetEntity().set_ptr(InId, InSize, InValue);
 		return *this;
 	}
@@ -203,11 +208,6 @@ public:
 	SOLID_INLINE const FSelfType& Set(const T& InTypeValue, const void* InData) const
 	{
 		const FFlecsId InId = FFlecsEntityHandle::GetInputId(*this, InTypeValue);
-		
-		if (!Has(InId))
-		{
-			Add(InId);
-		}
 
 		if constexpr (std::is_convertible_v<T, const UScriptStruct*>)
 		{
@@ -232,9 +232,6 @@ public:
 	template <typename T>
 	SOLID_INLINE const FSelfType& Assign(const T& InValue) const
 	{
-		solid_checkf(Has<T>(),
-			TEXT("Entity does not have component with type %hs"), nameof(T).data());
-
 		GetEntity().assign<T>(InValue);
 		return *this;
 	}
@@ -243,18 +240,12 @@ public:
 	requires (std::is_move_constructible_v<T> && !std::is_lvalue_reference_v<T>)
 	SOLID_INLINE const FSelfType& Assign(T&& InValue) const
 	{
-		solid_checkf(Has<T>(),
-			TEXT("Entity does not have component with type %hs"), nameof(T).data());
-
 		GetEntity().assign<T>(FLECS_FWD(InValue));
 		return *this;
 	}
 	
 	SOLID_INLINE const FSelfType& Assign(const FFlecsId InEntity, const uint32 InSize, const void* InValue) const
 	{
-		solid_checkf(Has(InEntity),
-			TEXT("Entity does not have component with id %llu"), InEntity.GetId());
-		
 		GetEntity().set_ptr(InEntity, InSize, InValue);
 		return *this;
 	}
@@ -263,9 +254,6 @@ public:
 	SOLID_INLINE const FSelfType& Assign(const T& InTypeValue, const void* InValue) const
 	{
 		const FFlecsId InId = FFlecsEntityHandle::GetInputId(*this, InTypeValue);
-		
-		solid_checkf(Has(InId),
-			TEXT("Entity does not have component with id %llu"), InId.GetId());
 		
 		if constexpr (std::is_convertible_v<T, const UScriptStruct*>)
 		{
@@ -281,10 +269,6 @@ public:
 
 	SOLID_INLINE const FSelfType& Assign(const FInstancedStruct& InValue) const
 	{
-		solid_checkf(Has(InValue.GetScriptStruct()),
-			TEXT("Entity does not have component with script struct %s"),
-			*InValue.GetScriptStruct()->GetStructCPPName());
-		
 		Assign(InValue.GetScriptStruct(), InValue.GetMemory());
 		return *this;
 	}
@@ -666,117 +650,85 @@ public:
 	// @TODO: add r-value set apis for pairs
 	
 	template <typename TFirst, typename TSecond, typename TActual = typename flecs::pair<TFirst, TSecond>::type>
-	requires (std::is_same_v<TFirst, TActual>)
-	SOLID_INLINE const FSelfType& SetPairFirst(const TActual& InValue) const
+	SOLID_INLINE const FSelfType& SetPair(const TActual& InValue) const
 	{
 		GetEntity().set<TFirst, TSecond>(InValue);
 		return *this;
 	}
 
-	template <typename TFirst, typename TSecond, typename TActual = typename flecs::pair<TFirst, TSecond>::type>
-	requires (std::is_same_v<TSecond, TActual>)
-	SOLID_INLINE const FSelfType& SetPairSecond(const TActual& InValue) const
-	{
-		GetEntity().set_second<TFirst, TSecond>(InValue);
-		return *this;
-	}
-
 	template <typename TFirst, Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond>
-	SOLID_INLINE const FSelfType& SetPairFirst(const TSecond& InSecondType, const TFirst& InValue) const
+	SOLID_INLINE const FSelfType& SetPair(const TSecond& InSecondType, const TFirst& InValue) const
 	{
 		GetEntity().set<TFirst>(FFlecsEntityHandle::GetInputId(*this, InSecondType), InValue);
 		return *this;
 	}
 
-	template <Unreal::Flecs::TFlecsEntityFunctionInputDataTypeConcept First,
-		Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept Second>
-	SOLID_INLINE const FSelfType& SetPairFirst(const First& InFirstTypeValue, const void* InValue,
-		const Second& InSecondTypeValue) const
+	template <typename TFirst, Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond>
+	SOLID_INLINE const FSelfType& SetPair(const TSecond& InSecondType, const void* InValue) const
 	{
-		if (!HasPair(InFirstTypeValue, InSecondTypeValue))
-		{
-			AddPair(InFirstTypeValue, InSecondTypeValue);
-		}
+		// @TODO: check for Type being registered
+		
+		Set(FFlecsId::MakePair(flecs::_::type<TFirst>::id(GetNativeFlecsWorld()), FFlecsEntityHandle::GetInputId(*this, InSecondType)),
+				InValue);
+			
+		return *this;
+	}
 
+	// @TODO: handle PairIsTag
+	template <Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept First,
+		Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept Second>
+	SOLID_INLINE const FSelfType& SetPair(const First& InFirstTypeValue, const void* InValue, const Second& InSecondTypeValue) const
+	{
 		Set(FFlecsId::MakePair(
 			FFlecsEntityHandle::GetInputId(*this, InFirstTypeValue),
 			FFlecsEntityHandle::GetInputId(*this, InSecondTypeValue)),
-				InSecondTypeValue->GetStructureSize(),
 				InValue);
+		
 		return *this;
 	}
 
-	template <typename TFirst, typename TSecond, typename TActual = TSecond>
-	SOLID_INLINE const FSelfType& SetPairSecond(const TActual& InSecond) const
-	{
-		GetEntity().set_second<TFirst, TSecond>(InSecond);
-		return *this;
-	}
-
-	template <typename TSecond, Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst>
-	SOLID_INLINE const FSelfType& SetPairSecond(const TFirst& InFirstType, const TSecond& InValue) const
+	template <typename TSecond, Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept First, typename TActual = TSecond>
+	SOLID_INLINE const FSelfType& SetPairSecond(const First& InFirstType, const TActual& InValue) const
 	{
 		GetEntity().set_second<TSecond>(FFlecsEntityHandle::GetInputId(*this, InFirstType), InValue);
 		return *this;
 	}
 
-	template <Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst,
-		Unreal::Flecs::TFlecsEntityFunctionInputDataTypeConcept TSecond>
-	SOLID_INLINE const FSelfType& SetPairSecond(const TFirst& InFirstTypeValue,
-		const TSecond& InSecondTypeValue, const void* InValue) const
-	{
-		if (!HasPair(InFirstTypeValue, InSecondTypeValue))
-		{
-			AddPair(InFirstTypeValue, InSecondTypeValue);
-		}
-
-		Set(FFlecsId::MakePair(FFlecsEntityHandle::GetInputId(*this, InFirstTypeValue), FFlecsEntityHandle::GetInputId(*this, InSecondTypeValue)),
-				InSecondTypeValue->GetStructureSize(),
-				InValue);
-		return *this;
-	}
-
 	template <typename TFirst, typename TSecond, typename TActual = typename flecs::pair<TFirst, TSecond>::type>
-	requires (std::is_same_v<TFirst, TActual>)
-	SOLID_INLINE const FSelfType& AssignPairFirst(const TActual& InValue) const
+	SOLID_INLINE const FSelfType& AssignPair(const TActual& InValue) const
 	{
 		GetEntity().assign<TFirst, TSecond>(InValue);
 		return *this;
 	}
 
-	template <typename TFirst, typename TSecond, typename TActual = typename flecs::pair<TFirst, TSecond>::type>
-	requires (std::is_same_v<TSecond, TActual>)
-	SOLID_INLINE const FSelfType& AssignPairSecond(const TActual& InValue) const
-	{
-		GetEntity().assign_second<TFirst, TSecond>(InValue);
-		return *this;
-	}
-
 	template <typename TFirst, Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond>
-	SOLID_INLINE const FSelfType& AssignPairFirst(const TSecond& InSecondType, const TFirst& InValue) const
+	SOLID_INLINE const FSelfType& AssignPair(const TSecond& InSecondType, const TFirst& InValue) const
 	{
 		GetEntity().assign<TFirst>(FFlecsEntityHandle::GetInputId(*this, InSecondType), InValue);
 		return *this;
 	}
 
-	template <Unreal::Flecs::TFlecsEntityFunctionInputDataTypeConcept First,
-		Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept Second>
-	SOLID_INLINE const FSelfType& AssignPairFirst(const First& InFirstTypeValue, const void* InValue,
-		const Second& InSecondTypeValue) const
+	template <typename TFirst, Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond>
+	SOLID_INLINE const FSelfType& AssignPair(const TSecond& InSecondType, const void* InValue) const
 	{
-		solid_checkf(HasPair(InFirstTypeValue, InSecondTypeValue), 
+		solid_checkf(HasPair<TFirst>(InSecondType), 
 			TEXT("Entity does not have pair"));
 
-		Assign(FFlecsId::MakePair(FFlecsEntityHandle::GetInputId(*this, InFirstTypeValue), FFlecsEntityHandle::GetInputId(*this, InSecondTypeValue)),
-				InSecondTypeValue->GetStructureSize(),
+		Assign(FFlecsId::MakePair(flecs::_::type<TFirst>::id(GetNativeFlecsWorld()),
+			FFlecsEntityHandle::GetInputId(*this, InSecondType)),
 				InValue);
+		
 		return *this;
 	}
 
-	template <typename TFirst, typename TSecond, typename TActual = TSecond>
-	SOLID_INLINE const FSelfType& AssignPairSecond(const TActual& InSecond) const
+	template <Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept First,
+		Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept Second>
+	SOLID_INLINE const FSelfType& AssignPair(const First& InFirstTypeValue, const void* InValue, const Second& InSecondTypeValue) const
 	{
-		GetEntity().assign_second<TFirst, TSecond>(InSecond);
+		Assign(FFlecsId::MakePair(
+			FFlecsEntityHandle::GetInputId(*this, InFirstTypeValue),
+			FFlecsEntityHandle::GetInputId(*this, InSecondTypeValue)),
+				InValue);
 		return *this;
 	}
 
@@ -784,20 +736,6 @@ public:
 	SOLID_INLINE const FSelfType& AssignPairSecond(const TFirst& InFirstType, const TSecond& InValue) const
 	{
 		GetEntity().assign_second<TSecond>(FFlecsEntityHandle::GetInputId(*this, InFirstType), InValue);
-		return *this;
-	}
-
-	template <Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst,
-		Unreal::Flecs::TFlecsEntityFunctionInputDataTypeConcept TSecond>
-	SOLID_INLINE const FSelfType& AssignPairSecond(const TFirst& InFirstTypeValue,
-		const TSecond& InSecondTypeValue, const void* InValue) const
-	{
-		solid_checkf(HasPair(InFirstTypeValue, InSecondTypeValue),
-			TEXT("Entity does not have pair"));
-
-		Assign(FFlecsId::MakePair(FFlecsEntityHandle::GetInputId(*this, InFirstTypeValue), FFlecsEntityHandle::GetInputId(*this, InSecondTypeValue)),
-				InSecondTypeValue->GetStructureSize(),
-				InValue);
 		return *this;
 	}
 	
@@ -890,6 +828,13 @@ public:
 		return *this;
 	}
 
+	template <Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept T>
+	SOLID_INLINE const FSelfType& SetIsA(const T& InValue) const
+	{
+		GetEntity().is_a(FFlecsEntityHandle::GetInputId(*this, InValue));
+		return *this;
+	}
+
 	SOLID_INLINE const FSelfType& MarkSlot() const
 	{
 		GetEntity().slot();
@@ -909,11 +854,47 @@ public:
 		return *this;
 	}
 
+	template <Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept T>
+	SOLID_INLINE const FSelfType& MarkSlot(const T& InIdType) const
+	{
+		GetEntity().slot_of(FFlecsEntityHandle::GetInputId(*this, InIdType));
+		return *this;
+	}
+
+	template <typename T>
+	SOLID_INLINE const FSelfType& AddWith() const
+	{
+		AddPairSecond<T>(flecs::With);
+		return *this;
+	}
+
+	template <Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept T>
+	SOLID_INLINE const FSelfType& AddWith(const T& InValue) const
+	{
+		AddPair(flecs::With, FFlecsEntityHandle::GetInputId(*this, InValue));
+		return *this;
+	}
+
 	template <typename TFunction>
 	SOLID_INLINE const FSelfType& Scope(const TFunction& InFunction) const
 	{
-		GetEntity().scope(std::forward<TFunction>(InFunction));
+		GetEntity().scope(InFunction);
 		return *this;
+	}
+
+	SOLID_INLINE const FSelfType& SetChildOrder(FFlecsId* InOrderArray, const int32 InOrderCount) const
+	{
+		solid_cassumef(InOrderArray != nullptr || InOrderCount == 0,
+			TEXT("InOrder cannot be null if InOrderCount is greater than zero"));
+		solid_cassumef(InOrderCount >= 0, TEXT("InOrderCount cannot be negative"));
+		
+		GetEntity().set_child_order(reinterpret_cast<flecs::id_t*>(InOrderArray), InOrderCount);
+		return *this;
+	}
+
+	SOLID_INLINE const FSelfType& SetChildOrder(const TArrayView<FFlecsId> InOrderArray) const
+	{
+		return SetChildOrder(InOrderArray.GetData(), InOrderArray.Num());
 	}
 
 	NO_DISCARD SOLID_INLINE FFlecsEntityView ToView() const
@@ -921,42 +902,54 @@ public:
 		return FFlecsEntityView(GetEntity().view());
 	}
 
-	SOLID_INLINE const FSelfType& AddCollection(const FFlecsId InCollection) const
+	const FSelfType& AddCollection(const FFlecsId InCollection, const FInstancedStruct& InParams = FInstancedStruct()) const;
+
+	template <Solid::TScriptStructConcept TCollectionParams>
+	SOLID_INLINE const FSelfType& AddCollection(const FFlecsId InCollection, const TCollectionParams& InParams) const
 	{
-		AddPair(flecs::IsA, InCollection);
-		return *this;
+		return AddCollection(InCollection, FInstancedStruct::Make<TCollectionParams>(InParams));
 	}
 
-	SOLID_INLINE const FSelfType& AddCollection(UClass* InCollection) const
+	SOLID_INLINE const FSelfType& AddCollection(UClass* InCollection, const FInstancedStruct& InParams = FInstancedStruct()) const
 	{
-		return AddCollection(ObtainTypeClass(InCollection));
+		return AddCollection(ObtainTypeClass(InCollection), InParams);
+	}
+
+	template <Solid::TScriptStructConcept TCollectionParams>
+	SOLID_INLINE const FSelfType& AddCollection(UClass* InCollection, const TCollectionParams& InParams) const
+	{
+		return AddCollection(InCollection, FInstancedStruct::Make<TCollectionParams>(InParams));
 	}
 
 	template <Solid::TStaticClassConcept T>
-	SOLID_INLINE const FSelfType& AddCollection() const
+	SOLID_INLINE const FSelfType& AddCollection(const FInstancedStruct& InParams = FInstancedStruct()) const
 	{
-		return AddCollection(T::StaticClass());
+		return AddCollection(T::StaticClass(), InParams);
 	}
 
-	// Note this doesnt remove overridden components
-	SOLID_INLINE const FSelfType& RemoveCollection(const FFlecsId InCollection, const bool bRemoveOverriden = false) const
+	template <Solid::TStaticClassConcept T, Solid::TScriptStructConcept TCollectionParams>
+	SOLID_INLINE const FSelfType& AddCollection(const TCollectionParams& InParams) const
 	{
-		RemovePair(flecs::IsA, InCollection);
-		
-		return *this;
+		return AddCollection(T::StaticClass(), FInstancedStruct::Make<TCollectionParams>(InParams));
 	}
 
+	const FSelfType& AddCollection(const FFlecsCollectionReference& InCollectionRef, const FInstancedStruct& InParams = FInstancedStruct()) const;
+	const FSelfType& AddCollection(const FFlecsCollectionInstancedReference& InCollectionRef) const;
+
 	// Note this doesnt remove overridden components
-	SOLID_INLINE const FSelfType& RemoveCollection(UClass* InCollection, const bool bRemoveOverriden = false) const
+	const FSelfType& RemoveCollection(const FFlecsId InCollection) const;
+
+	// Note this doesnt remove overridden components
+	SOLID_INLINE const FSelfType& RemoveCollection(UClass* InCollection) const
 	{
-		return RemoveCollection(ObtainTypeClass(InCollection), bRemoveOverriden);
+		return RemoveCollection(ObtainTypeClass(InCollection));
 	}
 
 	// Note this doesnt remove overridden components
 	template <Solid::TStaticClassConcept T>
-	SOLID_INLINE const FSelfType& RemoveCollection(const bool bRemoveOverriden = false) const
+	SOLID_INLINE const FSelfType& RemoveCollection() const
 	{
-		return RemoveCollection(T::StaticClass(), bRemoveOverriden);
+		return RemoveCollection(T::StaticClass());
 	}
 	
 protected:

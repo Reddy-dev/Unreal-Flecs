@@ -8,8 +8,11 @@
 
 #include "Entities/FlecsEntityRecord.h"
 #include "FlecsCollectionTypes.h"
+#include "FlecsCollectionDefinition.h"
 
 #include "FlecsCollectionDataAsset.generated.h"
+
+// @TODO: add versioning
 
 UCLASS(BlueprintType, Blueprintable)
 class UNREALFLECS_API UFlecsCollectionDataAsset : public UPrimaryDataAsset
@@ -22,10 +25,15 @@ public:
 	virtual FPrimaryAssetId GetPrimaryAssetId() const override final;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Config")
-	TArray<FFlecsCollectionReference> Collections;
+	TArray<FFlecsCollectionInstancedReference> Collections;
 
 	UPROPERTY(EditAnywhere, Category = "Collections")
 	FFlecsEntityRecord Record;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Config")
+	TMap<int32, FFlecsSubEntityCollectionReferences> SubEntityCollections;
+
+	NO_DISCARD FFlecsCollectionDefinition MakeCollectionDefinition() const;
 
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;

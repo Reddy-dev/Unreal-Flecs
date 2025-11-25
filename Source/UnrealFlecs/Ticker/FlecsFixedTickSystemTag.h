@@ -3,19 +3,22 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FFlecsUObjectTag.h"
+
 #include "Properties/FlecsComponentProperties.h"
-#include "FFlecsModuleComponentTag.generated.h"
+#include "Pipelines/FlecsOutsideMainLoopTag.h"
+
+#include "FlecsFixedTickSystemTag.generated.h"
 
 USTRUCT(BlueprintType)
-struct UNREALFLECS_API FFlecsModuleComponentTag : public FFlecsUObjectTag
+struct UNREALFLECS_API FFlecsFixedTickSystemTag
 {
 	GENERATED_BODY()
-}; // struct FFlecsModuleComponentTag
+}; // struct FFlecsFixedTickSystemTag
 
-REGISTER_FLECS_COMPONENT(FFlecsModuleComponentTag,
+REGISTER_FLECS_COMPONENT(FFlecsFixedTickSystemTag,
 	[](flecs::world InWorld, const FFlecsComponentHandle& InComponent)
 	{
 		InComponent
-			.Add(flecs::Target);
+			.AddWith<FFlecsOutsideMainLoopTag>();
 	});
+
