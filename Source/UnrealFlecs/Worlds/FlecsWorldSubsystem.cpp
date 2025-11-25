@@ -13,7 +13,6 @@
 #include "Settings/FlecsWorldSettingsAsset.h"
 #include "UnrealFlecsWorldTag.h"
 
-#include "Entities/FlecsDefaultEntitiesDeveloperSettings.h"
 #include "Entities/FlecsDefaultEntityEngine.h"
 
 #include "Components/FlecsWorldPtrComponent.h"
@@ -62,16 +61,8 @@ void UFlecsWorldSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	}
 	else
 	{
-#if WITH_EDITOR
-		if (!GIsAutomationTesting)
-		{
-#endif // #if WITH_EDITOR
-				
-			UE_LOG(LogFlecsCore, Warning, TEXT("No default world settings asset found"));
-				
-#if WITH_EDITOR
-		}
-#endif // #if WITH_EDITOR
+		UE_CLOG(!GIsAutomationTesting, LogFlecsCore,
+			Warning, TEXT("No default world settings asset found"));
 	}
 }
 

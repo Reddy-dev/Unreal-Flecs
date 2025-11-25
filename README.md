@@ -1,7 +1,5 @@
 # Unreal Engine Flecs Integration
 
-## Depends on [Solid-Macros](https://github.com/Reddy-dev/Solid-Macros)
-
 ### Unreal-Flecs Discord: https://discord.gg/Q6EWgd8tFK
 
 ### Flecs Discord: https://discord.gg/WRn8QSfVvx
@@ -16,6 +14,11 @@ Only tested on Version: UE 5.7 MSVC/partially Clang
 
 @Megafunk \
 @ronaldburns 
+
+
+### For Full Performance benefits make sure to use LTO/PGO in shipping builds.
+
+## Wiki/Documentation coming soon
 
 ## Features:
 Universalized Component Type Registration CPP <--> Meta Type, Works with USTRUCT, UENUM, and UCLASS \
