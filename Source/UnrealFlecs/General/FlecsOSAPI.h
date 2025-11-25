@@ -299,19 +299,25 @@ struct FOSApiInitializer
 
                 		break;
 	                }
-            	case 0: // Verbose
+				case -1: // Info
+					{
+						UE_LOGFMT(LogFlecsCore, Display,
+							"Flecs - File: {FileName}, Line: {LineNumber}, Message: {Message}",
+							File, Line, Message);
+
+						break;
+					}
+            	case 0: // Journal
             		{
-            			UE_LOGFMT(LogFlecsCore, Verbose,
+            			UE_LOGFMT(LogFlecsJournal, Verbose,
             				"Flecs - File: {FileName}, Line: {LineNumber}, Message: {Message}",
 							File, Line, Message);
 
                 		break;
             		}
-            	case 4: // Bookmark/Journal
+            	case 4: // VeryVerbose
             		{
-            			TRACE_BOOKMARK(TEXT("Flecs - File: %s, Line: %d, Message: %s"),
-            				StringCast<TCHAR>(File).Get(), Line, StringCast<TCHAR>(Message).Get());
-            			UE_LOGFMT(LogFlecsJournal, VeryVerbose,
+            			UE_LOGFMT(LogFlecsCore, VeryVerbose,
             				"Flecs - File: {FileName}, Line: {LineNumber}, Message: {Message}",
             				File, Line, Message);
 
