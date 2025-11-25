@@ -52,6 +52,17 @@ public:
 		meta = (EditCondition = "bDeleteEmptyTablesOnGC", EditConditionHides, ClampMin = "0", UIMin = "0", ClampMax = "65535", UIMax = "65535"))
 	uint32 DeleteGeneration = 10;
 
+	/**
+	 * @brief Flecs logging level.
+	 * -4: Fatal
+	 * -3: Error
+	 * -2: Warning
+	 * -1: Info
+	 *  0: Journal
+	 *  1: Trace Level 1
+	 *  2: Trace Level 2
+	 *  3: Trace Level 3
+	 */
 	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Logging",
 		meta = (ConsoleVariable = "Flecs.LogLevel"))
 	int32 LogLevel = -1;
