@@ -8,42 +8,36 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsDeveloperSettings)
 
-static bool bEnableFlecs = true;
-static FAutoConsoleVariableRef CVarEnableFlecs(
+static TAutoConsoleVariable<bool> CVarEnableFlecs(
 	TEXT("Flecs.UseFlecs"),
-	bEnableFlecs,
+	true,
 	TEXT("Enable Unreal Flecs Plugin.")
 );
 
-static bool bUseTaskThreads = false;
-static FAutoConsoleVariableRef CVarUseTaskThreads(
+static TAutoConsoleVariable<bool> CVarUseTaskThreads(
 	TEXT("Flecs.UseTaskThreads"),
-	bUseTaskThreads,
+	true,
 	TEXT("Enable task threads for Flecs.")
 );
 
-static int32 TaskThreadCount = 4;
-static FAutoConsoleVariableRef CVarTaskThreadCount(
+static TAutoConsoleVariable<int32> CVarTaskThreadCount(
 	TEXT("Flecs.TaskThreadCount"),
-	TaskThreadCount,
+	4,
 	TEXT("Number of threads to use for Flecs task processing.")
 );
-
-static int32 FlecsLogLevel = -1;
 
 static void FlecsLogLevelSink()
 {
 	if (IConsoleVariable* CVar = IConsoleManager::Get().FindConsoleVariable(TEXT("Flecs.LogLevel")))
 	{
 		const int32 NewLevel = CVar->GetInt();
-		FlecsLogLevel = NewLevel;
 		ecs_log_set_level(NewLevel);
 	}
 }
 
-static FAutoConsoleVariableRef CVarFlecsLogLevel(
+static TAutoConsoleVariable<int32> CVarFlecsLogLevel(
 	TEXT("Flecs.LogLevel"),
-	FlecsLogLevel,
+	-1,
 	TEXT("Sets the log level for Flecs. \n"),
 	ECVF_Default);
 
