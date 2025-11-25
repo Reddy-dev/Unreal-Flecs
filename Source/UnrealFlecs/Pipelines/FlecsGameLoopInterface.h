@@ -35,6 +35,6 @@ public:
 
 	virtual bool IsMainLoop() const;
 
-	NO_DISCARD virtual FGameplayTag GetTickFunctionTag() const;
+	NO_DISCARD virtual FGameplayTagContainer GetTickFunctionTags() const;
 	
 }; // class IFlecsGameLoopInterface

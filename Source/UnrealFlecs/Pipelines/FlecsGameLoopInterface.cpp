@@ -4,6 +4,7 @@
 
 #include "FlecsGameLoopTag.h"
 #include "FlecsTickGroupNativeTags.h"
+#include "FlecsTickGroupRelationship.h"
 #include "Ticker/FlecsFixedTickSystemTag.h"
 #include "Phases/FlecsDefaultPhaseNativeTags.h"
 
@@ -17,6 +18,11 @@ void IFlecsGameLoopInterface::InitializeModule(const TSolidNotNull<UFlecsWorld*>
 	IFlecsModuleInterface::InitializeModule(InWorld, InModuleEntity);
 
 	InModuleEntity.Add<FFlecsGameLoopTag>();
+	
+	for (const FGameplayTag& PhaseTag : GetTickFunctionTags())
+	{
+		InModuleEntity.AddPair<FFlecsTickGroupRelationship>(PhaseTag);
+	}
 
 	InitializeGameLoop(InWorld, InModuleEntity);
 }
@@ -26,7 +32,8 @@ bool IFlecsGameLoopInterface::IsMainLoop() const
 	return false;
 }
 
-FGameplayTag IFlecsGameLoopInterface::GetTickFunctionTag() const
+FGameplayTagContainer IFlecsGameLoopInterface::GetTickFunctionTags() const
 {
-	return FFlecsTickGroupNativeTags::Get().FlecsTickGroup_PrePhysics;
+	return FGameplayTagContainer(
+		FFlecsTickGroupNativeTags::Get().FlecsTickGroup_PrePhysics, 
 }

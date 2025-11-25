@@ -4,11 +4,10 @@
 
 #include "CoreMinimal.h"
 
+#include "Engine/EngineBaseTypes.h"
 #include "GameplayTagContainer.h"
 
 #include "Types/SolidNotNull.h"
-
-#include "Pipelines/FlecsTickingGroup.h"
 
 #include "FlecsTickFunctionSettings.generated.h"
 
@@ -28,10 +27,10 @@ struct UNREALFLECS_API FFlecsTickFunctionSettings
 	TEnumAsByte<ETickingGroup> TickGroup = TG_PrePhysics;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float TickInterval = 0.0f;
+	bool bStartWithTickEnabled = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bStartWithTickEnabled = true;
+	double TickInterval = 0.0;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bTickEvenWhenPaused = false;

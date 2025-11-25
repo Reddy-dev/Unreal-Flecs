@@ -20,6 +20,6 @@ REGISTER_FLECS_COMPONENT(FFlecsTickGroupRelationship,
 		InComponent
 			.Add(flecs::Relationship)
 			.Add(flecs::Acyclic)
-			.Add(flecs::Pipeline);
+			.Add(flecs::DontFragment);
 	});
 

@@ -7,6 +7,7 @@
 
 struct UNREALFLECS_API FFlecsTickGroupNativeTags : public FGameplayTagNativeAdder
 {
+public:
 	FGameplayTag FlecsTickGroupRoot;
 	FGameplayTag FlecsTickGroup_PrePhysics;
 	FGameplayTag FlecsTickGroup_UnpausedPrePhysics;
@@ -16,7 +17,6 @@ struct UNREALFLECS_API FFlecsTickGroupNativeTags : public FGameplayTagNativeAdde
 	FGameplayTag FlecsTickGroup_PostUpdate;
 	FGameplayTag FlecsTickGroupLast;
 	
-public:
 	virtual void AddTags() override;
 
 	static FFlecsTickGroupNativeTags& Get();

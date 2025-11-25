@@ -11,4 +11,13 @@ void FFlecsTickFunctionSettings::ApplySettingsToTickFunction(const TSolidNotNull
 {
 	OutTickFunction.FlecsWorld = InFlecsWorld;
 	OutTickFunction.TickGroupTag = TickGroupTag;
+
+	OutTickFunction.TickGroup = TickGroup;
+	OutTickFunction.bStartWithTickEnabled = bStartWithTickEnabled;
+	OutTickFunction.TickInterval = TickInterval;
+	OutTickFunction.bTickEvenWhenPaused = bTickEvenWhenPaused;
+	OutTickFunction.bAllowTickBatching = bAllowTickBatching;
+	OutTickFunction.bAllowTickOnDedicatedServer = bAllowTickOnDedicatedServer;
+	OutTickFunction.EndTickGroup = EndTickGroup;
+	OutTickFunction.bHighPriority = bHighPriority;
 }
