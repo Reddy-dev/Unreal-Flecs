@@ -49,9 +49,14 @@ void UFlecsDeveloperSettings::PostInitProperties()
 
 #if WITH_EDITOR
 	
-	if (IsTemplate())
+	for (TFieldIterator<FProperty> It(GetClass()); It; ++It)
 	{
-		//ImportConsoleVariableValues();
+		FProperty* Property = *It;
+
+		if (Property->HasAnyPropertyFlags(CPF_Config) && Property->HasMetaData(TEXT("ConsoleVariable")))
+		{
+			ExportValuesToConsoleVariables(Property);
+		}
 	}
 
 #endif // WITH_EDITOR
