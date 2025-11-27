@@ -41,15 +41,18 @@ public:
 	bool bDeleteEmptyTablesOnGC = false;
 
 	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Garbage Collection",
-		meta = (EditCondition = "bDeleteEmptyTablesOnGC", EditConditionHides, ClampMin = "0", UIMin = "0", ForceUnits = "s"))
+		meta = (EditCondition = "bDeleteEmptyTablesOnGC", EditConditionHides,
+			ClampMin = "0", UIMin = "0", ForceUnits = "s"))
 	double TimeBudget = 0.01;
 
 	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Garbage Collection",
-		meta = (EditCondition = "bDeleteEmptyTablesOnGC", EditConditionHides, ClampMin = "0", UIMin = "0", ClampMax = "65535", UIMax = "65535"))
+		meta = (EditCondition = "bDeleteEmptyTablesOnGC", EditConditionHides,
+			ClampMin = "0", UIMin = "0", ClampMax = "65535", UIMax = "65535"))
 	uint32 ClearGeneration = 0;
 
 	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Garbage Collection",
-		meta = (EditCondition = "bDeleteEmptyTablesOnGC", EditConditionHides, ClampMin = "0", UIMin = "0", ClampMax = "65535", UIMax = "65535"))
+		meta = (EditCondition = "bDeleteEmptyTablesOnGC", EditConditionHides,
+			ClampMin = "0", UIMin = "0", ClampMax = "65535", UIMax = "65535"))
 	uint32 DeleteGeneration = 10;
 
 	/**
@@ -63,8 +66,7 @@ public:
 	 *  2: Trace Level 2
 	 *  3: Trace Level 3
 	 */
-	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Logging",
-		meta = (ConsoleVariable = "Flecs.LogLevel"))
+	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Logging", meta = (ConsoleVariable = "Flecs.LogLevel"))
 	int32 LogLevel = -1;
 
 	UNREALFLECS_API virtual void PostInitProperties() override;

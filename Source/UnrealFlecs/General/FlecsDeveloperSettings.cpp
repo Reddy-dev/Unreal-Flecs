@@ -22,13 +22,14 @@ static TAutoConsoleVariable<bool> CVarUseTaskThreads(
 
 static TAutoConsoleVariable<int32> CVarTaskThreadCount(
 	TEXT("Flecs.TaskThreadCount"),
-	4,
+	8,
 	TEXT("Number of threads to use for Flecs task processing.")
 );
 
+// Sets the Flecs log level based on the console variable and when the CVar changes
 static void FlecsLogLevelSink()
 {
-	if (IConsoleVariable* CVar = IConsoleManager::Get().FindConsoleVariable(TEXT("Flecs.LogLevel")))
+	if LIKELY_IF(const IConsoleVariable* const CVar = IConsoleManager::Get().FindConsoleVariable(TEXT("Flecs.LogLevel")))
 	{
 		const int32 NewLevel = CVar->GetInt();
 		ecs_log_set_level(NewLevel);
