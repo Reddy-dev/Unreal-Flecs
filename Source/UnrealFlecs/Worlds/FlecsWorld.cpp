@@ -1949,3 +1949,8 @@ void UFlecsWorld::AddReferencedObjects(UObject* InThis, FReferenceCollector& Col
 
 	ecs_exclusive_access_end(This->World, false);
 }
+
+void UFlecsWorld::GetResourceSizeEx(FResourceSizeEx& CumulativeResourceSize)
+{
+	Super::GetResourceSizeEx(CumulativeResourceSize);
+}

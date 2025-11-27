@@ -1040,6 +1040,8 @@ public:
 
 	static void AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector);
 
+	virtual void GetResourceSizeEx(FResourceSizeEx& CumulativeResourceSize) override;
+
 	flecs::world World;
 
 	bool bIsInitialized = false;
