@@ -28,10 +28,10 @@ public:
 	{
 	}
 
-	virtual FFlecsEntityHandle GetEntityHandle() const override final;
+	NO_DISCARD virtual FFlecsEntityHandle GetEntityHandle() const override final;
 
 	virtual void BuildSystem(flecs::system_builder<>& Builder)
-		PURE_VIRTUAL(IFlecsSystemInterface::BuildSystem, return;);
+		PURE_VIRTUAL(IFlecsSystemInterface::BuildSystem, return;)
 
 	UFUNCTION(BlueprintImplementableEvent, Meta = (DisplayName = "Initialize System"))
 	void BP_InitializeSystem();
