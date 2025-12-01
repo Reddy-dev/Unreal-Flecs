@@ -13,7 +13,7 @@ UCLASS(MinimalAPI, BlueprintType, Config = Game, DefaultConfig, Category = "Flec
 class UFlecsDeveloperSettings final : public UDeveloperSettings
 {
 	GENERATED_BODY()
-
+	
 public:
 	/**
 	 * @brief Enable Unreal Flecs Plugin.

@@ -77,7 +77,7 @@ public:
 	void RegisterUnrealTypes() const;
 
 	/**
-	 * @brief Progress the iterator while unlocking the table lock for the duration of the function call.
+	 * @brief HACKY: Progress the iterator while unlocking the table lock for the duration of the function call.
 	 * does not loop over the iterator, only progresses it after each function call.
 	 * @param Iter The Flecs iterator.
 	 * @param Function The function to execute.
@@ -107,7 +107,7 @@ public:
 		});
 	}
 
-	void InitializeComponentPropertyObserver() const;
+	void InitializeComponentPropertyObserver();
 	void InitializeSystems();
 
 	/**
@@ -1065,6 +1065,8 @@ public:
 	flecs::query<FFlecsSoftDependenciesComponent> DependenciesComponentQuery;
 
 	FFlecsTypeMapComponent* TypeMapComponent;
+
+	FDelegateHandle ComponentRegisteredDelegateHandle;
 
 	FDelegateHandle ShrinkMemoryGCDelegateHandle;
 	FDelegateHandle DeleteEmptyTablesGCDelegateHandle;
