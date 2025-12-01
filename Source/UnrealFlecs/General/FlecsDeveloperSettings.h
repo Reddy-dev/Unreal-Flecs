@@ -8,9 +8,9 @@
 
 #include "FlecsDeveloperSettings.generated.h"
 
-UCLASS(MinimalAPI, BlueprintType, Config = Game, DefaultConfig, Category = "Flecs",
+UCLASS(BlueprintType, Config = Game, DefaultConfig, Category = "Flecs",
 	meta = (DisplayName = "Flecs Settings"))
-class UFlecsDeveloperSettings final : public UDeveloperSettings
+class UNREALFLECS_API UFlecsDeveloperSettings final : public UDeveloperSettings
 {
 	GENERATED_BODY()
 	
@@ -32,7 +32,7 @@ public:
 	 */
 	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Threading",
 		meta = (EditCondition = "bUseTaskThreads", ConsoleVariable = "Flecs.TaskThreadCount"))
-	int32 TaskThreadCount = 4;
+	int32 TaskThreadCount = 8;
 
 	/**
 	 * @brief Delete empty Flecs tables during Unreal Garbage Collection.
@@ -69,11 +69,11 @@ public:
 	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Logging", meta = (ConsoleVariable = "Flecs.LogLevel"))
 	int32 LogLevel = -1;
 
-	UNREALFLECS_API virtual void PostInitProperties() override;
+	virtual void PostInitProperties() override;
 
 #if WITH_EDITOR
 
-	UNREALFLECS_API virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 
 #endif // WITH_EDITOR
 
