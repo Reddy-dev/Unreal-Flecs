@@ -315,7 +315,31 @@ struct FOSApiInitializer
 
                 		break;
             		}
-            	case 4: // VeryVerbose
+				case 1: // Trace Level 1
+					{
+						UE_LOGFMT(LogFlecsCore, Verbose,
+							"Flecs - File: {FileName}, Line: {LineNumber}, Message: {Message}",
+							File, Line, Message);
+
+						break;
+					}
+            	case 2: // Trace Level 2
+					{
+						UE_LOGFMT(LogFlecsCore, VeryVerbose,
+							"Flecs - File: {FileName}, Line: {LineNumber}, Message: {Message}",
+							File, Line, Message);
+
+						break;
+					}
+				case 3: // Trace Level 3
+					{
+						UE_LOGFMT(LogFlecsCore, VeryVerbose,
+							"Flecs - File: {FileName}, Line: {LineNumber}, Message: {Message}",
+							File, Line, Message);
+
+						break;
+					}
+            	case 4: // Trace Level 4
             		{
             			UE_LOGFMT(LogFlecsCore, VeryVerbose,
             				"Flecs - File: {FileName}, Line: {LineNumber}, Message: {Message}",
