@@ -7,3 +7,4 @@ UE_DEFINE_GAMEPLAY_TAG(FlecsTickType_PrePhysics, "Flecs.TickType.PrePhysics");
 UE_DEFINE_GAMEPLAY_TAG(FlecsTickType_DuringPhysics, "Flecs.TickType.DuringPhysics");
 UE_DEFINE_GAMEPLAY_TAG(FlecsTickType_PostPhysics, "Flecs.TickType.PostPhysics");
 UE_DEFINE_GAMEPLAY_TAG(FlecsTickType_PostUpdateWork, "Flecs.TickType.PostUpdateWork");
+UE_DEFINE_GAMEPLAY_TAG(FlecsTickType_PostUpdateUnpaused, "Flecs.TickType.PostUpdateUnpaused");

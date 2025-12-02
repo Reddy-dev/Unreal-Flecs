@@ -30,9 +30,11 @@ public:
 	virtual void InitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsEntityHandle& InGameLoopEntity)
 		PURE_VIRTUAL(IFlecsGameLoopInterface::InitializeGameLoop,);
 	
-	virtual bool Progress(double DeltaTime, TSolidNotNull<UFlecsWorld*> InWorld)
+	virtual bool Progress(double DeltaTime, const FGameplayTag& InTickType, TSolidNotNull<UFlecsWorld*> InWorld)
 		PURE_VIRTUAL(IFlecsGameLoopInterface::Progress, return false;)
 
 	virtual bool IsMainLoop() const;
+
+	virtual TArray<FGameplayTag> GetTickTypeTags() const;
 	
 }; // class IFlecsGameLoopInterface

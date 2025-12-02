@@ -31,17 +31,20 @@
 #include "Components/ObjectTypes/FFlecsSceneComponentTag.h"
 #include "Components/ObjectTypes/FlecsActorTag.h"
 #include "Components/FlecsModuleComponent.h"
-#include "General/FlecsDeveloperSettings.h"
 
 #include "Modules/FlecsDependenciesComponent.h"
 #include "Modules/FlecsModuleInterface.h"
 
+#include "General/FlecsDeveloperSettings.h"
 #include "General/FlecsGameplayTagManagerEntity.h"
 #include "General/FlecsObjectRegistrationInterface.h"
 
 #include "Pipelines/FlecsGameLoopInterface.h"
 #include "Pipelines/FlecsGameLoopTag.h"
 #include "Pipelines/FlecsOutsideMainLoopTag.h"
+#include "Pipelines/TickFunctions/FlecsTickFunction.h"
+#include "Pipelines/TickFunctions/FlecsTickFunctionComponent.h"
+#include "Pipelines/TickFunctions/FlecsTickTypeRelationship.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsWorld)
 
@@ -417,6 +420,10 @@ void UFlecsWorld::InitializeDefaultComponents() const
 
 	RegisterComponentType<FFlecsGameLoopTag>();
 
+	RegisterComponentType<FFlecsTickFunction>();
+	RegisterComponentType<FFlecsTickFunctionComponent>();
+	RegisterComponentType<FFlecsTickTypeRelationship>();
+
 	RegisterComponentType<FFlecsOutsideMainLoopTag>();
 	
 }
@@ -570,9 +577,13 @@ void UFlecsWorld::InitializeComponentPropertyObserver()
 
 void UFlecsWorld::InitializeSystems()
 {
-		ObjectComponentQuery = World.query_builder<FFlecsUObjectComponent>("UObjectComponentQuery")
+		ObjectComponentQuery = World.query_builder<FFlecsUObjectComponent>("ObjectComponentQuery")
 			.term_at(0).second(flecs::Wildcard) // FFlecsUObjectComponent
-			.cached()
+			.build();
+
+		TickFunctionQuery = World.query_builder<>("TickFunctionQuery")
+			.with<FFlecsTickFunctionComponent>().inout_none() // 0
+			.with<FFlecsTickTypeRelationship>("$TickTypeTag") // 1
 			.build();
 
 		FCoreUObjectDelegates::GarbageCollectComplete.AddWeakLambda(this, [this]
@@ -678,6 +689,32 @@ void UFlecsWorld::InitializeSystems()
 					}
 				}
 			});
+
+	// @TODO: add verification for this
+	CreateObserver<FFlecsTickFunctionComponent&>(TEXT("AddTickFunctionObserver"))
+		.event(flecs::OnAdd)
+		.yield_existing()
+		.each([this](flecs::iter& InIter, size_t InIndex,
+		             FFlecsTickFunctionComponent& InTickFunctionComponent)
+		{
+			solid_checkf(InTickFunctionComponent.TickFunction.IsValid(),
+				TEXT("FFlecsTickFunctionComponent has invalid TickFunction"));
+
+			InTickFunctionComponent.TickFunction.GetMutable().OwningWorld = this;
+			InTickFunctionComponent.TickFunction.GetMutable().RegisterTickFunction(GetWorld()->PersistentLevel);
+		});
+
+	CreateObserver<FFlecsTickFunctionComponent&>(TEXT("RemoveTickFunctionObserver"))
+		.event(flecs::OnRemove)
+		.yield_existing()
+		.each([this](flecs::iter& InIter, size_t InIndex,
+		             FFlecsTickFunctionComponent& InTickFunctionComponent)
+		{
+			solid_checkf(InTickFunctionComponent.TickFunction.IsValid(),
+				TEXT("FFlecsTickFunctionComponent has invalid TickFunction"));
+			
+			InTickFunctionComponent.TickFunction.GetMutable().UnRegisterTickFunction();
+		});
 }
 
 void UFlecsWorld::RegisterModuleDependency(const TSolidNotNull<const UObject*> InModuleObject,
@@ -1045,17 +1082,43 @@ void UFlecsWorld::SetContext(void* InContext) const
 	World.set_ctx(InContext);
 }
 
-bool UFlecsWorld::ProgressGameLoop(const double DeltaTime)
+bool UFlecsWorld::ProgressGameLoops(const FGameplayTag& TickTypeTag, const double DeltaTime)
 {
 	SCOPE_CYCLE_COUNTER(STAT_FlecsWorldProgress);
 
-	return std::all_of(GameLoopInterfaces.begin(), GameLoopInterfaces.end(),
-		[DeltaTime, this](const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface)
-		{
-			solid_cassumef(GameLoopInterface, TEXT("Game loop interface is nullptr"));
+	if UNLIKELY_IF(ShouldQuit())
+	{
+		UE_LOGFMT(LogFlecsWorld, Warning, "World is quitting, cannot progress: {WorldObjectName}", *GetName());
+		return false;
+	}
 
-			return GameLoopInterface->Progress(DeltaTime, this);
-		});
+	if (!GameLoopTickTypes.Contains(TickTypeTag))
+	{
+		return false;
+	}
+
+	const TArray<TScriptInterface<IFlecsGameLoopInterface>> GameLoopsToTick = GameLoopTickTypes[TickTypeTag];
+
+	for (const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface : GameLoopsToTick)
+	{
+		solid_checkf(GameLoopInterface,
+			TEXT("Game loop interface is nullptr for tick type %s in world %s"),
+			*TickTypeTag.ToString(),
+			*GetName());
+
+		if (!GameLoopInterface->Progress(DeltaTime, TickTypeTag, this))
+		{
+			UE_LOGFMT(LogFlecsWorld, Warning,
+				"Game loop %s failed to progress for tick type %s in world %s",
+				GameLoopInterface.GetObject()->GetName(),
+				TickTypeTag.ToString(),
+				GetName());
+			
+			return false;
+		}
+	}
+
+	return true;
 }
 
 bool UFlecsWorld::Progress(const double DeltaTime)
@@ -1081,6 +1144,8 @@ void UFlecsWorld::DestroyWorld()
 	ModuleComponentQuery.destruct();
 	DependenciesComponentQuery.destruct();
 	ObjectComponentQuery.destruct();
+
+	TickFunctionQuery.destruct();
 		
 	const FAssetRegistryModule* AssetRegistryModule
 		= FModuleManager::LoadModulePtr<FAssetRegistryModule>(TEXT("AssetRegistry"));
@@ -1912,6 +1977,12 @@ int32 UFlecsWorld::DeleteEmptyTables(const double TimeBudgetSeconds,
 FFlecsTypeMapComponent* UFlecsWorld::GetTypeMapComponent() const
 {
 	return static_cast<FFlecsTypeMapComponent*>(World.get_binding_ctx());
+}
+
+FFlecsEntityHandle UFlecsWorld::GetFlecsTickFunctionByType(const FGameplayTag& InTickType) const
+{
+	TickFunctionQuery.set_var("TickTypeTag", GetTagEntity(InTickType));
+	return TickFunctionQuery.first();
 }
 
 void UFlecsWorld::AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector)

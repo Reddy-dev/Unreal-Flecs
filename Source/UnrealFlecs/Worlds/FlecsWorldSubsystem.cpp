@@ -24,6 +24,9 @@
 #include "Modules/FlecsModuleSetDataAsset.h"
 
 #include "Pipelines/FlecsGameLoopInterface.h"
+#include "Pipelines/TickFunctions/FlecsTickFunction.h"
+#include "Pipelines/TickFunctions/FlecsTickFunctionComponent.h"
+#include "Pipelines/TickFunctions/FlecsTickTypeRelationship.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsWorldSubsystem)
 
@@ -43,8 +46,6 @@ void UFlecsWorldSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	{
 		return;
 	}
-
-	SetTickableTickType(ETickableTickType::Always);
 
 	solid_check(IsValid(GetWorld()->GetWorldSettings()));
 	solid_checkf(GetWorld()->GetWorldSettings()->IsA<AFlecsWorldSettings>(),
@@ -91,37 +92,9 @@ void UFlecsWorldSubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
-TStatId UFlecsWorldSubsystem::GetStatId() const
-{
-	RETURN_QUICK_DECLARE_CYCLE_STAT(UFlecsWorldSubsystem, STATGROUP_Tickables);
-}
-
-void UFlecsWorldSubsystem::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	if UNLIKELY_IF(!IsValid(DefaultWorld))
-	{
-		return;
-	}
-
-#if WITH_EDITOR
-	const bool bResult =
-#endif // WITH_EDITOR
-		DefaultWorld->ProgressGameLoop(DeltaTime);
-
-#if WITH_EDITOR
-
-	UE_CLOG(!bResult, LogFlecsCore, Error, TEXT("Failed to progress Flecs world"));
-
-#endif // WITH_EDITOR
-}
-
 UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecsWorldSettingsInfo& Settings)
 {
 	solid_checkf(!Name.IsEmpty(), TEXT("World name cannot be NAME_None"));
-
-	SetTickableTickType(ETickableTickType::Always);
 
 	const std::vector<FFlecsDefaultMetaEntity>& DefaultEntities = FFlecsDefaultEntityEngine::Get().AddedDefaultEntities;
 		
@@ -143,12 +116,18 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 
 	for (TObjectPtr<UObject> GameLoop : InGameLoops)
 	{
+		solid_checkf(GameLoop,
+		             TEXT("GameLoop is nullptr in world %s"), *DefaultWorld->GetName());
+		
 		solid_checkf(GameLoop->GetClass()->ImplementsInterface(UFlecsGameLoopInterface::StaticClass()),
 		             TEXT("GameLoop %s does not implement UFlecsGameLoopInterface"), *GameLoop->GetName());
 			
 		UObject* DuplicatedGameLoop = DuplicateObject<UObject>(GameLoop, DefaultWorld);
 		
-		solid_cassumef(IsValid(DuplicatedGameLoop),
+		solid_cassumef(DuplicatedGameLoop, TEXT("Failed to duplicate GameLoop %s for world %s"),
+		              *GameLoop->GetName(), *DefaultWorld->GetName());
+		
+		solid_checkf(IsValid(DuplicatedGameLoop),
 		                TEXT("Failed to duplicate GameLoop %s for world %s"),
 		                *GameLoop->GetName(), *DefaultWorld->GetName());
 		
@@ -156,6 +135,16 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	}
 	
 	DefaultWorld->GameLoopInterfaces = DuplicatedGameLoops;
+
+	for (const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface : DefaultWorld->GameLoopInterfaces)
+	{
+		const TArray<FGameplayTag> TickTypes = GameLoopInterface->GetTickTypeTags();
+
+		for (const FGameplayTag& TickType : TickTypes)
+		{
+			DefaultWorld->GameLoopTickTypes.FindOrAdd(TickType).Add(GameLoopInterface);
+		}
+	}
 
 	DefaultWorld->InitializeComponentPropertyObserver();
 	DefaultWorld->InitializeDefaultComponents();
@@ -180,6 +169,24 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	DefaultWorld->InitializeSystems();
 
 	RegisterAllGameplayTags(DefaultWorld.Get());
+
+	DefaultWorld->BeginDefer();
+
+	for (const FFlecsTickFunctionSettingsInfo& TickFunctionStruct : Settings.TickFunctions)
+	{
+		solid_checkf(!TickFunctionStruct.TickFunctionName.IsEmpty(),
+		             TEXT("Tick function name cannot be empty"));
+
+		const FFlecsEntityHandle TickFunctionEntity = DefaultWorld->CreateEntity(TickFunctionStruct.TickFunctionName);
+		solid_checkf(TickFunctionEntity.IsValid(),
+		             TEXT("Failed to create tick function entity %s"),
+		             *TickFunctionStruct.TickFunctionName);
+
+		TickFunctionEntity.AddPair<FFlecsTickTypeRelationship>(TickFunctionStruct.TickTypeTag);
+		TickFunctionEntity.Set<FFlecsTickFunctionComponent>({ FFlecsTickFunctionSettingsInfo::CreateTickFunctionInstance(TickFunctionStruct) });
+	}
+
+	DefaultWorld->EndDefer();
 		
 	for (const FFlecsDefaultMetaEntity& DefaultEntity : DefaultEntities)
 	{
@@ -242,7 +249,6 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	}
 
 #endif // WITH_EDITOR
-	
 	
 	DefaultWorld->bIsInitialized = true;
 	OnWorldCreatedDelegate.Broadcast(DefaultWorld);

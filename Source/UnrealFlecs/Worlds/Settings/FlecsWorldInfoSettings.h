@@ -4,13 +4,69 @@
 
 #include "CoreMinimal.h"
 
+#include "Engine/EngineBaseTypes.h"
+
 #include "SolidMacros/Macros.h"
 #include "Standard/Hashing.h"
 #include "Types/SolidNotNull.h"
 
+#include "StructUtils/InstancedStruct.h"
+
 #include "FlecsWorldInfoSettings.generated.h"
 
+struct FFlecsTickFunction;
+
 class UFlecsModuleSetDataAsset;
+
+USTRUCT(BlueprintType)
+struct UNREALFLECS_API FFlecsTickFunctionSettingsInfo
+{
+    GENERATED_BODY()
+
+    NO_DISCARD FORCEINLINE friend uint32 GetTypeHash(const FFlecsTickFunctionSettingsInfo& InTickFunctionSettings)
+    {
+        return GetTypeHash(InTickFunctionSettings.TickTypeTag);
+    }
+
+public:
+    FFlecsTickFunctionSettingsInfo();
+    
+    UPROPERTY(EditAnywhere)
+    FString TickFunctionName;
+
+    UPROPERTY(EditAnywhere)
+    FGameplayTag TickTypeTag;
+
+    UPROPERTY(EditAnywhere)
+    TEnumAsByte<ETickingGroup> TickGroup = ETickingGroup::TG_PrePhysics;
+
+    UPROPERTY(EditAnywhere)
+    TEnumAsByte<ETickingGroup> EndTickGroup = ETickingGroup::TG_LastDemotable;
+
+    UPROPERTY(EditAnywhere)
+    bool bStartWithTickEnabled = true;
+
+    UPROPERTY(EditAnywhere)
+    bool bAllowTickOnDedicatedServer = true;
+
+    UPROPERTY(EditAnywhere)
+    bool bTickEvenWhenPaused = false;
+
+    UPROPERTY(EditAnywhere)
+    float TickInterval = 0.0f;
+
+    UPROPERTY()
+    bool bHighPriority = true;
+
+    UPROPERTY()
+    bool bAllowBatching = false;
+
+    static NO_DISCARD FFlecsTickFunctionSettingsInfo GetTickFunctionSettingsDefault(const FGameplayTag& InTickTypeTag);
+
+    static NO_DISCARD TInstancedStruct<FFlecsTickFunction> CreateTickFunctionInstance(
+        const FFlecsTickFunctionSettingsInfo& InTickFunctionSettings);
+    
+}; // struct FFlecsTickFunctionSettingsInfo
 
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsWorldSettingsInfo
@@ -23,7 +79,7 @@ struct UNREALFLECS_API FFlecsWorldSettingsInfo
     }
     
 public:
-    FFlecsWorldSettingsInfo() = default;
+    FFlecsWorldSettingsInfo();
     
     FORCEINLINE FFlecsWorldSettingsInfo(const FString& InWorldName, const TArray<TObjectPtr<UObject>>& InGameLoop,
         const TArray<TObjectPtr<UObject>>& InModules = {})
@@ -67,6 +123,9 @@ public:
     TArray<TObjectPtr<UFlecsModuleSetDataAsset>> EditorModuleSets;
 
 #endif // #if WITH_EDITORONLY_DATA
+
+    UPROPERTY(EditAnywhere, Category = "World", AdvancedDisplay)
+    TArray<FFlecsTickFunctionSettingsInfo> TickFunctions;
     
 }; // struct FFlecsWorldSettingsInfo
 

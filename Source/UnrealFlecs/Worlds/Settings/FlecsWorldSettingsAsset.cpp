@@ -60,6 +60,37 @@ EDataValidationResult UFlecsWorldSettingsAsset::IsDataValid(FDataValidationConte
 	}
 	else
 	{
+
+		if (WorldSettings.TickFunctions.IsEmpty())
+		{
+			Context.AddError(FText::Format(
+				LOCTEXT("NoTickFunctions",
+					"WorldSettings {0} has no TickFunctions assigned, at least one TickFunction is required."),
+				FText::FromString(GetPathName())));
+			
+			Result = EDataValidationResult::Invalid;
+		}
+
+		TSet<FGameplayTag> AssignedTickFunctionTags;
+
+		for (const FFlecsTickFunctionSettingsInfo& TickFunction : WorldSettings.TickFunctions)
+		{
+			if (AssignedTickFunctionTags.Contains(TickFunction.TickTypeTag))
+			{
+				Context.AddError(FText::Format(
+					LOCTEXT("DuplicateTickFunctionTag",
+						"WorldSettings {0} has multiple TickFunctions assigned with the same TickTypeTag {1}."),
+					FText::FromString(GetPathName()),
+					FText::FromName(TickFunction.TickTypeTag.GetTagName())));
+				
+				Result = EDataValidationResult::Invalid;
+			}
+			else
+			{
+				AssignedTickFunctionTags.Add(TickFunction.TickTypeTag);
+			}
+		}
+		
 		bool bHasMainLoop = false;
 		TArray<TObjectPtr<UObject>> MainLoops;
 		
@@ -90,6 +121,36 @@ EDataValidationResult UFlecsWorldSettingsAsset::IsDataValid(FDataValidationConte
 			{
 				bHasMainLoop = true;
 				MainLoops.AddUnique(GameLoop);
+			}
+
+			const TArray<FGameplayTag> GameLoopTickTypeTags = Cast<IFlecsGameLoopInterface>(GameLoop)->GetTickTypeTags();
+			if (GameLoopTickTypeTags.IsEmpty())
+			{
+				Context.AddError(FText::Format(
+					LOCTEXT("NoTickTypeTags",
+						"WorldSettings {0} has a GameLoop {1} in its GameLoops array that has no TickTypeTags assigned."),
+					FText::FromString(GetPathName()),
+					FText::FromString(GameLoop->GetClass()->GetClassPathName().ToString())));
+			}
+
+			bool bHasValidTickTypeTag = false;
+
+			for (const FGameplayTag& TickTypeTag : GameLoopTickTypeTags)
+			{
+				if (AssignedTickFunctionTags.Contains(TickTypeTag))
+				{
+					bHasValidTickTypeTag = true;
+					break;
+				}
+			}
+
+			if (!bHasValidTickTypeTag)
+			{
+				Context.AddWarning(FText::Format(
+					LOCTEXT("NoValidTickTypeTag",
+						"WorldSettings {0} has a GameLoop {1} in its GameLoops array that has no TickTypeTags matching any TickFunction's TickTypeTag."),
+					FText::FromString(GetPathName()),
+					FText::FromString(GameLoop->GetClass()->GetClassPathName().ToString())));
 			}
 		}
 

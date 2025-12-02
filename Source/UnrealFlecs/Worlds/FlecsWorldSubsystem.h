@@ -34,7 +34,7 @@ namespace Unreal::Flecs
 } // namespace Unreal::Flecs
 
 UCLASS(BlueprintType)
-class UNREALFLECS_API UFlecsWorldSubsystem final : public UTickableWorldSubsystem
+class UNREALFLECS_API UFlecsWorldSubsystem final : public UWorldSubsystem
 {
 	GENERATED_BODY()
 
@@ -46,10 +46,6 @@ public:
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 
 	virtual void Deinitialize() override;
-
-	virtual TStatId GetStatId() const override;
-
-	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION()
 	UFlecsWorld* CreateWorld(const FString& Name, const FFlecsWorldSettingsInfo& Settings);

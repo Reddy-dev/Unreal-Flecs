@@ -77,7 +77,7 @@ void UFlecsTickerGameLoop::InitializeGameLoop(const TSolidNotNull<UFlecsWorld*> 
 	TickerInterval = 1.0 / static_cast<double>(TickerRate);
 }
 
-bool UFlecsTickerGameLoop::Progress(double DeltaTime, TSolidNotNull<UFlecsWorld*> InWorld)
+bool UFlecsTickerGameLoop::Progress(double DeltaTime, const FGameplayTag& InTickType, TSolidNotNull<UFlecsWorld*> InWorld)
 {
 	SCOPE_CYCLE_COUNTER(STAT_FlecsFlecsTickerGameLoop_Progress);
 

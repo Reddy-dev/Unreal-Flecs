@@ -39,6 +39,7 @@ namespace Unreal::Flecs
 	
 } // namespace Unreal::Flecs
 
+// @TODO: rename this due to it being too generic and risks name collisions
 struct UNREALFLECS_API FFlecsComponentProperties
 {
 	std::string Name;
