@@ -20,6 +20,9 @@ public:
 
 	// Main Loop
 	UPROPERTY()
+	FFlecsEntityHandle MainLoopPipeline;
+	
+	UPROPERTY()
 	FFlecsEntityHandle PrePhysicsPipeline;
 
 	UPROPERTY()

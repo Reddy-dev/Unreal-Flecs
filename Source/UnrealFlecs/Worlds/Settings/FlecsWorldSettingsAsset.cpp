@@ -90,6 +90,22 @@ EDataValidationResult UFlecsWorldSettingsAsset::IsDataValid(FDataValidationConte
 				AssignedTickFunctionTags.Add(TickFunction.TickTypeTag);
 			}
 		}
+
+		for (const FFlecsTickFunctionSettingsInfo& TickFunction : WorldSettings.TickFunctions)
+		{
+			for (const FGameplayTag& PrerequisiteTag : TickFunction.TickFunctionPrerequisiteTags)
+			{
+				if (!AssignedTickFunctionTags.Contains(PrerequisiteTag))
+				{
+					Context.AddError(FText::Format(
+						LOCTEXT("MissingPrerequisiteTickFunctionTag",
+							"WorldSettings {0} has a TickFunction with TickTypeTag {1} that has a prerequisite TickTypeTag {2} which does not match any assigned TickFunction."),
+						FText::FromString(GetPathName()),
+						FText::FromName(TickFunction.TickTypeTag.GetTagName()),
+						FText::FromName(PrerequisiteTag.GetTagName())));
+				}
+			}
+		}
 		
 		bool bHasMainLoop = false;
 		TArray<TObjectPtr<UObject>> MainLoops;

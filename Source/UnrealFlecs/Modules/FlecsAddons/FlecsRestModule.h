@@ -3,9 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Modules/FlecsModuleInterface.h"
+
 #include "Modules/FlecsModuleObject.h"
-#include "UObject/Object.h"
+
 #include "FlecsRestModule.generated.h"
 
 UCLASS(BlueprintType, NotBlueprintable, DisplayName = "Flecs Rest Module")

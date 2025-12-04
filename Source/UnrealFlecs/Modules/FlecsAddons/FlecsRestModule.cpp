@@ -5,6 +5,7 @@
 
 #include "Engine/EngineBaseTypes.h"
 #include "Engine/World.h"
+
 #include "Ticker/FlecsTickerGameLoop.h"
 
 #include "Worlds/FlecsWorld.h"
@@ -48,6 +49,8 @@ void UFlecsRestModule::InitializeModule(TSolidNotNull<UFlecsWorld*> InWorld, con
 		if (bImportStats)
 		{
 			StatsEntity = InWorld->ImportFlecsModule<flecs::stats>();
+			solid_checkf(StatsEntity.IsValid(),
+				TEXT("Flecs REST module failed to import Stats module when requested."));
 		}
 
 	#endif // #ifdef FLECS_STATS

@@ -25,11 +25,20 @@ FFlecsTickFunctionSettingsInfo FFlecsTickFunctionSettingsInfo::GetTickFunctionSe
 	TickFunctionSettings.TickInterval = 0.0f;
 	TickFunctionSettings.TickTypeTag = InTickTypeTag;
 
-	if (InTickTypeTag == FlecsTickType_PrePhysics)
+	if (InTickTypeTag == FlecsTickType_MainLoop)
+	{
+		TickFunctionSettings.TickFunctionName = TEXT("MainLoopTickFunction");
+		TickFunctionSettings.TickGroup = ETickingGroup::TG_PrePhysics;
+		TickFunctionSettings.EndTickGroup = ETickingGroup::TG_PrePhysics;
+		TickFunctionSettings.bTickEvenWhenPaused = true;
+	}
+	else if (InTickTypeTag == FlecsTickType_PrePhysics)
 	{
 		TickFunctionSettings.TickFunctionName = TEXT("PrePhysicsTickFunction");
 		TickFunctionSettings.TickGroup = ETickingGroup::TG_PrePhysics;
 		TickFunctionSettings.EndTickGroup = ETickingGroup::TG_PrePhysics;
+		
+		TickFunctionSettings.TickFunctionPrerequisiteTags.Add(FlecsTickType_MainLoop);
 	}
 	else if (InTickTypeTag == FlecsTickType_DuringPhysics)
 	{
@@ -48,13 +57,6 @@ FFlecsTickFunctionSettingsInfo FFlecsTickFunctionSettingsInfo::GetTickFunctionSe
 		TickFunctionSettings.TickFunctionName = TEXT("PostUpdateWorkTickFunction");
 		TickFunctionSettings.TickGroup = ETickingGroup::TG_PostUpdateWork;
 		TickFunctionSettings.EndTickGroup = ETickingGroup::TG_LastDemotable;
-	}
-	else if (InTickTypeTag == FlecsTickType_PostUpdateUnpaused)
-	{
-		TickFunctionSettings.TickFunctionName = TEXT("PostUpdateUnpausedTickFunction");
-		TickFunctionSettings.TickGroup = ETickingGroup::TG_PostUpdateWork;
-		TickFunctionSettings.EndTickGroup = ETickingGroup::TG_LastDemotable;
-		TickFunctionSettings.bTickEvenWhenPaused = true;
 	}
 	else
 	{
@@ -83,6 +85,8 @@ TInstancedStruct<FFlecsTickFunction> FFlecsTickFunctionSettingsInfo::CreateTickF
 	TickFunction.bAllowTickOnDedicatedServer = InTickFunctionSettings.bAllowTickOnDedicatedServer;
 	TickFunction.bTickEvenWhenPaused = InTickFunctionSettings.bTickEvenWhenPaused;
 	TickFunction.TickInterval = InTickFunctionSettings.TickInterval;
+	TickFunction.bHighPriority = InTickFunctionSettings.bHighPriority;
+	TickFunction.bAllowTickBatching = InTickFunctionSettings.bAllowTickBatching;
 	
 	TickFunction.bCanEverTick = true;
 	
@@ -91,6 +95,9 @@ TInstancedStruct<FFlecsTickFunction> FFlecsTickFunctionSettingsInfo::CreateTickF
 
 FFlecsWorldSettingsInfo::FFlecsWorldSettingsInfo()
 {
+	FFlecsTickFunctionSettingsInfo MainLoopTickFunctionSettings = FFlecsTickFunctionSettingsInfo::GetTickFunctionSettingsDefault(
+		FlecsTickType_MainLoop);
+	
 	FFlecsTickFunctionSettingsInfo PrePhysicsTickFunctionSettings = FFlecsTickFunctionSettingsInfo::GetTickFunctionSettingsDefault(
 		FlecsTickType_PrePhysics);
 
@@ -103,12 +110,9 @@ FFlecsWorldSettingsInfo::FFlecsWorldSettingsInfo()
 	FFlecsTickFunctionSettingsInfo PostUpdateWorkTickFunctionSettings = FFlecsTickFunctionSettingsInfo::GetTickFunctionSettingsDefault(
 		FlecsTickType_PostUpdateWork);
 
-	FFlecsTickFunctionSettingsInfo PostUpdateUnpausedTickFunctionSettings = FFlecsTickFunctionSettingsInfo::GetTickFunctionSettingsDefault(
-		FlecsTickType_PostUpdateUnpaused);
-	
+	TickFunctions.Add(MainLoopTickFunctionSettings);
 	TickFunctions.Add(PrePhysicsTickFunctionSettings);
 	TickFunctions.Add(DuringPhysicsTickFunctionSettings);
 	TickFunctions.Add(PostPhysicsTickFunctionSettings);
 	TickFunctions.Add(PostUpdateWorkTickFunctionSettings);
-	TickFunctions.Add(PostUpdateUnpausedTickFunctionSettings);
 }

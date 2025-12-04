@@ -31,6 +31,7 @@
 #include "Components/ObjectTypes/FFlecsSceneComponentTag.h"
 #include "Components/ObjectTypes/FlecsActorTag.h"
 #include "Components/FlecsModuleComponent.h"
+#include "GameFramework/WorldSettings.h"
 
 #include "Modules/FlecsDependenciesComponent.h"
 #include "Modules/FlecsModuleInterface.h"
@@ -44,6 +45,7 @@
 #include "Pipelines/FlecsOutsideMainLoopTag.h"
 #include "Pipelines/TickFunctions/FlecsTickFunction.h"
 #include "Pipelines/TickFunctions/FlecsTickFunctionComponent.h"
+#include "Pipelines/TickFunctions/FlecsTickFunctionPrerequisite.h"
 #include "Pipelines/TickFunctions/FlecsTickTypeRelationship.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsWorld)
@@ -251,7 +253,6 @@ void UFlecsWorld::WorldStart()
 							  DeletedTables);
 			});
 	}
-	
 }
 
 void UFlecsWorld::WorldBeginPlay()
@@ -423,6 +424,7 @@ void UFlecsWorld::InitializeDefaultComponents() const
 	RegisterComponentType<FFlecsTickFunction>();
 	RegisterComponentType<FFlecsTickFunctionComponent>();
 	RegisterComponentType<FFlecsTickTypeRelationship>();
+	RegisterComponentType<FFlecsTickFunctionPrerequisite>();
 
 	RegisterComponentType<FFlecsOutsideMainLoopTag>();
 	
@@ -1082,6 +1084,30 @@ void UFlecsWorld::SetContext(void* InContext) const
 	World.set_ctx(InContext);
 }
 
+void UFlecsWorld::HandleWorldPause()
+{
+	if (GetWorld()->IsPaused())
+	{
+		if (!PrePauseTimeScale.IsSet())
+		{
+			PrePauseTimeScale = GetTimeScale();
+			SetTimeScale(0.0);
+		}
+	}
+	else
+	{
+		if (PrePauseTimeScale.IsSet())
+		{
+			SetTimeScale(PrePauseTimeScale.GetValue());
+			PrePauseTimeScale.Reset();
+		}
+		else if (FMath::IsNearlyZero(GetTimeScale())) // @TODO: maybe we should pause?
+		{
+			SetTimeScale(1.0);
+		}
+	}
+}
+
 bool UFlecsWorld::ProgressGameLoops(const FGameplayTag& TickTypeTag, const double DeltaTime)
 {
 	SCOPE_CYCLE_COUNTER(STAT_FlecsWorldProgress);
@@ -1096,6 +1122,8 @@ bool UFlecsWorld::ProgressGameLoops(const FGameplayTag& TickTypeTag, const doubl
 	{
 		return false;
 	}
+
+	HandleWorldPause();
 
 	const TArray<TScriptInterface<IFlecsGameLoopInterface>> GameLoopsToTick = GameLoopTickTypes[TickTypeTag];
 
@@ -1126,9 +1154,15 @@ bool UFlecsWorld::Progress(const double DeltaTime)
 	return World.progress(DeltaTime);
 }
 
-void UFlecsWorld::SetTimeScale(const double InTimeScale) const
+double UFlecsWorld::SetTimeScale(const double InTimeScale) const
 {
 	World.set_time_scale(InTimeScale);
+	return GetTimeScale();
+}
+
+double UFlecsWorld::GetTimeScale() const
+{
+	return World.get_info()->time_scale;
 }
 
 void UFlecsWorld::DestroyWorld()
@@ -1481,6 +1515,7 @@ FFlecsEntityHandle UFlecsWorld::RegisterScriptStruct(const UScriptStruct* Script
 					ScriptStructComponent.SetHooksLambda([ScriptStruct, &ScriptStructComponent](flecs::type_hooks_t& Hooks)
 					{
 						const bool bIsPOD = ScriptStruct->GetCppStructOps()->IsPlainOldData();
+						
 						const bool bHasCtor = !ScriptStruct->GetCppStructOps()->HasZeroConstructor();
 						const bool bHasDtor = ScriptStruct->GetCppStructOps()->HasDestructor();
 						const bool bHasCopy = ScriptStruct->GetCppStructOps()->HasCopy();

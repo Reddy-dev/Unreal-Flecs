@@ -26,6 +26,7 @@
 #include "Pipelines/FlecsGameLoopInterface.h"
 #include "Pipelines/TickFunctions/FlecsTickFunction.h"
 #include "Pipelines/TickFunctions/FlecsTickFunctionComponent.h"
+#include "Pipelines/TickFunctions/FlecsTickFunctionPrerequisite.h"
 #include "Pipelines/TickFunctions/FlecsTickTypeRelationship.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsWorldSubsystem)
@@ -170,24 +171,58 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 
 	RegisterAllGameplayTags(DefaultWorld.Get());
 
-	DefaultWorld->BeginDefer();
-
-	for (const FFlecsTickFunctionSettingsInfo& TickFunctionStruct : Settings.TickFunctions)
+	DefaultWorld->Defer([this, &Settings]()
 	{
-		solid_checkf(!TickFunctionStruct.TickFunctionName.IsEmpty(),
-		             TEXT("Tick function name cannot be empty"));
+		TSortedMap<FGameplayTag, TTuple<FFlecsTickFunction*, FFlecsTickFunctionSettingsInfo>> TickFunctionInstances;
 
-		const FFlecsEntityHandle TickFunctionEntity = DefaultWorld->CreateEntity(TickFunctionStruct.TickFunctionName);
-		solid_checkf(TickFunctionEntity.IsValid(),
-		             TEXT("Failed to create tick function entity %s"),
-		             *TickFunctionStruct.TickFunctionName);
+		for (const FFlecsTickFunctionSettingsInfo& TickFunctionStruct : Settings.TickFunctions)
+		{
+			solid_checkf(!TickFunctionStruct.TickFunctionName.IsEmpty(),
+			             TEXT("Tick function name cannot be empty"));
 
-		TickFunctionEntity.AddPair<FFlecsTickTypeRelationship>(TickFunctionStruct.TickTypeTag);
-		TickFunctionEntity.Set<FFlecsTickFunctionComponent>({ FFlecsTickFunctionSettingsInfo::CreateTickFunctionInstance(TickFunctionStruct) });
-	}
+			const FFlecsEntityHandle TickFunctionEntity = DefaultWorld->CreateEntity(TickFunctionStruct.TickFunctionName);
+			solid_checkf(TickFunctionEntity.IsValid(),
+			             TEXT("Failed to create tick function entity %s"),
+			             *TickFunctionStruct.TickFunctionName);
 
-	DefaultWorld->EndDefer();
-		
+			TickFunctionEntity.AddPair<FFlecsTickTypeRelationship>(TickFunctionStruct.TickTypeTag);
+			FFlecsTickFunctionComponent& TickFunctionComponent = TickFunctionEntity.Obtain<FFlecsTickFunctionComponent>();
+			TickFunctionComponent.TickFunction = FFlecsTickFunctionSettingsInfo::CreateTickFunctionInstance(TickFunctionStruct);
+
+			for (const FGameplayTag& PrerequisiteTickType : TickFunctionStruct.TickFunctionPrerequisiteTags)
+			{
+				solid_checkf(!PrerequisiteTickType.IsValid() || PrerequisiteTickType != TickFunctionStruct.TickTypeTag,
+							 TEXT("Tick function %s cannot have itself as a prerequisite"),
+							 *TickFunctionStruct.TickFunctionName);
+
+				TickFunctionEntity.AddPair<FFlecsTickFunctionPrerequisite>(PrerequisiteTickType);
+			}
+
+			TickFunctionInstances.Add(TickFunctionStruct.TickTypeTag,
+				TTuple<FFlecsTickFunction*, FFlecsTickFunctionSettingsInfo>(
+					TickFunctionComponent.TickFunction.GetMutablePtr(), TickFunctionStruct));
+		}
+
+		for (const auto& [TickTypeTag, TickFunctionTuple] : TickFunctionInstances)
+		{
+			const TConstArrayView<FGameplayTag> TickPrerequisites = TickFunctionTuple.Get<1>().TickFunctionPrerequisiteTags;
+
+			const TSolidNotNull<FFlecsTickFunction*> TickFunction = TickFunctionTuple.Get<0>();
+			
+			for (const FGameplayTag& PrerequisiteTickType : TickPrerequisites)
+			{
+				solid_checkf(TickFunctionInstances.Contains(PrerequisiteTickType),
+				             TEXT("Prerequisite tick type %s not found for tick function %s"),
+				             *PrerequisiteTickType.ToString(),
+				             *TickFunctionTuple.Get<1>().TickFunctionName);
+				
+				const TSolidNotNull<FFlecsTickFunction*> PrerequisiteTickFunctionPtr = TickFunctionInstances.Find(PrerequisiteTickType)->Get<0>();
+				
+				TickFunction->AddPrerequisite(DefaultWorld, *PrerequisiteTickFunctionPtr);
+			}
+		}
+	});
+
 	for (const FFlecsDefaultMetaEntity& DefaultEntity : DefaultEntities)
 	{
 #if !NO_LOGGING

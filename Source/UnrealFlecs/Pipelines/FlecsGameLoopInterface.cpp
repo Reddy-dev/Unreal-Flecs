@@ -26,5 +26,5 @@ bool IFlecsGameLoopInterface::IsMainLoop() const
 
 TArray<FGameplayTag> IFlecsGameLoopInterface::GetTickTypeTags() const
 {
-	return { FlecsTickType_PrePhysics };
+	return { FlecsTickType_MainLoop };
 }

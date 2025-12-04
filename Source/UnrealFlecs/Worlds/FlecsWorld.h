@@ -568,6 +568,8 @@ public:
 
 	void SetContext(void* InContext) const;
 
+	void HandleWorldPause();
+
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
 	bool ProgressGameLoops(const FGameplayTag& TickTypeTag, const double DeltaTime = 0.0);
 
@@ -575,7 +577,10 @@ public:
 	bool Progress(const double DeltaTime = 0.0);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	void SetTimeScale(const double InTimeScale) const;
+	double SetTimeScale(const double InTimeScale) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
+	double GetTimeScale() const;
 
 	void DestroyWorld();
 
@@ -1082,6 +1087,8 @@ public:
 	FDelegateHandle DeleteEmptyTablesGCDelegateHandle;
 
 	FFlecsWorldModuleImportedDelegate OnModuleImported;
+
+	TOptional<double> PrePauseTimeScale;
 
 	robin_hood::unordered_flat_map<FGameplayTag, FFlecsId> TagEntityMap;
 

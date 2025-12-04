@@ -37,4 +37,5 @@ struct TStructOpsTypeTraits<FFlecsTickFunction> : public TStructOpsTypeTraitsBas
 	{
 		WithCopy = false,
 	}; // enum
+	
 }; // struct TStructOpsTypeTraits<FFlecsTickFunction>

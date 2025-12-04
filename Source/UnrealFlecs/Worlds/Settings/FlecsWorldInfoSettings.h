@@ -59,7 +59,10 @@ public:
     bool bHighPriority = true;
 
     UPROPERTY()
-    bool bAllowBatching = false;
+    bool bAllowTickBatching = false;
+
+    UPROPERTY(EditAnywhere, AdvancedDisplay, meta = (NoElementDuplicate))
+    TArray<FGameplayTag> TickFunctionPrerequisiteTags;
 
     static NO_DISCARD FFlecsTickFunctionSettingsInfo GetTickFunctionSettingsDefault(const FGameplayTag& InTickTypeTag);
 
