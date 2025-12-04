@@ -33,8 +33,5 @@ public:
 
 	UPROPERTY()
 	FFlecsEntityHandle PostUpdateWorkPipeline;
-
-	UPROPERTY()
-	FFlecsEntityHandle PostUpdateUnpausedPipeline;
 	
 }; // class UFlecsDefaultGameLoop
