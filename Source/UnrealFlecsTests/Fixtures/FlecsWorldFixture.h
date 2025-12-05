@@ -34,7 +34,7 @@ public:
 	UFlecsWorld* FlecsWorld = nullptr;
 
 	// @TODO: add test support for multiple game loops
-	void SetUp(TScriptInterface<IFlecsGameLoopInterface> InGameLoopInterface = nullptr,
+	void SetUp(TArray<TScriptInterface<IFlecsGameLoopInterface>> InGameLoopInterfaces = {}, TArray<FFlecsTickFunctionSettingsInfo> InTickFunctions = {},
 	           const TArray<UObject*>& InModules = {})
 	{
 		TestWorldWrapper = MakeUnique<FTestWorldWrapper>();
@@ -45,18 +45,27 @@ public:
 		WorldSubsystem = TestWorld->GetSubsystem<UFlecsWorldSubsystem>();
 		check(IsValid(WorldSubsystem));
 
-		if (!InGameLoopInterface)
-		{
-			InGameLoopInterface = NewObject<UFlecsDefaultGameLoop>(WorldSubsystem);
-		}
-
-		UObject* GameLoopObject = InGameLoopInterface.GetObject();
-
 		// Create world settings
 		FFlecsWorldSettingsInfo WorldSettings;
 		WorldSettings.WorldName = TEXT("TestWorld");
-		WorldSettings.GameLoops.Add(GameLoopObject);
 		WorldSettings.Modules = InModules;
+
+		if (!InGameLoopInterfaces.IsEmpty())
+		{
+			for (const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface : InGameLoopInterfaces)
+			{
+				WorldSettings.GameLoops.AddUnique(GameLoopInterface.GetObject());
+			}
+		}
+		else
+		{
+			WorldSettings.GameLoops.AddUnique(NewObject<UFlecsDefaultGameLoop>(WorldSubsystem));
+		}
+
+		if (!InTickFunctions.IsEmpty())
+		{
+			WorldSettings.TickFunctions = InTickFunctions;
+		}
 
 		FlecsWorld = WorldSubsystem->CreateWorld(TEXT("TestWorld"), WorldSettings);
 
@@ -95,10 +104,10 @@ struct UNREALFLECSTESTS_API FFlecsTestFixtureRAII
 {
 	mutable FFlecsTestFixture Fixture;
 
-	FFlecsTestFixtureRAII(const TScriptInterface<IFlecsGameLoopInterface> InGameLoopInterface = nullptr,
+	FFlecsTestFixtureRAII(TArray<TScriptInterface<IFlecsGameLoopInterface>> InGameLoopInterfaces = {}, const TArray<FFlecsTickFunctionSettingsInfo> InTickFunctions = {},
 			   const TArray<UObject*>& InModules = {})
 	{
-		Fixture.SetUp(InGameLoopInterface, InModules);
+		Fixture.SetUp(InGameLoopInterfaces, InTickFunctions, InModules);
 	}
 
 	~FFlecsTestFixtureRAII()
