@@ -5,6 +5,7 @@
 #include "Logs/FlecsCategories.h"
 
 #include "FlecsOutsideMainLoopTag.h"
+#include "Containers/AnsiString.h"
 #include "TickFunctions/FlecsTickTypeNativeTags.h"
 
 #include "Worlds/FlecsWorld.h"
@@ -71,86 +72,13 @@ void UFlecsDefaultGameLoop::InitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWor
 
 	InWorld->SetPipeline(MainLoopPipeline);
 	
-	PrePhysicsPipeline = InWorld->CreatePipeline()
-		.with(flecs::System)
-		.with(flecs::Phase).cascade(flecs::DependsOn)
-		.without(flecs::Disabled).up(flecs::DependsOn)
-		.without(flecs::Disabled).up(flecs::ChildOf)
-		#ifdef FLECS_ENABLE_SYSTEM_PRIORITY
-		.with<flecs::SystemPriority>()
-		#endif // FLECS_ENABLE_SYSTEM_PRIORITY
-		.without<FFlecsOutsideMainLoopTag>()
-		.without<FFlecsOutsideMainLoopTag>().up(flecs::DependsOn)
-		.without<FFlecsOutsideMainLoopTag>().up(flecs::ChildOf)
-		#ifdef FLECS_ENABLE_SYSTEM_PRIORITY
-		.order_by<flecs::SystemPriority>(flecs_priority_compare)
-		#else // FLECS_ENABLE_SYSTEM_PRIORITY
-		.order_by(flecs_entity_compare)
-		#endif // FLECS_ENABLE_SYSTEM_PRIORITY
-		// @TODO: do we need this?
-		.with(InWorld->GetTagEntity(FlecsTickType_PrePhysics))
-		.build()
-		.set_name("PrePhysicsPipeline");
+	PrePhysicsPipeline = CreatePipelineForTickType(FlecsTickType_PrePhysics, InWorld);
 
-	DuringPhysicsPipeline = InWorld->CreatePipeline()
-		.with(flecs::System)
-		.with(flecs::Phase).cascade(flecs::DependsOn)
-		.without(flecs::Disabled).up(flecs::DependsOn)
-		.without(flecs::Disabled).up(flecs::ChildOf)
-		#ifdef FLECS_ENABLE_SYSTEM_PRIORITY
-		.with<flecs::SystemPriority>()
-		#endif // FLECS_ENABLE_SYSTEM_PRIORITY
-		.without<FFlecsOutsideMainLoopTag>()
-		.without<FFlecsOutsideMainLoopTag>().up(flecs::DependsOn)
-		.without<FFlecsOutsideMainLoopTag>().up(flecs::ChildOf)
-		#ifdef FLECS_ENABLE_SYSTEM_PRIORITY
-		.order_by<flecs::SystemPriority>(flecs_priority_compare)
-		#else // FLECS_ENABLE_SYSTEM_PRIORITY
-		.order_by(flecs_entity_compare)
-		#endif // FLECS_ENABLE_SYSTEM_PRIORITY
-		.with(InWorld->GetTagEntity(FlecsTickType_DuringPhysics))
-		.build()
-		.set_name("DuringPhysicsPipeline");
+	DuringPhysicsPipeline = CreatePipelineForTickType(FlecsTickType_DuringPhysics, InWorld);
 
-	PostPhysicsPipeline = InWorld->CreatePipeline()
-		.with(flecs::System)
-		.with(flecs::Phase).cascade(flecs::DependsOn)
-		.without(flecs::Disabled).up(flecs::DependsOn)
-		.without(flecs::Disabled).up(flecs::ChildOf)
-		#ifdef FLECS_ENABLE_SYSTEM_PRIORITY
-		.with<flecs::SystemPriority>()
-		#endif // FLECS_ENABLE_SYSTEM_PRIORITY
-		.without<FFlecsOutsideMainLoopTag>()
-		.without<FFlecsOutsideMainLoopTag>().up(flecs::DependsOn)
-		.without<FFlecsOutsideMainLoopTag>().up(flecs::ChildOf)
-		#ifdef FLECS_ENABLE_SYSTEM_PRIORITY
-		.order_by<flecs::SystemPriority>(flecs_priority_compare)
-		#else // FLECS_ENABLE_SYSTEM_PRIORITY
-		.order_by(flecs_entity_compare)
-		#endif // FLECS_ENABLE_SYSTEM_PRIORITY
-		.with(InWorld->GetTagEntity(FlecsTickType_PostPhysics))
-		.build()
-		.set_name("PostPhysicsPipeline");
+	PostPhysicsPipeline = CreatePipelineForTickType(FlecsTickType_PostPhysics, InWorld);
 
-	PostUpdateWorkPipeline = InWorld->CreatePipeline()
-		.with(flecs::System)
-		.with(flecs::Phase).cascade(flecs::DependsOn)
-		.without(flecs::Disabled).up(flecs::DependsOn)
-		.without(flecs::Disabled).up(flecs::ChildOf)
-		#ifdef FLECS_ENABLE_SYSTEM_PRIORITY
-		.with<flecs::SystemPriority>()
-		#endif // FLECS_ENABLE_SYSTEM_PRIORITY
-		.without<FFlecsOutsideMainLoopTag>()
-		.without<FFlecsOutsideMainLoopTag>().up(flecs::DependsOn)
-		.without<FFlecsOutsideMainLoopTag>().up(flecs::ChildOf)
-		#ifdef FLECS_ENABLE_SYSTEM_PRIORITY
-		.order_by<flecs::SystemPriority>(flecs_priority_compare)
-		#else // FLECS_ENABLE_SYSTEM_PRIORITY
-		.order_by(flecs_entity_compare)
-		#endif // FLECS_ENABLE_SYSTEM_PRIORITY
-		.with(InWorld->GetTagEntity(FlecsTickType_PostUpdateWork))
-		.build()
-		.set_name("PostUpdateWorkPipeline");
+	PostUpdateWorkPipeline = CreatePipelineForTickType(FlecsTickType_PostUpdateWork, InWorld);
 }
 
 bool UFlecsDefaultGameLoop::Progress(const double DeltaTime, const FGameplayTag& InTickType, const TSolidNotNull<UFlecsWorld*> InWorld)
@@ -196,3 +124,44 @@ TArray<FGameplayTag> UFlecsDefaultGameLoop::GetTickTypeTags() const
 {
 	return { FlecsTickType_MainLoop, FlecsTickType_PrePhysics, FlecsTickType_DuringPhysics, FlecsTickType_PostPhysics, FlecsTickType_PostUpdateWork };
 }
+
+FFlecsEntityHandle UFlecsDefaultGameLoop::CreatePipelineForTickType(const FGameplayTag& InTickType,
+	TSolidNotNull<UFlecsWorld*> InWorld) const
+{
+	auto MakeBasePipeline = [this, InWorld]() -> flecs::pipeline_builder<>
+	{
+		return InWorld->CreatePipeline()
+			.with(flecs::System)
+			.with(flecs::Phase).cascade(flecs::DependsOn)
+			.without(flecs::Disabled).up(flecs::DependsOn)
+			.without(flecs::Disabled).up(flecs::ChildOf)
+			#ifdef FLECS_ENABLE_SYSTEM_PRIORITY
+			.with<flecs::SystemPriority>()
+			#endif // FLECS_ENABLE_SYSTEM_PRIORITY
+			.without<FFlecsOutsideMainLoopTag>()
+			.without<FFlecsOutsideMainLoopTag>().up(flecs::DependsOn)
+			.without<FFlecsOutsideMainLoopTag>().up(flecs::ChildOf);
+	};
+
+	FFlecsEntityHandle ResultPipeline;
+
+	flecs::pipeline_builder<> PipelineBuilder = MakeBasePipeline();
+
+	#ifdef FLECS_ENABLE_SYSTEM_PRIORITY
+	PipelineBuilder
+			.with<flecs::SystemPriority>()
+		   .order_by<flecs::SystemPriority>(flecs_priority_compare);
+	#else
+		PipelineBuilder.order_by(flecs_entity_compare);
+	#endif
+
+	const FString PipelineName = FString::Printf(TEXT("%s_Pipeline"), *InTickType.ToString());
+
+	ResultPipeline = PipelineBuilder
+		.with(InWorld->GetTagEntity(InTickType))
+		.build()
+		.set_name(StringCast<char>(*PipelineName).Get());
+
+	return ResultPipeline;
+}
+

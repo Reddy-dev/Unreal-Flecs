@@ -33,5 +33,8 @@ public:
 
 	UPROPERTY()
 	FFlecsEntityHandle PostUpdateWorkPipeline;
+
+protected:
+	NO_DISCARD FFlecsEntityHandle CreatePipelineForTickType(const FGameplayTag& InTickType, TSolidNotNull<UFlecsWorld*> InWorld) const;
 	
 }; // class UFlecsDefaultGameLoop
