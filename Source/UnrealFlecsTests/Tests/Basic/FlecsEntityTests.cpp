@@ -66,7 +66,7 @@ TEST_CLASS_WITH_FLAGS(A10_UnrealFlecsEntityTests,
 		ASSERT_THAT(IsTrue(TestEntity.HasName()));
 		
 		ASSERT_THAT(AreEqual(TEXT("Entity"), TestEntity.GetName()));
-		ASSERT_THAT(AreEqual(TEXT("My::Test::Entity"), TestEntity.GetPath()));
+		ASSERT_THAT(AreEqual(TEXT("::My::Test::Entity"), TestEntity.GetPath()));
 		ASSERT_THAT(AreEqual(TEXT("My.Test.Entity"), TestEntity.GetPath(".", "")));
 		ASSERT_THAT(AreEqual(TEXT(".My.Test.Entity"), TestEntity.GetPath(".", ".")));
 		ASSERT_THAT(AreEqual(TEXT("/My/Test/Entity"), TestEntity.GetPath("/", "")));
@@ -87,7 +87,7 @@ TEST_CLASS_WITH_FLAGS(A10_UnrealFlecsEntityTests,
 		ASSERT_THAT(AreEqual(TEXT("My.Custom.Separator.Entity"), TestEntity.GetPath(".", "")));
 		ASSERT_THAT(AreEqual(TEXT(".My.Custom.Separator.Entity"), TestEntity.GetPath(".", ".")));
 		ASSERT_THAT(AreEqual(TEXT("::My.Custom.Separator.Entity"), TestEntity.GetPath(".", "::")));
-		ASSERT_THAT(AreEqual(TEXT("My::Custom::Separator::Entity"), TestEntity.GetPath()));
+		ASSERT_THAT(AreEqual(TEXT("::My::Custom::Separator::Entity"), TestEntity.GetPath()));
 	}
 
 	TEST_METHOD(A6_SpawnEntityWithParent_SetParent_API)
