@@ -375,17 +375,18 @@ void UFlecsWorldSubsystem::RegisterAllGameplayTags(const TSolidNotNull<UFlecsWor
 	InFlecsWorld->ObtainTypedEntity<FFlecsGameplayTagManagerEntity>()
 	            .Add(flecs::Module);
 
+	UGameplayTagsManager& GameplayTagsManager = UGameplayTagsManager::Get();
+
 	// @TODO: defer this
-	InFlecsWorld->Scope<FFlecsGameplayTagManagerEntity>([InFlecsWorld]()
+	InFlecsWorld->Scope<FFlecsGameplayTagManagerEntity>([InFlecsWorld, &GameplayTagsManager]()
 	{
 		FGameplayTagContainer AllTags;
-		UGameplayTagsManager::Get().RequestAllGameplayTags(AllTags, false);
+		GameplayTagsManager.RequestAllGameplayTags(AllTags, false);
 
 		for (const FGameplayTag& Tag : AllTags)
 		{
-			const FFlecsEntityHandle TagEntity = flecs::entity(InFlecsWorld->World,
-			                                                   StringCast<char>(*Tag.ToString()).Get(),
-			                                                   ".", ".");
+			const FFlecsEntityHandle TagEntity = InFlecsWorld->CreateEntity(Tag.ToString());
+				
 			TagEntity.Set<FGameplayTag>(Tag);
 
 			InFlecsWorld->TagEntityMap.emplace(Tag, TagEntity.GetFlecsId());
