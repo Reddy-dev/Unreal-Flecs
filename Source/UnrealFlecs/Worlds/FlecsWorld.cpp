@@ -376,9 +376,6 @@ void UFlecsWorld::InitializeDefaultComponents() const
 		     *Data = nullptr;
 	     });
 
-	/*World.component<FOptionalPropertyLayout>()
-	     .opaque(FScriptArray*/
-
 	/*
 	World.component<FScriptArray>()
 	     .opaque<flecs::Vector>(flecs::meta::VectorType)
