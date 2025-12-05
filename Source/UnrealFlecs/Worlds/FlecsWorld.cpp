@@ -15,6 +15,8 @@
 #include "Math/Color.h"
 #include "Math/MathFwd.h"
 
+#include "Kismet/GameplayStatics.h"
+
 #include "Types/SolidCppStructOps.h"
 
 #include "FlecsWorldSubsystem.h"
@@ -1086,25 +1088,39 @@ void UFlecsWorld::SetContext(void* InContext) const
 
 void UFlecsWorld::HandleWorldPause()
 {
-	if (GetWorld()->IsPaused())
+	const bool bIsPaused = GetWorld()->IsPaused();
+	const bool bHasSavedTimeScale = PrePauseTimeScale.IsSet();
+	const bool bTimeScaleZero = FMath::IsNearlyZero(GetTimeScale());
+
+	// World is paused and we don't have a saved time scale -> save time scale and set to 0
+	if (bIsPaused && !bHasSavedTimeScale)
 	{
-		if (!PrePauseTimeScale.IsSet())
-		{
-			PrePauseTimeScale = GetTimeScale();
-			SetTimeScale(0.0);
-		}
+		const double CurrentScale = bTimeScaleZero ? 1.0 : GetTimeScale();
+		PrePauseTimeScale = CurrentScale;
+		SetTimeScale(0.0);
+		return;
 	}
-	else
+
+	// World is unpaused and we have a saved time scale -> restore time scale
+	if (!bIsPaused && bHasSavedTimeScale)
 	{
-		if (PrePauseTimeScale.IsSet())
-		{
-			SetTimeScale(PrePauseTimeScale.GetValue());
-			PrePauseTimeScale.Reset();
-		}
-		else if (FMath::IsNearlyZero(GetTimeScale())) // @TODO: maybe we should pause?
-		{
-			SetTimeScale(1.0);
-		}
+		SetTimeScale(PrePauseTimeScale.GetValue());
+		PrePauseTimeScale.Reset();
+		return;
+	}
+
+	// Time scale became zero while world is unpaused -> pause world
+	if (!bIsPaused && bTimeScaleZero)
+	{
+		UGameplayStatics::SetGamePaused(this, true);
+		return;
+	}
+
+	// Time scale became non-zero while world is paused -> unpause world
+	if (bIsPaused && !bTimeScaleZero)
+	{
+		UGameplayStatics::SetGamePaused(this, false);
+		return;
 	}
 }
 
@@ -1125,7 +1141,7 @@ bool UFlecsWorld::ProgressGameLoops(const FGameplayTag& TickTypeTag, const doubl
 
 	HandleWorldPause();
 
-	const TArray<TScriptInterface<IFlecsGameLoopInterface>> GameLoopsToTick = GameLoopTickTypes[TickTypeTag];
+	const TConstArrayView<TScriptInterface<IFlecsGameLoopInterface>> GameLoopsToTick = GameLoopTickTypes[TickTypeTag];
 
 	for (const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface : GameLoopsToTick)
 	{
@@ -1134,10 +1150,12 @@ bool UFlecsWorld::ProgressGameLoops(const FGameplayTag& TickTypeTag, const doubl
 			*TickTypeTag.ToString(),
 			*GetName());
 
-		if (!GameLoopInterface->Progress(DeltaTime, TickTypeTag, this))
+		const bool bGameLoopResult = GameLoopInterface->Progress(DeltaTime, TickTypeTag, this);
+
+		if UNLIKELY_IF(!bGameLoopResult)
 		{
-			UE_LOGFMT(LogFlecsWorld, Warning,
-				"Game loop %s failed to progress for tick type %s in world %s",
+			UE_LOGFMT(LogFlecsWorld, Error,
+				"Game loop {GameLoopName} failed to progress for tick type {TickType} in world {WorldName}",
 				GameLoopInterface.GetObject()->GetName(),
 				TickTypeTag.ToString(),
 				GetName());
