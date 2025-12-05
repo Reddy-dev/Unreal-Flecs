@@ -69,7 +69,7 @@ TEST_CLASS_WITH_FLAGS(A10_UnrealFlecsEntityTests,
 		ASSERT_THAT(AreEqual(TEXT("::My::Test::Entity"), TestEntity.GetPath()));
 		ASSERT_THAT(AreEqual(TEXT("My.Test.Entity"), TestEntity.GetPath(".", "")));
 		ASSERT_THAT(AreEqual(TEXT(".My.Test.Entity"), TestEntity.GetPath(".", ".")));
-		ASSERT_THAT(AreEqual(TEXT("/My/Test/Entity"), TestEntity.GetPath("/", "")));
+		ASSERT_THAT(AreEqual(TEXT("My/Test/Entity"), TestEntity.GetPath("/", "")));
 		ASSERT_THAT(AreEqual(TEXT("/My/Test/Entity"), TestEntity.GetPath("/", "/")));
 	}
 
