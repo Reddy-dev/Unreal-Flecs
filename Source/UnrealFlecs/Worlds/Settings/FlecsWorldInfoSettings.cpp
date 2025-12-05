@@ -87,6 +87,7 @@ TInstancedStruct<FFlecsTickFunction> FFlecsTickFunctionSettingsInfo::CreateTickF
 	TickFunction.TickInterval = InTickFunctionSettings.TickInterval;
 	TickFunction.bHighPriority = InTickFunctionSettings.bHighPriority;
 	TickFunction.bAllowTickBatching = InTickFunctionSettings.bAllowTickBatching;
+	TickFunction.bRunTransactionally = InTickFunctionSettings.bRunTransactionally;
 	
 	TickFunction.bCanEverTick = true;
 	

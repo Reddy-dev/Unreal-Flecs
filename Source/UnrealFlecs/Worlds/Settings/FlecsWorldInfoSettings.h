@@ -41,7 +41,7 @@ public:
     TEnumAsByte<ETickingGroup> TickGroup = ETickingGroup::TG_PrePhysics;
 
     UPROPERTY(EditAnywhere)
-    TEnumAsByte<ETickingGroup> EndTickGroup = ETickingGroup::TG_LastDemotable;
+    TEnumAsByte<ETickingGroup> EndTickGroup = TickGroup;
 
     UPROPERTY(EditAnywhere)
     bool bStartWithTickEnabled = true;
@@ -60,6 +60,9 @@ public:
 
     UPROPERTY()
     bool bAllowTickBatching = false;
+
+    UPROPERTY()
+    bool bRunTransactionally = false;
 
     UPROPERTY(EditAnywhere, AdvancedDisplay, meta = (NoElementDuplicate))
     TArray<FGameplayTag> TickFunctionPrerequisiteTags;
