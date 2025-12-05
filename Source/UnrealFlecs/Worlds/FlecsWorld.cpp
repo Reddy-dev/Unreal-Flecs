@@ -758,9 +758,16 @@ void UFlecsWorld::ResetClock() const
 	World.reset_clock();
 }
 
-FFlecsEntityHandle UFlecsWorld::CreateEntity(const FString& Name) const
+FFlecsEntityHandle UFlecsWorld::CreateEntity(const FString& Name, const FString& Separator, const FString& RootSeparator) const
 {
-	return World.entity(StringCast<char>(*Name).Get());
+	if (Name.IsEmpty())
+	{
+		return World.entity();
+	}
+	
+	return World.entity(StringCast<char>(*Name).Get(), 
+	                    StringCast<char>(*Separator).Get(),
+	                    StringCast<char>(*RootSeparator).Get());
 }
 
 FFlecsEntityHandle UFlecsWorld::ObtainTypedEntity(const TSolidNotNull<UClass*> InClass) const

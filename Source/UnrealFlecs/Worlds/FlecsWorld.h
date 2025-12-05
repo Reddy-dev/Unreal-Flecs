@@ -166,8 +166,10 @@ public:
 	 * @param Name Optional Name Parameter
 	 * @return The created entity handle
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	FFlecsEntityHandle CreateEntity(const FString& Name = "") const;
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World", 
+		meta = (AdvancedDisplay = "Separator, RootSeparator"))
+	FFlecsEntityHandle CreateEntity(const FString& Name = "",
+		const FString& Separator = "::", const FString& RootSeparator = "::") const;
 
 	/**
 	 * @brief Obtain a typed entity handle for the given Type
