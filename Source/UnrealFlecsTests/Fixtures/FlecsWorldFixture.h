@@ -32,11 +32,14 @@ public:
 	TWeakObjectPtr<UWorld> TestWorld;
 	UFlecsWorldSubsystem* WorldSubsystem = nullptr;
 	UFlecsWorld* FlecsWorld = nullptr;
+	TSharedPtr<FScopedTestEnvironment> ScopedTestEnvironment = nullptr;
 
 	// @TODO: add test support for multiple game loops
 	void SetUp(TArray<TScriptInterface<IFlecsGameLoopInterface>> InGameLoopInterfaces = {}, TArray<FFlecsTickFunctionSettingsInfo> InTickFunctions = {},
 	           const TArray<UObject*>& InModules = {})
 	{
+		ScopedTestEnvironment = FScopedTestEnvironment::Get();
+		
 		TestWorldWrapper = MakeUnique<FTestWorldWrapper>();
 		TestWorldWrapper->CreateTestWorld(EWorldType::Game);
 
@@ -104,6 +107,8 @@ public:
 
 		TestWorldWrapper->DestroyTestWorld(true);
 		TestWorldWrapper = nullptr;
+
+		ScopedTestEnvironment = nullptr;
 	}
 
 	NO_DISCARD FORCEINLINE UFlecsWorld* GetFlecsWorld() const
