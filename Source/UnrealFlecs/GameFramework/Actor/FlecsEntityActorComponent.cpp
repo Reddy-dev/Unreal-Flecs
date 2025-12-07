@@ -14,12 +14,22 @@
 #include "Worlds/FlecsWorld.h"
 #include "Worlds/FlecsWorldSubsystem.h"
 
-#include "GameFramework/FlecsGameFrameworkVersioningTypes.h"
-
 #include "Components/FlecsUObjectComponent.h"
 #include "Components/ObjectTypes/FlecsActorTag.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsEntityActorComponent)
+
+IMPLEMENT_SOLID_ASSET_VERSION(UFlecsEntityActorComponent, 0xA9464252, 0x37464046, 0xBDFF76B4, 0xEBBDA15A, "FlecsEntityActorComponentVersion");
+
+REGISTER_ASSET_MIGRATION_STEP(UFlecsEntityActorComponent, SwitchedEntityInitializationMethodToEntityInitializationType,
+	{
+		const bool bChanged = !(Self->EntityRecord_DEPRECATED == Archetype->EntityRecord_DEPRECATED);
+		if (bChanged)
+		{
+			Self->EntityInitializer.Type = EFlecsEntityInitializationType::Record;
+			Self->EntityInitializer.Record = Self->EntityRecord_DEPRECATED;
+		}
+	})
 
 UFlecsEntityActorComponent::UFlecsEntityActorComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)

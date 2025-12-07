@@ -6,6 +6,8 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsCollectionDataAsset)
 
+IMPLEMENT_SOLID_ASSET_VERSION(UFlecsCollectionDataAsset, 0x3E4D2AEE, 0xBB164991, 0xBC6ADE23, 0xA03DD31E, "FlecsCollectionDataAssetVersion");
+
 UFlecsCollectionDataAsset::UFlecsCollectionDataAsset()
 {
 }

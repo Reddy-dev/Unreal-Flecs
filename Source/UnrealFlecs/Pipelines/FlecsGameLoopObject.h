@@ -3,9 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FlecsGameLoopInterface.h"
+
 #include "UObject/Object.h"
+
+#include "Versioning/SolidVersioningTypes.h"
+
+#include "FlecsGameLoopInterface.h"
+
 #include "FlecsGameLoopObject.generated.h"
+
+START_SOLID_ASSET_VERSION(UFlecsGameLoopObject)
+
+END_SOLID_ASSET_VERSION() // UFlecsGameLoopObject
 
 UCLASS(Abstract, EditInlineNew, BlueprintType, NotBlueprintable, Category = "Flecs|GameLoop")
 class UNREALFLECS_API UFlecsGameLoopObject : public UObject, public IFlecsGameLoopInterface

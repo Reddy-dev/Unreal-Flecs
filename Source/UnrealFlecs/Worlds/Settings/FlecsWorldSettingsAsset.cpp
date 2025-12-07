@@ -12,6 +12,8 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsWorldSettingsAsset)
 
+IMPLEMENT_SOLID_ASSET_VERSION(UFlecsWorldSettingsAsset, 0x15CC5705, 0xE0534189, 0xAA7792F1, 0x9CBAF6E8, "FlecsWorldSettingsAssetVersion");
+
 #define LOCTEXT_NAMESPACE "FlecsWorldSettingsAsset"
 
 UFlecsWorldSettingsAsset::UFlecsWorldSettingsAsset()
@@ -28,10 +30,7 @@ void UFlecsWorldSettingsAsset::PostLoad()
 {
 	Super::PostLoad();
 
-#if WITH_EDITOR
-	
-
-#endif // WITH_EDITOR
+	IMPLEMENT_ASSET_MIGRATION_POST_LOAD(UFlecsWorldSettingsAsset);
 }
 
 #if WITH_EDITOR

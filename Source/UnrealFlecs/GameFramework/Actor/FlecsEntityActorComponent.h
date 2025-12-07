@@ -6,7 +6,8 @@
 
 #include "Components/ActorComponent.h"
 
-#include "SolidMacros.h"
+#include "SolidMacros/Macros.h"
+#include "Versioning/SolidVersioningTypes.h"
 
 #include "Entities/FlecsEntityHandle.h"
 #include "Interfaces/FlecsEntityInterface.h"
@@ -14,6 +15,12 @@
 #include "Entities/FlecsEntityInitializationType.h"
 
 #include "FlecsEntityActorComponent.generated.h"
+
+START_SOLID_ASSET_VERSION(UFlecsEntityActorComponent)
+
+DEFINE_SOLID_ASSET_VERSION(SwitchedEntityInitializationMethodToEntityInitializationType)
+
+END_SOLID_ASSET_VERSION() // UFlecsEntityActorComponent
 
 UCLASS(BlueprintType, Blueprintable, ClassGroup=(Flecs),
 	meta = (BlueprintSpawnableComponent, DisplayName = "Flecs Entity Actor Component"))
