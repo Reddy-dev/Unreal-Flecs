@@ -1081,6 +1081,8 @@ public:
 
 	flecs::query<> TickFunctionQuery;
 
+	flecs::query<const FFlecsScriptStructComponent> AddReferencedObjectsQuery;
+
 	FFlecsTypeMapComponent* TypeMapComponent;
 
 	FDelegateHandle ComponentRegisteredDelegateHandle;

@@ -17,8 +17,8 @@ struct UNREALFLECS_API FFlecsTickFunctionComponent
 	GENERATED_BODY()
 
 public:
-	UPROPERTY()
-	TInstancedStruct<FFlecsTickFunction> TickFunction;
+	//UPROPERTY() // @TODO: this is disabled due to a UHT bug
+	TSharedStruct<FFlecsTickFunction> TickFunction;
 	
 }; // struct FFlecsTickFunctionComponent
 

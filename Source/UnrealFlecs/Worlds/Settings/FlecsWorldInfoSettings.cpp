@@ -18,7 +18,7 @@ FFlecsTickFunctionSettingsInfo::FFlecsTickFunctionSettingsInfo()
 FFlecsTickFunctionSettingsInfo FFlecsTickFunctionSettingsInfo::GetTickFunctionSettingsDefault(
 	const FGameplayTag& InTickTypeTag)
 {
-	FFlecsTickFunctionSettingsInfo TickFunctionSettings;
+	FFlecsTickFunctionSettingsInfo TickFunctionSettings = FFlecsTickFunctionSettingsInfo();
 	TickFunctionSettings.bStartWithTickEnabled = true;
 	TickFunctionSettings.bAllowTickOnDedicatedServer = true;
 	TickFunctionSettings.bTickEvenWhenPaused = false;
@@ -72,12 +72,13 @@ FFlecsTickFunctionSettingsInfo FFlecsTickFunctionSettingsInfo::GetTickFunctionSe
 	return TickFunctionSettings;
 }
 
-TInstancedStruct<FFlecsTickFunction> FFlecsTickFunctionSettingsInfo::CreateTickFunctionInstance(
+TSharedStruct<FFlecsTickFunction> FFlecsTickFunctionSettingsInfo::CreateTickFunctionInstance(
 	const FFlecsTickFunctionSettingsInfo& InTickFunctionSettings)
 {
-	TInstancedStruct<FFlecsTickFunction> TickFunctionInstance = TInstancedStruct<FFlecsTickFunction>::Make();
+	TSharedStruct<FFlecsTickFunction> TickFunctionInstance;
+	TickFunctionInstance.Initialize();
 	
-	FFlecsTickFunction& TickFunction = TickFunctionInstance.GetMutable<FFlecsTickFunction>();
+	FFlecsTickFunction& TickFunction = TickFunctionInstance.Get<FFlecsTickFunction>();
 	TickFunction.TickTypeTag = InTickFunctionSettings.TickTypeTag;
 	TickFunction.TickGroup = InTickFunctionSettings.TickGroup;
 	TickFunction.EndTickGroup = InTickFunctionSettings.EndTickGroup;
@@ -90,6 +91,8 @@ TInstancedStruct<FFlecsTickFunction> FFlecsTickFunctionSettingsInfo::CreateTickF
 	TickFunction.bRunTransactionally = InTickFunctionSettings.bRunTransactionally;
 	
 	TickFunction.bCanEverTick = true;
+
+	solid_check(TickFunctionInstance.IsValid());
 	
 	return TickFunctionInstance;
 }

@@ -173,7 +173,7 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 
 	DefaultWorld->Defer([this, &Settings]()
 	{
-		TSortedMap<FGameplayTag, TTuple<FFlecsTickFunction*, FFlecsTickFunctionSettingsInfo>> TickFunctionInstances;
+		TSortedMap<FGameplayTag, TTuple<TSharedStruct<FFlecsTickFunction>, FFlecsTickFunctionSettingsInfo>> TickFunctionInstances;
 
 		for (const FFlecsTickFunctionSettingsInfo& TickFunctionStruct : Settings.TickFunctions)
 		{
@@ -186,8 +186,11 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 			             *TickFunctionStruct.TickFunctionName);
 
 			TickFunctionEntity.AddPair<FFlecsTickTypeRelationship>(TickFunctionStruct.TickTypeTag);
-			FFlecsTickFunctionComponent& TickFunctionComponent = TickFunctionEntity.Obtain<FFlecsTickFunctionComponent>();
-			TickFunctionComponent.TickFunction = FFlecsTickFunctionSettingsInfo::CreateTickFunctionInstance(TickFunctionStruct);
+
+			TSharedStruct<FFlecsTickFunction> TickFunction = FFlecsTickFunctionSettingsInfo::CreateTickFunctionInstance(TickFunctionStruct);
+			solid_check(TickFunction.IsValid());
+			
+			TickFunctionEntity.Set<FFlecsTickFunctionComponent>(FFlecsTickFunctionComponent{ TickFunction });
 
 			for (const FGameplayTag& PrerequisiteTickType : TickFunctionStruct.TickFunctionPrerequisiteTags)
 			{
@@ -199,15 +202,16 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 			}
 
 			TickFunctionInstances.Add(TickFunctionStruct.TickTypeTag,
-				TTuple<FFlecsTickFunction*, FFlecsTickFunctionSettingsInfo>(
-					TickFunctionComponent.TickFunction.GetMutablePtr(), TickFunctionStruct));
+				TTuple<TSharedStruct<FFlecsTickFunction>, FFlecsTickFunctionSettingsInfo>(
+					TickFunction,
+					TickFunctionStruct));
 		}
 
 		for (const auto& [TickTypeTag, TickFunctionTuple] : TickFunctionInstances)
 		{
 			const TConstArrayView<FGameplayTag> TickPrerequisites = TickFunctionTuple.Get<1>().TickFunctionPrerequisiteTags;
 
-			const TSolidNotNull<FFlecsTickFunction*> TickFunction = TickFunctionTuple.Get<0>();
+			const TSharedStruct<FFlecsTickFunction> TickFunction = TickFunctionTuple.Get<0>();
 			
 			for (const FGameplayTag& PrerequisiteTickType : TickPrerequisites)
 			{
@@ -216,9 +220,9 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 				             *PrerequisiteTickType.ToString(),
 				             *TickFunctionTuple.Get<1>().TickFunctionName);
 				
-				const TSolidNotNull<FFlecsTickFunction*> PrerequisiteTickFunctionPtr = TickFunctionInstances.Find(PrerequisiteTickType)->Get<0>();
+				FFlecsTickFunction& PrerequisiteTickFunctionPtr = TickFunctionInstances[PrerequisiteTickType].Get<0>().Get();
 				
-				TickFunction->AddPrerequisite(DefaultWorld, *PrerequisiteTickFunctionPtr);
+				TickFunction.Get().AddPrerequisite(DefaultWorld, PrerequisiteTickFunctionPtr);
 			}
 		}
 	});
@@ -385,7 +389,7 @@ void UFlecsWorldSubsystem::RegisterAllGameplayTags(const TSolidNotNull<UFlecsWor
 
 		for (const FGameplayTag& Tag : AllTags)
 		{
-			const FFlecsEntityHandle TagEntity = InFlecsWorld->CreateEntity(Tag.ToString());
+			const FFlecsEntityHandle TagEntity = InFlecsWorld->CreateEntity(Tag.ToString(), ".", ".");
 				
 			TagEntity.Set<FGameplayTag>(Tag);
 

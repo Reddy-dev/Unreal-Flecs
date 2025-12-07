@@ -15,6 +15,10 @@
 #include "Math/Color.h"
 #include "Math/MathFwd.h"
 
+#include "StructUtils/InstancedStruct.h"
+#include "StructUtils/InstancedStructContainer.h"
+#include "StructUtils/SharedStruct.h"
+
 #include "Kismet/GameplayStatics.h"
 
 #include "Types/SolidCppStructOps.h"
@@ -530,7 +534,10 @@ void UFlecsWorld::RegisterUnrealTypes() const
 	RegisterComponentType<FFrameNumber>();
 	RegisterComponentType<FFrameRate>();
 
+	// @TODO: make this opaque?
 	RegisterComponentType<FInstancedStruct>();
+	RegisterComponentType<FInstancedStructContainer>();
+	RegisterComponentType<FSharedStruct>();
 }
 
 void UFlecsWorld::InitializeComponentPropertyObserver()
@@ -587,11 +594,17 @@ void UFlecsWorld::InitializeSystems()
 			.with<FFlecsTickTypeRelationship>("$TickTypeTag") // 1
 			.build();
 
+		AddReferencedObjectsQuery = World.query_builder<const FFlecsScriptStructComponent>("AddReferencedObjectsQuery") // 0 (FFlecsScriptStructComponent)
+			.with<FFlecsAddReferencedObjectsTrait>().src("$Component") //  1
+			.term_at(0).src("$Component") // 0
+			.with("$Component") // 2
+			.build();
+
 		FCoreUObjectDelegates::GarbageCollectComplete.AddWeakLambda(this, [this]
 		{
-			ObjectComponentQuery.each([](flecs::entity InEntity, const FFlecsUObjectComponent& InUObjectComponent)
+			ObjectComponentQuery.each([](flecs::iter& Iter, size_t Index, const FFlecsUObjectComponent& InUObjectComponent)
 			{
-				const FFlecsEntityHandle EntityHandle = InEntity;
+				const FFlecsEntityHandle EntityHandle = Iter.entity(Index);
 					
 				if (!InUObjectComponent.IsValid())
 				{
@@ -695,26 +708,42 @@ void UFlecsWorld::InitializeSystems()
 	CreateObserver<FFlecsTickFunctionComponent&>(TEXT("AddTickFunctionObserver"))
 		.event(flecs::OnAdd)
 		.yield_existing()
-		.each([this](flecs::iter& InIter, size_t InIndex,
-		             FFlecsTickFunctionComponent& InTickFunctionComponent)
+		.with<FFlecsTickTypeRelationship>("$TickTypeTag") // 1
+		.each([this](flecs::iter& InIter, size_t InIndex, FFlecsTickFunctionComponent& InTickFunctionComponent)
 		{
 			solid_checkf(InTickFunctionComponent.TickFunction.IsValid(),
 				TEXT("FFlecsTickFunctionComponent has invalid TickFunction"));
 
-			InTickFunctionComponent.TickFunction.GetMutable().OwningWorld = this;
-			InTickFunctionComponent.TickFunction.GetMutable().RegisterTickFunction(GetWorld()->PersistentLevel);
+			#if !NO_LOGGING
+			const FFlecsEntityHandle EntityHandle = InIter.entity(InIndex);
+			#endif // !NO_LOGGING
+
+			InTickFunctionComponent.TickFunction.Get().OwningWorld = this;
+			InTickFunctionComponent.TickFunction.Get().RegisterTickFunction(GetWorld()->PersistentLevel);
+
+			UE_LOGFMT(LogFlecsWorld, Verbose,
+				"Registered Tick Function for Entity {EntityIdentifier}",
+				EntityHandle.HasName() ? EntityHandle.GetName() : EntityHandle.ToString());
+				
 		});
 
 	CreateObserver<FFlecsTickFunctionComponent&>(TEXT("RemoveTickFunctionObserver"))
 		.event(flecs::OnRemove)
 		.yield_existing()
-		.each([this](flecs::iter& InIter, size_t InIndex,
-		             FFlecsTickFunctionComponent& InTickFunctionComponent)
+		.each([this](flecs::iter& InIter, size_t InIndex, FFlecsTickFunctionComponent& InTickFunctionComponent)
 		{
 			solid_checkf(InTickFunctionComponent.TickFunction.IsValid(),
 				TEXT("FFlecsTickFunctionComponent has invalid TickFunction"));
+
+			#if !NO_LOGGING
+			const FFlecsEntityHandle EntityHandle = InIter.entity(InIndex);
+			#endif // !NO_LOGGING
 			
-			InTickFunctionComponent.TickFunction.GetMutable().UnRegisterTickFunction();
+			InTickFunctionComponent.TickFunction.Get().UnRegisterTickFunction();
+
+			UE_LOGFMT(LogFlecsWorld, Verbose,
+				"Unregistered Tick Function for Entity {EntityIdentifier}",
+				EntityHandle.HasName() ? EntityHandle.GetName() : EntityHandle.ToString());
 		});
 }
 
@@ -760,11 +789,6 @@ void UFlecsWorld::ResetClock() const
 
 FFlecsEntityHandle UFlecsWorld::CreateEntity(const FString& Name, const FString& Separator, const FString& RootSeparator) const
 {
-	if (Name.IsEmpty())
-	{
-		return World.entity();
-	}
-	
 	return World.entity(StringCast<char>(*Name).Get(), 
 	                    StringCast<char>(*Separator).Get(),
 	                    StringCast<char>(*RootSeparator).Get());
@@ -2056,19 +2080,14 @@ void UFlecsWorld::AddReferencedObjects(UObject* InThis, FReferenceCollector& Col
 
 	ecs_exclusive_access_begin(This->World, "Garbage Collection ARO");
 		
-	This->World.query_builder<const FFlecsScriptStructComponent>() // 0
-	    .with<FFlecsAddReferencedObjectsTrait>().src("$Component") //  1
-	    .term_at(0).src("$Component") // 0
-	    .with("$Component") // 2
-		//.cache_kind(flecs::QueryCacheNone)
-	    .each([&Collector, InThis](flecs::iter& Iter, size_t Index,
+	This->AddReferencedObjectsQuery.each([InThis, &Collector](flecs::iter& Iter, size_t Index,
 	                               const FFlecsScriptStructComponent& InScriptStructComponent)
 	    {
 		    const FFlecsEntityHandle Component = Iter.get_var("Component");
 		    solid_check(Component.IsValid());
 
 		    void* ComponentPtr = Iter.field_at(1, Index);
-		    solid_check(ComponentPtr);
+		    solid_cassume(ComponentPtr);
 
 		    Collector.AddPropertyReferencesWithStructARO(InScriptStructComponent.ScriptStruct.Get(),
 		                                    ComponentPtr, InThis);

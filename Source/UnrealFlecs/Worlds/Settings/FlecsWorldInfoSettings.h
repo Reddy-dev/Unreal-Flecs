@@ -11,6 +11,7 @@
 #include "Types/SolidNotNull.h"
 
 #include "StructUtils/InstancedStruct.h"
+#include "StructUtils/SharedStruct.h"
 
 #include "FlecsWorldInfoSettings.generated.h"
 
@@ -62,14 +63,14 @@ public:
     bool bAllowTickBatching = false;
 
     UPROPERTY()
-    bool bRunTransactionally = false;
+    bool bRunTransactionally = true;
 
     UPROPERTY(EditAnywhere, AdvancedDisplay, meta = (NoElementDuplicate))
     TArray<FGameplayTag> TickFunctionPrerequisiteTags;
 
     static NO_DISCARD FFlecsTickFunctionSettingsInfo GetTickFunctionSettingsDefault(const FGameplayTag& InTickTypeTag);
 
-    static NO_DISCARD TInstancedStruct<FFlecsTickFunction> CreateTickFunctionInstance(
+    static NO_DISCARD TSharedStruct<FFlecsTickFunction> CreateTickFunctionInstance(
         const FFlecsTickFunctionSettingsInfo& InTickFunctionSettings);
     
 }; // struct FFlecsTickFunctionSettingsInfo

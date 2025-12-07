@@ -38,7 +38,7 @@ public:
 	           const TArray<UObject*>& InModules = {})
 	{
 		TestWorldWrapper = MakeUnique<FTestWorldWrapper>();
-		TestWorldWrapper->CreateTestWorld(EWorldType::GameRPC);
+		TestWorldWrapper->CreateTestWorld(EWorldType::Game);
 
 		TestWorld = TestWorldWrapper->GetTestWorld();
 
@@ -47,7 +47,7 @@ public:
 
 		// Create world settings
 		FFlecsWorldSettingsInfo WorldSettings;
-		WorldSettings.WorldName = TEXT("TestWorld");
+		WorldSettings.WorldName = "TestWorld";
 		WorldSettings.Modules = InModules;
 
 		if (!InGameLoopInterfaces.IsEmpty())
@@ -67,14 +67,27 @@ public:
 			WorldSettings.TickFunctions = InTickFunctions;
 		}
 
-		FlecsWorld = WorldSubsystem->CreateWorld(TEXT("TestWorld"), WorldSettings);
+		FlecsWorld = WorldSubsystem->CreateWorld("TestWorld", WorldSettings);
 
 		TestWorldWrapper->BeginPlayInTestWorld();
 	}
 
-	void TickWorld(const float DeltaTime = 0.01f) const
+	void TickWorld(const double DeltaTime = 0.016) const
 	{
-		TestWorldWrapper->TickTestWorld(DeltaTime);
+		if (DeltaTime == 0.0)
+		{
+			TestWorldWrapper->GetTestWorld()->Tick(LEVELTICK_PauseTick, 0.0f);
+
+			if (TestWorld->HasBegunPlay())
+			{
+				// If this has begin play increment the global counter to emulate gameplay
+				GFrameCounter++;
+			}
+		}
+		else
+		{
+			TestWorldWrapper->TickTestWorld(DeltaTime);
+		}
 	}
 
 	void TearDown()
