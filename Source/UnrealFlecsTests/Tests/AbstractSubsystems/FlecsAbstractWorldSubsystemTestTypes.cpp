@@ -8,6 +8,16 @@ UTestFlecsWorldSubsystem_Initialization::UTestFlecsWorldSubsystem_Initialization
 {
 }
 
+bool UTestFlecsWorldSubsystem_Initialization::ShouldCreateSubsystem(UObject* Outer) const
+{
+	if (!GIsAutomationTesting)
+	{
+		return false;
+	}
+	
+	return Super::ShouldCreateSubsystem(Outer);
+}
+
 void UTestFlecsWorldSubsystem_Initialization::OnFlecsWorldInitialized(const TSolidNotNull<UFlecsWorld*> InWorld)
 {
 	Super::OnFlecsWorldInitialized(InWorld);
