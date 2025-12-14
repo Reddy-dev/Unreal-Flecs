@@ -28,6 +28,7 @@ public class SolidMacros : ModuleRules
 			{
 				"Core",
 				"CoreUObject",
+				"Engine",
 				"GameplayTags",
 			}
 			);
@@ -37,7 +38,6 @@ public class SolidMacros : ModuleRules
 			new string[]
 			{
 				"PropertyPath",
-				"Engine"
 			}
 			);
 		
