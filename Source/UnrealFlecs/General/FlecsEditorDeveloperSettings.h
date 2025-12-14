@@ -13,7 +13,7 @@
 
 #include "FlecsEditorDeveloperSettings.generated.h"
 
-UCLASS(config=Editor, DefaultConfig, DisplayName="Flecs General Editor Settings")
+UCLASS(Config=Editor, DefaultConfig, DisplayName="Flecs General Editor Settings")
 class UNREALFLECS_API UFlecsEditorDeveloperSettings final : public UDeveloperSettings
 {
 	GENERATED_BODY()
