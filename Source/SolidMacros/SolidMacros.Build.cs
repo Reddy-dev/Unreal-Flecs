@@ -38,6 +38,7 @@ public class SolidMacros : ModuleRules
 			new string[]
 			{
 				"PropertyPath",
+				"EngineSettings",
 			}
 			);
 		
