@@ -8,8 +8,7 @@
 
 #include "FlecsDeveloperSettings.generated.h"
 
-UCLASS(BlueprintType, Config = Game, DefaultConfig, Category = "Flecs",
-	meta = (DisplayName = "Flecs Settings"))
+UCLASS(BlueprintType, Config = Flecs, meta = (DisplayName = "Flecs Settings"))
 class UNREALFLECS_API UFlecsDeveloperSettings final : public UDeveloperSettings
 {
 	GENERATED_BODY()
