@@ -35,7 +35,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A1_FlecsWorldTests, "UnrealFlecs.A1_World",
 
 	AFTER_EACH()
 	{
-		Fixture.Reset();
+		Fixture = nullptr;
 		FlecsWorld = nullptr;
 	}
 
@@ -234,21 +234,34 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A1_FlecsWorldTests, "UnrealFlecs.A1_World",
 			});
 		
 		ASSERT_THAT(IsTrue(TestSystem.IsValid()));
-		ASSERT_THAT(AreEqual(Counter, 0));
-		ASSERT_THAT(AreEqual(PostUpdateCounter, 0));
+		ASSERT_THAT(IsTrue(TestSystemPostUpdate.IsValid()));
+		
+		ASSERT_THAT(AreEqual(0, Counter));
+		ASSERT_THAT(AreEqual(0, PostUpdateCounter));
 
 		Fixture->Fixture.TickWorld(TickDeltaTime);
-		ASSERT_THAT(AreEqual(Counter, 1));
-		ASSERT_THAT(AreEqual(PostUpdateCounter, 1));
+		
+		ASSERT_THAT(AreEqual(1, Counter));
+		ASSERT_THAT(AreEqual(1, PostUpdateCounter));
 
 		Fixture->Fixture.TickWorld(TickDeltaTime);
-		ASSERT_THAT(AreEqual(Counter, 2));
-		ASSERT_THAT(AreEqual(PostUpdateCounter, 2));
+		
+		ASSERT_THAT(AreEqual(2, Counter));
+		ASSERT_THAT(AreEqual(2, PostUpdateCounter));
 	}
 
 	TEST_METHOD(D2_CreateSystemsInUnrealTickTypesAndMainLoopAndTickWorld)
 	{
 		// @TODO: use FFlecsSystem instead of FFlecsEntityHandle
+
+		int32 MainLoopCounter = 0;
+		FFlecsEntityHandle MainLoopSystem = FlecsWorld->World.system<>()
+			.kind(flecs::OnUpdate)
+			.each([&MainLoopCounter](flecs::iter& Iter, size_t Index)
+			{
+				MainLoopCounter++;
+			});
+			//.add(FlecsWorld->GetTagEntity(FlecsTickType_MainLoop).GetFlecsId());
 		
 		int32 PrePhysicsCounter = 0;
 		FFlecsEntityHandle PrePhysicsSystem = FlecsWorld->World.system<>()
@@ -285,30 +298,66 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A1_FlecsWorldTests, "UnrealFlecs.A1_World",
 				PostUpdateWorkCounter++;
 			})
 			.add(FlecsWorld->GetTagEntity(FlecsTickType_PostUpdateWork).GetFlecsId());
-		
+
+		ASSERT_THAT(IsTrue(MainLoopSystem.IsValid()));
 		ASSERT_THAT(IsTrue(PrePhysicsSystem.IsValid()));
 		ASSERT_THAT(IsTrue(DuringPhysicsSystem.IsValid()));
 		ASSERT_THAT(IsTrue(PostPhysicsSystem.IsValid()));
 		ASSERT_THAT(IsTrue(PostUpdateWorkSystem.IsValid()));
 
-		ASSERT_THAT(AreEqual(PrePhysicsCounter, 0));
-		ASSERT_THAT(AreEqual(DuringPhysicsCounter, 0));
-		ASSERT_THAT(AreEqual(PostPhysicsCounter, 0));
-		ASSERT_THAT(AreEqual(PostUpdateWorkCounter, 0));
+		ASSERT_THAT(AreEqual(0, MainLoopCounter));
+		ASSERT_THAT(AreEqual(0, PrePhysicsCounter));
+		ASSERT_THAT(AreEqual(0, DuringPhysicsCounter));
+		ASSERT_THAT(AreEqual(0, PostPhysicsCounter));
+		ASSERT_THAT(AreEqual(0, PostUpdateWorkCounter));
 
 		Fixture->Fixture.TickWorld();
 
-		ASSERT_THAT(AreEqual(PrePhysicsCounter, 1));
-		ASSERT_THAT(AreEqual(DuringPhysicsCounter, 1));
-		ASSERT_THAT(AreEqual(PostPhysicsCounter, 1));
-		ASSERT_THAT(AreEqual(PostUpdateWorkCounter, 1));
+		ASSERT_THAT(AreEqual(1, MainLoopCounter));
+		ASSERT_THAT(AreEqual(1, PrePhysicsCounter));
+		ASSERT_THAT(AreEqual(1, DuringPhysicsCounter));
+		ASSERT_THAT(AreEqual(1, PostPhysicsCounter));
+		ASSERT_THAT(AreEqual(1, PostUpdateWorkCounter));
 
 		Fixture->Fixture.TickWorld();
 
-		ASSERT_THAT(AreEqual(PrePhysicsCounter, 2));
-		ASSERT_THAT(AreEqual(DuringPhysicsCounter, 2));
-		ASSERT_THAT(AreEqual(PostPhysicsCounter, 2));
-		ASSERT_THAT(AreEqual(PostUpdateWorkCounter, 2));
+		ASSERT_THAT(AreEqual(2, MainLoopCounter));
+		ASSERT_THAT(AreEqual(2, PrePhysicsCounter));
+		ASSERT_THAT(AreEqual(2, DuringPhysicsCounter));
+		ASSERT_THAT(AreEqual(2, PostPhysicsCounter));
+		ASSERT_THAT(AreEqual(2, PostUpdateWorkCounter));
+	}
+
+	TEST_METHOD(D3_TickWorldWithDeltaTime)
+	{
+		static constexpr double TickDeltaTime = 1.0 / 30.0;
+		
+		int32 Counter = 0;
+		FFlecsSystem TestSystem = FlecsWorld->World.system<>()
+			.kind(flecs::OnUpdate)
+			.each([this, &Counter](flecs::iter& Iter, size_t Index)
+			{
+				AddErrorIfFalse(FMath::IsNearlyEqual(Iter.delta_time(), TickDeltaTime),
+					FString::Printf(TEXT("Expected delta time: %f, but got: %f"),
+						TickDeltaTime,
+						Iter.delta_time()
+					)
+				);
+				
+				Counter++;
+			});
+
+		ASSERT_THAT(IsTrue(TestSystem.IsValid()));
+		
+		ASSERT_THAT(AreEqual(0, Counter));
+
+		Fixture->Fixture.TickWorld(TickDeltaTime);
+		
+		ASSERT_THAT(AreEqual(1, Counter));
+
+		Fixture->Fixture.TickWorld(TickDeltaTime);
+		
+		ASSERT_THAT(AreEqual(2, Counter));
 	}
 	
 }; // End of A1_UnrealFlecsBasicTests
