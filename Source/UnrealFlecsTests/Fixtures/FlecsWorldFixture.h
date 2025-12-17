@@ -18,32 +18,38 @@
 #include "Worlds/FlecsWorldSubsystem.h"
 #include "Worlds/FlecsWorld.h"
 #include "Pipelines/FlecsDefaultGameLoop.h"
+#include "Tests/NetTestHelpers.h"
 
-namespace Unreal::Flecs::Testing::impl
+/*namespace Unreal::Flecs::Testing::impl
 {
 	static const FString DefaultTags = TEXT("");
-} // namespace Unreal::Flecs::Testing::impl
+} // namespace Unreal::Flecs::Testing::impl*/
 
 class UNREALFLECSTESTS_API FFlecsTestFixture
 {
+	static constexpr double DefaultTickStepInSeconds = 1.0 / 60.0;
+	
 public:
 	TUniquePtr<FTestWorldWrapper> TestWorldWrapper;
+
+	UGameInstance* StandaloneGameInstance = nullptr;
 	
 	TWeakObjectPtr<UWorld> TestWorld;
 	UFlecsWorldSubsystem* WorldSubsystem = nullptr;
 	UFlecsWorld* FlecsWorld = nullptr;
-	TSharedPtr<FScopedTestEnvironment> ScopedTestEnvironment = nullptr;
 
 	// @TODO: add test support for multiple game loops
 	void SetUp(TArray<TScriptInterface<IFlecsGameLoopInterface>> InGameLoopInterfaces = {}, TArray<FFlecsTickFunctionSettingsInfo> InTickFunctions = {},
 	           const TArray<UObject*>& InModules = {})
 	{
-		ScopedTestEnvironment = FScopedTestEnvironment::Get();
-		
 		TestWorldWrapper = MakeUnique<FTestWorldWrapper>();
 		TestWorldWrapper->CreateTestWorld(EWorldType::Game);
-
+		
 		TestWorld = TestWorldWrapper->GetTestWorld();
+		check(TestWorld.IsValid());
+		
+		StandaloneGameInstance = TestWorldWrapper->GetTestWorld()->GetGameInstance();
+		check(IsValid(StandaloneGameInstance));
 
 		WorldSubsystem = TestWorld->GetSubsystem<UFlecsWorldSubsystem>();
 		check(IsValid(WorldSubsystem));
@@ -75,22 +81,9 @@ public:
 		TestWorldWrapper->BeginPlayInTestWorld();
 	}
 
-	void TickWorld(const double DeltaTime = 0.016) const
+	void TickWorld(const double InDeltaSeconds = DefaultTickStepInSeconds) const
 	{
-		if (DeltaTime == 0.0)
-		{
-			TestWorldWrapper->GetTestWorld()->Tick(LEVELTICK_PauseTick, 0.0f);
-
-			if (TestWorld->HasBegunPlay())
-			{
-				// If this has begin play increment the global counter to emulate gameplay
-				GFrameCounter++;
-			}
-		}
-		else
-		{
-			TestWorldWrapper->TickTestWorld(DeltaTime);
-		}
+		TestWorldWrapper->TickTestWorld(InDeltaSeconds);
 	}
 
 	void TearDown()
@@ -105,10 +98,20 @@ public:
 			WorldSubsystem = nullptr;
 		}
 
-		TestWorldWrapper->DestroyTestWorld(true);
-		TestWorldWrapper = nullptr;
+		if (TestWorld.IsValid())
+		{
+			TestWorld = nullptr;
+		}
 
-		ScopedTestEnvironment = nullptr;
+		/*if (StandaloneGameInstance)
+		{
+			StandaloneGameInstance = nullptr;
+		}*/
+
+		if (TestWorldWrapper)
+		{
+			TestWorldWrapper.Reset();
+		}
 	}
 
 	NO_DISCARD FORCEINLINE UFlecsWorld* GetFlecsWorld() const
@@ -149,18 +152,6 @@ struct UNREALFLECSTESTS_API FFlecsTestFixtureRAII
 	{ \
 		FixtureName.TearDown(); \
 	})
-
-#define FLECS_FIXTURE_LIFECYCLE_LATENT(FixtureName) \
-	LatentBeforeEach([this](const FDoneDelegate& Done) \
-	{ \
-		FixtureName.SetUp(); \
-		Done.Execute(); \
-	}); \
-	LatentAfterEach([this](const FDoneDelegate& Done) \
-	{ \
-		FixtureName.TearDown(); \
-		Done.Execute(); \
-	});
 
 #define xTEST_METHOD_WITH_TAGS(_MethodName, _TestTags) \
 	void _MethodName()
