@@ -1224,6 +1224,7 @@ void UFlecsWorld::DestroyWorld()
 	ModuleComponentQuery.destruct();
 	DependenciesComponentQuery.destruct();
 	ObjectComponentQuery.destruct();
+	AddReferencedObjectsQuery.destruct();
 
 	TickFunctionQuery.destruct();
 		
