@@ -39,6 +39,7 @@ public class SolidMacros : ModuleRules
 			{
 				"PropertyPath",
 				"EngineSettings",
+				"UnrealED",
 			}
 			);
 		
