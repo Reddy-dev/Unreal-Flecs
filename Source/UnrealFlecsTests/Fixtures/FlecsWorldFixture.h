@@ -32,6 +32,8 @@ class UNREALFLECSTESTS_API FFlecsTestFixture
 public:
 	TUniquePtr<FTestWorldWrapper> TestWorldWrapper;
 
+	TSharedPtr<FScopedTestEnvironment> TestEnvironment;
+
 	UGameInstance* StandaloneGameInstance = nullptr;
 	
 	TWeakObjectPtr<UWorld> TestWorld;
@@ -42,6 +44,9 @@ public:
 	void SetUp(TArray<TScriptInterface<IFlecsGameLoopInterface>> InGameLoopInterfaces = {}, TArray<FFlecsTickFunctionSettingsInfo> InTickFunctions = {},
 	           const TArray<UObject*>& InModules = {})
 	{
+		TestEnvironment = FScopedTestEnvironment::Get();
+		TestEnvironment->SetConsoleVariableValue("r.RayTracing.Enable", "0");
+		
 		TestWorldWrapper = MakeUnique<FTestWorldWrapper>();
 		TestWorldWrapper->CreateTestWorld(EWorldType::Game);
 		
@@ -103,14 +108,20 @@ public:
 			TestWorld = nullptr;
 		}
 
-		/*if (StandaloneGameInstance)
+		if (StandaloneGameInstance)
 		{
 			StandaloneGameInstance = nullptr;
-		}*/
+		}
 
 		if (TestWorldWrapper)
 		{
+			TestWorldWrapper->DestroyTestWorld(true);
 			TestWorldWrapper.Reset();
+		}
+
+		if (TestEnvironment)
+		{
+			TestEnvironment.Reset();
 		}
 	}
 
