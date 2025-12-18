@@ -289,6 +289,7 @@ void UFlecsWorld::InitializeDefaultComponents() const
 	     {
 		     const FString String = Data->ToString();
 		     const TCHAR* CharArray = String.GetCharArray().GetData();
+	     	
 		     return Serializer->value(flecs::String, &CharArray);
 	     })
 	     .assign_string([](FName* Data, const char* String)
@@ -301,7 +302,8 @@ void UFlecsWorld::InitializeDefaultComponents() const
 	     .serialize([](const flecs::serializer* Serializer, const FText* Data)
 	     {
 		     const FString String = Data->ToString();
-		     TSolidNotNull<const TCHAR*> CharArray = String.GetCharArray().GetData();
+		     const TSolidNotNull<const TCHAR*> CharArray = String.GetCharArray().GetData();
+	     	
 		     return Serializer->value(flecs::String, &CharArray);
 	     })
 	     .assign_string([](FText* Data, const char* String)
