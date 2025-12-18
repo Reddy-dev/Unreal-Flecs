@@ -296,14 +296,12 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	return DefaultWorld;
 }
 
-void UFlecsWorldSubsystem::SetWorld(UFlecsWorld* InWorld)
+void UFlecsWorldSubsystem::SetWorld(const TSolidNotNull<UFlecsWorld*> InFlecsWorld)
 {
-	solid_cassumef(InWorld, TEXT("InWorld cannot be null"));
-	
-	solid_checkf(IsValid(InWorld), TEXT("InWorld cannot be null"));
+	solid_checkf(IsValid(InFlecsWorld), TEXT("InWorld cannot be null"));
 	solid_checkf(!IsValid(DefaultWorld), TEXT("DefaultWorld is already set"));
 
-	DefaultWorld = InWorld;
+	DefaultWorld = InFlecsWorld;
 }
 
 UFlecsWorld* UFlecsWorldSubsystem::GetDefaultWorld() const
@@ -326,28 +324,12 @@ bool UFlecsWorldSubsystem::HasValidFlecsWorld() const
 
 UFlecsWorld* UFlecsWorldSubsystem::GetDefaultWorldStatic(const UObject* WorldContextObject)
 {
-	solid_check(WorldContextObject);
+	solid_cassume(WorldContextObject);
 
 	const TSolidNotNull<const UWorld*> GameWorld = GEngine->GetWorldFromContextObjectChecked(WorldContextObject);
 	const TSolidNotNull<const UFlecsWorldSubsystem*> FlecsWorldSubsystem = GameWorld->GetSubsystemChecked<UFlecsWorldSubsystem>();
 	
 	return FlecsWorldSubsystem->DefaultWorld;
-}
-
-bool UFlecsWorldSubsystem::HasValidFlecsWorldStatic(const UObject* WorldContextObject)
-{
-	solid_check(WorldContextObject);
-		
-	if LIKELY_IF(GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::ReturnNull))
-	{
-		const TSolidNotNull<const UWorld*> GameWorld = GEngine->GetWorldFromContextObjectChecked(WorldContextObject);
-		const TSolidNotNull<const UFlecsWorldSubsystem*> FlecsWorldSubsystem = GameWorld->GetSubsystemChecked<UFlecsWorldSubsystem>();
-		return FlecsWorldSubsystem->HasValidFlecsWorld();
-	}
-	else
-	{
-		return false;
-	}
 }
 
 bool UFlecsWorldSubsystem::DoesSupportWorldType(const EWorldType::Type WorldType) const

@@ -82,10 +82,15 @@ void UFlecsEntityActorComponent::InitializeEntity()
 		return;
 	}
 
-	if LIKELY_IF(ensureMsgf(UFlecsWorldSubsystem::HasValidFlecsWorldStatic(this),
-		TEXT("Flecs World Subsystem is not initialized.")))
+	if LIKELY_IF(const UFlecsWorld* World = UFlecsWorldSubsystem::GetDefaultWorldStatic(this))
 	{
-		CreateActorEntity(UFlecsWorldSubsystem::GetDefaultWorldStatic(this));
+		CreateActorEntity(World);
+	}
+	else
+	{
+		UE_LOGFMT(LogFlecsEntity, Error,
+			"Could not initialize Entity for Actor Component on Actor: {ActorName} - No valid Flecs World found.",
+			GetOwner()->GetName());
 	}
 }
 

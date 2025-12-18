@@ -50,7 +50,7 @@ public:
 	UFUNCTION()
 	UFlecsWorld* CreateWorld(const FString& Name, const FFlecsWorldSettingsInfo& Settings);
 
-	void SetWorld(UFlecsWorld* InWorld);
+	void SetWorld(const TSolidNotNull<UFlecsWorld*> InFlecsWorld);
 
 	UFUNCTION(BlueprintCallable, Category = "Flecs")
 	UFlecsWorld* GetDefaultWorld() const;
@@ -62,9 +62,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs", Meta = (WorldContext = "WorldContextObject"))
 	static UFlecsWorld* GetDefaultWorldStatic(const UObject* WorldContextObject);
-
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs", Meta = (WorldContext = "WorldContextObject"))
-	static bool HasValidFlecsWorldStatic(const UObject* WorldContextObject);
 
 	virtual bool DoesSupportWorldType(const EWorldType::Type WorldType) const override;
 
