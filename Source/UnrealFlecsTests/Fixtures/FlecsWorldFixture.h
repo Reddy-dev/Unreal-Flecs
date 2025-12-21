@@ -18,7 +18,6 @@
 #include "Worlds/FlecsWorldSubsystem.h"
 #include "Worlds/FlecsWorld.h"
 #include "Pipelines/FlecsDefaultGameLoop.h"
-#include "Tests/NetTestHelpers.h"
 
 /*namespace Unreal::Flecs::Testing::impl
 {
@@ -35,8 +34,10 @@ public:
 	TSharedPtr<FScopedTestEnvironment> TestEnvironment;
 
 	UGameInstance* StandaloneGameInstance = nullptr;
+	APlayerController* StandalonePlayerController = nullptr;
 	
 	TWeakObjectPtr<UWorld> TestWorld;
+	
 	UFlecsWorldSubsystem* WorldSubsystem = nullptr;
 	UFlecsWorld* FlecsWorld = nullptr;
 
@@ -58,6 +59,9 @@ public:
 
 		WorldSubsystem = TestWorld->GetSubsystem<UFlecsWorldSubsystem>();
 		check(IsValid(WorldSubsystem));
+
+		/*StandalonePlayerController = NewObject<APlayerController>(TestWorld.Get());
+		check(IsValid(StandalonePlayerController));*/
 
 		// Create world settings
 		FFlecsWorldSettingsInfo WorldSettings;
@@ -112,6 +116,11 @@ public:
 		{
 			StandaloneGameInstance = nullptr;
 		}
+
+		/*if (StandalonePlayerController)
+		{
+			StandalonePlayerController = nullptr;
+		}*/
 
 		if (TestWorldWrapper)
 		{
