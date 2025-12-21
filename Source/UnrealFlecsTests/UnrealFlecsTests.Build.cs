@@ -25,6 +25,7 @@ public class UnrealFlecsTests : ModuleRules
                 "AutomationUtils",
                 "GameplayTags",
                 "CQTest",
+                "FunctionalTesting",
             }
         );
 
