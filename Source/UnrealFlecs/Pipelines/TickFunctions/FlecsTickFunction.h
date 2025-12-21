@@ -27,8 +27,6 @@ public:
 		const FGraphEventRef& MyCompletionGraphEvent) override;
 
 	virtual FString DiagnosticMessage() override;
-
-	
 	
 }; // struct FFlecsTickFunction
 
