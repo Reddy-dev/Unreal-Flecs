@@ -22,9 +22,9 @@
  * G. Collection Instantiation With Sub-Entities Tests
  * H. Collection Instantiation within an Entity Record Test
  */
-TEST_CLASS_WITH_FLAGS(B4_CollectionBasicTests, "UnrealFlecs.B4_CollectionsBasic",
+TEST_CLASS_WITH_FLAGS_AND_TAGS(B4_CollectionBasicTests, "UnrealFlecs.B4_CollectionsBasic",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter
-			| EAutomationTestFlags::CriticalPriority)
+			| EAutomationTestFlags::CriticalPriority, "[Flecs]")
 {
 	inline static TUniquePtr<FFlecsTestFixtureRAII> Fixture;
 	inline static TObjectPtr<UFlecsWorld> FlecsWorld = nullptr;

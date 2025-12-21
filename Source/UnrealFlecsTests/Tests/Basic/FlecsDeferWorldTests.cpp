@@ -14,9 +14,9 @@
  * B. Scoped Defer Window Tests
  * C. End Defer Tests
  */
-TEST_CLASS_WITH_FLAGS(A9_DeferWorldTests, "UnrealFlecs.A9_World_Defer",
+TEST_CLASS_WITH_FLAGS_AND_TAGS(A9_DeferWorldTests, "UnrealFlecs.A9_World_Defer",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter
-	| EAutomationTestFlags::CriticalPriority)
+	| EAutomationTestFlags::CriticalPriority, "[Flecs]")
 {
 	inline static TUniquePtr<FFlecsTestFixtureRAII> Fixture;
 	inline static TObjectPtr<UFlecsWorld> FlecsWorld = nullptr;

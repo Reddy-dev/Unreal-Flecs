@@ -11,9 +11,9 @@
  * Layout of Tests:
  * A. Abstract Flecs World Subsystem Initialization Tests
  */
-TEST_CLASS_WITH_FLAGS(B3_FlecsWorldSubsystems, "UnrealFlecs.B3_FlecsWorldSubsystems",
+TEST_CLASS_WITH_FLAGS_AND_TAGS(B3_FlecsWorldSubsystems, "UnrealFlecs.B3_FlecsWorldSubsystems",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter
-			| EAutomationTestFlags::CriticalPriority)
+			| EAutomationTestFlags::CriticalPriority, "[Flecs]")
 {
 	inline static TUniquePtr<FFlecsTestFixtureRAII> Fixture;
 	inline static TObjectPtr<UFlecsWorld> FlecsWorld = nullptr;

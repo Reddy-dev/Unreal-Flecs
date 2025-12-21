@@ -14,9 +14,9 @@
  * B. Entity Record Prefab Tests
  * C. Entity Record Fragment Tests
  */
-TEST_CLASS_WITH_FLAGS(B1_FlecsEntityRecordTests, "UnrealFlecs.B1_EntityRecords",
+TEST_CLASS_WITH_FLAGS_AND_TAGS(B1_FlecsEntityRecordTests, "UnrealFlecs.B1_EntityRecords",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter
-			| EAutomationTestFlags::CriticalPriority)
+			| EAutomationTestFlags::CriticalPriority, "[Flecs]")
 {
 	inline static TUniquePtr<FFlecsTestFixtureRAII> Fixture;
 	inline static TObjectPtr<UFlecsWorld> FlecsWorld = nullptr;

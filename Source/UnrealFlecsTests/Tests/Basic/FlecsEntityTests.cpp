@@ -13,10 +13,10 @@
  * C. Entity Hierarchy Tests
  * D. Default Entity Tests
  */
-TEST_CLASS_WITH_FLAGS(A10_UnrealFlecsEntityTests,
+TEST_CLASS_WITH_FLAGS_AND_TAGS(A10_UnrealFlecsEntityTests,
 							   "UnrealFlecs.A10_Entities",
 							   EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter
-								| EAutomationTestFlags::CriticalPriority)
+								| EAutomationTestFlags::CriticalPriority, "[Flecs]")
 {
 	inline static TUniquePtr<FFlecsTestFixtureRAII> Fixture;
 	inline static TObjectPtr<UFlecsWorld> FlecsWorld = nullptr;

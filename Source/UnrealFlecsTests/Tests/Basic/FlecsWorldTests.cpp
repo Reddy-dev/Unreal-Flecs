@@ -359,6 +359,98 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A1_FlecsWorldTests, "UnrealFlecs.A1_World",
 		
 		ASSERT_THAT(AreEqual(2, Counter));
 	}
+
+	/*TEST_METHOD(D4_TickWorldThenTickWorldPausedThroughUnrealThenTickWorldUnpaused)
+	{
+		int32 MainLoopCounter = 0;
+		FFlecsEntityHandle MainLoopSystem = FlecsWorld->World.system<>()
+			.kind(flecs::OnUpdate)
+			.each([&MainLoopCounter](flecs::iter& Iter, size_t Index)
+			{
+				MainLoopCounter++;
+			});
+		//.add(FlecsWorld->GetTagEntity(FlecsTickType_MainLoop).GetFlecsId());
+		
+		int32 PrePhysicsCounter = 0;
+		FFlecsEntityHandle PrePhysicsSystem = FlecsWorld->World.system<>()
+			.kind(flecs::OnUpdate)
+			.each([&PrePhysicsCounter](flecs::iter& Iter, size_t Index)
+			{
+				PrePhysicsCounter++;
+			})
+			.add(FlecsWorld->GetTagEntity(FlecsTickType_PrePhysics).GetFlecsId());
+
+		int32 DuringPhysicsCounter = 0;
+		FFlecsEntityHandle DuringPhysicsSystem = FlecsWorld->World.system<>()
+			.kind(flecs::OnUpdate)
+			.each([&DuringPhysicsCounter](flecs::iter& Iter, size_t Index)
+			{
+				DuringPhysicsCounter++;
+			})
+			.add(FlecsWorld->GetTagEntity(FlecsTickType_DuringPhysics).GetFlecsId());
+
+		int32 PostPhysicsCounter = 0;
+		FFlecsEntityHandle PostPhysicsSystem = FlecsWorld->World.system<>()
+			.kind(flecs::OnUpdate)
+			.each([&PostPhysicsCounter](flecs::iter& Iter, size_t Index)
+			{
+				PostPhysicsCounter++;
+			})
+			.add(FlecsWorld->GetTagEntity(FlecsTickType_PostPhysics).GetFlecsId());
+
+		int32 PostUpdateWorkCounter = 0;
+		FFlecsEntityHandle PostUpdateWorkSystem = FlecsWorld->World.system<>()
+			.kind(flecs::OnUpdate)
+			.each([&PostUpdateWorkCounter](flecs::iter& Iter, size_t Index)
+			{
+				PostUpdateWorkCounter++;
+			})
+			.add(FlecsWorld->GetTagEntity(FlecsTickType_PostUpdateWork).GetFlecsId());
+
+		ASSERT_THAT(IsTrue(MainLoopSystem.IsValid()));
+		ASSERT_THAT(IsTrue(PrePhysicsSystem.IsValid()));
+		ASSERT_THAT(IsTrue(DuringPhysicsSystem.IsValid()));
+		ASSERT_THAT(IsTrue(PostPhysicsSystem.IsValid()));
+		ASSERT_THAT(IsTrue(PostUpdateWorkSystem.IsValid()));
+
+		ASSERT_THAT(AreEqual(0, MainLoopCounter));
+		ASSERT_THAT(AreEqual(0, PrePhysicsCounter));
+		ASSERT_THAT(AreEqual(0, DuringPhysicsCounter));
+		ASSERT_THAT(AreEqual(0, PostPhysicsCounter));
+		ASSERT_THAT(AreEqual(0, PostUpdateWorkCounter));
+
+		Fixture->Fixture.TickWorld();
+
+		ASSERT_THAT(AreEqual(1, MainLoopCounter));
+		ASSERT_THAT(AreEqual(1, PrePhysicsCounter));
+		ASSERT_THAT(AreEqual(1, DuringPhysicsCounter));
+		ASSERT_THAT(AreEqual(1, PostPhysicsCounter));
+		ASSERT_THAT(AreEqual(1, PostUpdateWorkCounter));
+
+		UGameplayStatics::SetGamePaused(Fixture->Fixture.TestWorld.Get(), true);
+
+		ASSERT_THAT(IsTrue(UGameplayStatics::IsGamePaused(Fixture->Fixture.TestWorld.Get())));
+
+		Fixture->Fixture.TickWorld();
+
+		ASSERT_THAT(AreEqual(2, MainLoopCounter));
+		ASSERT_THAT(AreEqual(1, PrePhysicsCounter));
+		ASSERT_THAT(AreEqual(1, DuringPhysicsCounter));
+		ASSERT_THAT(AreEqual(1, PostPhysicsCounter));
+		ASSERT_THAT(AreEqual(1, PostUpdateWorkCounter));
+
+		UGameplayStatics::SetGamePaused(Fixture->Fixture.TestWorld.Get(), false);
+
+		ASSERT_THAT(IsFalse(UGameplayStatics::IsGamePaused(Fixture->Fixture.TestWorld.Get())));
+
+		Fixture->Fixture.TickWorld();
+
+		ASSERT_THAT(AreEqual(3, MainLoopCounter));
+		ASSERT_THAT(AreEqual(2, PrePhysicsCounter));
+		ASSERT_THAT(AreEqual(2, DuringPhysicsCounter));
+		ASSERT_THAT(AreEqual(2, PostPhysicsCounter));
+		ASSERT_THAT(AreEqual(2, PostUpdateWorkCounter));
+	}*/
 	
 }; // End of A1_UnrealFlecsBasicTests
 
