@@ -9,14 +9,7 @@ public class UnrealFlecs : ModuleRules
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		CppStandard = CppStandardVersion.Cpp20;
-		//IWYUSupport = IWYUSupport.KeepPublicAsIsForNow;
-
-		PublicIncludePaths.AddRange(
-			new string[] 
-			{
-				ModuleDirectory
-			}
-			);
+		IWYUSupport = IWYUSupport.Full;
 		
 		PublicDependencyModuleNames.AddRange(
 			new string[]

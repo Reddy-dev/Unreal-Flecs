@@ -1,0 +1,30 @@
+﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
+
+#include "Pipelines/FlecsGameLoopInterface.h"
+
+#include "Pipelines/FlecsGameLoopTag.h"
+#include "Pipelines/TickFunctions/FlecsTickTypeNativeTags.h"
+
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsGameLoopInterface)
+
+// Add default functionality here for any IFlecsGameLoopInterface functions that are not pure virtual.
+
+void IFlecsGameLoopInterface::InitializeModule(const TSolidNotNull<UFlecsWorld*> InWorld,
+	const FFlecsEntityHandle& InModuleEntity)
+{
+	IFlecsModuleInterface::InitializeModule(InWorld, InModuleEntity);
+
+	InModuleEntity.Add<FFlecsGameLoopTag>();
+
+	InitializeGameLoop(InWorld, InModuleEntity);
+}
+
+bool IFlecsGameLoopInterface::IsMainLoop() const
+{
+	return false;
+}
+
+TArray<FGameplayTag> IFlecsGameLoopInterface::GetTickTypeTags() const
+{
+	return { FlecsTickType_MainLoop };
+}
