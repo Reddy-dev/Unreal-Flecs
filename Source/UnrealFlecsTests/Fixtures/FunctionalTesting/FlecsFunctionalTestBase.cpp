@@ -1,19 +1,21 @@
 ﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
 
-#include "FlecsFunctionTestBase.h"
+#include "FlecsFunctionalTestBase.h"
 
 #include "Worlds/FlecsWorldSubsystem.h"
 #include "Worlds/FlecsWorld.h"
 
-#include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsFunctionTestBase)
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsFunctionalTestBase)
 
-AFlecsFunctionTestBase::AFlecsFunctionTestBase(const FObjectInitializer& ObjectInitializer)
+AFlecsFunctionalTestBase::AFlecsFunctionalTestBase(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	TestTags += "[Flecs]";
 }
 
-void AFlecsFunctionTestBase::PrepareTest()
+void AFlecsFunctionalTestBase::PrepareTest()
 {
 	Super::PrepareTest();
 
@@ -25,12 +27,12 @@ void AFlecsFunctionTestBase::PrepareTest()
 	}
 }
 
-UFlecsWorld* AFlecsFunctionTestBase::GetOwningFlecsWorld() const
+UFlecsWorld* AFlecsFunctionalTestBase::GetOwningFlecsWorld() const
 {
 	return OwningFlecsWorld.Get();
 }
 
-TSolidNotNull<UFlecsWorld*> AFlecsFunctionTestBase::GetOwningFlecsWorldChecked() const
+TSolidNotNull<UFlecsWorld*> AFlecsFunctionalTestBase::GetOwningFlecsWorldChecked() const
 {
 	solid_checkf(OwningFlecsWorld.IsValid(), TEXT("FlecsWorld is not valid!"));
 	return OwningFlecsWorld.Get();

@@ -9,17 +9,17 @@
 #include "SolidMacros/Macros.h"
 #include "Types/SolidNotNull.h"
 
-#include "FlecsFunctionTestBase.generated.h"
+#include "FlecsFunctionalTestBase.generated.h"
 
 class UFlecsWorld;
 
 UCLASS(Abstract, Blueprintable)
-class UNREALFLECSTESTS_API AFlecsFunctionTestBase : public AFunctionalTest
+class UNREALFLECSTESTS_API AFlecsFunctionalTestBase : public AFunctionalTest
 {
 	GENERATED_BODY()
 
 public:
-	AFlecsFunctionTestBase(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+	AFlecsFunctionalTestBase(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 	virtual void PrepareTest() override;
 
@@ -32,4 +32,4 @@ private:
 	UPROPERTY(Transient)
 	TWeakObjectPtr<UFlecsWorld> OwningFlecsWorld;
 	
-}; // class AFlecsFunctionTestBase
+}; // class AFlecsFunctionalTestBase

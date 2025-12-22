@@ -4,14 +4,14 @@
 
 #include "CoreMinimal.h"
 
-#include "FlecsFunctionTestBase.h"
+#include "FlecsFunctionalTestBase.h"
 
 #include "Entities/FlecsEntityHandle.h"
 
 #include "FlecsFunctionalTickBase.generated.h"
 
 UCLASS(Abstract, BlueprintType)
-class UNREALFLECSTESTS_API AFlecsFunctionalTickBase : public AFlecsFunctionTestBase
+class UNREALFLECSTESTS_API AFlecsFunctionalTickBase : public AFlecsFunctionalTestBase
 {
 	GENERATED_BODY()
 

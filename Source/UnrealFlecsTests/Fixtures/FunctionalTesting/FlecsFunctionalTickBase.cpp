@@ -14,8 +14,6 @@ AFlecsFunctionalTickBase::AFlecsFunctionalTickBase(const FObjectInitializer& Obj
 	PrimaryActorTick.bCanEverTick = true;
 
 	PrimaryActorTick.TickGroup = TG_LastDemotable;
-
-	TestTags += "Flecs";
 }
 
 void AFlecsFunctionalTickBase::PrepareTest()
