@@ -2,7 +2,6 @@
 
 #include "UnrealFlecsEditor.h"
 
-
 #include "Engine/AssetManagerSettings.h"
 #include "Engine/AssetManagerTypes.h"
 #include "Framework/Notifications/NotificationManager.h"
@@ -12,7 +11,6 @@
 #include "Types/SolidNotNull.h"
 
 #include "General/FlecsEditorDeveloperSettings.h"
-#include "Logs/FlecsEditorCategory.h"
 
 #include "UnrealFlecsEditorStyle.h"
 #include "Widgets/EntityHandle/FlecsIdCustomization.h"

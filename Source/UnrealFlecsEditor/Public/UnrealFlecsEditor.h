@@ -18,4 +18,5 @@ private:
     void AddPrimaryAssetTypes();
     
     TSharedPtr<FFlecsIdPinFactory> FlecsIdPinFactory;
+    
 }; // class FUnrealFlecsEditorModule

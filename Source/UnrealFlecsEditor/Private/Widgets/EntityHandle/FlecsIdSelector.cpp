@@ -1,14 +1,14 @@
 ﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
 
-#include "FlecsIdSelector.h"
+#include "Widgets/EntityHandle/FlecsIdSelector.h"
+
 #include "Widgets/Input/SSearchBox.h"
 #include "Widgets/Input/SComboButton.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Text/STextBlock.h"
-#include "Widgets/Layout/SBorder.h"
 #include "Widgets/Views/SListView.h"
 #include "Widgets/Views/STableRow.h"
-#include "ScopedTransaction.h"
+
 #include "Entities/FlecsDefaultEntityEngine.h"
 
 #define LOCTEXT_NAMESPACE "Flecs"

@@ -1,10 +1,11 @@
 ﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
 
-#include "SGraphPinFlecsId.h"
-#include "FlecsIdSelector.h"
+#include "Widgets/EntityHandle/SGraphPinFlecsId.h"
+
 #include "EdGraph/EdGraphPin.h"
+
+#include "Widgets/EntityHandle/FlecsIdSelector.h"
 #include "Entities/FlecsDefaultEntityEngine.h"
-#include "Widgets/Text/STextBlock.h"
 
 #define LOCTEXT_NAMESPACE "SGraphPinFlecsId"
 

@@ -1,8 +1,10 @@
 ﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
 
-#include "FlecsIdPinFactory.h"
-#include "SGraphPinFlecsId.h"
+#include "Widgets/EntityHandle/FlecsIdPinFactory.h"
+
 #include "Entities/FlecsEntityHandle.h"
+
+#include "Widgets/EntityHandle/SGraphPinFlecsId.h"
 
 TSharedPtr<SGraphPin> FFlecsIdPinFactory::CreatePin(UEdGraphPin* InPin) const
 {

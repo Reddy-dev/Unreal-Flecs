@@ -1,12 +1,14 @@
 ﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
 
-#include "FlecsIdCustomization.h"
+#include "Widgets/EntityHandle/FlecsIdCustomization.h"
 
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
-#include "FlecsIdSelector.h"
 #include "IDetailChildrenBuilder.h"
+
 #include "Entities/FlecsDefaultEntityEngine.h"
+
+#include "Widgets/EntityHandle/FlecsIdSelector.h"
 
 #define LOCTEXT_NAMESPACE "FlecsIdCustomization"
 
