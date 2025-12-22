@@ -63,6 +63,8 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs", Meta = (WorldContext = "WorldContextObject"))
 	static UFlecsWorld* GetDefaultWorldStatic(const UObject* WorldContextObject);
 
+	static NO_DISCARD TSolidNotNull<UFlecsWorld*> GetDefaultWorldStaticChecked(const UObject* WorldContextObject);
+
 	virtual bool DoesSupportWorldType(const EWorldType::Type WorldType) const override;
 
 	void ListenBeginPlay(const FFlecsOnWorldBeginPlay::FDelegate& Delegate);

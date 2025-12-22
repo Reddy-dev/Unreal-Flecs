@@ -35,47 +35,49 @@ void AFlecsWorldTickFunctionalTest::TickWithFlecs(float DeltaTime)
 		return;
 	}
 
-	if (FunctionalTestTickCount > 0)
+	if (FunctionalTestTickCount <= 0)
 	{
-		if (FunctionalTestTickCount != MainLoopCounter)
-		{
-			AddError(
-				FString::Printf(TEXT("MainLoopCounter (%d) did not match FunctionalTestTickCount (%d)"),
-					MainLoopCounter, FunctionalTestTickCount));
-		}
+		return;
+	}
 
-		if (FunctionalTestTickCount != PrePhysicsCounter)
-		{
-			AddError(
-				FString::Printf(TEXT("PrePhysicsCounter (%d) did not match FunctionalTestTickCount (%d)"),
-					PrePhysicsCounter, FunctionalTestTickCount));
-		}
+	if (FunctionalTestTickCount != MainLoopCounter)
+	{
+		AddError(
+			FString::Printf(TEXT("MainLoopCounter (%d) did not match FunctionalTestTickCount (%d)"),
+				MainLoopCounter, FunctionalTestTickCount));
+	}
 
-		if (FunctionalTestTickCount != DuringPhysicsCounter)
-		{
-			AddError(
-				FString::Printf(TEXT("DuringPhysicsCounter (%d) did not match FunctionalTestTickCount (%d)"),
-					DuringPhysicsCounter, FunctionalTestTickCount));
-		}
+	if (FunctionalTestTickCount != PrePhysicsCounter)
+	{
+		AddError(
+			FString::Printf(TEXT("PrePhysicsCounter (%d) did not match FunctionalTestTickCount (%d)"),
+				PrePhysicsCounter, FunctionalTestTickCount));
+	}
 
-		if (FunctionalTestTickCount != PostPhysicsCounter)
-		{
-			AddError(
-				FString::Printf(TEXT("PostPhysicsCounter (%d) did not match FunctionalTestTickCount (%d)"),
-					PostPhysicsCounter, FunctionalTestTickCount));
-		}
+	if (FunctionalTestTickCount != DuringPhysicsCounter)
+	{
+		AddError(
+			FString::Printf(TEXT("DuringPhysicsCounter (%d) did not match FunctionalTestTickCount (%d)"),
+				DuringPhysicsCounter, FunctionalTestTickCount));
+	}
 
-		if (FunctionalTestTickCount != PostUpdateWorkCounter)
-		{
-			AddError(
-				FString::Printf(TEXT("PostUpdateWorkCounter (%d) did not match FunctionalTestTickCount (%d)"),
-					(PostUpdateWorkCounter), FunctionalTestTickCount));
-		}
+	if (FunctionalTestTickCount != PostPhysicsCounter)
+	{
+		AddError(
+			FString::Printf(TEXT("PostPhysicsCounter (%d) did not match FunctionalTestTickCount (%d)"),
+				PostPhysicsCounter, FunctionalTestTickCount));
+	}
 
-		if (FunctionalTestTickCount >= TargetTickCount)
-		{
-			FinishTest(EFunctionalTestResult::Default, TEXT(""));
-		}
+	if (FunctionalTestTickCount != PostUpdateWorkCounter)
+	{
+		AddError(
+			FString::Printf(TEXT("PostUpdateWorkCounter (%d) did not match FunctionalTestTickCount (%d)"),
+				(PostUpdateWorkCounter), FunctionalTestTickCount));
+	}
+
+	if (FunctionalTestTickCount >= TargetTickCount)
+	{
+		FinishTest(EFunctionalTestResult::Default, TEXT(""));
 	}
 }
 

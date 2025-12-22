@@ -4,12 +4,14 @@
 
 #include "CoreMinimal.h"
 
-#include "FunctionalTest.h"
+#include "FlecsFunctionTestBase.h"
+
+#include "Entities/FlecsEntityHandle.h"
 
 #include "FlecsFunctionalTickBase.generated.h"
 
 UCLASS(Abstract, BlueprintType)
-class UNREALFLECSTESTS_API AFlecsFunctionalTickBase : public AFunctionalTest
+class UNREALFLECSTESTS_API AFlecsFunctionalTickBase : public AFlecsFunctionTestBase
 {
 	GENERATED_BODY()
 
@@ -18,6 +20,7 @@ public:
 
 	virtual void PrepareTest() override;
 	virtual void StartTest() override;
+	virtual void FinishTest(EFunctionalTestResult TestResult, const FString& Message) override;
 
 	virtual void Tick(float DeltaSeconds) override;
 
@@ -34,5 +37,11 @@ protected:
 	uint32 DuringPhysicsCounter = 0;
 	uint32 PostPhysicsCounter = 0;
 	uint32 PostUpdateWorkCounter = 0;
+
+	FFlecsEntityHandle MainLoopSystem;
+	FFlecsEntityHandle PrePhysicsSystem;
+	FFlecsEntityHandle DuringPhysicsSystem;
+	FFlecsEntityHandle PostPhysicsSystem;
+	FFlecsEntityHandle PostUpdateWorkSystem;
 	
 }; // class AFlecsFunctionalTickBase

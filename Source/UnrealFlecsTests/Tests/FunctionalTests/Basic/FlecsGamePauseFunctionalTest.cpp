@@ -4,8 +4,6 @@
 
 #include "Kismet/GameplayStatics.h"
 
-#include "Types/SolidNotNull.h"
-
 #include "Worlds/FlecsWorld.h"
 #include "Worlds/FlecsWorldSubsystem.h"
 
@@ -39,12 +37,10 @@ void AFlecsGamePauseFunctionalTest::TickWithFlecs(float DeltaTime)
 		return;
 	}
 
-	if (FunctionalTestTickCount == 0)
+	if (FunctionalTestTickCount <= 0)
 	{
 		return;
 	}
-
-	const TSolidNotNull<const UWorld*> World = GetWorld();
 
 	if (CurrentState == EFlecsGamePauseFunctionalTestState::RunningBeforePause)
 	{
@@ -83,8 +79,7 @@ void AFlecsGamePauseFunctionalTest::PauseWorld() const
 	}
 	else if (PauseMethod == EFlecsGamePauseFunctionalTestConfig::FlecsWorldToUWorldSync)
 	{
-		const TSolidNotNull<const UFlecsWorld*> FlecsWorld = UFlecsWorldSubsystem::GetDefaultWorldStatic(this);
-		FlecsWorld->SetTimeScale(0.0f);
+		GetOwningFlecsWorldChecked()->SetTimeScale(0.0f);
 	}
 }
 
@@ -96,8 +91,7 @@ void AFlecsGamePauseFunctionalTest::ResumeWorld() const
 	}
 	else if (PauseMethod == EFlecsGamePauseFunctionalTestConfig::FlecsWorldToUWorldSync)
 	{
-		const TSolidNotNull<const UFlecsWorld*> FlecsWorld = UFlecsWorldSubsystem::GetDefaultWorldStatic(this);
-		FlecsWorld->SetTimeScale(1.0f);
+		GetOwningFlecsWorldChecked()->SetTimeScale(1.0f);
 	}
 }
 

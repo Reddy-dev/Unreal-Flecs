@@ -332,6 +332,19 @@ UFlecsWorld* UFlecsWorldSubsystem::GetDefaultWorldStatic(const UObject* WorldCon
 	return FlecsWorldSubsystem->DefaultWorld;
 }
 
+TSolidNotNull<UFlecsWorld*> UFlecsWorldSubsystem::GetDefaultWorldStaticChecked(const UObject* WorldContextObject)
+{
+	solid_cassume(WorldContextObject);
+
+	const TSolidNotNull<const UWorld*> GameWorld = GEngine->GetWorldFromContextObjectChecked(WorldContextObject);
+	const TSolidNotNull<const UFlecsWorldSubsystem*> FlecsWorldSubsystem = GameWorld->GetSubsystemChecked<UFlecsWorldSubsystem>();
+	
+	solid_cassumef(FlecsWorldSubsystem->DefaultWorld, TEXT("Default Flecs world is not set"));
+	solid_checkf(IsValid(FlecsWorldSubsystem->DefaultWorld), TEXT("Default Flecs world is not valid"));
+	
+	return FlecsWorldSubsystem->DefaultWorld;
+}
+
 bool UFlecsWorldSubsystem::DoesSupportWorldType(const EWorldType::Type WorldType) const
 {
 	return WorldType == EWorldType::Game

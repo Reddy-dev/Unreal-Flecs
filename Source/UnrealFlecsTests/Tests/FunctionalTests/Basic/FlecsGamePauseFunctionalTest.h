@@ -15,7 +15,6 @@ enum class EFlecsGamePauseFunctionalTestConfig : uint8
 {
 	UWorldToFlecsWorldSync,
 	FlecsWorldToUWorldSync,
-	
 }; // enum class EFlecsGamePauseFunctionalTestState
 
 enum class EFlecsGamePauseFunctionalTestState : uint8

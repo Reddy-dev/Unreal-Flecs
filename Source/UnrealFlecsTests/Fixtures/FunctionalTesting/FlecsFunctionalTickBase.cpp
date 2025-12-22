@@ -2,7 +2,6 @@
 
 #include "FlecsFunctionalTickBase.h"
 
-#include "Entities/FlecsEntityHandle.h"
 #include "Pipelines/TickFunctions/FlecsTickTypeNativeTags.h"
 #include "Worlds/FlecsWorld.h"
 #include "Worlds/FlecsWorldSubsystem.h"
@@ -15,13 +14,13 @@ AFlecsFunctionalTickBase::AFlecsFunctionalTickBase(const FObjectInitializer& Obj
 	PrimaryActorTick.bCanEverTick = true;
 
 	PrimaryActorTick.TickGroup = TG_LastDemotable;
+
+	TestTags += "Flecs";
 }
 
 void AFlecsFunctionalTickBase::PrepareTest()
 {
 	Super::PrepareTest();
-
-	const UFlecsWorld* FlecsWorld = UFlecsWorldSubsystem::GetDefaultWorldStatic(this);
 
 	MainLoopCounter = 0;
 	PrePhysicsCounter = 0;
@@ -31,65 +30,119 @@ void AFlecsFunctionalTickBase::PrepareTest()
 	FunctionalTestTickCount = 0;
 	bStartedFlecsTicking = false;
 	bCountersResetAfterFlecsStart = false;
-
-	if UNLIKELY_IF(!IsValid(FlecsWorld))
-	{
-		FinishTest(EFunctionalTestResult::Failed, TEXT("FlecsWorld is not valid!"));
-		return;
-	}
 }
 
 void AFlecsFunctionalTickBase::StartTest()
 {
 	Super::StartTest();
 
-	const UFlecsWorld* FlecsWorld = UFlecsWorldSubsystem::GetDefaultWorldStatic(this);
+	const TSolidNotNull<const UFlecsWorld*> FlecsWorld = GetOwningFlecsWorldChecked();
 
-	FFlecsEntityHandle MainLoopSystem = FlecsWorld->World.system<>()
+	MainLoopSystem = FlecsWorld->World.system<>()
 				.kind(flecs::OnUpdate)
 				.each([this](flecs::iter& Iter, size_t Index)
 				{
+					if (!bIsRunning)
+					{
+						return;
+					}
+					
 					bStartedFlecsTicking = true;
 					MainLoopCounter++;
 				});
 	//.add(FlecsWorld->GetTagEntity(FlecsTickType_MainLoop).GetFlecsId());
 	
-	FFlecsEntityHandle PrePhysicsSystem = FlecsWorld->World.system<>()
+	PrePhysicsSystem = FlecsWorld->World.system<>()
 		.kind(flecs::OnUpdate)
 		.each([this](flecs::iter& Iter, size_t Index)
 		{
+			if (!bIsRunning)
+			{
+				return;
+			}
+			
 			PrePhysicsCounter++;
 		})
 		.add(FlecsWorld->GetTagEntity(FlecsTickType_PrePhysics).GetFlecsId());
 	
-	FFlecsEntityHandle DuringPhysicsSystem = FlecsWorld->World.system<>()
+	DuringPhysicsSystem = FlecsWorld->World.system<>()
 		.kind(flecs::OnUpdate)
 		.each([this](flecs::iter& Iter, size_t Index)
 		{
+			if (!bIsRunning)
+			{
+				return;
+			}
+			
 			DuringPhysicsCounter++;
 		})
 		.add(FlecsWorld->GetTagEntity(FlecsTickType_DuringPhysics).GetFlecsId());
 	
-	FFlecsEntityHandle PostPhysicsSystem = FlecsWorld->World.system<>()
+	PostPhysicsSystem = FlecsWorld->World.system<>()
 		.kind(flecs::OnUpdate)
 		.each([this](flecs::iter& Iter, size_t Index)
 		{
+			if (!bIsRunning)
+			{
+				return;
+			}
+			
 			PostPhysicsCounter++;
 		})
 		.add(FlecsWorld->GetTagEntity(FlecsTickType_PostPhysics).GetFlecsId());
 	
-	FFlecsEntityHandle PostUpdateWorkSystem = FlecsWorld->World.system<>()
+	PostUpdateWorkSystem = FlecsWorld->World.system<>()
 		.kind(flecs::OnUpdate)
 		.each([this](flecs::iter& Iter, size_t Index)
 		{
+			if (!bIsRunning)
+			{
+				return;
+			}
+			
 			PostUpdateWorkCounter++;
 		})
 		.add(FlecsWorld->GetTagEntity(FlecsTickType_PostUpdateWork).GetFlecsId());
 }
 
+void AFlecsFunctionalTickBase::FinishTest(EFunctionalTestResult TestResult, const FString& Message)
+{
+	Super::FinishTest(TestResult, Message);
+
+	if (MainLoopSystem.IsValid())
+	{
+		MainLoopSystem.Destroy();
+	}
+
+	if (PrePhysicsSystem.IsValid())
+	{
+		PrePhysicsSystem.Destroy();
+	}
+
+	if (DuringPhysicsSystem.IsValid())
+	{
+		DuringPhysicsSystem.Destroy();
+	}
+
+	if (PostPhysicsSystem.IsValid())
+	{
+		PostPhysicsSystem.Destroy();
+	}
+
+	if (PostUpdateWorkSystem.IsValid())
+	{
+		PostUpdateWorkSystem.Destroy();
+	}
+}
+
 void AFlecsFunctionalTickBase::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
+	if (!bIsRunning)
+	{
+		return;
+	}
 
 	if (!bStartedFlecsTicking)
 	{
