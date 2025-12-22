@@ -636,14 +636,27 @@ public:
 		return GetEntityView().depth(FFlecsEntityView::GetInputId(*this, InValue));
 	}
 
-	NO_DISCARD SOLID_INLINE FString GetPath() const
-	{
-		return FString(GetEntityView().path());
-	}
-
-	NO_DISCARD SOLID_INLINE FString GetPath(const FString& InSeparator, const FString& InitialSeparator) const
+	NO_DISCARD SOLID_INLINE FString GetPath(const FString& InSeparator = "::", const FString& InitialSeparator = "::") const
 	{
 		return FString(GetEntityView().path(StringCast<char>(*InSeparator).Get(),
+			StringCast<char>(*InitialSeparator).Get()));
+	}
+
+	template <Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TType>
+	NO_DISCARD SOLID_INLINE FString GetPathFrom(const TType& InTypeValue, const FString& InSeparator = "::",
+		const FString& InitialSeparator = "::") const
+	{
+		return FString(GetEntityView().path_from(FFlecsEntityView::GetInputId(*this, InTypeValue),
+			StringCast<char>(*InSeparator).Get(),
+			StringCast<char>(*InitialSeparator).Get()));
+	}
+
+	template <typename T>
+	NO_DISCARD SOLID_INLINE FString GetPathFrom(const FString& InSeparator = "::",
+		const FString& InitialSeparator = "::") const
+	{
+		return FString(GetEntityView().path_from<T>(
+			StringCast<char>(*InSeparator).Get(),
 			StringCast<char>(*InitialSeparator).Get()));
 	}
 

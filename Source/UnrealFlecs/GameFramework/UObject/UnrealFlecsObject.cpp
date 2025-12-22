@@ -31,8 +31,7 @@ void UUnrealFlecsObject::InitializeFlecsObject(const TSolidNotNull<UFlecsWorld*>
 	const TSolidNotNull<UFlecsWorldSubsystem*> FlecsWorldSubsystem = FlecsWorld->GetContext();
 
 	FlecsWorldSubsystem->ListenBeginPlay(
-		FFlecsOnWorldBeginPlay::FDelegate::CreateWeakLambda(this,
-			[this](TSolidNotNull<UWorld*> InWorld)
+		FFlecsOnWorldBeginPlay::FDelegate::CreateWeakLambda(this, [this](TSolidNotNull<UWorld*> InWorld)
 	{
 		solid_check(FlecsWorld->GetWorld() == InWorld);
 		
@@ -45,7 +44,7 @@ UFlecsWorld* UUnrealFlecsObject::GetFlecsWorld() const
 	return FlecsWorld.Get();
 }
 
-UFlecsWorld* UUnrealFlecsObject::GetFlecsWorldChecked() const
+TSolidNotNull<UFlecsWorld*> UUnrealFlecsObject::GetFlecsWorldChecked() const
 {
 	solid_check(FlecsWorld.IsValid());
 	return FlecsWorld.Get();

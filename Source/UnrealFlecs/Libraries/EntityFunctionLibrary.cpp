@@ -45,10 +45,9 @@ FFlecsEntityHandle UEntityFunctionLibrary::GetEntityFromObject(UObject* Object)
 		return CastChecked<IFlecsEntityInterface>(Object)->GetEntityHandle();
 	}
 
-	if LIKELY_IF(const AActor* Actor = Cast<AActor>(Object))
+	if (const AActor* Actor = Cast<AActor>(Object))
 	{
-		if (const UFlecsEntityActorComponent* EntityActorComponent
-			= Actor->FindComponentByClass<UFlecsEntityActorComponent>())
+		if (const UFlecsEntityActorComponent* EntityActorComponent = Actor->FindComponentByClass<UFlecsEntityActorComponent>())
 		{
 			return EntityActorComponent->GetEntityHandle();
 		}

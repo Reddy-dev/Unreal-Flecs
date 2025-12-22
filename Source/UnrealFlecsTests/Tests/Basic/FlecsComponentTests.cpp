@@ -9,7 +9,7 @@
 #include "Worlds/FlecsWorld.h"
 #include "Translators/FlecsTranslationSettingTraits.h"
 
-#include "Tests/FlecsTestTypes.h"
+#include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 
 /**
  * Layout of the tests:

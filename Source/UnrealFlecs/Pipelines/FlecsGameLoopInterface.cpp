@@ -3,6 +3,7 @@
 #include "FlecsGameLoopInterface.h"
 
 #include "FlecsGameLoopTag.h"
+#include "TickFunctions/FlecsTickTypeNativeTags.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsGameLoopInterface)
 
@@ -21,4 +22,9 @@ void IFlecsGameLoopInterface::InitializeModule(const TSolidNotNull<UFlecsWorld*>
 bool IFlecsGameLoopInterface::IsMainLoop() const
 {
 	return false;
+}
+
+TArray<FGameplayTag> IFlecsGameLoopInterface::GetTickTypeTags() const
+{
+	return { FlecsTickType_MainLoop };
 }

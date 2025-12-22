@@ -15,6 +15,12 @@
 #include "Math/Color.h"
 #include "Math/MathFwd.h"
 
+#include "StructUtils/InstancedStruct.h"
+#include "StructUtils/InstancedStructContainer.h"
+#include "StructUtils/SharedStruct.h"
+
+#include "Kismet/GameplayStatics.h"
+
 #include "Types/SolidCppStructOps.h"
 
 #include "FlecsWorldSubsystem.h"
@@ -31,17 +37,22 @@
 #include "Components/ObjectTypes/FFlecsSceneComponentTag.h"
 #include "Components/ObjectTypes/FlecsActorTag.h"
 #include "Components/FlecsModuleComponent.h"
-#include "General/FlecsDeveloperSettings.h"
+#include "GameFramework/WorldSettings.h"
 
 #include "Modules/FlecsDependenciesComponent.h"
 #include "Modules/FlecsModuleInterface.h"
 
+#include "General/FlecsDeveloperSettings.h"
 #include "General/FlecsGameplayTagManagerEntity.h"
 #include "General/FlecsObjectRegistrationInterface.h"
 
 #include "Pipelines/FlecsGameLoopInterface.h"
 #include "Pipelines/FlecsGameLoopTag.h"
 #include "Pipelines/FlecsOutsideMainLoopTag.h"
+#include "Pipelines/TickFunctions/FlecsTickFunction.h"
+#include "Pipelines/TickFunctions/FlecsTickFunctionComponent.h"
+#include "Pipelines/TickFunctions/FlecsTickFunctionPrerequisite.h"
+#include "Pipelines/TickFunctions/FlecsTickTypeRelationship.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsWorld)
 
@@ -248,7 +259,6 @@ void UFlecsWorld::WorldStart()
 							  DeletedTables);
 			});
 	}
-	
 }
 
 void UFlecsWorld::WorldBeginPlay()
@@ -279,6 +289,7 @@ void UFlecsWorld::InitializeDefaultComponents() const
 	     {
 		     const FString String = Data->ToString();
 		     const TCHAR* CharArray = String.GetCharArray().GetData();
+	     	
 		     return Serializer->value(flecs::String, &CharArray);
 	     })
 	     .assign_string([](FName* Data, const char* String)
@@ -291,7 +302,8 @@ void UFlecsWorld::InitializeDefaultComponents() const
 	     .serialize([](const flecs::serializer* Serializer, const FText* Data)
 	     {
 		     const FString String = Data->ToString();
-		     TSolidNotNull<const TCHAR*> CharArray = String.GetCharArray().GetData();
+		     const TSolidNotNull<const TCHAR*> CharArray = String.GetCharArray().GetData();
+	     	
 		     return Serializer->value(flecs::String, &CharArray);
 	     })
 	     .assign_string([](FText* Data, const char* String)
@@ -370,9 +382,6 @@ void UFlecsWorld::InitializeDefaultComponents() const
 		     *Data = nullptr;
 	     });
 
-	/*World.component<FOptionalPropertyLayout>()
-	     .opaque(FScriptArray*/
-
 	/*
 	World.component<FScriptArray>()
 	     .opaque<flecs::Vector>(flecs::meta::VectorType)
@@ -416,6 +425,11 @@ void UFlecsWorld::InitializeDefaultComponents() const
 		.Add(flecs::Sparse);
 
 	RegisterComponentType<FFlecsGameLoopTag>();
+
+	RegisterComponentType<FFlecsTickFunction>();
+	RegisterComponentType<FFlecsTickFunctionComponent>();
+	RegisterComponentType<FFlecsTickTypeRelationship>();
+	RegisterComponentType<FFlecsTickFunctionPrerequisite>();
 
 	RegisterComponentType<FFlecsOutsideMainLoopTag>();
 	
@@ -522,7 +536,10 @@ void UFlecsWorld::RegisterUnrealTypes() const
 	RegisterComponentType<FFrameNumber>();
 	RegisterComponentType<FFrameRate>();
 
+	// @TODO: make this opaque?
 	RegisterComponentType<FInstancedStruct>();
+	RegisterComponentType<FInstancedStructContainer>();
+	RegisterComponentType<FSharedStruct>();
 }
 
 void UFlecsWorld::InitializeComponentPropertyObserver()
@@ -570,16 +587,26 @@ void UFlecsWorld::InitializeComponentPropertyObserver()
 
 void UFlecsWorld::InitializeSystems()
 {
-		ObjectComponentQuery = World.query_builder<FFlecsUObjectComponent>("UObjectComponentQuery")
+		ObjectComponentQuery = World.query_builder<FFlecsUObjectComponent>("ObjectComponentQuery")
 			.term_at(0).second(flecs::Wildcard) // FFlecsUObjectComponent
-			.cached()
+			.build();
+
+		TickFunctionQuery = World.query_builder<>("TickFunctionQuery")
+			.with<FFlecsTickFunctionComponent>().inout_none() // 0
+			.with<FFlecsTickTypeRelationship>("$TickTypeTag") // 1
+			.build();
+
+		AddReferencedObjectsQuery = World.query_builder<const FFlecsScriptStructComponent>("AddReferencedObjectsQuery") // 0 (FFlecsScriptStructComponent)
+			.with<FFlecsAddReferencedObjectsTrait>().src("$Component") //  1
+			.term_at(0).src("$Component") // 0
+			.with("$Component") // 2
 			.build();
 
 		FCoreUObjectDelegates::GarbageCollectComplete.AddWeakLambda(this, [this]
 		{
-			ObjectComponentQuery.each([](flecs::entity InEntity, const FFlecsUObjectComponent& InUObjectComponent)
+			ObjectComponentQuery.each([](flecs::iter& Iter, size_t Index, const FFlecsUObjectComponent& InUObjectComponent)
 			{
-				const FFlecsEntityHandle EntityHandle = InEntity;
+				const FFlecsEntityHandle EntityHandle = Iter.entity(Index);
 					
 				if (!InUObjectComponent.IsValid())
 				{
@@ -678,6 +705,48 @@ void UFlecsWorld::InitializeSystems()
 					}
 				}
 			});
+
+	// @TODO: add verification for this
+	CreateObserver<FFlecsTickFunctionComponent&>(TEXT("AddTickFunctionObserver"))
+		.event(flecs::OnAdd)
+		.yield_existing()
+		.with<FFlecsTickTypeRelationship>("$TickTypeTag") // 1
+		.each([this](flecs::iter& InIter, size_t InIndex, FFlecsTickFunctionComponent& InTickFunctionComponent)
+		{
+			solid_checkf(InTickFunctionComponent.TickFunction.IsValid(),
+				TEXT("FFlecsTickFunctionComponent has invalid TickFunction"));
+
+			#if !NO_LOGGING
+			const FFlecsEntityHandle EntityHandle = InIter.entity(InIndex);
+			#endif // !NO_LOGGING
+
+			InTickFunctionComponent.TickFunction.Get().OwningWorld = this;
+			InTickFunctionComponent.TickFunction.Get().RegisterTickFunction(GetWorld()->PersistentLevel);
+
+			UE_LOGFMT(LogFlecsWorld, Verbose,
+				"Registered Tick Function for Entity {EntityIdentifier}",
+				EntityHandle.HasName() ? EntityHandle.GetName() : EntityHandle.ToString());
+				
+		});
+
+	CreateObserver<FFlecsTickFunctionComponent&>(TEXT("RemoveTickFunctionObserver"))
+		.event(flecs::OnRemove)
+		.yield_existing()
+		.each([this](flecs::iter& InIter, size_t InIndex, FFlecsTickFunctionComponent& InTickFunctionComponent)
+		{
+			solid_checkf(InTickFunctionComponent.TickFunction.IsValid(),
+				TEXT("FFlecsTickFunctionComponent has invalid TickFunction"));
+
+			#if !NO_LOGGING
+			const FFlecsEntityHandle EntityHandle = InIter.entity(InIndex);
+			#endif // !NO_LOGGING
+			
+			InTickFunctionComponent.TickFunction.Get().UnRegisterTickFunction();
+
+			UE_LOGFMT(LogFlecsWorld, Verbose,
+				"Unregistered Tick Function for Entity {EntityIdentifier}",
+				EntityHandle.HasName() ? EntityHandle.GetName() : EntityHandle.ToString());
+		});
 }
 
 void UFlecsWorld::RegisterModuleDependency(const TSolidNotNull<const UObject*> InModuleObject,
@@ -720,9 +789,11 @@ void UFlecsWorld::ResetClock() const
 	World.reset_clock();
 }
 
-FFlecsEntityHandle UFlecsWorld::CreateEntity(const FString& Name) const
+FFlecsEntityHandle UFlecsWorld::CreateEntity(const FString& Name, const FString& Separator, const FString& RootSeparator) const
 {
-	return World.entity(StringCast<char>(*Name).Get());
+	return World.entity(StringCast<char>(*Name).Get(), 
+	                    StringCast<char>(*Separator).Get(),
+	                    StringCast<char>(*RootSeparator).Get());
 }
 
 FFlecsEntityHandle UFlecsWorld::ObtainTypedEntity(const TSolidNotNull<UClass*> InClass) const
@@ -1045,17 +1116,85 @@ void UFlecsWorld::SetContext(void* InContext) const
 	World.set_ctx(InContext);
 }
 
-bool UFlecsWorld::ProgressGameLoop(const double DeltaTime)
+void UFlecsWorld::HandleWorldPause()
+{
+	const bool bIsPaused = GetWorld()->IsPaused();
+	const bool bHasSavedTimeScale = PrePauseTimeScale.IsSet();
+	const bool bTimeScaleZero = FMath::IsNearlyZero(GetTimeScale());
+
+	// World is paused and we don't have a saved time scale -> save time scale and set to 0
+	if (bIsPaused && !bHasSavedTimeScale)
+	{
+		const double CurrentScale = bTimeScaleZero ? 1.0 : GetTimeScale();
+		PrePauseTimeScale = CurrentScale;
+		SetTimeScale(0.0);
+		return;
+	}
+
+	// World is unpaused and we have a saved time scale -> restore time scale
+	if (!bIsPaused && bHasSavedTimeScale)
+	{
+		SetTimeScale(PrePauseTimeScale.GetValue());
+		PrePauseTimeScale.Reset();
+		return;
+	}
+
+	// Time scale became zero while world is unpaused -> pause world
+	if (!bIsPaused && bTimeScaleZero)
+	{
+		UGameplayStatics::SetGamePaused(this, true);
+		return;
+	}
+
+	// Time scale became non-zero while world is paused -> unpause world
+	if (bIsPaused && !bTimeScaleZero)
+	{
+		UGameplayStatics::SetGamePaused(this, false);
+		return;
+	}
+}
+
+bool UFlecsWorld::ProgressGameLoops(const FGameplayTag& TickTypeTag, const double DeltaTime)
 {
 	SCOPE_CYCLE_COUNTER(STAT_FlecsWorldProgress);
 
-	return std::all_of(GameLoopInterfaces.begin(), GameLoopInterfaces.end(),
-		[DeltaTime, this](const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface)
-		{
-			solid_cassumef(GameLoopInterface, TEXT("Game loop interface is nullptr"));
+	if UNLIKELY_IF(ShouldQuit())
+	{
+		UE_LOGFMT(LogFlecsWorld, Warning, "World is quitting, cannot progress: {WorldObjectName}", *GetName());
+		return false;
+	}
 
-			return GameLoopInterface->Progress(DeltaTime, this);
-		});
+	if (!GameLoopTickTypes.Contains(TickTypeTag))
+	{
+		return false;
+	}
+
+	HandleWorldPause();
+
+	const TConstArrayView<TScriptInterface<IFlecsGameLoopInterface>> GameLoopsToTick = GameLoopTickTypes[TickTypeTag];
+
+	for (const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface : GameLoopsToTick)
+	{
+		solid_checkf(GameLoopInterface,
+			TEXT("Game loop interface is nullptr for tick type %s in world %s"),
+			*TickTypeTag.ToString(),
+			*GetName());
+
+		const bool bGameLoopResult = GameLoopInterface->Progress(DeltaTime, TickTypeTag, this);
+
+		if UNLIKELY_IF(!bGameLoopResult)
+		{
+			UE_LOGFMT(LogFlecsWorld, Error,
+				"Game loop {GameLoopName} failed to progress for tick type {TickType} in world {WorldName}",
+				GameLoopInterface.GetObject()->GetName(),
+				TickTypeTag.ToString(),
+				GetName());
+			
+			return false;
+		}
+	}
+
+	return true;
 }
 
 bool UFlecsWorld::Progress(const double DeltaTime)
@@ -1063,9 +1202,15 @@ bool UFlecsWorld::Progress(const double DeltaTime)
 	return World.progress(DeltaTime);
 }
 
-void UFlecsWorld::SetTimeScale(const double InTimeScale) const
+double UFlecsWorld::SetTimeScale(const double InTimeScale) const
 {
 	World.set_time_scale(InTimeScale);
+	return GetTimeScale();
+}
+
+double UFlecsWorld::GetTimeScale() const
+{
+	return World.get_info()->time_scale;
 }
 
 void UFlecsWorld::DestroyWorld()
@@ -1081,6 +1226,9 @@ void UFlecsWorld::DestroyWorld()
 	ModuleComponentQuery.destruct();
 	DependenciesComponentQuery.destruct();
 	ObjectComponentQuery.destruct();
+	AddReferencedObjectsQuery.destruct();
+
+	TickFunctionQuery.destruct();
 		
 	const FAssetRegistryModule* AssetRegistryModule
 		= FModuleManager::LoadModulePtr<FAssetRegistryModule>(TEXT("AssetRegistry"));
@@ -1416,6 +1564,7 @@ FFlecsEntityHandle UFlecsWorld::RegisterScriptStruct(const UScriptStruct* Script
 					ScriptStructComponent.SetHooksLambda([ScriptStruct, &ScriptStructComponent](flecs::type_hooks_t& Hooks)
 					{
 						const bool bIsPOD = ScriptStruct->GetCppStructOps()->IsPlainOldData();
+						
 						const bool bHasCtor = !ScriptStruct->GetCppStructOps()->HasZeroConstructor();
 						const bool bHasDtor = ScriptStruct->GetCppStructOps()->HasDestructor();
 						const bool bHasCopy = ScriptStruct->GetCppStructOps()->HasCopy();
@@ -1914,6 +2063,12 @@ FFlecsTypeMapComponent* UFlecsWorld::GetTypeMapComponent() const
 	return static_cast<FFlecsTypeMapComponent*>(World.get_binding_ctx());
 }
 
+FFlecsEntityHandle UFlecsWorld::GetFlecsTickFunctionByType(const FGameplayTag& InTickType) const
+{
+	TickFunctionQuery.set_var("TickTypeTag", GetTagEntity(InTickType));
+	return TickFunctionQuery.first();
+}
+
 void UFlecsWorld::AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector)
 {
 	Super::AddReferencedObjects(InThis, Collector);
@@ -1928,19 +2083,14 @@ void UFlecsWorld::AddReferencedObjects(UObject* InThis, FReferenceCollector& Col
 
 	ecs_exclusive_access_begin(This->World, "Garbage Collection ARO");
 		
-	This->World.query_builder<const FFlecsScriptStructComponent>() // 0
-	    .with<FFlecsAddReferencedObjectsTrait>().src("$Component") //  1
-	    .term_at(0).src("$Component") // 0
-	    .with("$Component") // 2
-		//.cache_kind(flecs::QueryCacheNone)
-	    .each([&Collector, InThis](flecs::iter& Iter, size_t Index,
+	This->AddReferencedObjectsQuery.each([InThis, &Collector](flecs::iter& Iter, size_t Index,
 	                               const FFlecsScriptStructComponent& InScriptStructComponent)
 	    {
 		    const FFlecsEntityHandle Component = Iter.get_var("Component");
 		    solid_check(Component.IsValid());
 
 		    void* ComponentPtr = Iter.field_at(1, Index);
-		    solid_check(ComponentPtr);
+		    solid_cassume(ComponentPtr);
 
 		    Collector.AddPropertyReferencesWithStructARO(InScriptStructComponent.ScriptStruct.Get(),
 		                                    ComponentPtr, InThis);

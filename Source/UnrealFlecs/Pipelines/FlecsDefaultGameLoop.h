@@ -13,11 +13,28 @@ class UNREALFLECS_API UFlecsDefaultGameLoop final : public UFlecsGameLoopObject
 
 public:
 	virtual void InitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsEntityHandle& InGameLoopEntity) override;
-	virtual bool Progress(double DeltaTime, TSolidNotNull<UFlecsWorld*> InWorld) override;
-
+	virtual bool Progress(double DeltaTime, const FGameplayTag& InTickType, TSolidNotNull<UFlecsWorld*> InWorld) override;
+	
 	virtual bool IsMainLoop() const override;
+	virtual TArray<FGameplayTag> GetTickTypeTags() const override;
+
+	// Main Loop
+	UPROPERTY()
+	FFlecsEntityHandle MainLoopPipeline;
+	
+	UPROPERTY()
+	FFlecsEntityHandle PrePhysicsPipeline;
 
 	UPROPERTY()
-	FFlecsEntityHandle MainPipeline;
+	FFlecsEntityHandle DuringPhysicsPipeline;
+
+	UPROPERTY()
+	FFlecsEntityHandle PostPhysicsPipeline;
+
+	UPROPERTY()
+	FFlecsEntityHandle PostUpdateWorkPipeline;
+
+protected:
+	NO_DISCARD FFlecsEntityHandle CreatePipelineForTickType(const FGameplayTag& InTickType, TSolidNotNull<UFlecsWorld*> InWorld) const;
 	
 }; // class UFlecsDefaultGameLoop

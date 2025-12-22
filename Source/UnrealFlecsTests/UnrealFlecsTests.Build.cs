@@ -9,7 +9,7 @@ public class UnrealFlecsTests : ModuleRules
         PrivateIncludePaths.AddRange(
             new string[]
             {
-                ModuleDirectory
+               // ModuleDirectory,
             }
         );
             
@@ -18,13 +18,7 @@ public class UnrealFlecsTests : ModuleRules
             {
                 "Core",
                 "StructUtils",
-                "SolidMacros",
-                "FlecsLibrary",
-                "UnrealFlecs",
-                "UnrealEd",
-                "AutomationUtils",
                 "GameplayTags",
-                "CQTest",
             }
         );
 
@@ -35,6 +29,12 @@ public class UnrealFlecsTests : ModuleRules
                 "Engine",
                 "Slate",
                 "SlateCore",
+                "AutomationUtils",
+                "FunctionalTesting",
+                "CQTest",
+                "SolidMacros",
+                "FlecsLibrary",
+                "UnrealFlecs",
             }
         );
     }

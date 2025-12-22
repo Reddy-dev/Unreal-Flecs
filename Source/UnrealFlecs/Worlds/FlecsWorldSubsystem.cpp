@@ -24,6 +24,10 @@
 #include "Modules/FlecsModuleSetDataAsset.h"
 
 #include "Pipelines/FlecsGameLoopInterface.h"
+#include "Pipelines/TickFunctions/FlecsTickFunction.h"
+#include "Pipelines/TickFunctions/FlecsTickFunctionComponent.h"
+#include "Pipelines/TickFunctions/FlecsTickFunctionPrerequisite.h"
+#include "Pipelines/TickFunctions/FlecsTickTypeRelationship.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsWorldSubsystem)
 
@@ -43,8 +47,6 @@ void UFlecsWorldSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	{
 		return;
 	}
-
-	SetTickableTickType(ETickableTickType::Always);
 
 	solid_check(IsValid(GetWorld()->GetWorldSettings()));
 	solid_checkf(GetWorld()->GetWorldSettings()->IsA<AFlecsWorldSettings>(),
@@ -91,37 +93,9 @@ void UFlecsWorldSubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
-TStatId UFlecsWorldSubsystem::GetStatId() const
-{
-	RETURN_QUICK_DECLARE_CYCLE_STAT(UFlecsWorldSubsystem, STATGROUP_Tickables);
-}
-
-void UFlecsWorldSubsystem::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	if UNLIKELY_IF(!IsValid(DefaultWorld))
-	{
-		return;
-	}
-
-#if WITH_EDITOR
-	const bool bResult =
-#endif // WITH_EDITOR
-		DefaultWorld->ProgressGameLoop(DeltaTime);
-
-#if WITH_EDITOR
-
-	UE_CLOG(!bResult, LogFlecsCore, Error, TEXT("Failed to progress Flecs world"));
-
-#endif // WITH_EDITOR
-}
-
 UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecsWorldSettingsInfo& Settings)
 {
 	solid_checkf(!Name.IsEmpty(), TEXT("World name cannot be NAME_None"));
-
-	SetTickableTickType(ETickableTickType::Always);
 
 	const std::vector<FFlecsDefaultMetaEntity>& DefaultEntities = FFlecsDefaultEntityEngine::Get().AddedDefaultEntities;
 		
@@ -143,12 +117,18 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 
 	for (TObjectPtr<UObject> GameLoop : InGameLoops)
 	{
+		solid_checkf(GameLoop,
+		             TEXT("GameLoop is nullptr in world %s"), *DefaultWorld->GetName());
+		
 		solid_checkf(GameLoop->GetClass()->ImplementsInterface(UFlecsGameLoopInterface::StaticClass()),
 		             TEXT("GameLoop %s does not implement UFlecsGameLoopInterface"), *GameLoop->GetName());
 			
 		UObject* DuplicatedGameLoop = DuplicateObject<UObject>(GameLoop, DefaultWorld);
 		
-		solid_cassumef(IsValid(DuplicatedGameLoop),
+		solid_cassumef(DuplicatedGameLoop, TEXT("Failed to duplicate GameLoop %s for world %s"),
+		              *GameLoop->GetName(), *DefaultWorld->GetName());
+		
+		solid_checkf(IsValid(DuplicatedGameLoop),
 		                TEXT("Failed to duplicate GameLoop %s for world %s"),
 		                *GameLoop->GetName(), *DefaultWorld->GetName());
 		
@@ -156,6 +136,16 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	}
 	
 	DefaultWorld->GameLoopInterfaces = DuplicatedGameLoops;
+
+	for (const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface : DefaultWorld->GameLoopInterfaces)
+	{
+		const TArray<FGameplayTag> TickTypes = GameLoopInterface->GetTickTypeTags();
+
+		for (const FGameplayTag& TickType : TickTypes)
+		{
+			DefaultWorld->GameLoopTickTypes.FindOrAdd(TickType).Add(GameLoopInterface);
+		}
+	}
 
 	DefaultWorld->InitializeComponentPropertyObserver();
 	DefaultWorld->InitializeDefaultComponents();
@@ -180,13 +170,66 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	DefaultWorld->InitializeSystems();
 
 	RegisterAllGameplayTags(DefaultWorld.Get());
-		
+
+	DefaultWorld->Defer([this, &Settings]()
+	{
+		TSortedMap<FGameplayTag, TTuple<TSharedStruct<FFlecsTickFunction>, FFlecsTickFunctionSettingsInfo>> TickFunctionInstances;
+
+		for (const FFlecsTickFunctionSettingsInfo& TickFunctionStruct : Settings.TickFunctions)
+		{
+			solid_checkf(!TickFunctionStruct.TickFunctionName.IsEmpty(),
+			             TEXT("Tick function name cannot be empty"));
+
+			const FFlecsEntityHandle TickFunctionEntity = DefaultWorld->CreateEntity(TickFunctionStruct.TickFunctionName);
+			solid_checkf(TickFunctionEntity.IsValid(),
+			             TEXT("Failed to create tick function entity %s"),
+			             *TickFunctionStruct.TickFunctionName);
+
+			TickFunctionEntity.AddPair<FFlecsTickTypeRelationship>(TickFunctionStruct.TickTypeTag);
+
+			TSharedStruct<FFlecsTickFunction> TickFunction = FFlecsTickFunctionSettingsInfo::CreateTickFunctionInstance(TickFunctionStruct);
+			solid_check(TickFunction.IsValid());
+			
+			TickFunctionEntity.Set<FFlecsTickFunctionComponent>(FFlecsTickFunctionComponent{ TickFunction });
+
+			for (const FGameplayTag& PrerequisiteTickType : TickFunctionStruct.TickFunctionPrerequisiteTags)
+			{
+				solid_checkf(!PrerequisiteTickType.IsValid() || PrerequisiteTickType != TickFunctionStruct.TickTypeTag,
+							 TEXT("Tick function %s cannot have itself as a prerequisite"),
+							 *TickFunctionStruct.TickFunctionName);
+
+				TickFunctionEntity.AddPair<FFlecsTickFunctionPrerequisite>(PrerequisiteTickType);
+			}
+
+			TickFunctionInstances.Add(TickFunctionStruct.TickTypeTag,
+				TTuple<TSharedStruct<FFlecsTickFunction>, FFlecsTickFunctionSettingsInfo>(
+					TickFunction,
+					TickFunctionStruct));
+		}
+
+		for (const auto& [TickTypeTag, TickFunctionTuple] : TickFunctionInstances)
+		{
+			const TConstArrayView<FGameplayTag> TickPrerequisites = TickFunctionTuple.Get<1>().TickFunctionPrerequisiteTags;
+
+			const TSharedStruct<FFlecsTickFunction> TickFunction = TickFunctionTuple.Get<0>();
+			
+			for (const FGameplayTag& PrerequisiteTickType : TickPrerequisites)
+			{
+				solid_checkf(TickFunctionInstances.Contains(PrerequisiteTickType),
+				             TEXT("Prerequisite tick type %s not found for tick function %s"),
+				             *PrerequisiteTickType.ToString(),
+				             *TickFunctionTuple.Get<1>().TickFunctionName);
+				
+				FFlecsTickFunction& PrerequisiteTickFunctionPtr = TickFunctionInstances[PrerequisiteTickType].Get<0>().Get();
+				
+				TickFunction.Get().AddPrerequisite(DefaultWorld, PrerequisiteTickFunctionPtr);
+			}
+		}
+	});
+
 	for (const FFlecsDefaultMetaEntity& DefaultEntity : DefaultEntities)
 	{
-#if !NO_LOGGING
-		flecs::entity NewDefaultEntity =
-#endif // #if !NO_LOGGING
-			FFlecsDefaultEntityEngine::Get().CreateDefaultEntity(DefaultEntity, DefaultWorld->World);
+		flecs::entity NewDefaultEntity = FFlecsDefaultEntityEngine::Get().CreateDefaultEntity(DefaultEntity, DefaultWorld->World);
 
 		UE_LOGFMT(LogFlecsCore, Log,
 		          "Created default entity {EntityName} with id {EntityId}",
@@ -243,7 +286,6 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 
 #endif // WITH_EDITOR
 	
-	
 	DefaultWorld->bIsInitialized = true;
 	OnWorldCreatedDelegate.Broadcast(DefaultWorld);
 	Unreal::Flecs::GOnFlecsWorldInitialized.Broadcast(DefaultWorld);
@@ -251,14 +293,12 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	return DefaultWorld;
 }
 
-void UFlecsWorldSubsystem::SetWorld(UFlecsWorld* InWorld)
+void UFlecsWorldSubsystem::SetWorld(const TSolidNotNull<UFlecsWorld*> InFlecsWorld)
 {
-	solid_cassumef(InWorld, TEXT("InWorld cannot be null"));
-	
-	solid_checkf(IsValid(InWorld), TEXT("InWorld cannot be null"));
+	solid_checkf(IsValid(InFlecsWorld), TEXT("InWorld cannot be null"));
 	solid_checkf(!IsValid(DefaultWorld), TEXT("DefaultWorld is already set"));
 
-	DefaultWorld = InWorld;
+	DefaultWorld = InFlecsWorld;
 }
 
 UFlecsWorld* UFlecsWorldSubsystem::GetDefaultWorld() const
@@ -281,7 +321,7 @@ bool UFlecsWorldSubsystem::HasValidFlecsWorld() const
 
 UFlecsWorld* UFlecsWorldSubsystem::GetDefaultWorldStatic(const UObject* WorldContextObject)
 {
-	solid_check(WorldContextObject);
+	solid_cassume(WorldContextObject);
 
 	const TSolidNotNull<const UWorld*> GameWorld = GEngine->GetWorldFromContextObjectChecked(WorldContextObject);
 	const TSolidNotNull<const UFlecsWorldSubsystem*> FlecsWorldSubsystem = GameWorld->GetSubsystemChecked<UFlecsWorldSubsystem>();
@@ -289,20 +329,17 @@ UFlecsWorld* UFlecsWorldSubsystem::GetDefaultWorldStatic(const UObject* WorldCon
 	return FlecsWorldSubsystem->DefaultWorld;
 }
 
-bool UFlecsWorldSubsystem::HasValidFlecsWorldStatic(const UObject* WorldContextObject)
+TSolidNotNull<UFlecsWorld*> UFlecsWorldSubsystem::GetDefaultWorldStaticChecked(const UObject* WorldContextObject)
 {
-	solid_check(WorldContextObject);
-		
-	if LIKELY_IF(GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::ReturnNull))
-	{
-		const TSolidNotNull<const UWorld*> GameWorld = GEngine->GetWorldFromContextObjectChecked(WorldContextObject);
-		const TSolidNotNull<const UFlecsWorldSubsystem*> FlecsWorldSubsystem = GameWorld->GetSubsystemChecked<UFlecsWorldSubsystem>();
-		return FlecsWorldSubsystem->HasValidFlecsWorld();
-	}
-	else
-	{
-		return false;
-	}
+	solid_cassume(WorldContextObject);
+
+	const TSolidNotNull<const UWorld*> GameWorld = GEngine->GetWorldFromContextObjectChecked(WorldContextObject);
+	const TSolidNotNull<const UFlecsWorldSubsystem*> FlecsWorldSubsystem = GameWorld->GetSubsystemChecked<UFlecsWorldSubsystem>();
+	
+	solid_cassumef(FlecsWorldSubsystem->DefaultWorld, TEXT("Default Flecs world is not set"));
+	solid_checkf(IsValid(FlecsWorldSubsystem->DefaultWorld), TEXT("Default Flecs world is not valid"));
+	
+	return FlecsWorldSubsystem->DefaultWorld;
 }
 
 bool UFlecsWorldSubsystem::DoesSupportWorldType(const EWorldType::Type WorldType) const
@@ -334,17 +371,18 @@ void UFlecsWorldSubsystem::RegisterAllGameplayTags(const TSolidNotNull<UFlecsWor
 	InFlecsWorld->ObtainTypedEntity<FFlecsGameplayTagManagerEntity>()
 	            .Add(flecs::Module);
 
+	UGameplayTagsManager& GameplayTagsManager = UGameplayTagsManager::Get();
+
 	// @TODO: defer this
-	InFlecsWorld->Scope<FFlecsGameplayTagManagerEntity>([InFlecsWorld]()
+	InFlecsWorld->Scope<FFlecsGameplayTagManagerEntity>([InFlecsWorld, &GameplayTagsManager]()
 	{
 		FGameplayTagContainer AllTags;
-		UGameplayTagsManager::Get().RequestAllGameplayTags(AllTags, false);
+		GameplayTagsManager.RequestAllGameplayTags(AllTags, false);
 
 		for (const FGameplayTag& Tag : AllTags)
 		{
-			const FFlecsEntityHandle TagEntity = flecs::entity(InFlecsWorld->World,
-			                                                   StringCast<char>(*Tag.ToString()).Get(),
-			                                                   ".", ".");
+			const FFlecsEntityHandle TagEntity = InFlecsWorld->CreateEntity(Tag.ToString(), ".", ".");
+				
 			TagEntity.Set<FGameplayTag>(Tag);
 
 			InFlecsWorld->TagEntityMap.emplace(Tag, TagEntity.GetFlecsId());

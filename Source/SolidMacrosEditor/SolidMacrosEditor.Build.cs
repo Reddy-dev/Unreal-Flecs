@@ -21,13 +21,16 @@ public class SolidMacrosEditor : ModuleRules
                 "Engine",
                 "Slate",
                 "SlateCore",
-                "Kismet",
-                "PropertyEditor",
-                "UnrealEd",
-                "ToolWidgets",
                 "InputCore",
-                
+                "Kismet",
+                "UnrealEd",
+                "PropertyEditor",
             }
         );
+        
+        if (Target.bBuildEditor)
+        {
+            PrivateDependencyModuleNames.Add("ToolWidgets");
+        }
     }
 }

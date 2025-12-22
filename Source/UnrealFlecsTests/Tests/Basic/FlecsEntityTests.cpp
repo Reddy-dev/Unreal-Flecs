@@ -4,7 +4,7 @@
 
 #if WITH_AUTOMATION_TESTS
 
-#include "Tests/FlecsTestTypes.h"
+#include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 
 /*
  * Layout of Tests:
@@ -13,10 +13,10 @@
  * C. Entity Hierarchy Tests
  * D. Default Entity Tests
  */
-TEST_CLASS_WITH_FLAGS(A10_UnrealFlecsEntityTests,
+TEST_CLASS_WITH_FLAGS_AND_TAGS(A10_UnrealFlecsEntityTests,
 							   "UnrealFlecs.A10_Entities",
 							   EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter
-								| EAutomationTestFlags::CriticalPriority)
+								| EAutomationTestFlags::CriticalPriority, "[Flecs]")
 {
 	inline static TUniquePtr<FFlecsTestFixtureRAII> Fixture;
 	inline static TObjectPtr<UFlecsWorld> FlecsWorld = nullptr;
@@ -37,6 +37,7 @@ TEST_CLASS_WITH_FLAGS(A10_UnrealFlecsEntityTests,
 	{
 		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity();
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		ASSERT_THAT(IsFalse(TestEntity.HasName()));
 	}
 
 	TEST_METHOD(A2_SpawnNamedEntity)
@@ -49,7 +50,47 @@ TEST_CLASS_WITH_FLAGS(A10_UnrealFlecsEntityTests,
 		ASSERT_THAT(AreEqual(EntityName, TestEntity.GetName()));
 	}
 
-	TEST_METHOD(A3_SpawnEntityWithParent_SetParent_API)
+	TEST_METHOD(A3_SpawnEntityWithEmptyName)
+	{
+		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity(TEXT(""));
+		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		ASSERT_THAT(IsFalse(TestEntity.HasName()));
+	}
+
+	TEST_METHOD(A4_SpawnEntityWithNameWithDefaultSeparator)
+	{
+		static const FString EntityName = TEXT("My::Test::Entity");
+
+		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity(EntityName);
+		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity.HasName()));
+		
+		ASSERT_THAT(AreEqual(TEXT("Entity"), TestEntity.GetName()));
+		ASSERT_THAT(AreEqual(TEXT("::My::Test::Entity"), TestEntity.GetPath()));
+		ASSERT_THAT(AreEqual(TEXT("My.Test.Entity"), TestEntity.GetPath(".", "")));
+		ASSERT_THAT(AreEqual(TEXT(".My.Test.Entity"), TestEntity.GetPath(".", ".")));
+		ASSERT_THAT(AreEqual(TEXT("My/Test/Entity"), TestEntity.GetPath("/", "")));
+		ASSERT_THAT(AreEqual(TEXT("/My/Test/Entity"), TestEntity.GetPath("/", "/")));
+	}
+
+	TEST_METHOD(A5_SpawnEntityWithName_WithCustomSeparator)
+	{
+		static const FString EntityName = TEXT("My/Custom/Separator/Entity");
+
+		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity(EntityName, TEXT("/"));
+		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity.HasName()));
+		
+		ASSERT_THAT(AreEqual(TEXT("Entity"), TestEntity.GetName()));
+		ASSERT_THAT(AreEqual(TEXT("My/Custom/Separator/Entity"), TestEntity.GetPath("/", "")));
+		ASSERT_THAT(AreEqual(TEXT("/My/Custom/Separator/Entity"), TestEntity.GetPath("/", "/")));
+		ASSERT_THAT(AreEqual(TEXT("My.Custom.Separator.Entity"), TestEntity.GetPath(".", "")));
+		ASSERT_THAT(AreEqual(TEXT(".My.Custom.Separator.Entity"), TestEntity.GetPath(".", ".")));
+		ASSERT_THAT(AreEqual(TEXT("::My.Custom.Separator.Entity"), TestEntity.GetPath(".", "::")));
+		ASSERT_THAT(AreEqual(TEXT("::My::Custom::Separator::Entity"), TestEntity.GetPath()));
+	}
+
+	TEST_METHOD(A6_SpawnEntityWithParent_SetParent_API)
 	{
 		const FFlecsEntityHandle ParentEntity = FlecsWorld->CreateEntity("ParentEntity");
 		const FFlecsEntityHandle ChildEntity = FlecsWorld->CreateEntity("ChildEntity")

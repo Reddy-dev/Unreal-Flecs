@@ -19,53 +19,80 @@
 #include "Worlds/FlecsWorld.h"
 #include "Pipelines/FlecsDefaultGameLoop.h"
 
-namespace Unreal::Flecs::Testing::impl
+/*namespace Unreal::Flecs::Testing::impl
 {
 	static const FString DefaultTags = TEXT("");
-} // namespace Unreal::Flecs::Testing::impl
+} // namespace Unreal::Flecs::Testing::impl*/
 
 class UNREALFLECSTESTS_API FFlecsTestFixture
 {
+	static constexpr double DefaultTickStepInSeconds = 1.0 / 60.0;
+	
 public:
 	TUniquePtr<FTestWorldWrapper> TestWorldWrapper;
+
+	TSharedPtr<FScopedTestEnvironment> TestEnvironment;
+
+	UGameInstance* StandaloneGameInstance = nullptr;
+	APlayerController* StandalonePlayerController = nullptr;
 	
 	TWeakObjectPtr<UWorld> TestWorld;
+	
 	UFlecsWorldSubsystem* WorldSubsystem = nullptr;
 	UFlecsWorld* FlecsWorld = nullptr;
 
 	// @TODO: add test support for multiple game loops
-	void SetUp(TScriptInterface<IFlecsGameLoopInterface> InGameLoopInterface = nullptr,
+	void SetUp(TArray<TScriptInterface<IFlecsGameLoopInterface>> InGameLoopInterfaces = {}, TArray<FFlecsTickFunctionSettingsInfo> InTickFunctions = {},
 	           const TArray<UObject*>& InModules = {})
 	{
+		TestEnvironment = FScopedTestEnvironment::Get();
+		TestEnvironment->SetConsoleVariableValue("r.RayTracing.Enable", "0");
+		
 		TestWorldWrapper = MakeUnique<FTestWorldWrapper>();
-		TestWorldWrapper->CreateTestWorld(EWorldType::GameRPC);
-
+		TestWorldWrapper->CreateTestWorld(EWorldType::Game);
+		
 		TestWorld = TestWorldWrapper->GetTestWorld();
+		check(TestWorld.IsValid());
+		
+		StandaloneGameInstance = TestWorldWrapper->GetTestWorld()->GetGameInstance();
+		check(IsValid(StandaloneGameInstance));
 
 		WorldSubsystem = TestWorld->GetSubsystem<UFlecsWorldSubsystem>();
 		check(IsValid(WorldSubsystem));
 
-		if (!InGameLoopInterface)
-		{
-			InGameLoopInterface = NewObject<UFlecsDefaultGameLoop>(WorldSubsystem);
-		}
-
-		UObject* GameLoopObject = InGameLoopInterface.GetObject();
+		/*StandalonePlayerController = NewObject<APlayerController>(TestWorld.Get());
+		check(IsValid(StandalonePlayerController));*/
 
 		// Create world settings
 		FFlecsWorldSettingsInfo WorldSettings;
-		WorldSettings.WorldName = TEXT("TestWorld");
-		WorldSettings.GameLoops.Add(GameLoopObject);
+		WorldSettings.WorldName = "TestWorld";
 		WorldSettings.Modules = InModules;
 
-		FlecsWorld = WorldSubsystem->CreateWorld(TEXT("TestWorld"), WorldSettings);
+		if (!InGameLoopInterfaces.IsEmpty())
+		{
+			for (const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface : InGameLoopInterfaces)
+			{
+				WorldSettings.GameLoops.AddUnique(GameLoopInterface.GetObject());
+			}
+		}
+		else
+		{
+			WorldSettings.GameLoops.AddUnique(NewObject<UFlecsDefaultGameLoop>(WorldSubsystem));
+		}
+
+		if (!InTickFunctions.IsEmpty())
+		{
+			WorldSettings.TickFunctions = InTickFunctions;
+		}
+
+		FlecsWorld = WorldSubsystem->CreateWorld("TestWorld", WorldSettings);
 
 		TestWorldWrapper->BeginPlayInTestWorld();
 	}
 
-	void TickWorld(const float DeltaTime = 0.01f) const
+	void TickWorld(const double InDeltaSeconds = DefaultTickStepInSeconds) const
 	{
-		TestWorldWrapper->TickTestWorld(DeltaTime);
+		TestWorldWrapper->TickTestWorld(InDeltaSeconds);
 	}
 
 	void TearDown()
@@ -80,8 +107,31 @@ public:
 			WorldSubsystem = nullptr;
 		}
 
-		TestWorldWrapper->DestroyTestWorld(true);
-		TestWorldWrapper = nullptr;
+		if (TestWorld.IsValid())
+		{
+			TestWorld = nullptr;
+		}
+
+		if (StandaloneGameInstance)
+		{
+			StandaloneGameInstance = nullptr;
+		}
+
+		/*if (StandalonePlayerController)
+		{
+			StandalonePlayerController = nullptr;
+		}*/
+
+		if (TestWorldWrapper)
+		{
+			TestWorldWrapper->DestroyTestWorld(true);
+			TestWorldWrapper.Reset();
+		}
+
+		if (TestEnvironment)
+		{
+			TestEnvironment.Reset();
+		}
 	}
 
 	NO_DISCARD FORCEINLINE UFlecsWorld* GetFlecsWorld() const
@@ -95,10 +145,10 @@ struct UNREALFLECSTESTS_API FFlecsTestFixtureRAII
 {
 	mutable FFlecsTestFixture Fixture;
 
-	FFlecsTestFixtureRAII(const TScriptInterface<IFlecsGameLoopInterface> InGameLoopInterface = nullptr,
+	FFlecsTestFixtureRAII(TArray<TScriptInterface<IFlecsGameLoopInterface>> InGameLoopInterfaces = {}, const TArray<FFlecsTickFunctionSettingsInfo> InTickFunctions = {},
 			   const TArray<UObject*>& InModules = {})
 	{
-		Fixture.SetUp(InGameLoopInterface, InModules);
+		Fixture.SetUp(InGameLoopInterfaces, InTickFunctions, InModules);
 	}
 
 	~FFlecsTestFixtureRAII()
@@ -122,18 +172,6 @@ struct UNREALFLECSTESTS_API FFlecsTestFixtureRAII
 	{ \
 		FixtureName.TearDown(); \
 	})
-
-#define FLECS_FIXTURE_LIFECYCLE_LATENT(FixtureName) \
-	LatentBeforeEach([this](const FDoneDelegate& Done) \
-	{ \
-		FixtureName.SetUp(); \
-		Done.Execute(); \
-	}); \
-	LatentAfterEach([this](const FDoneDelegate& Done) \
-	{ \
-		FixtureName.TearDown(); \
-		Done.Execute(); \
-	});
 
 #define xTEST_METHOD_WITH_TAGS(_MethodName, _TestTags) \
 	void _MethodName()

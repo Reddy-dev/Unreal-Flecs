@@ -23,6 +23,8 @@
 
 #include "FlecsWorld.generated.h"
 
+
+struct FFlecsTickFunction;
 struct FFlecsEntityRecord;
 struct FFlecsSoftDependenciesComponent;
 struct FFlecsUObjectComponent;
@@ -164,8 +166,10 @@ public:
 	 * @param Name Optional Name Parameter
 	 * @return The created entity handle
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	FFlecsEntityHandle CreateEntity(const FString& Name = "") const;
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World", 
+		meta = (AdvancedDisplay = "Separator, RootSeparator"))
+	FFlecsEntityHandle CreateEntity(const FString& Name = "",
+		const FString& Separator = "::", const FString& RootSeparator = "::") const;
 
 	/**
 	 * @brief Obtain a typed entity handle for the given Type
@@ -473,15 +477,17 @@ public:
 		return CastChecked<T>(GetModule(T::StaticClass(), bAllowChildren));
 	}
 
+	// @TODO: add missing function variations template and checked versions
+
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
 	bool HasGameLoop(const TSubclassOf<UObject> InGameLoop, const bool bAllowChildren = false) const;
-
+	
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
 	FFlecsEntityHandle GetGameLoopEntity(const TSubclassOf<UObject> InGameLoop, const bool bAllowChildren = false) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
 	UObject* GetGameLoop(const TSubclassOf<UObject> InGameLoop, const bool bAllowChildren = false) const;
-
+	
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
 	bool BeginDefer() const;
 
@@ -564,14 +570,19 @@ public:
 
 	void SetContext(void* InContext) const;
 
+	void HandleWorldPause();
+
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	bool ProgressGameLoop(const double DeltaTime = 0.0);
+	bool ProgressGameLoops(const FGameplayTag& TickTypeTag, const double DeltaTime = 0.0);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
 	bool Progress(const double DeltaTime = 0.0);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	void SetTimeScale(const double InTimeScale) const;
+	double SetTimeScale(const double InTimeScale) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
+	double GetTimeScale() const;
 
 	void DestroyWorld();
 
@@ -1038,6 +1049,8 @@ public:
 
 	NO_DISCARD FFlecsTypeMapComponent* GetTypeMapComponent() const;
 
+	NO_DISCARD FFlecsEntityHandle GetFlecsTickFunctionByType(const FGameplayTag& InTickType) const;
+
 	static void AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector);
 
 	virtual void GetResourceSizeEx(FResourceSizeEx& CumulativeResourceSize) override;
@@ -1048,6 +1061,8 @@ public:
 
 	UPROPERTY(Transient)
 	TArray<TScriptInterface<IFlecsGameLoopInterface>> GameLoopInterfaces;
+
+	TSortedMap<FGameplayTag, TArray<TScriptInterface<IFlecsGameLoopInterface>>> GameLoopTickTypes;
 
 	UPROPERTY(Transient)
 	TArray<TScriptInterface<IFlecsModuleInterface>> ImportedModules;
@@ -1064,6 +1079,10 @@ public:
 	flecs::query<FFlecsUObjectComponent> ObjectComponentQuery;
 	flecs::query<FFlecsSoftDependenciesComponent> DependenciesComponentQuery;
 
+	flecs::query<> TickFunctionQuery;
+
+	flecs::query<const FFlecsScriptStructComponent> AddReferencedObjectsQuery;
+
 	FFlecsTypeMapComponent* TypeMapComponent;
 
 	FDelegateHandle ComponentRegisteredDelegateHandle;
@@ -1072,6 +1091,8 @@ public:
 	FDelegateHandle DeleteEmptyTablesGCDelegateHandle;
 
 	FFlecsWorldModuleImportedDelegate OnModuleImported;
+
+	TOptional<double> PrePauseTimeScale;
 
 	robin_hood::unordered_flat_map<FGameplayTag, FFlecsId> TagEntityMap;
 

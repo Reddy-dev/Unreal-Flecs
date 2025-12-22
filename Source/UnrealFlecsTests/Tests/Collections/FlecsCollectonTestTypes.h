@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
 #include "Collections/FlecsCollectionInterface.h"
 
 #include "FlecsCollectonTestTypes.generated.h"

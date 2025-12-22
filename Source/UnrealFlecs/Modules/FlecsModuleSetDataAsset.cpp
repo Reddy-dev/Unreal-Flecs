@@ -2,6 +2,7 @@
 
 #include "FlecsModuleSetDataAsset.h"
 #include "FlecsModuleInterface.h"
+#include "Logs/FlecsCategories.h"
 #include "Misc/DataValidation.h"
 #include "SolidMacros/Macros.h"
 #include "Worlds/FlecsWorld.h"
@@ -31,6 +32,9 @@ TArray<TSubclassOf<UObject>> UFlecsModuleSetDataAsset::GetModuleHardDependencies
 	{
 		if UNLIKELY_IF(!IsValid(Module))
 		{
+			UE_LOGFMT(LogFlecsModule, Warning,
+				"Module Set '{0}' has an invalid module reference!",
+				*GetName());
 			continue;
 		}
 

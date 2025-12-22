@@ -7,9 +7,15 @@
 #include "Engine/DataAsset.h"
 #include "Misc/DataValidation.h"
 
+#include "Versioning/SolidVersioningTypes.h"
+
 #include "FlecsWorldInfoSettings.h"
 
 #include "FlecsWorldSettingsAsset.generated.h"
+
+START_SOLID_ASSET_VERSION(UFlecsWorldSettingsAsset)
+
+END_SOLID_ASSET_VERSION() // UFlecsWorldSettingsAsset
 
 UCLASS(BlueprintType, Blueprintable)
 class UNREALFLECS_API UFlecsWorldSettingsAsset : public UDataAsset

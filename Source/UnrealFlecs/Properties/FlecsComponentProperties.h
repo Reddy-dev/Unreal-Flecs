@@ -39,6 +39,7 @@ namespace Unreal::Flecs
 	
 } // namespace Unreal::Flecs
 
+// @TODO: rename this due to it being too generic and risks name collisions
 struct UNREALFLECS_API FFlecsComponentProperties
 {
 	std::string Name;
@@ -120,4 +121,4 @@ public:
 // @TODO: Consider adding Auto-Registration
 // std::function<void(flecs::world, const FFlecsComponentHandle&)>
 #define REGISTER_FLECS_COMPONENT(...) \
-	PREPROCESSOR_APPEND_VA_ARG_COUNT(INTERNAL_REGISTER_FLECS_COMPONENT_, ##__VA_ARGS__)(__VA_ARGS__)
+	UE_APPEND_VA_ARG_COUNT(INTERNAL_REGISTER_FLECS_COMPONENT_, ##__VA_ARGS__)(__VA_ARGS__)

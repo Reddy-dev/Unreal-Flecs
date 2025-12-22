@@ -10,24 +10,20 @@ public class SolidMacros : ModuleRules
 
 		CppStandard = CppStandardVersion.Cpp20;
 		
+		IWYUSupport = IWYUSupport.KeepPublicAsIsForNow;
+		
 		PublicIncludePaths.AddRange(
 			new string[] {
 				ModuleDirectory,
 			}
 			);
-				
-		
-		PrivateIncludePaths.AddRange(
-			new string[] {
-			}
-			);
-			
 		
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
 				"Core",
 				"CoreUObject",
+				"Engine",
 				"GameplayTags",
 			}
 			);
@@ -36,16 +32,18 @@ public class SolidMacros : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"PropertyPath",
-				"Engine"
+				"EngineSettings",
 			}
 			);
 		
-		
-		DynamicallyLoadedModuleNames.AddRange(
-			new string[]
-			{
-			}
-			);
+		if (Target.bBuildEditor)
+		{
+			PrivateDependencyModuleNames.AddRange(
+				new string[]
+				{
+					"PropertyPath",
+				}
+				);
+		}
 	}
 }

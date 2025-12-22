@@ -10,7 +10,7 @@
 
 #include "FlecsEditorPerProjectDeveloperSettings.generated.h"
 
-UCLASS(MinimalAPI, config=EditorPerProjectUserSettings, PerObjectConfig, DisplayName="Flecs Per-Project Editor Settings")
+UCLASS(MinimalAPI, Config=EditorPerProjectUserSettings, PerObjectConfig, DisplayName="Flecs Per-Project Editor Settings")
 class UFlecsEditorPerProjectDeveloperSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()

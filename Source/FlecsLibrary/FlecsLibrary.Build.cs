@@ -11,11 +11,23 @@ public class FlecsLibrary : ModuleRules
         Type = ModuleType.CPlusPlus;
         
         CppStandard = CppStandardVersion.Cpp20;
-        CStandard = CStandardVersion.Latest;
-        
-        OptimizationLevel = OptimizationMode.Speed;
+        CStandard = CStandardVersion.C17;
         
         bool bIsMonolithic = Target.LinkType == TargetLinkType.Monolithic;
+        
+        PublicIncludePaths.AddRange(
+            new string[] {
+                ModuleDirectory + "/Public",
+            }
+        );
+        
+        PrivateIncludePaths.AddRange(
+            new string[] {
+                ModuleDirectory + "/Private",
+                ModuleDirectory + "/Tests",
+                ModuleDirectory + "/Fixtures",
+            }
+        );
         
         if (bIsMonolithic)
         {
@@ -87,20 +99,6 @@ public class FlecsLibrary : ModuleRules
         if (Target.bCompileAgainstEditor)
         {
         }
-        
-        PublicIncludePaths.AddRange(
-            new string[] {
-                ModuleDirectory + "/Public",
-            }
-        );
-        
-        PrivateIncludePaths.AddRange(
-            new string[] {
-                ModuleDirectory + "/Private",
-                ModuleDirectory + "/Tests",
-                ModuleDirectory + "/Fixtures",
-            }
-        );
         
         PublicDependencyModuleNames.AddRange(
             new string[]

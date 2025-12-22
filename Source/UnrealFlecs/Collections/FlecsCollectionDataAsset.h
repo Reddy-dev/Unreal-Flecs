@@ -6,13 +6,17 @@
 
 #include "Engine/DataAsset.h"
 
+#include "Versioning/SolidVersioningTypes.h"
+
 #include "Entities/FlecsEntityRecord.h"
 #include "FlecsCollectionTypes.h"
 #include "FlecsCollectionDefinition.h"
 
 #include "FlecsCollectionDataAsset.generated.h"
 
-// @TODO: add versioning
+START_SOLID_ASSET_VERSION(UFlecsCollectionDataAsset)
+
+END_SOLID_ASSET_VERSION() // UFlecsCollectionDataAsset
 
 UCLASS(BlueprintType, Blueprintable)
 class UNREALFLECS_API UFlecsCollectionDataAsset : public UPrimaryDataAsset

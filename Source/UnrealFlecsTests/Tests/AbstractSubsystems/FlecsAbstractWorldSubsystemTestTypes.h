@@ -16,6 +16,8 @@ class UNREALFLECSTESTS_API UTestFlecsWorldSubsystem_Initialization : public UFle
 public:
 	UTestFlecsWorldSubsystem_Initialization();
 
+	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
+
 	virtual void OnFlecsWorldInitialized(const TSolidNotNull<UFlecsWorld*> InWorld) override;
 
 	UPROPERTY()
