@@ -11,9 +11,16 @@ public class FlecsLibrary : ModuleRules
         Type = ModuleType.CPlusPlus;
         
         CppStandard = CppStandardVersion.Cpp20;
-        CStandard = CStandardVersion.Latest;
+        CStandard = CStandardVersion.C17;
         
         bool bIsMonolithic = Target.LinkType == TargetLinkType.Monolithic;
+        
+        PrivateIncludePaths.AddRange(
+            new string[] {
+                ModuleDirectory + "/Fixtures",
+                ModuleDirectory + "/Tests",
+            }
+        );
         
         if (bIsMonolithic)
         {
