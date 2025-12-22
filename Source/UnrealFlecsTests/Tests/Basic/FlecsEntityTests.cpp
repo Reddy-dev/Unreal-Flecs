@@ -4,7 +4,7 @@
 
 #if WITH_AUTOMATION_TESTS
 
-#include "Tests/FlecsTestTypes.h"
+#include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 
 /*
  * Layout of Tests:

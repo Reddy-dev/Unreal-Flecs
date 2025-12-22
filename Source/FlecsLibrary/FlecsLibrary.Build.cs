@@ -13,8 +13,6 @@ public class FlecsLibrary : ModuleRules
         CppStandard = CppStandardVersion.Cpp20;
         CStandard = CStandardVersion.Latest;
         
-        OptimizationLevel = OptimizationMode.Speed;
-        
         bool bIsMonolithic = Target.LinkType == TargetLinkType.Monolithic;
         
         if (bIsMonolithic)

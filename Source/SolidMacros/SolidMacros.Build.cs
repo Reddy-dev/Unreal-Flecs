@@ -10,18 +10,13 @@ public class SolidMacros : ModuleRules
 
 		CppStandard = CppStandardVersion.Cpp20;
 		
+		IWYUSupport = IWYUSupport.KeepPublicAsIsForNow;
+		
 		PublicIncludePaths.AddRange(
 			new string[] {
 				ModuleDirectory,
 			}
 			);
-				
-		
-		PrivateIncludePaths.AddRange(
-			new string[] {
-			}
-			);
-			
 		
 		PublicDependencyModuleNames.AddRange(
 			new string[]
@@ -37,17 +32,18 @@ public class SolidMacros : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"PropertyPath",
 				"EngineSettings",
-				"UnrealED",
 			}
 			);
 		
-		
-		DynamicallyLoadedModuleNames.AddRange(
-			new string[]
-			{
-			}
-			);
+		if (Target.bBuildEditor)
+		{
+			PrivateDependencyModuleNames.AddRange(
+				new string[]
+				{
+					"PropertyPath",
+				}
+				);
+		}
 	}
 }

@@ -258,6 +258,9 @@ struct entity_builder : entity_view {
         return this->add(flecs::SlotOf, second);
     }
 
+#pragma warning(push)
+#pragma warning(disable: 4702) // unreachable code
+    
     /** Shortcut for `add(SlotOf, target(ChildOf))`.
      */
     const Self& slot() const  {
@@ -267,6 +270,7 @@ struct entity_builder : entity_view {
     error:
         return to_base();
     }
+#pragma warning(pop)
 
     /** Shortcut for `add(ChildOf, entity)`.
      *

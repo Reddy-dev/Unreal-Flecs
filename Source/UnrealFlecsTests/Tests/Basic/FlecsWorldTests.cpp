@@ -6,7 +6,7 @@
 
 #include "Pipelines/TickFunctions/FlecsTickTypeNativeTags.h"
 #include "Systems/FlecsSystem.h"
-#include "Tests/FlecsTestTypes.h"
+#include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 
 #include "Worlds/FlecsWorld.h"
 #include "Worlds/FlecsWorldConverter.h"

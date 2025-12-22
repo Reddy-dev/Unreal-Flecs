@@ -229,10 +229,7 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 
 	for (const FFlecsDefaultMetaEntity& DefaultEntity : DefaultEntities)
 	{
-#if !NO_LOGGING
-		flecs::entity NewDefaultEntity =
-#endif // #if !NO_LOGGING
-			FFlecsDefaultEntityEngine::Get().CreateDefaultEntity(DefaultEntity, DefaultWorld->World);
+		flecs::entity NewDefaultEntity = FFlecsDefaultEntityEngine::Get().CreateDefaultEntity(DefaultEntity, DefaultWorld->World);
 
 		UE_LOGFMT(LogFlecsCore, Log,
 		          "Created default entity {EntityName} with id {EntityId}",

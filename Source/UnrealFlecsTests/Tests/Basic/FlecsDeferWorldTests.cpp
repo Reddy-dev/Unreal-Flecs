@@ -5,7 +5,7 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "StructUtils/StructView.h"
-#include "Tests/FlecsTestTypes.h"
+#include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 #include "Worlds/FlecsWorld.h"
 
 /*

@@ -8,9 +8,8 @@ public class UnrealFlecs : ModuleRules
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		CppStandard = CppStandardVersion.Latest;
-		OptimizationLevel = OptimizationMode.Speed;
-		IWYUSupport = IWYUSupport.Full;
+		CppStandard = CppStandardVersion.Cpp20;
+		//IWYUSupport = IWYUSupport.KeepPublicAsIsForNow;
 
 		PublicIncludePaths.AddRange(
 			new string[] 

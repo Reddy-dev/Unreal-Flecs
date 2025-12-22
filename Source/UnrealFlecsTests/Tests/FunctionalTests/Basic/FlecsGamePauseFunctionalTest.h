@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 
-#include "Fixtures/FunctionalTesting/FlecsFunctionalTickBase.h"
+#include "UnrealFlecsTests/Fixtures/FunctionalTesting/FlecsFunctionalTickBase.h"
 
 #include "SolidMacros/Macros.h"
 

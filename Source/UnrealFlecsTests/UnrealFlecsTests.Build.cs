@@ -5,13 +5,11 @@ public class UnrealFlecsTests : ModuleRules
     public UnrealFlecsTests(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-
-        IWYUSupport = IWYUSupport.Full;
         
         PrivateIncludePaths.AddRange(
             new string[]
             {
-                ModuleDirectory,
+               // ModuleDirectory,
             }
         );
             
@@ -20,14 +18,7 @@ public class UnrealFlecsTests : ModuleRules
             {
                 "Core",
                 "StructUtils",
-                "SolidMacros",
-                "FlecsLibrary",
-                "UnrealFlecs",
-                "UnrealEd",
-                "AutomationUtils",
                 "GameplayTags",
-                "CQTest",
-                "FunctionalTesting",
             }
         );
 
@@ -38,6 +29,12 @@ public class UnrealFlecsTests : ModuleRules
                 "Engine",
                 "Slate",
                 "SlateCore",
+                "AutomationUtils",
+                "FunctionalTesting",
+                "CQTest",
+                "SolidMacros",
+                "FlecsLibrary",
+                "UnrealFlecs",
             }
         );
     }

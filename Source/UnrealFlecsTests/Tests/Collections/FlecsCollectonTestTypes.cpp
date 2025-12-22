@@ -4,7 +4,7 @@
 
 #include "Collections/FlecsCollectionBuilder.h"
 
-#include "Tests/FlecsTestTypes.h"
+#include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsCollectonTestTypes)
 

@@ -6,7 +6,7 @@
 
 #include "Entities/FlecsEntityRecord.h"
 
-#include "Tests/FlecsTestTypes.h"
+#include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 
 /*
  * Layout of the Tests:

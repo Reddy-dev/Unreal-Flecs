@@ -5,10 +5,10 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "CQTest.h"
-#include "Fixtures/FlecsWorldFixture.h"
+#include "UnrealFlecsTests/Fixtures/FlecsWorldFixture.h"
 #include "Misc/AutomationTest.h"
-#include "Tests/FlecsTestTypes.h"
-#include "Tests/Types/FlecsClassTestTypes.h"
+#include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
+#include "UnrealFlecsTests/Tests/Types/FlecsClassTestTypes.h"
 #include "Worlds/FlecsWorld.h"
 
 /*

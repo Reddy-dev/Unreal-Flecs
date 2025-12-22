@@ -9,7 +9,7 @@
 #include "Collections/FlecsCollectionWorldSubsystem.h"
 #include "Collections/FlecsCollectionEntityRecordFragment.h"
 
-#include "Tests/FlecsTestTypes.h"
+#include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 
 /*
  * Layout of the tests:

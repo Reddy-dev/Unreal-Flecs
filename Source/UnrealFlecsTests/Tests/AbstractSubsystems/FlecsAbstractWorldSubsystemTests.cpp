@@ -5,7 +5,7 @@
 
 #include "FlecsAbstractWorldSubsystemTestTypes.h"
 
-#include "Tests/FlecsTestTypes.h"
+#include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 
 /*
  * Layout of Tests:

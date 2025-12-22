@@ -20,20 +20,20 @@ public class UnrealFlecsEditor : ModuleRules
                 "Engine",
                 "Slate",
                 "SlateCore",
-                "ToolMenus",
-                "EditorStyle",
                 "Projects",
-                "PropertyEditor",
                 "UnrealFlecs",
                 "FlecsLibrary",
                 "StructUtils",
                 "InputCore",
+                "AssetRegistry",
+                "SolidMacros",
                 "UnrealEd",
+                "ToolMenus",
+                "EditorStyle",
+                "PropertyEditor",
                 "GraphEditor",
                 "BlueprintGraph",
                 "StructUtilsEditor",
-                "AssetRegistry",
-                "SolidMacros"
             }
         );
     }
