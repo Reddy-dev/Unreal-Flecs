@@ -16,7 +16,7 @@ class UNREALFLECSTESTS_API AFlecsFunctionalTickBase : public AFlecsFunctionTestB
 	GENERATED_BODY()
 
 public:
-	AFlecsFunctionalTickBase(const FObjectInitializer& ObjectInitializer);
+	AFlecsFunctionalTickBase(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 	virtual void PrepareTest() override;
 	virtual void StartTest() override;
