@@ -1,6 +1,6 @@
 ﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
 
-#include "SolidVersioningTypes.h"
+#include "Versioning/SolidVersioningTypes.h"
 
 #include "Logging/StructuredLog.h"
 

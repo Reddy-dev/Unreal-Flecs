@@ -10,7 +10,7 @@ public class SolidMacros : ModuleRules
 
 		CppStandard = CppStandardVersion.Cpp20;
 		
-		IWYUSupport = IWYUSupport.KeepPublicAsIsForNow;
+		IWYUSupport = IWYUSupport.Full;
 		
 		PublicIncludePaths.AddRange(
 			new string[] {

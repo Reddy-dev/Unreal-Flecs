@@ -1,6 +1,6 @@
 ﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
 
-#include "SolidEnumSelectorDetails.h"
+#include "Types/SolidEnumSelectorDetails.h"
 
 #include "UObject/UObjectIterator.h"
 #include "ScopedTransaction.h"

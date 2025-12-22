@@ -1,6 +1,6 @@
 ﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
 
-#include "SolidCppStructOps.h"
+#include "Types/SolidCppStructOps.h"
 
 FSolidMoveableStructRegistry& FSolidMoveableStructRegistry::Get()
 {

@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 
 #include "SolidMacros/Macros.h"
-#include "SolidMacros/Concepts/SolidConcepts.h"
+#include "Concepts/SolidConcepts.h"
 
 #include "SolidEnumSelector.generated.h"
 

@@ -6,7 +6,7 @@
 
 #include "CoreMinimal.h"
 
-#include "SolidMacros/SolidMacros.h"
+#include "SolidMacros/Macros.h"
 
 #include "FlecsTableHandle.generated.h"
 
