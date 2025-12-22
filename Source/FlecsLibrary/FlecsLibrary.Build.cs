@@ -15,10 +15,17 @@ public class FlecsLibrary : ModuleRules
         
         bool bIsMonolithic = Target.LinkType == TargetLinkType.Monolithic;
         
+        PublicIncludePaths.AddRange(
+            new string[] {
+                ModuleDirectory + "/Public",
+            }
+        );
+        
         PrivateIncludePaths.AddRange(
             new string[] {
-                ModuleDirectory + "/Fixtures",
+                ModuleDirectory + "/Private",
                 ModuleDirectory + "/Tests",
+                ModuleDirectory + "/Fixtures",
             }
         );
         
@@ -92,20 +99,6 @@ public class FlecsLibrary : ModuleRules
         if (Target.bCompileAgainstEditor)
         {
         }
-        
-        PublicIncludePaths.AddRange(
-            new string[] {
-                ModuleDirectory + "/Public",
-            }
-        );
-        
-        PrivateIncludePaths.AddRange(
-            new string[] {
-                ModuleDirectory + "/Private",
-                ModuleDirectory + "/Tests",
-                ModuleDirectory + "/Fixtures",
-            }
-        );
         
         PublicDependencyModuleNames.AddRange(
             new string[]
