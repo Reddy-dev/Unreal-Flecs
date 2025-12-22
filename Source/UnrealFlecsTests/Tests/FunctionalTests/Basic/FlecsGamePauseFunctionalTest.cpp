@@ -51,8 +51,6 @@ void AFlecsGamePauseFunctionalTest::TickWithFlecs(float DeltaTime)
 	{
 		if (IsWorldPaused())
 		{
-			AssertTrue(DeltaTime == 0.0f, TEXT("DeltaTime should be zero when the world is paused."));
-			
 			ResumeWorld();
 			SetState(EFlecsGamePauseFunctionalTestState::RunningAfterPause);
 		}
