@@ -6,6 +6,8 @@ public class UnrealFlecsEditor : ModuleRules
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
         
+        CppStandard = CppStandardVersion.Cpp20;
+        
         IWYUSupport = IWYUSupport.Full;
 
         PublicDependencyModuleNames.AddRange(

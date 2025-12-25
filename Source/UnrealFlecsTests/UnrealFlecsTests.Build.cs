@@ -6,6 +6,8 @@ public class UnrealFlecsTests : ModuleRules
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
         
+        CppStandard = CppStandardVersion.Cpp20;
+        
         PrivateIncludePaths.AddRange(
             new string[]
             {
