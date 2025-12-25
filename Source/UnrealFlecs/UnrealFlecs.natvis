@@ -22,7 +22,7 @@
         <Expand>
             <Item Name="IsValid">this->IsValid()</Item>
             <Item Name="IsAlive">this->IsAlive()</Item>
-            <Item Name="IsInStage">this->IsInStage()</Item>
+            <Item Name="IsInStage">this->IsValid() ? this->IsInStage() : false</Item>
 
             <Item Name="NativeFlecsWorld">this->GetNativeFlecsWorld()</Item>
             <Item Name="Entity (flecs::id)">Entity</Item>
