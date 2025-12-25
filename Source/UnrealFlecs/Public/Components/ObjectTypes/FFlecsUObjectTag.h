@@ -3,7 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
 #include "Properties/FlecsComponentProperties.h"
+
 #include "FFlecsUObjectTag.generated.h"
 
 USTRUCT(BlueprintType)
