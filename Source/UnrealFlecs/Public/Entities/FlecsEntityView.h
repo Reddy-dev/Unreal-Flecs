@@ -72,19 +72,19 @@ public:
 	}
 
 	template <Unreal::Flecs::TFlecsEntityHandleTypeConcept THandle>
-	NO_DISCARD THandle ToMut(const flecs::entity_view& InView) const
+	NO_DISCARD SOLID_INLINE THandle ToMut(const flecs::entity_view& InView) const
 	{
 		return GetEntityView().mut(InView);
 	}
 
 	template <Unreal::Flecs::TFlecsEntityHandleTypeConcept THandle>
-	NO_DISCARD THandle ToMut(const flecs::world& InWorld) const
+	NO_DISCARD SOLID_INLINE THandle ToMut(const flecs::world& InWorld) const
 	{
 		return GetEntityView().mut(InWorld);
 	}
 
 	template <Unreal::Flecs::TFlecsEntityHandleTypeConcept THandle>
-	NO_DISCARD THandle ToMut(const flecs::iter& InIter) const
+	NO_DISCARD SOLID_INLINE THandle ToMut(const flecs::iter& InIter) const
 	{
 		return GetEntityView().mut(InIter);
 	}
