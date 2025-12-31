@@ -11,7 +11,6 @@
 
 class UFlecsWorld;
 
-
 /**
  * @brief A common handle to a flecs entity. This is the base for all entity handles in Unreal-Flecs.
  */
@@ -102,7 +101,7 @@ struct UNREALFLECS_API FFlecsCommonHandle
 
 public:
 	FFlecsCommonHandle() = default;
-	
+
 	SOLID_INLINE explicit FFlecsCommonHandle(const flecs::entity& InEntity)
 		: Entity(InEntity)
 	{
