@@ -4,8 +4,6 @@
 
 #include "CoreMinimal.h"
 
-#include "StructUtils/PropertyBag.h"
-
 #include "Properties/FlecsComponentProperties.h"
 #include "FlecsCollectionId.h"
 
