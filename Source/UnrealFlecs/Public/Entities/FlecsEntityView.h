@@ -18,6 +18,10 @@ class UFlecsWorld;
 
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsEntityView : public FFlecsCommonHandle
+	#if CPP
+	, public TFlecsHandleCRTPBase<FFlecsEntityView>
+	, public TFlecsCloneOps<FFlecsEntityView>
+	#endif // CPP
 {
 	GENERATED_BODY()
 
@@ -608,10 +612,9 @@ public:
 		return OwnsPair<flecs::Identifier>(flecs::Symbol);
 	}
 
-	template <Unreal::Flecs::TFlecsEntityHandleTypeConcept THandle>
-	NO_DISCARD SOLID_INLINE THandle Clone(const bool bCloneValue = true, const FFlecsId DestinationId = 0) const
+	NO_DISCARD SOLID_INLINE FFlecsEntityView Clone(const bool bCloneValue = true, const FFlecsId DestinationId = 0) const
 	{
-		return GetEntityView().clone(bCloneValue, DestinationId);
+		return TFlecsCloneOps<FFlecsEntityView>::Clone_Impl(bCloneValue, DestinationId);
 	}
 
 	NO_DISCARD SOLID_INLINE FString ToJson() const

@@ -105,6 +105,11 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A10_UnrealFlecsEntityTests,
 	{
 		const FFlecsEntityHandle ParentEntity = FlecsWorld->CreateEntity("ParentEntity")
 			.Add(flecs::OrderedChildren);
+		
+		FFlecsEntityHandle EntityHandle = ParentEntity.Clone();
+		
+		const FFlecsEntityView ParentView = ParentEntity.ToView();
+		FFlecsEntityView ChildViewA = ParentView.Clone();
 
 		const FFlecsEntityHandle ChildEntityA = FlecsWorld->CreateEntity("ChildEntityA").SetParent(ParentEntity);
 		const FFlecsEntityHandle ChildEntityB = FlecsWorld->CreateEntity("ChildEntityB").SetParent(ParentEntity);

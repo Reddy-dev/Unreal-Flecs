@@ -6,6 +6,7 @@
 
 #include "FlecsEntityHandleTypes.h"
 #include "FlecsId.h"
+#include "FlecsEntityHandleMixins.h"
 
 #include "FlecsCommonHandle.generated.h"
 
@@ -16,6 +17,9 @@ class UFlecsWorld;
  */
 USTRUCT(BlueprintInternalUseOnly)
 struct UNREALFLECS_API FFlecsCommonHandle
+	#if CPP
+		: public TFlecsHandleCRTPBase<FFlecsCommonHandle>
+	#endif // CPP
 {
 	GENERATED_BODY()
 

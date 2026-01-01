@@ -41,6 +41,10 @@ class UFlecsWorld;
  */
 USTRUCT(BlueprintType, meta = (DisableSplitPin))
 struct alignas(8) UNREALFLECS_API FFlecsEntityHandle : public FFlecsEntityView
+	#if CPP
+	, public TFlecsHandleCRTPBase<FFlecsEntityHandle>
+	, public TFlecsCloneOps<FFlecsEntityHandle>
+	#endif // CPP
 {
 	GENERATED_BODY()
 
@@ -913,6 +917,11 @@ public:
 	SOLID_INLINE const FSelfType& AddCollection(UClass* InCollection, const FInstancedStruct& InParams = FInstancedStruct()) const
 	{
 		return AddCollection(ObtainTypeClass(InCollection), InParams);
+	}
+	
+	NO_DISCARD SOLID_INLINE FFlecsEntityHandle Clone(const bool bCloneValue = true, const FFlecsId DestinationId = 0) const
+	{
+		return TFlecsCloneOps<FFlecsEntityHandle>::Clone_Impl(bCloneValue, DestinationId);
 	}
 
 	template <Solid::TScriptStructConcept TCollectionParams>
