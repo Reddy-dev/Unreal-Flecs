@@ -869,6 +869,24 @@ public:
 
 		return Component;
 	}
+
+	/*template <typename T>
+	FFlecsComponentHandle RegisterComponentType(const FString& InName, const bool bAllowTag = true, const FFlecsId InId = FFlecsId()) const
+	{
+		solid_checkf(!IsDeferred(), TEXT("Cannot register component while deferred"));
+
+		FFlecsComponentHandle Component;
+
+		World.component<T>(StringCast<char>(*InName).Get(), bAllowTag, InId);
+		solid_check(Component.IsValid());
+
+		if constexpr (Solid::IsScriptStruct<T>())
+		{
+			RegisterMemberProperties(TBaseStructure<T>::Get(), Component);
+		}
+
+		return Component;
+	}*/
 	
 	FFlecsEntityHandle RegisterComponentType(const TSolidNotNull<const UScriptStruct*> ScriptStruct) const;
 
@@ -881,6 +899,18 @@ public:
 			TEXT("Component %hs is not registered"), nameof(T).data());
 		return World.component<T>();
 	}
+
+	UFUNCTION(BlueprintCallable, Category = "Flecs")
+	bool IsIdInUse(const FFlecsId InId) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Flecs")
+	FFlecsId GetTypeId(const FFlecsId InId) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Flecs")
+	bool IsIdType(const FFlecsId InId) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Flecs")
+	bool IsIdTag(const FFlecsId InId) const;
 
 	template <typename ...TComponents>
 	flecs::observer_builder<TComponents...> CreateObserver(const FString& Name = "") const
@@ -942,8 +972,7 @@ public:
 	FFlecsEntityHandle GetTagEntity(const FGameplayTag& Tag) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	FFlecsEntityHandle CreatePrefabWithRecord(const FFlecsEntityRecord& InRecord,
-	                                          const FString& Name = "") const;
+	FFlecsEntityHandle CreatePrefabWithRecord(const FFlecsEntityRecord& InRecord, const FString& Name = "") const;
 
 	UFUNCTION(BlueprintCallable, Category = "Flecs")
 	FFlecsEntityHandle CreatePrefab(const FString& Name = "") const;
@@ -955,8 +984,7 @@ public:
 	}
 
 	FFlecsEntityHandle CreatePrefab(const TSolidNotNull<UClass*> InClass) const;
-	FFlecsEntityHandle CreatePrefabWithRecord(const FFlecsEntityRecord& InRecord,
-	                                          const TSolidNotNull<UClass*> InClass) const;
+	FFlecsEntityHandle CreatePrefabWithRecord(const FFlecsEntityRecord& InRecord, const TSolidNotNull<UClass*> InClass) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Flecs")
 	void DestroyPrefab(const FFlecsEntityHandle& InPrefab) const;

@@ -1461,7 +1461,7 @@ void UFlecsWorld::RegisterMemberProperties(const TSolidNotNull<const UStruct*> I
 			InComponent.AddMember<FObjectPtr>(Property->GetName(),
 			                                  0, Property->GetOffset_ForInternal());
 
-			if UNLIKELY_IF(ecs_id_in_use(World.c_ptr(), InComponent))
+			if UNLIKELY_IF(IsIdInUse(InComponent))
 			{
 				continue;
 			}
@@ -1494,8 +1494,7 @@ void UFlecsWorld::RegisterMemberProperties(const TSolidNotNull<const UStruct*> I
 			}
 			else
 			{
-				StructComponent
-					= GetScriptStructEntity(CastFieldChecked<FStructProperty>(Property)->Struct);
+				StructComponent = GetScriptStructEntity(CastFieldChecked<FStructProperty>(Property)->Struct);
 			}
 
 			if (!StructComponent.Has<flecs::Type>())
@@ -1522,7 +1521,7 @@ void UFlecsWorld::RegisterMemberProperties(const TSolidNotNull<const UStruct*> I
 
 FFlecsEntityHandle UFlecsWorld::RegisterScriptStruct(const UScriptStruct* ScriptStruct, const bool bComponent) const
 {
-	solid_check(ScriptStruct);
+	solid_cassume(ScriptStruct);
 
 		const FFlecsId OldScope = ClearScope();
 
@@ -1688,6 +1687,7 @@ FFlecsEntityHandle UFlecsWorld::RegisterScriptStruct(const UScriptStruct* Script
 
 FFlecsEntityHandle UFlecsWorld::RegisterScriptEnum(const UEnum* ScriptEnum) const
 {
+	solid_cassume(ScriptEnum);
 	solid_check(IsValid(ScriptEnum));
 
 	if (HasScriptEnum(ScriptEnum))
@@ -1900,6 +1900,26 @@ FFlecsEntityHandle UFlecsWorld::RegisterComponentType(const TSolidNotNull<const 
 	}
 
 	return RegisterScriptEnum(ScriptEnum);
+}
+
+bool UFlecsWorld::IsIdInUse(const FFlecsId InId) const
+{
+	return ecs_id_in_use(World.c_ptr(), InId);
+}
+
+FFlecsId UFlecsWorld::GetTypeId(const FFlecsId InId) const
+{
+	return ecs_get_typeid(World.c_ptr(), InId);
+}
+
+bool UFlecsWorld::IsIdType(const FFlecsId InId) const
+{
+	return GetTypeId(InId) != FFlecsId::Null();
+}
+
+bool UFlecsWorld::IsIdTag(const FFlecsId InId) const
+{
+	return ecs_id_is_tag(World.c_ptr(), InId);
 }
 
 void UFlecsWorld::RunPipeline(const FFlecsId InPipeline, const double DeltaTime) const
