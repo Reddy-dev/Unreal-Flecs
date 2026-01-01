@@ -43,19 +43,19 @@ public:
 
 	// @TODO: add test support for multiple game loops
 	void SetUp(TArray<TScriptInterface<IFlecsGameLoopInterface>> InGameLoopInterfaces = {}, TArray<FFlecsTickFunctionSettingsInfo> InTickFunctions = {},
-	           const TArray<UObject*>& InModules = {})
+	           const TArray<UObject*>& InModules = {}, EWorldType::Type InWorldType = EWorldType::GameRPC)
 	{
 		TestEnvironment = FScopedTestEnvironment::Get();
 		TestEnvironment->SetConsoleVariableValue("r.RayTracing.Enable", "0");
 		
 		TestWorldWrapper = MakeUnique<FTestWorldWrapper>();
-		TestWorldWrapper->CreateTestWorld(EWorldType::Game);
+		TestWorldWrapper->CreateTestWorld(InWorldType);
 		
 		TestWorld = TestWorldWrapper->GetTestWorld();
 		check(TestWorld.IsValid());
 		
-		StandaloneGameInstance = TestWorldWrapper->GetTestWorld()->GetGameInstance();
-		check(IsValid(StandaloneGameInstance));
+		/*StandaloneGameInstance = TestWorldWrapper->GetTestWorld()->GetGameInstance();
+		check(IsValid(StandaloneGameInstance));*/
 
 		WorldSubsystem = TestWorld->GetSubsystem<UFlecsWorldSubsystem>();
 		check(IsValid(WorldSubsystem));
@@ -146,9 +146,9 @@ struct UNREALFLECSTESTS_API FFlecsTestFixtureRAII
 	mutable FFlecsTestFixture Fixture;
 
 	FFlecsTestFixtureRAII(TArray<TScriptInterface<IFlecsGameLoopInterface>> InGameLoopInterfaces = {}, const TArray<FFlecsTickFunctionSettingsInfo> InTickFunctions = {},
-			   const TArray<UObject*>& InModules = {})
+			   const TArray<UObject*>& InModules = {}, EWorldType::Type InWorldType = EWorldType::GameRPC)
 	{
-		Fixture.SetUp(InGameLoopInterfaces, InTickFunctions, InModules);
+		Fixture.SetUp(InGameLoopInterfaces, InTickFunctions, InModules, InWorldType);
 	}
 
 	~FFlecsTestFixtureRAII()

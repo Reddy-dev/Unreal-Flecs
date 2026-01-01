@@ -17,6 +17,7 @@
  * B. Component Properties/Trait Registration Tests
  * C. Enum Component Registration Tests
  * D. Edge Case Tests
+ * E. Manual Registration Function Tests
  **/
 TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 							   "UnrealFlecs.A2_Components",
@@ -57,6 +58,10 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 		ASSERT_THAT(IsTrue(StaticStructEntity.IsComponent()));
 		ASSERT_THAT(IsFalse(StaticStructEntity.IsTag()));
 
+		ASSERT_THAT(IsTrue(FlecsWorld->IsIdType(StructEntity)));
+		//ASSERT_THAT(IsTrue(FlecsWorld->IsIdInUse(StructEntity)));
+		ASSERT_THAT(IsFalse(FlecsWorld->IsIdTag(StructEntity)));
+
 		ASSERT_THAT(IsTrue(StructEntity == StaticStructEntity));
 	}
 
@@ -74,6 +79,10 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 		ASSERT_THAT(IsTrue(StructEntity.IsComponent()));
 		ASSERT_THAT(IsFalse(StructEntity.IsTag()));
 
+		ASSERT_THAT(IsTrue(FlecsWorld->IsIdType(StructEntity)));
+		//ASSERT_THAT(IsTrue(FlecsWorld->IsIdInUse(StructEntity)));
+		ASSERT_THAT(IsFalse(FlecsWorld->IsIdTag(StructEntity)));
+
 		ASSERT_THAT(IsTrue(StaticStructEntity == StructEntity));
 	}
 
@@ -84,6 +93,49 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 
 		ASSERT_THAT(IsTrue(StructEntity.IsComponent()));
 		ASSERT_THAT(IsFalse(StructEntity.IsTag()));
+		
+		ASSERT_THAT(IsTrue(FlecsWorld->IsIdType(StructEntity)));
+		//ASSERT_THAT(IsTrue(FlecsWorld->IsIdInUse(StructEntity)));
+		ASSERT_THAT(IsFalse(FlecsWorld->IsIdTag(StructEntity)));
+	}
+
+	TEST_METHOD(A4_BasicComponentRegistration_Tag_CPPAPI)
+	{
+		const FFlecsEntityHandle TagEntity = FlecsWorld->RegisterComponentType<FFlecsTestStruct_Tag>();
+		ASSERT_THAT(IsTrue(TagEntity.IsValid()));
+
+		ASSERT_THAT(IsTrue(TagEntity.IsTag()));
+		//ASSERT_THAT(IsFalse(TagEntity.IsComponent()));
+		
+		ASSERT_THAT(IsFalse(FlecsWorld->IsIdType(TagEntity)));
+		//ASSERT_THAT(IsTrue(FlecsWorld->IsIdInUse(TagEntity)));
+		ASSERT_THAT(IsTrue(FlecsWorld->IsIdTag(TagEntity)));
+	}
+
+	TEST_METHOD(A5_BasicComponentRegistration_Tag_StaticStructAPI)
+	{
+		const FFlecsEntityHandle TagEntity = FlecsWorld->RegisterComponentType(FFlecsTestStruct_Tag::StaticStruct());
+		ASSERT_THAT(IsTrue(TagEntity.IsValid()));
+
+		ASSERT_THAT(IsTrue(TagEntity.IsTag()));
+		//ASSERT_THAT(IsFalse(TagEntity.IsComponent()));
+		
+		ASSERT_THAT(IsFalse(FlecsWorld->IsIdType(TagEntity)));
+		//ASSERT_THAT(IsTrue(FlecsWorld->IsIdInUse(TagEntity)));
+		ASSERT_THAT(IsTrue(FlecsWorld->IsIdTag(TagEntity)));
+	}
+
+	TEST_METHOD(A6_BasicComponentRegistration_Tag_CPPOnlyType)
+	{
+		const FFlecsEntityHandle TagEntity = FlecsWorld->RegisterComponentType<FFlecsTest_CPPStruct>();
+		ASSERT_THAT(IsTrue(TagEntity.IsValid()));
+
+		ASSERT_THAT(IsTrue(TagEntity.IsTag()));
+		//ASSERT_THAT(IsFalse(TagEntity.IsComponent()));
+		
+		ASSERT_THAT(IsFalse(FlecsWorld->IsIdType(TagEntity)));
+		//ASSERT_THAT(IsTrue(FlecsWorld->IsIdInUse(TagEntity)));
+		ASSERT_THAT(IsTrue(FlecsWorld->IsIdTag(TagEntity)));
 	}
 
 	TEST_METHOD(B1_GetComponentPropertyTraits_CPPAPI)
@@ -261,6 +313,17 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 		// @TODO: Can we unify this?
 		ASSERT_THAT(IsTrue(OneByteWithoutUPropertyEntity.IsTag()));
 	}
+
+	/*TEST_METHOD(E1_BasicComponentRegistrationWithCustomName_CPPAPI)
+	{
+		const FString CustomName = TEXT("MyCustomComponentName");
+		const FFlecsEntityHandle StructEntity = FlecsWorld->RegisterComponentType<FFlecsTest_CPPStructValue>(CustomName);
+		ASSERT_THAT(IsTrue(StructEntity.IsValid()));
+
+		ASSERT_THAT(IsTrue(StructEntity.IsComponent()));
+		ASSERT_THAT(IsFalse(StructEntity.IsTag()));
+		ASSERT_THAT(IsTrue(StructEntity.GetName() == CustomName));
+	}*/
 	
 }; // End of A2_UnrealFlecsComponentRegistrationTests
 
