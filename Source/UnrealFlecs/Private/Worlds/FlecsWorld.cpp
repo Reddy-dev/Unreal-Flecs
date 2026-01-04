@@ -1364,7 +1364,10 @@ bool UFlecsWorld::HasScriptEnum(const UEnum* ScriptEnum) const
 
 FFlecsEntityHandle UFlecsWorld::GetScriptStructEntity(const UScriptStruct* ScriptStruct) const
 {
-	solid_check(ScriptStruct);
+	solid_check(ScriptStruct)
+
+	solid_checkf(HasScriptStruct(ScriptStruct),
+		TEXT("Script struct %s is not registered"), *ScriptStruct->GetStructCPPName());
 		
 	const FFlecsId Component = TypeMapComponent->ScriptStructMap.at(ScriptStruct);
 	solid_checkf(IsAlive(Component), TEXT("Entity is not alive"));
@@ -1375,6 +1378,9 @@ FFlecsEntityHandle UFlecsWorld::GetScriptStructEntity(const UScriptStruct* Scrip
 FFlecsEntityHandle UFlecsWorld::GetScriptEnumEntity(const UEnum* ScriptEnum) const
 {
 	solid_check(ScriptEnum);
+	
+	solid_checkf(HasScriptEnum(ScriptEnum),
+		TEXT("Script enum %s is not registered"), *ScriptEnum->GetName());
 		
 	const FFlecsId Component = TypeMapComponent->ScriptEnumMap.at(ScriptEnum);
 	solid_checkf(ecs_is_valid(World.c_ptr(), Component), TEXT("Entity is not alive"));
