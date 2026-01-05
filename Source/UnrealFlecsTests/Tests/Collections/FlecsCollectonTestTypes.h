@@ -61,4 +61,4 @@ class UNREALFLECSTESTS_API UFlecsCollectionTestClassWithInterface_WithSubEntitie
 
 public:
 	virtual void BuildCollection(FFlecsCollectionBuilder& Builder) const override;
-};
+}; // class UFlecsCollectionTestClassWithInterface_WithSubEntities

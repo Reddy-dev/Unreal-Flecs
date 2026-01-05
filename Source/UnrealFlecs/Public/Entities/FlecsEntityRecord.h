@@ -41,7 +41,21 @@ namespace Unreal::Flecs
 	concept CRecordPairSlotType = std::is_convertible<T, FFlecsId>::value
 		|| std::is_convertible<T, FGameplayTag>::value
 		|| std::is_convertible<T, FInstancedStruct>::value;
+	
+	template <typename T>
+	concept CNonStructUtilScriptStructType = Solid::TScriptStructConcept<T> && !Solid::TStructUtilsTypeConcept<T>;
 		
+	namespace Entity::Records
+	{
+		template <typename TParentBuilder, typename TFragmentType>
+		concept CHasCustomFragmentBuilder = requires(TParentBuilder& Parent, TFragmentType& InFragment)
+		{
+			typename TFragmentType::FBuilder;
+			{ typename TFragmentType::FBuilder(Parent, InFragment) };
+			
+		}; // concept CHasCustomFragmentBuilder
+		
+	} // namespace Entity::Records
 	
 } // namespace Unreal::Flecs
 
@@ -70,7 +84,7 @@ struct UNREALFLECS_API FFlecsRecordPairSlot
 		return OutSlot;
 	}
 
-	template <Solid::TScriptStructConcept T>
+	template <Unreal::Flecs::CNonStructUtilScriptStructType T>
 	static NO_DISCARD FFlecsRecordPairSlot Make()
 	{
 		FFlecsRecordPairSlot OutSlot;
@@ -79,7 +93,7 @@ struct UNREALFLECS_API FFlecsRecordPairSlot
 		return OutSlot;
 	}
 
-	template <Solid::TScriptStructConcept T>
+	template <Unreal::Flecs::CNonStructUtilScriptStructType T>
 	static NO_DISCARD FFlecsRecordPairSlot Make(const T& InValue)
 	{
 		FFlecsRecordPairSlot OutSlot;
@@ -288,6 +302,8 @@ struct UNREALFLECS_API FFlecsComponentTypeInfo final
 	
 }; // struct FFlecsComponentTypeInfo
 
+// @TODO: utilize C++23 'explicit this' feature when available
+
 USTRUCT(BlueprintInternalUseOnly)
 struct UNREALFLECS_API FFlecsEntityRecordFragment
 {
@@ -295,6 +311,7 @@ struct UNREALFLECS_API FFlecsEntityRecordFragment
 
 public:
 	FFlecsEntityRecordFragment() = default;
+	
 	virtual ~FFlecsEntityRecordFragment()
 	{
 	}
@@ -316,6 +333,8 @@ USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsEntityRecord final
 {
 	GENERATED_BODY()
+	
+public:
 
 	FORCEINLINE FFlecsEntityRecord() = default;
 
@@ -327,6 +346,232 @@ struct UNREALFLECS_API FFlecsEntityRecord final
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Entity Record", meta = (ExcludeBaseStruct, NoElementDuplicate))
 	TArray<TInstancedStruct<FFlecsEntityRecordFragment>> Fragments;
+	
+	struct FBuilder
+	{
+	public:
+		FORCEINLINE explicit FBuilder(FFlecsEntityRecord& InRecord)
+			: EntityRecord(InRecord)
+		{
+		}
+		
+		FORCEINLINE FFlecsEntityRecord& Build()
+		{
+			return EntityRecord;
+		}
+		
+		FORCEINLINE const FFlecsEntityRecord& Build() const
+		{
+			return EntityRecord;
+		}
+		
+		template <Unreal::Flecs::CNonStructUtilScriptStructType T>
+		FORCEINLINE FBuilder& Component()
+		{
+			EntityRecord.AddComponent<T>();
+			return *this;
+		}
+
+		template <Unreal::Flecs::CNonStructUtilScriptStructType T>
+		FORCEINLINE FBuilder& Component(const T& InValue)
+		{
+			EntityRecord.AddComponent<T>(InValue);
+			return *this;
+		}
+
+		template <Unreal::Flecs::CNonStructUtilScriptStructType T>
+		FORCEINLINE FBuilder& Component(T&& InValue)
+		{
+			EntityRecord.AddComponent<T>(MoveTemp(InValue));
+			return *this;
+		}
+		
+		FORCEINLINE FBuilder& Component(const FFlecsId InEntityHandle)
+		{
+			EntityRecord.AddComponent(InEntityHandle);
+			return *this;
+		}
+		
+		FORCEINLINE FBuilder& Component(const TSolidNotNull<const UScriptStruct*> InStructType)
+		{
+			EntityRecord.AddComponent(InStructType);
+			return *this;
+		}
+		
+		FORCEINLINE FBuilder& Component(const FInstancedStruct& InStruct)
+		{
+			EntityRecord.AddComponent(InStruct);
+			return *this;
+		}
+		
+		FORCEINLINE FBuilder& Component(FInstancedStruct&& InStruct)
+		{
+			EntityRecord.AddComponent(MoveTemp(InStruct));
+			return *this;
+		}
+
+		FORCEINLINE FBuilder& GameplayTag(const FGameplayTag& InGameplayTag)
+		{
+			EntityRecord.AddComponent(InGameplayTag);
+			return *this;
+		}
+
+		FORCEINLINE FBuilder& GameplayTag(FGameplayTag&& InGameplayTag)
+		{
+			EntityRecord.AddComponent(MoveTemp(InGameplayTag));
+			return *this;
+		}
+
+		FORCEINLINE FBuilder& Enum(const FSolidEnumSelector& InScriptEnum)
+		{
+			EntityRecord.AddComponent(InScriptEnum);
+			return *this;
+		}
+
+		FORCEINLINE FBuilder& Enum(FSolidEnumSelector&& InScriptEnum)
+		{
+			EntityRecord.AddComponent(MoveTemp(InScriptEnum));
+			return *this;
+		}
+		
+		template <Solid::TStaticEnumConcept TEnum>
+		FORCEINLINE FBuilder& Enum(const TEnum InEnumValue)
+		{
+			EntityRecord.AddComponent<TEnum>(InEnumValue);
+			return *this;
+		}
+
+		FORCEINLINE FBuilder& Pair(const FFlecsRecordPair& InPair)
+		{
+			EntityRecord.AddComponent(InPair);
+			return *this;
+		}
+
+		FORCEINLINE FBuilder& Pair(FFlecsRecordPair&& InPair)
+		{
+			EntityRecord.AddComponent(MoveTemp(InPair));
+			return *this;
+		}
+		
+		template <Unreal::Flecs::CNonStructUtilScriptStructType TFragmentType, typename... TArgs>
+		requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
+		FORCEINLINE FBuilder& Fragment(TArgs&&... InArgs)
+		{
+			EntityRecord.AddFragment<TFragmentType>(Forward<TArgs>(InArgs)...);
+			
+			return *this;
+		}
+		
+		FORCEINLINE FBuilder& Fragment(const TInstancedStruct<FFlecsEntityRecordFragment>& InFragment)
+		{
+			EntityRecord.AddFragment(InFragment);
+			return *this;
+		}
+		
+		template <Unreal::Flecs::CNonStructUtilScriptStructType TFragmentType>
+		requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
+		struct TFragmentBuilderBase
+		{
+		public:
+			TFragmentBuilderBase(FBuilder& InParent, TFragmentType& InFragment)
+				: Parent(InParent)
+				, Fragment(InFragment)
+			{
+			}
+
+			FORCEINLINE TFragmentType* operator->()
+			{
+				return &Fragment;
+			}
+			
+			NO_DISCARD FORCEINLINE TFragmentType& Get()
+			{
+				return Fragment;
+			}
+			
+			FORCEINLINE FBuilder& End() const
+			{
+				return Parent;
+			}
+
+		private:
+			FBuilder& Parent;
+			TFragmentType& Fragment;
+			
+		}; // struct TFragmentBuilderBase
+		
+		template <Unreal::Flecs::CNonStructUtilScriptStructType TFragmentType, typename... TArgs>
+		requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
+		FORCEINLINE auto FragmentScope(TArgs&&... InArgs)
+		{
+			TFragmentType& Fragment = EntityRecord.GetOrAddFragment<TFragmentType>(Forward<TArgs>(InArgs)...);
+
+			if constexpr (Unreal::Flecs::Entity::Records::CHasCustomFragmentBuilder<FBuilder, TFragmentType>)
+			{
+				return typename TFragmentType::FBuilder(*this, Fragment);
+			}
+			else
+			{
+				return TFragmentBuilderBase<TFragmentType>(*this, Fragment);
+			}
+		}
+		
+		struct FSubEntityScope
+		{
+			FSubEntityScope(FBuilder& InParent, FFlecsEntityRecord& InChildRecord)
+				: Parent(&InParent)
+				, ChildRecord(&InChildRecord)
+			{
+			}
+			
+			FORCEINLINE FBuilder operator->() const
+			{
+				return FBuilder(*ChildRecord);
+			}
+			
+			NO_DISCARD FORCEINLINE FBuilder Get() const
+			{
+				return FBuilder(*ChildRecord);
+			}
+			
+			FORCEINLINE FBuilder& End() const
+			{
+				return *Parent;
+			}
+
+		private:
+			FBuilder* Parent = nullptr;
+			FFlecsEntityRecord* ChildRecord = nullptr;
+			
+		}; // struct FSubEntityScope
+		
+		FORCEINLINE FSubEntityScope SubEntity()
+		{
+			const int32 Index =
+				EntityRecord.SubEntities.Add(TInstancedStruct<FFlecsEntityRecord>::Make<FFlecsEntityRecord>());
+
+			FFlecsEntityRecord& Child = EntityRecord.SubEntities[Index].GetMutable();
+			return FSubEntityScope(*this, Child);
+		}
+		
+		FORCEINLINE FBuilder& SubEntity(const FFlecsEntityRecord& InSubEntity)
+		{
+			EntityRecord.AddSubEntity(InSubEntity);
+			return *this;
+		}
+		
+	private:
+		FFlecsEntityRecord& EntityRecord;
+		
+	}; // struct FBuilder
+	
+	template <Unreal::Flecs::CNonStructUtilScriptStructType TFragmentType>
+	using FFragmentBuilderType = FBuilder::TFragmentBuilderBase<TFragmentType>;
+	
+	FORCEINLINE FBuilder Builder()
+	{
+		return FBuilder(*this);
+	}
 
 	NO_DISCARD FORCEINLINE bool operator==(const FFlecsEntityRecord& Other) const
 	{
@@ -337,8 +582,43 @@ struct UNREALFLECS_API FFlecsEntityRecord final
 	{
 		return !(*this == Other);
 	}
+	
+	FORCEINLINE FFlecsEntityRecord& AddComponent(const TSolidNotNull<const UScriptStruct*> InStructType)
+	{
+		FFlecsComponentTypeInfo NewComponent;
+		NewComponent.NodeType = EFlecsComponentNodeType::ScriptStruct;
 
-	template <Solid::TScriptStructConcept T>
+		FInstancedStruct NewInstancedStruct;
+		NewInstancedStruct.InitializeAs(InStructType);
+		
+		NewComponent.ScriptStruct = MoveTemp(NewInstancedStruct);
+		Components.Add(NewComponent);
+
+		return *this;
+	}
+	
+	FORCEINLINE FFlecsEntityRecord& AddComponent(const FInstancedStruct& InStruct)
+	{
+		FFlecsComponentTypeInfo NewComponent;
+		NewComponent.NodeType = EFlecsComponentNodeType::ScriptStruct;
+		NewComponent.ScriptStruct = InStruct;
+		Components.Add(NewComponent);
+
+		return *this;
+	}
+	
+	FORCEINLINE FFlecsEntityRecord& AddComponent(FInstancedStruct&& InStruct)
+	{
+		FFlecsComponentTypeInfo NewComponent;
+		NewComponent.NodeType = EFlecsComponentNodeType::ScriptStruct;
+		NewComponent.ScriptStruct = MoveTemp(InStruct);
+		Components.Add(NewComponent);
+
+		return *this;
+	}
+
+	template <Unreal::Flecs::CNonStructUtilScriptStructType T>
+	requires (!std::is_enum_v<T>)
 	FORCEINLINE FFlecsEntityRecord& AddComponent()
 	{
 		FFlecsComponentTypeInfo NewComponent;
@@ -349,7 +629,8 @@ struct UNREALFLECS_API FFlecsEntityRecord final
 		return *this;
 	}
 
-	template <Solid::TScriptStructConcept T>
+	template <Unreal::Flecs::CNonStructUtilScriptStructType T>
+	requires (!std::is_enum_v<T>)
 	FORCEINLINE FFlecsEntityRecord& AddComponent(const T& InComponent)
 	{
 		FFlecsComponentTypeInfo NewComponent;
@@ -360,7 +641,8 @@ struct UNREALFLECS_API FFlecsEntityRecord final
 		return *this;
 	}
 
-	template <Solid::TScriptStructConcept T>
+	template <Unreal::Flecs::CNonStructUtilScriptStructType T>
+	requires (!std::is_enum_v<T>)
 	FORCEINLINE FFlecsEntityRecord& AddComponent(T&& InComponent)
 	{
 		FFlecsComponentTypeInfo NewComponent;
@@ -418,6 +700,24 @@ struct UNREALFLECS_API FFlecsEntityRecord final
 		NewComponent.ScriptEnum = MoveTemp(InScriptEnum);
 		Components.Add(NewComponent);
 
+		return *this;
+	}
+	
+	template <Solid::TStaticEnumConcept TEnum>
+	requires (std::is_enum_v<TEnum>)
+	FORCEINLINE FFlecsEntityRecord& AddComponent(const TEnum InEnumValue)
+	{
+		FFlecsComponentTypeInfo NewComponent;
+		NewComponent.NodeType = EFlecsComponentNodeType::ScriptEnum;
+		
+		FSolidEnumSelector NewEnumSelector;
+		NewEnumSelector.Class = StaticEnum<TEnum>();
+		NewEnumSelector.Value = static_cast<int64>(InEnumValue);
+		
+		NewComponent.ScriptEnum = NewEnumSelector;
+		
+		Components.Add(NewComponent);
+		
 		return *this;
 	}
 
@@ -479,7 +779,7 @@ struct UNREALFLECS_API FFlecsEntityRecord final
 		return SubEntities[InIndex];
 	}
 
-	template <Solid::TScriptStructConcept TFragmentType>
+	template <Unreal::Flecs::CNonStructUtilScriptStructType TFragmentType>
 	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 	FORCEINLINE int32 AddFragment(const TFragmentType& InFragment)
 	{
@@ -493,7 +793,7 @@ struct UNREALFLECS_API FFlecsEntityRecord final
 		return Fragments.Add(TInstancedStruct<FFlecsEntityRecordFragment>::Make<TFragmentType>(InFragment));
 	}
 
-	template <Solid::TScriptStructConcept TFragmentType, typename... TArgs>
+	template <Unreal::Flecs::CNonStructUtilScriptStructType TFragmentType, typename... TArgs>
 	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 	FORCEINLINE int32 AddFragment(TArgs&&... InArgs)
 	{
@@ -507,7 +807,7 @@ struct UNREALFLECS_API FFlecsEntityRecord final
 		return Fragments.Add(TInstancedStruct<FFlecsEntityRecordFragment>::Make<TFragmentType>(Forward<TArgs>(InArgs)...));
 	}
 
-	template <Solid::TScriptStructConcept TFragmentType>
+	template <Unreal::Flecs::CNonStructUtilScriptStructType TFragmentType>
 	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 	FORCEINLINE int32 AddFragment()
 	{
@@ -533,6 +833,42 @@ struct UNREALFLECS_API FFlecsEntityRecord final
 		}
 		
 		return Fragments.Add(InFragment);
+	}
+	
+	template <Solid::TScriptStructConcept TFragmentType>
+	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
+	FORCEINLINE TFragmentType& GetOrAddFragment()
+	{
+		for (TInstancedStruct<FFlecsEntityRecordFragment>& Fragment : Fragments)
+		{
+			if (Fragment.GetScriptStruct() == TBaseStructure<TFragmentType>::Get())
+			{
+				return Fragment.GetMutable<TFragmentType>();
+			}
+		}
+
+		const int32 NewIndex = AddFragment<TFragmentType>();
+		solid_cassumef(NewIndex != INDEX_NONE, TEXT("Failed to add new fragment"));
+		
+		return Fragments[NewIndex].GetMutable<TFragmentType>();
+	}
+	
+	template <Solid::TScriptStructConcept TFragmentType, typename... TArgs>
+	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
+	FORCEINLINE TFragmentType& GetOrAddFragment(TArgs&&... InArgs)
+	{
+		for (TInstancedStruct<FFlecsEntityRecordFragment>& Fragment : Fragments)
+		{
+			if (Fragment.GetScriptStruct() == TBaseStructure<TFragmentType>::Get())
+			{
+				return Fragment.GetMutable<TFragmentType>();
+			}
+		}
+		
+		const int32 NewIndex = AddFragment<TFragmentType>(Forward<TArgs>(InArgs)...);
+		solid_cassumef(NewIndex != INDEX_NONE, TEXT("Failed to add new fragment"));
+		
+		return Fragments[NewIndex].GetMutable<TFragmentType>();
 	}
 
 	NO_DISCARD FORCEINLINE bool HasFragment(const TSolidNotNull<const UScriptStruct*> InFragmentType) const
@@ -592,7 +928,6 @@ struct UNREALFLECS_API FFlecsNamedEntityRecordFragment : public FFlecsEntityReco
 
 public:
 	FORCEINLINE FFlecsNamedEntityRecordFragment() = default;
-	
 	FORCEINLINE FFlecsNamedEntityRecordFragment(const FString& InName)
 		: Name(InName)
 	{
@@ -600,11 +935,27 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Entity Record Fragment")
 	FString Name;
-
+	
 	virtual void PreApplyRecordToEntity(
 			const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsEntityHandle& InEntityHandle) const override;
 	
+	struct FBuilder;
+	
 }; // struct FFlecsNamedEntityRecordFragment
+
+struct FFlecsNamedEntityRecordFragment::FBuilder : public FFlecsEntityRecord::FFragmentBuilderType<FFlecsNamedEntityRecordFragment>
+{
+	using Super = FFlecsEntityRecord::FFragmentBuilderType<FFlecsNamedEntityRecordFragment>;
+	using Super::Super;
+	
+public:
+	FORCEINLINE FBuilder& Named(const FString& InName)
+	{
+		this->Get().Name = InName;
+		return *this;
+	}
+		
+}; // struct FFlecsNamedEntityRecordFragment::FBuilder
 
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsEntityRecordComponent

@@ -55,6 +55,17 @@ namespace Solid
 	{
 		requires IsScriptStruct<T>();
 	}; // concept TScriptStructConcept
+	
+	template <typename T>
+	concept TStructUtilsTypeConcept = requires
+	{
+		requires (TIsDerivedFrom<T, struct FInstancedStruct>::IsDerived &&
+					  TIsDerivedFrom<T, struct FStructView>::IsDerived &&
+					  TIsDerivedFrom<T, struct FConstStructView>::IsDerived &&
+					  TIsDerivedFrom<T, struct FSharedStruct>::IsDerived &&
+					  TIsDerivedFrom<T, struct FConstSharedStruct>::IsDerived);
+		
+	}; // concept TStructUtilsTypeConcept
 
 	template <typename T>
 	NO_DISCARD FORCEINLINE constexpr bool IsStaticClass()
@@ -89,6 +100,7 @@ namespace Solid
 	template <typename T>
 	concept TStaticEnumConcept = requires
 	{
+		requires std::is_enum<T>::value;
 		requires IsStaticEnum<T>();
 	}; // concept TStaticEnumConcept
 

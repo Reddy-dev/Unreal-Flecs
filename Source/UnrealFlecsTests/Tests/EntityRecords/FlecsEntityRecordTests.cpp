@@ -13,6 +13,7 @@
  * A. Entity Record Application Tests
  * B. Entity Record Prefab Tests
  * C. Entity Record Fragment Tests
+ * D. Entity Record Builder API Tests
  */
 TEST_CLASS_WITH_FLAGS_AND_TAGS(B1_FlecsEntityRecordTests, "UnrealFlecs.B1_EntityRecords",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter
@@ -32,6 +33,8 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B1_FlecsEntityRecordTests, "UnrealFlecs.B1_Entity
 		FlecsWorld->RegisterComponentType<FUSTRUCTPairTestComponent_Second>();
 		FlecsWorld->RegisterComponentType<FUSTRUCTPairTestComponent_Data>();
 		FlecsWorld->RegisterComponentType<EFlecsTestEnum_UENUM>();
+		FlecsWorld->RegisterComponentType<FFlecsTestStruct_Tag_Inherited>();
+		FlecsWorld->RegisterComponentType<FFlecsTestStruct_WithPropertyTraits>();
 	}
 
 	AFTER_EACH()
@@ -109,6 +112,8 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B1_FlecsEntityRecordTests, "UnrealFlecs.B1_Entity
 
 		Record.ApplyRecordToEntity(FlecsWorld, Entity);
 		ASSERT_THAT(IsTrue(Entity.HasPair<FUSTRUCTPairTestComponent_Data, FUSTRUCTPairTestComponent>()));
+		ASSERT_THAT(IsTrue(Entity.HasPair(FUSTRUCTPairTestComponent_Data::StaticStruct(), FUSTRUCTPairTestComponent::StaticStruct())));
+		
 		ASSERT_THAT(IsFalse(Entity.HasPair<FUSTRUCTPairTestComponent_Second, FUSTRUCTPairTestComponent>()));
 		ASSERT_THAT(IsFalse(Entity.HasPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Data>()));
 
@@ -133,6 +138,8 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B1_FlecsEntityRecordTests, "UnrealFlecs.B1_Entity
 		
 		Record.ApplyRecordToEntity(FlecsWorld, Entity);
 		ASSERT_THAT(IsTrue(Entity.HasPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Data>()));
+		ASSERT_THAT(IsTrue(Entity.HasPair(FUSTRUCTPairTestComponent::StaticStruct(), FUSTRUCTPairTestComponent_Data::StaticStruct())));
+		
 		ASSERT_THAT(IsFalse(Entity.HasPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>()));
 
 		const FUSTRUCTPairTestComponent_Data& Data
@@ -151,7 +158,10 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B1_FlecsEntityRecordTests, "UnrealFlecs.B1_Entity
 		Record.ApplyRecordToEntity(FlecsWorld, Entity);
 
 		ASSERT_THAT(IsFalse(Entity.Has<FFlecsTestStruct_Tag>()));
+		ASSERT_THAT(IsFalse(Entity.Has(FFlecsTestStruct_Tag::StaticStruct())));
 		ASSERT_THAT(IsFalse(Entity.Has<FFlecsTestStruct_Value>()));
+		ASSERT_THAT(IsFalse(Entity.Has(FFlecsTestStruct_Value::StaticStruct())));
+		
 		ASSERT_THAT(IsFalse(Entity.HasPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>()));
 	}
 
@@ -173,13 +183,16 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B1_FlecsEntityRecordTests, "UnrealFlecs.B1_Entity
 		Record.ApplyRecordToEntity(FlecsWorld, Entity);
 
 		ASSERT_THAT(IsTrue(Entity.Has<FFlecsTestStruct_Tag>()));
+		ASSERT_THAT(IsTrue(Entity.Has(FFlecsTestStruct_Tag::StaticStruct())));
 		ASSERT_THAT(IsTrue(Entity.Has<FFlecsTestStruct_Value>()));
+		ASSERT_THAT(IsTrue(Entity.Has(FFlecsTestStruct_Value::StaticStruct())));
+		
 		const auto& [Value] = Entity.Get<FFlecsTestStruct_Value>();
 		ASSERT_THAT(IsTrue(Value == 789));
 		ASSERT_THAT(IsTrue(Entity.HasPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>()));
 	}
 
-	TEST_METHOD(A8_ApplyRecord_MultipleTimes_AddScriptEnum)
+	TEST_METHOD(A8_ApplyRecord_AddScriptEnum_ScriptAPI)
 	{
 		FFlecsEntityRecord Record;
 		const FSolidEnumSelector EnumValue = FSolidEnumSelector::Make<EFlecsTestEnum_UENUM>(EFlecsTestEnum_UENUM::One);
@@ -195,8 +208,24 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B1_FlecsEntityRecordTests, "UnrealFlecs.B1_Entity
 		ASSERT_THAT(IsTrue(Entity.Has(StaticEnum<EFlecsTestEnum_UENUM>(),
 			static_cast<int64>(EFlecsTestEnum_UENUM::One))));
 	}
+	
+	TEST_METHOD(A9_ApplyRecord_AddScriptEnum_CPPAPI)
+	{
+		FFlecsEntityRecord Record;;
+		Record.AddComponent<EFlecsTestEnum_UENUM>(EFlecsTestEnum_UENUM::Two);
 
-	TEST_METHOD(A9_ApplyRecord_WithSubEntities_AddsComponents)
+		const FFlecsEntityHandle Entity = FlecsWorld->CreateEntity();
+		ASSERT_THAT(IsTrue(Entity.IsValid()));
+		
+		Record.ApplyRecordToEntity(FlecsWorld, Entity);
+
+		ASSERT_THAT(IsTrue(Entity.HasPair<EFlecsTestEnum_UENUM>(flecs::Wildcard)));
+		ASSERT_THAT(IsTrue(Entity.Has<EFlecsTestEnum_UENUM>(EFlecsTestEnum_UENUM::Two)));
+		ASSERT_THAT(IsTrue(Entity.Has(StaticEnum<EFlecsTestEnum_UENUM>(),
+			static_cast<int64>(EFlecsTestEnum_UENUM::Two))));
+	}
+
+	TEST_METHOD(A10_ApplyRecord_WithSubEntities_AddsComponents)
 	{
 		FFlecsEntityRecord SubRecord;
 		SubRecord.AddComponent<FFlecsTestStruct_Tag>();
@@ -210,6 +239,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B1_FlecsEntityRecordTests, "UnrealFlecs.B1_Entity
 		Record.ApplyRecordToEntity(FlecsWorld, Entity);
 		// Should be in the sub-entity
 		ASSERT_THAT(IsFalse(Entity.Has<FFlecsTestStruct_Tag>()));
+		ASSERT_THAT(IsFalse(Entity.Has(FFlecsTestStruct_Tag::StaticStruct())));
 
 		bool bFoundChild = false;
 		Entity.IterateChildren([&](const FFlecsEntityHandle& ChildEntity)
@@ -221,6 +251,27 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B1_FlecsEntityRecordTests, "UnrealFlecs.B1_Entity
 		});
 
 		ASSERT_THAT(IsTrue(bFoundChild));
+	}
+	
+	TEST_METHOD(A11_ApplyRecord_WithScriptStructTagsAndComponents_AddsAll)
+	{
+		FFlecsEntityRecord Record;
+		Record.AddComponent(FFlecsTestStruct_Tag::StaticStruct());
+		Record.AddComponent(FInstancedStruct::Make<FFlecsTestStruct_Value>(FFlecsTestStruct_Value{ .Value = 987 }));
+
+		const FFlecsEntityHandle Entity = FlecsWorld->CreateEntity();
+		ASSERT_THAT(IsTrue(Entity.IsValid()));
+
+		Record.ApplyRecordToEntity(FlecsWorld, Entity);
+
+		ASSERT_THAT(IsTrue(Entity.Has<FFlecsTestStruct_Tag>()));
+		ASSERT_THAT(IsTrue(Entity.Has(FFlecsTestStruct_Tag::StaticStruct())));
+		
+		ASSERT_THAT(IsTrue(Entity.Has<FFlecsTestStruct_Value>()));
+		ASSERT_THAT(IsTrue(Entity.Has(FFlecsTestStruct_Value::StaticStruct())));
+
+		const auto& [Value] = Entity.Get<FFlecsTestStruct_Value>();
+		ASSERT_THAT(IsTrue(Value == 987));
 	}
 
 	TEST_METHOD(B1_CreatePrefabWithRecord_ApplyPrefabToEntity_AddsTagComponent)
@@ -237,6 +288,8 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B1_FlecsEntityRecordTests, "UnrealFlecs.B1_Entity
 
 		TestEntity.AddPrefab(PrefabEntity);
 		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Tag>()));
+		ASSERT_THAT(IsTrue(TestEntity.Has(FFlecsTestStruct_Tag::StaticStruct())));
+		
 		ASSERT_THAT(IsTrue(TestEntity.IsA(PrefabEntity)));
 	}
 
@@ -254,6 +307,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B1_FlecsEntityRecordTests, "UnrealFlecs.B1_Entity
 
 		TestEntity.AddPrefab(PrefabEntity);
 		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Value>()));
+		ASSERT_THAT(IsTrue(TestEntity.Has(FFlecsTestStruct_Value::StaticStruct())));
 
 		const auto& [Value] = TestEntity.Get<FFlecsTestStruct_Value>();
 		ASSERT_THAT(IsTrue(Value == 321));
@@ -302,7 +356,9 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B1_FlecsEntityRecordTests, "UnrealFlecs.B1_Entity
 		TestEntity.AddPrefab(PrefabEntity);
 
 		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Tag>()));
+		ASSERT_THAT(IsTrue(TestEntity.Has(FFlecsTestStruct_Tag::StaticStruct())));
 		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Value>()));
+		ASSERT_THAT(IsTrue(TestEntity.Has(FFlecsTestStruct_Value::StaticStruct())));
 		
 		const auto& [Value] = TestEntity.Get<FFlecsTestStruct_Value>();
 		ASSERT_THAT(IsTrue(Value == 654));
@@ -371,8 +427,112 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B1_FlecsEntityRecordTests, "UnrealFlecs.B1_Entity
 		const FFlecsEntityHandle Entity = FlecsWorld->CreateEntityWithRecord(Record);
 		ASSERT_THAT(IsTrue(Entity.IsValid()));
 		ASSERT_THAT(IsTrue(Entity.HasName()));
+		
 		ASSERT_THAT(AreEqual(TEXT("TestEntityWithRecordFragment"), Entity.GetName()));
+		
 		ASSERT_THAT(IsTrue(Entity.Has<FFlecsTestStruct_Tag>()));
+		ASSERT_THAT(IsTrue(Entity.Has(FFlecsTestStruct_Tag::StaticStruct())));
+	}
+	
+	TEST_METHOD(D1_BuilderAPI_CreateEntityRecord_AddsComponents_CPPAPI)
+	{
+		FFlecsEntityRecord Record = FFlecsEntityRecord().Builder()
+			.Fragment<FFlecsNamedEntityRecordFragment>("BuilderAPITestEntity")
+			.Component<FFlecsTestStruct_Tag>()
+			.Component<FFlecsTestStruct_Value>(FFlecsTestStruct_Value{ .Value = 987 })
+			.Component(FFlecsTestStruct_WithPropertyTraits::StaticStruct())
+			.GameplayTag(FFlecsTestNativeGameplayTags::Get().TestTag1)
+			.Enum(EFlecsTestEnum_UENUM::Two)
+			.Build();
+
+		const FFlecsEntityHandle Entity = FlecsWorld->CreateEntityWithRecord(Record);
+		ASSERT_THAT(IsTrue(Entity.IsValid()));
+		
+		ASSERT_THAT(IsTrue(Entity.HasName()));
+		ASSERT_THAT(AreEqual(TEXT("BuilderAPITestEntity"), Entity.GetName()));
+		
+		ASSERT_THAT(IsTrue(Entity.Has<FFlecsTestStruct_Tag>()));
+		ASSERT_THAT(IsTrue(Entity.Has(FFlecsTestStruct_Tag::StaticStruct())));
+		
+		ASSERT_THAT(IsTrue(Entity.Has<FFlecsTestStruct_Value>()));
+		ASSERT_THAT(IsTrue(Entity.Has(FFlecsTestStruct_Value::StaticStruct())));
+		
+		ASSERT_THAT(IsTrue(Entity.Has(FFlecsTestStruct_WithPropertyTraits::StaticStruct())));
+		
+		ASSERT_THAT(IsTrue(Entity.Has(FFlecsTestNativeGameplayTags::Get().TestTag1)));
+		
+		ASSERT_THAT(IsTrue(Entity.HasPair<EFlecsTestEnum_UENUM>(flecs::Wildcard)));
+		ASSERT_THAT(IsTrue(Entity.Has<EFlecsTestEnum_UENUM>(EFlecsTestEnum_UENUM::Two)));
+		ASSERT_THAT(IsTrue(Entity.Has(StaticEnum<EFlecsTestEnum_UENUM>(), static_cast<int64>(EFlecsTestEnum_UENUM::Two))));
+		
+		const auto& [Value] = Entity.Get<FFlecsTestStruct_Value>();
+		ASSERT_THAT(IsTrue(Value == 987));
+	}
+	
+	TEST_METHOD(D2_BuilderAPI_CreateEntityRecord_AddsComponents_ScriptStructAPI)
+	{
+		FFlecsEntityRecord Record = FFlecsEntityRecord().Builder()
+			.Fragment<FFlecsNamedEntityRecordFragment>("BuilderAPITestEntity_ScriptStructAPI")
+			.Component(FFlecsTestStruct_Tag::StaticStruct())
+			.Component(FInstancedStruct::Make<FFlecsTestStruct_Value>(FFlecsTestStruct_Value{ .Value = 654 }))
+			.GameplayTag(FFlecsTestNativeGameplayTags::Get().TestTag2)
+			.Enum(FSolidEnumSelector::Make<EFlecsTestEnum_UENUM>(EFlecsTestEnum_UENUM::Three))
+			.Build();
+
+		const FFlecsEntityHandle Entity = FlecsWorld->CreateEntityWithRecord(Record);
+		ASSERT_THAT(IsTrue(Entity.IsValid()));
+		
+		ASSERT_THAT(IsTrue(Entity.HasName()));
+		ASSERT_THAT(AreEqual(TEXT("BuilderAPITestEntity_ScriptStructAPI"), Entity.GetName()));
+		
+		ASSERT_THAT(IsTrue(Entity.Has<FFlecsTestStruct_Tag>()));
+		ASSERT_THAT(IsTrue(Entity.Has(FFlecsTestStruct_Tag::StaticStruct())));
+		
+		ASSERT_THAT(IsTrue(Entity.Has<FFlecsTestStruct_Value>()));
+		ASSERT_THAT(IsTrue(Entity.Has(FFlecsTestStruct_Value::StaticStruct())));
+		
+		ASSERT_THAT(IsTrue(Entity.Has(FFlecsTestNativeGameplayTags::Get().TestTag2)));
+		
+		ASSERT_THAT(IsTrue(Entity.HasPair<EFlecsTestEnum_UENUM>(flecs::Wildcard)));
+		ASSERT_THAT(IsTrue(Entity.Has<EFlecsTestEnum_UENUM>(EFlecsTestEnum_UENUM::Three)));
+		ASSERT_THAT(IsTrue(Entity.Has(StaticEnum<EFlecsTestEnum_UENUM>(), static_cast<int64>(EFlecsTestEnum_UENUM::Three))));
+
+		const auto& [Value] = Entity.Get<FFlecsTestStruct_Value>();
+		ASSERT_THAT(IsTrue(Value == 654));
+	}
+	
+	TEST_METHOD(D3_BuilderAPI_CreateEntityRecord_UsingCustomFragmentBuilderAPI)
+	{
+		FFlecsEntityRecord Record = FFlecsEntityRecord().Builder()
+			.FragmentScope<FFlecsNamedEntityRecordFragment>()
+				.Named("BuilderAPITestEntity_CustomBuilder")
+			.End()
+			.Component(FFlecsTestStruct_Tag::StaticStruct())
+			.Component(FInstancedStruct::Make<FFlecsTestStruct_Value>(FFlecsTestStruct_Value{ .Value = 654 }))
+			.GameplayTag(FFlecsTestNativeGameplayTags::Get().TestTag2)
+			.Enum(FSolidEnumSelector::Make<EFlecsTestEnum_UENUM>(EFlecsTestEnum_UENUM::Three))
+			.Build();
+
+		const FFlecsEntityHandle Entity = FlecsWorld->CreateEntityWithRecord(Record);
+		ASSERT_THAT(IsTrue(Entity.IsValid()));
+		
+		ASSERT_THAT(IsTrue(Entity.HasName()));
+		ASSERT_THAT(AreEqual(TEXT("BuilderAPITestEntity_CustomBuilder"), Entity.GetName()));
+		
+		ASSERT_THAT(IsTrue(Entity.Has<FFlecsTestStruct_Tag>()));
+		ASSERT_THAT(IsTrue(Entity.Has(FFlecsTestStruct_Tag::StaticStruct())));
+		
+		ASSERT_THAT(IsTrue(Entity.Has<FFlecsTestStruct_Value>()));
+		ASSERT_THAT(IsTrue(Entity.Has(FFlecsTestStruct_Value::StaticStruct())));
+		
+		ASSERT_THAT(IsTrue(Entity.Has(FFlecsTestNativeGameplayTags::Get().TestTag2)));
+		
+		ASSERT_THAT(IsTrue(Entity.HasPair<EFlecsTestEnum_UENUM>(flecs::Wildcard)));
+		ASSERT_THAT(IsTrue(Entity.Has<EFlecsTestEnum_UENUM>(EFlecsTestEnum_UENUM::Three)));
+		ASSERT_THAT(IsTrue(Entity.Has(StaticEnum<EFlecsTestEnum_UENUM>(), static_cast<int64>(EFlecsTestEnum_UENUM::Three))));
+
+		const auto& [Value] = Entity.Get<FFlecsTestStruct_Value>();
+		ASSERT_THAT(IsTrue(Value == 654));
 	}
 	
 }; // End of B1_FlecsEntityRecordTests
