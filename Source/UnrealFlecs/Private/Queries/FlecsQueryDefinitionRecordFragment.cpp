@@ -9,13 +9,13 @@
 void FFlecsQueryDefinitionRecordFragment::PreApplyRecordToEntity(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld,
 	const FFlecsEntityHandle& InEntityHandle) const
 {
-	flecs::query_builder<> QueryBuilder(InFlecsWorld->World, InEntityHandle);
-	QueryDefinition.Apply(InFlecsWorld, QueryBuilder);
-	QueryBuilder.build();
+	
 }
 
 void FFlecsQueryDefinitionRecordFragment::PostApplyRecordToEntity(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld,
 	const FFlecsEntityHandle& InEntityHandle) const
 {
-	
+	flecs::query_builder<> QueryBuilder(InFlecsWorld->World, InEntityHandle);
+	QueryDefinition.Apply(InFlecsWorld, QueryBuilder);
+	QueryBuilder.build();
 }
