@@ -19,7 +19,7 @@ struct UNREALFLECS_API FFlecsExpressionInOut final : public FFlecsQueryExpressio
 public:
 	FFlecsExpressionInOut();
 	
-	virtual void Apply(TSolidNotNull<UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const override;
+	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query")
 	EFlecsQueryInOut InOut = EFlecsQueryInOut::Default;
