@@ -30,13 +30,22 @@ void FFlecsQueryTermExpression::Apply(TSolidNotNull<const UFlecsWorld*> InWorld,
 		case EFlecsQueryInputType::Entity:
 			{
 				const FFlecsId Entity = InputType.Entity;
+				solid_checkf(Entity.IsValid(),
+					TEXT("Invalid Entity provided for query term expression"));
 				InQueryBuilder.with(Entity);
 
 				break;
 			}
 		case EFlecsQueryInputType::String:
 			{
-				const FString Expr = InputType.Expr.Expr;
+				FString Expr = InputType.Expr.Expr;
+				solid_checkf(!Expr.IsEmpty(),
+					TEXT("Empty string provided for query term expression"));
+				
+				Expr.TrimStartAndEndInline();
+				Expr.ReplaceInline(TEXT("\n"), TEXT(""));
+				Expr.ReplaceInline(TEXT("\r"), TEXT(""));
+				
 				InQueryBuilder.with(StringCast<char>(*Expr).Get());
 				
 				break;
@@ -52,6 +61,24 @@ void FFlecsQueryTermExpression::Apply(TSolidNotNull<const UFlecsWorld*> InWorld,
 				
 				InQueryBuilder.with(TagEntity);
 
+				break;
+			}
+		case EFlecsQueryInputType::CPPType:
+			{
+				FString StringType = InputType.CPPType.ToString();
+				solid_checkf(!StringType.IsEmpty(),
+					TEXT("Empty string provided for query term expression"));
+				
+				StringType.TrimStartAndEndInline();
+				StringType.ReplaceInline(TEXT("\n"), TEXT(""));
+				StringType.ReplaceInline(TEXT("\r"), TEXT(""));
+				
+				const FFlecsEntityHandle TypeEntity = InWorld->LookupEntityBySymbol_Internal(StringType);
+				solid_checkf(TypeEntity.IsValid(),
+					TEXT("Could not find entity for CPP Type '%s'"), *StringType);
+				
+				InQueryBuilder.with(TypeEntity);
+				
 				break;
 			}
 	}

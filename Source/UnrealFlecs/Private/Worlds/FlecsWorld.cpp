@@ -838,6 +838,16 @@ FFlecsEntityHandle UFlecsWorld::LookupEntity(const FString& Name,
 	                    bRecursive);
 }
 
+FFlecsEntityHandle UFlecsWorld::LookupEntityBySymbol_Internal(const FString& Symbol, const bool bLookupAsPath,
+	const bool bRecursive) const
+{
+	return FFlecsEntityHandle(this, ecs_lookup_symbol(
+		World.world_,
+		StringCast<char>(*Symbol).Get(),
+		bLookupAsPath,
+		bRecursive));
+}
+
 void UFlecsWorld::DestroyEntityByName(const FString& Name) const
 {
 	solid_checkf(!Name.IsEmpty(), TEXT("Name is empty"));

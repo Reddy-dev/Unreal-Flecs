@@ -387,6 +387,11 @@ public:
 	{
 		return !IsComponent() || Get<flecs::Component>().size == 0;
 	}
+	
+	NO_DISCARD SOLID_INLINE bool IsValueComponent() const
+	{
+		return IsComponent() && Get<flecs::Component>().size > 0;
+	}
 
 	NO_DISCARD SOLID_INLINE bool IsEnum() const
 	{

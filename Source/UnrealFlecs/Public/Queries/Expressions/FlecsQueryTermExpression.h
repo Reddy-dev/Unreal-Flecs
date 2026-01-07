@@ -66,14 +66,18 @@ public:
 	
 	// CPP Type input
 	template <typename TInput>
-	requires (!Unreal::Flecs::Queries::CQueryInputType<TInput>)
+	requires (!Unreal::Flecs::Queries::CQueryInputType<TInput> && !Solid::TScriptStructConcept<TInput>)
 	FORCEINLINE FFlecsQueryTermExpression& SetInput()
 	{
-		InputType.Type = EFlecsQueryInputType::String;
+		InputType.Type = EFlecsQueryInputType::CPPType;
 		const std::string_view TypeName = nameof(TInput);
-		InputType.Expr.Expr = StringCast<TCHAR>(TypeName.data()).Get();
+		InputType.CPPType = FName(TypeName.data());
 		return *this;
 	}
+	
+	/*template <typename TInput>
+	requires (std::is_enum!Unreal::Flecs::Queries::CQueryInputType<TInput> && !Solid::TStaticEnumConcept<TInput> 
+	FORCEINLINE FFlecsQueryTermExpression*/
 
 	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const override;
 	

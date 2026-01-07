@@ -15,6 +15,7 @@ enum class EFlecsQueryInputType : uint8
 	ScriptStruct,
 	Entity,
 	String,
+	CPPType,
 	GameplayTag,
 }; // enum class EFlecsQueryInputType
 
@@ -38,10 +39,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query",
 		meta = (EditCondition = "Type == EFlecsQueryInputType::String", EditConditionHides))
 	FFlecsQueryScriptExpr Expr;
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query",
 		meta = (EditCondition = "Type == EFlecsQueryInputType::GameplayTag", EditConditionHides))
 	FGameplayTag Tag;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query",
+		meta = (EditCondition = "Type == EFlecsQueryInputType::CPPType", EditConditionHides))
+	FName CPPType;
 	
 }; // struct FFlecsQueryInput
 
