@@ -44,3 +44,9 @@ public:
 	FGameplayTag Tag;
 	
 }; // struct FFlecsQueryInput
+
+namespace Unreal::Flecs::Queries
+{
+	template <typename T>
+	concept CQueryInputType = Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept<T> || std::is_convertible<T, FString>::value;
+}; // namespace Unreal::Flecs::Queries
