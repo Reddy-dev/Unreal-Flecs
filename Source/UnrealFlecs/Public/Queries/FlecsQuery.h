@@ -76,11 +76,6 @@ public:
         return StringCast<TCHAR>(ecs_query_str(Query)).Get();
     }
 
-    NO_DISCARD FORCEINLINE FFlecsEntityHandle GetEntity() const
-    {
-        return FFlecsEntityHandle(ecs_get_entity(Query));
-    }
-
     NO_DISCARD FORCEINLINE bool operator==(const FFlecsQuery& Other) const
     {
         return Query.c_ptr() == Other.Query.c_ptr();
@@ -89,11 +84,6 @@ public:
     NO_DISCARD FORCEINLINE bool operator!=(const FFlecsQuery& Other) const
     {
         return !(*this == Other);
-    }
-
-    NO_DISCARD FORCEINLINE bool operator==(const flecs::query<>& Other) const
-    {
-        return GetEntity() == FFlecsEntityHandle(ecs_get_entity(Other));
     }
     
     flecs::query<> Query;
