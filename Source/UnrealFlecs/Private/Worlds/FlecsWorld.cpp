@@ -180,7 +180,7 @@ UFlecsWorld::UFlecsWorld(const FObjectInitializer& ObjectInitializer)
 	World = flecs::world(1, argv);
 		
 	TypeMapComponent = GetTypeMapComponent();  // NOLINT(cppcoreguidelines-prefer-member-initializer)
-	solid_check(TypeMapComponent);
+	solid_cassume(TypeMapComponent);
 }
 
 UFlecsWorld::~UFlecsWorld()
@@ -208,7 +208,7 @@ UFlecsWorld::~UFlecsWorld()
 
 UFlecsWorld* UFlecsWorld::GetDefaultWorld(const UObject* WorldContextObject)
 {
-	solid_check(WorldContextObject);
+	solid_cassume(WorldContextObject);
 
 	const TSolidNotNull<const UWorld*> GameWorld = GEngine->GetWorldFromContextObjectChecked(WorldContextObject);
 	
@@ -880,6 +880,7 @@ void UFlecsWorld::ImportModule(const TScriptInterface<IFlecsModuleInterface>& In
 
 	// Doesn't use TSolidNotNull because DuplicateObject works weird with it
 	const UObject* TemplateModuleObject = InModule.GetObject();
+	solid_cassume(TemplateModuleObject != nullptr);
 	solid_check(IsValid(TemplateModuleObject));
 	
 	const TSolidNotNull<UObject*> NewModuleObject = DuplicateObject(TemplateModuleObject, this);
@@ -916,6 +917,7 @@ void UFlecsWorld::ImportModuleChecked(const TScriptInterface<IFlecsModuleInterfa
 
 	// Doesn't use TSolidNotNull because DuplicateObject works weird with it
 	const UObject* TemplateModuleObject = InModule.GetObject();
+	solid_cassume(TemplateModuleObject != nullptr);
 	solid_check(IsValid(TemplateModuleObject));
 
 	const TSolidNotNull<UObject*> NewModuleObject = DuplicateObject(TemplateModuleObject, this);
@@ -1338,7 +1340,7 @@ void UFlecsWorld::SetTaskThreads(const int32 InThreadCount) const
 
 bool UFlecsWorld::HasScriptStruct(const UScriptStruct* ScriptStruct) const
 {
-	solid_check(ScriptStruct);
+	solid_cassume(ScriptStruct);
 		
 	if (TypeMapComponent->ScriptStructMap.contains(ScriptStruct))
 	{
@@ -1351,7 +1353,7 @@ bool UFlecsWorld::HasScriptStruct(const UScriptStruct* ScriptStruct) const
 
 bool UFlecsWorld::HasScriptEnum(const UEnum* ScriptEnum) const
 {
-	solid_check(ScriptEnum);
+	solid_cassume(ScriptEnum);
 		
 	if (TypeMapComponent->ScriptEnumMap.contains(ScriptEnum))
 	{
@@ -1364,7 +1366,7 @@ bool UFlecsWorld::HasScriptEnum(const UEnum* ScriptEnum) const
 
 FFlecsEntityHandle UFlecsWorld::GetScriptStructEntity(const UScriptStruct* ScriptStruct) const
 {
-	solid_check(ScriptStruct)
+	solid_cassume(ScriptStruct)
 
 	solid_checkf(HasScriptStruct(ScriptStruct),
 		TEXT("Script struct %s is not registered"), *ScriptStruct->GetStructCPPName());
@@ -1377,7 +1379,7 @@ FFlecsEntityHandle UFlecsWorld::GetScriptStructEntity(const UScriptStruct* Scrip
 
 FFlecsEntityHandle UFlecsWorld::GetScriptEnumEntity(const UEnum* ScriptEnum) const
 {
-	solid_check(ScriptEnum);
+	solid_cassume(ScriptEnum);
 	
 	solid_checkf(HasScriptEnum(ScriptEnum),
 		TEXT("Script enum %s is not registered"), *ScriptEnum->GetName());
@@ -1756,7 +1758,7 @@ FFlecsEntityHandle UFlecsWorld::RegisterComponentEnumType(TSolidNotNull<const UE
 			for (int32 EnumIndex = 0; EnumIndex < EnumCount; ++EnumIndex)
 			{
 				const int64 EnumValue = ScriptEnum->GetValueByIndex(EnumIndex);
-				solid_check(EnumValue >= 0);
+				solid_cassume(EnumValue >= 0);
 				
 				const FString EnumValueName = ScriptEnum->GetNameStringByIndex(EnumIndex);
 
