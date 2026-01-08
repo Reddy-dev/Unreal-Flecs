@@ -42,7 +42,15 @@ void FFlecsQueryTermExpression::Apply(TSolidNotNull<const UFlecsWorld*> InWorld,
 				solid_checkf(!Expr.IsEmpty(),
 					TEXT("Empty string provided for query term expression"));
 				
-				InQueryBuilder.with(StringCast<char>(*Expr).Get());
+				const char* ExprCStr = TCHAR_TO_UTF8(*Expr);
+				solid_cassume(ExprCStr != nullptr);
+				
+				const uint32 ExprCStrLen = static_cast<uint32>(FCStringAnsi::Strlen(ExprCStr));
+				
+				const char* ExprCStrCopy = (const char*)FMemory::Malloc(ExprCStrLen + 1);
+				FMemory::Memcpy((void*)ExprCStrCopy, (const void*)ExprCStr, ExprCStrLen + 1);
+				
+				InQueryBuilder.with(ExprCStrCopy);
 				
 				break;
 			}

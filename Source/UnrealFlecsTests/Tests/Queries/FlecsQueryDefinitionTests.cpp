@@ -238,6 +238,28 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		
 		ASSERT_THAT(IsTrue(Query.count() == 1));
 	}
+	
+	TEST_METHOD(A9_Construction_WithStringTerm)
+	{
+		FFlecsQueryDefinition QueryDefinition;
+		
+		FFlecsQueryTermExpression TermExpression1;
+		TermExpression1.SetInput("FFlecsTestStruct_Tag");
+		
+		QueryDefinition.Terms.Add(TermExpression1);
+		
+		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
+		QueryDefinition.Apply(FlecsWorld, QueryBuilder);
+		flecs::query<> Query = QueryBuilder.build();
+		ASSERT_THAT(IsNotNull(Query.c_ptr()));
+		
+		FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity()
+			.Add<FFlecsTestStruct_Tag>();
+		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Tag>()));
+		
+		ASSERT_THAT(IsTrue(Query.count() == 1));
+	}
 
 }; // End of B2_UnrealFlecsQueryDefinitionTests
 
