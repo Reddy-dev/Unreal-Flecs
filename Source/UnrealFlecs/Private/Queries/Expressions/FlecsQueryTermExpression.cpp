@@ -48,7 +48,7 @@ void FFlecsQueryTermExpression::Apply(TSolidNotNull<const UFlecsWorld*> InWorld,
 				const uint32 ExprCStrLen = static_cast<uint32>(FCStringAnsi::Strlen(ExprCStr));
 				
 				const char* ExprCStrCopy = (const char*)FMemory::Malloc(ExprCStrLen + 1);
-				FMemory::Memcpy((void*)ExprCStrCopy, (const void*)ExprCStr, ExprCStrLen + 1);
+				FMemory::Memcpy((void*)ExprCStrCopy, ExprCStr, ExprCStrLen + 1);
 				
 				InQueryBuilder.with(ExprCStrCopy);
 				
