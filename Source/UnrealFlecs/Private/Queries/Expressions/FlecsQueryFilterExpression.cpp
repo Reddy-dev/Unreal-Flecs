@@ -8,7 +8,7 @@ FFlecsQueryFilterExpression::FFlecsQueryFilterExpression() : Super(false /* bInA
 {
 }
 
-void FFlecsQueryFilterExpression::Apply(TSolidNotNull<UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const
+void FFlecsQueryFilterExpression::Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const
 {
 	InQueryBuilder.filter();
 }

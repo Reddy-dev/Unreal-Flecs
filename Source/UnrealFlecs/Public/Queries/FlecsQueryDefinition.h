@@ -23,13 +23,13 @@ public:
 	}
 
 	template <Unreal::Flecs::Queries::TQueryExpressionConcept TExpression>
-	FORCEINLINE FFlecsQueryDefinition& AddExpression(const TExpression& InExpression)
+	FORCEINLINE FFlecsQueryDefinition& AddAdditionalExpression(const TExpression& InExpression)
 	{
 		OtherExpressions.Add(InExpression);
 		return *this;
 	}
 
-	void Apply(const TSolidNotNull<UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const;
+	void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query")
 	TArray<FFlecsQueryTermExpression> Terms;

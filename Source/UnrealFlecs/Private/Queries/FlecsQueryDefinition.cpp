@@ -4,7 +4,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsQueryDefinition)
 
-void FFlecsQueryDefinition::Apply(const TSolidNotNull<UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const
+void FFlecsQueryDefinition::Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const
 {
 	InQueryBuilder.cache_kind(static_cast<flecs::query_cache_kind_t>(CacheType));
 	InQueryBuilder.query_flags(Flags);

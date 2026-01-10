@@ -20,7 +20,7 @@ struct UNREALFLECS_API FFlecsOperQueryExpression final : public FFlecsQueryExpre
 public:
 	FFlecsOperQueryExpression();
 	
-	virtual void Apply(TSolidNotNull<UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const override;
+	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const override;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Query")
 	EFlecsQueryOperator Operator = EFlecsQueryOperator::Default;

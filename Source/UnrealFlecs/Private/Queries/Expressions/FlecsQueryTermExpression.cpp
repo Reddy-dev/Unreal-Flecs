@@ -10,7 +10,7 @@ FFlecsQueryTermExpression::FFlecsQueryTermExpression() : Super(true /* bInAllows
 {
 }
 
-void FFlecsQueryTermExpression::Apply(TSolidNotNull<UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const
+void FFlecsQueryTermExpression::Apply(TSolidNotNull<const UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const
 {
 	switch (InputType.Type)
 	{
@@ -30,6 +30,8 @@ void FFlecsQueryTermExpression::Apply(TSolidNotNull<UFlecsWorld*> InWorld, flecs
 		case EFlecsQueryInputType::Entity:
 			{
 				const FFlecsId Entity = InputType.Entity;
+				solid_checkf(Entity.IsValid(),
+					TEXT("Invalid Entity provided for query term expression"));
 				InQueryBuilder.with(Entity);
 
 				break;
@@ -37,7 +39,18 @@ void FFlecsQueryTermExpression::Apply(TSolidNotNull<UFlecsWorld*> InWorld, flecs
 		case EFlecsQueryInputType::String:
 			{
 				const FString Expr = InputType.Expr.Expr;
-				InQueryBuilder.with(StringCast<char>(*Expr).Get());
+				solid_checkf(!Expr.IsEmpty(),
+					TEXT("Empty string provided for query term expression"));
+				
+				const char* ExprCStr = TCHAR_TO_UTF8(*Expr);
+				solid_cassume(ExprCStr != nullptr);
+				
+				const uint32 ExprCStrLen = static_cast<uint32>(FCStringAnsi::Strlen(ExprCStr));
+				
+				const char* ExprCStrCopy = (const char*)FMemory::Malloc(ExprCStrLen + 1);
+				FMemory::Memcpy((void*)ExprCStrCopy, ExprCStr, ExprCStrLen + 1);
+				
+				InQueryBuilder.with(ExprCStrCopy);
 				
 				break;
 			}
@@ -52,6 +65,20 @@ void FFlecsQueryTermExpression::Apply(TSolidNotNull<UFlecsWorld*> InWorld, flecs
 				
 				InQueryBuilder.with(TagEntity);
 
+				break;
+			}
+		case EFlecsQueryInputType::CPPType:
+			{
+				const FString StringType = InputType.CPPType.ToString();
+				solid_checkf(!StringType.IsEmpty(),
+					TEXT("Empty string provided for query term expression"));
+				
+				const FFlecsEntityHandle TypeEntity = InWorld->LookupEntityBySymbol_Internal(StringType);
+				solid_checkf(TypeEntity.IsValid(),
+					TEXT("Could not find entity for CPP Type '%s'"), *StringType);
+				
+				InQueryBuilder.with(TypeEntity);
+				
 				break;
 			}
 	}

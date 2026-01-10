@@ -227,6 +227,9 @@ public:
 	                                const FString& Separator = "::",
 	                                const FString& RootSeparator = "::",
 	                                const bool bRecursive = true) const;
+	
+	NO_DISCARD FFlecsEntityHandle LookupEntityBySymbol_Internal(const FString& Symbol,
+		const bool bLookupAsPath = false, const bool bRecursive = true) const;
 
 	/**
 	 * @brief Destroy an entity by its handle, if the entity does not exist, nothing happens
