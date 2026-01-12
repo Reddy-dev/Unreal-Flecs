@@ -28,6 +28,51 @@ public:
 		OtherExpressions.Add(InExpression);
 		return *this;
 	}
+	
+	NO_DISCARD FORCEINLINE int32 GetNumTerms() const
+	{
+		return Terms.Num();
+	}
+	
+	NO_DISCARD FORCEINLINE bool IsValidTermIndex(const int32 InIndex) const
+	{
+		return Terms.IsValidIndex(InIndex);
+	}
+	
+	NO_DISCARD FORCEINLINE int32 GetLastTermIndex() const
+	{
+		solid_checkf(!Terms.IsEmpty(),
+			TEXT("No terms available to get last term index from"));
+		return Terms.Num() - 1;
+	}
+	
+	NO_DISCARD FORCEINLINE const FFlecsQueryTermExpression& GetTermAt(const int32 InIndex) const
+	{
+		solid_checkf(IsValidTermIndex(InIndex),
+			TEXT("Invalid term index %d provided to GetTermAt"), InIndex);
+		return Terms[InIndex];
+	}
+	
+	NO_DISCARD FORCEINLINE FFlecsQueryTermExpression& GetTermAt(const int32 InIndex)
+	{
+		solid_checkf(IsValidTermIndex(InIndex),
+			TEXT("Invalid term index %d provided to GetTermAt"), InIndex);
+		return Terms[InIndex];
+	}
+	
+	NO_DISCARD FORCEINLINE const FFlecsQueryTermExpression& GetLastTerm() const
+	{
+		solid_checkf(!Terms.IsEmpty(),
+			TEXT("No terms available to get last term from"));
+		return Terms.Last();
+	}
+	
+	NO_DISCARD FORCEINLINE FFlecsQueryTermExpression& GetLastTerm()
+	{
+		solid_checkf(!Terms.IsEmpty(),
+			TEXT("No terms available to get last term from"));
+		return Terms.Last();
+	}
 
 	void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const;
 
