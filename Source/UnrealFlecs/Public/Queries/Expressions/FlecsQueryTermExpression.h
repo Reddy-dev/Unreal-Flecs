@@ -19,7 +19,13 @@ public:
 	FFlecsQueryTermExpression();
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query")
+	bool bIsPair = false;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query")
 	FFlecsQueryInput InputType;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query", meta = (EditCondition = "bIsPair", EditConditionHides))
+	FFlecsQueryInput SecondInputType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query")
 	bool bWithout = false;
@@ -56,11 +62,54 @@ public:
 		return *this;
 	}
 	
+	template <Unreal::Flecs::Queries::CQueryInputType TInput>
+	FORCEINLINE FFlecsQueryTermExpression& SetSecondInput(const TInput& InInput)
+	{
+		if constexpr (std::is_convertible<TInput, const UScriptStruct*>::value)
+		{
+			SecondInputType.Type = EFlecsQueryInputType::ScriptStruct;
+			SecondInputType.ScriptStruct = InInput;
+		}
+		else if constexpr (std::is_convertible<TInput, FFlecsId>::value)
+		{
+			SecondInputType.Type = EFlecsQueryInputType::Entity;
+			SecondInputType.Entity = InInput;
+		}
+		else if constexpr (std::is_convertible<TInput, FString>::value)
+		{
+			SecondInputType.Type = EFlecsQueryInputType::String;
+			SecondInputType.Expr.Expr = InInput;
+		}
+		else if constexpr (std::is_convertible<TInput, FGameplayTag>::value)
+		{
+			SecondInputType.Type = EFlecsQueryInputType::GameplayTag;
+			SecondInputType.Tag = InInput;
+		}
+		else
+		{
+			static_assert(false, "Type TInput is not a valid Flecs Entity Function Input Type");
+			UNREACHABLE;
+		}
+		
+		bIsPair = true;
+		
+		return *this;
+	}
+	
 	template <Solid::TScriptStructConcept TInput>
 	FORCEINLINE FFlecsQueryTermExpression& SetInput()
 	{
 		InputType.Type = EFlecsQueryInputType::ScriptStruct;
 		InputType.ScriptStruct = TBaseStructure<TInput>::Get();
+		return *this;
+	}
+	
+	template <Solid::TScriptStructConcept TInput>
+	FORCEINLINE FFlecsQueryTermExpression& SetSecondInput()
+	{
+		SecondInputType.Type = EFlecsQueryInputType::ScriptStruct;
+		SecondInputType.ScriptStruct = TBaseStructure<TInput>::Get();
+		bIsPair = true;
 		return *this;
 	}
 	
@@ -72,6 +121,17 @@ public:
 		InputType.Type = EFlecsQueryInputType::CPPType;
 		const std::string_view TypeName = nameof(TInput);
 		InputType.CPPType = FName(TypeName.data());
+		return *this;
+	}
+	
+	template <typename TInput>
+	requires (!Unreal::Flecs::Queries::CQueryInputType<TInput> && !Solid::TScriptStructConcept<TInput>)
+	FORCEINLINE FFlecsQueryTermExpression& SetSecondInput()
+	{
+		SecondInputType.Type = EFlecsQueryInputType::CPPType;
+		const std::string_view TypeName = nameof(TInput);
+		SecondInputType.CPPType = FName(TypeName.data());
+		bIsPair = true;
 		return *this;
 	}
 	

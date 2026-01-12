@@ -315,6 +315,52 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 			ASSERT_THAT(AreEqual(Entity, TestEntity));
 		});
 	}
+	
+	TEST_METHOD(A12_Construction_WithPairTerm_CPPAPI)
+	{
+		FFlecsQueryDefinition QueryDefinition;
+		
+		FFlecsQueryTermExpression TermExpression1;
+		TermExpression1.SetInput<FFlecsTestStruct_PairIsTag>();
+		TermExpression1.SetSecondInput<FFlecsTestStruct_Tag>();
+		
+		QueryDefinition.Terms.Add(TermExpression1);
+		
+		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
+		QueryDefinition.Apply(FlecsWorld, QueryBuilder);
+		flecs::query<> Query = QueryBuilder.build();
+		ASSERT_THAT(IsNotNull(Query.c_ptr()));
+		
+		FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity()
+			.AddPair<FFlecsTestStruct_PairIsTag, FFlecsTestStruct_Tag>();
+		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity.HasPair<FFlecsTestStruct_PairIsTag, FFlecsTestStruct_Tag>()));
+		
+		ASSERT_THAT(IsTrue(Query.count() == 1));
+	}
+	
+	TEST_METHOD(A13_Construction_WithPairTerm_ScriptStructAPI)
+	{
+		FFlecsQueryDefinition QueryDefinition;
+		
+		FFlecsQueryTermExpression TermExpression1;
+		TermExpression1.SetInput(FFlecsTestStruct_PairIsTag::StaticStruct());
+		TermExpression1.SetSecondInput(FFlecsTestStruct_Tag::StaticStruct());
+		
+		QueryDefinition.Terms.Add(TermExpression1);
+		
+		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
+		QueryDefinition.Apply(FlecsWorld, QueryBuilder);
+		flecs::query<> Query = QueryBuilder.build();
+		ASSERT_THAT(IsNotNull(Query.c_ptr()));
+		
+		FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity()
+			.AddPair(FFlecsTestStruct_PairIsTag::StaticStruct(), FFlecsTestStruct_Tag::StaticStruct());
+		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity.HasPair(FFlecsTestStruct_PairIsTag::StaticStruct(), FFlecsTestStruct_Tag::StaticStruct())));
+		
+		ASSERT_THAT(IsTrue(Query.count() == 1));
+	}
 
 }; // End of B2_UnrealFlecsQueryDefinitionTests
 

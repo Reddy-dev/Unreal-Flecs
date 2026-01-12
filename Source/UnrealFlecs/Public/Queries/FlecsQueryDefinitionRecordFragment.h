@@ -6,6 +6,8 @@
 
 #include "Entities/FlecsEntityRecord.h"
 #include "FlecsQueryDefinition.h"
+#include "Enums/FlecsQueryInOut.h"
+#include "Expressions/FlecsExpressionInOut.h"
 
 #include "FlecsQueryDefinitionRecordFragment.generated.h"
 
@@ -31,6 +33,8 @@ struct FFlecsQueryDefinitionRecordFragment::FBuilder : public FFlecsEntityRecord
 {
 	using Super = FFlecsEntityRecord::FFragmentBuilderType<FFlecsQueryDefinitionRecordFragment>;
 	using Super::Super;
+	
+	mutable int32 LastTermIndex = -1;
 	
 public:
 	FORCEINLINE FBuilder& Cache(const EFlecsQueryCacheType InCacheType = EFlecsQueryCacheType::Default)
@@ -64,6 +68,7 @@ public:
 		Term.SetInput<T>();
 		
 		this->Get().QueryDefinition.AddQueryTerm(Term);
+		LastTermIndex = this->Get().QueryDefinition.GetLastTermIndex();
 		return *this;
 	}
 	
@@ -74,6 +79,7 @@ public:
 		Term.SetInput(InInput);
 		
 		this->Get().QueryDefinition.AddQueryTerm(Term);
+		LastTermIndex = this->Get().QueryDefinition.GetLastTermIndex();
 		return *this;
 	}
 	
@@ -85,6 +91,7 @@ public:
 		Term.bWithout = true;
 		
 		this->Get().QueryDefinition.AddQueryTerm(Term);
+		LastTermIndex = this->Get().QueryDefinition.GetLastTermIndex();
 		return *this;
 	}
 	
@@ -96,12 +103,116 @@ public:
 		Term.bWithout = true;
 		
 		this->Get().QueryDefinition.AddQueryTerm(Term);
+		LastTermIndex = this->Get().QueryDefinition.GetLastTermIndex();
 		return *this;
 	}
 	
 	FORCEINLINE FBuilder& AddTerm(const FFlecsQueryTermExpression& InTerm)
 	{
 		this->Get().QueryDefinition.AddQueryTerm(InTerm);
+		LastTermIndex = this->Get().QueryDefinition.GetLastTermIndex();
+		return *this;
+	}
+	
+	FORCEINLINE FBuilder& TermAt(const int32 InTermIndex)
+	{
+		solid_checkf(this->Get().QueryDefinition.IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		LastTermIndex = InTermIndex;
+		return *this;
+	}
+	
+	FORCEINLINE FBuilder& Oper(const EFlecsQueryOperator InOperator)
+	{
+		solid_checkf(this->Get().QueryDefinition.IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		
+		FFlecsOperQueryExpression OperExpression;
+		OperExpression.Operator = InOperator;
+		
+		this->Get().QueryDefinition.Terms[LastTermIndex].Children.Add(TInstancedStruct<FFlecsQueryExpression>::Make(OperExpression));
+		return *this;
+	}
+	
+	FORCEINLINE FBuilder& And()
+	{
+		return Oper(EFlecsQueryOperator::And);
+	}
+	
+	FORCEINLINE FBuilder& Or()
+	{
+		return Oper(EFlecsQueryOperator::Or);
+	}
+	
+	FORCEINLINE FBuilder& Not()
+	{
+		return Oper(EFlecsQueryOperator::Not);
+	}
+	
+	FORCEINLINE FBuilder& Optional()
+	{
+		return Oper(EFlecsQueryOperator::Optional);
+	}
+	
+	FORCEINLINE FBuilder& AndFrom()
+	{
+		return Oper(EFlecsQueryOperator::AndFrom);
+	}
+	
+	FORCEINLINE FBuilder& OrFrom()
+	{
+		return Oper(EFlecsQueryOperator::OrFrom);
+	}
+	
+	FORCEINLINE FBuilder& InOutExpression(const EFlecsQueryInOut InInOut, const bool bStage = false)
+	{
+		solid_checkf(this->Get().QueryDefinition.IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		
+		FFlecsExpressionInOut InOut;
+		InOut.InOut = InInOut;
+		InOut.bStage = bStage;
+		
+		this->Get().QueryDefinition.Terms[LastTermIndex].Children.Add(TInstancedStruct<FFlecsQueryExpression>::Make(InOut));
+		return *this;
+	}
+	
+	FORCEINLINE FBuilder& In()
+	{
+		return InOutExpression(EFlecsQueryInOut::Read, false);
+	}
+	
+	FORCEINLINE FBuilder& Out()
+	{
+		return InOutExpression(EFlecsQueryInOut::Write, false);
+	}
+	
+	FORCEINLINE FBuilder& InOut()
+	{
+		return InOutExpression(EFlecsQueryInOut::ReadWrite, false);
+	}
+	
+	FORCEINLINE FBuilder& Read()
+	{
+		return InOutExpression(EFlecsQueryInOut::Read, true);
+	}
+	
+	FORCEINLINE FBuilder& Write()
+	{
+		return InOutExpression(EFlecsQueryInOut::Write, true);
+	}
+	
+	FORCEINLINE FBuilder& ReadWrite()
+	{
+		return InOutExpression(EFlecsQueryInOut::ReadWrite, true);
+	}
+	
+	FORCEINLINE FBuilder& Filter()
+	{
+		return InOutExpression(EFlecsQueryInOut::Filter, false);
+	}
+	
+	FORCEINLINE FBuilder& ModifyLastTerm(const TFunctionRef<void(FFlecsQueryTermExpression&)>& InModifier)
+	{
+		solid_checkf(this->Get().QueryDefinition.IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		InModifier(this->Get().QueryDefinition.Terms[LastTermIndex]);
 		return *this;
 	}
 	

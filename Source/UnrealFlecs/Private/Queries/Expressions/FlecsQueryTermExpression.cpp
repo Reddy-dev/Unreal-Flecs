@@ -32,6 +32,7 @@ void FFlecsQueryTermExpression::Apply(TSolidNotNull<const UFlecsWorld*> InWorld,
 				const FFlecsId Entity = InputType.Entity;
 				solid_checkf(Entity.IsValid(),
 					TEXT("Invalid Entity provided for query term expression"));
+				
 				InQueryBuilder.with(Entity);
 
 				break;
@@ -77,10 +78,90 @@ void FFlecsQueryTermExpression::Apply(TSolidNotNull<const UFlecsWorld*> InWorld,
 				solid_checkf(TypeEntity.IsValid(),
 					TEXT("Could not find entity for CPP Type '%s'"), *StringType);
 				
-				InQueryBuilder.with(TypeEntity);
+				if (bIsPair)
+				{
+					InQueryBuilder.first(TypeEntity);
+				}
+				else
+				{
+					InQueryBuilder.with(TypeEntity);
+				}
 				
 				break;
 			}
+	}
+	
+	if (bIsPair)
+	{
+		switch (SecondInputType.Type)
+		{
+			case EFlecsQueryInputType::ScriptStruct:
+				{
+					const UScriptStruct* Struct = SecondInputType.ScriptStruct;
+					solid_checkf(IsValid(Struct),
+						TEXT("Invalid ScriptStruct provided for query term expression second input"));
+					
+					const FFlecsEntityHandle ScriptStructEntity = InWorld->GetScriptStructEntity(Struct);
+					solid_check(ScriptStructEntity.IsValid());
+					
+					InQueryBuilder.second(ScriptStructEntity);
+
+					break;
+				}
+			case EFlecsQueryInputType::Entity:
+				{
+					const FFlecsId Entity = SecondInputType.Entity;
+					solid_checkf(Entity.IsValid(),
+						TEXT("Invalid Entity provided for query term expression second input"));
+					InQueryBuilder.second(Entity);
+
+					break;
+				}
+			case EFlecsQueryInputType::String:
+				{
+					const FString Expr = SecondInputType.Expr.Expr;
+					solid_checkf(!Expr.IsEmpty(),
+						TEXT("Empty string provided for query term expression second input"));
+					
+					const char* ExprCStr = TCHAR_TO_UTF8(*Expr);
+					solid_cassume(ExprCStr != nullptr);
+					
+					const uint32 ExprCStrLen = static_cast<uint32>(FCStringAnsi::Strlen(ExprCStr));
+					
+					const char* ExprCStrCopy = (const char*)FMemory::Malloc(ExprCStrLen + 1);
+					FMemory::Memcpy((void*)ExprCStrCopy, ExprCStr, ExprCStrLen + 1);
+					
+					InQueryBuilder.second(ExprCStrCopy);
+					
+					break;
+				}
+			case EFlecsQueryInputType::GameplayTag:
+				{
+					const FGameplayTag Tag = SecondInputType.Tag;
+					solid_checkf(Tag.IsValid(),
+						TEXT("Invalid GameplayTag provided for query term expression second input"));
+					
+					const FFlecsEntityHandle TagEntity = InWorld->GetTagEntity(Tag);
+					solid_check(TagEntity.IsValid());
+					
+					InQueryBuilder.second(TagEntity);
+
+					break;
+				}
+			case EFlecsQueryInputType::CPPType:
+				{
+					const FString StringType = SecondInputType.CPPType.ToString();
+					solid_checkf(!StringType.IsEmpty(),
+						TEXT("Empty string provided for query term expression second input"));
+					
+					const FFlecsEntityHandle TypeEntity = InWorld->LookupEntityBySymbol_Internal(StringType);
+					solid_checkf(TypeEntity.IsValid(),
+						TEXT("Could not find entity for CPP Type '%s'"), *StringType);
+					
+					InQueryBuilder.second(TypeEntity);
+					break;
+				}
+		};
 	}
 
 	if (bWithout)
