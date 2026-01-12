@@ -8,6 +8,8 @@
 
 #include "Queries/FlecsQueryDefinition.h"
 
+// @TODO: add pair testing
+
 /**
  * Layout of the tests:
  * A. Construction Tests
