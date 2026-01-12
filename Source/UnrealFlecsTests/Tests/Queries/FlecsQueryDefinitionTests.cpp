@@ -427,7 +427,33 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		});
 	}
 	
-	
+	TEST_METHOD(A16_Construction_WithMultipleTerms)
+	{
+		FFlecsQueryDefinition QueryDefinition;
+		
+		FFlecsQueryTermExpression TermExpression1;
+		TermExpression1.SetInput<FFlecsTestStruct_Tag>();
+		
+		FFlecsQueryTermExpression TermExpression2;
+		TermExpression2.SetInput<FFlecsTestStruct_Value>();
+		
+		QueryDefinition.Terms.Add(TermExpression1);
+		QueryDefinition.Terms.Add(TermExpression2);
+		
+		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
+		QueryDefinition.Apply(FlecsWorld, QueryBuilder);
+		flecs::query<> Query = QueryBuilder.build();
+		ASSERT_THAT(IsNotNull(Query.c_ptr()));
+		
+		FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity()
+			.Add<FFlecsTestStruct_Tag>()
+			.Set<FFlecsTestStruct_Value>({ 123 });
+		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Tag>()));
+		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Value>()));
+		
+		ASSERT_THAT(IsTrue(Query.count() == 1));
+	}
 
 }; // End of B2_UnrealFlecsQueryDefinitionTests
 
