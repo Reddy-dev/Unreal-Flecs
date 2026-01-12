@@ -361,6 +361,73 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		
 		ASSERT_THAT(IsTrue(Query.count() == 1));
 	}
+	
+	TEST_METHOD(A14_Construction_WithPairTermAndWildcard_CPPAPI)
+	{
+		FFlecsQueryDefinition QueryDefinition;
+		
+		FFlecsQueryTermExpression TermExpression1;
+		TermExpression1.SetInput<FFlecsTestStruct_PairIsTag>();
+		TermExpression1.SetSecondInput(flecs::Wildcard);
+		
+		QueryDefinition.Terms.Add(TermExpression1);
+		
+		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
+		QueryDefinition.Apply(FlecsWorld, QueryBuilder);
+		flecs::query<> Query = QueryBuilder.build();
+		ASSERT_THAT(IsNotNull(Query.c_ptr()));
+		
+		FFlecsEntityHandle TestEntity1 = FlecsWorld->CreateEntity()
+			.AddPair<FFlecsTestStruct_PairIsTag, FFlecsTestStruct_Tag>();
+		ASSERT_THAT(IsTrue(TestEntity1.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity1.HasPair<FFlecsTestStruct_PairIsTag, FFlecsTestStruct_Tag>()));
+		
+		FFlecsEntityHandle TestEntity2 = FlecsWorld->CreateEntity()
+			.AddPair<FFlecsTestStruct_PairIsTag, FFlecsTestStruct_Value>();
+		ASSERT_THAT(IsTrue(TestEntity2.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity2.HasPair<FFlecsTestStruct_PairIsTag, FFlecsTestStruct_Value>()));
+		
+		ASSERT_THAT(IsTrue(Query.count() == 2));
+	}
+	
+	TEST_METHOD(A15_Construction_WithPairTermAndVariable_ScriptStructAPI)
+	{
+		FFlecsQueryDefinition QueryDefinition;
+		
+		FFlecsQueryTermExpression TermExpression1;
+		TermExpression1.SetInput(FFlecsTestStruct_PairIsTag::StaticStruct());
+		TermExpression1.SetSecondInput(TEXT("$MyVarTag"));
+		
+		QueryDefinition.Terms.Add(TermExpression1);
+		
+		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
+		QueryDefinition.Apply(FlecsWorld, QueryBuilder);
+		flecs::query<> Query = QueryBuilder.build();
+		ASSERT_THAT(IsNotNull(Query.c_ptr()));
+		
+		FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity()
+			.AddPair(FFlecsTestStruct_PairIsTag::StaticStruct(), FFlecsTestStruct_Tag::StaticStruct());
+		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity.HasPair(FFlecsTestStruct_PairIsTag::StaticStruct(), FFlecsTestStruct_Tag::StaticStruct())));
+		
+		FFlecsEntityHandle TestEntity2 = FlecsWorld->CreateEntity()
+			.AddPair<FFlecsTestStruct_PairIsTag, FFlecsTestStruct_Value>();
+		ASSERT_THAT(IsTrue(TestEntity2.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity2.HasPair<FFlecsTestStruct_PairIsTag, FFlecsTestStruct_Value>()));
+		
+		FFlecsComponentHandle TagComponentHandle = FlecsWorld->ObtainComponentTypeStruct<FFlecsTestStruct_Tag>();
+		ASSERT_THAT(IsTrue(TagComponentHandle.IsValid()));
+		
+		ASSERT_THAT(IsTrue(Query.count() == 2));
+		
+		Query.set_var("MyVarTag", TagComponentHandle).each([&](flecs::iter& Iter, size_t Index)
+		{
+			FFlecsEntityHandle Entity = Iter.entity(Index);
+			ASSERT_THAT(AreEqual(Entity, TestEntity));
+		});
+	}
+	
+	
 
 }; // End of B2_UnrealFlecsQueryDefinitionTests
 
