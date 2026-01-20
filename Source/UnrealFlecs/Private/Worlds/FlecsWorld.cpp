@@ -547,9 +547,15 @@ void UFlecsWorld::InitializeComponentPropertyObserver()
 	ComponentRegisteredDelegateHandle = FlecsLibrary::GetTypeRegisteredDelegate().AddWeakLambda(this,
 		[this](const flecs::id_t InEntityId)
 	{
+		static const FString USTRUCTAliasPrefix = TEXT("UScriptStruct_");
+		static const FString UENUMAliasPrefix = TEXT("UEnum_");
+			
 		solid_checkf(!IsDeferred(), TEXT("Cannot register component properties while world is deferred."));
 		
 		const FFlecsEntityHandle EntityHandle = FFlecsEntityHandle(World, InEntityId);
+			
+		const bool bIsScriptStructComponent = EntityHandle.Has<FFlecsScriptStructComponent>();
+		const bool bIsScriptEnumComponent = EntityHandle.Has<FFlecsScriptEnumComponent>();
 			
 		const FString StructSymbol = EntityHandle.GetSymbol();
 		solid_checkf(!StructSymbol.IsEmpty(),TEXT("Registered component has no symbol"));
@@ -581,6 +587,30 @@ void UFlecsWorld::InitializeComponentPropertyObserver()
 				"Component properties {StructName} not found", StructSymbol);
 		}
 		#endif // UNLOG_ENABLED
+			
+		if (bIsScriptStructComponent)
+		{
+			const TSolidNotNull<const UScriptStruct*> ScriptStruct
+				= EntityHandle.Get<FFlecsScriptStructComponent>().ScriptStruct.Get();
+			
+			const FString ScriptStructAlias = USTRUCTAliasPrefix + ScriptStruct->GetStructCPPName();
+			solid_checkf(ScriptStructAlias.IsEmpty() == false, TEXT("Script struct alias is empty"));
+			
+			EntityHandle.SetAlias(StringCast<char>(*ScriptStructAlias).Get());
+		}
+			
+		if (bIsScriptEnumComponent)
+		{
+			const TSolidNotNull<const UEnum*> ScriptEnum
+				= EntityHandle.Get<FFlecsScriptEnumComponent>().ScriptEnum.Get();
+			
+			const FString ScriptEnumAlias = UENUMAliasPrefix + ScriptEnum->GetName();
+			solid_checkf(ScriptEnumAlias.IsEmpty() == false, TEXT("Script enum alias is empty"));
+			
+			EntityHandle.SetAlias(StringCast<char>(*ScriptEnumAlias).Get());
+		}
+			
+			
 	});
 
 }
@@ -1692,12 +1722,12 @@ FFlecsEntityHandle UFlecsWorld::RegisterScriptStruct(const UScriptStruct* Script
 			flecs_component_ids_set(World, Data.s_index, ScriptStructComponent);
 
 			TypeMapComponent->ScriptStructMap.emplace(ScriptStruct, ScriptStructComponent);
+			
+			ScriptStructComponent.Set<FFlecsScriptStructComponent>({ ScriptStruct });
 
 			RegisterMemberProperties(ScriptStruct, ScriptStructComponent);
 			FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(ScriptStructComponent);
 		});
-
-		ScriptStructComponent.Set<FFlecsScriptStructComponent>({ ScriptStruct });
 
 		SetScope(OldScope);
 		return ScriptStructComponent;
@@ -1808,9 +1838,11 @@ FFlecsEntityHandle UFlecsWorld::RegisterComponentEnumType(TSolidNotNull<const UE
 			
 			flecs_component_ids_set(World, s_index, ScriptEnumComponent);
 			TypeMapComponent->ScriptEnumMap.emplace(ScriptEnum, ScriptEnumComponent);
+			
+			ScriptEnumComponent.Set<FFlecsScriptEnumComponent>(FFlecsScriptEnumComponent(ScriptEnum));
+			
+			FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(ScriptEnumComponent);
 		});
-
-		ScriptEnumComponent.Set<FFlecsScriptEnumComponent>(FFlecsScriptEnumComponent(ScriptEnum));
 
 		SetScope(OldScope);
 		return ScriptEnumComponent;
