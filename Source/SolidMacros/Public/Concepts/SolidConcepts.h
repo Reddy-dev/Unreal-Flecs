@@ -16,7 +16,7 @@ namespace Solid
 	template <typename T>
 	NO_DISCARD FORCEINLINE constexpr bool IsStaticStruct()
 	{
-		return  TModels_V<CStaticStructProvider, T>;
+		return TModels_V<CStaticStructProvider, T>;
 	}
 	
 	template <typename T>
