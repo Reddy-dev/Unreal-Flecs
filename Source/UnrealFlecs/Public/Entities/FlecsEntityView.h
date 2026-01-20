@@ -608,7 +608,12 @@ public:
 	{
 		return OwnsPair<flecs::Identifier>(flecs::Name);
 	}
-
+	
+	NO_DISCARD SOLID_INLINE bool HasAlias() const
+	{
+		return OwnsPair<flecs::Identifier>(EcsAlias);
+	}
+	
 	NO_DISCARD SOLID_INLINE FString GetSymbol() const
 	{
 		return FString(GetEntityView().symbol().c_str(), static_cast<int32>(GetEntityView().symbol().length()));

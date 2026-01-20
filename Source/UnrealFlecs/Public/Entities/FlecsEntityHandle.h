@@ -427,6 +427,18 @@ public:
 		GetEntity().set_name(nullptr);
 		return *this;
 	}
+	
+	SOLID_INLINE const FSelfType& SetAlias(const FString& InAlias) const
+	{
+		GetEntity().set_alias(StringCast<char>(*InAlias).Get());
+		return *this;
+	}
+	
+	SOLID_INLINE const FSelfType& ClearAlias() const
+	{
+		GetEntity().set_alias(nullptr);
+		return *this;
+	}
 
 
 #if defined(FLECS_DOC)
