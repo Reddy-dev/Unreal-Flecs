@@ -23,6 +23,8 @@ namespace Solid::FSolidEnumSelectorDetailsConstants
 	
 } // namespace Solid::FSolidEnumSelectorDetailsConstants
 
+
+
 void FSolidEnumSelectorDetails::CustomizeHeader(const TSharedRef<IPropertyHandle> InPropertyHandle,
 	FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils)
 {
@@ -159,7 +161,7 @@ const FSolidEnumSelector* FSolidEnumSelectorDetails::GetEnumSelector() const
 	return (PropertyHandle->GetValueData(Data) == FPropertyAccess::Success) ? static_cast<const FSolidEnumSelector*>(Data) : nullptr;
 }
 
-UEnum* FSolidEnumSelectorDetails::GetSelectedEnumClass() const
+const UEnum* FSolidEnumSelectorDetails::GetSelectedEnumClass() const
 {
 	const FSolidEnumSelector* Selector = GetEnumSelector();
 	return Selector ? Selector->Class : nullptr;
@@ -252,7 +254,7 @@ void FSolidEnumSelectorDetails::InitializeClassComboBoxSelection()
 	ValueSelection = NAME_None;
 
 	// The selector is already defined, so use the struct data. Note: this is costly, but is needed to get the pointer to the correct widget option
-	if (UEnum* SelectedEnum = GetSelectedEnumClass())
+	if (const UEnum* SelectedEnum = GetSelectedEnumClass())
 	{
 		const TSharedPtr<FString>* SelectedOption = EnumClassSourceOptions.FindByPredicate([SelectedEnum](const TSharedPtr<FString>& InString)
 		{

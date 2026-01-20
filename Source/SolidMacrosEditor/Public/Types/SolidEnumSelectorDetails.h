@@ -40,7 +40,7 @@ protected:
 	const FSolidEnumSelector* GetEnumSelector() const;
 
 	/** Helper to convert the drop down selection into an enum class. */
-	UEnum* GetSelectedEnumClass() const;
+	const UEnum* GetSelectedEnumClass() const;
 
 	/** Helper to convert the drop down selection into an enum value. */
 	int64 GetSelectedEnumValue() const;
