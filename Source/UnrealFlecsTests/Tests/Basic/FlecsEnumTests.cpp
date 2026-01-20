@@ -48,6 +48,14 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A5_UnrealFlecsEnumRegistrationTests,
 		
 		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity();
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		
+		const FFlecsEntityHandle SymbolLookupEntity = FlecsWorld->LookupEntityBySymbol_Internal("EFlecsTestEnum_UENUM");
+		ASSERT_THAT(IsTrue(SymbolLookupEntity.IsValid()));
+		ASSERT_THAT(AreEqual(SymbolLookupEntity, TestEnumEntity));
+		
+		const FFlecsEntityHandle AliasLookupEntity = FlecsWorld->LookupEntity("UEnum_EFlecsTestEnum_UENUM");
+		ASSERT_THAT(IsTrue(AliasLookupEntity.IsValid()));
+		ASSERT_THAT(AreEqual(AliasLookupEntity, TestEnumEntity));
 
 		// Add the enum value using StaticEnum API
 		TestEntity.Add(StaticEnum<EFlecsTestEnum_UENUM>(), static_cast<uint64>(EFlecsTestEnum_UENUM::One));
@@ -91,6 +99,14 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A5_UnrealFlecsEnumRegistrationTests,
 
 		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity();
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		
+		const FFlecsEntityHandle SymbolLookupEntity = FlecsWorld->LookupEntityBySymbol_Internal("EFlecsTestEnum_UENUM");
+		ASSERT_THAT(IsTrue(SymbolLookupEntity.IsValid()));
+		ASSERT_THAT(AreEqual(SymbolLookupEntity, TestEnumEntity));
+		
+		const FFlecsEntityHandle AliasLookupEntity = FlecsWorld->LookupEntity("UEnum_EFlecsTestEnum_UENUM");
+		ASSERT_THAT(IsTrue(AliasLookupEntity.IsValid()));
+		ASSERT_THAT(AreEqual(AliasLookupEntity, TestEnumEntity));
 
 		TestEntity.Add<EFlecsTestEnum_UENUM>(EFlecsTestEnum_UENUM::One);
 		ASSERT_THAT(IsTrue(TestEntity.Has(StaticEnum<EFlecsTestEnum_UENUM>())));
@@ -130,6 +146,10 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A5_UnrealFlecsEnumRegistrationTests,
 
 		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity();
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		
+		const FFlecsEntityHandle SymbolLookupEntity = FlecsWorld->LookupEntityBySymbol_Internal("EFlecsTestEnum_UENUM");
+		ASSERT_THAT(IsTrue(SymbolLookupEntity.IsValid()));
+		ASSERT_THAT(AreEqual(SymbolLookupEntity, TestEnumEntity));
 
 		TestEntity.Add<EFlecsTestEnum_UENUM>(EFlecsTestEnum_UENUM::One);
 		ASSERT_THAT(IsTrue(TestEntity.Has(StaticEnum<EFlecsTestEnum_UENUM>())));
@@ -169,6 +189,10 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A5_UnrealFlecsEnumRegistrationTests,
 
 		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity();
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		
+		const FFlecsEntityHandle SymbolLookupEntity = FlecsWorld->LookupEntityBySymbol_Internal("EFlecsTestEnum_UENUM");
+		ASSERT_THAT(IsTrue(SymbolLookupEntity.IsValid()));
+		ASSERT_THAT(AreEqual(SymbolLookupEntity, TestEnumEntity));
 
 		TestEntity.Add(StaticEnum<EFlecsTestEnum_UENUM>(), static_cast<uint64>(EFlecsTestEnum_UENUM::One));
 		ASSERT_THAT(IsTrue(TestEntity.Has(StaticEnum<EFlecsTestEnum_UENUM>())));
