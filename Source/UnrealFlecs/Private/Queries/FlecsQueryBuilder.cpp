@@ -6,7 +6,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsQueryBuilder)
 
-FFlecsQueryBuilder::FFlecsQueryBuilder(const TSolidNotNull<const UFlecsWorld*> InWorld)
+FFlecsQueryBuilder::FFlecsQueryBuilder(const UFlecsWorld* InWorld)
 {
 	World = InWorld;
 }

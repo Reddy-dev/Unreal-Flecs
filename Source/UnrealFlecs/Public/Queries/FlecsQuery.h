@@ -101,6 +101,11 @@ public:
     {
         return StringCast<TCHAR>(ecs_query_str(Query)).Get();
     }
+    
+    FORCEINLINE void Destroy()
+    {
+        Query.destruct();
+    }
 
     NO_DISCARD FORCEINLINE bool operator==(const FFlecsQuery& Other) const
     {

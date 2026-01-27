@@ -179,6 +179,11 @@ public:
 		return InOutExpression(EFlecsQueryInOut::Filter, false);
 	}
 	
+	FORCEINLINE FInheritedType& InOutNone()
+	{
+		return InOutExpression(EFlecsQueryInOut::None, false);
+	}
+	
 #pragma endregion ReadWriteInOutExpressions
 	
 #pragma region TermHelperFunctions

@@ -1033,6 +1033,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Flecs")
 	FFlecsEntityHandle GetScope() const;
 	
+	UFUNCTION()
+	FFlecsQueryBuilder CreateQueryBuilder() const;
+	
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
 	FFlecsQuery GetQueryFromEntity(const FFlecsEntityHandle& InEntity) const;
 
@@ -1114,7 +1117,7 @@ public:
 	flecs::query<FFlecsUObjectComponent> ObjectComponentQuery;
 	flecs::query<FFlecsSoftDependenciesComponent> DependenciesComponentQuery;
 
-	flecs::query<> TickFunctionQuery;
+	FFlecsQuery TickFunctionQuery;
 
 	flecs::query<const FFlecsScriptStructComponent> AddReferencedObjectsQuery;
 

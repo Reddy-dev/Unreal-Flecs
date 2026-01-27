@@ -46,6 +46,8 @@
 #include "General/FlecsGameplayTagManagerEntity.h"
 #include "General/FlecsObjectRegistrationInterface.h"
 
+#include "Queries/FlecsQueryBuilder.h"
+
 #include "Pipelines/FlecsGameLoopInterface.h"
 #include "Pipelines/FlecsGameLoopTag.h"
 #include "Pipelines/FlecsOutsideMainLoopTag.h"
@@ -621,10 +623,10 @@ void UFlecsWorld::InitializeSystems()
 			.term_at(0).second(flecs::Wildcard) // FFlecsUObjectComponent
 			.build();
 
-		TickFunctionQuery = World.query_builder<>("TickFunctionQuery")
-			.with<FFlecsTickFunctionComponent>().inout_none() // 0
-			.with<FFlecsTickTypeRelationship>("$TickTypeTag") // 1
-			.build();
+		TickFunctionQuery = CreateQueryBuilder()
+			.With<FFlecsTickFunctionComponent>().InOutNone() // 0
+			.WithPair<FFlecsTickTypeRelationship>("$TickTypeTag") // 1
+			.Build();
 
 		AddReferencedObjectsQuery = World.query_builder<const FFlecsScriptStructComponent>("AddReferencedObjectsQuery") // 0 (FFlecsScriptStructComponent)
 			.with<FFlecsAddReferencedObjectsTrait>().src("$Component") //  1
@@ -1270,7 +1272,7 @@ void UFlecsWorld::DestroyWorld()
 	ObjectComponentQuery.destruct();
 	AddReferencedObjectsQuery.destruct();
 
-	TickFunctionQuery.destruct();
+	TickFunctionQuery.Destroy();
 		
 	const FAssetRegistryModule* AssetRegistryModule
 		= FModuleManager::LoadModulePtr<FAssetRegistryModule>(TEXT("AssetRegistry"));
@@ -2091,6 +2093,11 @@ FFlecsEntityHandle UFlecsWorld::GetScope() const
 	return World.get_scope();
 }
 
+FFlecsQueryBuilder UFlecsWorld::CreateQueryBuilder() const
+{
+	return FFlecsQueryBuilder(this);
+}
+
 FFlecsQuery UFlecsWorld::GetQueryFromEntity(const FFlecsEntityHandle& InEntity) const
 {
 	solid_checkf(InEntity.IsValid(), TEXT("Entity is not valid"));
@@ -2142,8 +2149,8 @@ FFlecsTypeMapComponent* UFlecsWorld::GetTypeMapComponent() const
 
 FFlecsEntityHandle UFlecsWorld::GetFlecsTickFunctionByType(const FGameplayTag& InTickType) const
 {
-	TickFunctionQuery.set_var("TickTypeTag", GetTagEntity(InTickType));
-	return TickFunctionQuery.first();
+	TickFunctionQuery.Get().set_var("TickTypeTag", GetTagEntity(InTickType));
+	return TickFunctionQuery.Get().first();
 }
 
 void UFlecsWorld::AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector)

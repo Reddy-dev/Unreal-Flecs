@@ -20,7 +20,7 @@ struct UNREALFLECS_API FFlecsQueryBuilder
 public:
 	FORCEINLINE FFlecsQueryBuilder() = default;
 	
-	explicit FFlecsQueryBuilder(const TSolidNotNull<const UFlecsWorld*> InWorld);
+	explicit FFlecsQueryBuilder(const UFlecsWorld* InWorld);
 	
 	NO_DISCARD FORCEINLINE FFlecsQueryDefinition& GetQueryDefinition_Impl() const
 	{
