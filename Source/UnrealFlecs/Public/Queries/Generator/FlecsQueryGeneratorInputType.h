@@ -48,7 +48,7 @@ public:
 
 }; // struct FFlecsQueryGeneratorInputType
 
-USTRUCT(BlueprintType, meta = (DisplayName = "Query Generator Input Type - Script Struct"))
+USTRUCT(BlueprintType, meta = (DisplayName = "Script Struct"))
 struct UNREALFLECS_API FFlecsQueryGeneratorInputType_ScriptStruct : public FFlecsQueryGeneratorInputType
 {
 	GENERATED_BODY()
@@ -66,7 +66,7 @@ public:
 	
 }; // struct FFlecsQueryGeneratorInputType_ScriptStruct
 
-USTRUCT(BlueprintType, meta = (DisplayName = "Query Generator Input Type - Script Enum"))
+USTRUCT(BlueprintType, meta = (DisplayName = "Script Enum"))
 struct UNREALFLECS_API FFlecsQueryGeneratorInputType_ScriptEnum : public FFlecsQueryGeneratorInputType
 {
 	GENERATED_BODY()
@@ -97,7 +97,7 @@ public:
 	
 }; // struct FFlecsQueryGeneratorInputType_String
 
-USTRUCT(BlueprintType, meta = (DisplayName = "Query Generator Input Type - Flecs Id"))
+USTRUCT(BlueprintType, meta = (DisplayName = "Flecs Id"))
 struct UNREALFLECS_API FFlecsQueryGeneratorInputType_FlecsId : public FFlecsQueryGeneratorInputType
 {
 	GENERATED_BODY()
@@ -115,7 +115,7 @@ public:
 	
 }; // struct FFlecsQueryGeneratorInputType_FlecsId
 
-USTRUCT(BlueprintType, meta = (DisplayName = "Query Generator Input Type - Script Enum Constant"))
+USTRUCT(BlueprintType, meta = (DisplayName = "Script Enum Constant"))
 struct UNREALFLECS_API FFlecsQueryGeneratorInputType_ScriptEnumConstant : public FFlecsQueryGeneratorInputType
 {
 	GENERATED_BODY()
@@ -134,7 +134,7 @@ public:
 }; // struct FFlecsQueryGeneratorInputType_ScriptEnumConstant
 
 
-USTRUCT(BlueprintType, meta = (DisplayName = "Query Generator Input Type - Wildcard"))
+USTRUCT(BlueprintType, meta = (DisplayName = "Wildcard"))
 struct UNREALFLECS_API FFlecsQueryGeneratorInputType_Wildcard : public FFlecsQueryGeneratorInputType
 {
 	GENERATED_BODY()
@@ -152,7 +152,7 @@ public:
 	
 }; // struct FFlecsQueryGeneratorInputType_Wildcard
 
-USTRUCT(BlueprintType, meta = (DisplayName = "Query Generator Input Type - Any"))
+USTRUCT(BlueprintType, meta = (DisplayName = "Any"))
 struct UNREALFLECS_API FFlecsQueryGeneratorInputType_Any : public FFlecsQueryGeneratorInputType
 {
 	GENERATED_BODY()
@@ -160,7 +160,7 @@ struct UNREALFLECS_API FFlecsQueryGeneratorInputType_Any : public FFlecsQueryGen
 public:
 }; // struct FFlecsQueryGeneratorInputType_Any
 
-USTRUCT(BlueprintType, meta = (DisplayName = "Query Generator Input Type - Pair"))
+USTRUCT(BlueprintType, meta = (DisplayName = "Pair"))
 struct UNREALFLECS_API FFlecsQueryGeneratorInputType_Pair : public FFlecsQueryGeneratorInputType
 {
 	GENERATED_BODY()
@@ -182,7 +182,7 @@ public:
 }; // struct FFlecsQueryGeneratorInputType_Pair
 
 
-USTRUCT(BlueprintType, meta = (DisplayName = "Query Generator Input Type - Name"))
+USTRUCT(BlueprintType, meta = (DisplayName = "Name"))
 struct UNREALFLECS_API FFlecsQueryGeneratorInputType_WithNameComponent : public FFlecsQueryGeneratorInputType
 {
 	GENERATED_BODY()
