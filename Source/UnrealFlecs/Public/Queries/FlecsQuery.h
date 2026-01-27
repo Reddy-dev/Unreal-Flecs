@@ -48,7 +48,7 @@ public:
     
     NO_DISCARD FORCEINLINE bool IsValid() const
     {
-        return static_cast<bool>(Query);
+        return Query;
     }
 
     NO_DISCARD FORCEINLINE bool HasChanged() const

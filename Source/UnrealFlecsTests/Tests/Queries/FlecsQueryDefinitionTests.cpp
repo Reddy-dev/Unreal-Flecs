@@ -751,6 +751,109 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		});
 	}
 	
+	TEST_METHOD(B4_Construction_WithPairTermScriptStructs_CPPAPI)
+	{
+		FFlecsEntityRecord QueryEntityRecord = FFlecsEntityRecord().Builder()
+			.FragmentScope<FFlecsQueryDefinitionRecordFragment>()
+				.WithPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>() // 0
+			.End()
+			.Build();
+		
+		ASSERT_THAT(IsTrue(QueryEntityRecord.HasFragment<FFlecsQueryDefinitionRecordFragment>()));
+		
+		FFlecsEntityHandle QueryEntityHandle = FlecsWorld->CreateEntityWithRecord(QueryEntityRecord);
+		ASSERT_THAT(IsTrue(QueryEntityHandle.IsValid()));
+		
+		FFlecsQuery Query = FlecsWorld->GetQueryFromEntity(QueryEntityHandle);
+		ASSERT_THAT(IsTrue(Query));
+		
+		FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity()
+			.AddPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>();
+		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity.HasPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>()));
+		
+		ASSERT_THAT(IsTrue(Query.GetCount() == 1));
+	}
+	
+	TEST_METHOD(B5_Construction_WithPairTermScriptStructAndWildcard_CPPAPI)
+	{
+		FFlecsEntityRecord QueryEntityRecord = FFlecsEntityRecord().Builder()
+			.FragmentScope<FFlecsQueryDefinitionRecordFragment>()
+				.WithPair<FUSTRUCTPairTestComponent>(flecs::Wildcard) // 0
+			.End()
+			.Build();
+		
+		ASSERT_THAT(IsTrue(QueryEntityRecord.HasFragment<FFlecsQueryDefinitionRecordFragment>()));
+		
+		FFlecsEntityHandle QueryEntityHandle = FlecsWorld->CreateEntityWithRecord(QueryEntityRecord);
+		ASSERT_THAT(IsTrue(QueryEntityHandle.IsValid()));
+		
+		FFlecsQuery Query = FlecsWorld->GetQueryFromEntity(QueryEntityHandle);
+		ASSERT_THAT(IsTrue(Query));
+		
+		FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity()
+			.AddPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>();
+		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity.HasPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>()));
+		
+		ASSERT_THAT(IsTrue(Query.GetCount() == 1));
+		
+		FFlecsEntityHandle TestEntity2 = FlecsWorld->CreateEntity()
+			.AddPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Data>();
+		ASSERT_THAT(IsTrue(TestEntity2.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity2.HasPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Data>()));
+		
+		ASSERT_THAT(IsTrue(Query.GetCount() == 2));
+	}
+	
+	TEST_METHOD(B6_Construction_WithPairTermScriptStructs_CPPAPI_ScriptStructAPI)
+	{
+		FFlecsEntityRecord QueryEntityRecord = FFlecsEntityRecord().Builder()
+			.FragmentScope<FFlecsQueryDefinitionRecordFragment>()
+				.WithPair<FUSTRUCTPairTestComponent>(FUSTRUCTPairTestComponent_Second::StaticStruct()) // 0
+			.End()
+			.Build();
+		
+		ASSERT_THAT(IsTrue(QueryEntityRecord.HasFragment<FFlecsQueryDefinitionRecordFragment>()));
+		
+		FFlecsEntityHandle QueryEntityHandle = FlecsWorld->CreateEntityWithRecord(QueryEntityRecord);
+		ASSERT_THAT(IsTrue(QueryEntityHandle.IsValid()));
+		
+		FFlecsQuery Query = FlecsWorld->GetQueryFromEntity(QueryEntityHandle);
+		ASSERT_THAT(IsTrue(Query));
+		
+		FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity()
+			.AddPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>();
+		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity.HasPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>()));
+		
+		ASSERT_THAT(IsTrue(Query.GetCount() == 1));
+	}
+	
+	TEST_METHOD(B7_Construction_WithPairTermScriptStructs_ScriptStructAPI_CPPAPI)
+	{
+		FFlecsEntityRecord QueryEntityRecord = FFlecsEntityRecord().Builder()
+			.FragmentScope<FFlecsQueryDefinitionRecordFragment>()
+				.WithPairSecond<FUSTRUCTPairTestComponent_Second>(FUSTRUCTPairTestComponent::StaticStruct()) // 0
+			.End()
+			.Build();
+		
+		ASSERT_THAT(IsTrue(QueryEntityRecord.HasFragment<FFlecsQueryDefinitionRecordFragment>()));
+		
+		FFlecsEntityHandle QueryEntityHandle = FlecsWorld->CreateEntityWithRecord(QueryEntityRecord);
+		ASSERT_THAT(IsTrue(QueryEntityHandle.IsValid()));
+		
+		FFlecsQuery Query = FlecsWorld->GetQueryFromEntity(QueryEntityHandle);
+		ASSERT_THAT(IsTrue(Query));
+		
+		FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity()
+			.AddPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>();
+		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity.HasPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>()));
+		
+		ASSERT_THAT(IsTrue(Query.GetCount() == 1));
+	}
+	
 	
 
 }; // End of B2_UnrealFlecsQueryDefinitionTests

@@ -184,6 +184,8 @@ public:
 	
 #pragma endregion ReadWriteInOutExpressions
 	
+#pragma region TermHelperFunctions
+	
 	FORCEINLINE FBuilder& With(const FFlecsId InId)
 	{
 		FFlecsQueryTermExpression Expr;
@@ -497,16 +499,16 @@ public:
 	template <typename T, Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TFirst>
 	FORCEINLINE FBuilder& WithPairSecond(const TFirst& InFirst)
 	{
-		this->With<T>();
-		this->Second(InFirst);
+		this->With(InFirst);
+		this->Second<T>();
 		return *this;
 	}
 	
 	template <typename T, Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TFirst>
 	FORCEINLINE FBuilder& WithoutPairSecond(const TFirst& InFirst)
 	{
-		this->Without<T>();
-		this->Second(InFirst);
+		this->Without(InFirst);
+		this->Second<T>();
 		return *this;
 	}
 	
@@ -525,6 +527,8 @@ public:
 		this->Second<TSecond>();
 		return *this;
 	}
+	
+#pragma endregion TermHelperFunctions
 	
 	FORCEINLINE FBuilder& ModifyLastTerm(const TFunctionRef<void(FFlecsQueryTermExpression&)>& InModifier)
 	{
