@@ -168,7 +168,7 @@ struct query_base {
         return ecs_query_find_var(query_, name);
     }
 
-    flecs::string str() {
+    flecs::string str() const {
         char *result = ecs_query_str(query_);
         return flecs::string(result);
     }
