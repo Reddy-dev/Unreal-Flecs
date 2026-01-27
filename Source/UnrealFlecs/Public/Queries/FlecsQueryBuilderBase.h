@@ -525,6 +525,18 @@ public:
 		return Get();
 	}
 	
+	FORCEINLINE FInheritedType& WithPair(const FSolidEnumSelector& InPair)
+	{
+		WithPair(InPair.Class, InPair.Value);
+		return Get();
+	}
+	
+	FORCEINLINE FInheritedType& WithoutPair(const FSolidEnumSelector& InPair)
+	{
+		WithoutPair(InPair.Class, InPair.Value);
+		return Get();
+	}
+	
 #pragma endregion TermHelperFunctions
 	
 	FORCEINLINE FInheritedType& ModifyLastTerm(const TFunctionRef<void(FFlecsQueryTermExpression&)>& InModifier)
