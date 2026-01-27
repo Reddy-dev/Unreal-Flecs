@@ -179,7 +179,7 @@
  * Member entities can also be created on a per-type basis by setting 
  * ecs_struct_desc_t::create_member_entities to true.
  */
-// #define FLECS_CREATE_MEMBER_ENTITIES
+ #define FLECS_CREATE_MEMBER_ENTITIES
 
 /** @def FLECS_CPP_NO_AUTO_REGISTRATION
  * When set, the C++ API will require that components are registered before they
