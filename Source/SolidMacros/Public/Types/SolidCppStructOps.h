@@ -72,7 +72,7 @@ struct SOLIDMACROS_API FSolidMoveableStructRegistry : public FNoncopyable
 			TypeHookInfo.MoveConstructor = nullptr;
 		}
 
-		solid_checkf(TypeHookInfo.MoveConstructor || TypeHookInfo.MoveAssignment,
+		solid_cassumef(TypeHookInfo.MoveConstructor || TypeHookInfo.MoveAssignment,
 			TEXT("At least one of MoveConstructor or MoveAssignment must be valid for moveable struct registration!"));
 
 		MoveableStructs.Add(ScriptStruct, MoveTemp(TypeHookInfo));

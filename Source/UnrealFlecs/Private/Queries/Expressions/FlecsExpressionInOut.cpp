@@ -10,7 +10,7 @@ FFlecsExpressionInOut::FFlecsExpressionInOut() : Super(false /* bInAllowsChildEx
 {
 }
 
-void FFlecsExpressionInOut::Apply(TSolidNotNull<UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const
+void FFlecsExpressionInOut::Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const
 {
 	if (bStage)
 	{

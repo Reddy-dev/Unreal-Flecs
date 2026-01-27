@@ -484,7 +484,7 @@ public:
 				return &Fragment;
 			}
 			
-			NO_DISCARD FORCEINLINE TFragmentType& Get()
+			NO_DISCARD FORCEINLINE TFragmentType& GetSelf()
 			{
 				return Fragment;
 			}
@@ -951,7 +951,7 @@ struct FFlecsNamedEntityRecordFragment::FBuilder : public FFlecsEntityRecord::FF
 public:
 	FORCEINLINE FBuilder& Named(const FString& InName)
 	{
-		this->Get().Name = InName;
+		this->GetSelf().Name = InName;
 		return *this;
 	}
 		

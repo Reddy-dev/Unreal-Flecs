@@ -20,6 +20,7 @@
 #include "Entities/FlecsId.h"
 #include "Modules/FlecsDependenciesComponent.h"
 #include "Properties/FlecsComponentProperties.h"
+#include "Queries/FlecsQuery.h"
 
 #include "FlecsWorld.generated.h"
 
@@ -227,6 +228,9 @@ public:
 	                                const FString& Separator = "::",
 	                                const FString& RootSeparator = "::",
 	                                const bool bRecursive = true) const;
+	
+	NO_DISCARD FFlecsEntityHandle LookupEntityBySymbol_Internal(const FString& Symbol,
+		const bool bLookupAsPath = false, const bool bRecursive = true) const;
 
 	/**
 	 * @brief Destroy an entity by its handle, if the entity does not exist, nothing happens
@@ -1028,6 +1032,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Flecs")
 	FFlecsEntityHandle GetScope() const;
+	
+	UFUNCTION()
+	FFlecsQueryBuilder CreateQueryBuilder() const;
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
+	FFlecsQuery GetQueryFromEntity(const FFlecsEntityHandle& InEntity) const;
 
 	virtual bool IsSupportedForNetworking() const override;
 
@@ -1107,7 +1117,7 @@ public:
 	flecs::query<FFlecsUObjectComponent> ObjectComponentQuery;
 	flecs::query<FFlecsSoftDependenciesComponent> DependenciesComponentQuery;
 
-	flecs::query<> TickFunctionQuery;
+	FFlecsQuery TickFunctionQuery;
 
 	flecs::query<const FFlecsScriptStructComponent> AddReferencedObjectsQuery;
 
@@ -1120,6 +1130,7 @@ public:
 
 	FFlecsWorldModuleImportedDelegate OnModuleImported;
 
+	UPROPERTY()
 	TOptional<double> PrePauseTimeScale;
 
 	robin_hood::unordered_flat_map<FGameplayTag, FFlecsId> TagEntityMap;

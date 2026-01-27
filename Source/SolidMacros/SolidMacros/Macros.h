@@ -35,7 +35,7 @@ namespace Solid
 	template <std::size_t ...Idxs>
 	FORCEINLINE constexpr auto substring_as_array(std::string_view str, std::index_sequence<Idxs...>)
 	{
-		return std::array{str[Idxs]..., '\n'};
+		return std::array{str[Idxs]..., '\0'};
 	}
 
 	template <typename T>
@@ -78,7 +78,7 @@ namespace Solid
 	constexpr auto type_name() -> std::string_view
 	{
 		constexpr auto& value = type_name_holder<T>::value;
-		return std::string_view{value.data(), value.size()};
+		return std::string_view{value.data(), value.size() - 1}; // exclude '\0'
 	}
 
 	namespace internal

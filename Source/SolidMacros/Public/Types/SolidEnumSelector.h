@@ -9,6 +9,14 @@
 
 #include "SolidEnumSelector.generated.h"
 
+/*
+* @TODO: Meta Specifiers:
+* Meta Specifiers:
+ * AllowedEnums: Comma separated list of enum type names that are allowed.
+ * DisallowedEnums: Comma separated list of enum type names that are disallowed.
+ * LockEnumClass: If true, the enum class cannot be changed in the editor.
+*/
+
 /**
  * Taken from @FEnumSelector in the PCG Module.
  */
@@ -26,28 +34,28 @@ public:
 	static NO_DISCARD FSolidEnumSelector Make(const TEnum InValue)
 	{
 		//using EnumType = decltype(InValue);
-		//static_assert(Solid::TStaticEnumConcept<EnumType>, "FSolidEnumSelector::Make<TEnum>: TEnum must be a UENUM type.");
+		static_assert(Solid::TStaticEnumConcept<TEnum>, "FSolidEnumSelector::Make<TEnum>: TEnum must be a UENUM type.");
 		
 		return FSolidEnumSelector(StaticEnum<TEnum>(), static_cast<int64>(InValue));
 	}
 
-	static NO_DISCARD FSolidEnumSelector Make(UEnum* InClass, const int64 InValue)
+	static NO_DISCARD FSolidEnumSelector Make(const UEnum* InClass, const int64 InValue)
 	{
 		return FSolidEnumSelector(InClass, InValue);
 	}
 
-	FORCEINLINE FSolidEnumSelector(UEnum* InClass, const int64 InValue)
+	FORCEINLINE FSolidEnumSelector(const UEnum* InClass, const int64 InValue)
 		: Class(InClass), Value(InValue)
 	{
 	}
 	
 	UPROPERTY(DisplayName="Enum Class")
-	TObjectPtr<UEnum> Class;
+	TObjectPtr<const UEnum> Class;
 
 	UPROPERTY(DisplayName="Enum Value")
 	int64 Value = 0;
 
-	FText GetDisplayName() const;
-	FString GetCultureInvariantDisplayName() const;
+	NO_DISCARD FText GetDisplayName() const;
+	NO_DISCARD FString GetCultureInvariantDisplayName() const;
 	
 }; // struct FSolidEnumSelector

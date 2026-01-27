@@ -3,9 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FlecsOperQueryExpression.h"
+
+#include "Queries/Enums/FlecsQueryOperators.h"
 #include "FlecsQueryExpression.h"
-#include "Queries/FlecsQueryInputType.h"
+#include "Queries/FlecsQueryTerm.h"
+
 #include "FlecsQueryTermExpression.generated.h"
 
 USTRUCT(BlueprintType, meta = (DisplayName = "Term Query"))
@@ -17,11 +19,11 @@ public:
 	FFlecsQueryTermExpression();
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query")
-	FFlecsQueryInput InputType;
+	FFlecsQueryTerm Term;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query")
-	bool bWithout = false;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Query")
+	EFlecsQueryOperator Operator = EFlecsQueryOperator::Default;
 
-	virtual void Apply(TSolidNotNull<UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const override;
+	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const override;
 	
 }; // struct FFlecsQueryTermExpression

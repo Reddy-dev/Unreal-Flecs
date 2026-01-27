@@ -56,6 +56,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 		ASSERT_THAT(IsTrue(StaticStructEntity.IsValid()));
 
 		ASSERT_THAT(IsTrue(StaticStructEntity.IsComponent()));
+		ASSERT_THAT(IsTrue(StaticStructEntity.IsValueComponent()));
 		ASSERT_THAT(IsFalse(StaticStructEntity.IsTag()));
 
 		ASSERT_THAT(IsTrue(FlecsWorld->IsIdType(StructEntity)));
@@ -63,6 +64,17 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 		ASSERT_THAT(IsFalse(FlecsWorld->IsIdTag(StructEntity)));
 
 		ASSERT_THAT(IsTrue(StructEntity == StaticStructEntity));
+		
+		const FString StructSymbolIdentifier = StructEntity.GetSymbol();
+		ASSERT_THAT(IsTrue(StructSymbolIdentifier.Contains(TEXT("FFlecsTestStruct_Value"))));
+		
+		const FFlecsEntityHandle SymbolLookupResult = FlecsWorld->LookupEntityBySymbol_Internal(TEXT("FFlecsTestStruct_Value"));
+		ASSERT_THAT(IsTrue(SymbolLookupResult.IsValid()));
+		ASSERT_THAT(IsTrue(SymbolLookupResult == StructEntity));
+		
+		const FFlecsEntityHandle AliasLookupResult = FlecsWorld->LookupEntity(TEXT("UScriptStruct_FFlecsTestStruct_Value"));
+		ASSERT_THAT(IsTrue(AliasLookupResult.IsValid()));
+		ASSERT_THAT(IsTrue(AliasLookupResult == StructEntity));
 	}
 
 	TEST_METHOD(A2_BasicUSTRUCTComponentRegistration_StaticStructAPI)
@@ -77,6 +89,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 		ASSERT_THAT(IsTrue(StructEntity.IsValid()));
 
 		ASSERT_THAT(IsTrue(StructEntity.IsComponent()));
+		ASSERT_THAT(IsTrue(StructEntity.IsValueComponent()));
 		ASSERT_THAT(IsFalse(StructEntity.IsTag()));
 
 		ASSERT_THAT(IsTrue(FlecsWorld->IsIdType(StructEntity)));
@@ -97,6 +110,15 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 		ASSERT_THAT(IsTrue(FlecsWorld->IsIdType(StructEntity)));
 		//ASSERT_THAT(IsTrue(FlecsWorld->IsIdInUse(StructEntity)));
 		ASSERT_THAT(IsFalse(FlecsWorld->IsIdTag(StructEntity)));
+		ASSERT_THAT(IsTrue(StructEntity.IsValueComponent()));
+		ASSERT_THAT(IsFalse(StructEntity.IsTag()));
+		
+		const FString StructSymbolIdentifier = StructEntity.GetSymbol();
+		ASSERT_THAT(IsTrue(StructSymbolIdentifier.Contains(TEXT("FFlecsTest_CPPStructValue"))));
+		
+		const FFlecsEntityHandle SymbolLookupResult = FlecsWorld->LookupEntityBySymbol_Internal(TEXT("FFlecsTest_CPPStructValue"));
+		ASSERT_THAT(IsTrue(SymbolLookupResult.IsValid()));
+		ASSERT_THAT(IsTrue(SymbolLookupResult == StructEntity));
 	}
 
 	TEST_METHOD(A4_BasicComponentRegistration_Tag_CPPAPI)
@@ -105,11 +127,19 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 		ASSERT_THAT(IsTrue(TagEntity.IsValid()));
 
 		ASSERT_THAT(IsTrue(TagEntity.IsTag()));
-		//ASSERT_THAT(IsFalse(TagEntity.IsComponent()));
+		ASSERT_THAT(IsFalse(TagEntity.IsValueComponent()));
 		
 		ASSERT_THAT(IsFalse(FlecsWorld->IsIdType(TagEntity)));
 		//ASSERT_THAT(IsTrue(FlecsWorld->IsIdInUse(TagEntity)));
 		ASSERT_THAT(IsTrue(FlecsWorld->IsIdTag(TagEntity)));
+		
+		const FFlecsEntityHandle SymbolLookupResult = FlecsWorld->LookupEntityBySymbol_Internal(TEXT("FFlecsTestStruct_Tag"));
+		ASSERT_THAT(IsTrue(SymbolLookupResult.IsValid()));
+		ASSERT_THAT(IsTrue(SymbolLookupResult == TagEntity));
+		
+		const FFlecsEntityHandle AliasLookupResult = FlecsWorld->LookupEntity(TEXT("UScriptStruct_FFlecsTestStruct_Tag"));
+		ASSERT_THAT(IsTrue(AliasLookupResult.IsValid()));
+		ASSERT_THAT(IsTrue(AliasLookupResult == TagEntity));
 	}
 
 	TEST_METHOD(A5_BasicComponentRegistration_Tag_StaticStructAPI)
@@ -123,6 +153,14 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 		ASSERT_THAT(IsFalse(FlecsWorld->IsIdType(TagEntity)));
 		//ASSERT_THAT(IsTrue(FlecsWorld->IsIdInUse(TagEntity)));
 		ASSERT_THAT(IsTrue(FlecsWorld->IsIdTag(TagEntity)));
+		
+		const FFlecsEntityHandle SymbolLookupResult = FlecsWorld->LookupEntityBySymbol_Internal(TEXT("FFlecsTestStruct_Tag"));
+		ASSERT_THAT(IsTrue(SymbolLookupResult.IsValid()));
+		ASSERT_THAT(IsTrue(SymbolLookupResult == TagEntity));
+		
+		const FFlecsEntityHandle AliasLookupResult = FlecsWorld->LookupEntity(TEXT("UScriptStruct_FFlecsTestStruct_Tag"));
+		ASSERT_THAT(IsTrue(AliasLookupResult.IsValid()));
+		ASSERT_THAT(IsTrue(AliasLookupResult == TagEntity));
 	}
 
 	TEST_METHOD(A6_BasicComponentRegistration_Tag_CPPOnlyType)
@@ -136,6 +174,15 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 		ASSERT_THAT(IsFalse(FlecsWorld->IsIdType(TagEntity)));
 		//ASSERT_THAT(IsTrue(FlecsWorld->IsIdInUse(TagEntity)));
 		ASSERT_THAT(IsTrue(FlecsWorld->IsIdTag(TagEntity)));
+		ASSERT_THAT(IsTrue(TagEntity.IsTag()));
+		ASSERT_THAT(IsFalse(TagEntity.IsValueComponent()));
+		
+		const FString TagSymbolIdentifier = TagEntity.GetSymbol();
+		ASSERT_THAT(IsTrue(TagSymbolIdentifier.Contains(TEXT("FFlecsTest_CPPStruct"))));
+		
+		const FFlecsEntityHandle SymbolLookupResult = FlecsWorld->LookupEntityBySymbol_Internal(TEXT("FFlecsTest_CPPStruct"));
+		ASSERT_THAT(IsTrue(SymbolLookupResult.IsValid()));
+		ASSERT_THAT(IsTrue(SymbolLookupResult == TagEntity));
 	}
 
 	TEST_METHOD(B1_GetComponentPropertyTraits_CPPAPI)
@@ -324,6 +371,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 		ASSERT_THAT(IsFalse(StructEntity.IsTag()));
 		ASSERT_THAT(IsTrue(StructEntity.GetName() == CustomName));
 	}*/
+	
 	
 }; // End of A2_UnrealFlecsComponentRegistrationTests
 

@@ -14,7 +14,7 @@ struct UNREALFLECS_API FFlecsQueryScriptExpr
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, Category = "Query")
+	UPROPERTY(EditAnywhere)
 	FString Expr;
 	
 }; // struct FFlecsQueryScriptExpr

@@ -112,7 +112,7 @@ public:
 		solid_check(EnumEntity.IsValid());
 		solid_check(EnumEntity.IsEnum());
 
-		const FFlecsId EnumConstant = ObtainEnumConstant<FFlecsId>(EnumType, InValue);
+		const FFlecsId EnumConstant = GetEnumConstant<FFlecsId>(EnumType, InValue);
 		
 		return HasPair(EnumEntity, EnumConstant);
 	}
@@ -155,7 +155,7 @@ public:
 		solid_check(EnumEntity.IsValid());
 		solid_check(EnumEntity.IsEnum());
 
-		const FFlecsId EnumConstant = ObtainEnumConstant<FFlecsId>(InFirst, InSecond);
+		const FFlecsId EnumConstant = GetEnumConstant<FFlecsId>(InFirst, InSecond);
 		
 		return GetEntityView().has(FFlecsEntityView::GetInputId(*this, InFirst), EnumConstant);
 	}
@@ -387,6 +387,11 @@ public:
 	{
 		return !IsComponent() || Get<flecs::Component>().size == 0;
 	}
+	
+	NO_DISCARD SOLID_INLINE bool IsValueComponent() const
+	{
+		return IsComponent() && Get<flecs::Component>().size > 0;
+	}
 
 	NO_DISCARD SOLID_INLINE bool IsEnum() const
 	{
@@ -460,7 +465,7 @@ public:
 
 	// @TODO: Optimize this to not require looking up the enum entity each time
 	template <Unreal::Flecs::TFlecsEntityHandleTypeConcept THandle, typename TEnumUnderlying = uint64>
-	NO_DISCARD SOLID_INLINE THandle ObtainEnumConstant(const TSolidNotNull<const UEnum*> EnumType,
+	NO_DISCARD SOLID_INLINE THandle GetEnumConstant(const TSolidNotNull<const UEnum*> EnumType,
 																  const TEnumUnderlying InValue) const
 	{
 		const FFlecsEntityView EnumEntity = ObtainComponentTypeEnum<FFlecsEntityView>(EnumType);
@@ -468,6 +473,12 @@ public:
 		solid_check(EnumEntity.IsEnum());
 
 		return EnumEntity.Lookup<THandle>(EnumType->GetNameStringByValue(static_cast<int64>(InValue)));
+	}
+	
+	template <Unreal::Flecs::TFlecsEntityHandleTypeConcept THandle>
+	NO_DISCARD SOLID_INLINE THandle GetEnumConstant(const FSolidEnumSelector& EnumSelector) const
+	{
+		return GetEnumConstant<THandle>(EnumSelector.Class, EnumSelector.Value);
 	}
 
 	// @TODO: make this default to FFlecsEntityView or handle maybe?
@@ -597,7 +608,12 @@ public:
 	{
 		return OwnsPair<flecs::Identifier>(flecs::Name);
 	}
-
+	
+	NO_DISCARD SOLID_INLINE bool HasAlias() const
+	{
+		return OwnsPair<flecs::Identifier>(EcsAlias);
+	}
+	
 	NO_DISCARD SOLID_INLINE FString GetSymbol() const
 	{
 		return FString(GetEntityView().symbol().c_str(), static_cast<int32>(GetEntityView().symbol().length()));

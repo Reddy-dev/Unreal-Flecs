@@ -91,7 +91,7 @@ public:
 	{
 		const FFlecsEntityHandle EnumEntity = ObtainComponentTypeEnum<FFlecsEntityHandle>(EnumType);
 
-		const FFlecsId ValueEntity = ObtainEnumConstant<FFlecsId>(EnumType, InValue);
+		const FFlecsId ValueEntity = GetEnumConstant<FFlecsId>(EnumType, InValue);
 		solid_check(ValueEntity.IsValid());
 		
 		AddPair(EnumEntity, ValueEntity);
@@ -157,7 +157,7 @@ public:
 		solid_check(EnumEntity.IsValid());
 		solid_check(EnumEntity.IsEnum());
 
-		const FFlecsId EnumConstant = ObtainEnumConstant<FFlecsId>(EnumType, InValue);
+		const FFlecsId EnumConstant = GetEnumConstant<FFlecsId>(EnumType, InValue);
 		
 		RemovePair(EnumEntity, EnumConstant);
 		return *this;
@@ -427,6 +427,18 @@ public:
 		GetEntity().set_name(nullptr);
 		return *this;
 	}
+	
+	SOLID_INLINE const FSelfType& SetAlias(const FString& InAlias) const
+	{
+		GetEntity().set_alias(StringCast<char>(*InAlias).Get());
+		return *this;
+	}
+	
+	SOLID_INLINE const FSelfType& ClearAlias() const
+	{
+		GetEntity().set_alias(nullptr);
+		return *this;
+	}
 
 
 #if defined(FLECS_DOC)
@@ -604,7 +616,7 @@ public:
 		solid_check(EnumEntity.IsValid());
 		solid_check(EnumEntity.IsEnum());
 
-		const FFlecsId EnumConstant = ObtainEnumConstant<FFlecsId>(InSecond, InValue);
+		const FFlecsId EnumConstant = GetEnumConstant<FFlecsId>(InSecond, InValue);
 		
 		AddPair(InFirst, EnumConstant);
 		return *this;
