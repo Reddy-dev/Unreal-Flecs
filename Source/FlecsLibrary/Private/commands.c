@@ -443,7 +443,8 @@ void* flecs_defer_set(
     ecs_check(ti != NULL, ECS_INVALID_PARAMETER, 
         "provided component is not a type");
     ecs_assert(size == ti->size, ECS_INVALID_PARAMETER,
-        "mismatching size specified for component in ensure/emplace/set");
+        "mismatching size specified for component in ensure/emplace/set (%u vs %u)",
+            size, ti->size);
 
     /* Handle trivial set command (no hooks, OnSet observers) */
     if (id < FLECS_HI_COMPONENT_ID) {
@@ -1045,7 +1046,7 @@ void flecs_cmd_batch_for_entity(
 
         if (r->row & EcsEntityIsTraversable) {
             /* Update monitors since we didn't do this in flecs_commit. Do this
-             * before calling flecs_notify_on_add() since this can trigger 
+             * before calling flecs_actions_move_add() since this can trigger 
              * prefab instantiation logic. When that happens, prefab children
              * can be created for this instance which would mean that the table
              * count of r->cr would always be >0.
@@ -1060,7 +1061,7 @@ void flecs_cmd_batch_for_entity(
         }
 
         flecs_defer_begin(world, world->stages[0]);
-        flecs_notify_on_add(world, r->table, start_table,
+        flecs_actions_move_add(world, r->table, start_table,
             ECS_RECORD_TO_ROW(r->row), 1, &add_diff, 0, true, false);
         flecs_defer_end(world, world->stages[0]);
     }
@@ -1125,8 +1126,8 @@ bool flecs_defer_end(
             ecs_cmd_t *cmds = ecs_vec_first(queue);
             int32_t i, count = ecs_vec_count(queue);
 
-            ecs_table_diff_builder_t diff;
-            flecs_table_diff_builder_init(world, &diff);
+            ecs_table_diff_builder_t diff = {0};
+            bool diff_builder_used = false;
 
             for (i = 0; i < count; i ++) {
                 ecs_cmd_t *cmd = &cmds[i];
@@ -1140,6 +1141,11 @@ bool flecs_defer_end(
 
                     /* Batch commands for entity to limit archetype moves */
                     if (is_alive) {
+                        if (!diff_builder_used) {
+                            flecs_table_diff_builder_init(world, &diff);
+                            diff_builder_used = true;
+                        }
+
                         flecs_cmd_batch_for_entity(world, &diff, e, cmds, i);
                     } else {
                         world->info.cmd.discard_count ++;
@@ -1236,7 +1242,7 @@ bool flecs_defer_end(
                     break;
                 case EcsCmdOnDeleteAction:
                     ecs_defer_begin(world);
-                    flecs_on_delete(world, id, e, false);
+                    flecs_on_delete(world, id, e, false, false);
                     ecs_defer_end(world);
                     world->info.cmd.other_count ++;
                     break;
@@ -1292,7 +1298,10 @@ bool flecs_defer_end(
 
             flecs_stack_reset(&commands->stack);
             ecs_vec_clear(queue);
-            flecs_table_diff_builder_fini(world, &diff);
+
+            if (diff_builder_used) {
+                flecs_table_diff_builder_fini(world, &diff);
+            }
 
             /* Internal callback for capturing commands, signal queue is done */
             if (world->on_commands_active) {

@@ -389,7 +389,27 @@
                 "set_non_copy_assignable",
                 "set_non_copy_assignable_w_move_assign",
                 "assign_non_copy_assignable",
-                "assign_non_copy_assignable_w_move_assign"
+                "assign_non_copy_assignable_w_move_assign",
+                "set_parent",
+                "defer_set_parent",
+                "set_change_parent",
+                "defer_set_change_parent",
+                "assign_parent",
+                "defer_assign_parent",
+                "set_parent_on_stage",
+                "assign_parent_on_stage",
+                "entity_w_childof",
+                "entity_w_childof_w_name",
+                "entity_w_childof_w_name_existing_w_name",
+                "entity_w_parent",
+                "entity_w_parent_w_name",
+                "entity_w_parent_w_name_existing_w_name",
+                "prefab_w_childof",
+                "prefab_w_childof_w_name",
+                "prefab_w_childof_w_name_existing_w_name",
+                "prefab_w_parent",
+                "prefab_w_parent_w_name",
+                "prefab_w_parent_w_name_existing_w_name"
             ]
         }, {
             "id": "OrderedChildren",
@@ -1280,8 +1300,7 @@
                 "reimport_after_delete",
                 "component_name_w_module_name",
                 "delete_module_w_implicit_component_and_system",
-                "delete_module_w_explicit_component_and_system",
-                "module_has_singleton"
+                "delete_module_w_explicit_component_and_system"
             ]
         }, {
             "id": "ImplicitComponents",

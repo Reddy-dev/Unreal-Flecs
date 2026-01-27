@@ -47,6 +47,11 @@ typedef struct ecs_table_diff_t {
     ecs_flags32_t removed_flags;
 } ecs_table_diff_t;
 
+/* Tracks which/how many non-fragmenting children are stored in table for parent. */
+typedef struct ecs_parent_record_t {
+    uint32_t entity;                /* If table only contains a single entity for parent, this will contain the entity id (without generation). */
+    int32_t count;                  /* The number of children for a parent in the table. */         
+} ecs_parent_record_t;
 
 /** Find record for entity. 
  * An entity record contains the table and row for the entity.
@@ -222,6 +227,17 @@ FLECS_ALWAYS_INLINE ecs_component_record_t* flecs_components_get(
     const ecs_world_t *world,
     ecs_id_t id);
 
+/* Ensure component record for component id 
+ * 
+ * @param world The world.
+ * @param id The component id.
+ * @return The new or existing component record.
+ */
+FLECS_API
+FLECS_ALWAYS_INLINE ecs_component_record_t* flecs_components_ensure(
+    ecs_world_t *world,
+    ecs_id_t id);
+
 /** Get component id from component record.
  * 
  * @param cr The component record.
@@ -241,6 +257,15 @@ ecs_flags32_t flecs_component_get_flags(
     const ecs_world_t *world,
     ecs_id_t id);
 
+/** Get type info for component record.
+ * 
+ * @param cr The component record.
+ * @return The type info struct, or NULL if component is a tag.
+ */
+FLECS_API
+const ecs_type_info_t* flecs_component_get_type_info(
+    const ecs_component_record_t *cr);
+
 /** Find table record for component record.
  * This operation returns the table record for the table/component record if it
  * exists. If the record exists, it means the table has the component.
@@ -253,6 +278,41 @@ FLECS_API
 FLECS_ALWAYS_INLINE const ecs_table_record_t* flecs_component_get_table(
     const ecs_component_record_t *cr,
     const ecs_table_t *table);
+
+/** Ger parent record for component/table. 
+ * A parent record stores how many children for a parent are stored in the 
+ * specified table. If the table only stores a single child, the parent record
+ * will also store the entity id of that child.
+ * 
+ * This information is used by queries to determine whether an O(n) search 
+ * through the table is required to find all children for the parent. If the 
+ * table only contains a single child the query can use 
+ * ecs_parent_record_t::entity directly, otherwise it has to do a scan.
+ * 
+ * The component record specified to this function must be a ChildOf pair. Only
+ * tables with children that use the non-fragmenting hierarchy storage will have
+ * parent records.
+ * 
+ * @param cr The ChildOf component record.
+ * @param table The table to check the number of children for.
+ * @return The parent record if it exists, NULL if it does not.
+*/
+FLECS_API
+FLECS_ALWAYS_INLINE ecs_parent_record_t* flecs_component_get_parent_record(
+    const ecs_component_record_t *cr,
+    const ecs_table_t *table);
+
+/** Return hierarchy depth for component record.
+ * The specified component record must be a ChildOf pair. This function does not
+ * compute the depth, it just returns the precomputed depth that is updated 
+ * automatically when hierarchy changes happen.
+ * 
+ * @param cr The ChildOf component record.
+ * @return The depth of the parent's children in the hierarchy.
+ */
+FLECS_API
+FLECS_ALWAYS_INLINE int32_t flecs_component_get_childof_depth(
+    const ecs_component_record_t *cr);
 
 /** Create component record iterator.
  * A component record iterator iterates all tables for the specified component

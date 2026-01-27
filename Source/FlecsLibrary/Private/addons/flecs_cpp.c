@@ -557,6 +557,7 @@ ecs_cpp_get_mut_t ecs_cpp_set(
             flecs_utosize(size), new_ptr);
         /* Modified command is already inserted */
         result.call_modified = false;
+        result.stage = NULL;
         return result;
     }
 
@@ -565,6 +566,8 @@ ecs_cpp_get_mut_t ecs_cpp_set(
         flecs_uto(int32_t, size));
     
     result.ptr = dst.ptr;
+    result.world = world;
+    result.stage = stage;
 
     if (id < FLECS_HI_COMPONENT_ID) {
         if (!world->non_trivial_set[id]) {
@@ -581,9 +584,7 @@ ecs_cpp_get_mut_t ecs_cpp_set(
             world, r->table, entity, id, dst.ptr, new_ptr, dst.ti);
     }
 
-done:
-    flecs_defer_end(world, stage);
-    
+done:    
     return result;
 error:
     return (ecs_cpp_get_mut_t){0};
@@ -607,6 +608,7 @@ ecs_cpp_get_mut_t ecs_cpp_assign(
             world, stage, entity, id, flecs_uto(int32_t, size), new_ptr);
         /* Modified command is already inserted */
         result.call_modified = false;
+        result.stage = NULL;
         return result;
     }
 
@@ -618,6 +620,8 @@ ecs_cpp_get_mut_t ecs_cpp_assign(
         "entity does not have component, use set() instead");
         
     result.ptr = dst.ptr;
+    result.world = world;
+    result.stage = stage;
 
     if (id < FLECS_HI_COMPONENT_ID) {
         if (!world->non_trivial_set[id]) {
@@ -635,11 +639,34 @@ ecs_cpp_get_mut_t ecs_cpp_assign(
     }
 
 done:
-    flecs_defer_end(world, stage);
-    
     return result;
 error:
     return (ecs_cpp_get_mut_t){0};
+}
+
+ecs_entity_t ecs_cpp_new(
+    ecs_world_t *world,
+    ecs_entity_t parent,
+    const char *name,
+    const char *sep,
+    const char *root_sep)
+{
+    ecs_stage_t *stage = flecs_stage_from_world(&world);
+
+    if (!parent && !name) {
+        if (!stage->scope && !stage->with) {
+            ecs_entity_t result = flecs_new_id(world);
+            flecs_add_to_root_table(world, result);
+            return result;
+        }
+    }
+
+    ecs_entity_desc_t desc = {0};
+    desc.parent = parent;
+    desc.name = name;
+    desc.sep = sep;
+    desc.root_sep = root_sep;
+    return ecs_entity_init(world, &desc);
 }
 
 #endif

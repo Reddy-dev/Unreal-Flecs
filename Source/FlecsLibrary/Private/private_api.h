@@ -26,6 +26,7 @@
 #include "storage/table.h"
 #include "storage/sparse_storage.h"
 #include "storage/ordered_children.h"
+#include "storage/non_fragmenting_childof.h"
 #include "query/query.h"
 #include "component_actions.h"
 #include "entity_name.h"
@@ -35,15 +36,13 @@
 #include "observable.h"
 #include "iter.h"
 #include "poly.h"
+#include "tree_spawner.h"
 #include "stage.h"
 #include "world.h"
 #include "addons/journal.h"
 
 /* Used in id records to keep track of entities used with id flags */
 extern const ecs_entity_t EcsFlag;
-
-/* Scope for flecs internals, like observers used for builtin features */
-extern const ecs_entity_t EcsFlecsInternals;
 
 ////////////////////////////////////////////////////////////////////////////////
 //// Bootstrap API
@@ -62,10 +61,8 @@ void flecs_bootstrap(
 
 #define flecs_bootstrap_tag(world, name)\
     ecs_make_alive(world, name);\
-    ecs_add_id(world, name, EcsFinal);\
     ecs_add_pair(world, name, EcsChildOf, ecs_get_scope(world));\
-    ecs_set_name(world, name, (const char*)&#name[ecs_os_strlen(world->info.name_prefix)]);\
-    ecs_set_symbol(world, name, #name);
+    ecs_set_name(world, name, (const char*)&#name[ecs_os_strlen(world->info.name_prefix)]);
 
 #define flecs_bootstrap_trait(world, name)\
     flecs_bootstrap_tag(world, name)\
@@ -199,6 +196,10 @@ void flecs_fini_type_info(
 const ecs_type_info_t* flecs_determine_type_info_for_component(
     const ecs_world_t *world,
     ecs_id_t component);
+
+ecs_size_t flecs_type_size(
+    ecs_world_t *world, 
+    ecs_entity_t type);
 
 /* Utility for using allocated strings in assert/error messages */
 const char* flecs_errstr(

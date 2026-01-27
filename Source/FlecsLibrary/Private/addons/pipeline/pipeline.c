@@ -462,8 +462,10 @@ bool flecs_pipeline_build(
 
     pq->match_count = new_match_count;
 
-    ecs_assert(pq->cur_op <= ecs_vec_last_t(&pq->ops, ecs_pipeline_op_t),
-        ECS_INTERNAL_ERROR, NULL);
+    if (ecs_vec_count(&pq->ops)) {
+        ecs_assert((pq->cur_op <= ecs_vec_last_t(&pq->ops, ecs_pipeline_op_t)),
+            ECS_INTERNAL_ERROR, NULL);
+    }
 
     return true;
 }
@@ -853,7 +855,6 @@ ecs_entity_t ecs_pipeline_init(
     ecs_pipeline_state_t *pq = ecs_os_calloc_t(ecs_pipeline_state_t);
     pq->query = query;
     pq->match_count = -1;
-    pq->cr_inactive = flecs_components_ensure(world, EcsEmpty);
     ecs_set(world, result, EcsPipeline, { pq });
 
     return result;
@@ -896,11 +897,7 @@ void FlecsPipelineImport(
 {
     ECS_MODULE(world, FlecsPipeline);
     ECS_IMPORT(world, FlecsSystem);
-#ifdef FLECS_DOC
-    ECS_IMPORT(world, FlecsDoc);
-    ecs_doc_set_brief(world, ecs_id(FlecsPipeline), 
-        "Module that schedules and runs systems");
-#endif
+
     ecs_set_name_prefix(world, "Ecs");
 
     flecs_bootstrap_component(world, EcsPipeline);

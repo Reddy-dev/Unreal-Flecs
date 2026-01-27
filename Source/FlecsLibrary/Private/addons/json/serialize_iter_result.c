@@ -343,6 +343,13 @@ void flecs_json_serialize_iter_this(
     if (parent_path) {
         flecs_json_memberl(buf, "parent");
         flecs_json_string(buf, parent_path);
+    } else if (this_data->parents) {
+        ecs_entity_t parent = this_data->parents[row].value;
+        ecs_assert(parent != 0, ECS_INTERNAL_ERROR, NULL);
+        flecs_json_memberl(buf, "parent");
+        char *path = ecs_get_path_w_sep(it->real_world, 0, parent, ".", "");
+        flecs_json_string(buf, path);
+        ecs_os_free(path);
     }
 
     flecs_json_memberl(buf, "name");
@@ -356,8 +363,13 @@ void flecs_json_serialize_iter_this(
     }
 
     if (desc && desc->serialize_entity_ids) {
+        ecs_entity_t e = this_data->ids[row];
         flecs_json_memberl(buf, "id");
-        flecs_json_u32(buf, (uint32_t)this_data->ids[row]);
+        flecs_json_u32(buf, (uint32_t)e);
+        if (e != (uint32_t)e) {
+            flecs_json_memberl(buf, "version");
+            flecs_json_u32(buf, (uint32_t)(e >> 32));
+        }
     }
 
 #ifdef FLECS_DOC
@@ -443,6 +455,12 @@ int flecs_json_serialize_iter_result(
             if (table->flags & EcsTableHasName) {
                 this_data.names = ecs_table_get_id(it->world, it->table, 
                     ecs_pair_t(EcsIdentifier, EcsName), it->offset);
+            }
+
+            /* Same for Parent column */
+            if (table->flags & EcsTableHasParent) {
+                this_data.parents = ecs_table_get_id(it->world, it->table,
+                    ecs_id(EcsParent), it->offset);
             }
 
             /* Get entity labels */

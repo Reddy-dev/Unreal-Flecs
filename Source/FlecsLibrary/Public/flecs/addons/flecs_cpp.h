@@ -97,6 +97,8 @@ ecs_entity_t ecs_cpp_enum_constant_register(
     size_t value_size);
 
 typedef struct ecs_cpp_get_mut_t {
+    ecs_world_t *world;
+    ecs_stage_t *stage;
     void *ptr;
     bool call_modified;
 } ecs_cpp_get_mut_t;
@@ -116,6 +118,14 @@ FLECS_ALWAYS_INLINE ecs_cpp_get_mut_t ecs_cpp_assign(
     ecs_id_t component,
     const void *new_ptr,
     size_t size);
+
+FLECS_API
+FLECS_ALWAYS_INLINE ecs_entity_t ecs_cpp_new(
+    ecs_world_t *world,
+    ecs_entity_t parent,
+    const char *name,
+    const char *sep,
+    const char *root_sep);
 
 #ifdef FLECS_META
 FLECS_API

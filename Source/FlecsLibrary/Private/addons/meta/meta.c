@@ -82,6 +82,8 @@ int flecs_init_type(
 
     EcsType *meta_type = ecs_ensure(world, type, EcsType);
     if (meta_type->kind == 0) {
+        meta_type->kind = kind;
+
         /* Determine if this is an existing type or a reflection-defined type 
          * (runtime type) */
         meta_type->existing = ecs_has(world, type, EcsComponent);
@@ -154,7 +156,6 @@ int flecs_init_type(
         meta_type->partial = comp->size != size;
     }
 
-    meta_type->kind = kind;
     ecs_modified(world, type, EcsType);
 
     return 0;
@@ -164,9 +165,6 @@ void FlecsMetaImport(
     ecs_world_t *world)
 {
     ECS_MODULE(world, FlecsMeta);
-#ifdef FLECS_DOC
-    ECS_IMPORT(world, FlecsDoc);
-#endif
 
     ecs_set_name_prefix(world, "Ecs");
 
@@ -191,17 +189,17 @@ void FlecsMetaImport(
     });
 
     ecs_observer(world, {
-        .entity = ecs_entity(world, { .parent = EcsFlecsInternals }),
         .query.terms[0] = { .id = ecs_id(EcsType) },
         .events = {EcsOnSet},
-        .callback = flecs_meta_type_serializer_init
+        .callback = flecs_meta_type_serializer_init,
+        .global_observer = true
     });
 
     ecs_observer(world, {
-        .entity = ecs_entity(world, { .parent = EcsFlecsInternals }),
         .query.terms[0] = { .id = ecs_id(EcsType) },
         .events = {EcsOnSet},
-        .callback = flecs_rtt_init_default_hooks
+        .callback = flecs_rtt_init_default_hooks,
+        .global_observer = true
     });
 
     /* Import type support for different type kinds */
