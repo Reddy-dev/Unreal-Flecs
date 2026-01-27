@@ -8,6 +8,7 @@
 #include "FlecsQueryDefinition.h"
 #include "Enums/FlecsQueryInOut.h"
 #include "Expressions/FlecsExpressionInOut.h"
+#include "Generator/FlecsQueryGeneratorInputType.h"
 
 #include "FlecsQueryDefinitionRecordFragment.generated.h"
 
@@ -29,6 +30,17 @@ public:
 	
 }; // struct FFlecsQueryDefinitionRecordFragment
 
+namespace Unreal::Flecs::Queries
+{
+	template <typename T>
+	concept CQueryDefinitionRecordInputType = std::is_convertible<T, FFlecsId>::value
+		|| std::is_convertible<T, const UScriptStruct*>::value
+		|| std::is_convertible<T, FString>::value
+		|| std::is_convertible<T, const UEnum*>::value
+		|| std::is_convertible<T, FSolidEnumSelector>::value;
+	
+} // namespace Unreal::Flecs::Queries
+
 struct FFlecsQueryDefinitionRecordFragment::FBuilder : public FFlecsEntityRecord::FFragmentBuilderType<FFlecsQueryDefinitionRecordFragment>
 {
 	using Super = FFlecsEntityRecord::FFragmentBuilderType<FFlecsQueryDefinitionRecordFragment>;
@@ -37,6 +49,22 @@ struct FFlecsQueryDefinitionRecordFragment::FBuilder : public FFlecsEntityRecord
 	mutable int32 LastTermIndex = -1;
 	
 public:
+	FORCEINLINE FBuilder& AddTerm(const FFlecsQueryTermExpression& InTerm)
+	{
+		this->Get().QueryDefinition.AddQueryTerm(InTerm);
+		LastTermIndex = this->Get().QueryDefinition.GetLastTermIndex();
+		return *this;
+	}
+	
+	FORCEINLINE FBuilder& TermAt(const int32 InTermIndex)
+	{
+		solid_checkf(this->Get().QueryDefinition.IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		LastTermIndex = InTermIndex;
+		return *this;
+	}
+	
+#pragma region QueryDefinitionProperties
+	
 	FORCEINLINE FBuilder& Cache(const EFlecsQueryCacheType InCacheType = EFlecsQueryCacheType::Default)
 	{
 		this->Get().QueryDefinition.CacheType = InCacheType;
@@ -61,74 +89,15 @@ public:
 		return *this;
 	}
 	
-	template <typename T>
-	FORCEINLINE FBuilder& With()
-	{
-		FFlecsQueryTermExpression Term;
-		Term.SetInput<T>();
-		
-		this->Get().QueryDefinition.AddQueryTerm(Term);
-		LastTermIndex = this->Get().QueryDefinition.GetLastTermIndex();
-		return *this;
-	}
+#pragma endregion QueryDefinitionProperties
 	
-	template <Unreal::Flecs::Queries::CQueryInputType TInput>
-	FORCEINLINE FBuilder& With(const TInput& InInput)
-	{
-		FFlecsQueryTermExpression Term;
-		Term.SetInput(InInput);
-		
-		this->Get().QueryDefinition.AddQueryTerm(Term);
-		LastTermIndex = this->Get().QueryDefinition.GetLastTermIndex();
-		return *this;
-	}
-	
-	template <typename T>
-	FORCEINLINE FBuilder& Without()
-	{
-		FFlecsQueryTermExpression Term;
-		Term.SetInput<T>();
-		Term.bWithout = true;
-		
-		this->Get().QueryDefinition.AddQueryTerm(Term);
-		LastTermIndex = this->Get().QueryDefinition.GetLastTermIndex();
-		return *this;
-	}
-	
-	template <Unreal::Flecs::Queries::CQueryInputType TInput>
-	FORCEINLINE FBuilder& Without(const TInput& InInput)
-	{
-		FFlecsQueryTermExpression Term;
-		Term.SetInput(InInput);
-		Term.bWithout = true;
-		
-		this->Get().QueryDefinition.AddQueryTerm(Term);
-		LastTermIndex = this->Get().QueryDefinition.GetLastTermIndex();
-		return *this;
-	}
-	
-	FORCEINLINE FBuilder& AddTerm(const FFlecsQueryTermExpression& InTerm)
-	{
-		this->Get().QueryDefinition.AddQueryTerm(InTerm);
-		LastTermIndex = this->Get().QueryDefinition.GetLastTermIndex();
-		return *this;
-	}
-	
-	FORCEINLINE FBuilder& TermAt(const int32 InTermIndex)
-	{
-		solid_checkf(this->Get().QueryDefinition.IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
-		LastTermIndex = InTermIndex;
-		return *this;
-	}
+#pragma region TermOperatorExpressions
 	
 	FORCEINLINE FBuilder& Oper(const EFlecsQueryOperator InOperator)
 	{
 		solid_checkf(this->Get().QueryDefinition.IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		
-		FFlecsOperQueryExpression OperExpression;
-		OperExpression.Operator = InOperator;
-		
-		this->Get().QueryDefinition.Terms[LastTermIndex].Children.Add(TInstancedStruct<FFlecsQueryExpression>::Make(OperExpression));
+		this->Get().QueryDefinition.Terms[LastTermIndex].Operator = InOperator;
 		return *this;
 	}
 	
@@ -161,6 +130,10 @@ public:
 	{
 		return Oper(EFlecsQueryOperator::OrFrom);
 	}
+	
+#pragma endregion TermOperatorExpressions
+	
+#pragma region ReadWriteInOutExpressions
 	
 	FORCEINLINE FBuilder& InOutExpression(const EFlecsQueryInOut InInOut, const bool bStage = false)
 	{
@@ -207,6 +180,350 @@ public:
 	FORCEINLINE FBuilder& Filter()
 	{
 		return InOutExpression(EFlecsQueryInOut::Filter, false);
+	}
+	
+#pragma endregion ReadWriteInOutExpressions
+	
+	FORCEINLINE FBuilder& With(const FFlecsId InId)
+	{
+		FFlecsQueryTermExpression Expr;
+		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
+		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InId;
+		
+		this->Get().QueryDefinition.AddQueryTerm(Expr);
+		LastTermIndex = this->Get().QueryDefinition.GetLastTermIndex();
+		
+		return *this;
+	}
+	
+	FORCEINLINE FBuilder& With(const TSolidNotNull<const UScriptStruct*> InStruct)
+	{
+		FFlecsQueryTermExpression Expr;
+		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
+		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
+		
+		this->AddTerm(Expr);
+		LastTermIndex = this->Get().QueryDefinition.GetLastTermIndex();
+		
+		return *this;
+	}
+	
+	FORCEINLINE FBuilder& With(const FString& InString)
+	{
+		FFlecsQueryTermExpression Expr;
+		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_String>();
+		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = InString;
+		
+		this->Get().QueryDefinition.AddQueryTerm(Expr);
+		LastTermIndex = this->Get().QueryDefinition.GetLastTermIndex();
+		
+		return *this;
+	}
+	
+	FORCEINLINE FBuilder& With(const TSolidNotNull<const UEnum*> InEnum)
+	{
+		FFlecsQueryTermExpression Expr;
+		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnum>();
+		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum;
+		
+		this->Get().QueryDefinition.AddQueryTerm(Expr);
+		LastTermIndex = this->Get().QueryDefinition.GetLastTermIndex();
+		
+		return *this;
+	}
+	
+	FORCEINLINE FBuilder& With(const FSolidEnumSelector& InEnumSelector)
+	{
+		FFlecsQueryTermExpression Expr;
+		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnumConstant>();
+		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnumConstant>().EnumValue = InEnumSelector;
+		
+		this->Get().QueryDefinition.AddQueryTerm(Expr);
+		LastTermIndex = this->Get().QueryDefinition.GetLastTermIndex();
+		
+		return *this;
+	}
+	
+	template <typename T>
+	FORCEINLINE FBuilder& With()
+	{
+		if constexpr (Solid::IsScriptStruct<T>())
+		{
+			this->With(TBaseStructure<T>::Get());
+		}
+		else if constexpr (Solid::TStaticEnumConcept<T>)
+		{
+			this->With(StaticEnum<T>());
+		}
+		else
+		{
+			const std::string_view TypeName = nameof(T);
+			const FString TypeNameFString = FString(TypeName.data());
+			this->With(TypeNameFString);
+		}
+		
+		return *this;
+	}
+	
+	FORCEINLINE FBuilder& Without(const FFlecsId InId)
+	{
+		FFlecsQueryTermExpression Expr;
+		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
+		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InId;
+		this->Not();
+		
+		this->AddTerm(Expr);
+		LastTermIndex = this->Get().QueryDefinition.GetLastTermIndex();
+		
+		return *this;
+	}
+	
+	FORCEINLINE FBuilder& Without(const TSolidNotNull<const UScriptStruct*> InStruct)
+	{
+		FFlecsQueryTermExpression Expr;
+		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
+		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
+		this->Not();
+		
+		this->AddTerm(Expr);
+		LastTermIndex = this->Get().QueryDefinition.GetLastTermIndex();
+		
+		return *this;
+	}
+	
+	FORCEINLINE FBuilder& Without(const FString& InString)
+	{
+		FFlecsQueryTermExpression Expr;
+		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_String>();
+		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = InString;
+		this->Not();
+		
+		this->AddTerm(Expr);
+		LastTermIndex = this->Get().QueryDefinition.GetLastTermIndex();
+		
+		return *this;
+	}
+	
+	FORCEINLINE FBuilder& Without(const TSolidNotNull<const UEnum*> InEnum)
+	{
+		FFlecsQueryTermExpression Expr;
+		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnum>();
+		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum;
+		this->Not();
+		
+		this->AddTerm(Expr);
+		LastTermIndex = this->Get().QueryDefinition.GetLastTermIndex();
+		
+		return *this;
+	}
+	
+	FORCEINLINE FBuilder& Without(const FSolidEnumSelector& InEnumSelector)
+	{
+		FFlecsQueryTermExpression Expr;
+		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnumConstant>();
+		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnumConstant>().EnumValue = InEnumSelector;
+		this->Not();
+		
+		this->AddTerm(Expr);
+		LastTermIndex = this->Get().QueryDefinition.GetLastTermIndex();
+		
+		return *this;
+	}
+	
+	template <typename T>
+	FORCEINLINE FBuilder& Without()
+	{
+		if constexpr (Solid::IsScriptStruct<T>())
+		{
+			this->Without(TBaseStructure<T>::Get());
+		}
+		else if constexpr (Solid::TStaticEnumConcept<T>)
+		{
+			this->Without(StaticEnum<T>());
+		}
+		else
+		{
+			const std::string_view TypeName = nameof(T);
+			const FString TypeNameFString = FString(TypeName.data());
+			this->Without(TypeNameFString);
+		}
+		
+		this->Not();
+		
+		return *this;
+	}
+	
+	FORCEINLINE FBuilder& Second(const FFlecsId InId)
+	{
+		solid_checkf(this->Get().QueryDefinition.IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		
+		FFlecsQueryTermExpression SecondExpr;
+		SecondExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
+		SecondExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InId;
+		
+		FFlecsQueryTermExpression& TermExpr = this->Get().QueryDefinition.Terms[LastTermIndex];
+		
+		const FFlecsQueryTerm FirstTerm = TermExpr.Term;
+		
+		TermExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
+		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTerm.InputType;
+		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondExpr.Term.InputType;
+		return *this;
+	}
+	
+	FORCEINLINE FBuilder& Second(const TSolidNotNull<const UScriptStruct*> InStruct)
+	{
+		solid_checkf(this->Get().QueryDefinition.IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		
+		FFlecsQueryTermExpression SecondExpr;
+		SecondExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
+		SecondExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
+		
+		FFlecsQueryTermExpression& TermExpr = this->Get().QueryDefinition.Terms[LastTermIndex];
+		
+		const FFlecsQueryTerm FirstTerm = TermExpr.Term;
+		
+		TermExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
+		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTerm.InputType;
+		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondExpr.Term.InputType;
+		return *this;
+	}
+	
+	FORCEINLINE FBuilder& Second(const FString& InString)
+	{
+		solid_checkf(this->Get().QueryDefinition.IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		
+		FFlecsQueryTermExpression SecondExpr;
+		SecondExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_String>();
+		SecondExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = InString;
+		
+		FFlecsQueryTermExpression& TermExpr = this->Get().QueryDefinition.Terms[LastTermIndex];
+		
+		const FFlecsQueryTerm FirstTerm = TermExpr.Term;
+		
+		TermExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
+		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTerm.InputType;
+		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondExpr.Term.InputType;
+		return *this;
+	}
+	
+	FORCEINLINE FBuilder& Second(const TSolidNotNull<const UEnum*> InEnum)
+	{
+		solid_checkf(this->Get().QueryDefinition.IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		
+		FFlecsQueryTermExpression SecondExpr;
+		SecondExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnum>();
+		SecondExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum;
+		
+		FFlecsQueryTermExpression& TermExpr = this->Get().QueryDefinition.Terms[LastTermIndex];
+		
+		const FFlecsQueryTerm FirstTerm = TermExpr.Term;
+		
+		TermExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
+		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTerm.InputType;
+		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondExpr.Term.InputType;
+		return *this;
+	}
+	
+	FORCEINLINE FBuilder& Second(const FSolidEnumSelector& InEnumSelector)
+	{
+		solid_checkf(this->Get().QueryDefinition.IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		
+		FFlecsQueryTermExpression SecondExpr;
+		SecondExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnumConstant>();
+		SecondExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnumConstant>().EnumValue = InEnumSelector;
+		
+		FFlecsQueryTermExpression& TermExpr = this->Get().QueryDefinition.Terms[LastTermIndex];
+		const FFlecsQueryTerm FirstTerm = TermExpr.Term;
+		TermExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
+		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTerm.InputType;
+		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondExpr.Term.InputType;
+		return *this;
+	}
+	
+	template <typename T>
+	FORCEINLINE FBuilder& Second()
+	{
+		if constexpr (Solid::IsScriptStruct<T>())
+		{
+			this->Second(TBaseStructure<T>::Get());
+		}
+		else if constexpr (Solid::TStaticEnumConcept<T>)
+		{
+			this->Second(StaticEnum<T>());
+		}
+		else
+		{
+			const std::string_view TypeName = nameof(T);
+			const FString TypeNameFString = FString(TypeName.data());
+			this->Second(TypeNameFString);
+		}
+		
+		return *this;
+	}
+	
+	template <Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TFirst, Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TSecond>
+	FORCEINLINE FBuilder& WithPair(const TFirst& InFirst, const TSecond& InSecond)
+	{
+		this->With(InFirst);
+		this->Second(InSecond);
+		return *this;
+	}
+	
+	template <Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TFirst, Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TSecond>
+	FORCEINLINE FBuilder& WithoutPair(const TFirst& InFirst, const TSecond& InSecond)
+	{
+		this->Without(InFirst);
+		this->Second(InSecond);
+		return *this;
+	}
+	
+	template <typename T, Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TSecond>
+	FORCEINLINE FBuilder& WithPair(const TSecond& InSecond)
+	{
+		this->With<T>();
+		this->Second(InSecond);
+		return *this;
+	}
+	
+	template <typename T, Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TSecond>
+	FORCEINLINE FBuilder& WithoutPair(const TSecond& InSecond)
+	{
+		this->Without<T>();
+		this->Second(InSecond);
+		return *this;
+	}
+	
+	template <typename T, Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TFirst>
+	FORCEINLINE FBuilder& WithPairSecond(const TFirst& InFirst)
+	{
+		this->With<T>();
+		this->Second(InFirst);
+		return *this;
+	}
+	
+	template <typename T, Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TFirst>
+	FORCEINLINE FBuilder& WithoutPairSecond(const TFirst& InFirst)
+	{
+		this->Without<T>();
+		this->Second(InFirst);
+		return *this;
+	}
+	
+	template <typename TFirst, typename TSecond>
+	FORCEINLINE FBuilder& WithPair()
+	{
+		this->With<TFirst>();
+		this->Second<TSecond>();
+		return *this;
+	}
+	
+	template <typename TFirst, typename TSecond>
+	FORCEINLINE FBuilder& WithoutPair()
+	{
+		this->Without<TFirst>();
+		this->Second<TSecond>();
+		return *this;
 	}
 	
 	FORCEINLINE FBuilder& ModifyLastTerm(const TFunctionRef<void(FFlecsQueryTermExpression&)>& InModifier)

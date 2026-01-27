@@ -64,6 +64,17 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 		ASSERT_THAT(IsFalse(FlecsWorld->IsIdTag(StructEntity)));
 
 		ASSERT_THAT(IsTrue(StructEntity == StaticStructEntity));
+		
+		const FString StructSymbolIdentifier = StructEntity.GetSymbol();
+		ASSERT_THAT(IsTrue(StructSymbolIdentifier.Contains(TEXT("FFlecsTestStruct_Value"))));
+		
+		const FFlecsEntityHandle SymbolLookupResult = FlecsWorld->LookupEntityBySymbol_Internal(TEXT("FFlecsTestStruct_Value"));
+		ASSERT_THAT(IsTrue(SymbolLookupResult.IsValid()));
+		ASSERT_THAT(IsTrue(SymbolLookupResult == StructEntity));
+		
+		const FFlecsEntityHandle AliasLookupResult = FlecsWorld->LookupEntity(TEXT("UScriptStruct_FFlecsTestStruct_Value"));
+		ASSERT_THAT(IsTrue(AliasLookupResult.IsValid()));
+		ASSERT_THAT(IsTrue(AliasLookupResult == StructEntity));
 	}
 
 	TEST_METHOD(A2_BasicUSTRUCTComponentRegistration_StaticStructAPI)
@@ -121,6 +132,14 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 		ASSERT_THAT(IsFalse(FlecsWorld->IsIdType(TagEntity)));
 		//ASSERT_THAT(IsTrue(FlecsWorld->IsIdInUse(TagEntity)));
 		ASSERT_THAT(IsTrue(FlecsWorld->IsIdTag(TagEntity)));
+		
+		const FFlecsEntityHandle SymbolLookupResult = FlecsWorld->LookupEntityBySymbol_Internal(TEXT("FFlecsTestStruct_Tag"));
+		ASSERT_THAT(IsTrue(SymbolLookupResult.IsValid()));
+		ASSERT_THAT(IsTrue(SymbolLookupResult == TagEntity));
+		
+		const FFlecsEntityHandle AliasLookupResult = FlecsWorld->LookupEntity(TEXT("UScriptStruct_FFlecsTestStruct_Tag"));
+		ASSERT_THAT(IsTrue(AliasLookupResult.IsValid()));
+		ASSERT_THAT(IsTrue(AliasLookupResult == TagEntity));
 	}
 
 	TEST_METHOD(A5_BasicComponentRegistration_Tag_StaticStructAPI)
@@ -134,6 +153,14 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 		ASSERT_THAT(IsFalse(FlecsWorld->IsIdType(TagEntity)));
 		//ASSERT_THAT(IsTrue(FlecsWorld->IsIdInUse(TagEntity)));
 		ASSERT_THAT(IsTrue(FlecsWorld->IsIdTag(TagEntity)));
+		
+		const FFlecsEntityHandle SymbolLookupResult = FlecsWorld->LookupEntityBySymbol_Internal(TEXT("FFlecsTestStruct_Tag"));
+		ASSERT_THAT(IsTrue(SymbolLookupResult.IsValid()));
+		ASSERT_THAT(IsTrue(SymbolLookupResult == TagEntity));
+		
+		const FFlecsEntityHandle AliasLookupResult = FlecsWorld->LookupEntity(TEXT("UScriptStruct_FFlecsTestStruct_Tag"));
+		ASSERT_THAT(IsTrue(AliasLookupResult.IsValid()));
+		ASSERT_THAT(IsTrue(AliasLookupResult == TagEntity));
 	}
 
 	TEST_METHOD(A6_BasicComponentRegistration_Tag_CPPOnlyType)

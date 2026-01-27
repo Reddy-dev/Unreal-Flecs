@@ -2091,6 +2091,13 @@ FFlecsEntityHandle UFlecsWorld::GetScope() const
 	return World.get_scope();
 }
 
+FFlecsQuery UFlecsWorld::GetQueryFromEntity(const FFlecsEntityHandle& InEntity) const
+{
+	solid_checkf(InEntity.IsValid(), TEXT("Entity is not valid"));
+
+	return World.query(InEntity);
+}
+
 bool UFlecsWorld::IsSupportedForNetworking() const
 {
 	return true;

@@ -45,6 +45,11 @@ public:
     FFlecsQuery(const TSolidNotNull<UFlecsWorld*> InFlecsWorld,
                 const FString& InName,
                 const FFlecsQueryDefinition& InDefinition);
+    
+    NO_DISCARD FORCEINLINE bool IsValid() const
+    {
+        return static_cast<bool>(Query);
+    }
 
     NO_DISCARD FORCEINLINE bool HasChanged() const
     {
@@ -65,6 +70,11 @@ public:
     {
         return Query.field_count();
     }
+    
+    NO_DISCARD FORCEINLINE int32 GetTermCount()
+    {
+        return Query.term_count();
+    }
 
     NO_DISCARD FORCEINLINE bool HasMatches() const
     {
@@ -84,6 +94,11 @@ public:
     NO_DISCARD FORCEINLINE bool operator!=(const FFlecsQuery& Other) const
     {
         return !(*this == Other);
+    }
+    
+    NO_DISCARD FORCEINLINE operator bool() const
+    {
+        return Query;
     }
     
     flecs::query<> Query;

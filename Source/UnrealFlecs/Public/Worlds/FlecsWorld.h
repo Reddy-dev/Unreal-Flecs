@@ -20,6 +20,7 @@
 #include "Entities/FlecsId.h"
 #include "Modules/FlecsDependenciesComponent.h"
 #include "Properties/FlecsComponentProperties.h"
+#include "Queries/FlecsQuery.h"
 
 #include "FlecsWorld.generated.h"
 
@@ -1031,6 +1032,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Flecs")
 	FFlecsEntityHandle GetScope() const;
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
+	FFlecsQuery GetQueryFromEntity(const FFlecsEntityHandle& InEntity) const;
 
 	virtual bool IsSupportedForNetworking() const override;
 
