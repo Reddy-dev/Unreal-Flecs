@@ -1127,6 +1127,7 @@ public:
 
 	FFlecsWorldModuleImportedDelegate OnModuleImported;
 
+	UPROPERTY()
 	TOptional<double> PrePauseTimeScale;
 
 	robin_hood::unordered_flat_map<FGameplayTag, FFlecsId> TagEntityMap;

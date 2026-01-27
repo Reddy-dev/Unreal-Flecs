@@ -7,7 +7,7 @@
 #include "UnrealFlecsWorldTag.generated.h"
 
 /*
- * Signifies that a flecs::world is an Unreal Flecs World.
+ * @brief Signifies that a flecs::world is an Unreal Flecs World.
  */
 USTRUCT()
 struct FUnrealFlecsWorldTag

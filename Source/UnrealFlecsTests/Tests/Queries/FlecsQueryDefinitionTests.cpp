@@ -744,7 +744,7 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		
 		ASSERT_THAT(IsTrue(Query.GetCount() == 1));
 		
-		Query.GetQuery().each([&](flecs::iter& Iter, size_t Index)
+		Query.Get().each([&](flecs::iter& Iter, size_t Index)
 		{
 			const FFlecsTestStruct_Value& Value = Iter.field_at<FFlecsTestStruct_Value>(0, Index);
 			ASSERT_THAT(AreEqual(Value.Value, 168));
@@ -853,7 +853,6 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		
 		ASSERT_THAT(IsTrue(Query.GetCount() == 1));
 	}
-	
 	
 
 }; // End of B2_UnrealFlecsQueryDefinitionTests

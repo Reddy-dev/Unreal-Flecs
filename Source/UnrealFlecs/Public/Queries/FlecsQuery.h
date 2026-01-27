@@ -13,6 +13,7 @@
 
 #include "FlecsQuery.generated.h"
 
+struct FFlecsQueryBuilder;
 class UFlecsWorld;
 
 USTRUCT(BlueprintType)
@@ -22,7 +23,7 @@ struct FFlecsQuery
 
     NO_DISCARD FORCEINLINE friend uint32 GetTypeHash(const FFlecsQuery& InQuery)
     {
-        return GetTypeHash(InQuery.GetQuery().entity().id());
+        return GetTypeHash(InQuery.Query.c_ptr());
     }
 
 public:
@@ -42,43 +43,58 @@ public:
         Query = InWorld.query<TArgs...>(InName);
     }
 
-    FFlecsQuery(const TSolidNotNull<UFlecsWorld*> InFlecsWorld,
-                const FString& InName,
-                const FFlecsQueryDefinition& InDefinition);
+    FFlecsQuery(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, 
+                const FFlecsQueryDefinition& InDefinition,
+                const FString& InName = "");
+
+    explicit FFlecsQuery(const FFlecsQueryBuilder& InQueryBuilder);
     
     NO_DISCARD FORCEINLINE bool IsValid() const
     {
         return Query;
     }
-
+    
+    NO_DISCARD FORCEINLINE const flecs::query<>& Get() const
+    {
+        return Query;
+    }
+    
+    NO_DISCARD FORCEINLINE flecs::query<>& Get()
+    {
+        return Query;
+    }
+    
     NO_DISCARD FORCEINLINE bool HasChanged() const
     {
         return Query.changed();
     }
 
-    NO_DISCARD FORCEINLINE flecs::query<> GetQuery() const
-    {
-        return Query;
-    }
-
     NO_DISCARD FORCEINLINE int32 GetCount() const
     {
-        return ecs_query_match_count(Query);
+        return Query.count();
     }
 
-    NO_DISCARD FORCEINLINE int32 GetFieldCount()
+    NO_DISCARD FORCEINLINE int32 GetFieldCount() const
     {
         return Query.field_count();
     }
     
-    NO_DISCARD FORCEINLINE int32 GetTermCount()
+    NO_DISCARD FORCEINLINE int32 GetTermCount() const
     {
         return Query.term_count();
     }
 
     NO_DISCARD FORCEINLINE bool HasMatches() const
     {
-        return ecs_query_is_true(Query);
+        return Query.is_true();
+    }
+    
+    NO_DISCARD FORCEINLINE int32 FindVar(const FString& InVarName) const
+    {
+        const char* CStr = TCHAR_TO_UTF8(*InVarName);
+        solid_cassume(CStr != nullptr);
+        
+        return Query.find_var(CStr);
     }
 
     NO_DISCARD FORCEINLINE FString ToString() const
