@@ -611,14 +611,6 @@ struct SingletonTest {
     }
 };
 
-void Module_module_has_singleton(void) {
-    flecs::world world;
-
-    auto e = world.import<SingletonTest>();
-
-    test_assert(e.has(flecs::Singleton));
-}
-
 END_DEFINE_SPEC(FFlecsModuleTestsSpec);
 
 /*"id": "Module",
@@ -648,7 +640,6 @@ END_DEFINE_SPEC(FFlecsModuleTestsSpec);
 "reimport_after_delete",
 "component_name_w_module_name",
 "module_delete_module_w_explicit_component_and_system",
-"module_has_singleton"
 ]*/
 
 void FFlecsModuleTestsSpec::Define()
@@ -678,7 +669,6 @@ void FFlecsModuleTestsSpec::Define()
     It("Module_reimport_after_delete", [this]() { Module_reimport_after_delete(); });
     It("Module_component_name_w_module_name", [this]() { Module_component_name_w_module_name(); });
     It("Module_delete_module_w_explicit_component_and_system", [this]() { Module_delete_module_w_explicit_component_and_system(); });
-    It("Module_module_has_singleton", [this]() { Module_module_has_singleton(); });
 }
 
 #endif // WITH_AUTOMATION_TESTS
