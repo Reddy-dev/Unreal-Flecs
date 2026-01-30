@@ -641,7 +641,7 @@ ecs_component_record_t* flecs_component_new(
 
     if (ecs_should_log_1()) {
         char *id_str = ecs_id_str(world, id);
-        ecs_dbg_1("#[green]id#[normal] %s #[green]created", id_str);
+        ecs_dbg_1("#[green]component record#[normal] %s #[green]created", id_str);
         ecs_os_free(id_str);
     }
 
@@ -759,7 +759,7 @@ void flecs_component_free(
 
     if (ecs_should_log_1()) {
         char *id_str = ecs_id_str(world, id);
-        ecs_dbg_1("#[green]id#[normal] %s #[red]deleted", id_str);
+        ecs_dbg_1("#[green]component record#[normal] %s #[red]deleted", id_str);
         ecs_os_free(id_str);
     }
 }
@@ -1218,7 +1218,8 @@ void flecs_component_update_childof_depth(
 
             EcsParent *data = tgt_table->data.columns[column - 1].data;
             ecs_entity_t parent = data[ECS_RECORD_TO_ROW(tgt_r->row)].value;
-            ecs_assert(parent != 0, ECS_INTERNAL_ERROR, NULL);
+            ecs_assert(parent != 0, ECS_CYCLE_DETECTED, 
+                "possible cycle detected in Parent hierarchy");
 
             ecs_component_record_t *cr_parent = flecs_components_get(world,
                 ecs_childof(parent));
