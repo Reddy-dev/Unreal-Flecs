@@ -611,35 +611,44 @@ struct SingletonTest {
     }
 };
 
+void Module_module_has_singleton(void) {
+    flecs::world world;
+
+    auto e = world.import<SingletonTest>();
+
+    test_assert(e.has(flecs::Singleton));
+}
+
 END_DEFINE_SPEC(FFlecsModuleTestsSpec);
 
 /*"id": "Module",
-"testcases": [
-"import",
-"lookup_from_scope",
-"nested_module",
-"nested_type_module",
-"component_redefinition_outside_module",
-"module_tag_on_namespace",
-"dtor_on_fini",
-"implicit_module",
-"module_in_namespace_w_root_name",
-"module_as_entity",
-"module_as_component",
-"module_with_core_name",
-"import_addons_two_worlds",
-"lookup_module_after_reparent",
-"reparent_module_in_ctor",
-"implicitly_add_module_to_scopes_component",
-"implicitly_add_module_to_scopes_entity",
-"rename_namespace_shorter",
-"rename_namespace_longer",
-"rename_namespace_nested",
-"rename_reparent_root_module",
-"no_recycle_after_rename_reparent",
-"reimport_after_delete",
-"component_name_w_module_name",
-"module_delete_module_w_explicit_component_and_system",
+    "testcases": [
+    "import",
+    "lookup_from_scope",
+    "nested_module",
+    "nested_type_module",
+    "component_redefinition_outside_module",
+    "module_tag_on_namespace",
+    "dtor_on_fini",
+    "implicit_module",
+    "module_in_namespace_w_root_name",
+    "module_as_entity",
+    "module_as_component",
+    "module_with_core_name",
+    "import_addons_two_worlds",
+    "lookup_module_after_reparent",
+    "reparent_module_in_ctor",
+    "implicitly_add_module_to_scopes_component",
+    "implicitly_add_module_to_scopes_entity",
+    "rename_namespace_shorter",
+    "rename_namespace_longer",
+    "rename_namespace_nested",
+    "rename_reparent_root_module",
+    "no_recycle_after_rename_reparent",
+    "reimport_after_delete",
+    "component_name_w_module_name",
+    "module_delete_module_w_explicit_component_and_system",
+    "module_has_singleton"
 ]*/
 
 void FFlecsModuleTestsSpec::Define()
@@ -669,6 +678,7 @@ void FFlecsModuleTestsSpec::Define()
     It("Module_reimport_after_delete", [this]() { Module_reimport_after_delete(); });
     It("Module_component_name_w_module_name", [this]() { Module_component_name_w_module_name(); });
     It("Module_delete_module_w_explicit_component_and_system", [this]() { Module_delete_module_w_explicit_component_and_system(); });
+    It("Module_module_has_singleton", [this]() { Module_module_has_singleton(); });
 }
 
 #endif // WITH_AUTOMATION_TESTS

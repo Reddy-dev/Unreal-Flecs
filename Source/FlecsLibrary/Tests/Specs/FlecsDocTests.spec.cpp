@@ -93,14 +93,14 @@ void Doc_get_name_no_doc_name()
 END_DEFINE_SPEC(FFlecsDocTestsSpec);
 
 /*"id": "Doc",
-"testcases": [
-"set_brief",
-"set_name",
-"set_link",
-"set_color",
-"set_uuid",
-"get_name_no_doc_name"
-]
+	"testcases": [
+	"set_brief",
+	"set_name",
+	"set_link",
+	"set_color",
+	"set_uuid",
+	"get_name_no_doc_name"
+	]
 }]*/
 
 void FFlecsDocTestsSpec::Define()
