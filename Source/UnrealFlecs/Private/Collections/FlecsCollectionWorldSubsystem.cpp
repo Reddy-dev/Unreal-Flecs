@@ -382,25 +382,6 @@ bool UFlecsCollectionWorldSubsystem::IsCollectionRegistered(const FFlecsCollecti
 	return RegisteredCollections.Contains(Id);
 }
 
-FFlecsEntityHandle UFlecsCollectionWorldSubsystem::EnsurePrefabShell(const FFlecsCollectionId& Id)
-{
-	if LIKELY_IF(const FFlecsEntityView* Found = RegisteredCollections.Find(Id))
-	{
-		return Found->ToMut<FFlecsEntityHandle>(GetFlecsWorldChecked()->World);
-	}
-	
-	const TSolidNotNull<const UFlecsWorld*> FlecsWorld = GetFlecsWorldChecked();
-	
-	const FFlecsEntityHandle Prefab = FlecsWorld->CreateEntity(Id.NameId)
-		.SetChildOf(CollectionScopeEntity)
-		.Add(flecs::Prefab)
-		.Add<FFlecsCollectionPrefabTag>();
-	
-	RegisteredCollections.Add(Id, Prefab);
-	
-	return Prefab;
-}
-
 FFlecsEntityHandle UFlecsCollectionWorldSubsystem::ResolveCollectionReference(const FFlecsCollectionReference& Reference)
 {
 	switch (Reference.Mode)
@@ -486,7 +467,8 @@ void UFlecsCollectionWorldSubsystem::ExpandChildCollectionReferences(const FFlec
 			.with(flecs::ChildOf, InCollectionEntity) // 1
 			.with<FFlecsCollectionSlotTag>().optional() // 2
 			.group_by(flecs::ParentDepth)
-			.each([&](flecs::iter& Iter, size_t Index, FFlecsCollectionReferenceComponent* ReferenceComponent) // 3
+			.each([&](flecs::iter& Iter, size_t Index,
+				FFlecsCollectionReferenceComponent* ReferenceComponent)
 			{
 				const FFlecsEntityHandle ChildEntityHandle = Iter.entity(Index);
 

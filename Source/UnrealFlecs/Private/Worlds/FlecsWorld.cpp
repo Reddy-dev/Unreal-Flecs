@@ -37,6 +37,8 @@
 #include "Components/ObjectTypes/FFlecsSceneComponentTag.h"
 #include "Components/ObjectTypes/FlecsActorTag.h"
 #include "Components/FlecsModuleComponent.h"
+#include "Components/FlecsSubEntityRecordNameComponent.h"
+
 #include "GameFramework/WorldSettings.h"
 
 #include "Modules/FlecsDependenciesComponent.h"
@@ -435,6 +437,8 @@ void UFlecsWorld::InitializeDefaultComponents() const
 
 	RegisterComponentType<FFlecsOutsideMainLoopTag>();
 	
+	RegisterComponentType<FFlecsSubEntityRecordNameComponent>();
+	
 }
 
 void UFlecsWorld::InitializeFlecsRegistrationObjects()
@@ -778,6 +782,17 @@ void UFlecsWorld::InitializeSystems()
 			UE_LOGFMT(LogFlecsWorld, Verbose,
 				"Unregistered Tick Function for Entity {EntityIdentifier}",
 				EntityHandle.HasName() ? EntityHandle.GetName() : EntityHandle.ToString());
+		});
+	
+	CreateObserver<const FFlecsSubEntityRecordNameComponent>("SubEntityRecordNameObserver") // 0 (FFlecsSubEntityRecordNameComponent)
+		.event(flecs::OnSet)
+		.with(flecs::ChildOf, flecs::Wildcard) // 1
+		.with_name_component().not_() // 2
+		.yield_existing()
+		.each([](flecs::iter& InIter, size_t InIndex, const FFlecsSubEntityRecordNameComponent& InNameComponent)
+		{
+			const FFlecsEntityHandle EntityHandle = InIter.entity(InIndex);
+			EntityHandle.SetName(InNameComponent.SubEntityName);
 		});
 }
 

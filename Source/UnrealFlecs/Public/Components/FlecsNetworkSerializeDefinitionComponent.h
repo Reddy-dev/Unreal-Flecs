@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 
-#include "Entities/FlecsComponentHandle.h"
 #include "Properties/FlecsComponentProperties.h"
 
 #include "FlecsNetworkSerializeDefinitionComponent.generated.h"

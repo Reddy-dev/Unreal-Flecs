@@ -2,6 +2,7 @@
 
 #include "Entities/FlecsEntityRecord.h"
 
+#include "Components/FlecsSubEntityRecordNameComponent.h"
 #include "UObject/PropertyIterator.h"
 #include "Worlds/FlecsWorld.h"
 
@@ -225,4 +226,5 @@ void FFlecsNamedEntityRecordFragment::PreApplyRecordToEntity(const TSolidNotNull
 	const FFlecsEntityHandle& InEntityHandle) const
 {
 	InEntityHandle.SetName(Name);
+	InEntityHandle.Set<FFlecsSubEntityRecordNameComponent>({ .SubEntityName = Name });
 }

@@ -154,8 +154,6 @@ public:
 	NO_DISCARD bool IsCollectionRegistered(const FFlecsCollectionId& Id) const;
 
 private:
-	// Ensure a shell entity exists for the collection (without any components, just the id)
-	NO_DISCARD FFlecsEntityHandle EnsurePrefabShell(const FFlecsCollectionId& Id);
 
 	// Create/Find the collection entity referenced in the @Reference
 	NO_DISCARD FFlecsEntityHandle ResolveCollectionReference(const FFlecsCollectionReference& Reference);
