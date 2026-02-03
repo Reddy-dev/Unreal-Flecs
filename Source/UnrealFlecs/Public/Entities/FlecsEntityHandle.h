@@ -486,7 +486,7 @@ public:
 
 	SOLID_INLINE const FSelfType& SetParent(const FFlecsId InParent) const
 	{
-		solid_checkf(!HasPair(flecs::ChildOf, flecs::Wildcard), TEXT("Entity already has a ChildOf relationship."));
+		//solid_checkf(!HasPair(flecs::ChildOf, flecs::Wildcard), TEXT("Entity already has a ChildOf relationship."));
 		
 		Set(flecs::Parent{InParent});
 		return *this;

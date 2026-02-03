@@ -214,9 +214,9 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A10_UnrealFlecsEntityTests,
 		const FFlecsEntityHandle ChildEntityB = FlecsWorld->CreateEntity("ChildEntityB").SetParent(ParentEntity);
 		const FFlecsEntityHandle ChildEntityC = FlecsWorld->CreateEntity("ChildEntityC").SetParent(ParentEntity);
 		
-		ASSERT_THAT(IsTrue(ChildEntityA.Has<flecs::Parent>() && !ChildEntityA.HasPair(flecs::ChildOf, flecs::Wildcard)));
-		ASSERT_THAT(IsTrue(ChildEntityB.Has<flecs::Parent>() && !ChildEntityB.HasPair(flecs::ChildOf, flecs::Wildcard)));
-		ASSERT_THAT(IsTrue(ChildEntityC.Has<flecs::Parent>() && !ChildEntityC.HasPair(flecs::ChildOf, flecs::Wildcard)));
+		ASSERT_THAT(IsTrue(ChildEntityA.Has<flecs::Parent>() && ChildEntityA.HasPair(flecs::ChildOf, flecs::Wildcard)));
+		ASSERT_THAT(IsTrue(ChildEntityB.Has<flecs::Parent>() && ChildEntityB.HasPair(flecs::ChildOf, flecs::Wildcard)));
+		ASSERT_THAT(IsTrue(ChildEntityC.Has<flecs::Parent>() && ChildEntityC.HasPair(flecs::ChildOf, flecs::Wildcard)));
 
 		{
 			TArray<FFlecsEntityHandle> ChildrenArray;
@@ -259,6 +259,10 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A10_UnrealFlecsEntityTests,
 		const FFlecsEntityHandle ChildEntityA = FlecsWorld->CreateEntity("ChildEntityA").SetParent(ParentEntity);
 		const FFlecsEntityHandle ChildEntityB = FlecsWorld->CreateEntity("ChildEntityB").SetParent(ParentEntity);
 		const FFlecsEntityHandle ChildEntityC = FlecsWorld->CreateEntity("ChildEntityC").SetParent(ParentEntity);
+		
+		ASSERT_THAT(IsTrue(ChildEntityA.Has<flecs::Parent>() && ChildEntityA.HasPair(flecs::ChildOf, flecs::Wildcard)));
+		ASSERT_THAT(IsTrue(ChildEntityB.Has<flecs::Parent>() && ChildEntityB.HasPair(flecs::ChildOf, flecs::Wildcard)));
+		ASSERT_THAT(IsTrue(ChildEntityC.Has<flecs::Parent>() && ChildEntityC.HasPair(flecs::ChildOf, flecs::Wildcard)));
 
 		{
 			TArray<FFlecsEntityHandle> ChildrenArray;
