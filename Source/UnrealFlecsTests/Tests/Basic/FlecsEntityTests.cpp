@@ -90,7 +90,18 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A10_UnrealFlecsEntityTests,
 		ASSERT_THAT(AreEqual(TEXT("::My::Custom::Separator::Entity"), TestEntity.GetPath()));
 	}
 
-	TEST_METHOD(A6_SpawnEntityWithParent_SetParent_API)
+	TEST_METHOD(A6_SpawnEntityWithParent_SetChildOf_API)
+	{
+		const FFlecsEntityHandle ParentEntity = FlecsWorld->CreateEntity("ParentEntity");
+		const FFlecsEntityHandle ChildEntity = FlecsWorld->CreateEntity("ChildEntity")
+			.SetChildOf(ParentEntity);
+
+		ASSERT_THAT(IsTrue(ChildEntity.IsValid()));
+		ASSERT_THAT(IsTrue(ChildEntity.HasParent()));
+		ASSERT_THAT(AreEqual(ParentEntity, ChildEntity.GetParent<FFlecsEntityHandle>()));
+	}
+	
+	TEST_METHOD(A7_SpawnEntityWithParent_SetParent_API)
 	{
 		const FFlecsEntityHandle ParentEntity = FlecsWorld->CreateEntity("ParentEntity");
 		const FFlecsEntityHandle ChildEntity = FlecsWorld->CreateEntity("ChildEntity")
@@ -105,10 +116,107 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A10_UnrealFlecsEntityTests,
 	{
 		const FFlecsEntityHandle ParentEntity = FlecsWorld->CreateEntity("ParentEntity")
 			.Add(flecs::OrderedChildren);
+		ASSERT_THAT(IsTrue(ParentEntity.IsValid()));
+		ASSERT_THAT(IsTrue(ParentEntity.Has(flecs::OrderedChildren)));
+
+		const FFlecsEntityHandle ChildEntityA = FlecsWorld->CreateEntity("ChildEntityA").SetChildOf(ParentEntity);
+		const FFlecsEntityHandle ChildEntityB = FlecsWorld->CreateEntity("ChildEntityB").SetChildOf(ParentEntity);
+		const FFlecsEntityHandle ChildEntityC = FlecsWorld->CreateEntity("ChildEntityC").SetChildOf(ParentEntity);
+		
+		ASSERT_THAT(IsTrue(ChildEntityA.HasPair(flecs::ChildOf, ParentEntity.GetFlecsId()) && !ChildEntityA.Has<flecs::Parent>()));
+		ASSERT_THAT(IsTrue(ChildEntityB.HasPair(flecs::ChildOf, ParentEntity.GetFlecsId()) && !ChildEntityB.Has<flecs::Parent>()));
+		ASSERT_THAT(IsTrue(ChildEntityC.HasPair(flecs::ChildOf, ParentEntity.GetFlecsId()) && !ChildEntityC.Has<flecs::Parent>()));
+
+		{
+			TArray<FFlecsEntityHandle> ChildrenArray;
+			ParentEntity.IterateChildren([&ChildrenArray](const FFlecsEntityHandle& InChildEntity)
+			{
+				ChildrenArray.Add(InChildEntity);
+			});
+
+			ASSERT_THAT(IsTrue(ChildrenArray.Num() == 3));
+			ASSERT_THAT(AreEqual(ChildrenArray[0], ChildEntityA));
+			ASSERT_THAT(AreEqual(ChildrenArray[1], ChildEntityB));
+			ASSERT_THAT(AreEqual(ChildrenArray[2], ChildEntityC));
+		}
+
+		FFlecsId NewChildrenEntityOrder[] = { ChildEntityC.GetFlecsId(), ChildEntityA.GetFlecsId(), ChildEntityB.GetFlecsId() };
+		ParentEntity.SetChildOrder(NewChildrenEntityOrder, 3);
+
+		{
+			TArray<FFlecsEntityHandle> ChildrenArray;
+			ParentEntity.IterateChildren([&ChildrenArray](const FFlecsEntityHandle& InChildEntity)
+			{
+				ChildrenArray.Add(InChildEntity);
+			});
+
+			ASSERT_THAT(IsTrue(ChildrenArray.Num() == 3));
+			ASSERT_THAT(AreEqual(ChildrenArray[0], ChildEntityC));
+			ASSERT_THAT(AreEqual(ChildrenArray[1], ChildEntityA));
+			ASSERT_THAT(AreEqual(ChildrenArray[2], ChildEntityB));
+		}
+	}
+	
+	TEST_METHOD(C2_SpawnEntityWithChildrenInOrder_SetChildOrder_TArrayView_API)
+	{
+		const FFlecsEntityHandle ParentEntity = FlecsWorld->CreateEntity("ParentEntity")
+			.Add(flecs::OrderedChildren);
+		ASSERT_THAT(IsTrue(ParentEntity.IsValid()));
+		ASSERT_THAT(IsTrue(ParentEntity.Has(flecs::OrderedChildren)));
+
+		const FFlecsEntityHandle ChildEntityA = FlecsWorld->CreateEntity("ChildEntityA").SetChildOf(ParentEntity);
+		const FFlecsEntityHandle ChildEntityB = FlecsWorld->CreateEntity("ChildEntityB").SetChildOf(ParentEntity);
+		const FFlecsEntityHandle ChildEntityC = FlecsWorld->CreateEntity("ChildEntityC").SetChildOf(ParentEntity);
+		
+		ASSERT_THAT(IsTrue(ChildEntityA.HasPair(flecs::ChildOf, ParentEntity.GetFlecsId()) && !ChildEntityA.Has<flecs::Parent>()));
+		ASSERT_THAT(IsTrue(ChildEntityB.HasPair(flecs::ChildOf, ParentEntity.GetFlecsId()) && !ChildEntityB.Has<flecs::Parent>()));
+		ASSERT_THAT(IsTrue(ChildEntityC.HasPair(flecs::ChildOf, ParentEntity.GetFlecsId()) && !ChildEntityC.Has<flecs::Parent>()));
+
+		{
+			TArray<FFlecsEntityHandle> ChildrenArray;
+			ParentEntity.IterateChildren([&ChildrenArray](const FFlecsEntityHandle& InChildEntity)
+			{
+				ChildrenArray.Add(InChildEntity);
+			});
+
+			ASSERT_THAT(IsTrue(ChildrenArray.Num() == 3));
+			ASSERT_THAT(AreEqual(ChildrenArray[0], ChildEntityA));
+			ASSERT_THAT(AreEqual(ChildrenArray[1], ChildEntityB));
+			ASSERT_THAT(AreEqual(ChildrenArray[2], ChildEntityC));
+		}
+
+		TArray<FFlecsId> NewChildrenEntityOrder = TArray<FFlecsId>{ ChildEntityC.GetFlecsId(), ChildEntityA.GetFlecsId(), ChildEntityB.GetFlecsId() };
+		ParentEntity.SetChildOrder(NewChildrenEntityOrder);
+
+		{
+			TArray<FFlecsEntityHandle> ChildrenArray;
+			ParentEntity.IterateChildren([&ChildrenArray](const FFlecsEntityHandle& InChildEntity)
+			{
+				ChildrenArray.Add(InChildEntity);
+			});
+
+			ASSERT_THAT(IsTrue(ChildrenArray.Num() == 3));
+			ASSERT_THAT(AreEqual(ChildrenArray[0], ChildEntityC));
+			ASSERT_THAT(AreEqual(ChildrenArray[1], ChildEntityA));
+			ASSERT_THAT(AreEqual(ChildrenArray[2], ChildEntityB));
+		}
+	}
+	
+	
+	TEST_METHOD(C3_SpawnEntityWithDontFragmentChildrenInOrder_SetChildOrder_C_API)
+	{
+		const FFlecsEntityHandle ParentEntity = FlecsWorld->CreateEntity("ParentEntity")
+			.Add(flecs::OrderedChildren);
+		ASSERT_THAT(IsTrue(ParentEntity.IsValid()));
+		ASSERT_THAT(IsTrue(ParentEntity.Has(flecs::OrderedChildren)));
 
 		const FFlecsEntityHandle ChildEntityA = FlecsWorld->CreateEntity("ChildEntityA").SetParent(ParentEntity);
 		const FFlecsEntityHandle ChildEntityB = FlecsWorld->CreateEntity("ChildEntityB").SetParent(ParentEntity);
 		const FFlecsEntityHandle ChildEntityC = FlecsWorld->CreateEntity("ChildEntityC").SetParent(ParentEntity);
+		
+		ASSERT_THAT(IsTrue(ChildEntityA.Has<flecs::Parent>() && !ChildEntityA.HasPair(flecs::ChildOf, flecs::Wildcard)));
+		ASSERT_THAT(IsTrue(ChildEntityB.Has<flecs::Parent>() && !ChildEntityB.HasPair(flecs::ChildOf, flecs::Wildcard)));
+		ASSERT_THAT(IsTrue(ChildEntityC.Has<flecs::Parent>() && !ChildEntityC.HasPair(flecs::ChildOf, flecs::Wildcard)));
 
 		{
 			TArray<FFlecsEntityHandle> ChildrenArray;
@@ -141,10 +249,12 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A10_UnrealFlecsEntityTests,
 		
 	}
 
-	TEST_METHOD(C2_SpawnEntityWithChildrenInOrder_SetChildOrder_TArrayView_API)
+	TEST_METHOD(C4_SpawnEntityWithDontFragmentChildrenInOrder_SetChildOrder_TArrayView_API)
 	{
 		const FFlecsEntityHandle ParentEntity = FlecsWorld->CreateEntity("ParentEntity")
 			.Add(flecs::OrderedChildren);
+		ASSERT_THAT(IsTrue(ParentEntity.IsValid()));
+		ASSERT_THAT(IsTrue(ParentEntity.Has(flecs::OrderedChildren)));
 
 		const FFlecsEntityHandle ChildEntityA = FlecsWorld->CreateEntity("ChildEntityA").SetParent(ParentEntity);
 		const FFlecsEntityHandle ChildEntityB = FlecsWorld->CreateEntity("ChildEntityB").SetParent(ParentEntity);
