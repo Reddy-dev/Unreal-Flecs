@@ -15,4 +15,4 @@ public:
 	FFlecsQueryFilterExpression();
 
 	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const override;
-};
+}; // struct FFlecsQueryFilterExpression
