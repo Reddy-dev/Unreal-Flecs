@@ -268,8 +268,7 @@ public:
 	{
 		solid_cassume(CollectionDefinition);
 		
-		const int32 SubEntityIndex =
-			GetCollectionDefinition().Record.AddSubEntity(InTemplateRecord);
+		const int32 SubEntityIndex = GetCollectionDefinition().Record.AddSubEntity(InTemplateRecord, false);
 
 		FFlecsEntityRecord& SubEntityRecordReference = 
 			GetCollectionDefinition().Record.GetSubEntity(SubEntityIndex).Get<FFlecsEntityRecord>();

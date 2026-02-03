@@ -190,17 +190,27 @@ void FFlecsEntityRecord::ApplyRecordToEntity(const TSolidNotNull<const UFlecsWor
 			}
 		}
 		
-		for (const TInstancedStruct<FFlecsEntityRecord>& SubEntityRecord : SubEntities)
+		for (const FFlecsSubEntityRecord& SubEntityRecord : SubEntities)
 		{
-			if UNLIKELY_IF(!ensure(SubEntityRecord.IsValid()))
+			if UNLIKELY_IF(!ensure(SubEntityRecord.Record.IsValid()))
 			{
 				continue;
 			}
 			
-			FFlecsEntityHandle NewEntityHandle = InFlecsWorld->CreateEntity()
-				.SetParent(InEntityHandle);
+			FFlecsEntityHandle NewEntityHandle = InFlecsWorld->CreateEntity();
+			solid_checkf(NewEntityHandle.IsValid(),
+				TEXT("FFlecsEntityRecord::ApplyRecordToEntity: Failed to create sub-entity"));
 			
-			SubEntityRecord.Get<FFlecsEntityRecord>().ApplyRecordToEntity(InFlecsWorld, NewEntityHandle);
+			if (SubEntityRecord.bDontFragmentParentChildRelationship)
+			{
+				NewEntityHandle.SetParent(InEntityHandle);
+			}
+			else
+			{
+				NewEntityHandle.SetChildOf(InEntityHandle);
+			}
+			
+			SubEntityRecord.Record.Get<FFlecsEntityRecord>().ApplyRecordToEntity(InFlecsWorld, NewEntityHandle);
 			InEntityHandle.Add(NewEntityHandle);
 		}
 	}//);

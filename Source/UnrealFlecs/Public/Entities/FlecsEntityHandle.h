@@ -475,10 +475,20 @@ public:
 	}
 
 #endif // #if defined(FLECS_DOC)
+	
+	SOLID_INLINE const FSelfType& SetChildOf(const FFlecsId InParent) const
+	{
+		solid_checkf(!Has<flecs::Parent>(),
+			TEXT("Entity already has an exclusive parent. Use SetParent to change the parent or change the existing parent component to a ChildOf"));
+		GetEntity().child_of(InParent);
+		return *this;
+	}
 
 	SOLID_INLINE const FSelfType& SetParent(const FFlecsId InParent) const
 	{
-		GetEntity().child_of(InParent);
+		solid_checkf(!HasPair(flecs::ChildOf, flecs::Wildcard), TEXT("Entity already has a ChildOf relationship."));
+		
+		Set(flecs::Parent{InParent});
 		return *this;
 	}
 

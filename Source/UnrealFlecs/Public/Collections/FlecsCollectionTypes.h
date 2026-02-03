@@ -200,3 +200,17 @@ REGISTER_FLECS_COMPONENT(FFlecsCollectionParametersComponent,
 		InComponentHandle
 			.AddPair(flecs::OnInstantiate, flecs::DontInherit);
 	});
+
+/*
+USTRUCT(BlueprintType)
+struct UNREALFLECS_API FFlecsCollectionInstanceRelationship
+{
+	GENERATED_BODY()
+}; // struct FFlecsCollectionInstanceRelationship
+
+REGISTER_FLECS_COMPONENT(FFlecsCollectionInstanceRelationship,
+	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
+	{
+		InComponentHandle
+			.Add(flecs::DontFragment);
+	});*/

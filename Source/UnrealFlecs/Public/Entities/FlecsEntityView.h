@@ -406,7 +406,7 @@ public:
 
 	NO_DISCARD SOLID_INLINE bool HasParent() const
 	{
-		return HasPair(flecs::ChildOf, flecs::Wildcard);
+		return Has<flecs::Parent>() || HasPair(flecs::ChildOf, flecs::Wildcard);
 	}
 
 	NO_DISCARD SOLID_INLINE bool IsPrefab() const

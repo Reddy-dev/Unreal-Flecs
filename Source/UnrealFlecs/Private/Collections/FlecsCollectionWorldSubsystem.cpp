@@ -392,7 +392,7 @@ FFlecsEntityHandle UFlecsCollectionWorldSubsystem::EnsurePrefabShell(const FFlec
 	const TSolidNotNull<const UFlecsWorld*> FlecsWorld = GetFlecsWorldChecked();
 	
 	const FFlecsEntityHandle Prefab = FlecsWorld->CreateEntity(Id.NameId)
-		.SetParent(CollectionScopeEntity)
+		.SetChildOf(CollectionScopeEntity)
 		.Add(flecs::Prefab)
 		.Add<FFlecsCollectionPrefabTag>();
 	
@@ -485,6 +485,7 @@ void UFlecsCollectionWorldSubsystem::ExpandChildCollectionReferences(const FFlec
 	FlecsWorld->World.query_builder<FFlecsCollectionReferenceComponent*>() // 0 (FFlecsCollectionReferenceComponent)
 			.with(flecs::ChildOf, InCollectionEntity) // 1
 			.with<FFlecsCollectionSlotTag>().optional() // 2
+			.group_by(flecs::ParentDepth)
 			.each([&](flecs::iter& Iter, size_t Index, FFlecsCollectionReferenceComponent* ReferenceComponent) // 3
 			{
 				const FFlecsEntityHandle ChildEntityHandle = Iter.entity(Index);

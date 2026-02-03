@@ -714,6 +714,19 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B4_CollectionBasicTests, "UnrealFlecs.B4_Collecti
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
 
 		TestEntity.AddCollection(CollectionPrefab);
+		
+		bool bHasSubEntity = false;
+		
+		TestEntity.IterateChildren([&](const FFlecsEntityHandle& ChildEntity)
+		{
+			if (ChildEntity.GetName() == TEXT("SubEntity1"))
+			{
+				bHasSubEntity = true;
+			}
+		});
+		
+		ASSERT_THAT(IsTrue(bHasSubEntity));
+		
 		ASSERT_THAT(IsTrue(TestEntity.HasCollection(CollectionPrefab)));
 		ASSERT_THAT(IsTrue(TestEntity.Lookup<FFlecsEntityView>("SubEntity1").IsValid()));
 		ASSERT_THAT(IsTrue(TestEntity.Lookup<FFlecsEntityView>("SubEntity1").Has<FFlecsTestStruct_Tag>()));
@@ -746,6 +759,18 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B4_CollectionBasicTests, "UnrealFlecs.B4_Collecti
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
 
 		TestEntity.AddCollection(CollectionPrefab);
+		
+		bool bHasSubEntity = false;
+		TestEntity.IterateChildren([&](const FFlecsEntityHandle& ChildEntity)
+		{
+			if (ChildEntity.GetName() == TEXT("SubEntity1"))
+			{
+				bHasSubEntity = true;
+			}
+		});
+		
+		ASSERT_THAT(IsTrue(bHasSubEntity));
+		
 		ASSERT_THAT(IsTrue(TestEntity.HasCollection(CollectionPrefab)));
 		ASSERT_THAT(IsTrue(TestEntity.Lookup<FFlecsEntityView>("SubEntity1").IsValid()));
 		ASSERT_THAT(IsTrue(TestEntity.Lookup<FFlecsEntityView>("SubEntity1").Has<FFlecsTestStruct_Tag>()));
@@ -766,8 +791,22 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B4_CollectionBasicTests, "UnrealFlecs.B4_Collecti
 		
 		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity("TestEntity_WithSubEntities_Class");
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		
 
 		TestEntity.AddCollection(CollectionPrefab);
+		
+		bool bHasSubEntity = false;
+		
+		TestEntity.IterateChildren([&](const FFlecsEntityHandle& ChildEntity)
+		{
+			if (ChildEntity.GetName() == TEXT("SubEntity1"))
+			{
+				bHasSubEntity = true;
+			}
+		});
+		
+		ASSERT_THAT(IsTrue(bHasSubEntity));
+		
 		ASSERT_THAT(IsTrue(TestEntity.HasCollection(CollectionPrefab)));
 		ASSERT_THAT(IsTrue(TestEntity.Lookup<FFlecsEntityView>("SubEntity1").IsValid()));
 		ASSERT_THAT(IsTrue(TestEntity.Lookup<FFlecsEntityView>("SubEntity1").Has<FFlecsTestStruct_Tag>()));

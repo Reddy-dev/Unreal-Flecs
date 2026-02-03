@@ -325,6 +325,47 @@ public:
 // @TODO: make custom UI for FFlecsEntityRecord and make custom meta tags.
 // @TODO: add data validation.
 
+USTRUCT(BlueprintType)
+struct UNREALFLECS_API FFlecsSubEntityRecord
+{
+	GENERATED_BODY()
+	
+public:
+	FORCEINLINE FFlecsSubEntityRecord() = default;
+	
+	FORCEINLINE explicit FFlecsSubEntityRecord(const TInstancedStruct<FFlecsEntityRecord>& InRecord, 
+		const bool bInDontFragmentParentChildRelationship = true)
+		: bDontFragmentParentChildRelationship(bInDontFragmentParentChildRelationship)
+		, Record(InRecord)
+	{
+	}
+	
+	FORCEINLINE explicit FFlecsSubEntityRecord(TInstancedStruct<FFlecsEntityRecord>&& InRecord, 
+		const bool bInDontFragmentParentChildRelationship = true)
+		: bDontFragmentParentChildRelationship(bInDontFragmentParentChildRelationship)
+		, Record(MoveTemp(InRecord))
+	{
+	}
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Entity Record")
+	bool bDontFragmentParentChildRelationship = true;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Entity Record")
+	TInstancedStruct<FFlecsEntityRecord> Record;
+	
+	NO_DISCARD FORCEINLINE bool operator==(const FFlecsSubEntityRecord& Other) const
+	{
+		return bDontFragmentParentChildRelationship == Other.bDontFragmentParentChildRelationship
+			&& Record == Other.Record;
+	}
+	
+	NO_DISCARD FORCEINLINE bool operator!=(const FFlecsSubEntityRecord& Other) const
+	{
+		return !(*this == Other);
+	}
+	
+}; // struct FFlecsSubEntityRecord
+
 /**
  * @brief A record of a generic entity's components and sub-entities,
  * this can be applied to an actual entity to give it the same components/sub-entities.
@@ -342,7 +383,7 @@ public:
 	TArray<FFlecsComponentTypeInfo> Components;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Entity Record")
-	TArray<TInstancedStruct<FFlecsEntityRecord>> SubEntities;
+	TArray<FFlecsSubEntityRecord> SubEntities;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Entity Record", meta = (ExcludeBaseStruct, NoElementDuplicate))
 	TArray<TInstancedStruct<FFlecsEntityRecordFragment>> Fragments;
@@ -545,12 +586,14 @@ public:
 			
 		}; // struct FSubEntityScope
 		
-		FORCEINLINE FSubEntityScope SubEntity()
+		FORCEINLINE FSubEntityScope SubEntity(const bool bInDontFragmentParentChildRelationship = true)
 		{
 			const int32 Index =
-				EntityRecord.SubEntities.Add(TInstancedStruct<FFlecsEntityRecord>::Make<FFlecsEntityRecord>());
+				EntityRecord.SubEntities.Add(FFlecsSubEntityRecord(
+					TInstancedStruct<FFlecsEntityRecord>::Make<FFlecsEntityRecord>(),
+					bInDontFragmentParentChildRelationship));
 
-			FFlecsEntityRecord& Child = EntityRecord.SubEntities[Index].GetMutable();
+			FFlecsEntityRecord& Child = EntityRecord.SubEntities[Index].Record.GetMutable();
 			return FSubEntityScope(*this, Child);
 		}
 		
@@ -741,9 +784,11 @@ public:
 		return *this;
 	}
 
-	FORCEINLINE int32 AddSubEntity(const FFlecsEntityRecord& InSubEntity)
+	FORCEINLINE int32 AddSubEntity(const FFlecsEntityRecord& InSubEntity, const bool bInDontFragmentParentChildRelationship = true)
 	{
-		return SubEntities.Add(TInstancedStruct<FFlecsEntityRecord>::Make(InSubEntity));
+		return SubEntities.Add(FFlecsSubEntityRecord(
+			TInstancedStruct<FFlecsEntityRecord>::Make(InSubEntity),
+			bInDontFragmentParentChildRelationship));
 	}
 
 	FORCEINLINE void RemoveSubEntity(const int32 InIndex)
@@ -770,13 +815,13 @@ public:
 	NO_DISCARD FORCEINLINE TConstStructView<FFlecsEntityRecord> GetSubEntity(const int32 InIndex) const
 	{
 		solid_checkf(SubEntities.IsValidIndex(InIndex), TEXT("Index is out of bounds"));
-		return SubEntities[InIndex];
+		return SubEntities[InIndex].Record;
 	}
 
 	NO_DISCARD FORCEINLINE TStructView<FFlecsEntityRecord> GetSubEntity(const int32 InIndex)
 	{
 		solid_checkf(SubEntities.IsValidIndex(InIndex), TEXT("Index is out of bounds"));
-		return SubEntities[InIndex];
+		return SubEntities[InIndex].Record;
 	}
 
 	template <Unreal::Flecs::CNonStructUtilScriptStructType TFragmentType>
