@@ -158,6 +158,16 @@ struct UNREALFLECS_API FFlecsQueryGeneratorInputType_Any : public FFlecsQueryGen
 	GENERATED_BODY()
 	
 public:
+	FFlecsQueryGeneratorInputType_Any()
+	{
+		ReturnType = EQueryReturnType::FlecsId;
+	}
+	
+	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorld*> InWorld) const override
+	{
+		return flecs::Any;
+	}
+	
 }; // struct FFlecsQueryGeneratorInputType_Any
 
 USTRUCT(BlueprintType, meta = (DisplayName = "Pair"))
