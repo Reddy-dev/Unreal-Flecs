@@ -544,6 +544,8 @@ public:
 	
 #pragma endregion TermHelperFunctions
 	
+	
+	
 	FORCEINLINE FInheritedType& ModifyLastTerm(const TFunctionRef<void(FFlecsQueryTermExpression&)>& InModifier)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
