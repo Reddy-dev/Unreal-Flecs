@@ -4,11 +4,13 @@
 
 #include "CoreMinimal.h"
 
+#include "StructUtils/InstancedStruct.h"
+
 #include "SolidMacros/Macros.h"
+#include "Types/SolidNotNull.h"
 #include "Types/SolidEnumSelector.h"
 
 #include "Entities/FlecsId.h"
-#include "StructUtils/InstancedStruct.h"
 
 #include "FlecsQueryGeneratorInputType.generated.h"
 
