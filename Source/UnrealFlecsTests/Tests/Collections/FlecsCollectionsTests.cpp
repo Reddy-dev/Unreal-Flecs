@@ -831,8 +831,8 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B4_CollectionBasicTests, "UnrealFlecs.B4_Collecti
 		FFlecsCollectionInstancedReference CollectionRef(FFlecsCollectionReference::FromId("TestCollection_WithinEntityRecord"));
 
 		FFlecsEntityRecord EntityRecord = FFlecsEntityRecord();
-		EntityRecord.AddFragment<FFlecsCollectionEntityRecordFragment>(FFlecsCollectionEntityRecordFragment(CollectionRef));
-		ASSERT_THAT(IsTrue(EntityRecord.HasFragment<FFlecsCollectionEntityRecordFragment>()));
+		EntityRecord.AddFragment<FFlecsCollectionsEntityRecordFragment>(FFlecsCollectionsEntityRecordFragment({CollectionRef}));
+		ASSERT_THAT(IsTrue(EntityRecord.HasFragment<FFlecsCollectionsEntityRecordFragment>()));
 		
 		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntityWithRecord(EntityRecord, "TestEntity_WithCollectionInRecord");
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
@@ -861,8 +861,8 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B4_CollectionBasicTests, "UnrealFlecs.B4_Collecti
 		FFlecsCollectionInstancedReference CollectionRef(FFlecsCollectionReference::FromId("TestCollection_WithinEntityRecord_Def"));
 
 		FFlecsEntityRecord EntityRecord = FFlecsEntityRecord();
-		EntityRecord.AddFragment<FFlecsCollectionEntityRecordFragment>(FFlecsCollectionEntityRecordFragment(CollectionRef));
-		ASSERT_THAT(IsTrue(EntityRecord.HasFragment<FFlecsCollectionEntityRecordFragment>()));
+		EntityRecord.AddFragment<FFlecsCollectionsEntityRecordFragment>(FFlecsCollectionsEntityRecordFragment({CollectionRef}));
+		ASSERT_THAT(IsTrue(EntityRecord.HasFragment<FFlecsCollectionsEntityRecordFragment>()));
 		
 		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntityWithRecord(EntityRecord, "TestEntity_WithCollectionInRecord_Def");
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
@@ -888,8 +888,8 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B4_CollectionBasicTests, "UnrealFlecs.B4_Collecti
 		FFlecsCollectionInstancedReference CollectionRef(FFlecsCollectionReference::FromClass(UFlecsCollectionTestClassNoInterface::StaticClass()));
 
 		FFlecsEntityRecord EntityRecord = FFlecsEntityRecord();
-		EntityRecord.AddFragment<FFlecsCollectionEntityRecordFragment>(FFlecsCollectionEntityRecordFragment(CollectionRef));
-		ASSERT_THAT(IsTrue(EntityRecord.HasFragment<FFlecsCollectionEntityRecordFragment>()));
+		EntityRecord.AddFragment<FFlecsCollectionsEntityRecordFragment>(FFlecsCollectionsEntityRecordFragment({CollectionRef}));
+		ASSERT_THAT(IsTrue(EntityRecord.HasFragment<FFlecsCollectionsEntityRecordFragment>()));
 		
 		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntityWithRecord(EntityRecord, "TestEntity_WithCollectionInRecord_Class");
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
@@ -911,8 +911,8 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B4_CollectionBasicTests, "UnrealFlecs.B4_Collecti
 		FFlecsCollectionInstancedReference CollectionRef(FFlecsCollectionReference::FromClass(UFlecsCollectionTestClassWithInterface_Inherited::StaticClass()));
 
 		FFlecsEntityRecord EntityRecord = FFlecsEntityRecord();
-		EntityRecord.AddFragment<FFlecsCollectionEntityRecordFragment>(FFlecsCollectionEntityRecordFragment(CollectionRef));
-		ASSERT_THAT(IsTrue(EntityRecord.HasFragment<FFlecsCollectionEntityRecordFragment>()));
+		EntityRecord.AddFragment<FFlecsCollectionsEntityRecordFragment>(FFlecsCollectionsEntityRecordFragment({CollectionRef}));
+		ASSERT_THAT(IsTrue(EntityRecord.HasFragment<FFlecsCollectionsEntityRecordFragment>()));
 		
 		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntityWithRecord(EntityRecord, "TestEntity_WithCollectionInRecord_ClassInterface");
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
@@ -935,8 +935,8 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B4_CollectionBasicTests, "UnrealFlecs.B4_Collecti
 		FFlecsCollectionInstancedReference CollectionRef(FFlecsCollectionReference::FromClass(UFlecsCollectionTestClassWithInterface_Parameterized::StaticClass()));
 
 		FFlecsEntityRecord EntityRecord = FFlecsEntityRecord();
-		EntityRecord.AddFragment<FFlecsCollectionEntityRecordFragment>(FFlecsCollectionEntityRecordFragment(CollectionRef));
-		ASSERT_THAT(IsTrue(EntityRecord.HasFragment<FFlecsCollectionEntityRecordFragment>()));
+		EntityRecord.AddFragment<FFlecsCollectionsEntityRecordFragment>(FFlecsCollectionsEntityRecordFragment({CollectionRef}));
+		ASSERT_THAT(IsTrue(EntityRecord.HasFragment<FFlecsCollectionsEntityRecordFragment>()));
 		
 		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntityWithRecord(EntityRecord, "TestEntity_WithCollectionInRecord_ClassInterface_Parameterized");
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
@@ -961,8 +961,8 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B4_CollectionBasicTests, "UnrealFlecs.B4_Collecti
 			FInstancedStruct::Make<FFlecsTestStruct_Value>(FFlecsTestStruct_Value{ 42 }));
 
 		FFlecsEntityRecord EntityRecord = FFlecsEntityRecord();
-		EntityRecord.AddFragment<FFlecsCollectionEntityRecordFragment>(FFlecsCollectionEntityRecordFragment(CollectionRef));
-		ASSERT_THAT(IsTrue(EntityRecord.HasFragment<FFlecsCollectionEntityRecordFragment>()));
+		EntityRecord.AddFragment<FFlecsCollectionsEntityRecordFragment>(FFlecsCollectionsEntityRecordFragment({CollectionRef}));
+		ASSERT_THAT(IsTrue(EntityRecord.HasFragment<FFlecsCollectionsEntityRecordFragment>()));
 		
 		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntityWithRecord(EntityRecord, "TestEntity_WithCollectionInRecord_ClassInterface_Parameterized_Explicit");
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
@@ -970,6 +970,102 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B4_CollectionBasicTests, "UnrealFlecs.B4_Collecti
 		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Tag>()));
 		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Value>()));
 		ASSERT_THAT(IsTrue(TestEntity.Get<FFlecsTestStruct_Value>().Value == 42));
+	}
+	
+	TEST_METHOD(H7_InstantiateMultipleCollectionsWithinEntityRecord_CreatesEntityWithBothCollections_BuilderAndDefinitionAPI)
+	{
+		FlecsWorld->RegisterComponentType<FFlecsTestStruct_Tag_Inherited>();
+		FlecsWorld->RegisterComponentType<FFlecsTestStruct_Tag>();
+		FlecsWorld->RegisterComponentType<FFlecsTestStruct_Value>();
+		
+		const FFlecsEntityHandle CollectionPrefabA = Collections->RegisterCollectionBuilder([](FFlecsCollectionBuilder& Builder)
+		{
+			Builder
+				.Name("TestCollection_Multi_A_Builder")
+				.Add<FFlecsTestStruct_Tag_Inherited>();
+		});
+
+		ASSERT_THAT(IsTrue(CollectionPrefabA.IsValid()));
+		ASSERT_THAT(IsTrue(CollectionPrefabA.Has(flecs::Prefab)));
+		
+		FFlecsCollectionDefinition DefB;
+		{
+			FFlecsCollectionBuilder Builder = FFlecsCollectionBuilder::Create(DefB)
+				.Name("TestCollection_Multi_B_Definition")
+				.Add<FFlecsTestStruct_Tag>()
+				.Add<FFlecsTestStruct_Value>(FFlecsTestStruct_Value{ 77 });
+		}
+
+		const FFlecsEntityHandle CollectionPrefabB
+			= Collections->RegisterCollectionDefinition(TEXT("TestCollection_Multi_B_Definition"), DefB);
+
+		ASSERT_THAT(IsTrue(CollectionPrefabB.IsValid()));
+		ASSERT_THAT(IsTrue(CollectionPrefabB.Has(flecs::Prefab)));
+		
+		const FFlecsCollectionInstancedReference RefA(FFlecsCollectionReference::FromId("TestCollection_Multi_A_Builder"));
+		const FFlecsCollectionInstancedReference RefB(FFlecsCollectionReference::FromId("TestCollection_Multi_B_Definition"));
+
+		FFlecsEntityRecord EntityRecord;
+		EntityRecord.AddFragment<FFlecsCollectionsEntityRecordFragment>(
+			FFlecsCollectionsEntityRecordFragment({ RefA, RefB })
+		);
+
+		ASSERT_THAT(IsTrue(EntityRecord.HasFragment<FFlecsCollectionsEntityRecordFragment>()));
+		
+		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntityWithRecord(EntityRecord, "TestEntity_WithMultipleCollections_Record");
+		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		
+		ASSERT_THAT(IsTrue(TestEntity.HasCollection(CollectionPrefabA)));
+		ASSERT_THAT(IsTrue(TestEntity.HasCollection(CollectionPrefabB)));
+
+		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Tag_Inherited>()));
+		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Tag>()));
+		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Value>()));
+		ASSERT_THAT(IsTrue(TestEntity.Get<FFlecsTestStruct_Value>().Value == 77));
+	}
+	
+	TEST_METHOD(H9_InstantiateMultipleCollectionsWithinEntityRecord_CreatesEntityWithBothCollections_ClassInterfaceAPI_ExplicitParams)
+	{
+		FlecsWorld->RegisterComponentType<FFlecsTestStruct_Tag_Inherited>();
+		FlecsWorld->RegisterComponentType<FFlecsTestStruct_Tag>();
+		FlecsWorld->RegisterComponentType<FFlecsTestStruct_Value>();
+
+		const FFlecsEntityHandle CollectionPrefabA
+			= Collections->RegisterCollectionInterfaceClass(UFlecsCollectionTestClassWithInterface_Inherited::StaticClass());
+
+		const FFlecsEntityHandle CollectionPrefabB
+			= Collections->RegisterCollectionInterfaceClass(UFlecsCollectionTestClassWithInterface_Parameterized::StaticClass());
+
+		ASSERT_THAT(IsTrue(CollectionPrefabA.IsValid()));
+		ASSERT_THAT(IsTrue(CollectionPrefabA.Has(flecs::Prefab)));
+		ASSERT_THAT(IsTrue(CollectionPrefabB.IsValid()));
+		ASSERT_THAT(IsTrue(CollectionPrefabB.Has(flecs::Prefab)));
+
+		const FFlecsCollectionInstancedReference RefA(
+			FFlecsCollectionReference::FromClass(UFlecsCollectionTestClassWithInterface_Inherited::StaticClass())
+		);
+		
+		const FFlecsCollectionInstancedReference RefB(
+			FFlecsCollectionReference::FromClass(UFlecsCollectionTestClassWithInterface_Parameterized::StaticClass()),
+			FInstancedStruct::Make<FFlecsTestStruct_Value>(FFlecsTestStruct_Value{ 123 })
+		);
+
+		FFlecsEntityRecord EntityRecord;
+		EntityRecord.AddFragment<FFlecsCollectionsEntityRecordFragment>(
+			FFlecsCollectionsEntityRecordFragment({ RefA, RefB })
+		);
+
+		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntityWithRecord(EntityRecord, "TestEntity_WithMultipleCollections_Record_ClassInterface_Explicit");
+		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+
+		ASSERT_THAT(IsTrue(TestEntity.HasCollection(CollectionPrefabA)));
+		ASSERT_THAT(IsTrue(TestEntity.HasCollection(CollectionPrefabB)));
+		
+		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Tag_Inherited>()));
+		
+		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Tag>()));
+		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Value>()));
+		ASSERT_THAT(IsTrue(TestEntity.Get<FFlecsTestStruct_Value>().Value == 123));
 	}
 	
 }; // End of B4_CollectionBasicTests
