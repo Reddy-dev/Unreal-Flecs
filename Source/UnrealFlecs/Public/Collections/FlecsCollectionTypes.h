@@ -148,6 +148,7 @@ REGISTER_FLECS_COMPONENT(FFlecsCollectionSlotTag,
 			.AddPair(flecs::OnInstantiate, flecs::DontInherit);
 	});
 
+// @TODO: Add Ordered Children
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsSubEntityIndex
 {
