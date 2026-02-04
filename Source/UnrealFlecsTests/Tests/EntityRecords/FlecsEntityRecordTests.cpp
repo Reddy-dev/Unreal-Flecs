@@ -4,6 +4,7 @@
 
 #if WITH_AUTOMATION_TESTS
 
+#include "Components/FlecsSubEntityRecordNameComponent.h"
 #include "Entities/FlecsEntityRecord.h"
 
 #include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
@@ -432,6 +433,111 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B1_FlecsEntityRecordTests, "UnrealFlecs.B1_Entity
 		
 		ASSERT_THAT(IsTrue(Entity.Has<FFlecsTestStruct_Tag>()));
 		ASSERT_THAT(IsTrue(Entity.Has(FFlecsTestStruct_Tag::StaticStruct())));
+	}
+	
+	TEST_METHOD(C3_CreatePrefabWithRecord_WithNamedEntityRecordFragment_InheritDontFragmentSubEntityNames)
+	{
+		FFlecsEntityRecord SubRecord;
+		SubRecord.AddFragment<FFlecsNamedEntityRecordFragment>("SubEntityName");
+		SubRecord.AddComponent<FFlecsTestStruct_Tag>();
+		
+		ASSERT_THAT(IsTrue(SubRecord.GetFragment<FFlecsNamedEntityRecordFragment>(0).bNameInheritedSubEntities));
+
+		FFlecsEntityRecord Record;
+		Record.AddFragment<FFlecsNamedEntityRecordFragment>("ParentEntityName");
+		Record.AddSubEntity(SubRecord);
+
+		const FFlecsEntityHandle PrefabEntity = FlecsWorld->CreatePrefabWithRecord(Record);
+		ASSERT_THAT(IsTrue(PrefabEntity.IsValid()));
+		ASSERT_THAT(IsTrue(PrefabEntity.Has(flecs::Prefab)));
+		ASSERT_THAT(IsTrue(PrefabEntity.HasName()));
+		ASSERT_THAT(AreEqual(TEXT("ParentEntityName"), PrefabEntity.GetName()));
+		
+		const FFlecsEntityView SubEntityView = PrefabEntity.Lookup<FFlecsEntityView>(TEXT("SubEntityName"));
+		ASSERT_THAT(IsTrue(SubEntityView.IsValid()));
+		ASSERT_THAT(IsTrue(SubEntityView.HasName()));
+		ASSERT_THAT(AreEqual(TEXT("SubEntityName"), SubEntityView.GetName()));
+		ASSERT_THAT(IsTrue(SubEntityView.Has<FFlecsSubEntityRecordNameComponent>()));
+		ASSERT_THAT(AreEqual(TEXT("SubEntityName"),
+			SubEntityView.Get<FFlecsSubEntityRecordNameComponent>().SubEntityName));
+
+		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity("TestEntity");
+		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		
+		ASSERT_THAT(IsTrue(TestEntity.HasName()));
+		ASSERT_THAT(AreEqual(TEXT("TestEntity"), TestEntity.GetName()));
+
+		TestEntity.AddPrefab(PrefabEntity);
+		
+		ASSERT_THAT(IsTrue(TestEntity.HasName()));
+		ASSERT_THAT(AreEqual(TEXT("TestEntity"), TestEntity.GetName()));
+		
+		ASSERT_THAT(IsTrue(TestEntity.IsA(PrefabEntity)));
+		
+		bool bFoundSubEntity = false;
+		TestEntity.IterateChildren([&](const FFlecsEntityHandle& ChildEntity)
+		{
+			if (ChildEntity.Has<FFlecsTestStruct_Tag>() && ChildEntity.Has<FFlecsSubEntityRecordNameComponent>())
+			{
+				bFoundSubEntity = true;
+			}
+		});
+		
+		ASSERT_THAT(IsTrue(bFoundSubEntity));
+		
+		ASSERT_THAT(IsTrue(TestEntity.Lookup<FFlecsEntityView>(TEXT("SubEntityName")).IsValid()));
+	}
+	
+	TEST_METHOD(C4_CreatePrefabWithRecord_WithNamedEntityRecordFragment_DontInheritDontFragmentSubEntityNames)
+	{
+		FFlecsEntityRecord SubRecord;
+		SubRecord.AddFragment<FFlecsNamedEntityRecordFragment>("SubEntityName", false);
+		SubRecord.AddComponent<FFlecsTestStruct_Tag>();
+		
+		ASSERT_THAT(IsTrue(!SubRecord.GetFragment<FFlecsNamedEntityRecordFragment>(0).bNameInheritedSubEntities));
+
+		FFlecsEntityRecord Record;
+		Record.AddFragment<FFlecsNamedEntityRecordFragment>("ParentEntityName");
+		Record.AddSubEntity(SubRecord);
+
+		const FFlecsEntityHandle PrefabEntity = FlecsWorld->CreatePrefabWithRecord(Record);
+		ASSERT_THAT(IsTrue(PrefabEntity.IsValid()));
+		ASSERT_THAT(IsTrue(PrefabEntity.Has(flecs::Prefab)));
+		ASSERT_THAT(IsTrue(PrefabEntity.HasName()));
+		ASSERT_THAT(AreEqual(TEXT("ParentEntityName"), PrefabEntity.GetName()));
+		ASSERT_THAT(IsTrue(PrefabEntity.Lookup<FFlecsEntityView>(TEXT("SubEntityName")).IsValid()));
+		
+		const FFlecsEntityView SubEntityView = PrefabEntity.Lookup<FFlecsEntityView>(TEXT("SubEntityName"));
+		ASSERT_THAT(IsTrue(SubEntityView.IsValid()));
+		ASSERT_THAT(IsTrue(SubEntityView.HasName()));
+		ASSERT_THAT(AreEqual(TEXT("SubEntityName"), SubEntityView.GetName()));
+		ASSERT_THAT(IsTrue(!SubEntityView.Has<FFlecsSubEntityRecordNameComponent>()));
+
+		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity("TestEntity");
+		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		
+		ASSERT_THAT(IsTrue(TestEntity.HasName()));
+		ASSERT_THAT(AreEqual(TEXT("TestEntity"), TestEntity.GetName()));
+
+		TestEntity.AddPrefab(PrefabEntity);
+		
+		ASSERT_THAT(IsTrue(TestEntity.HasName()));
+		ASSERT_THAT(AreEqual(TEXT("TestEntity"), TestEntity.GetName()));
+		
+		ASSERT_THAT(IsTrue(TestEntity.IsA(PrefabEntity)));
+		
+		bool bFoundSubEntity = false;
+		TestEntity.IterateChildren([&](const FFlecsEntityHandle& ChildEntity)
+		{
+			if (ChildEntity.Has<FFlecsTestStruct_Tag>())
+			{
+				bFoundSubEntity = true;
+			}
+		});
+		
+		ASSERT_THAT(IsTrue(bFoundSubEntity));
+		
+		ASSERT_THAT(IsTrue(!TestEntity.Lookup<FFlecsEntityView>(TEXT("SubEntityName")).IsValid()));
 	}
 	
 	TEST_METHOD(D1_BuilderAPI_CreateEntityRecord_AddsComponents_CPPAPI)

@@ -226,5 +226,9 @@ void FFlecsNamedEntityRecordFragment::PreApplyRecordToEntity(const TSolidNotNull
 	const FFlecsEntityHandle& InEntityHandle) const
 {
 	InEntityHandle.SetName(Name);
-	InEntityHandle.Set<FFlecsSubEntityRecordNameComponent>({ .SubEntityName = Name });
+	
+	if (bNameInheritedSubEntities)
+	{
+		InEntityHandle.Set<FFlecsSubEntityRecordNameComponent>({ .SubEntityName = Name });
+	}
 }

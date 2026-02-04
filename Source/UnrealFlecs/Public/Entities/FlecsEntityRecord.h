@@ -953,6 +953,64 @@ public:
 		solid_checkf(Fragments.IsValidIndex(InIndex), TEXT("Index is out of bounds"));
 		return Fragments[InIndex];
 	}
+	
+	template <Solid::TScriptStructConcept TFragmentType>
+	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
+	NO_DISCARD FORCEINLINE TFragmentType& GetFragment(const int32 InIndex)
+	{
+		solid_checkf(Fragments.IsValidIndex(InIndex), TEXT("Index is out of bounds"));
+		
+		TInstancedStruct<FFlecsEntityRecordFragment>& Fragment = Fragments[InIndex];
+		solid_checkf(Fragment.GetScriptStruct() == TBaseStructure<TFragmentType>::Get(),
+			TEXT("Fragment at index %d is not of type %s"), InIndex,
+			*TBaseStructure<TFragmentType>::Get()->GetName());
+		
+		return Fragment.GetMutable<TFragmentType>();
+	}
+	
+	template <Solid::TScriptStructConcept TFragmentType>
+	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
+	NO_DISCARD FORCEINLINE const TFragmentType& GetFragment(const int32 InIndex) const
+	{
+		solid_checkf(Fragments.IsValidIndex(InIndex), TEXT("Index is out of bounds"));
+		
+		const TInstancedStruct<FFlecsEntityRecordFragment>& Fragment = Fragments[InIndex];
+		solid_checkf(Fragment.GetScriptStruct() == TBaseStructure<TFragmentType>::Get(),
+			TEXT("Fragment at index %d is not of type %s"), InIndex,
+			*TBaseStructure<TFragmentType>::Get()->GetName());
+		
+		return Fragment.Get<TFragmentType>();
+	}
+	
+	/*template <Solid::TScriptStructConcept TFragmentType>
+	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
+	NO_DISCARD FORCEINLINE TFragmentType& GetFragment()
+	{
+		for (TInstancedStruct<FFlecsEntityRecordFragment>& Fragment : Fragments)
+		{
+			if (Fragment.GetScriptStruct() == TBaseStructure<TFragmentType>::Get())
+			{
+				return TStructView<TFragmentType>(Fragment);
+			}
+		}
+		
+		return TStructView<TFragmentType>();
+	}
+	
+	template <Solid::TScriptStructConcept TFragmentType>
+	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
+	NO_DISCARD FORCEINLINE TFragmentType& GetFragment() const
+	{
+		for (const TInstancedStruct<FFlecsEntityRecordFragment>& Fragment : Fragments)
+		{
+			if (Fragment.GetScriptStruct() == TBaseStructure<TFragmentType>::Get())
+			{
+				return TConstStructView<TFragmentType>(Fragment);
+			}
+		}
+		
+		return TConstStructView<TFragmentType>();
+	}*/
 
 	void ApplyRecordToEntity(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsEntityHandle& InEntityHandle) const;
 
@@ -973,13 +1031,17 @@ struct UNREALFLECS_API FFlecsNamedEntityRecordFragment : public FFlecsEntityReco
 
 public:
 	FORCEINLINE FFlecsNamedEntityRecordFragment() = default;
-	FORCEINLINE FFlecsNamedEntityRecordFragment(const FString& InName)
+	FORCEINLINE FFlecsNamedEntityRecordFragment(const FString& InName, const bool bInNameInheritedSubEntities = true)
 		: Name(InName)
+		, bNameInheritedSubEntities(bInNameInheritedSubEntities)
 	{
 	}
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Entity Record Fragment")
 	FString Name;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, AdvancedDisplay, Category = "Entity Record Fragment")
+	bool bNameInheritedSubEntities = true;
 	
 	virtual void PreApplyRecordToEntity(
 			const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsEntityHandle& InEntityHandle) const override;
@@ -997,6 +1059,12 @@ public:
 	FORCEINLINE FBuilder& Named(const FString& InName)
 	{
 		this->GetSelf().Name = InName;
+		return *this;
+	}
+	
+	FORCEINLINE FBuilder& InheritSubEntityNames(const bool bInInheritSubEntities)
+	{
+		this->GetSelf().bNameInheritedSubEntities = bInInheritSubEntities;
 		return *this;
 	}
 		

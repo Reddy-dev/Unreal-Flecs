@@ -785,12 +785,15 @@ void UFlecsWorld::InitializeSystems()
 		});
 	
 	CreateObserver<const FFlecsSubEntityRecordNameComponent>("SubEntityRecordNameObserver") // 0 (FFlecsSubEntityRecordNameComponent)
-		.event(flecs::OnSet)
-		.with(flecs::ChildOf, flecs::Wildcard) // 1
-		.with_name_component().not_() // 2
+		.event(flecs::OnAdd)
+		.with<flecs::Parent>().filter() // 1
+		.without<flecs::Identifier>(flecs::Name) // 2
 		.yield_existing()
 		.each([](flecs::iter& InIter, size_t InIndex, const FFlecsSubEntityRecordNameComponent& InNameComponent)
 		{
+			UE_LOGFMT(LogFlecsWorld, Log,
+				"Setting name for sub-entity to {SubEntityName}",
+				*InNameComponent.SubEntityName);
 			const FFlecsEntityHandle EntityHandle = InIter.entity(InIndex);
 			EntityHandle.SetName(InNameComponent.SubEntityName);
 		});
