@@ -315,10 +315,36 @@ int flecs_expr_binary_visit_eval(
         goto error;
     }
 
-    if (flecs_value_binary(
-        ctx->script, &left->value, &right->value, &out->value, node->operator)) 
-    {
-        goto error;
+    int32_t i, vector_count = node->vector_count;
+    if (!vector_count) {
+        if (flecs_value_binary(
+            ctx->script, &left->value, &right->value, &out->value, node->operator)) 
+        {
+            goto error;
+        }
+    } else {
+        ecs_entity_t vector_type = node->vector_type;
+        ecs_value_t left_value = { .ptr = left->value.ptr, .type = vector_type };
+        ecs_value_t right_value = { .ptr = right->value.ptr, .type = vector_type };
+        ecs_value_t out_value = { .ptr = out->value.ptr, .type = vector_type };
+        ecs_size_t size = flecs_expr_storage_size(vector_type);
+        ecs_size_t right_offset = 0;
+
+        if (left->value.type == right->value.type) {
+            right_offset = size;
+        }
+
+        for (i = 0; i < vector_count; i ++) {
+            if (flecs_value_binary(ctx->script, &left_value, &right_value, 
+                &out_value, node->operator)) 
+            {
+                goto error;
+            }
+
+            left_value.ptr = ECS_OFFSET(left_value.ptr, size);
+            right_value.ptr = ECS_OFFSET(right_value.ptr, right_offset);
+            out_value.ptr = ECS_OFFSET(out_value.ptr, size);
+        }
     }
 
     flecs_expr_stack_pop(ctx->stack);
@@ -613,10 +639,12 @@ int flecs_expr_function_visit_eval(
 {
     flecs_expr_stack_push(ctx->stack);
 
+    const ecs_function_calldata_t *calldata = &node->calldata;
+
     ecs_function_ctx_t call_ctx = {
         .world = ctx->world,
-        .function = node->calldata.function,
-        .ctx = node->calldata.ctx
+        .function = calldata->function,
+        .ctx = calldata->ctx
     };
 
     ecs_assert(out->value.ptr != NULL, ECS_INTERNAL_ERROR, NULL);
@@ -630,7 +658,14 @@ int flecs_expr_function_visit_eval(
         }
     }
 
-    node->calldata.callback(&call_ctx, argc, argv, &out->value);
+    int32_t elem_count = calldata->vector_elem_count;
+    if (elem_count) {
+        node->calldata.is.vector_callback(
+            &call_ctx, argc, argv, &out->value, elem_count);
+    } else {
+        node->calldata.is.callback(&call_ctx, argc, argv, &out->value);
+    }
+
     out->owned = true;
 
     flecs_expr_stack_pop(ctx->stack);
@@ -654,10 +689,12 @@ int flecs_expr_method_visit_eval(
             goto error;
         }
 
+        const ecs_function_calldata_t *calldata = &node->calldata;
+
         ecs_function_ctx_t call_ctx = {
             .world = ctx->world,
-            .function = node->calldata.function,
-            .ctx = node->calldata.ctx
+            .function = calldata->function,
+            .ctx = calldata->ctx
         };
 
         ecs_assert(expr->value.ptr != NULL, ECS_INTERNAL_ERROR, NULL);
@@ -675,7 +712,14 @@ int flecs_expr_method_visit_eval(
             }
         }
 
-        node->calldata.callback(&call_ctx, argc, argv, &out->value);
+        int32_t elem_count = calldata->vector_elem_count;
+        if (elem_count) {
+            node->calldata.is.vector_callback(
+                &call_ctx, argc, argv, &out->value, elem_count);
+        } else {
+            node->calldata.is.callback(&call_ctx, argc, argv, &out->value);
+        }
+
         out->owned = true;
     }
 

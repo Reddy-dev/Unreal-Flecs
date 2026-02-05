@@ -145,47 +145,6 @@ double flecs_lerp(
     return a + t * (b - a);
 }
 
-static
-double flecs_min(
-    double a, 
-    double b) 
-{
-    return (a < b) ? a : b;
-}
-
-static
-double flecs_max(
-    double a, 
-    double b) 
-{
-    return (a > b) ? a : b;
-}
-
-static
-double flecs_clamp(
-    double v,
-    double min,
-    double max)
-{
-    if (v < min) {
-        return min;
-    } else if (v > max) {
-        return max;
-    } else {
-        return v;
-    }
-}
-
-static
-double flecs_smoothstep(
-    double a,
-    double b,
-    double t)
-{
-    double x = flecs_clamp((t - a) / (b - a), 0, 1);
-    return x * x * (3 - 2 * x);
-}
-
 void flecs_script_min(
     const ecs_function_ctx_t *ctx,
     int32_t argc,
@@ -196,7 +155,7 @@ void flecs_script_min(
     (void)argc;
     double a = *(double*)argv[0].ptr;
     double b = *(double*)argv[1].ptr;
-    *(double*)result->ptr = flecs_min(a, b);
+    *(double*)result->ptr = (a < b) ? a : b;
 }
 
 void flecs_script_max(
@@ -209,50 +168,201 @@ void flecs_script_max(
     (void)argc;
     double a = *(double*)argv[0].ptr;
     double b = *(double*)argv[1].ptr;
-    *(double*)result->ptr = flecs_max(a, b);
+    *(double*)result->ptr = (a > b) ? a : b;
 }
 
-void flecs_script_lerp(
-    const ecs_function_ctx_t *ctx,
-    int32_t argc,
-    const ecs_value_t *argv,
-    ecs_value_t *result)
-{
-    (void)ctx;
-    (void)argc;
-    double a = *(double*)argv[0].ptr;
-    double b = *(double*)argv[1].ptr;
-    double t = *(double*)argv[2].ptr;
-    *(double*)result->ptr = flecs_lerp(a, b, t);
-}
+#define FLECS_SCRIPT_LERP(type)\
+    static void flecs_script_lerp_##type(\
+        const ecs_function_ctx_t *ctx,\
+        int32_t argc,\
+        const ecs_value_t *argv,\
+        ecs_value_t *result,\
+        int32_t elem_count)\
+    {\
+        (void)ctx; (void)argc;\
+        type *a = argv[0].ptr;\
+        type *b = argv[1].ptr;\
+        type t = (type)*(double*)argv[2].ptr;\
+        type *r = result->ptr;\
+        for (int i = 0; i < elem_count; i ++) {\
+            r[i] = a[i] + t * (b[i] - a[i]);\
+        }\
+    }
 
-void flecs_script_clamp(
-    const ecs_function_ctx_t *ctx,
-    int32_t argc,
-    const ecs_value_t *argv,
-    ecs_value_t *result)
-{
-    (void)ctx;
-    (void)argc;
-    double v = *(double*)argv[0].ptr;
-    double min = *(double*)argv[1].ptr;
-    double max = *(double*)argv[2].ptr;
-    *(double*)result->ptr = flecs_clamp(v, min, max);
-}
+FLECS_SCRIPT_LERP(float)
+FLECS_SCRIPT_LERP(double)
 
-void flecs_script_smoothstep(
-    const ecs_function_ctx_t *ctx,
-    int32_t argc,
-    const ecs_value_t *argv,
-    ecs_value_t *result)
-{
-    (void)ctx;
-    (void)argc;
-    double a = *(double*)argv[0].ptr;
-    double b = *(double*)argv[1].ptr;
-    double t = *(double*)argv[2].ptr;
-    *(double*)result->ptr = flecs_smoothstep(a, b, t);
-}
+#define FLECS_SCRIPT_SMOOTHSTEP(type)\
+    void flecs_script_smoothstep_##type(\
+        const ecs_function_ctx_t *ctx,\
+        int32_t argc,\
+        const ecs_value_t *argv,\
+        ecs_value_t *result,\
+        int32_t elem_count)\
+    {\
+        (void)ctx; (void)argc;\
+        type *a = argv[0].ptr;\
+        type *b = argv[1].ptr;\
+        type t = (type)*(double*)argv[2].ptr;\
+        type *r = result->ptr;\
+        for (int i = 0; i < elem_count; i ++) {\
+            type v = (t - a[i]) / (b[i] - a[i]);\
+            type x = (v < (type)0) ? (type)0\
+                   : (v > (type)1) ? (type)1\
+                   : v;\
+            r[i] = x * x * (3 - 2 * x);\
+        }\
+    }
+
+FLECS_SCRIPT_SMOOTHSTEP(float)
+FLECS_SCRIPT_SMOOTHSTEP(double)
+
+#define FLECS_SCRIPT_CLAMP(type)\
+    static void flecs_script_clamp_##type(\
+        const ecs_function_ctx_t *ctx,\
+        int32_t argc,\
+        const ecs_value_t *argv,\
+        ecs_value_t *result,\
+        int32_t elem_count)\
+    {\
+        (void)ctx; (void)argc;\
+        type *v = argv[0].ptr;\
+        type min = (type)*(double*)argv[1].ptr;\
+        type max = (type)*(double*)argv[2].ptr;\
+        type *r = result->ptr;\
+        for (int i = 0; i < elem_count; i ++) {\
+            r[i] = (v[i] < min) ? min\
+                 : (v[i] > max) ? max\
+                 : v[i];\
+        }\
+    }
+
+FLECS_SCRIPT_CLAMP(int8_t)
+FLECS_SCRIPT_CLAMP(int16_t)
+FLECS_SCRIPT_CLAMP(int32_t)
+FLECS_SCRIPT_CLAMP(int64_t)
+FLECS_SCRIPT_CLAMP(uint8_t)
+FLECS_SCRIPT_CLAMP(uint16_t)
+FLECS_SCRIPT_CLAMP(uint32_t)
+FLECS_SCRIPT_CLAMP(uint64_t)
+FLECS_SCRIPT_CLAMP(float)
+FLECS_SCRIPT_CLAMP(double)
+
+#define FLECS_SCRIPT_DOT(type)\
+    static void flecs_script_dot_##type(\
+        const ecs_function_ctx_t *ctx,\
+        int32_t argc,\
+        const ecs_value_t *argv,\
+        ecs_value_t *result,\
+        int32_t elem_count)\
+    {\
+        (void)ctx; (void)argc;\
+        type *a = argv[0].ptr;\
+        type *b = argv[1].ptr;\
+        double *r = result->ptr;\
+        for (int i = 0; i < elem_count; i ++) {\
+            double x = (double)a[i], y = (double)b[i];\
+            *r += x * y;\
+        }\
+    }
+
+FLECS_SCRIPT_DOT(int8_t)
+FLECS_SCRIPT_DOT(int16_t)
+FLECS_SCRIPT_DOT(int32_t)
+FLECS_SCRIPT_DOT(int64_t)
+FLECS_SCRIPT_DOT(uint8_t)
+FLECS_SCRIPT_DOT(uint16_t)
+FLECS_SCRIPT_DOT(uint32_t)
+FLECS_SCRIPT_DOT(uint64_t)
+FLECS_SCRIPT_DOT(float)
+FLECS_SCRIPT_DOT(double)
+
+#define FLECS_SCRIPT_LENGTH(type)\
+    static void flecs_script_length_##type(\
+        const ecs_function_ctx_t *ctx,\
+        int32_t argc,\
+        const ecs_value_t *argv,\
+        ecs_value_t *result,\
+        int32_t elem_count)\
+    {\
+        (void)ctx; (void)argc;\
+        type *v = argv[0].ptr;\
+        double *r = result->ptr;\
+        double sum = 0;\
+        for (int i = 0; i < elem_count; i ++) {\
+            double x = (double)v[i];\
+            sum += x * x;\
+        }\
+        *r = sqrt(sum);\
+    }
+
+FLECS_SCRIPT_LENGTH(int8_t)
+FLECS_SCRIPT_LENGTH(int16_t)
+FLECS_SCRIPT_LENGTH(int32_t)
+FLECS_SCRIPT_LENGTH(int64_t)
+FLECS_SCRIPT_LENGTH(uint8_t)
+FLECS_SCRIPT_LENGTH(uint16_t)
+FLECS_SCRIPT_LENGTH(uint32_t)
+FLECS_SCRIPT_LENGTH(uint64_t)
+FLECS_SCRIPT_LENGTH(float)
+FLECS_SCRIPT_LENGTH(double)
+
+#define FLECS_SCRIPT_LENGTH_SQ(type)\
+    static void flecs_script_length_sq_##type(\
+        const ecs_function_ctx_t *ctx,\
+        int32_t argc,\
+        const ecs_value_t *argv,\
+        ecs_value_t *result,\
+        int32_t elem_count)\
+    {\
+        (void)ctx; (void)argc;\
+        type *v = argv[0].ptr;\
+        double *r = result->ptr;\
+        for (int i = 0; i < elem_count; i ++) {\
+            double x = (double)v[i];\
+            *r += x * x;\
+        }\
+    }
+
+FLECS_SCRIPT_LENGTH_SQ(int8_t)
+FLECS_SCRIPT_LENGTH_SQ(int16_t)
+FLECS_SCRIPT_LENGTH_SQ(int32_t)
+FLECS_SCRIPT_LENGTH_SQ(int64_t)
+FLECS_SCRIPT_LENGTH_SQ(uint8_t)
+FLECS_SCRIPT_LENGTH_SQ(uint16_t)
+FLECS_SCRIPT_LENGTH_SQ(uint32_t)
+FLECS_SCRIPT_LENGTH_SQ(uint64_t)
+FLECS_SCRIPT_LENGTH_SQ(float)
+FLECS_SCRIPT_LENGTH_SQ(double)
+
+#define FLECS_SCRIPT_NORMALIZE(type)\
+    static void flecs_script_normalize_##type(\
+        const ecs_function_ctx_t *ctx,\
+        int32_t argc,\
+        const ecs_value_t *argv,\
+        ecs_value_t *result,\
+        int32_t elem_count)\
+    {\
+        (void)ctx; (void)argc;\
+        const type *v = argv[0].ptr;\
+        type *r = result->ptr;\
+        double sum_sq = 0.0;\
+        for (int i = 0; i < elem_count; i++) {\
+            double x = (double)v[i];\
+            sum_sq += x * x;\
+        }\
+        if (ECS_EQZERO(sum_sq)) {\
+            for (int i = 0; i < elem_count; i++) r[i] = (type)0;\
+            return;\
+        }\
+        double inv_len = 1.0 / sqrt(sum_sq);\
+        for (int i = 0; i < elem_count; i++) {\
+            r[i] = (type)((double)v[i] * inv_len);\
+        }\
+    }
+
+FLECS_SCRIPT_NORMALIZE(float)
+FLECS_SCRIPT_NORMALIZE(double)
 
 #define FLECS_MATH_FUNC_F64(name, ...)\
     static\
@@ -262,8 +372,7 @@ void flecs_script_smoothstep(
         const ecs_value_t *argv,\
         ecs_value_t *result)\
     {\
-        (void)ctx;\
-        (void)argc;\
+        (void)ctx; (void)argc;\
         ecs_assert(argc == 1, ECS_INTERNAL_ERROR, NULL);\
         double x = *(double*)argv[0].ptr;\
         *(double*)result->ptr = __VA_ARGS__;\
@@ -277,8 +386,7 @@ void flecs_script_smoothstep(
         const ecs_value_t *argv,\
         ecs_value_t *result)\
     {\
-        (void)ctx;\
-        (void)argc;\
+        (void)ctx; (void)argc;\
         ecs_assert(argc == 2, ECS_INTERNAL_ERROR, NULL);\
         double x = *(double*)argv[0].ptr;\
         double y = *(double*)argv[1].ptr;\
@@ -293,8 +401,7 @@ void flecs_script_smoothstep(
         const ecs_value_t *argv,\
         ecs_value_t *result)\
     {\
-        (void)ctx;\
-        (void)argc;\
+        (void)ctx; (void)argc;\
         ecs_assert(argc == 2, ECS_INTERNAL_ERROR, NULL);\
         double x = *(double*)argv[0].ptr;\
         ecs_i32_t y = *(ecs_i32_t*)argv[1].ptr;\
@@ -379,7 +486,6 @@ FLECS_MATH_FUNC_F64(floor, floor(x))
 FLECS_MATH_FUNC_F64(round, round(x))
 
 FLECS_MATH_FUNC_F64(abs, fabs(x))
-
 
 void FlecsScriptMathImport(
     ecs_world_t *world)
@@ -486,7 +592,7 @@ void FlecsScriptMathImport(
         .return_type = ecs_id(ecs_f64_t),
         .params = {
             { .name = "a", .type = ecs_id(ecs_f64_t) },
-            { .name = "b", .type = ecs_id(ecs_f64_t) }
+            { .name = "b", .type = ecs_id(ecs_f64_t) },
         },
         .callback = flecs_script_min
     });
@@ -497,45 +603,139 @@ void FlecsScriptMathImport(
         .return_type = ecs_id(ecs_f64_t),
         .params = {
             { .name = "a", .type = ecs_id(ecs_f64_t) },
-            { .name = "b", .type = ecs_id(ecs_f64_t) }
+            { .name = "b", .type = ecs_id(ecs_f64_t) },
         },
         .callback = flecs_script_max
     });
-    
+
     ecs_function(world, {
-        .name = "lerp",
+        .name = "dot",
         .parent = ecs_id(FlecsScriptMath),
         .return_type = ecs_id(ecs_f64_t),
         .params = {
-            { .name = "a", .type = ecs_id(ecs_f64_t) },
-            { .name = "b", .type = ecs_id(ecs_f64_t) },
-            { .name = "t", .type = ecs_id(ecs_f64_t) }
+            { .name = "a", .type = EcsScriptVectorType },
+            { .name = "b", .type = EcsScriptVectorType },
         },
-        .callback = flecs_script_lerp
+        .vector_callbacks = {
+            [EcsI8]  = flecs_script_dot_int8_t,
+            [EcsI16] = flecs_script_dot_int16_t,
+            [EcsI32] = flecs_script_dot_int32_t,
+            [EcsI64] = flecs_script_dot_int64_t,
+            [EcsU8]  = flecs_script_dot_uint8_t,
+            [EcsU16] = flecs_script_dot_uint16_t,
+            [EcsU32] = flecs_script_dot_uint32_t,
+            [EcsU64] = flecs_script_dot_uint64_t,
+            [EcsF32] = flecs_script_dot_float,
+            [EcsF64] = flecs_script_dot_double
+        }
     });
 
     ecs_function(world, {
-        .name = "clamp",
+        .name = "length",
         .parent = ecs_id(FlecsScriptMath),
         .return_type = ecs_id(ecs_f64_t),
         .params = {
-            { .name = "v", .type = ecs_id(ecs_f64_t) },
-            { .name = "min", .type = ecs_id(ecs_f64_t) },
-            { .name = "max", .type = ecs_id(ecs_f64_t) }
+            { .name = "v", .type = EcsScriptVectorType }
         },
-        .callback = flecs_script_clamp
+        .vector_callbacks = {
+            [EcsI8]  = flecs_script_length_int8_t,
+            [EcsI16] = flecs_script_length_int16_t,
+            [EcsI32] = flecs_script_length_int32_t,
+            [EcsI64] = flecs_script_length_int64_t,
+            [EcsU8]  = flecs_script_length_uint8_t,
+            [EcsU16] = flecs_script_length_uint16_t,
+            [EcsU32] = flecs_script_length_uint32_t,
+            [EcsU64] = flecs_script_length_uint64_t,
+            [EcsF32] = flecs_script_length_float,
+            [EcsF64] = flecs_script_length_double
+        }
+    });
+
+    ecs_function(world, {
+        .name = "length_sq",
+        .parent = ecs_id(FlecsScriptMath),
+        .return_type = ecs_id(ecs_f64_t),
+        .params = {
+            { .name = "v", .type = EcsScriptVectorType }
+        },
+        .vector_callbacks = {
+            [EcsI8]  = flecs_script_length_sq_int8_t,
+            [EcsI16] = flecs_script_length_sq_int16_t,
+            [EcsI32] = flecs_script_length_sq_int32_t,
+            [EcsI64] = flecs_script_length_sq_int64_t,
+            [EcsU8]  = flecs_script_length_sq_uint8_t,
+            [EcsU16] = flecs_script_length_sq_uint16_t,
+            [EcsU32] = flecs_script_length_sq_uint32_t,
+            [EcsU64] = flecs_script_length_sq_uint64_t,
+            [EcsF32] = flecs_script_length_sq_float,
+            [EcsF64] = flecs_script_length_sq_double
+        }
+    });
+
+    ecs_function(world, {
+        .name = "normalize",
+        .parent = ecs_id(FlecsScriptMath),
+        .return_type = EcsScriptVectorType,
+        .params = {
+            { .name = "v", .type = EcsScriptVectorType }
+        },
+        .vector_callbacks = {
+            [EcsF32] = flecs_script_normalize_float,
+            [EcsF64] = flecs_script_normalize_double
+        }
+    });
+
+    ecs_function(world, {
+        .name = "lerp",
+        .parent = ecs_id(FlecsScriptMath),
+        .return_type = EcsScriptVectorType,
+        .params = {
+            { .name = "a", .type = EcsScriptVectorType },
+            { .name = "b", .type = EcsScriptVectorType },
+            { .name = "t", .type = ecs_id(ecs_f64_t) }
+        },
+        .vector_callbacks = {
+            [EcsF32] = flecs_script_lerp_float,
+            [EcsF64] = flecs_script_lerp_double
+        }
     });
 
     ecs_function(world, {
         .name = "smoothstep",
         .parent = ecs_id(FlecsScriptMath),
-        .return_type = ecs_id(ecs_f64_t),
+        .return_type = EcsScriptVectorType,
         .params = {
-            { .name = "a", .type = ecs_id(ecs_f64_t) },
-            { .name = "b", .type = ecs_id(ecs_f64_t) },
+            { .name = "a", .type = EcsScriptVectorType },
+            { .name = "b", .type = EcsScriptVectorType },
             { .name = "t", .type = ecs_id(ecs_f64_t) }
         },
-        .callback = flecs_script_smoothstep
+        .vector_callbacks = {
+            [EcsF32] = flecs_script_smoothstep_float,
+            [EcsF64] = flecs_script_smoothstep_double
+        }
+    });
+
+    ecs_function(world, {
+        .name = "clamp",
+        .parent = ecs_id(FlecsScriptMath),
+        .return_type = EcsScriptVectorType,
+        .params = {
+            { .name = "v", .type = EcsScriptVectorType },
+            { .name = "min", .type = ecs_id(ecs_f64_t) },
+            { .name = "max", .type = ecs_id(ecs_f64_t) }
+        },
+        .vector_callbacks = {
+            [EcsI8] = flecs_script_clamp_int8_t,
+            [EcsI16] = flecs_script_clamp_int16_t,
+            [EcsI32] = flecs_script_clamp_int32_t,
+            [EcsI64] = flecs_script_clamp_int64_t,
+            [EcsU8] = flecs_script_clamp_uint8_t,
+            [EcsU16] = flecs_script_clamp_uint16_t,
+            [EcsU32] = flecs_script_clamp_uint32_t,
+            [EcsU64] = flecs_script_clamp_uint64_t,
+            [EcsF32] = flecs_script_clamp_float,
+            [EcsF64] = flecs_script_clamp_double
+        }
     });
 
     FlecsScriptMathPerlinImport(world);
