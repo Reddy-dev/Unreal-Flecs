@@ -274,10 +274,11 @@ public:
 		FFlecsQueryTermExpression Expr;
 		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
 		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InId;
-		this->Not();
 		
 		this->AddTerm(Expr);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
+		
+		this->Not();
 		
 		return Get();
 	}
@@ -287,10 +288,11 @@ public:
 		FFlecsQueryTermExpression Expr;
 		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
 		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
-		this->Not();
 		
 		this->AddTerm(Expr);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
+		
+		this->Not();
 		
 		return Get();
 	}
@@ -300,10 +302,11 @@ public:
 		FFlecsQueryTermExpression Expr;
 		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_String>();
 		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = InString;
-		this->Not();
 		
 		this->AddTerm(Expr);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
+		
+		this->Not();
 		
 		return Get();
 	}
@@ -313,10 +316,11 @@ public:
 		FFlecsQueryTermExpression Expr;
 		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnum>();
 		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum;
-		this->Not();
 		
 		this->AddTerm(Expr);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
+		
+		this->Not();
 		
 		return Get();
 	}
@@ -326,10 +330,11 @@ public:
 		FFlecsQueryTermExpression Expr;
 		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnumConstant>();
 		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnumConstant>().EnumValue = InEnumSelector;
-		this->Not();
 		
 		this->AddTerm(Expr);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
+		
+		this->Not();
 		
 		return Get();
 	}
@@ -543,7 +548,6 @@ public:
 	}
 	
 #pragma endregion TermHelperFunctions
-	
 	
 	
 	FORCEINLINE FInheritedType& ModifyLastTerm(const TFunctionRef<void(FFlecsQueryTermExpression&)>& InModifier)
