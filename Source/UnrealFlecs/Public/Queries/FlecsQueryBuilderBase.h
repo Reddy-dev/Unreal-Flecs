@@ -7,7 +7,6 @@
 #include "FlecsQueryFlags.h"
 #include "Enums/FlecsQueryCache.h"
 #include "Enums/FlecsQueryInOut.h"
-#include "Expressions/FlecsExpressionInOut.h"
 #include "Expressions/FlecsQueryTermExpression.h"
 #include "Generator/FlecsQueryGeneratorInputType.h"
 #include "FlecsQueryDefinition.h"
@@ -28,17 +27,17 @@ struct TFlecsQueryBuilderBase
 {
 	using FInheritedType = TInherited;
 	
-	FORCEINLINE FInheritedType& Get()
+	FORCEINLINE_DEBUGGABLE FInheritedType& Get()
 	{
 		return static_cast<TInherited&>(*this);
 	}
 	
-	FORCEINLINE const FInheritedType& Get() const
+	FORCEINLINE_DEBUGGABLE const FInheritedType& Get() const
 	{
 		return static_cast<const TInherited&>(*this);
 	}
 	
-	FORCEINLINE FFlecsQueryDefinition& GetQueryDefinition() const
+	FORCEINLINE_DEBUGGABLE FFlecsQueryDefinition& GetQueryDefinition() const
 	{
 		return this->Get().GetQueryDefinition_Impl();
 	}
@@ -46,14 +45,14 @@ struct TFlecsQueryBuilderBase
 public:
 	mutable int32 LastTermIndex = -1;
 	
-	FORCEINLINE FInheritedType& AddTerm(const FFlecsQueryTermExpression& InTerm)
+	FORCEINLINE_DEBUGGABLE FInheritedType& AddTerm(const FFlecsQueryTermExpression& InTerm)
 	{
 		this->GetQueryDefinition().AddQueryTerm(InTerm);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
 		return Get();
 	}
 	
-	FORCEINLINE FInheritedType& TermAt(const int32 InTermIndex)
+	FORCEINLINE_DEBUGGABLE FInheritedType& TermAt(const int32 InTermIndex)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		LastTermIndex = InTermIndex;
@@ -62,25 +61,25 @@ public:
 	
 #pragma region QueryDefinitionProperties
 	
-	FORCEINLINE FInheritedType& Cache(const EFlecsQueryCacheType InCacheType = EFlecsQueryCacheType::Default)
+	FORCEINLINE_DEBUGGABLE FInheritedType& Cache(const EFlecsQueryCacheType InCacheType = EFlecsQueryCacheType::Default)
 	{
 		this->GetQueryDefinition().CacheType = InCacheType;
 		return Get();
 	}
 	
-	FORCEINLINE FInheritedType& DetectChanges(const bool bInDetectChanges = true)
+	FORCEINLINE_DEBUGGABLE FInheritedType& DetectChanges(const bool bInDetectChanges = true)
 	{
 		this->GetQueryDefinition().bDetectChanges = bInDetectChanges;
 		return Get();
 	}
 	
-	FORCEINLINE FInheritedType& Flags(const uint8 InFlags)
+	FORCEINLINE_DEBUGGABLE FInheritedType& Flags(const uint8 InFlags)
 	{
 		this->GetQueryDefinition().Flags = InFlags;
 		return Get();
 	}
 	
-	FORCEINLINE FInheritedType& Flags(const EFlecsQueryFlags InFlags)
+	FORCEINLINE_DEBUGGABLE FInheritedType& Flags(const EFlecsQueryFlags InFlags)
 	{
 		this->GetQueryDefinition().Flags = static_cast<uint8>(InFlags);
 		return Get();
@@ -90,7 +89,7 @@ public:
 	
 #pragma region TermOperatorExpressions
 	
-	FORCEINLINE FInheritedType& Oper(const EFlecsQueryOperator InOperator)
+	FORCEINLINE_DEBUGGABLE FInheritedType& Oper(const EFlecsQueryOperator InOperator)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		
@@ -98,32 +97,32 @@ public:
 		return Get();
 	}
 	
-	FORCEINLINE FInheritedType& And()
+	FORCEINLINE_DEBUGGABLE FInheritedType& And()
 	{
 		return Oper(EFlecsQueryOperator::And);
 	}
 	
-	FORCEINLINE FInheritedType& Or()
+	FORCEINLINE_DEBUGGABLE FInheritedType& Or()
 	{
 		return Oper(EFlecsQueryOperator::Or);
 	}
 	
-	FORCEINLINE FInheritedType& Not()
+	FORCEINLINE_DEBUGGABLE FInheritedType& Not()
 	{
 		return Oper(EFlecsQueryOperator::Not);
 	}
 	
-	FORCEINLINE FInheritedType& Optional()
+	FORCEINLINE_DEBUGGABLE FInheritedType& Optional()
 	{
 		return Oper(EFlecsQueryOperator::Optional);
 	}
 	
-	FORCEINLINE FInheritedType& AndFrom()
+	FORCEINLINE_DEBUGGABLE FInheritedType& AndFrom()
 	{
 		return Oper(EFlecsQueryOperator::AndFrom);
 	}
 	
-	FORCEINLINE FInheritedType& OrFrom()
+	FORCEINLINE_DEBUGGABLE FInheritedType& OrFrom()
 	{
 		return Oper(EFlecsQueryOperator::OrFrom);
 	}
@@ -132,54 +131,51 @@ public:
 	
 #pragma region ReadWriteInOutExpressions
 	
-	FORCEINLINE FInheritedType& InOutExpression(const EFlecsQueryInOut InInOut, const bool bStage = false)
+	FORCEINLINE_DEBUGGABLE FInheritedType& InOutExpression(const EFlecsQueryInOut InInOut, const bool bStage = false)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		
-		FFlecsExpressionInOut InOut;
-		InOut.InOut = InInOut;
-		InOut.bStage = bStage;
-		
-		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(TInstancedStruct<FFlecsQueryExpression>::Make(InOut));
+		this->GetQueryDefinition().Terms[LastTermIndex].InOut = InInOut;
+		this->GetQueryDefinition().Terms[LastTermIndex].bStage = bStage;
 		return Get();
 	}
 	
-	FORCEINLINE FInheritedType& In()
+	FORCEINLINE_DEBUGGABLE FInheritedType& In()
 	{
 		return InOutExpression(EFlecsQueryInOut::Read, false);
 	}
 	
-	FORCEINLINE FInheritedType& Out()
+	FORCEINLINE_DEBUGGABLE FInheritedType& Out()
 	{
 		return InOutExpression(EFlecsQueryInOut::Write, false);
 	}
 	
-	FORCEINLINE FInheritedType& InOut()
+	FORCEINLINE_DEBUGGABLE FInheritedType& InOut()
 	{
 		return InOutExpression(EFlecsQueryInOut::ReadWrite, false);
 	}
 	
-	FORCEINLINE FInheritedType& Read()
+	FORCEINLINE_DEBUGGABLE FInheritedType& Read()
 	{
 		return InOutExpression(EFlecsQueryInOut::Read, true);
 	}
 	
-	FORCEINLINE FInheritedType& Write()
+	FORCEINLINE_DEBUGGABLE FInheritedType& Write()
 	{
 		return InOutExpression(EFlecsQueryInOut::Write, true);
 	}
 	
-	FORCEINLINE FInheritedType& ReadWrite()
+	FORCEINLINE_DEBUGGABLE FInheritedType& ReadWrite()
 	{
 		return InOutExpression(EFlecsQueryInOut::ReadWrite, true);
 	}
 	
-	FORCEINLINE FInheritedType& Filter()
+	FORCEINLINE_DEBUGGABLE FInheritedType& Filter()
 	{
 		return InOutExpression(EFlecsQueryInOut::Filter, false);
 	}
 	
-	FORCEINLINE FInheritedType& InOutNone()
+	FORCEINLINE_DEBUGGABLE FInheritedType& InOutNone()
 	{
 		return InOutExpression(EFlecsQueryInOut::None, false);
 	}
@@ -188,7 +184,7 @@ public:
 	
 #pragma region TermHelperFunctions
 	
-	FORCEINLINE FInheritedType& With(const FFlecsId InId)
+	FORCEINLINE_DEBUGGABLE FInheritedType& With(const FFlecsId InId)
 	{
 		FFlecsQueryTermExpression Expr;
 		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
@@ -200,7 +196,7 @@ public:
 		return Get();
 	}
 	
-	FORCEINLINE FInheritedType& With(const TSolidNotNull<const UScriptStruct*> InStruct)
+	FORCEINLINE_DEBUGGABLE FInheritedType& With(const TSolidNotNull<const UScriptStruct*> InStruct)
 	{
 		FFlecsQueryTermExpression Expr;
 		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
@@ -212,7 +208,7 @@ public:
 		return Get();
 	}
 	
-	FORCEINLINE FInheritedType& With(const FString& InString)
+	FORCEINLINE_DEBUGGABLE FInheritedType& With(const FString& InString)
 	{
 		FFlecsQueryTermExpression Expr;
 		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_String>();
@@ -224,7 +220,7 @@ public:
 		return Get();
 	}
 	
-	FORCEINLINE FInheritedType& With(const TSolidNotNull<const UEnum*> InEnum)
+	FORCEINLINE_DEBUGGABLE FInheritedType& With(const TSolidNotNull<const UEnum*> InEnum)
 	{
 		FFlecsQueryTermExpression Expr;
 		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnum>();
@@ -236,7 +232,7 @@ public:
 		return Get();
 	}
 	
-	FORCEINLINE FInheritedType& With(const FSolidEnumSelector& InEnumSelector)
+	FORCEINLINE_DEBUGGABLE FInheritedType& With(const FSolidEnumSelector& InEnumSelector)
 	{
 		FFlecsQueryTermExpression Expr;
 		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnumConstant>();
@@ -249,7 +245,7 @@ public:
 	}
 	
 	template <typename T>
-	FORCEINLINE FInheritedType& With()
+	FORCEINLINE_DEBUGGABLE FInheritedType& With()
 	{
 		if constexpr (Solid::IsScriptStruct<T>())
 		{
@@ -269,7 +265,7 @@ public:
 		return Get();
 	}
 	
-	FORCEINLINE FInheritedType& Without(const FFlecsId InId)
+	FORCEINLINE_DEBUGGABLE FInheritedType& Without(const FFlecsId InId)
 	{
 		FFlecsQueryTermExpression Expr;
 		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
@@ -283,7 +279,7 @@ public:
 		return Get();
 	}
 	
-	FORCEINLINE FInheritedType& Without(const TSolidNotNull<const UScriptStruct*> InStruct)
+	FORCEINLINE_DEBUGGABLE FInheritedType& Without(const TSolidNotNull<const UScriptStruct*> InStruct)
 	{
 		FFlecsQueryTermExpression Expr;
 		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
@@ -297,7 +293,7 @@ public:
 		return Get();
 	}
 	
-	FORCEINLINE FInheritedType& Without(const FString& InString)
+	FORCEINLINE_DEBUGGABLE FInheritedType& Without(const FString& InString)
 	{
 		FFlecsQueryTermExpression Expr;
 		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_String>();
@@ -311,7 +307,7 @@ public:
 		return Get();
 	}
 	
-	FORCEINLINE FInheritedType& Without(const TSolidNotNull<const UEnum*> InEnum)
+	FORCEINLINE_DEBUGGABLE FInheritedType& Without(const TSolidNotNull<const UEnum*> InEnum)
 	{
 		FFlecsQueryTermExpression Expr;
 		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnum>();
@@ -325,7 +321,7 @@ public:
 		return Get();
 	}
 	
-	FORCEINLINE FInheritedType& Without(const FSolidEnumSelector& InEnumSelector)
+	FORCEINLINE_DEBUGGABLE FInheritedType& Without(const FSolidEnumSelector& InEnumSelector)
 	{
 		FFlecsQueryTermExpression Expr;
 		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnumConstant>();
@@ -340,7 +336,7 @@ public:
 	}
 	
 	template <typename T>
-	FORCEINLINE FInheritedType& Without()
+	FORCEINLINE_DEBUGGABLE FInheritedType& Without()
 	{
 		if constexpr (Solid::IsScriptStruct<T>())
 		{
@@ -362,7 +358,7 @@ public:
 		return Get();
 	}
 	
-	FORCEINLINE FInheritedType& Second(const FFlecsId InId)
+	FORCEINLINE_DEBUGGABLE FInheritedType& Second(const FFlecsId InId)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		
@@ -380,7 +376,7 @@ public:
 		return Get();
 	}
 	
-	FORCEINLINE FInheritedType& Second(const TSolidNotNull<const UScriptStruct*> InStruct)
+	FORCEINLINE_DEBUGGABLE FInheritedType& Second(const TSolidNotNull<const UScriptStruct*> InStruct)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		
@@ -398,7 +394,7 @@ public:
 		return Get();
 	}
 	
-	FORCEINLINE FInheritedType& Second(const FString& InString)
+	FORCEINLINE_DEBUGGABLE FInheritedType& Second(const FString& InString)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		
@@ -416,7 +412,7 @@ public:
 		return Get();
 	}
 	
-	FORCEINLINE FInheritedType& Second(const TSolidNotNull<const UEnum*> InEnum)
+	FORCEINLINE_DEBUGGABLE FInheritedType& Second(const TSolidNotNull<const UEnum*> InEnum)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		
@@ -434,7 +430,7 @@ public:
 		return Get();
 	}
 	
-	FORCEINLINE FInheritedType& Second(const FSolidEnumSelector& InEnumSelector)
+	FORCEINLINE_DEBUGGABLE FInheritedType& Second(const FSolidEnumSelector& InEnumSelector)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		
@@ -451,7 +447,7 @@ public:
 	}
 	
 	template <typename T>
-	FORCEINLINE FInheritedType& Second()
+	FORCEINLINE_DEBUGGABLE FInheritedType& Second()
 	{
 		if constexpr (Solid::IsScriptStruct<T>())
 		{
@@ -472,7 +468,7 @@ public:
 	}
 	
 	template <Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TFirst, Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TSecond>
-	FORCEINLINE FInheritedType& WithPair(const TFirst& InFirst, const TSecond& InSecond)
+	FORCEINLINE_DEBUGGABLE FInheritedType& WithPair(const TFirst& InFirst, const TSecond& InSecond)
 	{
 		this->With(InFirst);
 		this->Second(InSecond);
@@ -480,7 +476,7 @@ public:
 	}
 	
 	template <Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TFirst, Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TSecond>
-	FORCEINLINE FInheritedType& WithoutPair(const TFirst& InFirst, const TSecond& InSecond)
+	FORCEINLINE_DEBUGGABLE FInheritedType& WithoutPair(const TFirst& InFirst, const TSecond& InSecond)
 	{
 		this->Without(InFirst);
 		this->Second(InSecond);
@@ -488,7 +484,7 @@ public:
 	}
 	
 	template <typename T, Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TSecond>
-	FORCEINLINE FInheritedType& WithPair(const TSecond& InSecond)
+	FORCEINLINE_DEBUGGABLE FInheritedType& WithPair(const TSecond& InSecond)
 	{
 		this->With<T>();
 		this->Second(InSecond);
@@ -496,7 +492,7 @@ public:
 	}
 	
 	template <typename T, Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TSecond>
-	FORCEINLINE FInheritedType& WithoutPair(const TSecond& InSecond)
+	FORCEINLINE_DEBUGGABLE FInheritedType& WithoutPair(const TSecond& InSecond)
 	{
 		this->Without<T>();
 		this->Second(InSecond);
@@ -504,7 +500,7 @@ public:
 	}
 	
 	template <typename T, Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TFirst>
-	FORCEINLINE FInheritedType& WithPairSecond(const TFirst& InFirst)
+	FORCEINLINE_DEBUGGABLE FInheritedType& WithPairSecond(const TFirst& InFirst)
 	{
 		this->With(InFirst);
 		this->Second<T>();
@@ -512,7 +508,7 @@ public:
 	}
 	
 	template <typename T, Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TFirst>
-	FORCEINLINE FInheritedType& WithoutPairSecond(const TFirst& InFirst)
+	FORCEINLINE_DEBUGGABLE FInheritedType& WithoutPairSecond(const TFirst& InFirst)
 	{
 		this->Without(InFirst);
 		this->Second<T>();
@@ -520,7 +516,7 @@ public:
 	}
 	
 	template <typename TFirst, typename TSecond>
-	FORCEINLINE FInheritedType& WithPair()
+	FORCEINLINE_DEBUGGABLE FInheritedType& WithPair()
 	{
 		this->With<TFirst>();
 		this->Second<TSecond>();
@@ -528,20 +524,20 @@ public:
 	}
 	
 	template <typename TFirst, typename TSecond>
-	FORCEINLINE FInheritedType& WithoutPair()
+	FORCEINLINE_DEBUGGABLE FInheritedType& WithoutPair()
 	{
 		this->Without<TFirst>();
 		this->Second<TSecond>();
 		return Get();
 	}
 	
-	FORCEINLINE FInheritedType& WithPair(const FSolidEnumSelector& InPair)
+	FORCEINLINE_DEBUGGABLE FInheritedType& WithPair(const FSolidEnumSelector& InPair)
 	{
 		WithPair(InPair.Class, InPair.Value);
 		return Get();
 	}
 	
-	FORCEINLINE FInheritedType& WithoutPair(const FSolidEnumSelector& InPair)
+	FORCEINLINE_DEBUGGABLE FInheritedType& WithoutPair(const FSolidEnumSelector& InPair)
 	{
 		WithoutPair(InPair.Class, InPair.Value);
 		return Get();
@@ -549,8 +545,15 @@ public:
 	
 #pragma endregion TermHelperFunctions
 	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Src(const FString& InSource)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.template InitializeAs<FFlecsQueryGeneratorInputType_String>();
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.template GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = InSource;
+		return Get();
+	}
 	
-	FORCEINLINE FInheritedType& ModifyLastTerm(const TFunctionRef<void(FFlecsQueryTermExpression&)>& InModifier)
+	FORCEINLINE_DEBUGGABLE FInheritedType& ModifyLastTerm(const TFunctionRef<void(FFlecsQueryTermExpression&)>& InModifier)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		InModifier(this->GetQueryDefinition().Terms[LastTermIndex]);
@@ -558,7 +561,7 @@ public:
 	}
 	
 	template <Unreal::Flecs::Queries::TQueryExpressionConcept TExpression>
-	FORCEINLINE FInheritedType& AddExpression(const TExpression& InExpression)
+	FORCEINLINE_DEBUGGABLE FInheritedType& AddExpression(const TExpression& InExpression)
 	{
 		this->GetQueryDefinition().AddAdditionalExpression(InExpression);
 		return Get();

@@ -17,7 +17,8 @@
 /**
  * Layout of the tests:
  * A. Construction Tests
- * B. Query Definition Entity Record Fragment Builder
+ * B. Query Builder Tests
+ * C. Query Definition Entity Record Fragment Builder
  **/
 TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 							   "UnrealFlecs.B2_QueryDefinition",
@@ -675,7 +676,7 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		ASSERT_THAT(IsTrue(Query.count() == 1));
 	}
 	
-	TEST_METHOD(B1_Construction_WithNoTermsOrOtherExpressions_BuildsQuerySuccessfully)
+	TEST_METHOD(C1_Construction_EntityRecordWithNoTermsOrOtherExpressions_BuildsQuerySuccessfully)
 	{
 		FFlecsEntityRecord QueryEntityRecord = FFlecsEntityRecord().Builder()
 			.FragmentScope<FFlecsQueryDefinitionRecordFragment>()
@@ -690,10 +691,10 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		FFlecsQuery Query = FlecsWorld->GetQueryFromEntity(QueryEntityHandle);
 		ASSERT_THAT(IsTrue(Query));
 		
-		ASSERT_THAT(IsTrue(Query.GetCount() == 0));
+		ASSERT_THAT(IsTrue(Query.is_true() == 0));
 	}
 	
-	TEST_METHOD(B2_Construction_WithTagTermScriptStruct_CPPAPI)
+	TEST_METHOD(C2_Construction_EntityRecordWithTagTermScriptStruct_CPPAPI)
 	{
 		FFlecsEntityRecord QueryEntityRecord = FFlecsEntityRecord().Builder()
 			.FragmentScope<FFlecsQueryDefinitionRecordFragment>()
@@ -714,10 +715,10 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
 		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Tag>()));
 		
-		ASSERT_THAT(IsTrue(Query.GetCount() == 1));
+		ASSERT_THAT(IsTrue(Query.count() == 1));
 	}
 	
-	TEST_METHOD(B3_Construction_WithValueTermScriptStruct_ScriptStructAPI)
+	TEST_METHOD(C3_Construction_EntityRecordWithValueTermScriptStruct_ScriptStructAPI)
 	{
 		static const FFlecsTestStruct_Value TestValue { 168 };
 		FFlecsEntityRecord QueryEntityRecord = FFlecsEntityRecord().Builder()
@@ -742,16 +743,16 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		const FFlecsTestStruct_Value& RetrievedValue = TestEntity.Get<FFlecsTestStruct_Value>();
 		ASSERT_THAT(IsTrue(RetrievedValue.Value == 168));
 		
-		ASSERT_THAT(IsTrue(Query.GetCount() == 1));
+		ASSERT_THAT(IsTrue(Query.count() == 1));
 		
-		Query.Get().each([&](flecs::iter& Iter, size_t Index)
+		Query.each([&](flecs::iter& Iter, size_t Index)
 		{
 			const FFlecsTestStruct_Value& Value = Iter.field_at<FFlecsTestStruct_Value>(0, Index);
 			ASSERT_THAT(AreEqual(Value.Value, 168));
 		});
 	}
 	
-	TEST_METHOD(B4_Construction_WithPairTermScriptStructs_CPPAPI)
+	TEST_METHOD(C4_Construction_EntityRecordWithPairTermScriptStructs_CPPAPI)
 	{
 		FFlecsEntityRecord QueryEntityRecord = FFlecsEntityRecord().Builder()
 			.FragmentScope<FFlecsQueryDefinitionRecordFragment>()
@@ -772,10 +773,10 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
 		ASSERT_THAT(IsTrue(TestEntity.HasPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>()));
 		
-		ASSERT_THAT(IsTrue(Query.GetCount() == 1));
+		ASSERT_THAT(IsTrue(Query.count() == 1));
 	}
 	
-	TEST_METHOD(B5_Construction_WithPairTermScriptStructAndWildcard_CPPAPI)
+	TEST_METHOD(C5_Construction_EntityRecordWithPairTermScriptStructAndWildcard_CPPAPI)
 	{
 		FFlecsEntityRecord QueryEntityRecord = FFlecsEntityRecord().Builder()
 			.FragmentScope<FFlecsQueryDefinitionRecordFragment>()
@@ -796,17 +797,17 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
 		ASSERT_THAT(IsTrue(TestEntity.HasPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>()));
 		
-		ASSERT_THAT(IsTrue(Query.GetCount() == 1));
+		ASSERT_THAT(IsTrue(Query.count() == 1));
 		
 		FFlecsEntityHandle TestEntity2 = FlecsWorld->CreateEntity()
 			.AddPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Data>();
 		ASSERT_THAT(IsTrue(TestEntity2.IsValid()));
 		ASSERT_THAT(IsTrue(TestEntity2.HasPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Data>()));
 		
-		ASSERT_THAT(IsTrue(Query.GetCount() == 2));
+		ASSERT_THAT(IsTrue(Query.count() == 2));
 	}
 	
-	TEST_METHOD(B6_Construction_WithPairTermScriptStructs_CPPAPI_ScriptStructAPI)
+	TEST_METHOD(C6_Construction_EntityRecordWithPairTermScriptStructs_CPPAPI_ScriptStructAPI)
 	{
 		FFlecsEntityRecord QueryEntityRecord = FFlecsEntityRecord().Builder()
 			.FragmentScope<FFlecsQueryDefinitionRecordFragment>()
@@ -827,10 +828,10 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
 		ASSERT_THAT(IsTrue(TestEntity.HasPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>()));
 		
-		ASSERT_THAT(IsTrue(Query.GetCount() == 1));
+		ASSERT_THAT(IsTrue(Query.count() == 1));
 	}
 	
-	TEST_METHOD(B7_Construction_WithPairTermScriptStructs_ScriptStructAPI_CPPAPI)
+	TEST_METHOD(C7_Construction_EntityRecordWithPairTermScriptStructs_ScriptStructAPI_CPPAPI)
 	{
 		FFlecsEntityRecord QueryEntityRecord = FFlecsEntityRecord().Builder()
 			.FragmentScope<FFlecsQueryDefinitionRecordFragment>()
@@ -851,7 +852,7 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
 		ASSERT_THAT(IsTrue(TestEntity.HasPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>()));
 		
-		ASSERT_THAT(IsTrue(Query.GetCount() == 1));
+		ASSERT_THAT(IsTrue(Query.count() == 1));
 	}
 	
 

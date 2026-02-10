@@ -623,20 +623,20 @@ void UFlecsWorld::InitializeComponentPropertyObserver()
 
 void UFlecsWorld::InitializeSystems()
 {
-		ObjectComponentQuery = World.query_builder<FFlecsUObjectComponent>("ObjectComponentQuery")
-			.term_at(0).second(flecs::Wildcard) // FFlecsUObjectComponent
-			.build();
+		ObjectComponentQuery = CreateQueryBuilder<FFlecsUObjectComponent>("ObjectComponentQuery")
+			.TermAt(0).Second(flecs::Wildcard) // FFlecsUObjectComponent
+			.Build();
 
-		TickFunctionQuery = CreateQueryBuilder()
+		TickFunctionQuery = CreateQueryBuilder("TickFunctionQuery")
 			.With<FFlecsTickFunctionComponent>().InOutNone() // 0
 			.WithPair<FFlecsTickTypeRelationship>("$TickTypeTag") // 1
 			.Build();
 
-		AddReferencedObjectsQuery = World.query_builder<const FFlecsScriptStructComponent>("AddReferencedObjectsQuery") // 0 (FFlecsScriptStructComponent)
-			.with<FFlecsAddReferencedObjectsTrait>().src("$Component") //  1
-			.term_at(0).src("$Component") // 0
-			.with("$Component") // 2
-			.build();
+		AddReferencedObjectsQuery = CreateQueryBuilder<const FFlecsScriptStructComponent>("AddReferencedObjectsQuery") // 0 (FFlecsScriptStructComponent)
+			.With<FFlecsAddReferencedObjectsTrait>().Src("$Component") //  1
+			.TermAt(0).Src("$Component") // 0
+			.With("$Component") // 2
+			.Build();
 
 		FCoreUObjectDelegates::GarbageCollectComplete.AddWeakLambda(this, [this]
 		{
@@ -654,11 +654,11 @@ void UFlecsWorld::InitializeSystems()
 			});
 		});
 		
-		ModuleComponentQuery = World.query_builder<FFlecsModuleComponent>("ModuleComponentQuery")
-			.build();
+		ModuleComponentQuery = CreateQueryBuilder<FFlecsModuleComponent>("ModuleComponentQuery")
+			.Build();
 
-		DependenciesComponentQuery = World.query_builder<FFlecsSoftDependenciesComponent>("DependenciesComponentQuery")
-			.build();
+		DependenciesComponentQuery = CreateQueryBuilder<FFlecsSoftDependenciesComponent>("DependenciesComponentQuery")
+			.Build();
 
 		OnModuleImported.AddWeakLambda(this, [this](const FFlecsEntityHandle& InModule)
 		{
@@ -794,6 +794,7 @@ void UFlecsWorld::InitializeSystems()
 			UE_LOGFMT(LogFlecsWorld, Log,
 				"Setting name for sub-entity to {SubEntityName}",
 				*InNameComponent.SubEntityName);
+			
 			const FFlecsEntityHandle EntityHandle = InIter.entity(InIndex);
 			EntityHandle.SetName(InNameComponent.SubEntityName);
 		});
@@ -1285,10 +1286,10 @@ void UFlecsWorld::DestroyWorld()
 
 	FCoreUObjectDelegates::GarbageCollectComplete.RemoveAll(this);
 
-	ModuleComponentQuery.destruct();
-	DependenciesComponentQuery.destruct();
-	ObjectComponentQuery.destruct();
-	AddReferencedObjectsQuery.destruct();
+	ModuleComponentQuery.Destroy();
+	DependenciesComponentQuery.Destroy();
+	ObjectComponentQuery.Destroy();
+	AddReferencedObjectsQuery.Destroy();
 
 	TickFunctionQuery.Destroy();
 		
@@ -2111,9 +2112,9 @@ FFlecsEntityHandle UFlecsWorld::GetScope() const
 	return World.get_scope();
 }
 
-FFlecsQueryBuilder UFlecsWorld::CreateQueryBuilder() const
+FFlecsQueryBuilder UFlecsWorld::CreateQueryBuilder(const FString& InName) const
 {
-	return FFlecsQueryBuilder(this);
+	return FFlecsQueryBuilder(this, InName);
 }
 
 FFlecsQuery UFlecsWorld::GetQueryFromEntity(const FFlecsEntityHandle& InEntity) const
@@ -2167,8 +2168,8 @@ FFlecsTypeMapComponent* UFlecsWorld::GetTypeMapComponent() const
 
 FFlecsEntityHandle UFlecsWorld::GetFlecsTickFunctionByType(const FGameplayTag& InTickType) const
 {
-	TickFunctionQuery.Get().set_var("TickTypeTag", GetTagEntity(InTickType));
-	return TickFunctionQuery.Get().first();
+	TickFunctionQuery.set_var("TickTypeTag", GetTagEntity(InTickType));
+	return TickFunctionQuery.first();
 }
 
 void UFlecsWorld::AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector)

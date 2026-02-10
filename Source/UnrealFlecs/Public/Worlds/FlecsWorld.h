@@ -21,6 +21,7 @@
 #include "Modules/FlecsDependenciesComponent.h"
 #include "Properties/FlecsComponentProperties.h"
 #include "Queries/FlecsQuery.h"
+#include "Queries/FlecsQueryBuilder.h"
 
 #include "FlecsWorld.generated.h"
 
@@ -1034,7 +1035,13 @@ public:
 	FFlecsEntityHandle GetScope() const;
 	
 	UFUNCTION()
-	FFlecsQueryBuilder CreateQueryBuilder() const;
+	FFlecsQueryBuilder CreateQueryBuilder(const FString& InName = "") const;
+	
+	template <typename ...TComponents>
+	NO_DISCARD TFlecsQueryBuilder<TComponents...> CreateQueryBuilder(const FString& InName = "")
+	{
+		return TFlecsQueryBuilder<TComponents...>(GetSelf(), InName);
+	}
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
 	FFlecsQuery GetQueryFromEntity(const FFlecsEntityHandle& InEntity) const;
@@ -1113,13 +1120,13 @@ public:
 	UPROPERTY(Transient)
 	TArray<TScriptInterface<IFlecsObjectRegistrationInterface>> RegisteredObjects;
 
-	flecs::query<FFlecsModuleComponent> ModuleComponentQuery;
-	flecs::query<FFlecsUObjectComponent> ObjectComponentQuery;
-	flecs::query<FFlecsSoftDependenciesComponent> DependenciesComponentQuery;
+	TTypedFlecsQuery<FFlecsModuleComponent> ModuleComponentQuery;
+	TTypedFlecsQuery<FFlecsUObjectComponent> ObjectComponentQuery;
+	TTypedFlecsQuery<FFlecsSoftDependenciesComponent> DependenciesComponentQuery;
 
 	FFlecsQuery TickFunctionQuery;
 
-	flecs::query<const FFlecsScriptStructComponent> AddReferencedObjectsQuery;
+	TTypedFlecsQuery<const FFlecsScriptStructComponent> AddReferencedObjectsQuery;
 
 	FFlecsTypeMapComponent* TypeMapComponent;
 

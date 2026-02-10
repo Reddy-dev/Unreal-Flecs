@@ -6,7 +6,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsQuery)
 
-FFlecsQuery::FFlecsQuery(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld,
+/*FFlecsQuery::FFlecsQuery(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld,
                          const FFlecsQueryDefinition& InDefinition,
                          const FString& InName)
 {
@@ -18,4 +18,4 @@ FFlecsQuery::FFlecsQuery(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld,
 FFlecsQuery::FFlecsQuery(const FFlecsQueryBuilder& InQueryBuilder)
 	: FFlecsQuery(InQueryBuilder.World.Get(), InQueryBuilder.Definition)
 {
-}
+}*/

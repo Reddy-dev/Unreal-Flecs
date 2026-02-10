@@ -8,127 +8,135 @@
 
 #include "SolidMacros/Macros.h"
 
-#include "Entities/FlecsEntityHandle.h"
-#include "FlecsQueryDefinition.h"
+#include "FlecsQueryBase.h"
 
 #include "FlecsQuery.generated.h"
 
 struct FFlecsQueryBuilder;
+struct FFlecsQuery;
+
+template <typename ...TArgs>
+struct TTypedFlecsQuery;
+
 class UFlecsWorld;
 
 USTRUCT(BlueprintType)
-struct FFlecsQuery
+struct FFlecsQuery : public FFlecsQueryBase
+    #if CPP
+        , public flecs::iterable<>
+    #endif // CPP
 {
     GENERATED_BODY()
-
-    NO_DISCARD FORCEINLINE friend uint32 GetTypeHash(const FFlecsQuery& InQuery)
-    {
-        return GetTypeHash(InQuery.Query.c_ptr());
-    }
+    
+private:
+    using Fields = typename flecs::_::field_ptrs<>::array;
 
 public:
-    FORCEINLINE FFlecsQuery() = default;
+    using FFlecsQueryBase::FFlecsQueryBase;
     
-    FORCEINLINE FFlecsQuery(const flecs::query<>& InQuery) : Query(InQuery) {}
-    FORCEINLINE FFlecsQuery(const flecs::query<>* InQuery) : Query(*InQuery) {}
-
-    FORCEINLINE FFlecsQuery(flecs::query_builder<>& InQueryBuilder)
+    FORCEINLINE FFlecsQuery()
+        : FFlecsQueryBase()
     {
-        Query = InQueryBuilder.build();
     }
 
-    template<typename ...TArgs>
-    FORCEINLINE FFlecsQuery(const flecs::world& InWorld, const char* InName)
+    /*FORCEINLINE FFlecsQuery(const FFlecsQuery& Other)
+        : FFlecsQueryBase(Other)
     {
-        Query = InWorld.query<TArgs...>(InName);
+    }*/
+    
+    FORCEINLINE FFlecsQuery(FFlecsQuery&& Other) noexcept
+        : FFlecsQueryBase(FLECS_FWD(Other))
+    {
+    }
+    
+    FORCEINLINE FFlecsQuery& operator=(const FFlecsQuery&& Other)
+    {
+        FFlecsQueryBase::operator=(FLECS_FWD(Other));
+        return *this;
+    }
+    
+private:
+    virtual ecs_iter_t get_iter(flecs::world_t *world) const override 
+    {
+        ecs_assert(GetCPtr() != nullptr, ECS_INVALID_PARAMETER, 
+            "cannot iterate invalid query");
+        if (!world) {
+            world = GetCPtr()->world;
+        }
+        return ecs_query_iter(world, GetCPtr());
     }
 
-    FFlecsQuery(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, 
-                const FFlecsQueryDefinition& InDefinition,
-                const FString& InName = "");
-
-    explicit FFlecsQuery(const FFlecsQueryBuilder& InQueryBuilder);
-    
-    NO_DISCARD FORCEINLINE bool IsValid() const
+    virtual ecs_iter_next_action_t next_action() const override 
     {
-        return Query;
+        return ecs_query_next;
     }
-    
-    NO_DISCARD FORCEINLINE const flecs::query<>& Get() const
-    {
-        return Query;
-    }
-    
-    NO_DISCARD FORCEINLINE flecs::query<>& Get()
-    {
-        return Query;
-    }
-    
-    NO_DISCARD FORCEINLINE bool HasChanged() const
-    {
-        return Query.changed();
-    }
-
-    NO_DISCARD FORCEINLINE int32 GetCount() const
-    {
-        return Query.count();
-    }
-
-    NO_DISCARD FORCEINLINE int32 GetFieldCount() const
-    {
-        return Query.field_count();
-    }
-    
-    NO_DISCARD FORCEINLINE int32 GetTermCount() const
-    {
-        return Query.term_count();
-    }
-
-    NO_DISCARD FORCEINLINE bool HasMatches() const
-    {
-        return Query.is_true();
-    }
-    
-    NO_DISCARD FORCEINLINE int32 FindVar(const FString& InVarName) const
-    {
-        const char* CStr = TCHAR_TO_UTF8(*InVarName);
-        solid_cassume(CStr != nullptr);
-        
-        return Query.find_var(CStr);
-    }
-
-    NO_DISCARD FORCEINLINE FString ToString() const
-    {
-        return StringCast<TCHAR>(ecs_query_str(Query)).Get();
-    }
-    
-    FORCEINLINE void Destroy()
-    {
-        Query.destruct();
-    }
-
-    NO_DISCARD FORCEINLINE bool operator==(const FFlecsQuery& Other) const
-    {
-        return Query.c_ptr() == Other.Query.c_ptr();
-    }
-
-    NO_DISCARD FORCEINLINE bool operator!=(const FFlecsQuery& Other) const
-    {
-        return !(*this == Other);
-    }
-    
-    NO_DISCARD FORCEINLINE operator bool() const
-    {
-        return Query;
-    }
-    
-    flecs::query<> Query;
     
 }; // struct FFlecsQuery
 
-/*template <typename ...TArgs>
-struct TFlecsQuery
+template <>
+struct TStructOpsTypeTraits<FFlecsQuery> : public TStructOpsTypeTraitsBase2<FFlecsQuery>
 {
-}; // struct TFlecsQuery*/
+    enum
+    {
+        WithCopy = false,
+    };
+};
+
+template <typename ...TArgs>
+struct TTypedFlecsQuery : public FFlecsQueryBase, public flecs::iterable<TArgs...>
+{
+private:
+    using Fields = flecs::_::field_ptrs<TArgs...>::array;
+    
+public:
+    using FFlecsQueryBase::FFlecsQueryBase;
+    
+    FORCEINLINE TTypedFlecsQuery() 
+        : FFlecsQueryBase()
+    {
+    }
+    
+    FORCEINLINE TTypedFlecsQuery(const TTypedFlecsQuery& Other) 
+        : FFlecsQueryBase(Other)
+    {
+    }
+    
+    FORCEINLINE TTypedFlecsQuery(TTypedFlecsQuery&& Other) noexcept 
+        : FFlecsQueryBase(FLECS_FWD(Other))
+    {
+    }
+    
+    FORCEINLINE TTypedFlecsQuery& operator=(const TTypedFlecsQuery&& Other) 
+    {
+        FFlecsQueryBase::operator=(FLECS_FWD(Other));
+        return *this;
+    }
+    
+    FORCEINLINE TTypedFlecsQuery(const FFlecsQuery& Other) 
+        : FFlecsQueryBase(Other)
+    {
+    }
+    
+private:
+    virtual ecs_iter_t get_iter(flecs::world_t *world) const override 
+    {
+        ecs_assert(GetCPtr() != nullptr, ECS_INVALID_PARAMETER, 
+            "cannot iterate invalid query");
+        
+        if (!world) 
+        {
+            world = GetCPtr()->world;
+        }
+        
+        return ecs_query_iter(world, GetCPtr());
+    }
+
+    virtual ecs_iter_next_action_t next_action() const override 
+    {
+        return ecs_query_next;
+    }
+    
+    
+}; // struct TTypedFlecsQuery
 
 

@@ -18,6 +18,22 @@
 
 namespace Solid
 {
+	constexpr std::string_view strip_constprefix(std::string_view name)
+	{
+		constexpr std::array<const char*, 2> prefixes = {"const ", "volatile "};
+		
+		for (const auto* prefix : prefixes)
+		{
+			std::string_view prefix_sv(prefix);
+			if (name.starts_with(prefix_sv))
+			{
+				return name.substr(prefix_sv.size());
+			}
+		}
+		
+		return name;
+	}
+	
 	constexpr std::string_view strip_prefix(std::string_view name)
 	{
 		constexpr std::array<const char*, 3> prefixes = {"struct ", "class ", "enum "};
@@ -63,7 +79,7 @@ namespace Solid
 		static_assert(start < end, "Failed to parse type name.");
 
 		constexpr std::string_view name = function.substr(start, (end - start));
-		constexpr std::string_view stripped_name = strip_prefix(name);
+		constexpr std::string_view stripped_name = strip_prefix(strip_constprefix(name));
 		return substring_as_array(stripped_name, std::make_index_sequence<stripped_name.size()>{});
 	}
 
