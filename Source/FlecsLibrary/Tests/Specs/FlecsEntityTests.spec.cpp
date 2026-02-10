@@ -668,6 +668,245 @@ void Entity_ensure_generic_w_id_t(void) {
 	test_bool(invoked, true);
 }
 
+void Entity_get_w_id(void) {
+	flecs::world world;
+	world.component<Position>();
+
+	flecs::entity e = world.entity();
+	e.set<Position>({10, 20});
+    
+	const Position *p = static_cast<const Position*>(e.get(world.id<Position>()));
+	test_assert(p != nullptr);
+
+	test_int(p->x, 10);
+	test_int(p->y, 20);
+}
+
+void Entity_get_T(void) {
+	flecs::world world;
+	world.component<Position>();
+
+	flecs::entity e = world.entity();
+	e.set<Position>({10, 20});
+    
+	const Position& p = e.get<Position>();
+	test_int(p.x, 10);
+	test_int(p.y, 20);
+}
+
+void Entity_get_n_T(void) {
+	flecs::world world;
+	world.component<Position>();
+	world.component<Velocity>();
+
+	flecs::entity e = world.entity();
+	e.set<Position>({10, 20});
+	e.set<Velocity>({1, 2});
+
+	const auto [p, v] = e.get_n<Position, Velocity>();
+	test_int(p.x, 10);
+	test_int(p.y, 20);
+	test_int(v.x, 1);
+	test_int(v.y, 2);
+}
+
+void Entity_get_r_t(void) {
+	flecs::world world;
+	world.component<Position>();
+
+	flecs::entity tgt = world.entity();
+	flecs::entity e = world.entity();
+
+	e.set<Position>(tgt, {10, 20});
+    
+	const Position* p = static_cast<const Position*>(e.get(world.id<Position>(), tgt));
+	test_assert(p != nullptr);
+
+	test_int(p->x, 10);
+	test_int(p->y, 20);
+}
+
+void Entity_get_R_t(void) {
+	flecs::world world;
+	world.component<Position>();
+
+	flecs::entity tgt = world.entity();
+	flecs::entity e = world.entity();
+	e.set<Position>(tgt, {10, 20});
+    
+	const Position& p = e.get<Position>(tgt);
+	test_int(p.x, 10);
+	test_int(p.y, 20);
+}
+
+void Entity_get_R_T(void) {
+	flecs::world world;
+	world.component<Position>();
+	world.component<Tgt>();
+
+	flecs::entity e = world.entity();
+	e.set<Position, Tgt>({10, 20});
+    
+	const Position& p = e.get<Position, Tgt>();
+	test_int(p.x, 10);
+	test_int(p.y, 20);
+}
+
+void Entity_get_r_T(void) {
+	flecs::world world;
+	world.component<Position>();
+
+	flecs::entity rel = world.entity();
+	flecs::entity e = world.entity();
+	e.set_second<Position>(rel, {10, 20});
+    
+	const Position& p = e.get_second<Position>(rel);
+	test_int(p.x, 10);
+	test_int(p.y, 20);
+}
+
+void Entity_try_get_w_id(void) {
+	flecs::world world;
+	world.component<Position>();
+
+	flecs::entity e = world.entity();
+
+	const Position *p = static_cast<const Position*>(e.try_get(world.id<Position>()));
+	test_assert(p == nullptr);
+
+	e.set<Position>({10, 20});
+    
+	p = static_cast<const Position*>(e.try_get(world.id<Position>()));
+	test_assert(p != nullptr);
+
+	test_int(p->x, 10);
+	test_int(p->y, 20);
+}
+
+void Entity_try_get_T(void) {
+	flecs::world world;
+	world.component<Position>();
+
+	flecs::entity e = world.entity();
+
+	const Position *p = e.try_get<Position>();
+	test_assert(p == nullptr);
+
+	e.set<Position>({10, 20});
+    
+	p = e.try_get<Position>();
+	test_assert(p != nullptr);
+
+	test_int(p->x, 10);
+	test_int(p->y, 20);
+}
+
+void Entity_try_get_n_T(void) {
+	flecs::world world;
+	world.component<Position>();
+	world.component<Velocity>();
+
+	flecs::entity e = world.entity();
+
+	{
+		const auto [p, v] = e.try_get_n<Position, Velocity>();
+		test_assert(p == nullptr);
+		test_assert(v == nullptr);
+	}
+
+	e.set<Position>({10, 20});
+	e.set<Velocity>({1, 2});
+
+	{
+		const auto [p, v] = e.try_get_n<Position, Velocity>();
+		test_assert(p != nullptr);
+		test_assert(v != nullptr);
+
+		test_int(p->x, 10);
+		test_int(p->y, 20);
+		test_int(v->x, 1);
+		test_int(v->y, 2);
+	}
+}
+
+void Entity_try_get_r_t(void) {
+	flecs::world world;
+	world.component<Position>();
+
+	flecs::entity tgt = world.entity();
+	flecs::entity e = world.entity();
+
+	const Position *p = static_cast<const Position*>(e.try_get_mut(world.id<Position>(), tgt));
+	test_assert(p == nullptr);
+
+	e.set<Position>(tgt, {10, 20});
+    
+	p = static_cast<const Position*>(e.get_mut(world.id<Position>(), tgt));
+	test_assert(p != nullptr);
+
+	test_int(p->x, 10);
+	test_int(p->y, 20);
+}
+
+void Entity_try_get_R_t(void) {
+	flecs::world world;
+	world.component<Position>();
+
+	flecs::entity tgt = world.entity();
+	flecs::entity e = world.entity();
+
+	const Position *p = e.try_get<Position>(tgt);
+	test_assert(p == nullptr);
+
+	e.set<Position>(tgt, {10, 20});
+    
+	p = e.try_get<Position>(tgt);
+	test_assert(p != nullptr);
+
+	test_int(p->x, 10);
+	test_int(p->y, 20);
+}
+
+void Entity_try_get_R_T(void) {
+	flecs::world world;
+	world.component<Position>();
+
+	struct Tgt { };
+	world.component<Tgt>();
+
+	flecs::entity e = world.entity();
+
+	const Position *p = e.try_get<Position, Tgt>();
+	test_assert(p == nullptr);
+
+	e.set<Position, Tgt>({10, 20});
+    
+	p = e.try_get<Position, Tgt>();
+	test_assert(p != nullptr);
+
+	test_int(p->x, 10);
+	test_int(p->y, 20);
+}
+
+void Entity_try_get_r_T(void) {
+	flecs::world world;
+	world.component<Position>();
+
+	flecs::entity rel = world.entity();
+	flecs::entity e = world.entity();
+
+	const Position *p = e.try_get_second<Position>(rel);
+	test_assert(p == nullptr);
+
+	e.set_second<Position>(rel, {10, 20});
+    
+	p = e.try_get_second<Position>(rel);
+	test_assert(p != nullptr);
+
+	test_int(p->x, 10);
+	test_int(p->y, 20);
+}
+
 void Entity_get_mut_w_id(void) {
 	flecs::world world;
 	world.component<Position>();
@@ -685,7 +924,6 @@ void Entity_get_mut_w_id(void) {
 	test_int(p->x, 10);
 	test_int(p->y, 20);
 }
-
 
 void Entity_get_mut_T(void) {
 	flecs::world world;
@@ -818,6 +1056,37 @@ void Entity_try_get_mut_T(void) {
 
     test_int(p->x, 10);
     test_int(p->y, 20);
+}
+
+void Entity_try_get_mut_n_T(void) {
+	flecs::world world;
+	world.component<Position>();
+	world.component<Velocity>();
+
+	flecs::entity e = world.entity();
+
+	{
+		auto [p, v] = e.try_get_mut_n<Position, Velocity>();
+		test_assert(p == nullptr);
+		test_assert(v == nullptr);
+	}
+
+	e.set<Position>({10, 20});
+	e.set<Velocity>({1, 2});
+
+	{
+		auto [p, v] = e.try_get_mut_n<Position, Velocity>();
+		test_assert(p != nullptr);
+		test_assert(v != nullptr);
+
+		p->x += 15;
+		v->y += 2;
+
+		test_int(e.get<Position>().x, 25);
+		test_int(e.get<Position>().y, 20);
+		test_int(e.get<Velocity>().x, 1);
+		test_int(e.get<Velocity>().y, 4);
+	}
 }
 
 void Entity_try_get_mut_r_t(void) {
@@ -6702,18 +6971,14 @@ END_DEFINE_SPEC(FFlecsEntityTestsSpec);
                 "ensure_generic_w_id_t",
                 "get_w_id",
                 "get_T",
+				"get_n_T",
                 "get_r_t",
                 "get_R_t",
                 "get_R_T",
                 "get_r_T",
-                "get_w_id_not_found",
-                "get_T_not_found",
-                "get_r_t_not_found",
-                "get_R_t_not_found",
-                "get_R_T_not_found",
-                "get_r_T_not_found",
                 "try_get_w_id",
                 "try_get_T",
+                "try_get_n_T",
                 "try_get_r_t",
                 "try_get_R_t",
                 "try_get_R_T",
@@ -6724,14 +6989,9 @@ END_DEFINE_SPEC(FFlecsEntityTestsSpec);
                 "get_mut_R_t",
                 "get_mut_R_T",
                 "get_mut_r_T",
-                "get_mut_w_id_not_found",
-                "get_mut_T_not_found",
-                "get_mut_r_t_not_found",
-                "get_mut_R_t_not_found",
-                "get_mut_R_T_not_found",
-                "get_mut_r_T_not_found",
                 "try_get_mut_w_id",
                 "try_get_mut_T",
+                "try_get_mut_n_T",
                 "try_get_mut_r_t",
                 "try_get_mut_R_t",
                 "try_get_mut_R_T",
@@ -7084,12 +7344,33 @@ void FFlecsEntityTestsSpec::Define()
 	It("Entity_get_generic_w_id_t", [&]() { Entity_get_generic_w_id_t(); });
 	It("Entity_ensure_generic_w_id", [&]() { Entity_ensure_generic_w_id(); });
 	It("Entity_ensure_generic_w_id_t", [&]() { Entity_ensure_generic_w_id_t(); });
+	It("Entity_get_w_id", [&]() { Entity_get_w_id(); });
+	It("Entity_get_T_type", [&]() { Entity_get_T(); });
+	It("Entity_get_n_T_type", [&]() { Entity_get_n_T(); });
+	It("Entity_get_r_entity_entity_t_entity", [&]() { Entity_get_r_t(); });
+	It("Entity_get_R_type_t_entity", [&]() { Entity_get_R_t(); });
+	It("Entity_get_R_type_T_type", [&]() { Entity_get_R_T(); });
+	It("Entity_get_r_entity_T_type", [&]() { Entity_get_r_T(); });
+	It("Entity_try_get_w_id", [&]() { Entity_try_get_w_id(); });
+	It("Entity_try_get_T_type", [&]() { Entity_try_get_T(); });
+	It("Entity_try_get_n_T_type", [&]() { Entity_try_get_n_T(); });
+	It("Entity_try_get_r_entity_t_entity", [&]() { Entity_try_get_r_t(); });
+	It("Entity_try_get_R_type_t_entity", [&]() { Entity_try_get_R_t(); });
+	It("Entity_try_get_R_type_T_type", [&]() { Entity_try_get_R_T(); });
+	It("Entity_try_get_r_entity_T_type", [&]() { Entity_try_get_r_T(); });
 	It("Entity_get_mut_w_id", [&]() { Entity_get_mut_w_id(); });
 	It("Entity_get_mut_T_type", [&]() { Entity_get_mut_T(); });
 	It("Entity_get_mut_r_entity_t_entity", [&]() { Entity_get_mut_r_t(); });
 	It("Entity_get_mut_R_type_t_entity", [&]() { Entity_get_mut_R_t(); });
 	It("Entity_get_mut_R_type_T_type", [&]() { Entity_get_mut_R_T(); });
 	It("Entity_get_mut_r_entity_T_type", [&]() { Entity_get_mut_r_T(); });
+	It("Entity_try_get_mut_w_id", [&]() { Entity_try_get_mut_w_id(); });
+	It("Entity_try_get_mut_T_type", [&]() { Entity_try_get_mut_T(); });
+	It("Entity_try_get_mut_n_T_type", [&]() { Entity_try_get_mut_n_T(); });
+	It("Entity_try_get_mut_r_entity_t_entity", [&]() { Entity_try_get_mut_r_t(); });
+	It("Entity_try_get_mut_R_type_t_entity", [&]() { Entity_try_get_mut_R_t(); });
+	It("Entity_try_get_mut_R_type_T_type", [&]() { Entity_try_get_mut_R_T(); });
+	It("Entity_try_get_mut_r_entity_T_type", [&]() { Entity_try_get_mut_r_T(); });
 	It("Entity_set_generic", [&]() { Entity_set_generic(); });
 	It("Entity_set_generic_w_id", [&]() { Entity_set_generic_w_id(); });
 	It("Entity_set_generic_w_id_t", [&]() { Entity_set_generic_w_id_t(); });
