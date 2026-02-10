@@ -52,6 +52,10 @@ typedef struct ecs_system_desc_t {
     /** System query parameters */
     ecs_query_desc_t query;
 
+    /** Optional pipeline phase for the system to run in. When set, it will be
+     * added to the system both as a tag and as a (DependsOn, phase) pair. */
+    ecs_entity_t phase;
+
     /** Callback that is ran for each result returned by the system's query. This
      * means that this callback can be invoked multiple times per system per
      * frame, typically once for each matching table. */
@@ -199,44 +203,34 @@ const ecs_system_t* ecs_system_get(
  * @endcode
  */
 #ifdef FLECS_ENABLE_SYSTEM_PRIORITY
-#define ECS_SYSTEM_DEFINE(world, id_, phase, ...) \
-    { \
-        ecs_system_desc_t desc = {0}; \
-        ecs_entity_desc_t edesc = {0}; \
-        ecs_id_t add_ids[3] = {\
-            ((phase) ? ecs_pair(EcsDependsOn, (phase)) : 0), \
-            (phase), \
-            0 \
-        };\
-        edesc.id = ecs_id(id_);\
-        edesc.name = #id_;\
-        edesc.add = add_ids;\
-        desc.entity = ecs_entity_init(world, &edesc);\
-        desc.query.expr = #__VA_ARGS__; \
-        desc.callback = id_; \
-        desc.priority = 0; \
-        ecs_id(id_) = ecs_system_init(world, &desc); \
-    } \
-    ecs_assert(ecs_id(id_) != 0, ECS_INVALID_PARAMETER, "failed to create system %s", #id_)
-#else // FLECS_ENABLE_SYSTEM_PRIORITY
-#define ECS_SYSTEM_DEFINE(world, id_, phase, ...) \
+#define ECS_SYSTEM_DEFINE(world, id_, phase_, ...) \
         { \
         ecs_system_desc_t desc = {0}; \
         ecs_entity_desc_t edesc = {0}; \
-        ecs_id_t add_ids[3] = {\
-        ((phase) ? ecs_pair(EcsDependsOn, (phase)) : 0), \
-        (phase), \
-        0 \
-        };\
         edesc.id = ecs_id(id_);\
         edesc.name = #id_;\
-        edesc.add = add_ids;\
         desc.entity = ecs_entity_init(world, &edesc);\
         desc.query.expr = #__VA_ARGS__; \
+        desc.phase = phase_; \
         desc.callback = id_; \
+        desc.priority = 0 \
         ecs_id(id_) = ecs_system_init(world, &desc); \
         } \
-        ecs_assert(ecs_id(id_) != 0, ECS_INVALID_PARAMETER, "failed to create system %s", #id_)
+    ecs_assert(ecs_id(id_) != 0, ECS_INVALID_PARAMETER, "failed to create system %s", #id_)
+#else // FLECS_ENABLE_SYSTEM_PRIORITY
+#define ECS_SYSTEM_DEFINE(world, id_, phase_, ...) \
+    { \
+        ecs_system_desc_t desc = {0}; \
+        ecs_entity_desc_t edesc = {0}; \
+        edesc.id = ecs_id(id_);\
+        edesc.name = #id_;\
+        desc.entity = ecs_entity_init(world, &edesc);\
+        desc.query.expr = #__VA_ARGS__; \
+        desc.phase = phase_; \
+        desc.callback = id_; \
+        ecs_id(id_) = ecs_system_init(world, &desc); \
+    } \
+    ecs_assert(ecs_id(id_) != 0, ECS_INVALID_PARAMETER, "failed to create system %s", #id_)
 
 #endif // FLECS_ENABLE_SYSTEM_PRIORITY
 
