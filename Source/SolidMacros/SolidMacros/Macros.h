@@ -205,30 +205,30 @@ namespace Solid
 #define IS_UNIX PLATFORM_UNIX
 #endif // IS_UNIX
 
-#ifndef IS_WINDOWS
-#define IS_WINDOWS PLATFORM_WINDOWS
-#endif // IS_WINDOWS
+#ifndef SOLID_IS_WINDOWS
+#define SOLID_IS_WINDOWS PLATFORM_WINDOWS
+#endif // SOLID_IS_WINDOWS
 
-#ifndef IS_LINUX
-#define IS_LINUX PLATFORM_LINUX
-#endif // IS_LINUX
+#ifndef SOLID_IS_LINUX
+#define SOLID_IS_LINUX PLATFORM_LINUX
+#endif // SOLID_IS_LINUX
 
-#ifndef DECLSPEC
+#ifndef SOLID_DECLSPEC
 
 	#if IS_MSVC
 
-	#define DECLSPEC(Expr) __declspec(Expr)
+	#define SOLID_DECLSPEC(Expr) __declspec(Expr)
 
 	#else // IS_MSVC
 
-	#define DECLSPEC(Expr)
+	#define SOLID_DECLSPEC(Expr)
 
 	#endif // IS_MSVC
 
 #endif // DECLSPEC
 
 #ifndef NAKED
-#define NAKED DECLSPEC(naked)
+#define NAKED SOLID_DECLSPEC(naked)
 #endif // NAKED
 
 #ifndef FORCEINLINE_CALLS
@@ -615,43 +615,39 @@ namespace Solid
 #define BINARY_LITERAL(x) 0b##x
 #endif // BINARY_LITERAL
 
-#ifndef DEFINE_CUSTOM_LITERAL
-#define DEFINE_CUSTOM_LITERAL(Name, Type, Literal) \
+#ifndef SOLID_DEFINE_CUSTOM_LITERAL
+#define SOLID_DEFINE_CUSTOM_LITERAL(Name, Type, Literal) \
 	constexpr Type operator"" Name(unsigned long long int Value) \
 	{ \
 		return static_cast<Type>(Value); \
 	}
-#endif // DEFINE_CUSTOM_LITERAL
+#endif // SOLID_DEFINE_CUSTOM_LITERAL
 
-#ifndef EXISTS
-#define EXISTS(x) (!std::is_same_v<decltype(x), void>)
-#endif // EXISTS
+#ifndef SOLID_EXISTS
+#define SOLID_EXISTS(x) (!std::is_same_v<decltype(x), void>)
+#endif // SOLID_EXISTS
 
-#ifndef NOT_EXISTS
-#define NOT_EXISTS(x) (std::is_same_v<decltype(x), void>)
-#endif // NOT_EXISTS
+#ifndef SOLID_NOT_EXISTS
+#define SOLID_NOT_EXISTS(x) (std::is_same_v<decltype(x), void>)
+#endif // SOLID_NOT_EXISTS
 
-#ifndef IF_EXISTS
-#define IF_EXISTS(x) if constexpr EXISTS(x)
-#endif // IF_EXISTS
+#ifndef SOLID_IF_EXISTS
+#define SOLID_IF_EXISTS(x) if constexpr EXISTS(x)
+#endif // SOLID_IF_EXISTS
 
-#ifndef IF_NOT_EXISTS
-#define IF_NOT_EXISTS(x) if constexpr NOT_EXISTS(x)
-#endif // IF_NOT_EXISTS
+#ifndef SOLID_IF_NOT_EXISTS
+#define SOLID_IF_NOT_EXISTS(x) if constexpr NOT_EXISTS(x)
+#endif // SOLID_IF_NOT_EXISTS
 
-#ifndef UNDERLYING_TYPE
-#define UNDERLYING_TYPE(x) std::underlying_type_t<x>
-#endif // UNDERLYING_TYPE
-
-#ifndef FUNCTION_TEXT
+#ifndef SOLID_FUNCTION_TEXT
 
 #if defined(_MSC_VER)
 // On MSVC __FUNCTION__ is a compile‐time literal so we can do literal concatenation.
-#define FUNCTION_TEXT(Message) TEXT(__FUNCTION__) TEXT(": ") TEXT(Message)
+#define SOLID_FUNCTION_TEXT(Message) TEXT(__FUNCTION__) TEXT(": ") TEXT(Message)
 #else
 // On other compilers (like Clang/GCC), __func__ is not a preprocessor literal.
 // In this case, use the non-Printf (ordered arguments) version of the log macro.
-#define FUNCTION_TEXT(Message) (FString(ANSI_TO_TCHAR(__func__)) + TEXT(": ") + FString(TEXT(Message)))
+#define SOLID_FUNCTION_TEXT(Message) (FString(ANSI_TO_TCHAR(__func__)) + TEXT(": ") + FString(TEXT(Message)))
 #endif
 
 #endif // FUNCTION_TEXT
