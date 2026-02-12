@@ -1208,60 +1208,33 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		});
 	}
 	
-	/*TEST_METHOD(D1_GroupBy_DontFragmentParentHierarchy_Cascading)
+	TEST_METHOD(D1_GroupBy_SetGroup_ScriptStructValue_ScriptStructAPI)
 	{
-		FFlecsEntityHandle Root = FlecsWorld->CreateEntity()
-		.Set<FFlecsTestStruct_Value>({ 1 });
-		ASSERT_THAT(IsTrue(Root.IsValid()));
-		ASSERT_THAT(IsTrue(Root.Has<FFlecsTestStruct_Value>()));
-
-		FFlecsEntityHandle Parent = FlecsWorld->CreateEntity()
-			.Set<FFlecsTestStruct_Value>({ 10 });
-		ASSERT_THAT(IsTrue(Parent.IsValid()));
-		ASSERT_THAT(IsTrue(Parent.Has<FFlecsTestStruct_Value>()));
-
-		FFlecsEntityHandle Child = FlecsWorld->CreateEntity()
-			.Set<FFlecsTestStruct_Value>({ 100 });
-		ASSERT_THAT(IsTrue(Root.IsValid()));
-		ASSERT_THAT(IsTrue(Child.Has<FFlecsTestStruct_Value>()));
+		const FFlecsEntityHandle Relation = FlecsWorld->CreateEntity();
+		const FFlecsEntityHandle GroupA = FlecsWorld->CreateEntity();
+		const FFlecsEntityHandle GroupB = FlecsWorld->CreateEntity();
 		
-		Parent.SetParent(Root);
-		Child.SetParent(Parent);
-		
-		FFlecsQuery Query = FlecsWorld->CreateQueryBuilder()
-			.With<FFlecsTestStruct_Value>()
-			.With<FFlecsTestStruct_Value>().Up()
-			.GroupBy(flecs::ParentDepth)
+		const TTypedFlecsQuery<FFlecsTestStruct_Value> Query = FlecsWorld->CreateQueryBuilder<const FFlecsTestStruct_Value>()
+			.GroupBy(Relation)
 			.Build();
 		
-		ASSERT_THAT(IsTrue(Query.IsValid()));
+		FFlecsEntityHandle TestEntity1 = FlecsWorld->CreateEntity()
+			.AddPair(Relation, GroupA)
+			.Set<FFlecsTestStruct_Value>({ 1 });
 		
-		TArray<int32> ExpectedOrder = { 1, 10, 100 };
-		int32 Index = 0;
-		Query.each([&](flecs::iter& Iter, size_t IndexInIter)
+		FFlecsEntityHandle TestEntity2 = FlecsWorld->CreateEntity()
+			.AddPair(Relation, GroupB)
+			.Set<FFlecsTestStruct_Value>({ 20 });
+		
+		int32 Count = 0;
+		Query.set_group(GroupB).each([&](flecs::iter& Iter, size_t IndexInIter, const FFlecsTestStruct_Value Value)
 		{
-			const FFlecsTestStruct_Value& Value = Iter.field_at<const FFlecsTestStruct_Value>(0, IndexInIter);
-			ASSERT_THAT(IsTrue(Value.Value == ExpectedOrder[Index]));
-			Index++;
+			ASSERT_THAT(IsTrue(Value.Value == 20));
+			Count++;
 		});
-		
-		for (int Depth = 0; Depth < 8; ++Depth)
-		{
-			Query.set_group(Depth).each([](FFlecsTestStruct_Value& V)
-			{
-				const FFlecsTestStruct_Value* ParentV = P.get<FFlecsTestStruct_Value>();
-				// In a correct hierarchy, this should always exist
-				check(ParentV);
-				V.Value += ParentV->Value;
-			});
-		}
-
-		const FFlecsTestStruct_Value& ParentOut = Parent.Get<FFlecsTestStruct_Value>();
-		const FFlecsTestStruct_Value& ChildOut  = Child.Get<FFlecsTestStruct_Value>();
-
-		ASSERT_THAT(AreEqual(ParentOut.Value, 11));
-		ASSERT_THAT(AreEqual(ChildOut.Value, 111));
-	}*/
+			
+		ASSERT_THAT(IsTrue(Count == 1));
+	}
 
 }; // End of B2_UnrealFlecsQueryDefinitionTests
 
