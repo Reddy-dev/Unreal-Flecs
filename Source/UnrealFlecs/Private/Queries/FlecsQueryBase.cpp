@@ -3,6 +3,7 @@
 #include "Queries/FlecsQueryBase.h"
 
 #include "Queries/FlecsQuery.h"
+#include "Worlds/FlecsWorld.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsQueryBase)
 

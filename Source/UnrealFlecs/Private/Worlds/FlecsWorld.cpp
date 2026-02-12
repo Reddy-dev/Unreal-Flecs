@@ -2117,12 +2117,37 @@ FFlecsQueryBuilder UFlecsWorld::CreateQueryBuilder(const FString& InName) const
 	return FFlecsQueryBuilder(this, InName);
 }
 
-FFlecsQuery UFlecsWorld::GetQueryFromEntity(const FFlecsEntityHandle& InEntity) const
+FFlecsQueryBuilder UFlecsWorld::CreateQueryBuilderWithEntity(const FFlecsEntityHandle& InEntity) const
 {
 	solid_checkf(InEntity.IsValid(), TEXT("Entity is not valid"));
 
-	return World.query(InEntity);
+	return FFlecsQueryBuilder(this, InEntity);
 }
+
+FFlecsQuery UFlecsWorld::CreateQuery(const FFlecsQueryDefinition& InDefinition, const FString& InName) const
+{
+	flecs::query_builder<> Builder = flecs::query_builder<>(World, StringCast<char>(*InName).Get());
+	InDefinition.Apply(this, Builder);
+	return FFlecsQuery(Builder.build());
+}
+
+FFlecsQuery UFlecsWorld::CreateQueryWithEntity(const FFlecsQueryDefinition& InDefinition,
+	const FFlecsEntityHandle& InEntity) const
+{
+	flecs::query_builder<> Builder = flecs::query_builder<>(World, InEntity);
+	InDefinition.Apply(this, Builder);
+	return FFlecsQuery(Builder.build());
+}
+
+/*
+FFlecsQuery UFlecsWorld::GetQueryFromEntity(const FFlecsEntityHandle& InEntity) const
+{
+	solid_checkf(InEntity.IsValid(), TEXT("Entity is not valid"));
+	solid_checkf(poly(InEntity, ecs_query_t), TEXT("Entity is not a query"));
+
+	return InEntity.Get<
+}
+*/
 
 bool UFlecsWorld::IsSupportedForNetworking() const
 {

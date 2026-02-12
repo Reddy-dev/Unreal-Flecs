@@ -1037,6 +1037,9 @@ public:
 	UFUNCTION()
 	FFlecsQueryBuilder CreateQueryBuilder(const FString& InName = "") const;
 	
+	UFUNCTION()
+	FFlecsQueryBuilder CreateQueryBuilderWithEntity(const FFlecsEntityHandle& InEntity) const;
+	
 	template <typename ...TComponents>
 	NO_DISCARD TFlecsQueryBuilder<TComponents...> CreateQueryBuilder(const FString& InName = "")
 	{
@@ -1044,7 +1047,13 @@ public:
 	}
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
-	FFlecsQuery GetQueryFromEntity(const FFlecsEntityHandle& InEntity) const;
+	FFlecsQuery CreateQuery(const FFlecsQueryDefinition& InDefinition, const FString& InName = "") const;
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
+	FFlecsQuery CreateQueryWithEntity(const FFlecsQueryDefinition& InDefinition, const FFlecsEntityHandle& InEntity) const;
+	
+	/*UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
+	FFlecsQuery GetQueryFromEntity(const FFlecsEntityHandle& InEntity) const;*/
 
 	virtual bool IsSupportedForNetworking() const override;
 
@@ -1126,7 +1135,7 @@ public:
 
 	FFlecsQuery TickFunctionQuery;
 
-	TTypedFlecsQuery<const FFlecsScriptStructComponent> AddReferencedObjectsQuery;
+	TTypedFlecsQuery<const FFlecsScriptStructComponent>  AddReferencedObjectsQuery;
 
 	FFlecsTypeMapComponent* TypeMapComponent;
 

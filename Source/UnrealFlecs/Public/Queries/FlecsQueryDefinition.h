@@ -3,10 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
 #include "FlecsQueryFlags.h"
 #include "Enums/FlecsQueryCache.h"
+#include "Expressions/FlecsQueryGroupByExpression.h"
 #include "Expressions/FlecsQueryTermExpression.h"
+
 #include "FlecsQueryDefinition.generated.h"
+
+struct FFlecsQueryGroupByExpression;
 
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsQueryDefinition
@@ -85,5 +90,11 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query", meta = (ExcludeBaseStruct))
 	TArray<TInstancedStruct<FFlecsQueryExpression>> OtherExpressions;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query")
+	bool bUseGroupBy = false;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query", meta = (EditCondition = "bUseGroupBy", ExcludeBaseStruct))
+	FFlecsQueryGroupByExpression GroupByExpression;
 	
 }; // struct FFlecsQueryDefinition

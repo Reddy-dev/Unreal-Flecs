@@ -725,6 +725,40 @@ public:
 	}
 
 #endif // #if defined(FLECS_DOC)
+	
+	/*NO_DISCARD SOLID_INLINE bool HasPoly() const
+	{
+		return HasPair<flecs::Poly>(flecs::Wildcard);
+	}
+	
+	NO_DISCARD SOLID_INLINE bool IsPolyOf(const FFlecsId InBase) const
+	{
+		return HasPair<flecs::Poly>(InBase);
+	}
+	
+	template <typename T>
+	NO_DISCARD SOLID_INLINE bool IsPolyOf() const
+	{
+		return HasPair<flecs::Poly, T>();
+	}
+	
+	NO_DISCARD SOLID_INLINE const flecs::Poly& GetPoly(const FFlecsId InBase) const
+	{
+		return GetPairFirst<flecs::Poly>(InBase);
+	}
+	
+	template <typename T>
+	NO_DISCARD SOLID_INLINE const flecs::Poly& GetPoly() const
+	{
+		return GetPairFirst<flecs::Poly, T>();
+	}
+	
+	NO_DISCARD SOLID_INLINE const void* GetPolyData(const FFlecsId InBase) const
+	{
+		EcsQuery
+		return GetPairSecond<flecs::Poly>(InBase);
+	}*/
+	
 
 private:
 	

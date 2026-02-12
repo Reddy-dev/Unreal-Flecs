@@ -23,4 +23,9 @@ void FFlecsQueryDefinition::Apply(const TSolidNotNull<const UFlecsWorld*> InWorl
 	{
 		OtherExpression.Get<FFlecsQueryExpression>().Apply(InWorld, InQueryBuilder);
 	}
+	
+	if (bUseGroupBy)
+	{
+		GroupByExpression.Apply(InWorld, InQueryBuilder);
+	}
 }

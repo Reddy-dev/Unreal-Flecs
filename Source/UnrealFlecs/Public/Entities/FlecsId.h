@@ -179,8 +179,8 @@ public:
     
 }; // struct FFlecsId
 
-static_assert(sizeof(FFlecsId) == sizeof(flecs::id_t), "FFlecsId must have the same size as flecs::id_t");
-static_assert(alignof(FFlecsId) == alignof(flecs::id_t), "FFlecsId must have the same alignment as flecs::id_t");
+static_assert(sizeof(FFlecsId) == sizeof(flecs::entity_t), "FFlecsId must have the same size as flecs::id_t");
+static_assert(alignof(FFlecsId) == alignof(flecs::entity_t), "FFlecsId must have the same alignment as flecs::id_t");
 static_assert(std::is_trivially_copyable_v<FFlecsId>, "FFlecsId must be trivially copyable.");
 
 template<>

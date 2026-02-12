@@ -12,9 +12,27 @@ FFlecsQueryBuilder::FFlecsQueryBuilder(const UFlecsWorld* InWorld, const FString
 	World = InWorld;
 }
 
+FFlecsQueryBuilder::FFlecsQueryBuilder(const UFlecsWorld* InWorld, const FFlecsEntityHandle& InQueryEntity)
+{
+	World = InWorld;
+	OptionalQueryEntity = InQueryEntity;
+}
+
 FFlecsQuery FFlecsQueryBuilder::Build() const
 {
-	flecs::query_builder<> Builder = flecs::query_builder<>(World->World, StringCast<char>(*Name).Get());
-	Definition.Apply(World.Get(), Builder);
-	return FFlecsQuery(Builder.build());
+	if (OptionalQueryEntity.IsSet())
+	{
+		const FFlecsEntityHandle QueryEntity = OptionalQueryEntity.GetValue();
+		solid_checkf(QueryEntity.IsValid(), TEXT("Invalid query entity provided to FlecsQueryBuilder"));
+		
+		flecs::query_builder<> Builder = flecs::query_builder<>(World->World, QueryEntity);
+		Definition.Apply(World.Get(), Builder);
+		return FFlecsQuery(Builder.build());
+	}
+	else
+	{
+		flecs::query_builder<> Builder = flecs::query_builder<>(World->World, StringCast<char>(*Name).Get());
+		Definition.Apply(World.Get(), Builder);
+		return FFlecsQuery(Builder.build());
+	}
 }

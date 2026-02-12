@@ -30,13 +30,13 @@ public:
 	// We should only call the Super when we have child expressions
 	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const;
 
-	#if WITH_EDITORONLY_DATA
+#if WITH_EDITORONLY_DATA
 
 	//UPROPERTY(VisibleAnywhere, Category = "Flecs | Query")
 	UPROPERTY()
 	bool bAllowsChildExpressions = false;
 
-	#endif // WITH_EDITORONLY_DATA
+#endif // WITH_EDITORONLY_DATA
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query",
 		meta = (EditCondition = "bAllowsChildExpressions", ShowOnlyInnerProperties, ExcludeBaseStruct))

@@ -10,6 +10,7 @@
 
 #include "FlecsQueryBase.generated.h"
 
+struct FFlecsQueryDefinition;
 struct FFlecsQuery;
 
 USTRUCT(BlueprintInternalUseOnly)

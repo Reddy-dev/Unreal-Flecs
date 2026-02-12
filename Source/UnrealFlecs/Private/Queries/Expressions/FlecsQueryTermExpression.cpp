@@ -20,11 +20,11 @@ void FFlecsQueryTermExpression::Apply(TSolidNotNull<const UFlecsWorld*> InWorld,
 	{
 		const FFlecsQueryGeneratorInputType& SourceInputType = Source.Get<FFlecsQueryGeneratorInputType>();
 		
-		if (SourceInputType.ReturnType == FFlecsQueryGeneratorInputType::EQueryReturnType::FlecsId)
+		if (SourceInputType.ReturnType == EFlecsQueryGeneratorReturnType::FlecsId)
 		{
 			InQueryBuilder.src(SourceInputType.GetFlecsIdOutput(InWorld));
 		}
-		else if (SourceInputType.ReturnType == FFlecsQueryGeneratorInputType::EQueryReturnType::String)
+		else if (SourceInputType.ReturnType == EFlecsQueryGeneratorReturnType::String)
 		{
 			const FString StringOutput = SourceInputType.GetStringOutput();
 	

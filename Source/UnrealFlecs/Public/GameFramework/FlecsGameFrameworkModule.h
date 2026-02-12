@@ -3,7 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
 #include "Modules/FlecsModuleObject.h"
+
 #include "FlecsGameFrameworkModule.generated.h"
 
 UCLASS(BlueprintType, DisplayName = "Flecs Game Framework Module")

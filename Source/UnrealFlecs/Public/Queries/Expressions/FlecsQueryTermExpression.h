@@ -39,7 +39,7 @@ public:
 	 * Setting this is optional. If not set, the value of the accessed component
 	 * may be out of sync for at most one frame.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query", AdvancedDisplay)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query")
 	bool bStage = false;
 
 	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const override;

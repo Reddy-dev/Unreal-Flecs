@@ -10,14 +10,14 @@
 void FFlecsQueryTerm::ApplyToQueryBuilder(const TSolidNotNull<const UFlecsWorld*> InWorld,
 	flecs::query_builder<>& InQueryBuilder) const
 {
-	const FFlecsQueryGeneratorInputType::EQueryReturnType ReturnType = InputType.Get().ReturnType;
+	const EFlecsQueryGeneratorReturnType ReturnType = InputType.Get().ReturnType;
 	
-	if (ReturnType == FFlecsQueryGeneratorInputType::EQueryReturnType::FlecsId)
+	if (ReturnType == EFlecsQueryGeneratorReturnType::FlecsId)
 	{
 		const FFlecsId IdOutput = InputType.Get().GetFlecsIdOutput(InWorld);
 		InQueryBuilder.with(IdOutput);
 	}
-	else if (ReturnType == FFlecsQueryGeneratorInputType::EQueryReturnType::String)
+	else if (ReturnType == EFlecsQueryGeneratorReturnType::String)
 	{
 		const FString StringOutput = InputType.Get().GetStringOutput();
 	
@@ -33,7 +33,7 @@ void FFlecsQueryTerm::ApplyToQueryBuilder(const TSolidNotNull<const UFlecsWorld*
 	
 		InQueryBuilder.with(OwnedCStr);
 	}
-	else if (ReturnType == FFlecsQueryGeneratorInputType::EQueryReturnType::CustomBuilder)
+	else if (ReturnType == EFlecsQueryGeneratorReturnType::CustomBuilder)
 	{
 		InputType.Get().CustomBuilderOutput(InQueryBuilder, InWorld);
 	}

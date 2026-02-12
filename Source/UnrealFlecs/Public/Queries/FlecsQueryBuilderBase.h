@@ -10,6 +10,9 @@
 #include "Expressions/FlecsQueryTermExpression.h"
 #include "Generator/FlecsQueryGeneratorInputType.h"
 #include "FlecsQueryDefinition.h"
+#include "Callbacks/FlecsOrderByCallbackDefinition.h"
+#include "Expressions/FlecsQueryGroupByExpression.h"
+#include "Expressions/FlecsQueryOrderByExpression.h"
 
 namespace Unreal::Flecs::Queries
 {
@@ -27,62 +30,67 @@ struct TFlecsQueryBuilderBase
 {
 	using FInheritedType = TInherited;
 	
-	FORCEINLINE_DEBUGGABLE FInheritedType& Get()
+private:
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& GetSelf()
 	{
 		return static_cast<TInherited&>(*this);
 	}
 	
-	FORCEINLINE_DEBUGGABLE const FInheritedType& Get() const
+	FORCEINLINE_DEBUGGABLE const FInheritedType& GetSelf() const
 	{
 		return static_cast<const TInherited&>(*this);
 	}
 	
+public:
+	
 	FORCEINLINE_DEBUGGABLE FFlecsQueryDefinition& GetQueryDefinition() const
 	{
-		return this->Get().GetQueryDefinition_Impl();
+		return this->GetSelf().GetQueryDefinition_Impl();
 	}
 	
-public:
 	mutable int32 LastTermIndex = -1;
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& AddTerm(const FFlecsQueryTermExpression& InTerm)
 	{
 		this->GetQueryDefinition().AddQueryTerm(InTerm);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
-		return Get();
+		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& TermAt(const int32 InTermIndex)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		LastTermIndex = InTermIndex;
-		return Get();
+		return GetSelf();
 	}
+	
+	/*FORCEINLINE_DEBUGGABLE FInheritedType& TermAt(*/
 	
 #pragma region QueryDefinitionProperties
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& Cache(const EFlecsQueryCacheType InCacheType = EFlecsQueryCacheType::Default)
 	{
 		this->GetQueryDefinition().CacheType = InCacheType;
-		return Get();
+		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& DetectChanges(const bool bInDetectChanges = true)
 	{
 		this->GetQueryDefinition().bDetectChanges = bInDetectChanges;
-		return Get();
+		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& Flags(const uint8 InFlags)
 	{
 		this->GetQueryDefinition().Flags = InFlags;
-		return Get();
+		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& Flags(const EFlecsQueryFlags InFlags)
 	{
 		this->GetQueryDefinition().Flags = static_cast<uint8>(InFlags);
-		return Get();
+		return GetSelf();
 	}
 	
 #pragma endregion QueryDefinitionProperties
@@ -94,7 +102,7 @@ public:
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		
 		this->GetQueryDefinition().Terms[LastTermIndex].Operator = InOperator;
-		return Get();
+		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& And()
@@ -137,7 +145,7 @@ public:
 		
 		this->GetQueryDefinition().Terms[LastTermIndex].InOut = InInOut;
 		this->GetQueryDefinition().Terms[LastTermIndex].bStage = bStage;
-		return Get();
+		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& In()
@@ -184,6 +192,48 @@ public:
 	
 #pragma region TermHelperFunctions
 	
+private:
+	FORCEINLINE_DEBUGGABLE FInheritedType& WithCppType_Internal(const std::string_view TypeName)
+	{
+		const FString TypeNameFString = FString(TypeName.data());
+		
+		FFlecsQueryTermExpression Expr;
+		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
+		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = TypeNameFString;
+		
+		this->GetQueryDefinition().AddQueryTerm(Expr);
+		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
+		
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& WithoutCppType_Internal(const std::string_view TypeName)
+	{
+		WithCppType_Internal(TypeName);
+		this->Not();
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& SecondCppType_Internal(const std::string_view TypeName)
+	{
+		const FString TypeNameFString = FString(TypeName.data());
+		
+		FFlecsQueryTermExpression SecondExpr;
+		SecondExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
+		SecondExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = TypeNameFString;
+		
+		FFlecsQueryTermExpression& TermExpr = this->GetQueryDefinition().Terms[LastTermIndex];
+		
+		const FFlecsQueryTerm FirstTerm = TermExpr.Term;
+		
+		TermExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
+		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTerm.InputType;
+		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondExpr.Term.InputType;
+		return GetSelf();
+	}
+	
+public:
+	
 	FORCEINLINE_DEBUGGABLE FInheritedType& With(const FFlecsId InId)
 	{
 		FFlecsQueryTermExpression Expr;
@@ -193,7 +243,7 @@ public:
 		this->GetQueryDefinition().AddQueryTerm(Expr);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
 		
-		return Get();
+		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& With(const TSolidNotNull<const UScriptStruct*> InStruct)
@@ -205,7 +255,7 @@ public:
 		this->AddTerm(Expr);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
 		
-		return Get();
+		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& With(const FString& InString)
@@ -217,7 +267,7 @@ public:
 		this->GetQueryDefinition().AddQueryTerm(Expr);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
 		
-		return Get();
+		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& With(const TSolidNotNull<const UEnum*> InEnum)
@@ -229,7 +279,7 @@ public:
 		this->GetQueryDefinition().AddQueryTerm(Expr);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
 		
-		return Get();
+		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& With(const FSolidEnumSelector& InEnumSelector)
@@ -241,7 +291,7 @@ public:
 		this->GetQueryDefinition().AddQueryTerm(Expr);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
 		
-		return Get();
+		return GetSelf();
 	}
 	
 	template <typename T>
@@ -258,11 +308,10 @@ public:
 		else
 		{
 			const std::string_view TypeName = nameof(T);
-			const FString TypeNameFString = FString(TypeName.data());
-			this->With(TypeNameFString);
+			this->WithCppType_Internal(TypeName);
 		}
 		
-		return Get();
+		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& Without(const FFlecsId InId)
@@ -276,7 +325,7 @@ public:
 		
 		this->Not();
 		
-		return Get();
+		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& Without(const TSolidNotNull<const UScriptStruct*> InStruct)
@@ -290,7 +339,7 @@ public:
 		
 		this->Not();
 		
-		return Get();
+		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& Without(const FString& InString)
@@ -304,7 +353,7 @@ public:
 		
 		this->Not();
 		
-		return Get();
+		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& Without(const TSolidNotNull<const UEnum*> InEnum)
@@ -318,7 +367,7 @@ public:
 		
 		this->Not();
 		
-		return Get();
+		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& Without(const FSolidEnumSelector& InEnumSelector)
@@ -332,7 +381,7 @@ public:
 		
 		this->Not();
 		
-		return Get();
+		return GetSelf();
 	}
 	
 	template <typename T>
@@ -349,13 +398,10 @@ public:
 		else
 		{
 			const std::string_view TypeName = nameof(T);
-			const FString TypeNameFString = FString(TypeName.data());
-			this->Without(TypeNameFString);
+			this->WithoutCppType_Internal(TypeName);
 		}
 		
-		this->Not();
-		
-		return Get();
+		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& Second(const FFlecsId InId)
@@ -373,7 +419,7 @@ public:
 		TermExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
 		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTerm.InputType;
 		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondExpr.Term.InputType;
-		return Get();
+		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& Second(const TSolidNotNull<const UScriptStruct*> InStruct)
@@ -391,7 +437,7 @@ public:
 		TermExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
 		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTerm.InputType;
 		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondExpr.Term.InputType;
-		return Get();
+		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& Second(const FString& InString)
@@ -409,7 +455,7 @@ public:
 		TermExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
 		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTerm.InputType;
 		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondExpr.Term.InputType;
-		return Get();
+		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& Second(const TSolidNotNull<const UEnum*> InEnum)
@@ -427,7 +473,7 @@ public:
 		TermExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
 		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTerm.InputType;
 		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondExpr.Term.InputType;
-		return Get();
+		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& Second(const FSolidEnumSelector& InEnumSelector)
@@ -443,7 +489,7 @@ public:
 		TermExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
 		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTerm.InputType;
 		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondExpr.Term.InputType;
-		return Get();
+		return GetSelf();
 	}
 	
 	template <typename T>
@@ -464,7 +510,7 @@ public:
 			this->Second(TypeNameFString);
 		}
 		
-		return Get();
+		return GetSelf();
 	}
 	
 	template <Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TFirst, Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TSecond>
@@ -472,7 +518,7 @@ public:
 	{
 		this->With(InFirst);
 		this->Second(InSecond);
-		return Get();
+		return GetSelf();
 	}
 	
 	template <Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TFirst, Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TSecond>
@@ -480,7 +526,7 @@ public:
 	{
 		this->Without(InFirst);
 		this->Second(InSecond);
-		return Get();
+		return GetSelf();
 	}
 	
 	template <typename T, Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TSecond>
@@ -488,7 +534,7 @@ public:
 	{
 		this->With<T>();
 		this->Second(InSecond);
-		return Get();
+		return GetSelf();
 	}
 	
 	template <typename T, Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TSecond>
@@ -496,7 +542,7 @@ public:
 	{
 		this->Without<T>();
 		this->Second(InSecond);
-		return Get();
+		return GetSelf();
 	}
 	
 	template <typename T, Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TFirst>
@@ -504,7 +550,7 @@ public:
 	{
 		this->With(InFirst);
 		this->Second<T>();
-		return Get();
+		return GetSelf();
 	}
 	
 	template <typename T, Unreal::Flecs::Queries::CQueryDefinitionRecordInputType TFirst>
@@ -512,7 +558,7 @@ public:
 	{
 		this->Without(InFirst);
 		this->Second<T>();
-		return Get();
+		return GetSelf();
 	}
 	
 	template <typename TFirst, typename TSecond>
@@ -520,7 +566,7 @@ public:
 	{
 		this->With<TFirst>();
 		this->Second<TSecond>();
-		return Get();
+		return GetSelf();
 	}
 	
 	template <typename TFirst, typename TSecond>
@@ -528,43 +574,267 @@ public:
 	{
 		this->Without<TFirst>();
 		this->Second<TSecond>();
-		return Get();
+		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& WithPair(const FSolidEnumSelector& InPair)
 	{
 		WithPair(InPair.Class, InPair.Value);
-		return Get();
+		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& WithoutPair(const FSolidEnumSelector& InPair)
 	{
 		WithoutPair(InPair.Class, InPair.Value);
-		return Get();
+		return GetSelf();
 	}
 	
 #pragma endregion TermHelperFunctions
+	
+#pragma region OrderByFunctions
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& OrderBy(const FFlecsId InId, Unreal::Flecs::Queries::FOrderByFunctionType InFunction)
+	{
+		TInstancedStruct<FFlecsQueryExpression> OrderByExpr;
+		OrderByExpr.InitializeAs<FFlecsQueryOrderByCPPExpressionWrapper>();
+		OrderByExpr.GetMutable<FFlecsQueryOrderByCPPExpressionWrapper>().OrderByInput.InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
+		OrderByExpr.GetMutable<FFlecsQueryOrderByCPPExpressionWrapper>().OrderByInput.GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InId;
+		OrderByExpr.GetMutable<FFlecsQueryOrderByCPPExpressionWrapper>().OrderByFunction = InFunction;
+		
+		this->GetQueryDefinition().OtherExpressions.Add(OrderByExpr);
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& OrderBy(const UScriptStruct* InStruct, Unreal::Flecs::Queries::FOrderByFunctionType InFunction)
+	{
+		TInstancedStruct<FFlecsQueryExpression> OrderByExpr;
+		OrderByExpr.InitializeAs<FFlecsQueryOrderByCPPExpressionWrapper>();
+		OrderByExpr.GetMutable<FFlecsQueryOrderByCPPExpressionWrapper>().OrderByInput.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
+		OrderByExpr.GetMutable<FFlecsQueryOrderByCPPExpressionWrapper>().OrderByInput.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
+		OrderByExpr.GetMutable<FFlecsQueryOrderByCPPExpressionWrapper>().OrderByFunction = InFunction;
+		
+		this->GetQueryDefinition().OtherExpressions.Add(OrderByExpr);
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& OrderBy(const UEnum* InEnum, const Unreal::Flecs::Queries::FOrderByFunctionType& InFunction)
+	{
+		TInstancedStruct<FFlecsQueryExpression> OrderByExpr;
+		OrderByExpr.InitializeAs<FFlecsQueryOrderByExpression>();
+		OrderByExpr.GetMutable<FFlecsQueryOrderByCPPExpressionWrapper>().OrderByInput.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnum>();
+		OrderByExpr.GetMutable<FFlecsQueryOrderByCPPExpressionWrapper>().OrderByInput.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum;
+		OrderByExpr.GetMutable<FFlecsQueryOrderByCPPExpressionWrapper>().OrderByFunction = InFunction;
+		
+		this->GetQueryDefinition().OtherExpressions.Add(OrderByExpr);
+		return GetSelf();
+	}
+	
+	// Note: The InCppTypeName should be the exact match of what the EcsSymbol would be for the given C++ type.
+	FORCEINLINE_DEBUGGABLE FInheritedType& OrderBy(const FString& InCppTypeName, const Unreal::Flecs::Queries::FOrderByFunctionType& InFunction)
+	{
+		TInstancedStruct<FFlecsQueryExpression> OrderByExpr;
+		OrderByExpr.InitializeAs<FFlecsQueryOrderByCPPExpressionWrapper>();
+		OrderByExpr.GetMutable<FFlecsQueryOrderByCPPExpressionWrapper>().OrderByInput.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
+		OrderByExpr.GetMutable<FFlecsQueryOrderByCPPExpressionWrapper>().OrderByInput.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = InCppTypeName;
+		OrderByExpr.GetMutable<FFlecsQueryOrderByCPPExpressionWrapper>().OrderByFunction = InFunction;
+		
+		this->GetQueryDefinition().OtherExpressions.Add(OrderByExpr);
+		return GetSelf();
+	}
+	
+	template <typename T>
+	FORCEINLINE_DEBUGGABLE FInheritedType& OrderBy(const Unreal::Flecs::Queries::TOrderByFunction<T>& InFunction)
+	{
+		const std::string_view TypeName = nameof(T);
+		
+		TInstancedStruct<FFlecsQueryExpression> OrderByExpr;
+		OrderByExpr.InitializeAs<FFlecsQueryOrderByCPPExpressionWrapper>();
+		OrderByExpr.GetMutable<FFlecsQueryOrderByCPPExpressionWrapper>().OrderByInput.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
+		OrderByExpr.GetMutable<FFlecsQueryOrderByCPPExpressionWrapper>().OrderByInput.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = FString(TypeName.data());
+		OrderByExpr.GetMutable<FFlecsQueryOrderByCPPExpressionWrapper>().OrderByFunction = Unreal::Flecs::Queries::ConvertToUntypedOrderByFunction(InFunction);
+		
+		this->GetQueryDefinition().OtherExpressions.Add(OrderByExpr);
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& OrderByCallbackDefinition(const FFlecsId InId, const TInstancedStruct<FFlecsOrderByCallbackDefinition>& InCallbackDefinition)
+	{
+		TInstancedStruct<FFlecsQueryExpression> OrderByExpr;
+		OrderByExpr.InitializeAs<FFlecsQueryOrderByExpression>();
+		OrderByExpr.GetMutable<FFlecsQueryOrderByExpression>().OrderByInput.InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
+		OrderByExpr.GetMutable<FFlecsQueryOrderByExpression>().OrderByInput.GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InId;
+		OrderByExpr.GetMutable<FFlecsQueryOrderByExpression>().OrderByCallback = InCallbackDefinition;
+		
+		this->GetQueryDefinition().OtherExpressions.Add(OrderByExpr);
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& OrderByCallbackDefinition(const UScriptStruct* InStruct, const TInstancedStruct<FFlecsOrderByCallbackDefinition>& InCallbackDefinition)
+	{
+		TInstancedStruct<FFlecsQueryExpression> OrderByExpr;
+		OrderByExpr.InitializeAs<FFlecsQueryOrderByExpression>();
+		OrderByExpr.GetMutable<FFlecsQueryOrderByExpression>().OrderByInput.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
+		OrderByExpr.GetMutable<FFlecsQueryOrderByExpression>().OrderByInput.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
+		OrderByExpr.GetMutable<FFlecsQueryOrderByExpression>().OrderByCallback = InCallbackDefinition;
+		
+		this->GetQueryDefinition().OtherExpressions.Add(OrderByExpr);
+		return GetSelf();
+	}
+	
+	// Note: The InCppTypeName should be the exact match of what the EcsSymbol would be for the given C++ type.
+	FORCEINLINE_DEBUGGABLE FInheritedType& OrderByCallbackDefinition(const FString& InCppTypeName, const TInstancedStruct<FFlecsOrderByCallbackDefinition>& InCallbackDefinition)
+	{
+		TInstancedStruct<FFlecsQueryExpression> OrderByExpr;
+		OrderByExpr.InitializeAs<FFlecsQueryOrderByExpression>();
+		OrderByExpr.GetMutable<FFlecsQueryOrderByExpression>().OrderByInput.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
+		OrderByExpr.GetMutable<FFlecsQueryOrderByExpression>().OrderByInput.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = InCppTypeName;
+		OrderByExpr.GetMutable<FFlecsQueryOrderByExpression>().OrderByCallback = InCallbackDefinition;
+		
+		this->GetQueryDefinition().OtherExpressions.Add(OrderByExpr);
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& OrderByCallbackDefinition(const UEnum* InEnum, const TInstancedStruct<FFlecsOrderByCallbackDefinition>& InCallbackDefinition)
+	{
+		TInstancedStruct<FFlecsQueryExpression> OrderByExpr;
+		OrderByExpr.InitializeAs<FFlecsQueryOrderByExpression>();
+		OrderByExpr.GetMutable<FFlecsQueryOrderByExpression>().OrderByInput.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnum>();
+		OrderByExpr.GetMutable<FFlecsQueryOrderByExpression>().OrderByInput.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum;
+		OrderByExpr.GetMutable<FFlecsQueryOrderByExpression>().OrderByCallback = InCallbackDefinition;
+		
+		this->GetQueryDefinition().OtherExpressions.Add(OrderByExpr);
+		return GetSelf();
+	}
+	
+	template <typename T>
+	FORCEINLINE_DEBUGGABLE FInheritedType& OrderByCallbackDefinition(const TInstancedStruct<FFlecsOrderByCallbackDefinition>& InCallbackDefinition)
+	{
+		const std::string_view TypeName = nameof(T);
+		
+		TInstancedStruct<FFlecsQueryExpression> OrderByExpr;
+		OrderByExpr.InitializeAs<FFlecsQueryOrderByExpression>();
+		OrderByExpr.GetMutable<FFlecsQueryOrderByExpression>().OrderByInput.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
+		OrderByExpr.GetMutable<FFlecsQueryOrderByExpression>().OrderByInput.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = FString(TypeName.data());
+		OrderByExpr.GetMutable<FFlecsQueryOrderByExpression>().OrderByCallback = InCallbackDefinition;
+		
+		this->GetQueryDefinition().OtherExpressions.Add(OrderByExpr);
+		return GetSelf();
+	}
+	
+#pragma endregion OrderByFunctions
+	
+#pragma region GroupByFunctions
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& GroupBy(const FFlecsId InId)
+	{
+		if (InId.IsValid())
+		{
+			this->GetQueryDefinition().bUseGroupBy = true;
+		}
+		else
+		{
+			this->GetQueryDefinition().bUseGroupBy = false;
+			return GetSelf();
+		}
+		
+		this->GetQueryDefinition().GroupByExpression.GroupByInput.InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
+		this->GetQueryDefinition().GroupByExpression.GroupByInput.GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InId;
+
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& GroupBy(const UScriptStruct* InStruct)
+	{
+		if (InStruct != nullptr)
+		{
+			this->GetQueryDefinition().bUseGroupBy = true;
+		}
+		else
+		{
+			this->GetQueryDefinition().bUseGroupBy = false;
+			return GetSelf();
+		}
+		
+		this->GetQueryDefinition().GroupByExpression.GroupByInput.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
+		this->GetQueryDefinition().GroupByExpression.GroupByInput.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
+
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& GroupBy(const UEnum* InEnum)
+	{
+		if (InEnum != nullptr)
+		{
+			this->GetQueryDefinition().bUseGroupBy = true;
+		}
+		else
+		{
+			this->GetQueryDefinition().bUseGroupBy = false;
+			return GetSelf();
+		}
+		
+		this->GetQueryDefinition().GroupByExpression.GroupByInput.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnum>();
+		this->GetQueryDefinition().GroupByExpression.GroupByInput.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum;
+
+		return GetSelf();
+	}
+	
+	// Note: The InCppTypeName should be the exact match of what the EcsSymbol would be for the given C++ type.
+	FORCEINLINE_DEBUGGABLE FInheritedType& GroupBy(const FString& InCppTypeName)
+	{
+		if (!InCppTypeName.IsEmpty())
+		{
+			this->GetQueryDefinition().bUseGroupBy = true;
+		}
+		else
+		{
+			this->GetQueryDefinition().bUseGroupBy = false;
+			return GetSelf();
+		}
+		
+		this->GetQueryDefinition().GroupByExpression.GroupByInput.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
+		this->GetQueryDefinition().GroupByExpression.GroupByInput.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = InCppTypeName;
+
+		return GetSelf();
+	}
+	
+	template <typename T>
+	FORCEINLINE_DEBUGGABLE FInheritedType& GroupBy()
+	{
+		const std::string_view TypeName = nameof(T);
+		return GroupBy(FString(TypeName.data()));
+	}
+
+#pragma endregion GroupByFunctions
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& Src(const FString& InSource)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		this->GetQueryDefinition().Terms[LastTermIndex].Source.template InitializeAs<FFlecsQueryGeneratorInputType_String>();
 		this->GetQueryDefinition().Terms[LastTermIndex].Source.template GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = InSource;
-		return Get();
+		return GetSelf();
 	}
+	
+	/*FORCEINLINE_DEBUGGABLE FInheritedType& Src(const TSolidNotNull<const UScriptStruct*> InStruct)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.template InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.template GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
+		return GetSelf();
+	}*/
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& ModifyLastTerm(const TFunctionRef<void(FFlecsQueryTermExpression&)>& InModifier)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		InModifier(this->GetQueryDefinition().Terms[LastTermIndex]);
-		return Get();
+		return GetSelf();
 	}
 	
 	template <Unreal::Flecs::Queries::TQueryExpressionConcept TExpression>
 	FORCEINLINE_DEBUGGABLE FInheritedType& AddExpression(const TExpression& InExpression)
 	{
 		this->GetQueryDefinition().AddAdditionalExpression(InExpression);
-		return Get();
+		return GetSelf();
 	}
 	
 }; // struct TFlecsQueryBuilderBase

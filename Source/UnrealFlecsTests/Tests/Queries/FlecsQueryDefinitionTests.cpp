@@ -2,23 +2,23 @@
 
 #include "Misc/AutomationTest.h"
 
-#if WITH_AUTOMATION_TESTS
+#if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
 
-#include "Entities/FlecsEntityRecord.h"
+#include "FlecsQueryDefinitionTestTypes.h"
 #include "Queries/FlecsQuery.h"
-#include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 
 #include "Queries/FlecsQueryDefinition.h"
-#include "Queries/FlecsQueryDefinitionRecordFragment.h"
 #include "Queries/Generator/FlecsQueryGeneratorInputType.h"
+#include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 
 // @TODO: add pair testing
 
 /**
  * Layout of the tests:
  * A. Construction Tests
- * B. Query Builder Tests
- * C. Query Definition Entity Record Fragment Builder
+ * B. Query Builder 
+ * C. Query Order By Tests
+ * D. Query Group By Tests
  **/
 TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 							   "UnrealFlecs.B2_QueryDefinition",
@@ -676,185 +676,592 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		ASSERT_THAT(IsTrue(Query.count() == 1));
 	}
 	
-	TEST_METHOD(C1_Construction_EntityRecordWithNoTermsOrOtherExpressions_BuildsQuerySuccessfully)
+	TEST_METHOD(B1_BuilderConstruction_WithScriptStructTagTerm_ScriptStructAPI)
 	{
-		FFlecsEntityRecord QueryEntityRecord = FFlecsEntityRecord().Builder()
-			.FragmentScope<FFlecsQueryDefinitionRecordFragment>()
-			.End()
+		FFlecsQuery Query = FlecsWorld->CreateQueryBuilder()
+			.With(FFlecsTestStruct_Tag::StaticStruct())
 			.Build();
 		
-		ASSERT_THAT(IsTrue(QueryEntityRecord.HasFragment<FFlecsQueryDefinitionRecordFragment>()));
-		
-		FFlecsEntityHandle QueryEntityHandle = FlecsWorld->CreateEntityWithRecord(QueryEntityRecord);
-		ASSERT_THAT(IsTrue(QueryEntityHandle.IsValid()));
-		
-		FFlecsQuery Query = FlecsWorld->GetQueryFromEntity(QueryEntityHandle);
-		ASSERT_THAT(IsTrue(Query));
-		
-		ASSERT_THAT(IsTrue(Query.is_true() == 0));
-	}
-	
-	TEST_METHOD(C2_Construction_EntityRecordWithTagTermScriptStruct_CPPAPI)
-	{
-		FFlecsEntityRecord QueryEntityRecord = FFlecsEntityRecord().Builder()
-			.FragmentScope<FFlecsQueryDefinitionRecordFragment>()
-				.With<FFlecsTestStruct_Tag>() // 0
-			.End()
-			.Build();
-		
-		ASSERT_THAT(IsTrue(QueryEntityRecord.HasFragment<FFlecsQueryDefinitionRecordFragment>()));
-		
-		FFlecsEntityHandle QueryEntityHandle = FlecsWorld->CreateEntityWithRecord(QueryEntityRecord);
-		ASSERT_THAT(IsTrue(QueryEntityHandle.IsValid()));
-		
-		FFlecsQuery Query = FlecsWorld->GetQueryFromEntity(QueryEntityHandle);
-		ASSERT_THAT(IsTrue(Query));
+		ASSERT_THAT(IsTrue(Query.IsValid()));
 		
 		FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity()
 			.Add<FFlecsTestStruct_Tag>();
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
 		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Tag>()));
 		
+		ASSERT_THAT(IsTrue(Query.is_true()));
 		ASSERT_THAT(IsTrue(Query.count() == 1));
+		
+		FFlecsEntityHandle TestEntity2 = FlecsWorld->CreateEntity()
+			.Add<FFlecsTestStruct_Tag>();
+		ASSERT_THAT(IsTrue(TestEntity2.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity2.Has<FFlecsTestStruct_Tag>()));
+			
+		ASSERT_THAT(IsTrue(Query.is_true()));
+		ASSERT_THAT(IsTrue(Query.count() == 2));
+		
+		TestEntity2.Remove<FFlecsTestStruct_Tag>();
+		ASSERT_THAT(IsTrue(Query.is_true()));
+		ASSERT_THAT(IsTrue(Query.count() == 1));
+		
+		TestEntity.Remove<FFlecsTestStruct_Tag>();
+		ASSERT_THAT(IsFalse(Query.is_true()));
+		ASSERT_THAT(IsTrue(Query.count() == 0));
 	}
 	
-	TEST_METHOD(C3_Construction_EntityRecordWithValueTermScriptStruct_ScriptStructAPI)
+	TEST_METHOD(B2_BuilderConstruction_WithScriptStructTagTerm_CPPAPI)
 	{
-		static const FFlecsTestStruct_Value TestValue { 168 };
-		FFlecsEntityRecord QueryEntityRecord = FFlecsEntityRecord().Builder()
-			.FragmentScope<FFlecsQueryDefinitionRecordFragment>()
-				.With(FFlecsTestStruct_Value::StaticStruct()) // 0
-			.End()
+		FFlecsQuery Query = FlecsWorld->CreateQueryBuilder()
+			.With<FFlecsTestStruct_Tag>()
 			.Build();
 		
-		ASSERT_THAT(IsTrue(QueryEntityRecord.HasFragment<FFlecsQueryDefinitionRecordFragment>()));
+		ASSERT_THAT(IsTrue(Query.IsValid()));
 		
-		FFlecsEntityHandle QueryEntityHandle = FlecsWorld->CreateEntityWithRecord(QueryEntityRecord);
-		ASSERT_THAT(IsTrue(QueryEntityHandle.IsValid()));
+		FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity()
+			.Add<FFlecsTestStruct_Tag>();
+		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Tag>()));
 		
-		FFlecsQuery Query = FlecsWorld->GetQueryFromEntity(QueryEntityHandle);
-		ASSERT_THAT(IsTrue(Query));
+		ASSERT_THAT(IsTrue(Query.is_true()));
+		ASSERT_THAT(IsTrue(Query.count() == 1));
 		
+		FFlecsEntityHandle TestEntity2 = FlecsWorld->CreateEntity()
+			.Add<FFlecsTestStruct_Tag>();
+		ASSERT_THAT(IsTrue(TestEntity2.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity2.Has<FFlecsTestStruct_Tag>()));
+			
+		ASSERT_THAT(IsTrue(Query.is_true()));
+		ASSERT_THAT(IsTrue(Query.count() == 2));
+		
+		TestEntity2.Remove<FFlecsTestStruct_Tag>();
+		ASSERT_THAT(IsTrue(Query.is_true()));
+		ASSERT_THAT(IsTrue(Query.count() == 1));
+		
+		TestEntity.Remove<FFlecsTestStruct_Tag>();
+		ASSERT_THAT(IsFalse(Query.is_true()));
+		ASSERT_THAT(IsTrue(Query.count() == 0));
+	}
+	
+	TEST_METHOD(B3_BuilderConstruction_WithScriptStructTagTerm_StringAPI)
+	{
+		FFlecsQuery Query = FlecsWorld->CreateQueryBuilder()
+			.With("FFlecsTestStruct_Tag")
+			.Build();
+		
+		ASSERT_THAT(IsTrue(Query.IsValid()));
+		
+		FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity()
+			.Add<FFlecsTestStruct_Tag>();
+		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Tag>()));
+		
+		ASSERT_THAT(IsTrue(Query.is_true()));
+		ASSERT_THAT(IsTrue(Query.count() == 1));
+		
+		FFlecsEntityHandle TestEntity2 = FlecsWorld->CreateEntity()
+			.Add<FFlecsTestStruct_Tag>();
+		ASSERT_THAT(IsTrue(TestEntity2.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity2.Has<FFlecsTestStruct_Tag>()));
+			
+		ASSERT_THAT(IsTrue(Query.is_true()));
+		ASSERT_THAT(IsTrue(Query.count() == 2));
+		
+		TestEntity2.Remove<FFlecsTestStruct_Tag>();
+		ASSERT_THAT(IsTrue(Query.is_true()));
+		ASSERT_THAT(IsTrue(Query.count() == 1));
+		
+		TestEntity.Remove<FFlecsTestStruct_Tag>();
+		ASSERT_THAT(IsFalse(Query.is_true()));
+		ASSERT_THAT(IsTrue(Query.count() == 0));
+	}
+	
+	TEST_METHOD(B4_BuilderConstruction_WithScriptStructTagTermAndWithoutTag_ScriptStructAPI)
+	{
+		FFlecsQuery Query = FlecsWorld->CreateQueryBuilder()
+			.Without(FFlecsTestStruct_Tag::StaticStruct())
+			.With(FFlecsTestStruct_Value::StaticStruct())
+			.Build();
+		
+		ASSERT_THAT(IsTrue(Query.IsValid()));
+		
+		static const FFlecsTestStruct_Value TestValue { 256 };
 		FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity()
 			.Set(FFlecsTestStruct_Value::StaticStruct(), &TestValue);
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
 		ASSERT_THAT(IsTrue(TestEntity.Has(FFlecsTestStruct_Value::StaticStruct())));
 		
 		const FFlecsTestStruct_Value& RetrievedValue = TestEntity.Get<FFlecsTestStruct_Value>();
-		ASSERT_THAT(IsTrue(RetrievedValue.Value == 168));
-		
-		ASSERT_THAT(IsTrue(Query.count() == 1));
-		
-		Query.each([&](flecs::iter& Iter, size_t Index)
-		{
-			const FFlecsTestStruct_Value& Value = Iter.field_at<FFlecsTestStruct_Value>(0, Index);
-			ASSERT_THAT(AreEqual(Value.Value, 168));
-		});
-	}
-	
-	TEST_METHOD(C4_Construction_EntityRecordWithPairTermScriptStructs_CPPAPI)
-	{
-		FFlecsEntityRecord QueryEntityRecord = FFlecsEntityRecord().Builder()
-			.FragmentScope<FFlecsQueryDefinitionRecordFragment>()
-				.WithPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>() // 0
-			.End()
-			.Build();
-		
-		ASSERT_THAT(IsTrue(QueryEntityRecord.HasFragment<FFlecsQueryDefinitionRecordFragment>()));
-		
-		FFlecsEntityHandle QueryEntityHandle = FlecsWorld->CreateEntityWithRecord(QueryEntityRecord);
-		ASSERT_THAT(IsTrue(QueryEntityHandle.IsValid()));
-		
-		FFlecsQuery Query = FlecsWorld->GetQueryFromEntity(QueryEntityHandle);
-		ASSERT_THAT(IsTrue(Query));
-		
-		FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity()
-			.AddPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>();
-		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
-		ASSERT_THAT(IsTrue(TestEntity.HasPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>()));
-		
-		ASSERT_THAT(IsTrue(Query.count() == 1));
-	}
-	
-	TEST_METHOD(C5_Construction_EntityRecordWithPairTermScriptStructAndWildcard_CPPAPI)
-	{
-		FFlecsEntityRecord QueryEntityRecord = FFlecsEntityRecord().Builder()
-			.FragmentScope<FFlecsQueryDefinitionRecordFragment>()
-				.WithPair<FUSTRUCTPairTestComponent>(flecs::Wildcard) // 0
-			.End()
-			.Build();
-		
-		ASSERT_THAT(IsTrue(QueryEntityRecord.HasFragment<FFlecsQueryDefinitionRecordFragment>()));
-		
-		FFlecsEntityHandle QueryEntityHandle = FlecsWorld->CreateEntityWithRecord(QueryEntityRecord);
-		ASSERT_THAT(IsTrue(QueryEntityHandle.IsValid()));
-		
-		FFlecsQuery Query = FlecsWorld->GetQueryFromEntity(QueryEntityHandle);
-		ASSERT_THAT(IsTrue(Query));
-		
-		FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity()
-			.AddPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>();
-		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
-		ASSERT_THAT(IsTrue(TestEntity.HasPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>()));
+		ASSERT_THAT(IsTrue(RetrievedValue.Value == 256));
 		
 		ASSERT_THAT(IsTrue(Query.count() == 1));
 		
 		FFlecsEntityHandle TestEntity2 = FlecsWorld->CreateEntity()
-			.AddPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Data>();
+			.Add<FFlecsTestStruct_Tag>()
+			.Set(FFlecsTestStruct_Value::StaticStruct(), &TestValue);
 		ASSERT_THAT(IsTrue(TestEntity2.IsValid()));
-		ASSERT_THAT(IsTrue(TestEntity2.HasPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Data>()));
+		ASSERT_THAT(IsTrue(TestEntity2.Has<FFlecsTestStruct_Tag>()));
+		ASSERT_THAT(IsTrue(TestEntity2.Has(FFlecsTestStruct_Value::StaticStruct())));
 		
+		ASSERT_THAT(IsTrue(Query.count() == 1));
+	}
+	
+	TEST_METHOD(B5_BuilderConstruction_WithCPPTagTermAndWithoutTag_CPPAPI)
+	{
+		FFlecsQuery Query = FlecsWorld->CreateQueryBuilder()
+			.Without<FFlecsTestStruct_Tag>()
+			.With<FFlecsTest_CPPStructValue>()
+			.Build();
+		
+		ASSERT_THAT(IsTrue(Query.IsValid()));
+		
+		static const FFlecsTest_CPPStructValue TestValue { 256 };
+		FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity()
+			.Set<FFlecsTest_CPPStructValue>(TestValue);
+		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTest_CPPStructValue>()));
+		
+		const FFlecsTest_CPPStructValue& RetrievedValue = TestEntity.Get<FFlecsTest_CPPStructValue>();
+		ASSERT_THAT(IsTrue(RetrievedValue.Value == 256));
+		
+		ASSERT_THAT(IsTrue(Query.count() == 1));
+		
+		FFlecsEntityHandle TestEntity2 = FlecsWorld->CreateEntity()
+			.Add<FFlecsTestStruct_Tag>()
+			.Set<FFlecsTest_CPPStructValue>(TestValue);
+		ASSERT_THAT(IsTrue(TestEntity2.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity2.Has<FFlecsTestStruct_Tag>()));
+		ASSERT_THAT(IsTrue(TestEntity2.Has<FFlecsTest_CPPStructValue>()));
+		
+		ASSERT_THAT(IsTrue(Query.count() == 1));
+	}
+	
+	TEST_METHOD(B6_BuilderConstruction_WithTypedQueryDefinition_ScriptStructTagTerm_ScriptStructAPI)
+	{
+		TTypedFlecsQuery<FFlecsTestStruct_Tag> Query = FlecsWorld->CreateQueryBuilder<FFlecsTestStruct_Tag>()
+			.Build();
+		
+		ASSERT_THAT(IsTrue(Query.IsValid()));
+		
+		FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity()
+			.Add<FFlecsTestStruct_Tag>();
+		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Tag>()));
+		
+		ASSERT_THAT(IsTrue(Query.is_true()));
+		ASSERT_THAT(IsTrue(Query.count() == 1));
+		
+		FFlecsEntityHandle TestEntity2 = FlecsWorld->CreateEntity()
+			.Add<FFlecsTestStruct_Tag>();
+		ASSERT_THAT(IsTrue(TestEntity2.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity2.Has<FFlecsTestStruct_Tag>()));
+			
+		ASSERT_THAT(IsTrue(Query.is_true()));
 		ASSERT_THAT(IsTrue(Query.count() == 2));
+		
+		TestEntity2.Remove<FFlecsTestStruct_Tag>();
+		ASSERT_THAT(IsTrue(Query.is_true()));
+		ASSERT_THAT(IsTrue(Query.count() == 1));
+		
+		TestEntity.Remove<FFlecsTestStruct_Tag>();
+		ASSERT_THAT(IsFalse(Query.is_true()));
+		ASSERT_THAT(IsTrue(Query.count() == 0));
 	}
 	
-	TEST_METHOD(C6_Construction_EntityRecordWithPairTermScriptStructs_CPPAPI_ScriptStructAPI)
+	TEST_METHOD(B7_BuilderConstruction_WithTypedQueryDefinition_ScriptStructTagTermAndScriptStructValueTerm_ScriptStructAPI)
 	{
-		FFlecsEntityRecord QueryEntityRecord = FFlecsEntityRecord().Builder()
-			.FragmentScope<FFlecsQueryDefinitionRecordFragment>()
-				.WithPair<FUSTRUCTPairTestComponent>(FUSTRUCTPairTestComponent_Second::StaticStruct()) // 0
-			.End()
+		TTypedFlecsQuery<FFlecsTestStruct_Value> Query = FlecsWorld->CreateQueryBuilder<const FFlecsTestStruct_Value>()
+			.With<FFlecsTestStruct_Tag>()
 			.Build();
 		
-		ASSERT_THAT(IsTrue(QueryEntityRecord.HasFragment<FFlecsQueryDefinitionRecordFragment>()));
-		
-		FFlecsEntityHandle QueryEntityHandle = FlecsWorld->CreateEntityWithRecord(QueryEntityRecord);
-		ASSERT_THAT(IsTrue(QueryEntityHandle.IsValid()));
-		
-		FFlecsQuery Query = FlecsWorld->GetQueryFromEntity(QueryEntityHandle);
-		ASSERT_THAT(IsTrue(Query));
+		ASSERT_THAT(IsTrue(Query.IsValid()));
 		
 		FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity()
-			.AddPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>();
+			.Add<FFlecsTestStruct_Tag>()
+			.Set<FFlecsTestStruct_Value>({ 512 });
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
-		ASSERT_THAT(IsTrue(TestEntity.HasPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>()));
+		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Tag>()));
 		
+		ASSERT_THAT(IsTrue(Query.is_true()));
 		ASSERT_THAT(IsTrue(Query.count() == 1));
+		
+		FFlecsEntityHandle TestEntity2 = FlecsWorld->CreateEntity()
+			.Add<FFlecsTestStruct_Tag>()
+			.Set<FFlecsTestStruct_Value>({ 256 });
+		ASSERT_THAT(IsTrue(TestEntity2.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity2.Has<FFlecsTestStruct_Tag>()));
+			
+		ASSERT_THAT(IsTrue(Query.is_true()));
+		ASSERT_THAT(IsTrue(Query.count() == 2));
+		
+		int32 FoundValueSum = 0;
+		Query.each([&](flecs::iter& Iter, size_t Index, const FFlecsTestStruct_Value& Value)
+		{
+			FoundValueSum += Value.Value;
+		});
+		
+		ASSERT_THAT(IsTrue(FoundValueSum == (512 + 256)));
+		
+		TestEntity2.Remove<FFlecsTestStruct_Tag>();
+		ASSERT_THAT(IsTrue(Query.is_true()));
+		ASSERT_THAT(IsTrue(Query.count() == 1));
+		
+		TestEntity.Remove<FFlecsTestStruct_Tag>();
+		ASSERT_THAT(IsFalse(Query.is_true()));
+		ASSERT_THAT(IsTrue(Query.count() == 0));
 	}
 	
-	TEST_METHOD(C7_Construction_EntityRecordWithPairTermScriptStructs_ScriptStructAPI_CPPAPI)
+	TEST_METHOD(C1_BuilderAPI_OrderByCallbackDefinition_ScriptStructValue_Ascending_ScriptStructAPI)
 	{
-		FFlecsEntityRecord QueryEntityRecord = FFlecsEntityRecord().Builder()
-			.FragmentScope<FFlecsQueryDefinitionRecordFragment>()
-				.WithPairSecond<FUSTRUCTPairTestComponent_Second>(FUSTRUCTPairTestComponent::StaticStruct()) // 0
-			.End()
+		FFlecsQuery Query = FlecsWorld->CreateQueryBuilder()
+			.With(FFlecsTestStruct_Value::StaticStruct())
+			.OrderByCallbackDefinition(FFlecsTestStruct_Value::StaticStruct(), 
+				TInstancedStruct<FFlecsQueryOrderByCallbackDefinitionTest_ScriptStruct>::Make(EFlecsTestQueryOrderByFunction::Ascending))
 			.Build();
 		
-		ASSERT_THAT(IsTrue(QueryEntityRecord.HasFragment<FFlecsQueryDefinitionRecordFragment>()));
+		{
+			static const FFlecsTestStruct_Value V3{ 3 };
+			static const FFlecsTestStruct_Value V1{ 1 };
+			static const FFlecsTestStruct_Value V2{ 2 };
+
+			FlecsWorld->CreateEntity().Set(FFlecsTestStruct_Value::StaticStruct(), &V1);
+			FlecsWorld->CreateEntity().Set(FFlecsTestStruct_Value::StaticStruct(), &V2);
+			FlecsWorld->CreateEntity().Set(FFlecsTestStruct_Value::StaticStruct(), &V3);
+		}
 		
-		FFlecsEntityHandle QueryEntityHandle = FlecsWorld->CreateEntityWithRecord(QueryEntityRecord);
-		ASSERT_THAT(IsTrue(QueryEntityHandle.IsValid()));
-		
-		FFlecsQuery Query = FlecsWorld->GetQueryFromEntity(QueryEntityHandle);
-		ASSERT_THAT(IsTrue(Query));
-		
-		FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity()
-			.AddPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>();
-		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
-		ASSERT_THAT(IsTrue(TestEntity.HasPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>()));
-		
-		ASSERT_THAT(IsTrue(Query.count() == 1));
+		TArray<int32> ExpectedOrder = { 1, 2, 3 };
+		int32 Index = 0;
+		Query.each([&](flecs::iter& Iter, size_t IndexInIter)
+		{
+			const FFlecsTestStruct_Value& Value = Iter.field_at<const FFlecsTestStruct_Value>(0, IndexInIter);
+			ASSERT_THAT(IsTrue(Value.Value == ExpectedOrder[Index]));
+			Index++;
+		});
 	}
 	
+	TEST_METHOD(C2_BuilderAPI_OrderByCallbackDefinition_ScriptStructValue_Descending_ScriptStructAPI)
+	{
+		FFlecsQuery Query = FlecsWorld->CreateQueryBuilder()
+			.With(FFlecsTestStruct_Value::StaticStruct())
+			.OrderByCallbackDefinition(FFlecsTestStruct_Value::StaticStruct(), 
+				TInstancedStruct<FFlecsQueryOrderByCallbackDefinitionTest_ScriptStruct>::Make(EFlecsTestQueryOrderByFunction::Descending))
+			.Build();
+		
+		{
+			static const FFlecsTestStruct_Value V3{ 3 };
+			static const FFlecsTestStruct_Value V1{ 1 };
+			static const FFlecsTestStruct_Value V2{ 2 };
+
+			FlecsWorld->CreateEntity().Set(FFlecsTestStruct_Value::StaticStruct(), &V1);
+			FlecsWorld->CreateEntity().Set(FFlecsTestStruct_Value::StaticStruct(), &V2);
+			FlecsWorld->CreateEntity().Set(FFlecsTestStruct_Value::StaticStruct(), &V3);
+		}
+		
+		TArray<int32> ExpectedOrder = { 3, 2, 1 };
+		int32 Index = 0;
+		Query.each([&](flecs::iter& Iter, size_t IndexInIter)
+		{
+			const FFlecsTestStruct_Value& Value = Iter.field_at<const FFlecsTestStruct_Value>(0, IndexInIter);
+			ASSERT_THAT(IsTrue(Value.Value == ExpectedOrder[Index]));
+			Index++;
+		});
+	}
+	
+	TEST_METHOD(C3_BuilderAPI_OrderByCallbackDefinition_ScriptStructValue_Ascending_CPPAPI)
+	{
+		FFlecsQuery Query = FlecsWorld->CreateQueryBuilder()
+			.With(FFlecsTestStruct_Value::StaticStruct())
+			.OrderByCallbackDefinition<FFlecsTestStruct_Value>(
+				TInstancedStruct<FFlecsQueryOrderByCallbackDefinitionTest_ScriptStruct>::Make(EFlecsTestQueryOrderByFunction::Ascending))
+			.Build();
+		
+		{
+			static const FFlecsTestStruct_Value V3{ 3 };
+			static const FFlecsTestStruct_Value V1{ 1 };
+			static const FFlecsTestStruct_Value V2{ 2 };
+
+			FlecsWorld->CreateEntity().Set(FFlecsTestStruct_Value::StaticStruct(), &V1);
+			FlecsWorld->CreateEntity().Set(FFlecsTestStruct_Value::StaticStruct(), &V2);
+			FlecsWorld->CreateEntity().Set(FFlecsTestStruct_Value::StaticStruct(), &V3);
+		}
+		
+		TArray<int32> ExpectedOrder = { 1, 2, 3 };
+		int32 Index = 0;
+		Query.each([&](flecs::iter& Iter, size_t IndexInIter)
+		{
+			const FFlecsTestStruct_Value& Value = Iter.field_at<const FFlecsTestStruct_Value>(0, IndexInIter);
+			ASSERT_THAT(IsTrue(Value.Value == ExpectedOrder[Index]));
+			Index++;
+		});
+	}
+	
+	TEST_METHOD(C4_BuilderAPI_OrderByCallbackDefinition_ScriptStructValue_Descending_CPPAPI)
+	{
+		FFlecsQuery Query = FlecsWorld->CreateQueryBuilder()
+			.With(FFlecsTestStruct_Value::StaticStruct())
+			.OrderByCallbackDefinition<FFlecsTestStruct_Value>(
+				TInstancedStruct<FFlecsQueryOrderByCallbackDefinitionTest_ScriptStruct>::Make(EFlecsTestQueryOrderByFunction::Descending))
+			.Build();
+		
+		{
+			static const FFlecsTestStruct_Value V3{ 3 };
+			static const FFlecsTestStruct_Value V1{ 1 };
+			static const FFlecsTestStruct_Value V2{ 2 };
+
+			FlecsWorld->CreateEntity().Set(FFlecsTestStruct_Value::StaticStruct(), &V1);
+			FlecsWorld->CreateEntity().Set(FFlecsTestStruct_Value::StaticStruct(), &V2);
+			FlecsWorld->CreateEntity().Set(FFlecsTestStruct_Value::StaticStruct(), &V3);
+		}
+		
+		TArray<int32> ExpectedOrder = { 3, 2, 1 };
+		int32 Index = 0;
+		Query.each([&](flecs::iter& Iter, size_t IndexInIter)
+		{
+			const FFlecsTestStruct_Value& Value = Iter.field_at<const FFlecsTestStruct_Value>(0, IndexInIter);
+			ASSERT_THAT(IsTrue(Value.Value == ExpectedOrder[Index]));
+			Index++;
+		});
+	}
+	
+	TEST_METHOD(C5_BuilderAPI_OrderByOrderByCallbackDefinition_CppOnlyStructValue_Ascending_CPPAPI)
+	{
+		FFlecsQuery Query = FlecsWorld->CreateQueryBuilder()
+			.With<FFlecsTest_CPPStructValue>()
+			.OrderByCallbackDefinition<FFlecsTest_CPPStructValue>(
+				TInstancedStruct<FFlecsQueryOrderByCallbackDefinitionTest_CPPType>::Make(EFlecsTestQueryOrderByFunction::Ascending))
+			.Build();
+		
+		{
+			static const FFlecsTest_CPPStructValue V3{ 3 };
+			static const FFlecsTest_CPPStructValue V1{ 1 };
+			static const FFlecsTest_CPPStructValue V2{ 2 };
+
+			FlecsWorld->CreateEntity().Set<FFlecsTest_CPPStructValue>(V1);
+			FlecsWorld->CreateEntity().Set<FFlecsTest_CPPStructValue>(V2);
+			FlecsWorld->CreateEntity().Set<FFlecsTest_CPPStructValue>(V3);
+		}
+		
+		TArray<int32> ExpectedOrder = { 1, 2, 3 };
+		int32 Index = 0;
+		Query.each([&](flecs::iter& Iter, size_t IndexInIter)
+		{
+			const FFlecsTest_CPPStructValue& Value = Iter.field_at<const FFlecsTest_CPPStructValue>(0, IndexInIter);
+			ASSERT_THAT(IsTrue(Value.Value == ExpectedOrder[Index]));
+			Index++;
+		});
+	}
+	
+	TEST_METHOD(C6_BuilderAPI_OrderByOrderByCallbackDefinition_CppOnlyStructValue_Descending_CPPAPI)
+	{
+		FFlecsQuery Query = FlecsWorld->CreateQueryBuilder()
+			.With<FFlecsTest_CPPStructValue>()
+			.OrderByCallbackDefinition<FFlecsTest_CPPStructValue>(
+				TInstancedStruct<FFlecsQueryOrderByCallbackDefinitionTest_CPPType>::Make(EFlecsTestQueryOrderByFunction::Descending))
+			.Build();
+		
+		{
+			static const FFlecsTest_CPPStructValue V3{ 3 };
+			static const FFlecsTest_CPPStructValue V1{ 1 };
+			static const FFlecsTest_CPPStructValue V2{ 2 };
+
+			FlecsWorld->CreateEntity().Set<FFlecsTest_CPPStructValue>(V1);
+			FlecsWorld->CreateEntity().Set<FFlecsTest_CPPStructValue>(V2);
+			FlecsWorld->CreateEntity().Set<FFlecsTest_CPPStructValue>(V3);
+		}
+		
+		TArray<int32> ExpectedOrder = { 3, 2, 1 };
+		int32 Index = 0;
+		Query.each([&](flecs::iter& Iter, size_t IndexInIter)
+		{
+			const FFlecsTest_CPPStructValue& Value = Iter.field_at<const FFlecsTest_CPPStructValue>(0, IndexInIter);
+			ASSERT_THAT(IsTrue(Value.Value == ExpectedOrder[Index]));
+			Index++;
+		});
+	}
+	
+	TEST_METHOD(C7_BuilderAPI_OrderBy_ScriptStructValue_Ascending_StringAPI)
+	{
+		FFlecsQuery Query = FlecsWorld->CreateQueryBuilder()
+			.With("FFlecsTestStruct_Value")
+			.OrderBy(
+				FFlecsTestStruct_Value::StaticStruct(),
+				[](const FFlecsId IdA, const void* A, const FFlecsId IdB, const void* B) -> int32
+			{
+				const FFlecsTestStruct_Value* StructA = static_cast<const FFlecsTestStruct_Value*>(A);
+				const FFlecsTestStruct_Value* StructB = static_cast<const FFlecsTestStruct_Value*>(B);
+				return StructA->Value - StructB->Value;
+			})
+			.Build();
+		
+		{
+			static const FFlecsTestStruct_Value V3{ 3 };
+			static const FFlecsTestStruct_Value V1{ 1 };
+			static const FFlecsTestStruct_Value V2{ 2 };
+
+			FlecsWorld->CreateEntity().Set(FFlecsTestStruct_Value::StaticStruct(), &V1);
+			FlecsWorld->CreateEntity().Set(FFlecsTestStruct_Value::StaticStruct(), &V2);
+			FlecsWorld->CreateEntity().Set(FFlecsTestStruct_Value::StaticStruct(), &V3);
+		}
+		
+		TArray<int32> ExpectedOrder = { 1, 2, 3 };
+		int32 Index = 0;
+		Query.each([&](flecs::iter& Iter, size_t IndexInIter)
+		{
+			const FFlecsTestStruct_Value& Value = Iter.field_at<const FFlecsTestStruct_Value>(0, IndexInIter);
+			ASSERT_THAT(IsTrue(Value.Value == ExpectedOrder[Index]));
+			Index++;
+		});
+	}
+	
+	TEST_METHOD(C8_BuilderAPI_OrderBy_ScriptStructValue_Descending_StringAPI)
+	{
+		FFlecsQuery Query = FlecsWorld->CreateQueryBuilder()
+			.With("FFlecsTestStruct_Value")
+			.OrderBy(
+				FFlecsTestStruct_Value::StaticStruct(),
+				[](const FFlecsId IdA, const void* A, const FFlecsId IdB, const void* B) -> int32
+			{
+				const FFlecsTestStruct_Value* StructA = static_cast<const FFlecsTestStruct_Value*>(A);
+				const FFlecsTestStruct_Value* StructB = static_cast<const FFlecsTestStruct_Value*>(B);
+				return StructB->Value - StructA->Value;
+			})
+			.Build();
+		
+		{
+			static const FFlecsTestStruct_Value V3{ 3 };
+			static const FFlecsTestStruct_Value V1{ 1 };
+			static const FFlecsTestStruct_Value V2{ 2 };
+
+			FlecsWorld->CreateEntity().Set(FFlecsTestStruct_Value::StaticStruct(), &V1);
+			FlecsWorld->CreateEntity().Set(FFlecsTestStruct_Value::StaticStruct(), &V2);
+			FlecsWorld->CreateEntity().Set(FFlecsTestStruct_Value::StaticStruct(), &V3);
+		}
+		
+		TArray<int32> ExpectedOrder = { 3, 2, 1 };
+		int32 Index = 0;
+		Query.each([&](flecs::iter& Iter, size_t IndexInIter)
+		{
+			const FFlecsTestStruct_Value& Value = Iter.field_at<const FFlecsTestStruct_Value>(0, IndexInIter);
+			ASSERT_THAT(IsTrue(Value.Value == ExpectedOrder[Index]));
+			Index++;
+		});
+	}
+	
+	TEST_METHOD(C9_BuilderAPI_OrderBy_ScriptStructValue_Ascending_CPPAPI)
+	{
+		FFlecsQuery Query = FlecsWorld->CreateQueryBuilder()
+			.With<FFlecsTestStruct_Value>()
+			.OrderBy<FFlecsTestStruct_Value>(
+				[](const FFlecsId IdA, const FFlecsTestStruct_Value* A, const FFlecsId IdB, const FFlecsTestStruct_Value* B) -> int32
+			{
+				return A->Value - B->Value;
+			})
+			.Build();
+		
+		{
+			static const FFlecsTestStruct_Value V3{ 3 };
+			static const FFlecsTestStruct_Value V1{ 1 };
+			static const FFlecsTestStruct_Value V2{ 2 };
+
+			FlecsWorld->CreateEntity().Set(FFlecsTestStruct_Value::StaticStruct(), &V1);
+			FlecsWorld->CreateEntity().Set(FFlecsTestStruct_Value::StaticStruct(), &V2);
+			FlecsWorld->CreateEntity().Set(FFlecsTestStruct_Value::StaticStruct(), &V3);
+		}
+
+		TArray<int32> ExpectedOrder = { 1, 2, 3 };
+		int32 Index = 0;
+		Query.each([&](flecs::iter& Iter, size_t IndexInIter)
+		{
+			const FFlecsTestStruct_Value& Value = Iter.field_at<const FFlecsTestStruct_Value>(0, IndexInIter);
+			ASSERT_THAT(IsTrue(Value.Value == ExpectedOrder[Index]));
+			Index++;
+		});
+	}
+	
+	TEST_METHOD(C10_BuilderAPI_OrderBy_ScriptStructValue_Descending_CPPAPI)
+	{
+		FFlecsQuery Query = FlecsWorld->CreateQueryBuilder()
+			.With<FFlecsTestStruct_Value>()
+			.OrderBy<FFlecsTestStruct_Value>(
+				[](const FFlecsId IdA, const FFlecsTestStruct_Value* A, const FFlecsId IdB, const FFlecsTestStruct_Value* B) -> int32
+			{
+				return B->Value - A->Value;
+			})
+			.Build();
+		
+		{
+			static const FFlecsTestStruct_Value V3{ 3 };
+			static const FFlecsTestStruct_Value V1{ 1 };
+			static const FFlecsTestStruct_Value V2{ 2 };
+
+			FlecsWorld->CreateEntity().Set(FFlecsTestStruct_Value::StaticStruct(), &V1);
+			FlecsWorld->CreateEntity().Set(FFlecsTestStruct_Value::StaticStruct(), &V2);
+			FlecsWorld->CreateEntity().Set(FFlecsTestStruct_Value::StaticStruct(), &V3);
+		}
+		
+		TArray<int32> ExpectedOrder = { 3, 2, 1 };
+		int32 Index = 0;
+		Query.each([&](flecs::iter& Iter, size_t IndexInIter)
+		{
+			const FFlecsTestStruct_Value& Value = Iter.field_at<const FFlecsTestStruct_Value>(0, IndexInIter);
+			ASSERT_THAT(IsTrue(Value.Value == ExpectedOrder[Index]));
+			Index++;
+		});
+	}
+	
+	/*TEST_METHOD(D1_GroupBy_DontFragmentParentHierarchy_Cascading)
+	{
+		FFlecsEntityHandle Root = FlecsWorld->CreateEntity()
+		.Set<FFlecsTestStruct_Value>({ 1 });
+		ASSERT_THAT(IsTrue(Root.IsValid()));
+		ASSERT_THAT(IsTrue(Root.Has<FFlecsTestStruct_Value>()));
+
+		FFlecsEntityHandle Parent = FlecsWorld->CreateEntity()
+			.Set<FFlecsTestStruct_Value>({ 10 });
+		ASSERT_THAT(IsTrue(Parent.IsValid()));
+		ASSERT_THAT(IsTrue(Parent.Has<FFlecsTestStruct_Value>()));
+
+		FFlecsEntityHandle Child = FlecsWorld->CreateEntity()
+			.Set<FFlecsTestStruct_Value>({ 100 });
+		ASSERT_THAT(IsTrue(Root.IsValid()));
+		ASSERT_THAT(IsTrue(Child.Has<FFlecsTestStruct_Value>()));
+		
+		Parent.SetParent(Root);
+		Child.SetParent(Parent);
+		
+		FFlecsQuery Query = FlecsWorld->CreateQueryBuilder()
+			.With<FFlecsTestStruct_Value>()
+			.With<FFlecsTestStruct_Value>().Up()
+			.GroupBy(flecs::ParentDepth)
+			.Build();
+		
+		ASSERT_THAT(IsTrue(Query.IsValid()));
+		
+		TArray<int32> ExpectedOrder = { 1, 10, 100 };
+		int32 Index = 0;
+		Query.each([&](flecs::iter& Iter, size_t IndexInIter)
+		{
+			const FFlecsTestStruct_Value& Value = Iter.field_at<const FFlecsTestStruct_Value>(0, IndexInIter);
+			ASSERT_THAT(IsTrue(Value.Value == ExpectedOrder[Index]));
+			Index++;
+		});
+		
+		for (int Depth = 0; Depth < 8; ++Depth)
+		{
+			Query.set_group(Depth).each([](FFlecsTestStruct_Value& V)
+			{
+				const FFlecsTestStruct_Value* ParentV = P.get<FFlecsTestStruct_Value>();
+				// In a correct hierarchy, this should always exist
+				check(ParentV);
+				V.Value += ParentV->Value;
+			});
+		}
+
+		const FFlecsTestStruct_Value& ParentOut = Parent.Get<FFlecsTestStruct_Value>();
+		const FFlecsTestStruct_Value& ChildOut  = Child.Get<FFlecsTestStruct_Value>();
+
+		ASSERT_THAT(AreEqual(ParentOut.Value, 11));
+		ASSERT_THAT(AreEqual(ChildOut.Value, 111));
+	}*/
 
 }; // End of B2_UnrealFlecsQueryDefinitionTests
 

@@ -10,12 +10,18 @@
 UENUM(BlueprintType)
 enum class EFlecsQueryInOut : uint8
 {
-	Default = flecs::InOutDefault, /**< InOut for regular terms, In for shared terms */
-	None = flecs::InOutNone, /**< Term is neither read nor written */
-	Read = flecs::In, /** Term is only read */
-	Write = flecs::Out, /**< Term is only written */
-	ReadWrite = flecs::InOut UMETA(DisplayName = "Read/Write"), /**< Term is both read and written */
-	Filter = flecs::InOutFilter /** Same as None + prevents term from triggering observers */
+	/**< InOut for regular terms, In for shared terms */
+	Default = flecs::InOutDefault,
+	/**< Term is neither read nor written */
+	None = flecs::InOutNone,
+	/** Term is only read */
+	Read = flecs::In,
+	/**< Term is only written */
+	Write = flecs::Out,
+	/**< Term is both read and written */
+	ReadWrite = flecs::InOut UMETA(DisplayName = "Read/Write"),
+	/** Same as None + prevents term from triggering observers */
+	Filter = flecs::InOutFilter
 }; // enum class EFlecsQueryInOut
 
 NO_DISCARD FORCEINLINE constexpr flecs::inout_kind_t ToFlecsInOut(EFlecsQueryInOut InOut)

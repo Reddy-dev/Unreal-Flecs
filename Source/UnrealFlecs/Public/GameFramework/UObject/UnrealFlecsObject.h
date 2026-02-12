@@ -3,8 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Interfaces/FlecsEntityInterface.h"
+
 #include "UObject/Object.h"
+
+#include "Interfaces/FlecsEntityInterface.h"
+
 #include "UnrealFlecsObject.generated.h"
 
 class UFlecsWorld;

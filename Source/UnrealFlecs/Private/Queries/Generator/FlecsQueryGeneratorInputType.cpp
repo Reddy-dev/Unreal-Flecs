@@ -27,6 +27,11 @@ FString FFlecsQueryGeneratorInputType_String::GetStringOutput() const
 	return InputString;
 }
 
+FFlecsId FFlecsQueryGeneratorInputType_CPPType::GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorld*> InWorld) const
+{
+	return InWorld->LookupEntityBySymbol_Internal(SymbolString);
+}
+
 FFlecsId FFlecsQueryGeneratorInputType_FlecsId::GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorld*> InWorld) const
 {
 	return FlecsId;
@@ -50,12 +55,12 @@ FFlecsId FFlecsQueryGeneratorInputType_ScriptEnumConstant::GetFlecsIdOutput(
 void FFlecsQueryGeneratorInputType_Pair::CustomBuilderOutput(flecs::query_builder<>& Builder,
 	const TSolidNotNull<const UFlecsWorld*> InWorld) const
 {
-	const FFlecsQueryGeneratorInputType::EQueryReturnType FirstReturnType = First.Get().ReturnType;
-	const FFlecsQueryGeneratorInputType::EQueryReturnType SecondReturnType = Second.Get().ReturnType;
+	const EFlecsQueryGeneratorReturnType FirstReturnType = First.Get().ReturnType;
+	const EFlecsQueryGeneratorReturnType SecondReturnType = Second.Get().ReturnType;
 	
-	solid_checkf(FirstReturnType != FFlecsQueryGeneratorInputType::EQueryReturnType::CustomBuilder,
+	solid_checkf(FirstReturnType != EFlecsQueryGeneratorReturnType::CustomBuilder,
 		TEXT("FFlecsQueryGeneratorInputType_Pair::CustomBuilderOutput: First input type cannot be of CustomBuilder return type!"));
-	solid_checkf(SecondReturnType != FFlecsQueryGeneratorInputType::EQueryReturnType::CustomBuilder,
+	solid_checkf(SecondReturnType != EFlecsQueryGeneratorReturnType::CustomBuilder,
 		TEXT("FFlecsQueryGeneratorInputType_Pair::CustomBuilderOutput: Second input type cannot be of CustomBuilder return type!"));
 	
 	using FStringOrId = TVariant<FString, FFlecsId>;
@@ -63,15 +68,15 @@ void FFlecsQueryGeneratorInputType_Pair::CustomBuilderOutput(flecs::query_builde
 	FStringOrId FirstOutput;
 	FStringOrId SecondOutput;
 	
-	if (FirstReturnType == FFlecsQueryGeneratorInputType::EQueryReturnType::FlecsId)
+	if (FirstReturnType == EFlecsQueryGeneratorReturnType::FlecsId)
 	{
 		FirstOutput = FStringOrId(TInPlaceType<FFlecsId>(), First.Get().GetFlecsIdOutput(InWorld));
 	}
-	else if (FirstReturnType == FFlecsQueryGeneratorInputType::EQueryReturnType::String)
+	else if (FirstReturnType == EFlecsQueryGeneratorReturnType::String)
 	{
 		FirstOutput = FStringOrId(TInPlaceType<FString>(), First.Get().GetStringOutput());
 	}
-	else if (FirstReturnType == FFlecsQueryGeneratorInputType::EQueryReturnType::CustomBuilder) UNLIKELY_ATTRIBUTE
+	else if (FirstReturnType == EFlecsQueryGeneratorReturnType::CustomBuilder) UNLIKELY_ATTRIBUTE
 	{
 		solid_cassumef(false,
 			TEXT("FFlecsQueryGeneratorInputType_Pair::CustomBuilderOutput: First input type cannot be of CustomBuilder return type!"));
@@ -81,15 +86,15 @@ void FFlecsQueryGeneratorInputType_Pair::CustomBuilderOutput(flecs::query_builde
 		UNREACHABLE
 	}
 	
-	if (SecondReturnType == FFlecsQueryGeneratorInputType::EQueryReturnType::FlecsId)
+	if (SecondReturnType == EFlecsQueryGeneratorReturnType::FlecsId)
 	{
 		SecondOutput = FStringOrId(TInPlaceType<FFlecsId>(), Second.Get().GetFlecsIdOutput(InWorld));
 	}
-	else if (SecondReturnType == FFlecsQueryGeneratorInputType::EQueryReturnType::String)
+	else if (SecondReturnType == EFlecsQueryGeneratorReturnType::String)
 	{
 		SecondOutput = FStringOrId(TInPlaceType<FString>(), Second.Get().GetStringOutput());
 	}
-	else if (SecondReturnType == FFlecsQueryGeneratorInputType::EQueryReturnType::CustomBuilder) UNLIKELY_ATTRIBUTE
+	else if (SecondReturnType == EFlecsQueryGeneratorReturnType::CustomBuilder) UNLIKELY_ATTRIBUTE
 	{
 		solid_checkf(false, TEXT("FFlecsQueryGeneratorInputType_Pair::CustomBuilderOutput: Second input type cannot be of CustomBuilder return type!"));
 	}
