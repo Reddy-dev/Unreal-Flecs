@@ -13,6 +13,7 @@
 #include "Callbacks/FlecsOrderByCallbackDefinition.h"
 #include "Expressions/FlecsQueryGroupByExpression.h"
 #include "Expressions/FlecsQueryOrderByExpression.h"
+#include "Expressions/FlecsQueryUpExpression.h"
 
 namespace Unreal::Flecs::Queries
 {
@@ -822,6 +823,80 @@ public:
 		this->GetQueryDefinition().Terms[LastTermIndex].Source.template GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
 		return GetSelf();
 	}*/
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Up()
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		TInstancedStruct<FFlecsQueryExpression> UpExpr;
+		UpExpr.InitializeAs<FFlecsQueryUpExpression>();
+		
+		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(UpExpr);
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Up(const FFlecsId InId)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		TInstancedStruct<FFlecsQueryExpression> UpExpr;
+		UpExpr.InitializeAs<FFlecsQueryUpExpression>();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = TInstancedStruct<FFlecsQueryGeneratorInputType_FlecsId>::Make();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InId;
+		
+		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(UpExpr);
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Up(const UScriptStruct* InStruct)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		TInstancedStruct<FFlecsQueryExpression> UpExpr;
+		UpExpr.InitializeAs<FFlecsQueryUpExpression>();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = TInstancedStruct<FFlecsQueryGeneratorInputType_ScriptStruct>::Make();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
+		
+		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(UpExpr);
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Up(const UEnum* InEnum)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		TInstancedStruct<FFlecsQueryExpression> UpExpr;
+		UpExpr.InitializeAs<FFlecsQueryUpExpression>();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = TInstancedStruct<FFlecsQueryGeneratorInputType_ScriptEnum>::Make();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum;
+		
+		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(UpExpr);
+		return GetSelf();
+	}
+	
+	// Note: The InCppTypeName should be the exact match of what the EcsSymbol would be for the given C++ type.
+	FORCEINLINE_DEBUGGABLE FInheritedType& Up(const FString& InCppTypeName)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		TInstancedStruct<FFlecsQueryExpression> UpExpr;
+		UpExpr.InitializeAs<FFlecsQueryUpExpression>();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = TInstancedStruct<FFlecsQueryGeneratorInputType_CPPType>::Make();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = InCppTypeName;
+		
+		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(UpExpr);
+		return GetSelf();
+	}
+	
+	template <typename TTraversal>
+	FORCEINLINE_DEBUGGABLE FInheritedType& Up()
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		const std::string_view TypeName = nameof(TTraversal);
+		
+		TInstancedStruct<FFlecsQueryExpression> UpExpr;
+		UpExpr.InitializeAs<FFlecsQueryUpExpression>();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = TInstancedStruct<FFlecsQueryGeneratorInputType_CPPType>::Make();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = FString(TypeName.data());
+		
+		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(UpExpr);
+		return GetSelf();
+	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& ModifyLastTerm(const TFunctionRef<void(FFlecsQueryTermExpression&)>& InModifier)
 	{
