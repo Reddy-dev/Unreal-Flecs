@@ -23,6 +23,6 @@ REGISTER_FLECS_COMPONENT(FFlecsSubEntityRecordNameComponent,
 	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
 	{
 		InComponentHandle
-			//.Add(flecs::DontFragment)
+			.Add(flecs::DontFragment)
 			.AddPair(flecs::OnInstantiate, flecs::Override);
 	});

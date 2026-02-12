@@ -785,7 +785,7 @@ void UFlecsWorld::InitializeSystems()
 		});
 	
 	CreateObserver<const FFlecsSubEntityRecordNameComponent>("SubEntityRecordNameObserver") // 0 (FFlecsSubEntityRecordNameComponent)
-		.event(flecs::OnAdd)
+		.event(flecs::OnSet)
 		.with<flecs::Parent>().filter() // 1
 		.without<flecs::Identifier>(flecs::Name) // 2
 		.yield_existing()
