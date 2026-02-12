@@ -12,6 +12,7 @@
 #include "FlecsQueryDefinition.h"
 #include "Callbacks/FlecsOrderByCallbackDefinition.h"
 #include "Expressions/FlecsQueryCascadeExpression.h"
+#include "Expressions/FlecsQueryDescendingExpression.h"
 #include "Expressions/FlecsQueryGroupByExpression.h"
 #include "Expressions/FlecsQueryOrderByExpression.h"
 #include "Expressions/FlecsQueryUpExpression.h"
@@ -809,6 +810,14 @@ public:
 
 #pragma endregion GroupByFunctions
 	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Src(const FFlecsId InSource)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.template InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.template GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InSource;
+		return GetSelf();
+	}
+	
 	FORCEINLINE_DEBUGGABLE FInheritedType& Src(const FString& InSource)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
@@ -817,13 +826,36 @@ public:
 		return GetSelf();
 	}
 	
-	/*FORCEINLINE_DEBUGGABLE FInheritedType& Src(const TSolidNotNull<const UScriptStruct*> InStruct)
+	FORCEINLINE_DEBUGGABLE FInheritedType& Src(const TSolidNotNull<const UScriptStruct*> InStruct)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		this->GetQueryDefinition().Terms[LastTermIndex].Source.template InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
 		this->GetQueryDefinition().Terms[LastTermIndex].Source.template GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
 		return GetSelf();
-	}*/
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Src(const TSolidNotNull<const UEnum*> InEnum)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.template InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnum>();
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.template GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum;
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& SrcCppType(const FString& InCppTypeName)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.template InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.template GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = InCppTypeName;
+		return GetSelf();
+	}
+	
+	template <typename T>
+	FORCEINLINE_DEBUGGABLE FInheritedType& Src()
+	{
+		const std::string_view TypeName = nameof(T);
+		return SrcCppType(FString(TypeName.data()));
+	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& Up()
 	{
@@ -945,6 +977,7 @@ public:
 		return GetSelf();
 	}
 	
+	// Note: The InCppTypeName should be the exact match of what the EcsSymbol would be for the given C++ type.
 	FORCEINLINE_DEBUGGABLE FInheritedType& Cascade(const FString& InCppTypeName)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
@@ -971,6 +1004,16 @@ public:
 		return GetSelf();
 	}
 	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Desc()
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		
+		TInstancedStruct<FFlecsQueryExpression> DescExpr;
+		DescExpr.InitializeAs<FFlecsQueryDescendingExpression>();
+		
+		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(DescExpr);
+		return GetSelf();
+	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& ModifyLastTerm(const TFunctionRef<void(FFlecsQueryTermExpression&)>& InModifier)
 	{
