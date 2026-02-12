@@ -11,6 +11,7 @@
 #include "Generator/FlecsQueryGeneratorInputType.h"
 #include "FlecsQueryDefinition.h"
 #include "Callbacks/FlecsOrderByCallbackDefinition.h"
+#include "Expressions/FlecsQueryCascadeExpression.h"
 #include "Expressions/FlecsQueryGroupByExpression.h"
 #include "Expressions/FlecsQueryOrderByExpression.h"
 #include "Expressions/FlecsQueryUpExpression.h"
@@ -897,6 +898,79 @@ public:
 		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(UpExpr);
 		return GetSelf();
 	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Cascade()
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		TInstancedStruct<FFlecsQueryExpression> CascadeExpr;
+		CascadeExpr.InitializeAs<FFlecsQueryCascadeExpression>();
+		
+		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(CascadeExpr);
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Cascade(const FFlecsId InId)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		TInstancedStruct<FFlecsQueryExpression> CascadeExpr;
+		CascadeExpr.InitializeAs<FFlecsQueryCascadeExpression>();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal = TInstancedStruct<FFlecsQueryGeneratorInputType_FlecsId>::Make();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InId;
+		
+		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(CascadeExpr);
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Cascade(const UScriptStruct* InStruct)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		TInstancedStruct<FFlecsQueryExpression> CascadeExpr;
+		CascadeExpr.InitializeAs<FFlecsQueryCascadeExpression>();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal = TInstancedStruct<FFlecsQueryGeneratorInputType_ScriptStruct>::Make();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
+		
+		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(CascadeExpr);
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Cascade(const UEnum* InEnum)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		TInstancedStruct<FFlecsQueryExpression> CascadeExpr;
+		CascadeExpr.InitializeAs<FFlecsQueryCascadeExpression>();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal = TInstancedStruct<FFlecsQueryGeneratorInputType_ScriptEnum>::Make();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum;
+		
+		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(CascadeExpr);
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Cascade(const FString& InCppTypeName)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		TInstancedStruct<FFlecsQueryExpression> CascadeExpr;
+		CascadeExpr.InitializeAs<FFlecsQueryCascadeExpression>();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal = TInstancedStruct<FFlecsQueryGeneratorInputType_CPPType>::Make();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = InCppTypeName;
+		
+		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(CascadeExpr);
+		return GetSelf();
+	}
+	
+	template <typename TTraversal>
+	FORCEINLINE_DEBUGGABLE FInheritedType& Cascade()
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		const std::string_view TypeName = nameof(TTraversal);
+		TInstancedStruct<FFlecsQueryExpression> CascadeExpr;
+		CascadeExpr.InitializeAs<FFlecsQueryCascadeExpression>();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal = TInstancedStruct<FFlecsQueryGeneratorInputType_CPPType>::Make();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = FString(TypeName.data());
+		
+		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(CascadeExpr);
+		return GetSelf();
+	}
+	
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& ModifyLastTerm(const TFunctionRef<void(FFlecsQueryTermExpression&)>& InModifier)
 	{
