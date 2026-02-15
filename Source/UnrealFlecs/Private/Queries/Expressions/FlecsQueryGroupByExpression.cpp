@@ -20,7 +20,7 @@ void FFlecsQueryGroupByExpression::Apply(const TSolidNotNull<const UFlecsWorld*>
 	{
 		GroupByComponentId = GroupByInput.Get<FFlecsQueryGeneratorInputType>().GetFlecsIdOutput(InWorld);
 	}
-	else
+	else UNLIKELY_ATTRIBUTE
 	{
 		solid_checkf(false, TEXT("Unsupported OrderBy input type return type"));
 	}
