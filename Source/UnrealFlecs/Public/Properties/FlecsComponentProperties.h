@@ -120,5 +120,6 @@ public:
 
 // @TODO: Consider adding Auto-Registration
 // std::function<void(flecs::world, const FFlecsComponentHandle&)>
+// std::function<void(flecs::world, const TFlecsComponentHandle<T>&)>
 #define REGISTER_FLECS_COMPONENT(...) \
 	UE_APPEND_VA_ARG_COUNT(INTERNAL_REGISTER_FLECS_COMPONENT_, ##__VA_ARGS__)(__VA_ARGS__)
