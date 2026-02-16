@@ -58,6 +58,19 @@ REGISTER_FLECS_COMPONENT(FFlecsTest_CPPStructValue_Traits,
 			.Add(flecs::PairIsTag);
 	});
 
+struct FFlecsTest_CPPStructValue_Traits_WithTypedComponentHandleInLambda
+{
+	uint32 Value = 0;
+}; // struct FFlecsTest_CPPStructValue_Traits_WithTypedComponentHandleInLambda
+
+REGISTER_FLECS_COMPONENT(FFlecsTest_CPPStructValue_Traits_WithTypedComponentHandleInLambda,
+	[](flecs::world InWorld, const TFlecsComponentHandle<FFlecsTest_CPPStructValue_Traits_WithTypedComponentHandleInLambda>& InComponentHandle)
+	{
+		InComponentHandle
+			.Add(flecs::Trait)
+			.Add(flecs::PairIsTag);
+	});
+
 USTRUCT()
 struct FFlecsTestStruct_Tag
 {
@@ -143,6 +156,20 @@ public:
 
 REGISTER_FLECS_COMPONENT(FFlecsTestStruct_WithPropertyTraits,
 	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
+	{
+		InComponentHandle
+			.Add(flecs::Trait)
+			.Add(flecs::PairIsTag);
+	});
+
+USTRUCT()
+struct FFlecsTestStruct_WithPropertyTraits_WithTypedComponentHandleInLambda
+{
+	GENERATED_BODY()
+}; // struct FFlecsTestStruct_WithPropertyTraits_WithTypedComponentHandleInLambda
+
+REGISTER_FLECS_COMPONENT(FFlecsTestStruct_WithPropertyTraits_WithTypedComponentHandleInLambda,
+	[](flecs::world InWorld, const TFlecsComponentHandle<FFlecsTestStruct_WithPropertyTraits_WithTypedComponentHandleInLambda>& InComponentHandle)
 	{
 		InComponentHandle
 			.Add(flecs::Trait)
@@ -529,6 +556,43 @@ struct FFlecsTestStruct_LifecycleTracker_NoMoveReg
 	}
 	
 }; // struct FFlecsTestStruct_LifecycleTracker_NoMoveReg
+
+USTRUCT()
+struct FFlecsTestStruct_FlecsHookTracker
+{
+	GENERATED_BODY()
+	
+public:
+	UPROPERTY()
+	int32 OnAddCalled = 0;
+	
+	UPROPERTY()
+	int32 OnRemoveCalled = 0;
+	
+	UPROPERTY()
+	int32 OnSetCalled = 0;
+	
+	UPROPERTY()
+	int32 OnReplaceCalled = 0;
+	
+}; // struct FFlecsTestStruct_FlecsHookTracker
+
+/*
+REGISTER_FLECS_COMPONENT(FFlecsTestStruct_FlecsHookTracker,
+	[](flecs::world InWorld, const TFlecsComponentHandle<FFlecsTestStruct_FlecsHookTracker>& InComponentHandle)
+	{
+		InComponentHandle
+			.OnAdd([](FFlecsTestStruct_FlecsHookTracker& HookTracker)
+			{
+				++HookTracker.OnAddCalled;
+			})
+			.OnReplace([](FFlecsTestStruct_FlecsHookTracker& Previous, FFlecsTestStruct_FlecsHookTracker& Next)
+			{
+				++Previous.OnReplaceCalled;
+				++Next.OnReplaceCalled;
+			});
+	});
+	*/
 
 struct FFlecsTestNativeGameplayTags : public FGameplayTagNativeAdder
 {

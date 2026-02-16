@@ -1629,7 +1629,7 @@ FFlecsEntityHandle UFlecsWorld::RegisterScriptStruct(const UScriptStruct* Script
 							ScriptStruct->GetName());
 					}
 
-					ScriptStructComponent.SetHooksLambda([ScriptStruct, &ScriptStructComponent](flecs::type_hooks_t& Hooks)
+					ScriptStructComponent.ModifyHooksLambda([ScriptStruct, &ScriptStructComponent](flecs::type_hooks_t& Hooks)
 					{
 						const bool bIsPOD = ScriptStruct->GetCppStructOps()->IsPlainOldData();
 						

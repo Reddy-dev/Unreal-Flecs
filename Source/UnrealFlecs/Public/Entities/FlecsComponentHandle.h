@@ -3,9 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FlecsMemberHandle.h"
+
 #include "FlecsEntityHandle.h"
+#include "FlecsMemberHandle.h"
+
 #include "FlecsComponentHandle.generated.h"
+
+
 
 /**
  *	@struct FFlecsComponentHandle
@@ -104,7 +108,7 @@ public:
 		GetUntypedComponent().set_hooks(InHooks);
 	}
 	
-	SOLID_INLINE void SetHooksLambda(const TFunctionRef<void(flecs::type_hooks_t&)>& InHooksFunction) const
+	SOLID_INLINE void ModifyHooksLambda(const TFunctionRef<void(flecs::type_hooks_t&)>& InHooksFunction) const
 	{
 		flecs::type_hooks_t Hooks = GetHooks();
 		Invoke(InHooksFunction, Hooks);
@@ -118,91 +122,178 @@ public:
 	
 	SOLID_INLINE const FSelfType& SetConstructor(const ecs_xtor_t& InConstructor) const
 	{
-		SetHooksLambda([InConstructor](flecs::type_hooks_t& Hooks)
+		ModifyHooksLambda([InConstructor](flecs::type_hooks_t& Hooks)
 		{
 			Hooks.ctor = InConstructor;
 		});
+		
 		return *this;
 	}
 
 	SOLID_INLINE const FSelfType& SetDestructor(const ecs_xtor_t& InDestructor) const
 	{
-		SetHooksLambda([InDestructor](flecs::type_hooks_t& Hooks)
+		ModifyHooksLambda([InDestructor](flecs::type_hooks_t& Hooks)
 		{
 			Hooks.dtor = InDestructor;
 		});
+		
 		return *this;
 	}
 
 	SOLID_INLINE const FSelfType& SetCopy(const ecs_copy_t& InCopy) const
 	{
-		SetHooksLambda([InCopy](flecs::type_hooks_t& Hooks)
+		ModifyHooksLambda([InCopy](flecs::type_hooks_t& Hooks)
 		{
 			Hooks.copy = InCopy;
 		});
+		
 		return *this;
 	}
 
 	SOLID_INLINE const FSelfType& SetMove(const ecs_move_t& InMove) const
 	{
-		SetHooksLambda([InMove](flecs::type_hooks_t& Hooks)
+		ModifyHooksLambda([InMove](flecs::type_hooks_t& Hooks)
 		{
 			Hooks.move = InMove;
 		});
+		
 		return *this;
 	}
 
 	SOLID_INLINE const FSelfType& SetCompare(const ecs_cmp_t& InCompare) const
 	{
-		SetHooksLambda([InCompare](flecs::type_hooks_t& Hooks)
+		ModifyHooksLambda([InCompare](flecs::type_hooks_t& Hooks)
 		{
 			Hooks.cmp = InCompare;
 		});
+		
 		return *this;
 	}
 
 	SOLID_INLINE const FSelfType& SetEquals(const ecs_equals_t& InEquals) const
 	{
-		SetHooksLambda([InEquals](flecs::type_hooks_t& Hooks)
+		ModifyHooksLambda([InEquals](flecs::type_hooks_t& Hooks)
 		{
 			Hooks.equals = InEquals;
 		});
+		
 		return *this;
 	}
-
-	SOLID_INLINE const FSelfType& SetOnAdd(const ecs_iter_action_t& InOnAdd) const
+	
+	/*SOLID_INLINE const FSelfType& OnAdd(const ecs_iter_action_t& InOnAdd) const
 	{
-		SetHooksLambda([InOnAdd](flecs::type_hooks_t& Hooks)
+		ModifyHooksLambda([InOnAdd](flecs::type_hooks_t& Hooks)
 		{
+			solid_checkf(Hooks.on_add == nullptr, 
+				TEXT("OnAdd hook is already set for this component. Only one OnAdd hook can be set per component."));
+			
 			Hooks.on_add = InOnAdd;
 		});
+		
+		return *this;
+	}*/
+
+	template <typename TFunc>
+	SOLID_INLINE const FSelfType& OnAdd(TFunc&& InOnAddFunction) const
+	{
+		using FDelegateType = flecs::_::each_delegate<TFunc>;
+		ModifyHooksLambda([this, InOnAddFunction = Forward(InOnAddFunction)](flecs::type_hooks_t& Hooks)
+		{
+			solid_checkf(Hooks.on_add == nullptr, 
+				TEXT("OnAdd hook is already set for this component. Only one OnAdd hook can be set per component."));
+			
+			const TSolidNotNull<FBindingContextType*> BindingContext = GetBindingContext(Hooks);
+			
+			Hooks.on_add = FDelegateType::run_add;
+			BindingContext->on_add = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnAddFunction));
+			BindingContext->free_on_add = flecs::_::free_obj<FDelegateType>;
+		});
+		
 		return *this;
 	}
-
-	SOLID_INLINE const FSelfType& SetOnRemove(const ecs_iter_action_t& InOnRemove) const
+	
+	/*SOLID_INLINE const FSelfType& OnRemove(const ecs_iter_action_t& InOnRemove) const
 	{
-		SetHooksLambda([InOnRemove](flecs::type_hooks_t& Hooks)
+		ModifyHooksLambda([InOnRemove](flecs::type_hooks_t& Hooks)
 		{
+			solid_checkf(Hooks.on_remove == nullptr, 
+				TEXT("OnRemove hook is already set for this component. Only one OnRemove hook can be set per component."));
+			
 			Hooks.on_remove = InOnRemove;
 		});
+		
+		return *this;
+	}*/
+
+	template <typename TFunc>
+	SOLID_INLINE const FSelfType& OnRemove(TFunc&& InOnRemoveFunction) const
+	{
+		using FDelegateType = flecs::_::each_delegate<TFunc>;
+		ModifyHooksLambda([this, InOnRemoveFunction = Forward(InOnRemoveFunction)](flecs::type_hooks_t& Hooks)
+		{
+			solid_checkf(Hooks.on_remove == nullptr, 
+				TEXT("OnRemove hook is already set for this component. Only one OnRemove hook can be set per component."));
+			
+			const TSolidNotNull<FBindingContextType*> BindingContext = GetBindingContext(Hooks);
+			
+			Hooks.on_remove = FDelegateType::run_remove;
+			BindingContext->on_remove = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnRemoveFunction));
+			BindingContext->free_on_remove = flecs::_::free_obj<FDelegateType>;
+		});
+		
 		return *this;
 	}
-
-	SOLID_INLINE const FSelfType& SetOnSet(const ecs_iter_action_t& InOnSet) const
+	
+	/*SOLID_INLINE const FSelfType& OnSet(const ecs_iter_action_t& InOnSet) const
 	{
-		SetHooksLambda([InOnSet](flecs::type_hooks_t& Hooks)
+		ModifyHooksLambda([InOnSet](flecs::type_hooks_t& Hooks)
 		{
+			solid_checkf(Hooks.on_set == nullptr, 
+				TEXT("OnSet hook is already set for this component. Only one OnSet hook can be set per component."));
+			
 			Hooks.on_set = InOnSet;
 		});
+		
+		return *this;
+	}*/
+
+	template <typename TFunc>
+	SOLID_INLINE const FSelfType& OnSet(TFunc&& InOnSetFunction) const
+	{
+		using FDelegateType = flecs::_::each_delegate<TFunc>;
+		
+		ModifyHooksLambda([this, InOnSetFunction = Forward(InOnSetFunction)](flecs::type_hooks_t& Hooks)
+		{
+			solid_checkf(Hooks.on_set == nullptr, 
+				TEXT("OnSet hook is already set for this component. Only one OnSet hook can be set per component."));
+			
+			const TSolidNotNull<FBindingContextType*> BindingContext = GetBindingContext(Hooks);
+			
+			Hooks.on_set = FDelegateType::run_set;
+			BindingContext->on_set = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnSetFunction));
+			BindingContext->free_on_set = flecs::_::free_obj<FDelegateType>;
+		});
+		
 		return *this;
 	}
 
-	SOLID_INLINE const FSelfType& SetOnReplace(const ecs_iter_action_t& InOnReplace) const
+	template <typename TFunc>
+	SOLID_INLINE const FSelfType& OnReplace(TFunc&& InOnReplaceFunction) const
 	{
-		SetHooksLambda([InOnReplace](flecs::type_hooks_t& Hooks)
+		using FDelegateType = flecs::_::each_delegate<TFunc>;
+		
+		ModifyHooksLambda([this, InOnReplaceFunction = Forward(InOnReplaceFunction)](flecs::type_hooks_t& Hooks)
 		{
-			Hooks.on_replace = InOnReplace;
+			solid_checkf(Hooks.on_replace == nullptr, 
+				TEXT("OnReplace hook is already set for this component. Only one OnReplace hook can be set per component."));
+			
+			const TSolidNotNull<FBindingContextType*> BindingContext = GetBindingContext(Hooks);
+			
+			Hooks.on_replace = FDelegateType::run_replace;
+			BindingContext->on_replace = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnReplaceFunction));
+			BindingContext->free_on_replace = flecs::_::free_obj<FDelegateType>;
 		});
+		
 		return *this;
 	}
 
@@ -366,6 +457,24 @@ private:
 		return flecs::untyped_component(GetNativeFlecsWorld(), GetEntity());
 	}
 	
+protected:
+	
+	using FBindingContextType = flecs::_::component_binding_ctx;
+	
+	NO_DISCARD FORCEINLINE FBindingContextType* GetBindingContext(flecs::type_hooks_t& InHooks) const
+	{
+		FBindingContextType* BindingContext = static_cast<FBindingContextType*>(InHooks.binding_ctx);
+		
+		if (!BindingContext)
+		{
+			BindingContext = FLECS_NEW(FBindingContextType);
+			InHooks.binding_ctx = BindingContext;
+			InHooks.binding_ctx_free = flecs::_::free_obj<FBindingContextType>;
+		}
+		
+		return BindingContext;
+	}
+	
 }; // struct FFlecsComponentHandle
 
 // @TODO: Impl this
@@ -448,8 +557,86 @@ public:
 		GetTypedComponent().template opaque<TComponent>(std::forward<TFunction>(Func));
 		return *this;
 	}
-
 	
+	template <typename TFunc>
+	SOLID_INLINE const FSelfType& OnAdd(TFunc&& InOnAddFunction) const
+	{
+		using FDelegateType = flecs::_::each_delegate<TFunc, TComponent>;
+		
+		ModifyHooksLambda([this, InOnAddFunction = Forward(InOnAddFunction)](flecs::type_hooks_t& Hooks)
+		{
+			solid_checkf(Hooks.on_add == nullptr, 
+				TEXT("OnAdd hook is already set for this component. Only one OnAdd hook can be set per component."));
+			
+			const TSolidNotNull<FBindingContextType*> BindingContext = GetBindingContext(Hooks);
+			
+			Hooks.on_add = FDelegateType::run_add;
+			BindingContext->on_add = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnAddFunction));
+			BindingContext->free_on_add = flecs::_::free_obj<FDelegateType>;
+		});
+		
+		return *this;
+	}
+
+	template <typename TFunc>
+	SOLID_INLINE const FSelfType& OnRemove(TFunc&& InOnRemoveFunction) const
+	{
+		using FDelegateType = flecs::_::each_delegate<TFunc, TComponent>;
+		
+		ModifyHooksLambda([this, InOnRemoveFunction = Forward(InOnRemoveFunction)](flecs::type_hooks_t& Hooks)
+		{
+			solid_checkf(Hooks.on_remove == nullptr, 
+				TEXT("OnRemove hook is already set for this component. Only one OnRemove hook can be set per component."));
+			
+			const TSolidNotNull<FBindingContextType*> BindingContext = GetBindingContext(Hooks);
+			
+			Hooks.on_remove = FDelegateType::run_remove;
+			BindingContext->on_remove = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnRemoveFunction));
+			BindingContext->free_on_remove = flecs::_::free_obj<FDelegateType>;
+		});
+		
+		return *this;
+	}
+
+	template <typename TFunc>
+	SOLID_INLINE const FSelfType& OnSet(TFunc&& InOnSetFunction) const
+	{
+		using FDelegateType = flecs::_::each_delegate<TFunc, TComponent>;
+		
+		ModifyHooksLambda([this, InOnSetFunction = Forward(InOnSetFunction)](flecs::type_hooks_t& Hooks)
+		{
+			solid_checkf(Hooks.on_set == nullptr, 
+				TEXT("OnSet hook is already set for this component. Only one OnSet hook can be set per component."));
+			
+			const TSolidNotNull<FBindingContextType*> BindingContext = GetBindingContext(Hooks);
+			
+			Hooks.on_set = FDelegateType::run_set;
+			BindingContext->on_set = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnSetFunction));
+			BindingContext->free_on_set = flecs::_::free_obj<FDelegateType>;
+		});
+		
+		return *this;
+	}
+
+	template <typename TFunc>
+	SOLID_INLINE const FSelfType& OnReplace(TFunc&& InOnReplaceFunction) const
+	{
+		using FDelegateType = flecs::_::each_delegate<TFunc, TComponent>;
+		
+		ModifyHooksLambda([this, InOnReplaceFunction = Forward(InOnReplaceFunction)](flecs::type_hooks_t& Hooks)
+		{
+			solid_checkf(Hooks.on_replace == nullptr, 
+				TEXT("OnReplace hook is already set for this component. Only one OnReplace hook can be set per component."));
+			
+			const TSolidNotNull<FBindingContextType*> BindingContext = GetBindingContext(Hooks);
+			
+			Hooks.on_replace = FDelegateType::run_replace;
+			BindingContext->on_replace = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnReplaceFunction));
+			BindingContext->free_on_replace = flecs::_::free_obj<FDelegateType>;
+		});
+		
+		return *this;
+	}
 	
 	
 }; // struct TFlecsComponentHandle
