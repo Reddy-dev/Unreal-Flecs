@@ -126,7 +126,7 @@ void UEntityFunctionLibrary::Disable(const FFlecsEntityHandle& Entity)
 	Entity.Disable();
 }
 
-void UEntityFunctionLibrary::Clear(const FFlecsEntityHandle& Entity)
+void UEntityFunctionLibrary::ClearEntity(const FFlecsEntityHandle& Entity)
 {
 	Entity.Clear();
 }

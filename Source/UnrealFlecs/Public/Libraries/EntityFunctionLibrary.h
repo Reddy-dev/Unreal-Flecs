@@ -68,6 +68,6 @@ public:
     static void Disable(const FFlecsEntityHandle& Entity);
 
     UFUNCTION(BlueprintCallable, Category = "Flecs | Entity")
-    static void Clear(const FFlecsEntityHandle& Entity);
+    static void ClearEntity(const FFlecsEntityHandle& Entity);
 
 }; // class UEntityFunctionLibrary
