@@ -257,7 +257,7 @@ void UFlecsWorld::WorldStart()
 					FlecsDeveloperSettings->ClearGeneration,  // NOLINT(clang-diagnostic-implicit-int-conversion)
 					FlecsDeveloperSettings->DeleteGeneration); // NOLINT(clang-diagnostic-implicit-int-conversion)
 				
-				UE_LOGFMT(LogFlecsWorld, Log,
+				UE_LOGFMT(LogFlecsWorld, Verbose,
 							  "Flecs World {WorldName} Deleted {DeletedTableCount} empty tables on GC",
 							  *GetName(),
 							  DeletedTables);
@@ -275,7 +275,19 @@ void UFlecsWorld::InitializeDefaultComponents() const
 	//World.component<FFlecsEntityHandle>()
 	//	.disable();
 		
-	World.component<FString>()
+	RegisterComponentType<FString>()
+		.Opaque(flecs::String)
+		.serialize([](const flecs::serializer* Serializer, const FString* Data)
+		 {
+			 const TCHAR* CharArray = Data->GetCharArray().GetData();
+			 return Serializer->value(flecs::String, &CharArray);
+		 })
+		 .assign_string([](FString* Data, const char* String)
+		 {
+			 *Data = String;
+		 });
+	
+	/*World.component<FString>()
 	     .opaque(flecs::String)
 	     .serialize([](const flecs::serializer* Serializer, const FString* Data)
 	     {
@@ -285,10 +297,10 @@ void UFlecsWorld::InitializeDefaultComponents() const
 	     .assign_string([](FString* Data, const char* String)
 	     {
 		     *Data = String;
-	     });
+	     });*/
 
-	World.component<FName>()
-	     .opaque(flecs::String)
+	RegisterComponentType<FName>()
+	     .Opaque(flecs::String)
 	     .serialize([](const flecs::serializer* Serializer, const FName* Data)
 	     {
 		     const FString String = Data->ToString();
@@ -301,8 +313,8 @@ void UFlecsWorld::InitializeDefaultComponents() const
 		     *Data = FName(String);
 	     });
 
-	World.component<FText>()
-	     .opaque(flecs::String)
+	RegisterComponentType<FText>()
+	     .Opaque(flecs::String)
 	     .serialize([](const flecs::serializer* Serializer, const FText* Data)
 	     {
 		     const FString String = Data->ToString();
@@ -315,8 +327,8 @@ void UFlecsWorld::InitializeDefaultComponents() const
 		     *Data = FText::FromString(String);
 	     });
 
-	World.component<std::string>()
-		 .opaque(flecs::String)
+	RegisterComponentType<std::string>()
+		 .Opaque(flecs::String)
 		 .serialize([](const flecs::serializer* Serializer, const std::string* Data)
 		 {
 			 const char* CharArray = Data->c_str();
@@ -327,8 +339,8 @@ void UFlecsWorld::InitializeDefaultComponents() const
 			 *Data = String;
 		 });
 
-	World.component<FGameplayTag>()
-	     .opaque(flecs::Entity)
+	RegisterComponentType<FGameplayTag>(false)
+	     .Opaque(flecs::Entity)
 	     .serialize([](const flecs::serializer* Serializer, const FGameplayTag* Data)
 	     {
 		     const FFlecsId TagEntity = ecs_lookup_path_w_sep(
@@ -342,16 +354,16 @@ void UFlecsWorld::InitializeDefaultComponents() const
 		     return Serializer->value(flecs::Entity, &TagEntity);
 	     });
 		
-	World.component<FObjectPtr>()
-	     .opaque(flecs::Uptr)
+	RegisterComponentType<FObjectPtr>()
+	     .Opaque(flecs::Uptr)
 	     .serialize([](const flecs::serializer* Serializer, const FObjectPtr* Data)
 	     {
 		     const UObject* Object = Data->Get();
 		     return Serializer->value(flecs::Uptr, std::addressof(Object));
 	     });
 		
-	World.component<FWeakObjectPtr>()
-	     .opaque(flecs::Uptr)
+	RegisterComponentType<FWeakObjectPtr>()
+	     .Opaque(flecs::Uptr)
 	     .serialize([](const flecs::serializer* Serializer, const FWeakObjectPtr* Data)
 	     {
 		     const UObject* Object = Data->Get();
@@ -362,8 +374,8 @@ void UFlecsWorld::InitializeDefaultComponents() const
 		     Data->Reset();
 	     });
 
-	World.component<FSoftObjectPtr>()
-	     .opaque(flecs::Uptr)
+	RegisterComponentType<FSoftObjectPtr>()
+	     .Opaque(flecs::Uptr)
 	     .serialize([](const flecs::serializer* Serializer, const FSoftObjectPtr* Data)
 	     {
 		     const UObject* Object = Data->Get();
@@ -374,8 +386,8 @@ void UFlecsWorld::InitializeDefaultComponents() const
 		     Data->Reset();
 	     });
 
-	World.component<TSubclassOf<UObject>>()
-	     .opaque(flecs::Uptr)
+	RegisterComponentType<TSubclassOf<UObject>>()
+	     .Opaque(flecs::Uptr)
 	     .serialize([](const flecs::serializer* Serializer, const TSubclassOf<UObject>* Data)
 	     {
 		     const UClass* Class = Data->Get();
@@ -438,7 +450,6 @@ void UFlecsWorld::InitializeDefaultComponents() const
 	RegisterComponentType<FFlecsOutsideMainLoopTag>();
 	
 	RegisterComponentType<FFlecsSubEntityRecordNameComponent>();
-	
 }
 
 void UFlecsWorld::InitializeFlecsRegistrationObjects()
@@ -791,10 +802,6 @@ void UFlecsWorld::InitializeSystems()
 		.yield_existing()
 		.each([](flecs::iter& InIter, size_t InIndex, const FFlecsSubEntityRecordNameComponent& InNameComponent)
 		{
-			UE_LOGFMT(LogFlecsWorld, Log,
-				"Setting name for sub-entity to {SubEntityName}",
-				*InNameComponent.SubEntityName);
-			
 			const FFlecsEntityHandle EntityHandle = InIter.entity(InIndex);
 			EntityHandle.SetName(InNameComponent.SubEntityName);
 		});
@@ -1588,7 +1595,7 @@ void UFlecsWorld::RegisterMemberProperties(const TSolidNotNull<const UStruct*> I
 	}
 }
 
-FFlecsEntityHandle UFlecsWorld::RegisterScriptStruct(const UScriptStruct* ScriptStruct, const bool bComponent) const
+FFlecsEntityHandle UFlecsWorld::RegisterScriptStruct(const UScriptStruct* ScriptStruct, const bool bComponent, const bool bRegisterMemberProperties) const
 {
 	solid_cassume(ScriptStruct);
 
@@ -1603,7 +1610,7 @@ FFlecsEntityHandle UFlecsWorld::RegisterScriptStruct(const UScriptStruct* Script
 		const char* StructNameCStr = StringCast<char>(*StructName).Get();
 
 		// Register Member properties can't be deferred
-		DeferEndLambda([this, ScriptStruct, &ScriptStructComponent, StructNameCStr, bComponent, &StructName]()
+		DeferEndLambda([this, ScriptStruct, &ScriptStructComponent, StructNameCStr, bComponent, &StructName, bRegisterMemberProperties]()
 		{
 			ScriptStructComponent = World.component(StructNameCStr);
 			solid_check(ScriptStructComponent.IsValid());
@@ -1746,7 +1753,11 @@ FFlecsEntityHandle UFlecsWorld::RegisterScriptStruct(const UScriptStruct* Script
 			
 			ScriptStructComponent.Set<FFlecsScriptStructComponent>({ ScriptStruct });
 
-			RegisterMemberProperties(ScriptStruct, ScriptStructComponent);
+			if (bRegisterMemberProperties)
+			{
+				RegisterMemberProperties(ScriptStruct, ScriptStructComponent);
+			}
+			
 			FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(ScriptStructComponent);
 		});
 
@@ -1949,7 +1960,7 @@ FFlecsEntityHandle UFlecsWorld::GetScriptClassEntity(const TSubclassOf<UObject> 
 	return FFlecsEntityHandle(World, Component);
 }
 
-FFlecsEntityHandle UFlecsWorld::RegisterComponentType(const TSolidNotNull<const UScriptStruct*> ScriptStruct) const
+FFlecsEntityHandle UFlecsWorld::RegisterComponentType(const TSolidNotNull<const UScriptStruct*> ScriptStruct, const bool bRegisterMemberProperties) const
 {
 	solid_checkf(!IsDeferred(), TEXT("Cannot register component while deferred"));
 	
@@ -1958,7 +1969,7 @@ FFlecsEntityHandle UFlecsWorld::RegisterComponentType(const TSolidNotNull<const 
 		return GetScriptStructEntity(ScriptStruct);
 	}
 
-	return RegisterScriptStruct(ScriptStruct);
+	return RegisterScriptStruct(ScriptStruct, true, bRegisterMemberProperties);
 }
 
 FFlecsEntityHandle UFlecsWorld::RegisterComponentType(const TSolidNotNull<const UEnum*> ScriptEnum) const

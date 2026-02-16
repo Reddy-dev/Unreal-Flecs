@@ -26,6 +26,56 @@ namespace Unreal::Flecs::Queries
 		|| std::is_convertible<T, const UEnum*>::value
 		|| std::is_convertible<T, FSolidEnumSelector>::value;
 	
+	template <typename T>
+	using TNoCVRef = std::remove_cv_t<std::remove_reference_t<T>>;
+
+	template <typename T>
+	inline constexpr bool bIsPointerV = std::is_pointer_v<TNoCVRef<T>>;
+
+	template <typename T>
+	using TComponentFromArg = std::remove_pointer_t<TNoCVRef<T>>;
+
+	template <typename T>
+	using TComponentBare = std::remove_cv_t<TComponentFromArg<T>>;
+
+	template <typename T>
+	inline constexpr bool bIsConstPointeeOrValueV =
+		std::is_const_v<std::remove_reference_t<T>> || // const T / const T&
+		std::is_const_v<std::remove_pointer_t<TNoCVRef<T>>>; // const T*
+
+	template <typename T>
+	inline constexpr bool bIsRefV = std::is_reference_v<T>;
+	
+	template <typename T>
+	NO_DISCARD FORCEINLINE constexpr EFlecsQueryInOut TypeToInOut()
+	{
+		if constexpr (bIsConstPointeeOrValueV<T>)
+		{
+			return EFlecsQueryInOut::Read;
+		}
+		else if constexpr (bIsRefV<T>)
+		{
+			return EFlecsQueryInOut::ReadWrite;
+		}
+		else
+		{
+			return EFlecsQueryInOut::Default;
+		}
+	}
+	
+	template <typename T>
+	NO_DISCARD FORCEINLINE constexpr EFlecsQueryOperator TypeToOperator()
+	{
+		if constexpr (bIsPointerV<T>)
+		{
+			return EFlecsQueryOperator::Optional;
+		}
+		else
+		{
+			return EFlecsQueryOperator::And;
+		}
+	}
+	
 } // namespace Unreal::Flecs::Queries
 
 template <typename TInherited>
@@ -303,15 +353,22 @@ public:
 		if constexpr (Solid::IsScriptStruct<T>())
 		{
 			this->With(TBaseStructure<T>::Get());
+			this->InOutExpression(Unreal::Flecs::Queries::TypeToInOut<T>(), false);
 		}
 		else if constexpr (Solid::TStaticEnumConcept<T>)
 		{
 			this->With(StaticEnum<T>());
 		}
+		else if constexpr (std::is_enum<T>::value)
+		{
+			const std::string_view TypeName = nameof(T);
+			this->WithCppType_Internal(TypeName);
+		}
 		else
 		{
 			const std::string_view TypeName = nameof(T);
 			this->WithCppType_Internal(TypeName);
+			this->InOutExpression(Unreal::Flecs::Queries::TypeToInOut<T>(), false);
 		}
 		
 		return GetSelf();

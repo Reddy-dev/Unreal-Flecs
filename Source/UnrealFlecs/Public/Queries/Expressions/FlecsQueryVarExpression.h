@@ -3,7 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
 #include "FlecsQueryExpression.h"
+
 #include "FlecsQueryVarExpression.generated.h"
 
 USTRUCT(BlueprintType, meta = (DisplayName="Var Expression"))

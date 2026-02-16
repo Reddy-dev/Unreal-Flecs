@@ -64,7 +64,13 @@ public:
 	NO_DISCARD SOLID_INLINE flecs::component<T> GetTypedComponent() const
 	{
 		solid_checkf(IsComponent(), TEXT("Entity is not a component"));
-		return flecs::component<T>(GetUntypedComponent());
+		
+		solid_checkf(GetNativeFlecsWorld().id_if_registered<T>() == GetFlecsId(),
+			TEXT("Component type %s does not match the component handle's entity id"), *FString(flecs::_::type_name<T>()));
+		
+		flecs::component<T> TypedComponentHandle = GetNativeFlecsWorld().component<T>();
+		
+		return TypedComponentHandle;
 	}
 
 	NO_DISCARD SOLID_INLINE flecs::untyped_component GetUntypedComponent() const
@@ -532,7 +538,7 @@ public:
 	NO_DISCARD SOLID_INLINE flecs::component<TComponent> GetTypedComponent() const
 	{
 		solid_checkf(IsComponent(), TEXT("Entity is not a component"));
-		return flecs::component<TComponent>(GetUntypedComponent());
+		return static_cast<const FFlecsComponentHandle*>(this)->template GetTypedComponent<TComponent>();
 	}
 
 	SOLID_INLINE operator flecs::component<TComponent>() const
@@ -540,23 +546,24 @@ public:
 		return GetTypedComponent();
 	}
 
-	SOLID_INLINE flecs::opaque<TComponent> Opaque(const FFlecsId InId) const
+	SOLID_INLINE flecs::opaque<TComponent> Opaque(const FFlecsId AsTypeId) const
 	{
-		return GetTypedComponent().opaque(InId);
+		return GetTypedComponent().opaque(AsTypeId.GetId());
 	}
 
 	template <typename TElement>
-	SOLID_INLINE flecs::opaque<TComponent> Opaque(const FFlecsId InId) const
+	SOLID_INLINE flecs::opaque<TComponent> Opaque(const FFlecsId AsTypeId) const
 	{
-		return GetTypedComponent().template opaque<TElement>(InId);
+		return GetTypedComponent().template opaque<TElement>(AsTypeId.GetId());
 	}
 
-	template <typename TFunction>
-	SOLID_INLINE const FSelfType& Opaque(TFunction&& Func) const
+	/*template <typename TFunction>
+	requires (std::is_function_v<TFunction>)
+	SOLID_INLINE const FSelfType& Opaque(const TFunction& Func) const
 	{
-		GetTypedComponent().template opaque<TComponent>(std::forward<TFunction>(Func));
+		GetTypedComponent().template opaque<TComponent>(Func);
 		return *this;
-	}
+	}*/
 	
 	template <typename TFunc>
 	SOLID_INLINE const FSelfType& OnAdd(TFunc&& InOnAddFunction) const

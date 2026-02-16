@@ -5,7 +5,9 @@
 #include "flecs.h"
 
 #include "CoreMinimal.h"
+
 #include "SolidMacros/Macros.h"
+
 #include "FlecsQueryOperators.generated.h"
 
 UENUM(BlueprintType)

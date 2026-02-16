@@ -27,4 +27,4 @@ public:
 		return GetEntityHandle().IsValid();
 	}
 
-}; // class IFlecsEntityInterface
+}; // class IFlecsEntityInterface 

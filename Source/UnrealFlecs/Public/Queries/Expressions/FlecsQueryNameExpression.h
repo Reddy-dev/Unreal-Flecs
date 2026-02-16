@@ -3,7 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
 #include "FlecsQueryExpression.h"
+
 #include "FlecsQueryNameExpression.generated.h"
 
 USTRUCT(BlueprintType, meta = (DisplayName = "Name Expression"))

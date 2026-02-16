@@ -79,8 +79,9 @@ struct TStructOpsTypeTraits<FFlecsQuery> : public TStructOpsTypeTraitsBase2<FFle
     enum
     {
         WithCopy = false,
-    };
-};
+    }; // enum
+    
+}; // struct TStructOpsTypeTraits<FFlecsQuery>
 
 template <typename ...TArgs>
 struct TTypedFlecsQuery : public FFlecsQueryBase, public flecs::iterable<TArgs...>
