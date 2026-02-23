@@ -46,10 +46,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool bCustomEventType = false;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (EditCondition = "!bCustomEventType"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (EditCondition = "!bCustomEventType", EditConditionHides))
 	EFlecsObserverEvent EventType = EFlecsObserverEvent::OnAdd;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (EditCondition = "bCustomEventType", AllowPair = false))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (EditCondition = "bCustomEventType", EditConditionHides, AllowPair = false))
 	FFlecsQueryGeneratorInput CustomEventType;
 	
 	void ApplyToObserver(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld,

@@ -47,6 +47,18 @@ public:
 		return this->GetSelf();
 	}
 	
+	FORCEINLINE TInherited& ObserverFlags(const uint32 InFlags)
+	{
+		GetObserverDefinition().Flags = InFlags;
+		return this->GetSelf();
+	}
+	
+	FORCEINLINE TInherited& ObserverFlags(const EFlecsObserverFlags InFlags)
+	{
+		GetObserverDefinition().Flags = static_cast<uint32>(InFlags);
+		return this->GetSelf();
+	}
+	
 	template <typename Func>
 	THandleType run(Func&& func) {
 		using Delegate = typename flecs::_::run_delegate<

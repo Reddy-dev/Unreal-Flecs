@@ -15,8 +15,12 @@
 
 class UFlecsWorld;
 
+USTRUCT()
 struct FFlecsDependencyFunctionDefinition
 {
+	GENERATED_BODY()
+	
+public:
 	using FDependencyFunctionType = std::function<void(UObject*, const UFlecsWorld*, FFlecsEntityHandle)>;
 	
 	FDependencyFunctionType Function;

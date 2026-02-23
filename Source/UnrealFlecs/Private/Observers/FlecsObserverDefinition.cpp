@@ -22,27 +22,9 @@ void FFlecsObserverDefinition::ApplyToObserver(const TSolidNotNull<const UFlecsW
 	
 	QueryDefinition.Apply(InFlecsWorld, QueryBuilderView);
 	
-	if (bMatchPrefab)
-	{
-		InObserverBuilder.observer_flags(EcsObserverMatchPrefab);
-	}
-	
-	if (bMatchDisabled)
-	{
-		InObserverBuilder.observer_flags(EcsObserverMatchDisabled);
-	}
-	
-	if (bYieldOnCreate)
-	{
-		InObserverBuilder.observer_flags(EcsObserverYieldOnCreate);
-	}
-	
-	if (bYieldOnDelete)
-	{
-		InObserverBuilder.observer_flags(EcsObserverYieldOnDelete);
-	}
-	
 	InObserverBuilder.yield_existing(bYieldExisting);
+	
+	InObserverBuilder.observer_flags(Flags);
 	
 	InObserverBuilder._internal_get_desc()->callback = callback;
 	InObserverBuilder._internal_get_desc()->run = run;

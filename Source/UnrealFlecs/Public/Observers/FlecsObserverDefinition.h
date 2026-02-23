@@ -2,12 +2,16 @@
 
 #pragma once
 
+#include "flecs.h"
+
 #include "CoreMinimal.h"
 
 #include "SolidMacros/Macros.h"
 
 #include "Entities/FlecsEntityHandle.h"
+
 #include "FlecsObserverEventInput.h"
+#include "FlecsObserverFlags.h"
 #include "Queries/FlecsQueryDefinition.h"
 
 #include "FlecsObserverDefinition.generated.h"
@@ -27,17 +31,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool bYieldExisting = false;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	bool bMatchPrefab = false;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	bool bMatchDisabled = false;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	bool bYieldOnCreate = false;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	bool bYieldOnDelete = false;
+	UPROPERTY(EditAnywhere, meta = (Bitmask, BitmaskEnum = "/Script/UnrealFlecs.EFlecsObserverFlags"))
+	uint32 Flags = static_cast<uint32>(EFlecsObserverFlags::None);
 	
 	UPROPERTY()
 	bool bGlobalObserver = false;
