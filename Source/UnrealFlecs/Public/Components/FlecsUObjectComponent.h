@@ -62,6 +62,11 @@ public:
         return CastChecked<T>(GetObject());
     }
     
+    FORCEINLINE void SetObject(UObject* InObject)
+    {
+        Object = InObject;
+    }
+    
     template <Solid::TStaticClassConcept T>
     FORCEINLINE void SetObject(T* InObject)
     {
