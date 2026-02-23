@@ -2,6 +2,7 @@
 
 #include "Queries/FlecsQueryBuilder.h"
 
+#include "Queries/FlecsQueryBuilderView.h"
 #include "Worlds/FlecsWorld.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsQueryBuilder)
@@ -26,13 +27,15 @@ FFlecsQuery FFlecsQueryBuilder::Build() const
 		solid_checkf(QueryEntity.IsValid(), TEXT("Invalid query entity provided to FlecsQueryBuilder"));
 		
 		flecs::query_builder<> Builder = flecs::query_builder<>(World->World, QueryEntity);
-		Definition.Apply(World.Get(), Builder);
+		FFlecsQueryBuilderView BuilderView = MakeQueryBuilderView(Builder);
+		Definition.Apply(World.Get(), BuilderView);
 		return FFlecsQuery(Builder.build());
 	}
 	else
 	{
 		flecs::query_builder<> Builder = flecs::query_builder<>(World->World, StringCast<char>(*Name).Get());
-		Definition.Apply(World.Get(), Builder);
+		FFlecsQueryBuilderView BuilderView = MakeQueryBuilderView(Builder);
+		Definition.Apply(World.Get(), BuilderView);
 		return FFlecsQuery(Builder.build());
 	}
 }

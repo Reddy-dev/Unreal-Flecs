@@ -3,6 +3,7 @@
 #include "Queries/Expressions/FlecsQueryGroupByExpression.h"
 
 #include "Entities/FlecsId.h"
+#include "Queries/FlecsQueryBuilderView.h"
 #include "Queries/Generator/FlecsQueryGeneratorInputType.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsQueryGroupByExpression)
@@ -12,7 +13,7 @@ FFlecsQueryGroupByExpression::FFlecsQueryGroupByExpression() : Super(true /* bIn
 }
 
 void FFlecsQueryGroupByExpression::Apply(const TSolidNotNull<const UFlecsWorld*> InWorld,
-	flecs::query_builder<>& InQueryBuilder) const
+	FFlecsQueryBuilderView& InQueryBuilder) const
 {
 	FFlecsId GroupByComponentId;
 	

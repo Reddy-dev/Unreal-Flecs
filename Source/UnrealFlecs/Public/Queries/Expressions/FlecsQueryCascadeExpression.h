@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 
 #include "FlecsQueryExpression.h"
+#include "Queries/Generator/FlecsQueryGeneratorInput.h"
 
 #include "FlecsQueryCascadeExpression.generated.h"
 
@@ -18,9 +19,9 @@ struct UNREALFLECS_API FFlecsQueryCascadeExpression : public FFlecsQueryExpressi
 public:
 	FFlecsQueryCascadeExpression();
 	
-	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const override;
+	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const override;
 	
-	UPROPERTY(EditAnywhere)
-	TOptional<TInstancedStruct<FFlecsQueryGeneratorInputType>> Traversal;
+	UPROPERTY(EditAnywhere, meta = (AllowPairInput = false, AllowStringInput = false))
+	TOptional<FFlecsQueryGeneratorInput> Traversal;
 	
 }; // struct FFlecsQueryCascadeExpression

@@ -83,7 +83,7 @@ struct TFlecsQueryBuilderBase
 {
 	using FInheritedType = TInherited;
 	
-private:
+protected:
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& GetSelf()
 	{
@@ -251,8 +251,8 @@ private:
 		const FString TypeNameFString = FString(TypeName.data());
 		
 		FFlecsQueryTermExpression Expr;
-		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
-		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = TypeNameFString;
+		Expr.Term.Input.First.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
+		Expr.Term.Input.First.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = TypeNameFString;
 		
 		this->GetQueryDefinition().AddQueryTerm(Expr);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
@@ -271,17 +271,11 @@ private:
 	{
 		const FString TypeNameFString = FString(TypeName.data());
 		
-		FFlecsQueryTermExpression SecondExpr;
-		SecondExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
-		SecondExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = TypeNameFString;
-		
 		FFlecsQueryTermExpression& TermExpr = this->GetQueryDefinition().Terms[LastTermIndex];
+		TermExpr.Term.Input.bPair = true;
+		TermExpr.Term.Input.Second.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
+		TermExpr.Term.Input.Second.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = TypeNameFString;
 		
-		const FFlecsQueryTerm FirstTerm = TermExpr.Term;
-		
-		TermExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
-		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTerm.InputType;
-		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondExpr.Term.InputType;
 		return GetSelf();
 	}
 	
@@ -290,8 +284,8 @@ public:
 	FORCEINLINE_DEBUGGABLE FInheritedType& With(const FFlecsId InId)
 	{
 		FFlecsQueryTermExpression Expr;
-		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
-		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InId;
+		Expr.Term.Input.First.InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
+		Expr.Term.Input.First.GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InId;
 		
 		this->GetQueryDefinition().AddQueryTerm(Expr);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
@@ -302,8 +296,8 @@ public:
 	FORCEINLINE_DEBUGGABLE FInheritedType& With(const TSolidNotNull<const UScriptStruct*> InStruct)
 	{
 		FFlecsQueryTermExpression Expr;
-		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
-		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
+		Expr.Term.Input.First.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
+		Expr.Term.Input.First.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
 		
 		this->AddTerm(Expr);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
@@ -314,8 +308,8 @@ public:
 	FORCEINLINE_DEBUGGABLE FInheritedType& With(const FString& InString)
 	{
 		FFlecsQueryTermExpression Expr;
-		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_String>();
-		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = InString;
+		Expr.Term.Input.First.InitializeAs<FFlecsQueryGeneratorInputType_String>();
+		Expr.Term.Input.First.GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = InString;
 		
 		this->GetQueryDefinition().AddQueryTerm(Expr);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
@@ -326,8 +320,8 @@ public:
 	FORCEINLINE_DEBUGGABLE FInheritedType& With(const TSolidNotNull<const UEnum*> InEnum)
 	{
 		FFlecsQueryTermExpression Expr;
-		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnum>();
-		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum;
+		Expr.Term.Input.First.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnum>();
+		Expr.Term.Input.First.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum;
 		
 		this->GetQueryDefinition().AddQueryTerm(Expr);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
@@ -338,8 +332,8 @@ public:
 	FORCEINLINE_DEBUGGABLE FInheritedType& With(const FSolidEnumSelector& InEnumSelector)
 	{
 		FFlecsQueryTermExpression Expr;
-		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnumConstant>();
-		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnumConstant>().EnumValue = InEnumSelector;
+		Expr.Term.Input.First.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnumConstant>();
+		Expr.Term.Input.First.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnumConstant>().EnumValue = InEnumSelector;
 		
 		this->GetQueryDefinition().AddQueryTerm(Expr);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
@@ -366,7 +360,9 @@ public:
 		}
 		else
 		{
-			const std::string_view TypeName = nameof(T);
+			using TNoCVRef = std::remove_cv_t<std::remove_reference_t<T>>;
+			
+			const std::string_view TypeName = nameof(TNoCVRef);
 			this->WithCppType_Internal(TypeName);
 			this->InOutExpression(Unreal::Flecs::Queries::TypeToInOut<T>(), false);
 		}
@@ -377,8 +373,8 @@ public:
 	FORCEINLINE_DEBUGGABLE FInheritedType& Without(const FFlecsId InId)
 	{
 		FFlecsQueryTermExpression Expr;
-		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
-		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InId;
+		Expr.Term.Input.First.InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
+		Expr.Term.Input.First.GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InId;
 		
 		this->AddTerm(Expr);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
@@ -391,8 +387,8 @@ public:
 	FORCEINLINE_DEBUGGABLE FInheritedType& Without(const TSolidNotNull<const UScriptStruct*> InStruct)
 	{
 		FFlecsQueryTermExpression Expr;
-		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
-		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
+		Expr.Term.Input.First.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
+		Expr.Term.Input.First.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
 		
 		this->AddTerm(Expr);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
@@ -405,8 +401,8 @@ public:
 	FORCEINLINE_DEBUGGABLE FInheritedType& Without(const FString& InString)
 	{
 		FFlecsQueryTermExpression Expr;
-		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_String>();
-		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = InString;
+		Expr.Term.Input.First.InitializeAs<FFlecsQueryGeneratorInputType_String>();
+		Expr.Term.Input.First.GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = InString;
 		
 		this->AddTerm(Expr);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
@@ -419,8 +415,8 @@ public:
 	FORCEINLINE_DEBUGGABLE FInheritedType& Without(const TSolidNotNull<const UEnum*> InEnum)
 	{
 		FFlecsQueryTermExpression Expr;
-		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnum>();
-		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum;
+		Expr.Term.Input.First.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnum>();
+		Expr.Term.Input.First.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum;
 		
 		this->AddTerm(Expr);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
@@ -433,8 +429,8 @@ public:
 	FORCEINLINE_DEBUGGABLE FInheritedType& Without(const FSolidEnumSelector& InEnumSelector)
 	{
 		FFlecsQueryTermExpression Expr;
-		Expr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnumConstant>();
-		Expr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnumConstant>().EnumValue = InEnumSelector;
+		Expr.Term.Input.First.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnumConstant>();
+		Expr.Term.Input.First.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnumConstant>().EnumValue = InEnumSelector;
 		
 		this->AddTerm(Expr);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
@@ -468,17 +464,11 @@ public:
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		
-		FFlecsQueryTermExpression SecondExpr;
-		SecondExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
-		SecondExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InId;
-		
 		FFlecsQueryTermExpression& TermExpr = this->GetQueryDefinition().Terms[LastTermIndex];
+		TermExpr.Term.Input.bPair = true;
+		TermExpr.Term.Input.Second.InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
+		TermExpr.Term.Input.Second.GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InId;
 		
-		const FFlecsQueryTerm FirstTerm = TermExpr.Term;
-		
-		TermExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
-		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTerm.InputType;
-		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondExpr.Term.InputType;
 		return GetSelf();
 	}
 	
@@ -486,17 +476,11 @@ public:
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		
-		FFlecsQueryTermExpression SecondExpr;
-		SecondExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
-		SecondExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
-		
 		FFlecsQueryTermExpression& TermExpr = this->GetQueryDefinition().Terms[LastTermIndex];
+		TermExpr.Term.Input.bPair = true;
+		TermExpr.Term.Input.Second.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
+		TermExpr.Term.Input.Second.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
 		
-		const FFlecsQueryTerm FirstTerm = TermExpr.Term;
-		
-		TermExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
-		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTerm.InputType;
-		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondExpr.Term.InputType;
 		return GetSelf();
 	}
 	
@@ -504,17 +488,11 @@ public:
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		
-		FFlecsQueryTermExpression SecondExpr;
-		SecondExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_String>();
-		SecondExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = InString;
-		
 		FFlecsQueryTermExpression& TermExpr = this->GetQueryDefinition().Terms[LastTermIndex];
+		TermExpr.Term.Input.bPair = true;
+		TermExpr.Term.Input.Second.InitializeAs<FFlecsQueryGeneratorInputType_String>();
+		TermExpr.Term.Input.Second.GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = InString;
 		
-		const FFlecsQueryTerm FirstTerm = TermExpr.Term;
-		
-		TermExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
-		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTerm.InputType;
-		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondExpr.Term.InputType;
 		return GetSelf();
 	}
 	
@@ -522,17 +500,11 @@ public:
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		
-		FFlecsQueryTermExpression SecondExpr;
-		SecondExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnum>();
-		SecondExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum;
-		
 		FFlecsQueryTermExpression& TermExpr = this->GetQueryDefinition().Terms[LastTermIndex];
+		TermExpr.Term.Input.bPair = true;
+		TermExpr.Term.Input.Second.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnum>();
+		TermExpr.Term.Input.Second.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum;
 		
-		const FFlecsQueryTerm FirstTerm = TermExpr.Term;
-		
-		TermExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
-		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTerm.InputType;
-		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondExpr.Term.InputType;
 		return GetSelf();
 	}
 	
@@ -540,15 +512,23 @@ public:
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		
-		FFlecsQueryTermExpression SecondExpr;
-		SecondExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnumConstant>();
-		SecondExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnumConstant>().EnumValue = InEnumSelector;
+		FFlecsQueryTermExpression& TermExpr = this->GetQueryDefinition().Terms[LastTermIndex];
+		TermExpr.Term.Input.bPair = true;
+		TermExpr.Term.Input.Second.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnumConstant>();
+		TermExpr.Term.Input.Second.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnumConstant>().EnumValue = InEnumSelector;
+		
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Second_CppType(const FString& InTypeName)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		
 		FFlecsQueryTermExpression& TermExpr = this->GetQueryDefinition().Terms[LastTermIndex];
-		const FFlecsQueryTerm FirstTerm = TermExpr.Term;
-		TermExpr.Term.InputType.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
-		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTerm.InputType;
-		TermExpr.Term.InputType.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondExpr.Term.InputType;
+		TermExpr.Term.Input.bPair = true;
+		TermExpr.Term.Input.Second.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
+		TermExpr.Term.Input.Second.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = InTypeName;
+		
 		return GetSelf();
 	}
 	
@@ -565,9 +545,10 @@ public:
 		}
 		else
 		{
-			const std::string_view TypeName = nameof(T);
+			using TNoCVRef = std::remove_cv_t<std::remove_reference_t<T>>;
+			const std::string_view TypeName = nameof(TNoCVRef);
 			const FString TypeNameFString = FString(TypeName.data());
-			this->Second(TypeNameFString);
+			this->Second_CppType(TypeNameFString);
 		}
 		
 		return GetSelf();
@@ -870,40 +851,40 @@ public:
 	FORCEINLINE_DEBUGGABLE FInheritedType& Src(const FFlecsId InSource)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
-		this->GetQueryDefinition().Terms[LastTermIndex].Source.template InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
-		this->GetQueryDefinition().Terms[LastTermIndex].Source.template GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InSource;
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.First.template InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.First.template GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InSource;
 		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& Src(const FString& InSource)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
-		this->GetQueryDefinition().Terms[LastTermIndex].Source.template InitializeAs<FFlecsQueryGeneratorInputType_String>();
-		this->GetQueryDefinition().Terms[LastTermIndex].Source.template GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = InSource;
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.First.template InitializeAs<FFlecsQueryGeneratorInputType_String>();
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.First.template GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = InSource;
 		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& Src(const TSolidNotNull<const UScriptStruct*> InStruct)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
-		this->GetQueryDefinition().Terms[LastTermIndex].Source.template InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
-		this->GetQueryDefinition().Terms[LastTermIndex].Source.template GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.First.template InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.First.template GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
 		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& Src(const TSolidNotNull<const UEnum*> InEnum)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
-		this->GetQueryDefinition().Terms[LastTermIndex].Source.template InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnum>();
-		this->GetQueryDefinition().Terms[LastTermIndex].Source.template GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum;
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.First.template InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnum>();
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.First.template GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum;
 		return GetSelf();
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& SrcCppType(const FString& InCppTypeName)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
-		this->GetQueryDefinition().Terms[LastTermIndex].Source.template InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
-		this->GetQueryDefinition().Terms[LastTermIndex].Source.template GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = InCppTypeName;
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.First.template InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.First.template GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = InCppTypeName;
 		return GetSelf();
 	}
 	
@@ -929,8 +910,9 @@ public:
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		TInstancedStruct<FFlecsQueryExpression> UpExpr;
 		UpExpr.InitializeAs<FFlecsQueryUpExpression>();
-		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = TInstancedStruct<FFlecsQueryGeneratorInputType_FlecsId>::Make();
-		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InId;
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = FFlecsQueryGeneratorInput();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InId;
 		
 		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(UpExpr);
 		return GetSelf();
@@ -941,8 +923,9 @@ public:
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		TInstancedStruct<FFlecsQueryExpression> UpExpr;
 		UpExpr.InitializeAs<FFlecsQueryUpExpression>();
-		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = TInstancedStruct<FFlecsQueryGeneratorInputType_ScriptStruct>::Make();
-		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = FFlecsQueryGeneratorInput();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
 		
 		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(UpExpr);
 		return GetSelf();
@@ -953,8 +936,9 @@ public:
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		TInstancedStruct<FFlecsQueryExpression> UpExpr;
 		UpExpr.InitializeAs<FFlecsQueryUpExpression>();
-		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = TInstancedStruct<FFlecsQueryGeneratorInputType_ScriptEnum>::Make();
-		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum;
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = FFlecsQueryGeneratorInput();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnum>();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum;
 		
 		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(UpExpr);
 		return GetSelf();
@@ -966,8 +950,9 @@ public:
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		TInstancedStruct<FFlecsQueryExpression> UpExpr;
 		UpExpr.InitializeAs<FFlecsQueryUpExpression>();
-		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = TInstancedStruct<FFlecsQueryGeneratorInputType_CPPType>::Make();
-		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = InCppTypeName;
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = FFlecsQueryGeneratorInput();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = InCppTypeName;
 		
 		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(UpExpr);
 		return GetSelf();
@@ -981,8 +966,9 @@ public:
 		
 		TInstancedStruct<FFlecsQueryExpression> UpExpr;
 		UpExpr.InitializeAs<FFlecsQueryUpExpression>();
-		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = TInstancedStruct<FFlecsQueryGeneratorInputType_CPPType>::Make();
-		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = FString(TypeName.data());
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = FFlecsQueryGeneratorInput();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = FString(TypeName.data());
 		
 		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(UpExpr);
 		return GetSelf();
@@ -1003,8 +989,9 @@ public:
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		TInstancedStruct<FFlecsQueryExpression> CascadeExpr;
 		CascadeExpr.InitializeAs<FFlecsQueryCascadeExpression>();
-		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal = TInstancedStruct<FFlecsQueryGeneratorInputType_FlecsId>::Make();
-		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InId;
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal = FFlecsQueryGeneratorInput();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InId;
 		
 		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(CascadeExpr);
 		return GetSelf();
@@ -1015,8 +1002,9 @@ public:
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		TInstancedStruct<FFlecsQueryExpression> CascadeExpr;
 		CascadeExpr.InitializeAs<FFlecsQueryCascadeExpression>();
-		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal = TInstancedStruct<FFlecsQueryGeneratorInputType_ScriptStruct>::Make();
-		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal = FFlecsQueryGeneratorInput();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
 		
 		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(CascadeExpr);
 		return GetSelf();
@@ -1027,8 +1015,9 @@ public:
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		TInstancedStruct<FFlecsQueryExpression> CascadeExpr;
 		CascadeExpr.InitializeAs<FFlecsQueryCascadeExpression>();
-		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal = TInstancedStruct<FFlecsQueryGeneratorInputType_ScriptEnum>::Make();
-		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum;
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal = FFlecsQueryGeneratorInput();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnum>();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum;
 		
 		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(CascadeExpr);
 		return GetSelf();
@@ -1040,8 +1029,9 @@ public:
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		TInstancedStruct<FFlecsQueryExpression> CascadeExpr;
 		CascadeExpr.InitializeAs<FFlecsQueryCascadeExpression>();
-		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal = TInstancedStruct<FFlecsQueryGeneratorInputType_CPPType>::Make();
-		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = InCppTypeName;
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal = FFlecsQueryGeneratorInput();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = InCppTypeName;
 		
 		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(CascadeExpr);
 		return GetSelf();
@@ -1054,8 +1044,9 @@ public:
 		const std::string_view TypeName = nameof(TTraversal);
 		TInstancedStruct<FFlecsQueryExpression> CascadeExpr;
 		CascadeExpr.InitializeAs<FFlecsQueryCascadeExpression>();
-		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal = TInstancedStruct<FFlecsQueryGeneratorInputType_CPPType>::Make();
-		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = FString(TypeName.data());
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal = FFlecsQueryGeneratorInput();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = FString(TypeName.data());
 		
 		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(CascadeExpr);
 		return GetSelf();

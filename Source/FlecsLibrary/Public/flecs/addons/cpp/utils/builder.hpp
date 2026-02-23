@@ -42,6 +42,8 @@ public:
     T<Components ...> build() {
         return T<Components...>(world_, *static_cast<Base*>(this));
     }
+    
+    flecs::world_t* _internal_world_v() { return world_; }
 
 protected:
     flecs::world_t* world_v() override { return world_; }

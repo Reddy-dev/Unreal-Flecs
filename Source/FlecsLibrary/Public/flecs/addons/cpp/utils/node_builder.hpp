@@ -78,6 +78,10 @@ public:
     T build() {
         return T(world_, &desc_);
     }
+    
+    TDesc* _internal_get_desc() {
+        return &desc_;
+    }
 
 protected:
     

@@ -2,6 +2,8 @@
 
 #include "Queries/Expressions/FlecsQueryDescendingExpression.h"
 
+#include "Queries/FlecsQueryBuilderView.h"
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsQueryDescendingExpression)
 
 FFlecsQueryDescendingExpression::FFlecsQueryDescendingExpression() : Super(false /* bInAllowsChildExpressions */)
@@ -9,7 +11,7 @@ FFlecsQueryDescendingExpression::FFlecsQueryDescendingExpression() : Super(false
 }
 
 void FFlecsQueryDescendingExpression::Apply(const TSolidNotNull<const UFlecsWorld*> InWorld,
-                                            flecs::query_builder<>& InQueryBuilder) const
+                                            FFlecsQueryBuilderView& InQueryBuilder) const
 {
 	InQueryBuilder.desc();
 }

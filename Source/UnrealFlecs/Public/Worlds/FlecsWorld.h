@@ -22,6 +22,7 @@
 #include "Properties/FlecsComponentProperties.h"
 #include "Queries/FlecsQuery.h"
 #include "Queries/FlecsQueryBuilder.h"
+#include "Observers/FlecsObserverBuilder.h"
 
 #include "FlecsWorld.generated.h"
 
@@ -929,21 +930,9 @@ public:
 	bool IsIdTag(const FFlecsId InId) const;
 
 	template <typename ...TComponents>
-	flecs::observer_builder<TComponents...> CreateObserver(const FString& Name = "") const
+	TFlecsObserverBuilder<TComponents...> CreateObserver(const FString& Name = "") const
 	{
-		return World.observer<TComponents...>(StringCast<char>(*Name).Get());
-	}
-
-	NO_DISCARD flecs::observer_builder<> CreateObserver(const FString& Name = "") const
-	{
-		return World.observer<>(StringCast<char>(*Name).Get());
-	}
-
-	template <typename ...TComponents, typename ...TArgs>
-	flecs::observer_builder<TComponents...> CreateObserver(
-		const FFlecsEntityHandle& InEntity, TArgs&&... Args) const
-	{
-		return World.observer<TComponents...>(InEntity.GetEntity(), std::forward<TArgs>(Args)...);
+		return TFlecsObserverBuilder<TComponents...>(GetSelf(), Name);
 	}
 
 	NO_DISCARD flecs::event_builder Event(const FFlecsEntityHandle& InEntity) const

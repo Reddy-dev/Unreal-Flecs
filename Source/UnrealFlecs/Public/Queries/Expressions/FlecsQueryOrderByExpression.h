@@ -20,7 +20,7 @@ struct UNREALFLECS_API FFlecsQueryOrderByExpression : public FFlecsQueryExpressi
 public:
 	FFlecsQueryOrderByExpression();
 	
-	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const override;
+	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const override;
 	
 	UPROPERTY(EditAnywhere)
 	TInstancedStruct<FFlecsQueryGeneratorInputType> OrderByInput;
@@ -39,7 +39,7 @@ struct UNREALFLECS_API FFlecsQueryOrderByCPPExpressionWrapper : public FFlecsQue
 public:
 	FFlecsQueryOrderByCPPExpressionWrapper();
 	
-	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const override;
+	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const override;
 	
 	UPROPERTY()
 	TInstancedStruct<FFlecsQueryGeneratorInputType> OrderByInput;

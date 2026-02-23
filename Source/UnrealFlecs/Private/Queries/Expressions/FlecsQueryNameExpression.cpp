@@ -2,13 +2,15 @@
 
 #include "Queries/Expressions/FlecsQueryNameExpression.h"
 
+#include "Queries/FlecsQueryBuilderView.h"
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsQueryNameExpression)
 
 FFlecsQueryNameExpression::FFlecsQueryNameExpression() : Super(false /* bInAllowsChildExpressions */)
 {
 }
 
-void FFlecsQueryNameExpression::Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const
+void FFlecsQueryNameExpression::Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const
 {
 	solid_checkf(!Name.IsEmpty(), TEXT("Name is empty"));
 	InQueryBuilder.name(StringCast<char>(*Name).Get());

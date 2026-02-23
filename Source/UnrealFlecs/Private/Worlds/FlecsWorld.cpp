@@ -49,6 +49,7 @@
 #include "General/FlecsObjectRegistrationInterface.h"
 
 #include "Queries/FlecsQueryBuilder.h"
+#include "Queries/FlecsQueryBuilderView.h"
 
 #include "Pipelines/FlecsGameLoopInterface.h"
 #include "Pipelines/FlecsGameLoopTag.h"
@@ -735,9 +736,9 @@ void UFlecsWorld::InitializeSystems()
 		// @TODO: handle hard dependencies being removed?
 		// @TODO: do we have a module object tag type?
 		CreateObserver<const FFlecsUObjectComponent&>(TEXT("RemoveModuleComponentObserver"))
-			.event(flecs::OnRemove)
-			.with<FFlecsModuleComponent>().inout_none() // 1
-			.term_at(0).second<FFlecsModuleObjectTarget>().filter() // FFlecsUObjectComponent (0)
+			.With<FFlecsModuleComponent>().InOutNone() // 1
+			.TermAt(0).Second<FFlecsModuleObjectTarget>().Filter() // FFlecsUObjectComponent (0)
+			.Event(flecs::OnRemove)
 			.each([this](flecs::entity InEntity, const FFlecsUObjectComponent& InUObjectComponent)
 			{
 				for (int32 Index = ImportedModules.Num() - 1; Index >= 0; --Index)
@@ -755,9 +756,9 @@ void UFlecsWorld::InitializeSystems()
 
 	// @TODO: add verification for this
 	CreateObserver<FFlecsTickFunctionComponent&>(TEXT("AddTickFunctionObserver"))
-		.event(flecs::OnAdd)
-		.yield_existing()
-		.with<FFlecsTickTypeRelationship>("$TickTypeTag") // 1
+		.Event(flecs::OnAdd)
+		.YieldExisting()
+		.WithPair<FFlecsTickTypeRelationship>("$TickTypeTag") // 1
 		.each([this](flecs::iter& InIter, size_t InIndex, FFlecsTickFunctionComponent& InTickFunctionComponent)
 		{
 			solid_checkf(InTickFunctionComponent.TickFunction.IsValid(),
@@ -777,8 +778,8 @@ void UFlecsWorld::InitializeSystems()
 		});
 
 	CreateObserver<FFlecsTickFunctionComponent&>(TEXT("RemoveTickFunctionObserver"))
-		.event(flecs::OnRemove)
-		.yield_existing()
+		.Event(flecs::OnRemove)
+		.YieldExisting()
 		.each([this](flecs::iter& InIter, size_t InIndex, FFlecsTickFunctionComponent& InTickFunctionComponent)
 		{
 			solid_checkf(InTickFunctionComponent.TickFunction.IsValid(),
@@ -796,10 +797,10 @@ void UFlecsWorld::InitializeSystems()
 		});
 	
 	CreateObserver<const FFlecsSubEntityRecordNameComponent>("SubEntityRecordNameObserver") // 0 (FFlecsSubEntityRecordNameComponent)
-		.event(flecs::OnSet)
-		.with<flecs::Parent>().filter() // 1
-		.without<flecs::Identifier>(flecs::Name) // 2
-		.yield_existing()
+		.Event(flecs::OnSet)
+		.With<flecs::Parent>().Filter() // 1
+		.WithoutPair<flecs::Identifier>(flecs::Name) // 2
+		.YieldExisting()
 		.each([](flecs::iter& InIter, size_t InIndex, const FFlecsSubEntityRecordNameComponent& InNameComponent)
 		{
 			const FFlecsEntityHandle EntityHandle = InIter.entity(InIndex);
@@ -2138,7 +2139,8 @@ FFlecsQueryBuilder UFlecsWorld::CreateQueryBuilderWithEntity(const FFlecsEntityH
 FFlecsQuery UFlecsWorld::CreateQuery(const FFlecsQueryDefinition& InDefinition, const FString& InName) const
 {
 	flecs::query_builder<> Builder = flecs::query_builder<>(World, StringCast<char>(*InName).Get());
-	InDefinition.Apply(this, Builder);
+	FFlecsQueryBuilderView BuilderView = MakeQueryBuilderView(Builder);
+	InDefinition.Apply(this, BuilderView);
 	return FFlecsQuery(Builder.build());
 }
 
@@ -2146,7 +2148,8 @@ FFlecsQuery UFlecsWorld::CreateQueryWithEntity(const FFlecsQueryDefinition& InDe
 	const FFlecsEntityHandle& InEntity) const
 {
 	flecs::query_builder<> Builder = flecs::query_builder<>(World, InEntity);
-	InDefinition.Apply(this, Builder);
+	FFlecsQueryBuilderView BuilderView = MakeQueryBuilderView(Builder);
+	InDefinition.Apply(this, BuilderView);
 	return FFlecsQuery(Builder.build());
 }
 

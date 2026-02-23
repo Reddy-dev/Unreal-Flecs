@@ -74,7 +74,7 @@ public:
 		return Terms.Last();
 	}
 
-	void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const;
+	void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query")
 	TArray<FFlecsQueryTermExpression> Terms;

@@ -6,6 +6,7 @@
 
 #include "FlecsQueryDefinitionTestTypes.h"
 #include "Queries/FlecsQuery.h"
+#include "Queries/FlecsQueryBuilderView.h"
 
 #include "Queries/FlecsQueryDefinition.h"
 #include "Queries/Generator/FlecsQueryGeneratorInputType.h"
@@ -69,7 +70,8 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		ASSERT_THAT(AreEqual(QueryDefinition.OtherExpressions.Num(), 0));
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		QueryDefinition.Apply(FlecsWorld, QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		flecs::query<> Query = QueryBuilder.build();
 		
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
@@ -85,12 +87,13 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		InputTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
 		InputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = FFlecsTestStruct_Tag::StaticStruct();
 		
-		TermExpression1.Term.InputType = InputTypeStruct;
+		TermExpression1.Term.Input.First = InputTypeStruct;
 		
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		QueryDefinition.Apply(FlecsWorld, QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
 		
@@ -113,12 +116,13 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		InputTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
 		InputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = FFlecsTestStruct_Value::StaticStruct();
 		
-		TermExpression1.Term.InputType = InputTypeStruct;
+		TermExpression1.Term.Input.First = InputTypeStruct;
 		
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		QueryDefinition.Apply(FlecsWorld, QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
 		
@@ -149,12 +153,13 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		InputTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_String>();
 		InputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = TEXT("FFlecsTestStruct_Tag");
 		
-		TermExpression1.Term.InputType = InputTypeStruct;
+		TermExpression1.Term.Input.First = InputTypeStruct;
 		
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		QueryDefinition.Apply(FlecsWorld, QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
 		
@@ -177,12 +182,13 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		InputTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_String>();
 		InputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = TEXT("FFlecsTestStruct_Value");
 		
-		TermExpression1.Term.InputType = InputTypeStruct;
+		TermExpression1.Term.Input.First = InputTypeStruct;
 		
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		QueryDefinition.Apply(FlecsWorld, QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
 		
@@ -209,9 +215,6 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		
 		FFlecsQueryTermExpression TermExpression1;
 		
-		TInstancedStruct<FFlecsQueryGeneratorInputType_Pair> InputTypeStruct;
-		InputTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
-		
 		TInstancedStruct<FFlecsQueryGeneratorInputType_ScriptStruct> FirstTypeStruct;
 		FirstTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
 		FirstTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = FUSTRUCTPairTestComponent::StaticStruct();
@@ -220,15 +223,15 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		SecondTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
 		SecondTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = FUSTRUCTPairTestComponent_Second::StaticStruct();
 		
-		InputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTypeStruct;
-		InputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondTypeStruct;
-		
-		TermExpression1.Term.InputType = InputTypeStruct;
+		TermExpression1.Term.Input.bPair = true;
+		TermExpression1.Term.Input.First = FirstTypeStruct;
+		TermExpression1.Term.Input.Second = SecondTypeStruct;
 		
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		QueryDefinition.Apply(FlecsWorld, QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
@@ -247,9 +250,6 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		
 		FFlecsQueryTermExpression TermExpression1;
 		
-		TInstancedStruct<FFlecsQueryGeneratorInputType_Pair> InputTypeStruct;
-		InputTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
-		
 		TInstancedStruct<FFlecsQueryGeneratorInputType_String> FirstTypeStruct;
 		FirstTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_String>();
 		FirstTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = TEXT("FUSTRUCTPairTestComponent");
@@ -258,15 +258,15 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		SecondTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_String>();
 		SecondTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = TEXT("FUSTRUCTPairTestComponent_Second");
 		
-		InputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTypeStruct;
-		InputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondTypeStruct;
-		
-		TermExpression1.Term.InputType = InputTypeStruct;
+		TermExpression1.Term.Input.bPair = true;
+		TermExpression1.Term.Input.First = FirstTypeStruct;
+		TermExpression1.Term.Input.Second = SecondTypeStruct;
 		
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		QueryDefinition.Apply(FlecsWorld, QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
@@ -285,9 +285,6 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		
 		FFlecsQueryTermExpression TermExpression1;
 		
-		TInstancedStruct<FFlecsQueryGeneratorInputType_Pair> InputTypeStruct;
-		InputTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
-		
 		TInstancedStruct<FFlecsQueryGeneratorInputType_ScriptStruct> FirstTypeStruct;
 		FirstTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
 		FirstTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = FUSTRUCTPairTestComponent::StaticStruct();
@@ -296,15 +293,15 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		SecondTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_String>();
 		SecondTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = TEXT("FUSTRUCTPairTestComponent_Second");
 		
-		InputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTypeStruct;
-		InputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondTypeStruct;
-		
-		TermExpression1.Term.InputType = InputTypeStruct;
+		TermExpression1.Term.Input.bPair = true;
+		TermExpression1.Term.Input.First = FirstTypeStruct;
+		TermExpression1.Term.Input.Second = SecondTypeStruct;
 		
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		QueryDefinition.Apply(FlecsWorld, QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
@@ -323,9 +320,6 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		
 		FFlecsQueryTermExpression TermExpression1;
 		
-		TInstancedStruct<FFlecsQueryGeneratorInputType_Pair> InputTypeStruct;
-		InputTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
-		
 		TInstancedStruct<FFlecsQueryGeneratorInputType_ScriptStruct> FirstTypeStruct;
 		FirstTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
 		FirstTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = FUSTRUCTPairTestComponent::StaticStruct();
@@ -334,15 +328,15 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		SecondTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
 		SecondTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = flecs::Wildcard;
 		
-		InputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTypeStruct;
-		InputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondTypeStruct;
-		
-		TermExpression1.Term.InputType = InputTypeStruct;
+		TermExpression1.Term.Input.bPair = true;
+		TermExpression1.Term.Input.First = FirstTypeStruct;
+		TermExpression1.Term.Input.Second = SecondTypeStruct;
 		
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		QueryDefinition.Apply(FlecsWorld, QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
@@ -368,9 +362,6 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		
 		FFlecsQueryTermExpression TermExpression1;
 		
-		TInstancedStruct<FFlecsQueryGeneratorInputType_Pair> InputTypeStruct;
-		InputTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
-		
 		TInstancedStruct<FFlecsQueryGeneratorInputType_ScriptEnum> FirstTypeStruct;
 		FirstTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnum>();
 		FirstTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = StaticEnum<EFlecsTestEnum_UENUM>();
@@ -379,15 +370,15 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		SecondTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnumConstant>();
 		SecondTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnumConstant>().EnumValue = FSolidEnumSelector::Make<EFlecsTestEnum_UENUM>(EFlecsTestEnum_UENUM::One);
 		
-		InputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTypeStruct;
-		InputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondTypeStruct;
-		
-		TermExpression1.Term.InputType = InputTypeStruct;
+		TermExpression1.Term.Input.bPair = true;
+		TermExpression1.Term.Input.First = FirstTypeStruct;
+		TermExpression1.Term.Input.Second = SecondTypeStruct;
 		
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		QueryDefinition.Apply(FlecsWorld, QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
 		
@@ -412,9 +403,6 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		
 		FFlecsQueryTermExpression TermExpression1;
 		
-		TInstancedStruct<FFlecsQueryGeneratorInputType_Pair> InputTypeStruct;
-		InputTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
-		
 		TInstancedStruct<FFlecsQueryGeneratorInputType_ScriptEnum> FirstTypeStruct;
 		FirstTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnum>();
 		FirstTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = StaticEnum<EFlecsTestEnum_UENUM>();
@@ -423,15 +411,15 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		SecondTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
 		SecondTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = flecs::Wildcard;
 		
-		InputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTypeStruct;
-		InputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondTypeStruct;
-		
-		TermExpression1.Term.InputType = InputTypeStruct;
-		
+		TermExpression1.Term.Input.bPair = true;
+		TermExpression1.Term.Input.First = FirstTypeStruct;
+		TermExpression1.Term.Input.Second = SecondTypeStruct;
+
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		QueryDefinition.Apply(FlecsWorld, QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
 		
@@ -456,9 +444,6 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		
 		FFlecsQueryTermExpression TermExpression1;
 		
-		TInstancedStruct<FFlecsQueryGeneratorInputType_Pair> InputTypeStruct;
-		InputTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
-		
 		TInstancedStruct<FFlecsQueryGeneratorInputType_String> FirstTypeStruct;
 		FirstTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_String>();
 		FirstTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = TEXT("EFlecsTestEnum_UENUM");
@@ -467,15 +452,15 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		SecondTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_String>();
 		SecondTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = TEXT("EFlecsTestEnum_UENUM.One");
 		
-		InputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTypeStruct;
-		InputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondTypeStruct;
-		
-		TermExpression1.Term.InputType = InputTypeStruct;
+		TermExpression1.Term.Input.bPair = true;
+		TermExpression1.Term.Input.First = FirstTypeStruct;
+		TermExpression1.Term.Input.Second = SecondTypeStruct;
 		
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		QueryDefinition.Apply(FlecsWorld, QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
 		
@@ -500,9 +485,6 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		
 		FFlecsQueryTermExpression TermExpression1;
 		
-		TInstancedStruct<FFlecsQueryGeneratorInputType_Pair> InputTypeStruct;
-		InputTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
-		
 		TInstancedStruct<FFlecsQueryGeneratorInputType_String> FirstTypeStruct;
 		FirstTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_String>();
 		FirstTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = TEXT("EFlecsTestEnum_UENUM");
@@ -511,15 +493,15 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		SecondTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
 		SecondTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = flecs::Wildcard;
 		
-		InputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTypeStruct;
-		InputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondTypeStruct;
-		
-		TermExpression1.Term.InputType = InputTypeStruct;
+		TermExpression1.Term.Input.bPair = true;
+		TermExpression1.Term.Input.First = FirstTypeStruct;
+		TermExpression1.Term.Input.Second = SecondTypeStruct;
 		
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		QueryDefinition.Apply(FlecsWorld, QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
 		
@@ -544,9 +526,6 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		
 		FFlecsQueryTermExpression TermExpression1;
 		
-		TInstancedStruct<FFlecsQueryGeneratorInputType_Pair> InputTypeStruct;
-		InputTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
-		
 		TInstancedStruct<FFlecsQueryGeneratorInputType_String> FirstTypeStruct;
 		FirstTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_String>();
 		FirstTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = TEXT("ETestEnum");
@@ -555,15 +534,15 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		SecondTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_String>();
 		SecondTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = TEXT("ETestEnum.One");
 		
-		InputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTypeStruct;
-		InputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondTypeStruct;
-		
-		TermExpression1.Term.InputType = InputTypeStruct;
+		TermExpression1.Term.Input.bPair = true;
+		TermExpression1.Term.Input.First = FirstTypeStruct;
+		TermExpression1.Term.Input.Second = SecondTypeStruct;
 		
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		QueryDefinition.Apply(FlecsWorld, QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
 		
@@ -588,9 +567,6 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		
 		FFlecsQueryTermExpression TermExpression1;
 		
-		TInstancedStruct<FFlecsQueryGeneratorInputType_Pair> InputTypeStruct;
-		InputTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_Pair>();
-		
 		TInstancedStruct<FFlecsQueryGeneratorInputType_String> FirstTypeStruct;
 		FirstTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_String>();
 		FirstTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_String>().InputString = TEXT("ETestEnum");
@@ -599,15 +575,15 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		SecondTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
 		SecondTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = flecs::Wildcard;
 		
-		InputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_Pair>().First = FirstTypeStruct;
-		InputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_Pair>().Second = SecondTypeStruct;
-		
-		TermExpression1.Term.InputType = InputTypeStruct;
+		TermExpression1.Term.Input.bPair = true;
+		TermExpression1.Term.Input.First = FirstTypeStruct;
+		TermExpression1.Term.Input.Second = SecondTypeStruct;
 		
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		QueryDefinition.Apply(FlecsWorld, QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
 		
@@ -636,7 +612,7 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		WithoutInputTypeStruct.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
 		WithoutInputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = FFlecsTestStruct_Tag::StaticStruct();
 		
-		TermExpression1.Term.InputType = WithoutInputTypeStruct;
+		TermExpression1.Term.Input.First = WithoutInputTypeStruct;
 		TermExpression1.Operator = EFlecsQueryOperator::Not;
 		
 		QueryDefinition.Terms.Add(TermExpression1);
@@ -646,12 +622,13 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		WithInputTypeStruct.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = FFlecsTestStruct_Value::StaticStruct();
 		
 		FFlecsQueryTermExpression TermExpression2;
-		TermExpression2.Term.InputType = WithInputTypeStruct;
+		TermExpression2.Term.Input.First = WithInputTypeStruct;
 		
 		QueryDefinition.Terms.Add(TermExpression2);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		QueryDefinition.Apply(FlecsWorld, QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
 		
@@ -908,6 +885,63 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		TestEntity.Remove<FFlecsTestStruct_Tag>();
 		ASSERT_THAT(IsFalse(Query.is_true()));
 		ASSERT_THAT(IsTrue(Query.count() == 0));
+	}
+	
+	TEST_METHOD(B8_BuilderConstruction_WithTypedQueryDefinition_CPPOnlyValueTerm_WithInOutRef_CPPAPI)
+	{
+		TTypedFlecsQuery<FFlecsTest_CPPStructValue> Query = FlecsWorld->CreateQueryBuilder<FFlecsTest_CPPStructValue&>()
+			.Build();
+		
+		ASSERT_THAT(IsTrue(Query.IsValid()));
+		
+		static const FFlecsTest_CPPStructValue TestValue { 256 };
+		FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity()
+			.Set(TestValue);
+		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTest_CPPStructValue>()));
+		
+		const FFlecsTest_CPPStructValue& RetrievedValue = TestEntity.Get<FFlecsTest_CPPStructValue>();
+		ASSERT_THAT(IsTrue(RetrievedValue.Value == 256));
+		
+		ASSERT_THAT(IsTrue(Query.count() == 1));
+		
+		int32 FoundValueSum = 0;
+		Query.each([&](flecs::iter& Iter, size_t Index, FFlecsTest_CPPStructValue& Value)
+		{
+			Value.Value += 1;
+			FoundValueSum += Value.Value;
+		});
+		
+		ASSERT_THAT(IsTrue(FoundValueSum == 257));
+		ASSERT_THAT(IsTrue(TestEntity.Get<FFlecsTest_CPPStructValue>().Value == 257));
+	}
+	
+	TEST_METHOD(B9_BuilderConstruction_WithTypedQueryDefinition_CPPOnlyValueTerm_WithInConstRef_CPPAPI)
+	{
+		TTypedFlecsQuery<FFlecsTest_CPPStructValue> Query = FlecsWorld->CreateQueryBuilder<const FFlecsTest_CPPStructValue>()
+			.Build();
+		
+		ASSERT_THAT(IsTrue(Query.IsValid()));
+		
+		static const FFlecsTest_CPPStructValue TestValue { 256 };
+		FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity()
+			.Set(TestValue);
+		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTest_CPPStructValue>()));
+		
+		const FFlecsTest_CPPStructValue& RetrievedValue = TestEntity.Get<FFlecsTest_CPPStructValue>();
+		ASSERT_THAT(IsTrue(RetrievedValue.Value == 256));
+		
+		ASSERT_THAT(IsTrue(Query.count() == 1));
+		
+		int32 FoundValueSum = 0;
+		Query.each([&](flecs::iter& Iter, size_t Index, const FFlecsTest_CPPStructValue& Value)
+		{
+			FoundValueSum += Value.Value;
+		});
+		
+		ASSERT_THAT(IsTrue(FoundValueSum == 256));
+		ASSERT_THAT(IsTrue(TestEntity.Get<FFlecsTest_CPPStructValue>().Value == 256));
 	}
 	
 	TEST_METHOD(C1_BuilderAPI_OrderByCallbackDefinition_ScriptStructValue_Ascending_ScriptStructAPI)
@@ -1207,6 +1241,7 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 			Index++;
 		});
 	}
+	
 	
 	TEST_METHOD(D1_GroupBy_SetGroup_ScriptStructValue_ScriptStructAPI)
 	{

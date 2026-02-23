@@ -9,6 +9,8 @@
 #include "Types/SolidNotNull.h"
 #include "FlecsQueryExpression.generated.h"
 
+struct FFlecsQueryBuilderView;
+
 class UFlecsWorld;
 
 USTRUCT(BlueprintInternalUseOnly)
@@ -28,7 +30,7 @@ public:
 	virtual ~FFlecsQueryExpression() = default;
 
 	// We should only call the Super when we have child expressions
-	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const;
+	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const;
 
 #if WITH_EDITORONLY_DATA
 

@@ -13,34 +13,34 @@ class UFlecsWorld;
 
 namespace Unreal::Flecs::Queries
 {
-	template <typename T>
+	template <typename TBuilder, typename T>
 	struct TAddInputType
 	{
-		static FORCEINLINE void Apply(TFlecsQueryBuilderBase<FFlecsQueryBuilder>& InOutDefinition)
+		static FORCEINLINE void Apply(TBuilder& InOutDefinition)
 		{
 			InOutDefinition
-				.With<T>().InOutExpression(TypeToInOut<T>()).Oper(TypeToOperator<T>());
+				.template With<T>().InOutExpression(TypeToInOut<T>()).Oper(TypeToOperator<T>());
 		}
 		
 	}; // struct TAddInputType
 
-	template <typename ...TArgs>
+	template <typename TBuilder, typename ...TArgs>
 	struct TAddInputTypes
 	{
-		static FORCEINLINE void Apply(TFlecsQueryBuilderBase<FFlecsQueryBuilder>& InOutDefinition)
+		static FORCEINLINE void Apply(TBuilder InOutDefinition)
 		{
 			// Base case: do nothing
 		}
 		
 	}; // struct TAddInputTypes
 	
-	template <typename TFirst, typename ...TRest>
-	struct TAddInputTypes<TFirst, TRest...>
+	template <typename TBuilder, typename TFirst, typename ...TRest>
+	struct TAddInputTypes<TBuilder, TFirst, TRest...>
 	{
-		static FORCEINLINE void Apply(TFlecsQueryBuilderBase<FFlecsQueryBuilder>& InOutDefinition)
+		static FORCEINLINE void Apply(TBuilder& InOutDefinition)
 		{
-			Unreal::Flecs::Queries::TAddInputType<TFirst>::Apply(InOutDefinition);
-			TAddInputTypes<TRest...>::Apply(InOutDefinition);
+			Unreal::Flecs::Queries::TAddInputType<TBuilder, TFirst>::Apply(InOutDefinition);
+			TAddInputTypes<TBuilder, TRest...>::Apply(InOutDefinition);
 		}
 		
 	}; // struct TAddInputTypes
@@ -49,9 +49,9 @@ namespace Unreal::Flecs::Queries
 
 USTRUCT()
 struct UNREALFLECS_API FFlecsQueryBuilder 
-#if CPP
-	: public TFlecsQueryBuilderBase<FFlecsQueryBuilder>
-#endif // CPP
+	#if CPP
+		: public TFlecsQueryBuilderBase<FFlecsQueryBuilder>
+	#endif // CPP
 {
 	GENERATED_BODY()
 	
@@ -91,13 +91,13 @@ public:
 	FORCEINLINE explicit TFlecsQueryBuilder(const UFlecsWorld* InWorld, const FString& InName = FString())
 		: FFlecsQueryBuilder(InWorld, InName)
 	{
-		Unreal::Flecs::Queries::TAddInputTypes<TArgs...>::Apply(*this);
+		Unreal::Flecs::Queries::TAddInputTypes<TFlecsQueryBuilder, TArgs...>::Apply(*this);
 	}
 	
 	FORCEINLINE explicit TFlecsQueryBuilder(const UFlecsWorld* InWorld, const FFlecsEntityHandle& InQueryEntity)
 		: FFlecsQueryBuilder(InWorld, InQueryEntity)
 	{
-		Unreal::Flecs::Queries::TAddInputTypes<TArgs...>::Apply(*this);
+		Unreal::Flecs::Queries::TAddInputTypes<TFlecsQueryBuilder, TArgs...>::Apply(*this);
 	}
 	
 	

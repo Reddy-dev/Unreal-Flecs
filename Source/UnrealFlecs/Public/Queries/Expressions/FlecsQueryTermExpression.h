@@ -8,6 +8,7 @@
 #include "FlecsQueryExpression.h"
 #include "Queries/FlecsQueryTerm.h"
 #include "Queries/Enums/FlecsQueryInOut.h"
+#include "Queries/Generator/FlecsQueryGeneratorInput.h"
 
 #include "FlecsQueryTermExpression.generated.h"
 
@@ -19,16 +20,16 @@ struct UNREALFLECS_API FFlecsQueryTermExpression : public FFlecsQueryExpression
 public:
 	FFlecsQueryTermExpression();
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FFlecsQueryTerm Term;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Query")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	EFlecsQueryOperator Operator = EFlecsQueryOperator::Default;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query")
-	TInstancedStruct<FFlecsQueryGeneratorInputType> Source;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowsPairInput = false))
+	FFlecsQueryGeneratorInput Source;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EFlecsQueryInOut InOut = EFlecsQueryInOut::Default;
 
 	/** Set read/write access for stage. Use this when a system reads or writes
@@ -39,9 +40,9 @@ public:
 	 * Setting this is optional. If not set, the value of the accessed component
 	 * may be out of sync for at most one frame.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bStage = false;
 
-	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const override;
+	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const override;
 	
 }; // struct FFlecsQueryTermExpression

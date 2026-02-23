@@ -2,6 +2,8 @@
 
 #include "Queries/Expressions/FlecsQueryScopeExpression.h"
 
+#include "Queries/FlecsQueryBuilderView.h"
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsQueryScopeExpression)
 
 FFlecsQueryScopeExpression::FFlecsQueryScopeExpression() : Super(true /* bInAllowsChildExpressions */)
@@ -9,7 +11,7 @@ FFlecsQueryScopeExpression::FFlecsQueryScopeExpression() : Super(true /* bInAllo
 }
 
 void FFlecsQueryScopeExpression::Apply(const TSolidNotNull<const UFlecsWorld*> InWorld,
-	flecs::query_builder<>& InQueryBuilder) const
+	FFlecsQueryBuilderView& InQueryBuilder) const
 {
 	if (ScopeType == EFlecsQueryScopeExpressionType::Open)
 	{

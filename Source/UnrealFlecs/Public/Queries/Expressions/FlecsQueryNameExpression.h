@@ -16,9 +16,9 @@ struct UNREALFLECS_API FFlecsQueryNameExpression : public FFlecsQueryExpression
 public:
 	FFlecsQueryNameExpression();
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString Name;
 
-	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const override;
+	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const override;
 	
 }; // struct FFlecsQueryNameExpression

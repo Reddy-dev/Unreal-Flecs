@@ -2,9 +2,27 @@
 
 #include "Queries/Generator/FlecsQueryGeneratorInputType.h"
 
+#include "Queries/FlecsQueryBuilderView.h"
 #include "Worlds/FlecsWorld.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsQueryGeneratorInputType)
+
+FFlecsTermRef FFlecsQueryGeneratorInputType::GetTermRefOutput(const TSolidNotNull<const UFlecsWorld*> InWorld) const
+{
+	if (ReturnType == EFlecsQueryGeneratorReturnType::FlecsId)
+	{
+		return FFlecsTermRef(TInPlaceType<FFlecsId>(), GetFlecsIdOutput(InWorld));
+	}
+	else if (ReturnType == EFlecsQueryGeneratorReturnType::String)
+	{
+		return FFlecsTermRef(TInPlaceType<FString>(), GetStringOutput());
+	}
+	else UNLIKELY_ATTRIBUTE
+	{
+		solid_checkf(false, TEXT("Invalid return type for query generator input type!"));
+		return FFlecsTermRef();
+	}
+}
 
 FFlecsId FFlecsQueryGeneratorInputType_ScriptStruct::GetFlecsIdOutput(
 	const TSolidNotNull<const UFlecsWorld*> InWorld) const
@@ -50,118 +68,4 @@ FFlecsId FFlecsQueryGeneratorInputType_ScriptEnumConstant::GetFlecsIdOutput(
 		*EnumValueName, *EnumClass->GetName());
 	
 	return EnumConstantEntity;
-}
-
-void FFlecsQueryGeneratorInputType_Pair::CustomBuilderOutput(flecs::query_builder<>& Builder,
-	const TSolidNotNull<const UFlecsWorld*> InWorld) const
-{
-	const EFlecsQueryGeneratorReturnType FirstReturnType = First.Get().ReturnType;
-	const EFlecsQueryGeneratorReturnType SecondReturnType = Second.Get().ReturnType;
-	
-	solid_checkf(FirstReturnType != EFlecsQueryGeneratorReturnType::CustomBuilder,
-		TEXT("FFlecsQueryGeneratorInputType_Pair::CustomBuilderOutput: First input type cannot be of CustomBuilder return type!"));
-	solid_checkf(SecondReturnType != EFlecsQueryGeneratorReturnType::CustomBuilder,
-		TEXT("FFlecsQueryGeneratorInputType_Pair::CustomBuilderOutput: Second input type cannot be of CustomBuilder return type!"));
-	
-	using FStringOrId = TVariant<FString, FFlecsId>;
-	
-	FStringOrId FirstOutput;
-	FStringOrId SecondOutput;
-	
-	if (FirstReturnType == EFlecsQueryGeneratorReturnType::FlecsId)
-	{
-		FirstOutput = FStringOrId(TInPlaceType<FFlecsId>(), First.Get().GetFlecsIdOutput(InWorld));
-	}
-	else if (FirstReturnType == EFlecsQueryGeneratorReturnType::String)
-	{
-		FirstOutput = FStringOrId(TInPlaceType<FString>(), First.Get().GetStringOutput());
-	}
-	else if (FirstReturnType == EFlecsQueryGeneratorReturnType::CustomBuilder) UNLIKELY_ATTRIBUTE
-	{
-		solid_cassumef(false,
-			TEXT("FFlecsQueryGeneratorInputType_Pair::CustomBuilderOutput: First input type cannot be of CustomBuilder return type!"));
-	}
-	else UNLIKELY_ATTRIBUTE
-	{
-		UNREACHABLE
-	}
-	
-	if (SecondReturnType == EFlecsQueryGeneratorReturnType::FlecsId)
-	{
-		SecondOutput = FStringOrId(TInPlaceType<FFlecsId>(), Second.Get().GetFlecsIdOutput(InWorld));
-	}
-	else if (SecondReturnType == EFlecsQueryGeneratorReturnType::String)
-	{
-		SecondOutput = FStringOrId(TInPlaceType<FString>(), Second.Get().GetStringOutput());
-	}
-	else if (SecondReturnType == EFlecsQueryGeneratorReturnType::CustomBuilder) UNLIKELY_ATTRIBUTE
-	{
-		solid_checkf(false, TEXT("FFlecsQueryGeneratorInputType_Pair::CustomBuilderOutput: Second input type cannot be of CustomBuilder return type!"));
-	}
-	else UNLIKELY_ATTRIBUTE
-	{
-		UNREACHABLE
-	}
-	
-	if (FirstOutput.IsType<FFlecsId>() && SecondOutput.IsType<FFlecsId>())
-	{
-		Builder.with(FirstOutput.Get<FFlecsId>(), SecondOutput.Get<FFlecsId>());
-	}
-	else if (FirstOutput.IsType<FFlecsId>() && SecondOutput.IsType<FString>())
-	{
-		const FString& SecondString = SecondOutput.Get<FString>();
-		
-		const char* CStr = TCHAR_TO_UTF8(*SecondString);
-		solid_cassume(CStr != nullptr);
-	
-		const uint32 Length = static_cast<uint32>(FCStringAnsi::Strlen(CStr));
-		
-		const char* OwnedCStr = (const char*)FMemory::Malloc(Length + 1);
-		FMemory::Memcpy((void*)OwnedCStr, (const void*)CStr, Length + 1);
-		
-		Builder.with(FirstOutput.Get<FFlecsId>(), OwnedCStr);
-	}
-	else if (FirstOutput.IsType<FString>() && SecondOutput.IsType<FFlecsId>())
-	{
-		const FString& FirstString = FirstOutput.Get<FString>();
-		
-		const char* CStr = TCHAR_TO_UTF8(*FirstString);
-		solid_cassume(CStr != nullptr);
-	
-		const uint32 Length = static_cast<uint32>(FCStringAnsi::Strlen(CStr));
-		
-		const char* OwnedCStr = (const char*)FMemory::Malloc(Length + 1);
-		FMemory::Memcpy((void*)OwnedCStr, (const void*)CStr, Length + 1);
-		
-		Builder.with(OwnedCStr, SecondOutput.Get<FFlecsId>());
-	}
-	else if (FirstOutput.IsType<FString>() && SecondOutput.IsType<FString>())
-	{
-		const FString& FirstString = FirstOutput.Get<FString>();
-		const FString& SecondString = SecondOutput.Get<FString>();
-		
-		const char* CStrFirst = TCHAR_TO_UTF8(*FirstString);
-		solid_cassume(CStrFirst != nullptr);
-	
-		const uint32 LengthFirst = static_cast<uint32>(FCStringAnsi::Strlen(CStrFirst));
-		
-		const char* OwnedCStrFirst = (const char*)FMemory::Malloc(LengthFirst + 1);
-		FMemory::Memcpy((void*)OwnedCStrFirst, (const void*)CStrFirst, LengthFirst + 1);
-		
-		
-		const char* CStrSecond = TCHAR_TO_UTF8(*SecondString);
-		solid_cassume(CStrSecond != nullptr);
-	
-		const uint32 LengthSecond = static_cast<uint32>(FCStringAnsi::Strlen(CStrSecond));
-		const char* OwnedCStrSecond = (const char*)FMemory::Malloc(LengthSecond + 1);
-		FMemory::Memcpy((void*)OwnedCStrSecond, (const void*)CStrSecond, LengthSecond + 1);
-		
-		Builder.with(OwnedCStrFirst, OwnedCStrSecond);
-	}
-}
-
-void FFlecsQueryGeneratorInputType_WithNameComponent::CustomBuilderOutput(flecs::query_builder<>& Builder,
-	const TSolidNotNull<const UFlecsWorld*> InWorld) const
-{
-	Builder.with_name_component();
 }

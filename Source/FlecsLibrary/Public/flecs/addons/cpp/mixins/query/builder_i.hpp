@@ -396,6 +396,10 @@ struct query_builder_i : term_builder_i<Base> {
         desc_->on_group_delete = action;
         return *this;
     }
+    
+    ecs_query_desc_t* _internal_get_query_desc() {
+        return desc_;
+    }
 
 protected:
     virtual flecs::world_t* world_v() override = 0;

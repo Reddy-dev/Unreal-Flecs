@@ -11,15 +11,17 @@
 #include "Types/SolidEnumSelector.h"
 
 #include "Entities/FlecsId.h"
+#include "FlecsGeneratorTermRef.h"
 
 #include "FlecsQueryGeneratorInputType.generated.h"
+
+struct FFlecsQueryBuilderView;
 
 UENUM(BlueprintType)
 enum class EFlecsQueryGeneratorReturnType : uint8
 {
 	String,
 	FlecsId,
-	CustomBuilder
 }; // enum class EFlecsQueryGeneratorReturnType
 
 USTRUCT(BlueprintInternalUseOnly)
@@ -46,15 +48,17 @@ public:
 		return FFlecsId();
 	}
 	
-	virtual void CustomBuilderOutput(flecs::query_builder<>& Builder, const TSolidNotNull<const UFlecsWorld*> InWorld) const
+	virtual void CustomBuilderOutput(FFlecsQueryBuilderView& Builder, const TSolidNotNull<const UFlecsWorld*> InWorld) const
 	{
 		solid_checkf(false, TEXT("FFlecsQueryGeneratorInputType::CustomBuilderOutput: Pure virtual function called on base class! Did you forget to override it?"));
 	}
+	
+	NO_DISCARD FFlecsTermRef GetTermRefOutput(const TSolidNotNull<const UFlecsWorld*> InWorld) const;
 
 }; // struct FFlecsQueryGeneratorInputType
 
 USTRUCT(BlueprintType, meta = (DisplayName = "Script Struct"))
-struct UNREALFLECS_API FFlecsQueryGeneratorInputType_ScriptStruct : public FFlecsQueryGeneratorInputType
+struct UNREALFLECS_API FFlecsQueryGeneratorInputType_ScriptStruct final : public FFlecsQueryGeneratorInputType
 {
 	GENERATED_BODY()
 	
@@ -72,7 +76,7 @@ public:
 }; // struct FFlecsQueryGeneratorInputType_ScriptStruct
 
 USTRUCT(BlueprintType, meta = (DisplayName = "Script Enum"))
-struct UNREALFLECS_API FFlecsQueryGeneratorInputType_ScriptEnum : public FFlecsQueryGeneratorInputType
+struct UNREALFLECS_API FFlecsQueryGeneratorInputType_ScriptEnum final : public FFlecsQueryGeneratorInputType
 {
 	GENERATED_BODY()
 	
@@ -90,7 +94,7 @@ public:
 }; // struct FFlecsQueryGeneratorInputType_ScriptEnum
 
 USTRUCT(BlueprintType, meta = (DisplayName = "String"))
-struct UNREALFLECS_API FFlecsQueryGeneratorInputType_String : public FFlecsQueryGeneratorInputType
+struct UNREALFLECS_API FFlecsQueryGeneratorInputType_String final : public FFlecsQueryGeneratorInputType
 {
 	GENERATED_BODY()
 	
@@ -108,7 +112,7 @@ public:
 }; // struct FFlecsQueryGeneratorInputType_String
 
 USTRUCT(NotBlueprintType)
-struct UNREALFLECS_API FFlecsQueryGeneratorInputType_CPPType : public FFlecsQueryGeneratorInputType
+struct UNREALFLECS_API FFlecsQueryGeneratorInputType_CPPType final : public FFlecsQueryGeneratorInputType
 {
 	GENERATED_BODY()
 	
@@ -126,7 +130,7 @@ public:
 }; // struct FFlecsQueryGeneratorInputType_CPPType
 
 USTRUCT(BlueprintType, meta = (DisplayName = "Flecs Id"))
-struct UNREALFLECS_API FFlecsQueryGeneratorInputType_FlecsId : public FFlecsQueryGeneratorInputType
+struct UNREALFLECS_API FFlecsQueryGeneratorInputType_FlecsId final : public FFlecsQueryGeneratorInputType
 {
 	GENERATED_BODY()
 	
@@ -144,7 +148,7 @@ public:
 }; // struct FFlecsQueryGeneratorInputType_FlecsId
 
 USTRUCT(BlueprintType, meta = (DisplayName = "Script Enum Constant"))
-struct UNREALFLECS_API FFlecsQueryGeneratorInputType_ScriptEnumConstant : public FFlecsQueryGeneratorInputType
+struct UNREALFLECS_API FFlecsQueryGeneratorInputType_ScriptEnumConstant final : public FFlecsQueryGeneratorInputType
 {
 	GENERATED_BODY()
 	
@@ -163,7 +167,7 @@ public:
 
 
 USTRUCT(BlueprintType, meta = (DisplayName = "Wildcard"))
-struct UNREALFLECS_API FFlecsQueryGeneratorInputType_Wildcard : public FFlecsQueryGeneratorInputType
+struct UNREALFLECS_API FFlecsQueryGeneratorInputType_Wildcard final : public FFlecsQueryGeneratorInputType
 {
 	GENERATED_BODY()
 	
@@ -181,7 +185,7 @@ public:
 }; // struct FFlecsQueryGeneratorInputType_Wildcard
 
 USTRUCT(BlueprintType, meta = (DisplayName = "Any"))
-struct UNREALFLECS_API FFlecsQueryGeneratorInputType_Any : public FFlecsQueryGeneratorInputType
+struct UNREALFLECS_API FFlecsQueryGeneratorInputType_Any final : public FFlecsQueryGeneratorInputType
 {
 	GENERATED_BODY()
 	
@@ -197,40 +201,3 @@ public:
 	}
 	
 }; // struct FFlecsQueryGeneratorInputType_Any
-
-USTRUCT(BlueprintType, meta = (DisplayName = "Pair"))
-struct UNREALFLECS_API FFlecsQueryGeneratorInputType_Pair : public FFlecsQueryGeneratorInputType
-{
-	GENERATED_BODY()
-	
-public:
-	FFlecsQueryGeneratorInputType_Pair()
-	{
-		ReturnType = EFlecsQueryGeneratorReturnType::CustomBuilder;
-	}
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Query Generator")
-	TInstancedStruct<FFlecsQueryGeneratorInputType> First;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Query Generator")
-	TInstancedStruct<FFlecsQueryGeneratorInputType> Second;
-	
-	virtual void CustomBuilderOutput(flecs::query_builder<>& Builder, const TSolidNotNull<const UFlecsWorld*> InWorld) const override;
-	
-}; // struct FFlecsQueryGeneratorInputType_Pair
-
-
-USTRUCT(BlueprintType, meta = (DisplayName = "Name"))
-struct UNREALFLECS_API FFlecsQueryGeneratorInputType_WithNameComponent : public FFlecsQueryGeneratorInputType
-{
-	GENERATED_BODY()
-	
-public:
-	FFlecsQueryGeneratorInputType_WithNameComponent()
-	{
-		ReturnType = EFlecsQueryGeneratorReturnType::CustomBuilder;
-	}
-	
-	virtual void CustomBuilderOutput(flecs::query_builder<>& Builder, const TSolidNotNull<const UFlecsWorld*> InWorld) const override;
-	
-}; // struct FFlecsQueryGeneratorInputType_WithNameComponent

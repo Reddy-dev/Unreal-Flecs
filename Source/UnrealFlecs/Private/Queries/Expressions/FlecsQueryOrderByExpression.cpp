@@ -2,6 +2,7 @@
 
 #include "Queries/Expressions/FlecsQueryOrderByExpression.h"
 
+#include "Queries/FlecsQueryBuilderView.h"
 #include "Queries/Callbacks/FlecsOrderByCallbackDefinition.h"
 #include "Queries/Generator/FlecsQueryGeneratorInputType.h"
 
@@ -12,7 +13,7 @@ FFlecsQueryOrderByExpression::FFlecsQueryOrderByExpression() : Super(false /* bI
 }
 
 void FFlecsQueryOrderByExpression::Apply(const TSolidNotNull<const UFlecsWorld*> InWorld,
-	flecs::query_builder<>& InQueryBuilder) const
+	FFlecsQueryBuilderView& InQueryBuilder) const
 {
 	FFlecsId OrderByComponentId;
 	if LIKELY_IF(OrderByInput.Get().ReturnType == EFlecsQueryGeneratorReturnType::FlecsId)
@@ -38,9 +39,10 @@ FFlecsQueryOrderByCPPExpressionWrapper::FFlecsQueryOrderByCPPExpressionWrapper()
 }
 
 void FFlecsQueryOrderByCPPExpressionWrapper::Apply(const TSolidNotNull<const UFlecsWorld*> InWorld,
-	flecs::query_builder<>& InQueryBuilder) const
+	FFlecsQueryBuilderView& InQueryBuilder) const
 {
 	FFlecsId OrderByComponentId;
+	
 	if LIKELY_IF(OrderByInput.Get().ReturnType == EFlecsQueryGeneratorReturnType::FlecsId)
 	{
 		OrderByComponentId = OrderByInput.Get<FFlecsQueryGeneratorInputType>().GetFlecsIdOutput(InWorld);

@@ -17,9 +17,9 @@ struct UNREALFLECS_API FFlecsQueryScriptExpression : public FFlecsQueryExpressio
 public:
 	FFlecsQueryScriptExpression();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query", meta = (ShowOnlyInnerProperties))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ShowOnlyInnerProperties))
 	FFlecsQueryScriptExpr ScriptExpr;
 
-	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const override;
+	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const override;
 	
 }; // struct FFlecsQueryScriptExpression

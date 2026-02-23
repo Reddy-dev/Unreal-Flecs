@@ -45,6 +45,7 @@ namespace Solid
 				return name.substr(prefix_sv.size());
 			}
 		}
+		
 		return name;
 	}
 

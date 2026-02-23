@@ -6,12 +6,13 @@
 
 #include "CoreMinimal.h"
 
-#include "StructUtils/InstancedStruct.h"
-
 #include "Types/SolidNotNull.h"
+
+#include "Generator/FlecsQueryGeneratorInput.h"
 
 #include "FlecsQueryTerm.generated.h"
 
+struct FFlecsQueryBuilderView;
 struct FFlecsQueryGeneratorInputType;
 
 class UFlecsWorld;
@@ -23,8 +24,8 @@ struct UNREALFLECS_API FFlecsQueryTerm
 	
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query")
-	TInstancedStruct<FFlecsQueryGeneratorInputType> InputType;
+	FFlecsQueryGeneratorInput Input;
 
-	void ApplyToQueryBuilder(const TSolidNotNull<const UFlecsWorld*> InWorld, flecs::query_builder<>& InQueryBuilder) const;
+	void ApplyToQueryBuilder(const TSolidNotNull<const UFlecsWorld*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const;
 	
 }; // struct FFlecsQueryTerm

@@ -3,6 +3,8 @@
 #include "Queries/Expressions/FlecsQueryUpExpression.h"
 
 #include "Entities/FlecsId.h"
+#include "Logs/FlecsCategories.h"
+#include "Queries/FlecsQueryBuilderView.h"
 #include "Queries/Generator/FlecsQueryGeneratorInputType.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsQueryUpExpression)
@@ -12,24 +14,22 @@ FFlecsQueryUpExpression::FFlecsQueryUpExpression() : Super(false /* bInAllowsChi
 }
 
 void FFlecsQueryUpExpression::Apply(const TSolidNotNull<const UFlecsWorld*> InWorld,
-                                    flecs::query_builder<>& InQueryBuilder) const
+                                    FFlecsQueryBuilderView& InQueryBuilder) const
 {
 	if (Traversal.IsSet())
 	{
-		FFlecsId TraversalId;
+		const FFlecsQueryGeneratorInput& TraversalInput = Traversal.GetValue();
+		const FFlecsTermRefAtom_Internal TraversalTermRef = TraversalInput.GetFirstTermRef(InWorld);
 		
-		const TInstancedStruct<FFlecsQueryGeneratorInputType>& TraversalInput = Traversal.GetValue();
-		if LIKELY_IF(TraversalInput.Get().ReturnType == EFlecsQueryGeneratorReturnType::FlecsId)
+		if UNLIKELY_IF(TraversalTermRef.IsType<char*>())
 		{
-			TraversalId = TraversalInput.Get<FFlecsQueryGeneratorInputType>().GetFlecsIdOutput(InWorld);
-		}
-		else UNLIKELY_ATTRIBUTE
-		{
-			solid_checkf(false, TEXT("Unsupported Up traversal input type return type"));
+			UE_LOG(LogFlecsCore, Error, 
+				TEXT("Traversal input for cascade expression cannot be a string. Cascade will be applied without traversal."));
+			Unreal::Flecs::Queries::FreeTermRefAtom(TraversalTermRef);
 			return;
 		}
 		
-		InQueryBuilder.up(TraversalId);
+		InQueryBuilder.up(TraversalTermRef.Get<FFlecsId>());
 	}
 	else
 	{
