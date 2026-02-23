@@ -15,9 +15,8 @@ void flecs_add_non_fragmenting_child_to_table(
     /* Encode id of first entity in table + the total number of entities in the
      * table for this parent in a single uint64 so everything fits in a map
      * element without having to allocate. */
-    if (!elem->entity) {
+    if (!elem->count) {
         elem->entity = (uint32_t)entity;
-        elem->count = 1;
 
         if (table->flags & EcsTableIsDisabled) {
             cr->pair->disabled_tables ++;
@@ -26,9 +25,10 @@ void flecs_add_non_fragmenting_child_to_table(
             cr->pair->prefab_tables ++;
         }
     } else {
-        elem->count ++;
         elem->entity = 0;
     }
+
+    elem->count ++;
 }
 
 static
@@ -192,6 +192,19 @@ void flecs_on_replace_parent(ecs_iter_t *it) {
         ecs_entity_t e = it->entities[i];
         ecs_entity_t old_parent = old[i].value;
         ecs_entity_t new_parent = new[i].value;
+
+        /* This can happen when a child is parented to a parent that is deleted
+         * in the same command queue. */
+        if (!flecs_entities_is_alive(world, new_parent)) {
+            /* So cleanup code can see this is child of deleted parent */
+            old[i].value = new_parent;
+            ecs_delete(world, e);
+            continue;
+        }
+
+        flecs_journal_begin(world, EcsJournalSetParent, e, &(ecs_type_t){
+            .count = 1, .array = &new_parent
+        }, NULL);
         
         flecs_remove_non_fragmenting_child(world, old_parent, e);
 
@@ -225,6 +238,8 @@ void flecs_on_replace_parent(ecs_iter_t *it) {
                 &(ecs_type_t){ .count = 1, .array = &added },
                 &(ecs_type_t) { .count = 1, .array = &removed });
         }
+
+        flecs_journal_end();
     }
 }
 
@@ -417,4 +432,6 @@ void flecs_bootstrap_parent_component(
         .ctor = flecs_default_ctor,
         .on_replace = flecs_on_replace_parent
     });
+
+    ecs_add_pair(world, ecs_id(EcsParent), EcsOnInstantiate, EcsDontInherit);
 }

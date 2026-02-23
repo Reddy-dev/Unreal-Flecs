@@ -1096,7 +1096,16 @@ int flecs_expr_binary_visit_type(
         goto error;
     }
 
-    if (flecs_expr_visit_type_priv(script, node->right, cur, desc)) {
+    ecs_meta_cursor_t right_cur = *cur;
+    if (node->right->kind == EcsExprIdentifier) {
+        if (ecs_get(script->world, node->left->type, EcsEnum) != NULL) {
+            /* If the left hand side is an enum, interpret untyped identifiers
+             * on the right hand side as enum constants of the same type. */
+            right_cur = ecs_meta_cursor(script->world, node->left->type, NULL);
+        }
+    }
+
+    if (flecs_expr_visit_type_priv(script, node->right, &right_cur, desc)) {
         goto error;
     }
 
@@ -1198,6 +1207,52 @@ bool flecs_expr_is_entity_type(
     }
 
     return false;
+}
+
+static
+int flecs_expr_identifier_variable_member_visit_type(
+    ecs_script_t *script,
+    ecs_expr_identifier_t *node,
+    const ecs_expr_eval_desc_t *desc)
+{
+    char *member_sep = strchr(node->value, '.');
+    while (member_sep) {
+        if (member_sep != node->value && member_sep[-1] == '\\') {
+            member_sep = strchr(member_sep + 1, '.');
+            continue;
+        }
+        break;
+    }
+
+    if (!member_sep) {
+        return 1;
+    }
+
+    member_sep[0] = '\0';
+
+    if (!flecs_script_find_var(desc->vars, node->value, NULL)) {
+        member_sep[0] = '.';
+        return 1;
+    }
+
+    ecs_expr_variable_t *var_node = flecs_expr_variable_from(
+        script, (ecs_expr_node_t*)node, node->value);
+    ecs_expr_member_t *member_node = flecs_expr_member_from(
+        script, (ecs_expr_node_t*)var_node, &member_sep[1]);
+
+    node->expr = (ecs_expr_node_t*)member_node;
+
+    ecs_meta_cursor_t tmp_cur; ecs_os_zeromem(&tmp_cur);
+    if (flecs_expr_visit_type_priv(script, node->expr, &tmp_cur, desc)) {
+        goto error;
+    }
+
+    node->node.type = node->expr->type;
+    return 0;
+error:
+    flecs_expr_visit_free(script, node->expr);
+    node->expr = NULL;
+    return -1;
 }
 
 static
@@ -1310,6 +1365,14 @@ int flecs_expr_identifier_visit_type(
             }
 
             return 0;
+        }
+
+        int var_member_result = flecs_expr_identifier_variable_member_visit_type(
+            script, node, desc);
+        if (var_member_result == 0) {
+            return 0;
+        } else if (var_member_result == -1) {
+            goto error;
         }
 
         /* If unresolved identifiers aren't allowed here, throw error */
