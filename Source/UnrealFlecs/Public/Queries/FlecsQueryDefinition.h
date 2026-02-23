@@ -82,11 +82,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query")
 	EFlecsQueryCacheType CacheType = EFlecsQueryCacheType::Default;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query", meta = (Bitmask, BitmaskEnum = "/Script/UnrealFlecs.EFlecsQueryFlags"))
-	uint8 Flags = static_cast<uint8>(EFlecsQueryFlags::None);
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query")
-	bool bDetectChanges = false;
+	UPROPERTY(EditAnywhere, Category = "Query", meta = (Bitmask, BitmaskEnum = "/Script/UnrealFlecs.EFlecsQueryFlags"))
+	uint32 Flags = static_cast<uint32>(EFlecsQueryFlags::None);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query", meta = (ExcludeBaseStruct))
 	TArray<TInstancedStruct<FFlecsQueryExpression>> OtherExpressions;

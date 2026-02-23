@@ -64,7 +64,6 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		FFlecsQueryDefinition QueryDefinition;
 
 		ASSERT_THAT(AreEqual(QueryDefinition.CacheType, EFlecsQueryCacheType::Default));
-		ASSERT_THAT(IsFalse(QueryDefinition.bDetectChanges));
 		ASSERT_THAT(AreEqual(QueryDefinition.Flags, static_cast<uint8>(EFlecsQueryFlags::None)));
 		ASSERT_THAT(AreEqual(QueryDefinition.Terms.Num(), 0));
 		ASSERT_THAT(AreEqual(QueryDefinition.OtherExpressions.Num(), 0));

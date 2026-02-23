@@ -8,8 +8,8 @@
 
 #include "FlecsQueryFlags.generated.h"
 
-UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = true))
-enum class EFlecsQueryFlags : uint8
+UENUM(meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = true))
+enum class EFlecsQueryFlags : uint32
 {
 	None = 0 UMETA(Hidden),
 	/**
@@ -42,6 +42,18 @@ enum class EFlecsQueryFlags : uint8
 	 * @ingroup queries
 	 */
 	TableOnly = EcsQueryTableOnly, // (1u << 7u)
+	
+	/** Enable change detection for query.
+	 * Can be combined with other query flags on the ecs_query_desc_t::flags field.
+	 * 
+	 * Adding this flag makes it possible to use ecs_query_changed() and 
+	 * ecs_iter_changed() with the query. Change detection requires the query to be
+	 * cached. If cache_kind is left to the default value, this flag will cause it
+	 * to default to EcsQueryCacheAuto.
+	 * 
+	 * \ingroup queries
+	 */
+	DetectChanges = EcsQueryDetectChanges, // (1u << 8u)
 	
 }; // enum class EFlecsQueryFlags
 

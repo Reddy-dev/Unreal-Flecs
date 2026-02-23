@@ -130,11 +130,19 @@ public:
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& DetectChanges(const bool bInDetectChanges = true)
 	{
-		this->GetQueryDefinition().bDetectChanges = bInDetectChanges;
+		if (bInDetectChanges)
+		{
+			this->GetQueryDefinition().Flags |= static_cast<uint8>(EFlecsQueryFlags::DetectChanges);
+		}
+		else
+		{
+			this->GetQueryDefinition().Flags &= ~static_cast<uint8>(EFlecsQueryFlags::DetectChanges);
+		}
+		
 		return GetSelf();
 	}
 	
-	FORCEINLINE_DEBUGGABLE FInheritedType& Flags(const uint8 InFlags)
+	FORCEINLINE_DEBUGGABLE FInheritedType& Flags(const uint32 InFlags)
 	{
 		this->GetQueryDefinition().Flags = InFlags;
 		return GetSelf();
@@ -142,7 +150,7 @@ public:
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& Flags(const EFlecsQueryFlags InFlags)
 	{
-		this->GetQueryDefinition().Flags = static_cast<uint8>(InFlags);
+		this->GetQueryDefinition().Flags = static_cast<uint32>(InFlags);
 		return GetSelf();
 	}
 	

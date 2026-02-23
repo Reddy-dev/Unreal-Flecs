@@ -10,11 +10,6 @@ void FFlecsQueryDefinition::Apply(const TSolidNotNull<const UFlecsWorld*> InWorl
 {
 	InQueryBuilder.cache_kind(static_cast<flecs::query_cache_kind_t>(CacheType));
 	InQueryBuilder.query_flags(Flags);
-
-	if (bDetectChanges)
-	{
-		InQueryBuilder.detect_changes();
-	}
 		
 	for (const FFlecsQueryTermExpression& Term : Terms)
 	{
