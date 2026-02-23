@@ -6929,6 +6929,116 @@ void Entity_prefab_w_parent_w_name_existing_w_name(void) {
     test_assert(world.lookup("Parent::Foo") == e);
 }
 
+void Entity_defer_set_parent_to_deleted(void) {
+    flecs::world world;
+
+    flecs::entity parent = world.entity();
+    flecs::entity child = world.entity();
+
+    world.defer_begin();
+    parent.destruct();
+    child.set(flecs::Parent{parent});
+    world.defer_end();
+
+    test_assert(!parent.is_alive());
+    test_assert(!child.is_alive());
+}
+
+void Entity_defer_set_parent_to_deleted_batched(void) {
+    flecs::world world;
+	world.component<Position>();
+	world.component<Velocity>();
+
+    flecs::entity parent = world.entity();
+    flecs::entity child = world.entity();
+
+    world.defer_begin();
+    parent.destruct();
+    child.set(Position{10, 20});
+    child.set(flecs::Parent{parent});
+    child.set(Velocity{1, 2});
+    world.defer_end();
+
+    test_assert(!parent.is_alive());
+    test_assert(!child.is_alive());
+}
+
+void Entity_defer_set_existing_parent_to_deleted(void) {
+    flecs::world world;
+
+    flecs::entity parent_a = world.entity();
+    flecs::entity parent_b = world.entity();
+    flecs::entity child = world.entity(flecs::Parent{parent_a}, nullptr);
+
+    world.defer_begin();
+    parent_b.destruct();
+    child.set(flecs::Parent{parent_b});
+    world.defer_end();
+
+    test_assert(parent_a.is_alive());
+    test_assert(!parent_b.is_alive());
+    test_assert(!child.is_alive());
+}
+
+void Entity_defer_set_existing_parent_to_deleted_batched(void) {
+    flecs::world world;
+	world.component<Position>();
+	world.component<Velocity>();
+
+    flecs::entity parent_a = world.entity();
+    flecs::entity parent_b = world.entity();
+    flecs::entity child = world.entity(flecs::Parent{parent_a}, nullptr);
+
+    world.defer_begin();
+    parent_b.destruct();
+    child.set(Position{10, 20});
+    child.set(flecs::Parent{parent_b});
+    child.set(Velocity{1, 2});
+    world.defer_end();
+
+    test_assert(parent_a.is_alive());
+    test_assert(!parent_b.is_alive());
+    test_assert(!child.is_alive());
+}
+
+void Entity_defer_assign_parent_to_deleted(void) {
+    flecs::world world;
+
+    flecs::entity parent_a = world.entity();
+    flecs::entity parent_b = world.entity();
+    flecs::entity child = world.entity(flecs::Parent{parent_a}, nullptr);
+
+    world.defer_begin();
+    parent_b.destruct();
+    child.assign(flecs::Parent{parent_b});
+    world.defer_end();
+
+    test_assert(parent_a.is_alive());
+    test_assert(!parent_b.is_alive());
+    test_assert(!child.is_alive());
+}
+
+void Entity_defer_assign_parent_to_deleted_batched(void) {
+    flecs::world world;
+	world.component<Position>();
+	world.component<Velocity>();
+
+    flecs::entity parent_a = world.entity();
+    flecs::entity parent_b = world.entity();
+    flecs::entity child = world.entity(flecs::Parent{parent_a}, nullptr);
+
+    world.defer_begin();
+    parent_b.destruct();
+    child.set(Position{10, 20});
+    child.assign(flecs::Parent{parent_b});
+    child.set(Velocity{1, 2});
+    world.defer_end();
+
+    test_assert(parent_a.is_alive());
+    test_assert(!parent_b.is_alive());
+    test_assert(!child.is_alive());
+}
+
 END_DEFINE_SPEC(FFlecsEntityTestsSpec);
 
 /*""id": "Entity",
@@ -7302,7 +7412,13 @@ END_DEFINE_SPEC(FFlecsEntityTestsSpec);
 				"prefab_w_childof_w_name_existing_w_name",
 				"prefab_w_parent",
 				"prefab_w_parent_w_name",
-				"prefab_w_parent_w_name_existing_w_name"
+				"prefab_w_parent_w_name_existing_w_name",
+				"defer_set_parent_to_deleted",
+				"defer_set_parent_to_deleted_batched",
+				"defer_set_existing_parent_to_deleted",
+				"defer_set_existing_parent_to_deleted_batched",
+				"defer_assign_parent_to_deleted",
+				"defer_assign_parent_to_deleted_batched"
                 
             ]*/
 
@@ -7663,6 +7779,12 @@ void FFlecsEntityTestsSpec::Define()
 	It("Entity_prefab_w_parent", [&]() { Entity_prefab_w_parent(); });
 	It("Entity_prefab_w_parent_w_name", [&]() { Entity_prefab_w_parent_w_name(); });
 	It("Entity_prefab_w_parent_w_name_existing_w_name", [&]() { Entity_prefab_w_parent_w_name_existing_w_name(); });
+	It("Entity_defer_set_parent_to_deleted", [&]() { Entity_defer_set_parent_to_deleted(); });
+	It("Entity_defer_set_parent_to_deleted_batched", [&]() { Entity_defer_set_parent_to_deleted_batched(); });
+	It("Entity_defer_set_existing_parent_to_deleted", [&]() { Entity_defer_set_existing_parent_to_deleted(); });
+	It("Entity_defer_set_existing_parent_to_deleted_batched", [&]() { Entity_defer_set_existing_parent_to_deleted_batched(); });
+	It("Entity_defer_assign_parent_to_deleted", [&]() { Entity_defer_assign_parent_to_deleted(); });
+	It("Entity_defer_assign_parent_to_deleted_batched", [&]() { Entity_defer_assign_parent_to_deleted_batched(); });
 	
 }
 
