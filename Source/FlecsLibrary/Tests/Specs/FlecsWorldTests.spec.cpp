@@ -2329,6 +2329,7 @@ END_DEFINE_SPEC(FFlecsWorldTestsSpec);
                 "component_w_low_id",
                 "get_set_log_level",
                 "reset_world",
+                "reset_set_rest_after_reset",
                 "id_from_pair_type",
                 "scope_w_name",
                 "set_get_context",
@@ -2451,6 +2452,7 @@ void FFlecsWorldTestsSpec::Define()
     It("run_post_frame", [this]() { World_run_post_frame(); });
     It("component_w_low_id", [this]() { World_component_w_low_id(); });
     It("reset_world", [this]() { World_reset_world(); });
+    It("reset_set_rest_after_reset", [this]() { World_reset_set_rest_after_reset(); });
     It("id_from_pair_type", [this]() { World_id_from_pair_type(); });
     It("scope_w_name", [this]() { World_scope_w_name(); });
     It("set_get_context", [this]() { World_set_get_context(); });
