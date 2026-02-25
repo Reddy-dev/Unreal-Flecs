@@ -9,12 +9,47 @@
 
 #include "parser.h"
 
+static
+bool flecs_is_comment(
+    const char *pos)
+{
+    return pos[0] == '/' && (pos[1] == '/' || pos[1] == '*');
+}
+
+static
+bool flecs_keyword_boundary(
+    const char *pos)
+{
+    if (!pos[0]) {
+        return true;
+    }
+
+    if (isspace(pos[0])) {
+        return true;
+    }
+
+    if (flecs_is_comment(pos)) {
+        return true;
+    }
+
+    return false;
+}
+
+static
+bool flecs_keyword_match(
+    const char *pos,
+    const char *keyword)
+{
+    ecs_size_t len = ecs_os_strlen(keyword);
+    if (ecs_os_strncmp(pos, keyword, len)) {
+        return false;
+    }
+
+    return flecs_keyword_boundary(pos + len);
+}
+
 #define Keyword(keyword, _kind)\
-    } else if (!ecs_os_strncmp(pos, keyword " ", ecs_os_strlen(keyword) + 1)) {\
-        out->value = keyword;\
-        out->kind = _kind;\
-        return pos + ecs_os_strlen(keyword);\
-    } else if (!ecs_os_strncmp(pos, keyword "\n", ecs_os_strlen(keyword) + 1)) {\
+    } else if (flecs_keyword_match(pos, keyword)) {\
         out->value = keyword;\
         out->kind = _kind;\
         return pos + ecs_os_strlen(keyword);
@@ -176,7 +211,7 @@ const char* flecs_scan_whitespace(
     ecs_parser_t *parser,
     const char *pos) 
 {
-    (void)parser;
+    ecs_assert(pos != NULL, ECS_INTERNAL_ERROR, NULL);
 
     if (parser->significant_newline) {
         while (pos[0] && isspace(pos[0]) && pos[0] != '\n') {
@@ -192,37 +227,143 @@ const char* flecs_scan_whitespace(
 }
 
 static
+const char* flecs_scan_line_comment(
+    const char *pos)
+{
+    ecs_assert(pos[0] == '/' && pos[1] == '/', ECS_INTERNAL_ERROR, NULL);
+
+    for (pos = pos + 2; pos[0] && pos[0] != '\n'; pos ++) { }
+    return pos;
+}
+
+static
+bool flecs_newline_followed_by_comment(
+    ecs_parser_t *parser,
+    const char *newline)
+{
+    ecs_assert(newline[0] == '\n', ECS_INTERNAL_ERROR, NULL);
+    const char *next = flecs_scan_whitespace(parser, newline + 1);
+    return flecs_is_comment(next);
+}
+
+static
+const char* flecs_scan_multiline_comment(
+    ecs_parser_t *parser,
+    const char *pos)
+{
+    ecs_assert(pos[0] == '/' && pos[1] == '*', ECS_INTERNAL_ERROR, NULL);
+
+    for (pos = &pos[2]; pos[0] != 0; pos ++) {
+        if (pos[0] == '*' && pos[1] == '/') {
+            return pos + 2;
+        }
+    }
+
+    ecs_parser_error(parser->name, parser->code,
+        pos - parser->code, "missing */ for multiline comment");
+    return NULL;
+}
+
+static
+const char* flecs_scan_significant_line_comment_newline_run(
+    ecs_parser_t *parser,
+    const char *comment_newline)
+{
+    ecs_assert(comment_newline[0] == '\n', ECS_INTERNAL_ERROR, NULL);
+
+    const char *next = comment_newline + 1;
+    const char *last_newline = comment_newline;
+    bool collapse = false;
+
+    while (next[0]) {
+        next = flecs_scan_whitespace(parser, next);
+
+        if (next[0] == '\n') {
+            collapse = true;
+            last_newline = next;
+            next ++;
+            continue;
+        }
+
+        if (next[0] == '/' && next[1] == '/') {
+            collapse = true;
+            next = flecs_scan_line_comment(next);
+            if (next[0] == '\n') {
+                last_newline = next;
+                next ++;
+            }
+            continue;
+        }
+
+        if (next[0] == '/' && next[1] == '*') {
+            collapse = true;
+            const char *ml_end = &next[2];
+            while (ml_end[0]) {
+                if (ml_end[0] == '*' && ml_end[1] == '/') {
+                    next = ml_end + 2;
+                    break;
+                }
+                ml_end ++;
+            }
+
+            if (!ml_end[0]) {
+                /* Unterminated multiline comments are reported by the regular
+                 * tokenizer path. Keep this pass non-fatal as it is only used
+                 * to decide whether newlines can be collapsed. */
+                break;
+            }
+            continue;
+        }
+
+        break;
+    }
+
+    return collapse ? last_newline : comment_newline;
+}
+
+static
 const char* flecs_scan_whitespace_and_comment(
     ecs_parser_t *parser,
     const char *pos) 
 {
+    if (!pos) {
+        return NULL;
+    }
+
 repeat_skip_whitespace_comment:
     pos = flecs_scan_whitespace(parser, pos);
+
     if (pos[0] == '/') {
         if (pos[1] == '/') {
-            for (pos = pos + 2; pos[0] && pos[0] != '\n'; pos ++) { }
+            pos = flecs_scan_line_comment(pos);
             if (pos[0] == '\n') {
+                if (parser->significant_newline) {
+                    return flecs_scan_significant_line_comment_newline_run(
+                        parser, pos);
+                }
                 pos ++;
                 goto repeat_skip_whitespace_comment;
             }
         } else if (pos[1] == '*') {
-            for (pos = &pos[2]; pos[0] != 0; pos ++) {
-                if (pos[0] == '*' && pos[1] == '/') {
-                    pos += 2;
-                    goto repeat_skip_whitespace_comment;
-                }
+            pos = flecs_scan_multiline_comment(parser, pos);
+            if (!pos) {
+                return NULL;
             }
 
-            ecs_parser_error(parser->name, parser->code, 
-                pos - parser->code, "missing */ for multiline comment");
-            return NULL;
+            if (parser->significant_newline && pos[0] == '\n' &&
+                flecs_newline_followed_by_comment(parser, pos))
+            {
+                return flecs_scan_significant_line_comment_newline_run(
+                    parser, pos);
+            }
+
+            goto repeat_skip_whitespace_comment;
         }
     }
 
     return pos;
 }
 
-// Identifier token
 static
 bool flecs_script_is_identifier(
     char c)
@@ -350,7 +491,6 @@ done:
     return pos;
 }
 
-// Number token static
 static
 bool flecs_script_is_number(
     const char *c)
@@ -369,6 +509,7 @@ const char* flecs_script_number(
     
     bool dot_parsed = false;
     bool e_parsed = false;
+    bool digit_parsed = false;
     int base = 10;
 
     ecs_assert(flecs_script_is_number(pos), ECS_INTERNAL_ERROR, NULL);
@@ -397,6 +538,7 @@ const char* flecs_script_number(
     do {
         char c = pos[0];
         bool valid_number = false;
+        bool handled_char = false;
 
         if (c == '.') {
             if (!dot_parsed && !e_parsed) {
@@ -405,30 +547,50 @@ const char* flecs_script_number(
                     valid_number = true;
                 }
             }
-        } else if (c == 'e') {
-            if (!e_parsed) {
+        } else if ((c == 'e' || c == 'E') && base == 10) {
+            if (!e_parsed && digit_parsed) {
                 if (isdigit(pos[1])) {
                     e_parsed = true;
                     valid_number = true;
+                } else if ((pos[1] == '+' || pos[1] == '-') && isdigit(pos[2])) {
+                    e_parsed = true;
+                    valid_number = true;
+                    handled_char = true;
+
+                    outpos[0] = c;
+                    outpos[1] = pos[1];
+                    outpos += 2;
+                    pos += 2;
                 }
             }
         } else if ((base == 10) && isdigit(c)) {
+            digit_parsed = true;
             valid_number = true;
         } else if ((base == 16) && isxdigit(c)) {
+            digit_parsed = true;
             valid_number = true;
         }  else if ((base == 2) && (c == '0' || c == '1')) {
+            digit_parsed = true;
             valid_number = true;
         }
 
         if (!valid_number) {
+            if (!digit_parsed && base != 10) {
+                ecs_parser_error(parser->name, parser->code,
+                    pos - parser->code, "missing digits in number literal");
+                return NULL;
+            }
+
             *outpos = '\0';
             parser->token_cur = outpos + 1;
             break;
         }
 
-        outpos[0] = pos[0];
-        outpos ++;
-        pos ++;
+        if (!handled_char) {
+            outpos[0] = pos[0];
+            outpos ++;
+            pos ++;
+        }
     } while (true);
 
     return pos;
@@ -475,7 +637,7 @@ const char* flecs_script_char(
         ecs_parser_error(parser->name, parser->code,
             pos - parser->code, "Empty char");
         return NULL;
-    } else if((len > 2) || (len == 2 && parser->token_cur[0] == '\\')) {
+    } else if ((len > 1) && !((len == 2) && (pos[1] == '\\'))) {
         ecs_parser_error(parser->name, parser->code,
             pos - parser->code, "only one char allowed");
         return NULL;
@@ -530,6 +692,8 @@ const char* flecs_script_multiline_string(
     }
 
     if (ch != '`') {
+        ecs_parser_error(parser->name, parser->code,
+            end - parser->code, "unterminated string");
         return NULL;
     }
 
@@ -581,10 +745,11 @@ const char* flecs_tokenizer_until(
 
     int32_t len = flecs_ito(int32_t, pos - start);
     ecs_os_memcpy(parser->token_cur, start, len);
+    char *token_start = parser->token_cur;
     out->value = parser->token_cur;
     parser->token_cur += len;
 
-    while (isspace(parser->token_cur[-1])) {
+    while (parser->token_cur != token_start && isspace(parser->token_cur[-1])) {
         parser->token_cur --;
     }
 
@@ -600,9 +765,16 @@ const char* flecs_token(
     ecs_token_t *out,
     bool is_lookahead)
 {
+    if (!pos) {
+        if (!is_lookahead) {
+            ecs_parser_error(parser->name, parser->code, 0,
+                "unexpected end of parser state");
+        }
+        return NULL;
+    }
+
     parser->pos = pos;
 
-    // Skip whitespace and comments
     pos = flecs_scan_whitespace_and_comment(parser, pos);
     if (!pos) {
         return NULL;
@@ -616,12 +788,16 @@ const char* flecs_token(
         return pos;
     } else if (pos[0] == '\n') {
         out->kind = EcsTokNewline;
-        
-        // Parse multiple newlines/whitespaces as a single token
+
         pos = flecs_scan_whitespace_and_comment(parser, pos + 1);
+        if (!pos) {
+            return NULL;
+        }
+
         if (pos[0] == '\n') {
             pos ++;
         }
+
         return pos;
 
     } else if (flecs_script_is_number(pos)) {

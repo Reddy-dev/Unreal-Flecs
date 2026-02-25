@@ -27,6 +27,14 @@ const char* flecs_script_scope(
     ecs_assert(scope != NULL, ECS_INTERNAL_ERROR, NULL);
     ecs_assert(pos[-1] == '{', ECS_INTERNAL_ERROR, NULL);
 
+    if (parser->scope_depth >= ECS_PARSER_MAX_RECURSION_DEPTH) {
+        ecs_parser_error(parser->name, parser->code, pos - parser->code,
+            "maximum scope nesting depth exceeded");
+        return NULL;
+    }
+
+    parser->scope_depth ++;
+
     ecs_script_scope_t *prev = parser->scope;
     parser->scope = scope;
 
@@ -48,11 +56,16 @@ const char* flecs_script_scope(
 
 scope_close:
     parser->scope = prev;
+    parser->scope_depth --;
 
     ecs_assert(pos[-1] == '}', ECS_INTERNAL_ERROR, NULL);
     return pos;
 
-    ParserEnd;
+    Error("unexpected end of rule (parser error)");
+error:
+    parser->scope = prev;
+    parser->scope_depth --;
+    return NULL;
 }
 
 /* Parse comma expression (expressions separated by ',') */
@@ -266,10 +279,18 @@ const char* flecs_script_if_stmt(
 
                     // if expr { } else\n if
                     case EcsTokNewline: {
-                        Parse_1(EcsTokKeywordIf,
-                            Scope(stmt->if_false, 
-                                return flecs_script_if_stmt(parser, pos);
-                            )
+                        Parse(
+                            case EcsTokKeywordIf: {
+                                Scope(stmt->if_false, 
+                                    return flecs_script_if_stmt(parser, pos);
+                                )
+                            }
+
+                            // if expr { } else\n {
+                            case '{': {
+                                return flecs_script_scope(
+                                    parser, stmt->if_false, pos);
+                            }
                         )
                     }
 

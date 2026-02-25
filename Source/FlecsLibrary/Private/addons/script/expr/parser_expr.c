@@ -304,6 +304,10 @@ const char* flecs_script_parse_function(
 
     return pos;
 error:
+    if (result->args) {
+        flecs_script_parser_expr_free(parser, (ecs_expr_node_t*)result->args);
+    }
+    flecs_free_t(&parser->script->allocator, ecs_expr_function_t, result);
     return NULL;
 }
 
@@ -449,19 +453,38 @@ const char* flecs_script_parse_lhs(
     Parse(
         case EcsTokNumber: {
             const char *expr = Token(0);
-            if (strchr(expr, '.') || strchr(expr, 'e')) {
+            int base = 10;
+            bool is_negative = false;
+            const char *base_expr = expr;
+            if (base_expr[0] == '-') {
+                is_negative = true;
+                base_expr ++;
+            }
+
+            if (base_expr[0] == '0' && (base_expr[1] == 'x' || base_expr[1] == 'X')) {
+                base = 16;
+            } else if (base_expr[0] == '0' && (base_expr[1] == 'b' || base_expr[1] == 'B')) {
+                base = 2;
+            }
+
+            if (base == 10 &&
+                (strchr(expr, '.') || strchr(expr, 'e') || strchr(expr, 'E')))
+            {
                 *out = (ecs_expr_node_t*)flecs_expr_float(parser, atof(expr));
                 break;
             }
-            int base = 10;
-            if (expr[0] == '0' && (expr[1] == 'x' || expr[1] == 'X')) {
-                base = 16;
-                expr += 2;
-            } else if (expr[0] == '0' && (expr[1] == 'b' || expr[1] == 'B')) {
-                base = 2;
-                expr += 2;
-            }
-            if (expr[0] == '-') {
+
+            if (base == 2) {
+                const char *bin_expr = base_expr + 2;
+                char *end;
+                uint64_t v = strtoull(bin_expr, &end, base);
+
+                if (is_negative) {
+                    *out = (ecs_expr_node_t*)flecs_expr_int(parser, -(int64_t)v);
+                } else {
+                    *out = (ecs_expr_node_t*)flecs_expr_uint(parser, v);
+                }
+            } else if (is_negative) {
                 char *end;
                 *out = (ecs_expr_node_t*)flecs_expr_int(parser, 
                     strtoll(expr, &end, base));
@@ -587,16 +610,20 @@ const char* flecs_script_parse_lhs(
             int32_t stmt_count = ecs_vec_count(&parser->scope->stmts);
 
             bool old_function_token = parser->function_token;
+            bool old_significant_newline = parser->significant_newline;
             parser->function_token = false;
+            parser->significant_newline = true;
             pos = flecs_script_stmt(parser, pos);
             if (!pos) {
+                parser->significant_newline = old_significant_newline;
                 goto error;
             }
             parser->function_token = old_function_token;
+            parser->significant_newline = old_significant_newline;
 
             pos = flecs_parse_ws_eol(pos);
 
-            if ((stmt_count - ecs_vec_count(&parser->scope->stmts)) > 1) {
+            if ((ecs_vec_count(&parser->scope->stmts) - stmt_count) != 1) {
                 Error("expected entity statement after new");
             }
 
@@ -642,13 +669,13 @@ const char* flecs_script_parse_lhs(
                 goto error;
             }
 
+            *out = (ecs_expr_node_t*)node;
+
             Parse_1('}', {
                 break;
             })
 
             can_have_rhs = false;
-
-            *out = (ecs_expr_node_t*)node;
             break;
         }
 
@@ -661,14 +688,13 @@ const char* flecs_script_parse_lhs(
             }
 
             node->is_collection = true;
+            *out = (ecs_expr_node_t*)node;
 
             Parse_1(']', {
                 break;
             })
 
             can_have_rhs = false;
-
-            *out = (ecs_expr_node_t*)node;
             break;
         }
     )
@@ -693,15 +719,34 @@ const char* flecs_script_parse_expr(
     ecs_token_kind_t left_oper,
     ecs_expr_node_t **out)
 {
-    ParserBegin;
+    if (parser->expr_depth >= ECS_PARSER_MAX_RECURSION_DEPTH) {
+        ecs_parser_error(parser->name, parser->code, pos - parser->code,
+            "maximum expression nesting depth exceeded");
+        return NULL;
+    }
+
+    parser->expr_depth ++;
+
+    ecs_tokenizer_t _tokenizer;
+    ecs_os_zeromem(&_tokenizer);
+    _tokenizer.tokens = _tokenizer.stack.tokens;
+    ecs_tokenizer_t *tokenizer = &_tokenizer;
 
     bool old_function_token = parser->function_token;
     parser->function_token = true;
     pos = flecs_script_parse_lhs(parser, pos, tokenizer, left_oper, out);
     parser->function_token = old_function_token;
-    EndOfRule;
+    if (!pos) {
+        parser->expr_depth --;
+        if (out && *out) {
+            flecs_script_parser_expr_free(parser, *out);
+            *out = NULL;
+        }
+        return NULL;
+    }
 
-    ParserEnd;
+    parser->expr_depth --;
+    return pos;
 }
 
 ecs_script_t* ecs_expr_parse(
