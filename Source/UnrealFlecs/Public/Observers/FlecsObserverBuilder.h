@@ -21,8 +21,9 @@ public:
 		return const_cast<FFlecsObserverDefinition&>(ObserverDefinition);
 	}
 	
-	FORCEINLINE TFlecsObserverBuilder(const TSolidNotNull<const UFlecsWorld*> InWorld, const FString& InOptionalName)
-									: ObserverDefinition()
+	FORCEINLINE TFlecsObserverBuilder(const TSolidNotNull<const UFlecsWorld*> InWorld, const FString& InOptionalName, 
+		const FFlecsObserverDefinition& InObserverDefinition = FFlecsObserverDefinition())
+									: ObserverDefinition(InObserverDefinition)
 									, World(InWorld)
 									, OptionalName(InOptionalName)
 	{

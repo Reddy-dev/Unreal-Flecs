@@ -6,8 +6,6 @@
 
 #include "CoreMinimal.h"
 
-#include "SolidMacros/Macros.h"
-
 #include "Entities/FlecsEntityHandle.h"
 
 #include "FlecsObserverEventInput.h"
@@ -22,6 +20,8 @@ struct UNREALFLECS_API FFlecsObserverDefinition
 	GENERATED_BODY()
 	
 public:
+	FORCEINLINE FFlecsObserverDefinition() = default;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TArray<FFlecsObserverEventInput> Events;
 	

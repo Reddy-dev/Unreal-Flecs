@@ -78,6 +78,7 @@ public:
 	void InitializeDefaultComponents() const;
 
 	void InitializeFlecsRegistrationObjects();
+	void CallBeginPlayForRegisteredObjects();
 
 	void RegisterUnrealTypes() const;
 
@@ -933,6 +934,12 @@ public:
 	TFlecsObserverBuilder<TComponents...> CreateObserver(const FString& Name = "") const
 	{
 		return TFlecsObserverBuilder<TComponents...>(GetSelf(), Name);
+	}
+	
+	NO_DISCARD FORCEINLINE TFlecsObserverBuilder<> CreateObserverWithDefinition(
+		const FFlecsObserverDefinition& InDefinition, const FString& Name = "") const
+	{
+		return TFlecsObserverBuilder<>(GetSelf(), Name, InDefinition);
 	}
 
 	NO_DISCARD flecs::event_builder Event(const FFlecsEntityHandle& InEntity) const

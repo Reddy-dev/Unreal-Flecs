@@ -21,8 +21,8 @@
  * C. Query Order By Tests
  * D. Query Group By Tests
  **/
-TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
-							   "UnrealFlecs.B2_QueryDefinition",
+TEST_CLASS_WITH_FLAGS(A12_UnrealFlecsQueryDefinitionTests,
+							   "UnrealFlecs.A12_QueryDefinition",
 							   EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter
 								| EAutomationTestFlags::CriticalPriority)
 {
@@ -1270,6 +1270,6 @@ TEST_CLASS_WITH_FLAGS(B2_UnrealFlecsQueryDefinitionTests,
 		ASSERT_THAT(IsTrue(Count == 1));
 	}
 
-}; // End of B2_UnrealFlecsQueryDefinitionTests
+}; // End of A12_UnrealFlecsQueryDefinitionTests
 
 #endif // WITH_AUTOMATION_TESTS

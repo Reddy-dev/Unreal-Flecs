@@ -486,14 +486,30 @@ void UFlecsWorld::InitializeFlecsRegistrationObjects()
 			TSolidNotNull<UObject*> ObjectPtr = NewObject<UObject>(this, Class);
 				
 			const TScriptInterface<IFlecsObjectRegistrationInterface> ScriptInterface(ObjectPtr);
+			
+			// @TODO: Implement
+			if (!ScriptInterface->ShouldAutoRegister(this))
+			{
+				ObjectPtr->MarkAsGarbage();
+				continue;
+			}
+				
 			ScriptInterface->RegisterObject(this);
 
 			RegisteredObjects.Add(ObjectPtr);
 			RegisteredObjectTypes.Add(Class, ObjectPtr);
 
-			UE_LOGFMT(LogFlecsWorld, Log,
+			UE_LOGFMT(LogFlecsWorld, Verbose,
 			          "Registering object type {ClassName}", Class->GetName());
 		}
+	}
+}
+
+void UFlecsWorld::CallBeginPlayForRegisteredObjects()
+{
+	for (const TScriptInterface<IFlecsObjectRegistrationInterface>& RegisteredObject : RegisteredObjects)
+	{
+		RegisteredObject->FlecsWorldBeginPlay(this);
 	}
 }
 
@@ -794,17 +810,6 @@ void UFlecsWorld::InitializeSystems()
 			UE_LOGFMT(LogFlecsWorld, Verbose,
 				"Unregistered Tick Function for Entity {EntityIdentifier}",
 				EntityHandle.HasName() ? EntityHandle.GetName() : EntityHandle.ToString());
-		});
-	
-	CreateObserver<const FFlecsSubEntityRecordNameComponent>("SubEntityRecordNameObserver") // 0 (FFlecsSubEntityRecordNameComponent)
-		.Event(flecs::OnSet)
-		.With<flecs::Parent>().Filter() // 1
-		.WithoutPair<flecs::Identifier>(flecs::Name) // 2
-		.YieldExisting()
-		.each([](flecs::iter& InIter, size_t InIndex, const FFlecsSubEntityRecordNameComponent& InNameComponent)
-		{
-			const FFlecsEntityHandle EntityHandle = InIter.entity(InIndex);
-			EntityHandle.SetName(InNameComponent.SubEntityName);
 		});
 }
 

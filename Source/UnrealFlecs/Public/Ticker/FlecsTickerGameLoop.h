@@ -3,10 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FlecsTickerSingletonComponent.h"
+
 #include "Entities/FlecsEntityHandle.h"
+#include "FlecsTickerSingletonComponent.h"
 #include "Pipelines/FlecsGameLoopObject.h"
-#include "Systems/FlecsSystem.h"
+
 #include "FlecsTickerGameLoop.generated.h"
 
 // This should not be used as the main pipeline in a world

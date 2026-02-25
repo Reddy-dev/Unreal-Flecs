@@ -5,3 +5,15 @@
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsObjectRegistrationInterface)
 
 // Add default functionality here for any IFlecsObjectRegistrationInterface functions that are not pure virtual.
+
+void IFlecsObjectRegistrationInterface::RegisterObject(const TSolidNotNull<UFlecsWorld*> InFlecsWorld)
+{
+}
+
+void IFlecsObjectRegistrationInterface::FlecsWorldBeginPlay(const TSolidNotNull<UFlecsWorld*> InFlecsWorld)
+{
+}
+
+/*void IFlecsObjectRegistrationInterface::UnregisterObject(const TSolidNotNull<UFlecsWorld*> InFlecsWorld)
+{
+}*/

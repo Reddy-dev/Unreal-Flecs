@@ -48,7 +48,7 @@ namespace Unreal::Flecs::Queries
 } // namespace Unreal::Flecs::Queries
 
 USTRUCT()
-struct UNREALFLECS_API FFlecsQueryBuilder 
+struct UNREALFLECS_API FFlecsQueryBuilder
 	#if CPP
 		: public TFlecsQueryBuilderBase<FFlecsQueryBuilder>
 	#endif // CPP

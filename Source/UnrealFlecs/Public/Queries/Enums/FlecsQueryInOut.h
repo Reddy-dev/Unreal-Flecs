@@ -22,8 +22,12 @@ enum class EFlecsQueryInOut : uint8
 	/**< Term is both read and written */
 	ReadWrite = flecs::InOut UMETA(DisplayName = "Read/Write"),
 	/** Same as None + prevents term from triggering observers */
-	Filter = flecs::InOutFilter
+	Filter = flecs::InOutFilter,
+	
+	Count UMETA(Hidden)
 }; // enum class EFlecsQueryInOut
+
+ENUM_RANGE_BY_COUNT(EFlecsQueryInOut, EFlecsQueryInOut::Count)
 
 NO_DISCARD FORCEINLINE constexpr flecs::inout_kind_t ToFlecsInOut(EFlecsQueryInOut InOut)
 {

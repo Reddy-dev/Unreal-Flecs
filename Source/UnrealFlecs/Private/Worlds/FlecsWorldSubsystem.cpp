@@ -76,6 +76,7 @@ void UFlecsWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	{
 		DefaultWorld->WorldBeginPlay();
 		OnWorldBeginPlayDelegate.Broadcast(&InWorld);
+		DefaultWorld->CallBeginPlayForRegisteredObjects();
 	}
 }
 

@@ -12,7 +12,7 @@
 #include "FlecsObserverHandle.generated.h"
 
 USTRUCT(BlueprintType)
-struct UNREALFLECS_API FFlecsObserverHandle : public FFlecsEntityHandle
+struct UNREALFLECS_API FFlecsObserverHandle final : public FFlecsEntityHandle
 {
 	GENERATED_BODY()
 	
@@ -21,6 +21,11 @@ public:
 	
 	FFlecsObserverHandle(const TSolidNotNull<const UFlecsWorld*> InWorld, 
 		const FFlecsObserverDefinition& InObserverBuilder, const FString& InObserverName);
+	
+	NO_DISCARD FORCEINLINE FFlecsEntityHandle GetObserverEntity() const
+	{
+		return FFlecsEntityHandle(*this);
+	}
 	
 private:
 	flecs::observer Observer;
