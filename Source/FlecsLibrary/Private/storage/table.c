@@ -963,17 +963,12 @@ void flecs_table_invoke_ctor_for_array(
                 void *base_ptr = ecs_ref_get_id(world, r, r->id);
                 ecs_assert(base_ptr != NULL, ECS_INTERNAL_ERROR, NULL);
 
-                ecs_copy_t copy = ti->hooks.copy_ctor;
                 ecs_iter_action_t on_set = ti->hooks.on_set;
                 ecs_size_t size = ti->size;
 
                 int32_t i;
                 for (i = 0; i < count; i ++) {
-                    if (copy) {
-                        copy(ptr, base_ptr, 1, ti);
-                    } else {
-                        ecs_os_memcpy(ptr, base_ptr, size);
-                    }
+                    flecs_type_info_copy_ctor(ptr, base_ptr, 1, ti);
 
                     ptr = ECS_OFFSET(ptr, size);
                 }
@@ -993,10 +988,7 @@ void flecs_table_invoke_ctor_for_array(
         }
     }
 
-    ecs_xtor_t ctor = ti->hooks.ctor;
-    if (ctor) {
-        ctor(ptr, count, ti);
-    }
+    flecs_type_info_ctor(ptr, count, ti);
 }
 
 static
@@ -1027,11 +1019,8 @@ void flecs_table_invoke_dtor(
     ecs_assert(column->data != NULL, ECS_INTERNAL_ERROR, NULL);
     ecs_type_info_t *ti = column->ti;
     ecs_assert(ti != NULL, ECS_INTERNAL_ERROR, NULL);
-    ecs_xtor_t dtor = ti->hooks.dtor;
-    if (dtor) {
-        void *ptr = ECS_ELEM(column->data, ti->size, row);
-        dtor(ptr, count, ti);
-    }
+    void *ptr = ECS_ELEM(column->data, ti->size, row);
+    flecs_type_info_dtor(ptr, count, ti);
 }
 
 /* Run hooks that get invoked when component is added to entity */
@@ -1471,8 +1460,6 @@ void flecs_table_move_bitset_columns(
         return;
     }
 
-    ecs_os_perf_trace_push("flecs.table.move_bitset");
-
     ecs_bitset_t *src_columns = src_meta ? src_meta->bs_columns : NULL;
     ecs_bitset_t *dst_columns = dst_meta ? dst_meta->bs_columns : NULL;
 
@@ -1524,8 +1511,6 @@ void flecs_table_move_bitset_columns(
             flecs_bitset_fini(src_bs);
         }
     }
-
-    ecs_os_perf_trace_pop("flecs.table.move_bitset");
 }
 
 /* Grow table column. When a column needs to be reallocated this function takes
@@ -1551,14 +1536,10 @@ void flecs_table_grow_column(
 
     ecs_assert(dst_size >= dst_count, ECS_INTERNAL_ERROR, NULL);
 
-    ecs_os_perf_trace_push("flecs.table.grow_column");
-
     /* If the array could possibly realloc and the component has a move action 
      * defined, move old elements manually */
-    ecs_move_t move_ctor;
-    if (count && can_realloc && (move_ctor = ti->hooks.ctor_move_dtor)) {
+    if (count && can_realloc && ti->hooks.ctor_move_dtor) {
         ecs_assert(ti->hooks.ctor != NULL, ECS_INTERNAL_ERROR, NULL);
-        ecs_assert(move_ctor != NULL, ECS_INTERNAL_ERROR, NULL);
 
         /* Create  vector */
         ecs_vec_t dst;
@@ -1569,7 +1550,7 @@ void flecs_table_grow_column(
         void *dst_buffer = dst.array;
 
         /* Move (and construct) existing elements to new vector */
-        move_ctor(dst_buffer, src_buffer, count, ti);
+        flecs_type_info_ctor_move_dtor(dst_buffer, src_buffer, count, ti);
 
         if (construct) {
             /* Construct new element(s) */
@@ -1595,8 +1576,6 @@ void flecs_table_grow_column(
         }
     }
 
-    ecs_os_perf_trace_pop("flecs.table.grow_column");
-
     ecs_assert(column->size == dst_size, ECS_INTERNAL_ERROR, NULL);
 }
 
@@ -1614,8 +1593,6 @@ int32_t flecs_table_grow_data(
     ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
     ecs_assert(table->data.count + to_add == size, ECS_INTERNAL_ERROR, NULL);
 
-    ecs_os_perf_trace_push("flecs.table.grow_data");
-    
     int32_t count = ecs_table_count(table);
     int32_t column_count = table->column_count;
 
@@ -1686,8 +1663,6 @@ int32_t flecs_table_grow_data(
     /* Mark columns as potentially reallocated */
     flecs_increment_table_column_version(world, table);
 
-    ecs_os_perf_trace_pop("flecs.table.grow_data");
-
     /* Return index of first added entity */
     return count;
 }
@@ -1710,7 +1685,7 @@ void flecs_table_fast_append(
 }
 
 /* Append entity to table */
-int32_t flecs_table_append(
+void flecs_table_append(
     ecs_world_t *world,
     ecs_table_t *table,
     ecs_entity_t entity,
@@ -1722,8 +1697,6 @@ int32_t flecs_table_append(
         FLECS_LOCKED_STORAGE_MSG("table append"));
 
     flecs_table_check_sanity(table);
-
-    ecs_os_perf_trace_push("flecs.table.append");
 
     /* Get count & size before growing entities array. This tells us whether the
      * arrays will realloc */
@@ -1749,8 +1722,7 @@ int32_t flecs_table_append(
         flecs_table_fast_append(table);
         table->data.count = v_entities.count;
         table->data.size = v_entities.size;
-        ecs_os_perf_trace_pop("flecs.table.append");
-        return count;
+        return;
     }
 
     flecs_table_update_overrides(world, table);
@@ -1800,9 +1772,6 @@ int32_t flecs_table_append(
     }
 
     flecs_table_check_sanity(table);
-
-    ecs_os_perf_trace_pop("flecs.table.append");
-    return count;
 }
 
 /* Delete operation for tables that don't have any complex logic */
@@ -1835,8 +1804,6 @@ void flecs_table_delete(
         FLECS_LOCKED_STORAGE_MSG("table delete"));
 
     flecs_table_check_sanity(table);
-
-    ecs_os_perf_trace_push("flecs.table.delete");
 
     int32_t count = ecs_table_count(table);
     ecs_assert(count > 0, ECS_INTERNAL_ERROR, NULL);
@@ -1878,7 +1845,6 @@ void flecs_table_delete(
         table->data.count --;
 
         flecs_table_check_sanity(table);
-        ecs_os_perf_trace_pop("flecs.table.delete");
         return;
     }
 
@@ -1909,21 +1875,14 @@ void flecs_table_delete(
                         EcsOnRemove, column, &entity_to_delete, row, 1);
                 }
 
-                ecs_move_t move_dtor = ti->hooks.move_dtor;
-                
                 /* If neither move nor move_ctor are set, this indicates that 
                  * non-destructive move semantics are not supported for this 
-                 * type. In such cases, we set the move_dtor as ctor_move_dtor, 
-                 * which indicates a destructive move operation. This adjustment 
-                 * ensures compatibility with different language bindings. */
+                 * type. In such cases, use ctor_move_dtor for destructive move
+                 * semantics to ensure compatibility with language bindings. */
                 if (!ti->hooks.move_ctor && ti->hooks.ctor_move_dtor) {
-                  move_dtor = ti->hooks.ctor_move_dtor;
-                }
-
-                if (move_dtor) {
-                    move_dtor(dst, src, 1, ti);
+                    flecs_type_info_ctor_move_dtor(dst, src, 1, ti);
                 } else {
-                    ecs_os_memcpy(dst, src, size);
+                    flecs_type_info_move_dtor(dst, src, 1, ti);
                 }
             }
         } else {
@@ -1941,8 +1900,6 @@ void flecs_table_delete(
 
     table->data.count --;
 
-    ecs_os_perf_trace_pop("flecs.table.delete");
-    
     flecs_table_check_sanity(table);
 }
 
@@ -2038,18 +1995,14 @@ void flecs_table_move(
             void *dst = ECS_ELEM(dst_column->data, size, dst_index);
             void *src = ECS_ELEM(src_column->data, size, src_index);
 
-            ecs_move_t move = ti->hooks.move_ctor;
-            if (use_move_dtor || !move) {
+            bool use_ctor_move_dtor = use_move_dtor || !ti->hooks.move_ctor;
+            if (use_ctor_move_dtor) {
                 /* Also use move_dtor if component doesn't have a move_ctor
                  * registered, to ensure that the dtor gets called to 
                  * cleanup resources. */
-                move = ti->hooks.ctor_move_dtor;
-            }
-
-            if (move) {
-                move(dst, src, 1, ti);
+                flecs_type_info_ctor_move_dtor(dst, src, 1, ti);
             } else {
-                ecs_os_memcpy(dst, src, size);
+                flecs_type_info_move_ctor(dst, src, 1, ti);
             }
         } else {
             if (dst_id < src_id) {
@@ -2118,8 +2071,6 @@ bool flecs_table_shrink(
 
     flecs_table_check_sanity(table);
 
-    ecs_os_perf_trace_push("flecs.table.shrink");
-
     bool has_payload = table->data.entities != NULL;
 
     int32_t count = table->data.count;
@@ -2144,18 +2095,11 @@ bool flecs_table_shrink(
     for (i = 0; i < column_count; i ++) {
         const ecs_type_info_t *ti = columns[i].ti;
         ecs_size_t component_size = ti->size;
-        ecs_move_t move = ti->hooks.ctor_move_dtor;
         void *data = columns[i].data;
 
         if (count) {
             columns[i].data = ecs_os_malloc(component_size * count);
-
-            if (move) {
-                move(columns[i].data, data, count, ti);
-            } else {
-                ecs_assert(columns[i].data != NULL, ECS_INTERNAL_ERROR, NULL);
-                ecs_os_memcpy(columns[i].data, data, component_size * count);   
-            }
+            flecs_type_info_ctor_move_dtor(columns[i].data, data, count, ti);
         } else {
             columns[i].data = NULL;
         }
@@ -2169,8 +2113,6 @@ bool flecs_table_shrink(
 
     flecs_table_mark_table_dirty(world, table, 0);
 
-    ecs_os_perf_trace_pop("flecs.table.shrink");
-    
     flecs_table_check_sanity(table);
 
     return has_payload;
@@ -2216,8 +2158,6 @@ void flecs_table_swap(
         return;
     }
 
-    ecs_os_perf_trace_push("flecs.table.swap");
-
     /* If the table is monitored indicate that there has been a change */
     flecs_table_mark_table_dirty(world, table, 0);    
 
@@ -2246,7 +2186,6 @@ void flecs_table_swap(
     ecs_column_t *columns = table->data.columns;
     if (!columns) {
         flecs_table_check_sanity(table);
-        ecs_os_perf_trace_pop("flecs.table.swap");
         return;
     }
 
@@ -2270,24 +2209,21 @@ void flecs_table_swap(
         void *el_1 = ECS_ELEM(ptr, size, row_1);
         void *el_2 = ECS_ELEM(ptr, size, row_2);
 
-        ecs_move_t move = ti->hooks.move;
-        if (!move) {
+        bool move_hook = ti->hooks.move != NULL;
+        if (!move_hook) {
             ecs_os_memcpy(tmp, el_1, size);
             ecs_os_memcpy(el_1, el_2, size);
             ecs_os_memcpy(el_2, tmp, size);
         } else {
-            ecs_move_t move_ctor = ti->hooks.move_ctor;
-            ecs_move_t move_dtor = ti->hooks.move_dtor;
-            ecs_assert(move_ctor != NULL, ECS_INTERNAL_ERROR, NULL);
-            ecs_assert(move_dtor != NULL, ECS_INTERNAL_ERROR, NULL);
-            move_ctor(tmp, el_1, 1, ti);
-            move(el_1, el_2, 1, ti);
-            move_dtor(el_2, tmp, 1, ti);
+            ecs_assert(ti->hooks.move_ctor != NULL, ECS_INTERNAL_ERROR, NULL);
+            ecs_assert(ti->hooks.move_dtor != NULL, ECS_INTERNAL_ERROR, NULL);
+            flecs_type_info_move_ctor(tmp, el_1, 1, ti);
+            flecs_type_info_move(el_1, el_2, 1, ti);
+            flecs_type_info_move_dtor(el_2, tmp, 1, ti);
         }
     }
 
     flecs_table_check_sanity(table);
-    ecs_os_perf_trace_pop("flecs.table.swap");
 }
 
 static
@@ -2351,12 +2287,7 @@ void flecs_table_merge_column(
 
         /* Move values into column */
         ecs_assert(ti != NULL, ECS_INTERNAL_ERROR, NULL);
-        ecs_move_t move = ti->hooks.ctor_move_dtor;
-        if (move) {
-            move(dst_ptr, src_ptr, src_count, ti);
-        } else {
-            ecs_os_memcpy(dst_ptr, src_ptr, elem_size * src_count);
-        }
+        flecs_type_info_ctor_move_dtor(dst_ptr, src_ptr, src_count, ti);
 
         ecs_vec_fini(NULL, src_vec, elem_size);
     }
@@ -2486,8 +2417,6 @@ void flecs_table_merge(
     flecs_table_check_sanity(src_table);
     flecs_table_check_sanity(dst_table);
 
-    ecs_os_perf_trace_push("flecs.table.merge");
-
     const ecs_entity_t *src_entities = ecs_table_entities(src_table);
     int32_t src_count = ecs_table_count(src_table);
     int32_t dst_count = ecs_table_count(dst_table);
@@ -2509,8 +2438,6 @@ void flecs_table_merge(
         flecs_table_traversable_add(src_table, -src_table->_->traversable_count);
         ecs_assert(src_table->_->traversable_count == 0, ECS_INTERNAL_ERROR, NULL);
     }
-
-    ecs_os_perf_trace_pop("flecs.table.merge");
 
     flecs_table_check_sanity(src_table);
     flecs_table_check_sanity(dst_table);

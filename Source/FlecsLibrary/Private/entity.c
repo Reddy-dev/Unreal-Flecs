@@ -166,22 +166,23 @@ static
 ecs_record_t* flecs_new_entity(
     ecs_world_t *world,
     ecs_entity_t entity,
-    ecs_record_t *record,
+    ecs_record_t *r,
     ecs_table_t *table,
     ecs_table_diff_t *diff,
     bool ctor,
     ecs_flags32_t evt_flags)
 {
-    ecs_assert(record != NULL, ECS_INTERNAL_ERROR, NULL);
-    int32_t row = flecs_table_append(world, table, entity, ctor, true);
-    record->table = table;
-    record->row = ECS_ROW_TO_RECORD(row, record->row & ECS_ROW_FLAGS_MASK);
+    ecs_assert(r != NULL, ECS_INTERNAL_ERROR, NULL);
+    int32_t row = ecs_table_count(table);
+    r->table = table;
+    r->row = ECS_ROW_TO_RECORD(row, r->row & ECS_ROW_FLAGS_MASK);
+    flecs_table_append(world, table, entity, ctor, true);
 
     ecs_assert(ecs_table_count(table) > row, ECS_INTERNAL_ERROR, NULL);
     flecs_actions_new(world, table, row, 1, diff, evt_flags, ctor, true);
-    ecs_assert(table == record->table, ECS_INTERNAL_ERROR, NULL);
+    ecs_assert(table == r->table, ECS_INTERNAL_ERROR, NULL);
 
-    return record;
+    return r;
 }
 
 static
@@ -208,20 +209,19 @@ void flecs_move_entity(
     ecs_assert(record->table == src_table, ECS_INTERNAL_ERROR, NULL);
 
     /* Append new row to destination table */
-    int32_t dst_row = flecs_table_append(world, dst_table, entity, 
-        false, false);
+    int32_t dst_row = ecs_table_count(dst_table);
+    flecs_table_append(world, dst_table, entity, false, false);
 
     /* Invoke remove actions for removed components */
     flecs_actions_move_remove(world, src_table, dst_table, src_row, 1, diff);
 
+    record->table = dst_table;
+    record->row = ECS_ROW_TO_RECORD(dst_row, record->row & ECS_ROW_FLAGS_MASK);
+
     /* Copy entity & components from src_table to dst_table */
     flecs_table_move(world, entity, entity, dst_table, dst_row, 
         src_table, src_row, ctor);
-    ecs_assert(record->table == src_table, ECS_INTERNAL_ERROR, NULL);
-
-    /* Update entity index & delete old data after running remove actions */
-    record->table = dst_table;
-    record->row = ECS_ROW_TO_RECORD(dst_row, record->row & ECS_ROW_FLAGS_MASK);
+    ecs_assert(record->table == dst_table, ECS_INTERNAL_ERROR, NULL);
     
     flecs_table_delete(world, src_table, src_row, false);
 
@@ -371,14 +371,10 @@ const ecs_entity_t* flecs_bulk_new(
                     ptr = flecs_component_sparse_get(
                         world, cr, table, entities[e]);
 
-                    ecs_copy_t copy;
-                    ecs_move_t move;
-                    if (is_move && (move = ti->hooks.move)) {
-                        move(ptr, src_ptr, 1, ti);
-                    } else if (!is_move && (copy = ti->hooks.copy)) {
-                        copy(ptr, src_ptr, 1, ti);
+                    if (is_move) {
+                        flecs_type_info_move(ptr, src_ptr, 1, ti);
                     } else {
-                        ecs_os_memcpy(ptr, src_ptr, size);
+                        flecs_type_info_copy(ptr, src_ptr, 1, ti);
                     }
 
                     flecs_notify_on_set(world, table, row + e, id, true);
@@ -404,14 +400,10 @@ const ecs_entity_t* flecs_bulk_new(
                 ecs_assert(size != 0, ECS_INTERNAL_ERROR, NULL);
                 ptr = ECS_ELEM(column->data, size, row);
 
-                ecs_copy_t copy;
-                ecs_move_t move;
-                if (is_move && (move = ti->hooks.move)) {
-                    move(ptr, src_ptr, count, ti);
-                } else if (!is_move && (copy = ti->hooks.copy)) {
-                    copy(ptr, src_ptr, count, ti);
+                if (is_move) {
+                    flecs_type_info_move(ptr, src_ptr, count, ti);
                 } else {
-                    ecs_os_memcpy(ptr, src_ptr, size * count);
+                    flecs_type_info_copy(ptr, src_ptr, count, ti);
                 }
             }
         };
@@ -673,7 +665,8 @@ void flecs_add_to_root_table(
     ecs_assert(r != NULL, ECS_INTERNAL_ERROR, NULL);
     ecs_assert(r->table == NULL, ECS_INTERNAL_ERROR, NULL);
 
-    int32_t row = flecs_table_append(world, &world->store.root, e, false, false);
+    int32_t row = ecs_table_count(&world->store.root);
+    flecs_table_append(world, &world->store.root, e, false, false);
     r->table = &world->store.root;
     r->row = ECS_ROW_TO_RECORD(row, r->row & ECS_ROW_FLAGS_MASK);
 
@@ -884,18 +877,14 @@ void flecs_copy_id(
 {
     ecs_assert(dst_ptr != NULL, ECS_INTERNAL_ERROR, NULL);
     ecs_assert(src_ptr != NULL, ECS_INTERNAL_ERROR, NULL);
+    (void)size;
 
     if (ti->hooks.on_replace) {
         flecs_invoke_replace_hook(
             world, r->table, entity, component, dst_ptr, src_ptr, ti);
     }
 
-    ecs_copy_t copy = ti->hooks.copy;
-    if (copy) {
-        copy(dst_ptr, src_ptr, 1, ti);
-    } else {
-        ecs_os_memcpy(dst_ptr, src_ptr, flecs_utosize(size));
-    }
+    flecs_type_info_copy(dst_ptr, src_ptr, 1, ti);
 
     flecs_table_mark_dirty(world, r->table, component);
 
@@ -1537,12 +1526,12 @@ void flecs_check_component(
 {
     if (ptr->size != size) {
         char *path = ecs_get_path(world, result);
-        ecs_abort(ECS_INVALID_COMPONENT_SIZE, path);
+        ecs_abort(ECS_INVALID_COMPONENT_SIZE, "%s", path);
         ecs_os_free(path);
     }
     if (ptr->alignment != alignment) {
         char *path = ecs_get_path(world, result);
-        ecs_abort(ECS_INVALID_COMPONENT_ALIGNMENT, path);
+        ecs_abort(ECS_INVALID_COMPONENT_ALIGNMENT, "%s", path);
         ecs_os_free(path);
     }
 }
@@ -1844,11 +1833,7 @@ ecs_entity_t ecs_clone(
 
             const void *src_ptr = ecs_get_id(world, src, component);
             const ecs_type_info_t *ti = src_table->data.columns[i].ti;
-            if (ti->hooks.copy) {
-                ti->hooks.copy(dst_ptr, src_ptr, 1, ti);
-            } else {
-                ecs_os_memcpy(dst_ptr, src_ptr, ti->size);
-            }
+            flecs_type_info_copy(dst_ptr, src_ptr, 1, ti);
 
             flecs_notify_on_set(world, dst_table, row, component, true);
         }
@@ -2337,17 +2322,11 @@ void flecs_set_id_move(
             world, r->table, entity, component, dst.ptr, ptr, ti);
     }
 
-    ecs_move_t move;
     if (cmd_kind != EcsCmdEmplace) {
         /* ctor will have happened by ensure */
-        move = ti->hooks.move_dtor;
+        flecs_type_info_move_dtor(dst.ptr, ptr, 1, ti);
     } else {
-        move = ti->hooks.ctor_move_dtor;
-    }
-    if (move) {
-        move(dst.ptr, ptr, 1, ti);
-    } else {
-        ecs_os_memcpy(dst.ptr, ptr, flecs_utosize(size));
+        flecs_type_info_ctor_move_dtor(dst.ptr, ptr, 1, ti);
     }
 
     flecs_table_mark_dirty(world, r->table, component);
@@ -2935,7 +2914,8 @@ ecs_entity_t ecs_new_w_parent(
         .added_flags = flags
     };
 
-    int32_t row = flecs_table_append(world, table, entity, false, false);
+    int32_t row = ecs_table_count(table);
+    flecs_table_append(world, table, entity, false, false);
     r->table = table;
     r->row = (uint32_t)row;
 
@@ -3176,8 +3156,8 @@ void ecs_make_alive(
     ecs_assert(r != NULL, ECS_INTERNAL_ERROR, NULL);
     ecs_assert(r->table == NULL, ECS_INTERNAL_ERROR, NULL);
 
-    int32_t row = flecs_table_append(
-        world, &world->store.root, entity, false, false);
+    int32_t row = ecs_table_count(&world->store.root);
+    flecs_table_append(world, &world->store.root, entity, false, false);
     r->table = &world->store.root;
     r->row = ECS_ROW_TO_RECORD(row, r->row & ECS_ROW_FLAGS_MASK);
 error:
