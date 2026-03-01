@@ -23,6 +23,8 @@
 #include "Queries/FlecsQuery.h"
 #include "Queries/FlecsQueryBuilder.h"
 #include "Observers/FlecsObserverBuilder.h"
+#include "Systems/FlecsSystemBuilder.h"
+#include "Timers/FlecsTimerHandle.h"
 
 #include "FlecsWorld.generated.h"
 
@@ -621,9 +623,14 @@ public:
 	FFlecsEntityHandle MakeAlive(const FFlecsId& InId) const;
 
 	template <typename ...TComponents>
-	NO_DISCARD flecs::system_builder<TComponents...> CreateSystemWithBuilder(const FString& InName) const
+	NO_DISCARD TFlecsSystemBuilder<TComponents...> CreateSystem(const FString& InName = "") const
 	{
-		return World.system<TComponents...>(StringCast<char>(*InName).Get());
+		return TFlecsSystemBuilder<TComponents...>(this, InName);
+	}
+	
+	NO_DISCARD TFlecsSystemBuilder<> CreateSystemWithDefinition(const FFlecsSystemDefinition& InDefinition, const FString& InName = "") const
+	{
+		return TFlecsSystemBuilder<>(this, InName, InDefinition);
 	}
 	
 	/**
@@ -969,10 +976,11 @@ public:
 
 	void RandomizeTimers() const;
 
-	NO_DISCARD flecs::timer CreateTimer(const FString& Name) const;
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
+	FFlecsTimerHandle CreateTimer(const FString& Name) const;
 
 	template <typename T>
-	NO_DISCARD flecs::timer CreateTimer() const
+	NO_DISCARD FFlecsTimerHandle CreateTimer() const
 	{
 		return World.timer<T>();
 	}
@@ -1111,6 +1119,33 @@ public:
 	NO_DISCARD FFlecsTypeMapComponent* GetTypeMapComponent() const;
 
 	NO_DISCARD FFlecsEntityHandle GetFlecsTickFunctionByType(const FGameplayTag& InTickType) const;
+	
+	UFUNCTION(BlueprintCallable, Category = "Flecs")
+	UObject* RegisterFlecsObject(const TSubclassOf<UObject> InClass);
+	
+	template <Solid::TStaticClassConcept T>
+	FORCEINLINE T* RegisterFlecsObject()
+	{
+		return CastChecked<T>(RegisterFlecsObject(T::StaticClass()));
+	}
+	
+	UFUNCTION(BlueprintCallable, Category = "Flecs")
+	UObject* GetRegisteredFlecsObject(const TSubclassOf<UObject> InClass) const;
+	
+	template <Solid::TStaticClassConcept T>
+	NO_DISCARD FORCEINLINE T* GetRegisteredFlecsObject() const
+	{
+		return CastChecked<T>(GetRegisteredFlecsObject(T::StaticClass()));
+	}
+	
+	UFUNCTION(BlueprintCallable, Category = "Flecs")
+	bool IsFlecsObjectRegistered(const TSubclassOf<UObject> InClass) const;
+	
+	template <Solid::TStaticClassConcept T>
+	NO_DISCARD FORCEINLINE bool IsFlecsObjectRegistered() const
+	{
+		return IsFlecsObjectRegistered(T::StaticClass());
+	}
 
 	static void AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector);
 
@@ -1159,6 +1194,7 @@ public:
 	robin_hood::unordered_flat_map<FGameplayTag, FFlecsId> TagEntityMap;
 
 private:
+	void CallUnregisterOnRegisteredObjects();
 	
 	/**
 	 * @brief Get this world as a non-const pointer

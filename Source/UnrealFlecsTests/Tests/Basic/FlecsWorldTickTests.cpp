@@ -5,7 +5,6 @@
 #if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
 
 #include "Pipelines/TickFunctions/FlecsTickTypeNativeTags.h"
-#include "Systems/FlecsSystem.h"
 #include "Worlds/FlecsWorld.h"
 
 #include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
@@ -38,7 +37,7 @@ TEST_CLASS_WITH_FLAGS(A11_UnrealFlecsWorldTickTests,
 		static constexpr double TickDeltaTime = 1.0 / 60.0;
 		
 		int32 Counter = 0;
-		FFlecsSystem TestSystem = FlecsWorld->World.system<>()
+		flecs::system TestSystem = FlecsWorld->World.system<>()
 			.kind(flecs::OnUpdate)
 			.each([this, &Counter](flecs::iter& Iter, size_t Index)
 			{
@@ -53,7 +52,7 @@ TEST_CLASS_WITH_FLAGS(A11_UnrealFlecsWorldTickTests,
 			});
 
 		int32 PostUpdateCounter = 0;
-		FFlecsSystem TestSystemPostUpdate = FlecsWorld->World.system<>()
+		flecs::system TestSystemPostUpdate = FlecsWorld->World.system<>()
 			.kind(flecs::PostUpdate)
 			.each([this, &PostUpdateCounter](flecs::iter& Iter, size_t Index)
 			{
@@ -67,8 +66,8 @@ TEST_CLASS_WITH_FLAGS(A11_UnrealFlecsWorldTickTests,
 				PostUpdateCounter++;
 			});
 		
-		ASSERT_THAT(IsTrue(TestSystem.IsValid()));
-		ASSERT_THAT(IsTrue(TestSystemPostUpdate.IsValid()));
+		ASSERT_THAT(IsTrue(TestSystem.is_valid()));
+		ASSERT_THAT(IsTrue(TestSystemPostUpdate.is_valid()));
 		
 		ASSERT_THAT(AreEqual(0, Counter));
 		ASSERT_THAT(AreEqual(0, PostUpdateCounter));
@@ -167,7 +166,7 @@ TEST_CLASS_WITH_FLAGS(A11_UnrealFlecsWorldTickTests,
 		static constexpr double TickDeltaTime = 1.0 / 30.0;
 		
 		int32 Counter = 0;
-		FFlecsSystem TestSystem = FlecsWorld->World.system<>()
+		flecs::system TestSystem = FlecsWorld->World.system<>()
 			.kind(flecs::OnUpdate)
 			.each([this, &Counter](flecs::iter& Iter, size_t Index)
 			{
@@ -181,7 +180,7 @@ TEST_CLASS_WITH_FLAGS(A11_UnrealFlecsWorldTickTests,
 				Counter++;
 			});
 
-		ASSERT_THAT(IsTrue(TestSystem.IsValid()));
+		ASSERT_THAT(IsTrue(TestSystem.is_valid()));
 		
 		ASSERT_THAT(AreEqual(0, Counter));
 

@@ -6,8 +6,6 @@
 
 #include "CoreMinimal.h"
 
-#include "SolidMacros/Macros.h"
-
 #include "FlecsQueryBase.h"
 
 #include "FlecsQuery.generated.h"

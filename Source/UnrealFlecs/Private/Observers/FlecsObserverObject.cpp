@@ -30,7 +30,15 @@ UFlecsWorld* UFlecsObserverObject::GetFlecsWorld() const
 
 void UFlecsObserverObject::RegisterObject(const TSolidNotNull<UFlecsWorld*> InFlecsWorld)
 {
-	InitializeObserver(InFlecsWorld);
+}
+
+void UFlecsObserverObject::UnregisterObject(const TSolidNotNull<UFlecsWorld*> InFlecsWorld)
+{
+	if LIKELY_IF(ObserverHandle.IsValid())
+	{
+		ObserverHandle.Destroy();
+		ObserverHandle.ResetHandle();
+	}
 }
 
 void UFlecsObserverObject::FlecsWorldBeginPlay(const TSolidNotNull<UFlecsWorld*> InFlecsWorld)

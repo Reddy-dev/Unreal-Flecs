@@ -25,7 +25,7 @@ class UNREALFLECS_API IFlecsCollectionInterface
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-	virtual void BuildCollection(FFlecsCollectionBuilder& Builder) const PURE_VIRTUAL(IFlecsCollectionInterface::BuildCollection, );
+	virtual void BuildCollection(FFlecsCollectionBuilder& Builder) const = 0;
 
 	void CallInstantiateParameters(const FFlecsEntityHandle& InEntityHandle, const FInstancedStruct& InParameters) const;
 

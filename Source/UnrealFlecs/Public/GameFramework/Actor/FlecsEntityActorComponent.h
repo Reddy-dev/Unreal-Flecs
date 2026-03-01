@@ -63,9 +63,6 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	//UPROPERTY(EditAnywhere, Category = "Flecs | Entity")
-	//FString EntityName;
-
 	UPROPERTY(meta=(DeprecatedProperty))
 	FFlecsEntityRecord EntityRecord_DEPRECATED;
 

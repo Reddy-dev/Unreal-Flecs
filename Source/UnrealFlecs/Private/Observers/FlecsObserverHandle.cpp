@@ -11,5 +11,5 @@ FFlecsObserverHandle::FFlecsObserverHandle(const TSolidNotNull<const UFlecsWorld
 {
 	flecs::observer_builder<> Builder(InWorld->World, TCHAR_TO_UTF8(*InObserverName));
 	InObserverBuilder.ApplyToObserver(InWorld, Builder);
-	Observer = Builder.build();
+	Entity = Builder.build();
 }

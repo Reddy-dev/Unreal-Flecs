@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "flecs.h"
-
 #include "CoreMinimal.h"
 
 #include "UObject/Object.h"
@@ -19,7 +17,7 @@
 
 #include "FlecsObserverObject.generated.h"
 
-UCLASS(Abstract, Blueprintable, BlueprintType)
+UCLASS(Abstract, BlueprintType, NotBlueprintable)
 class UNREALFLECS_API UFlecsObserverObject : public UObject, 
 	public IFlecsObserverHandleInterface, public IFlecsIteratorObjectInterface, public IFlecsObjectRegistrationInterface
 {
@@ -40,6 +38,7 @@ public:
 	UFlecsWorld* GetFlecsWorld() const;
 	
 	virtual void RegisterObject(const TSolidNotNull<UFlecsWorld*> InFlecsWorld) override final;
+	virtual void UnregisterObject(const TSolidNotNull<UFlecsWorld*> InFlecsWorld) override;
 	virtual void FlecsWorldBeginPlay(const TSolidNotNull<UFlecsWorld*> InFlecsWorld) override;
 
 protected:

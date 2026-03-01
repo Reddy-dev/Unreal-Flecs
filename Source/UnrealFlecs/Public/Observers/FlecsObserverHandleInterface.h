@@ -22,8 +22,7 @@ class UNREALFLECS_API IFlecsObserverHandleInterface : public IFlecsEntityInterfa
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-	virtual NO_DISCARD FFlecsObserverHandle GetObserverHandle() const
-		PURE_VIRTUAL(IFlecsObserverHandleInterface::GetObserverHandle, return FFlecsObserverHandle(););
+	virtual NO_DISCARD FFlecsObserverHandle GetObserverHandle() const = 0;
 	
 	virtual NO_DISCARD FFlecsEntityHandle GetEntityHandle() const override final;
 

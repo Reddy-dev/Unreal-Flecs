@@ -17,17 +17,19 @@ struct UNREALFLECS_API FFlecsObserverHandle final : public FFlecsEntityHandle
 	GENERATED_BODY()
 	
 public:
-	FORCEINLINE FFlecsObserverHandle() = default;
+	using FFlecsEntityHandle::FFlecsEntityHandle;
 	
 	FFlecsObserverHandle(const TSolidNotNull<const UFlecsWorld*> InWorld, 
 		const FFlecsObserverDefinition& InObserverBuilder, const FString& InObserverName);
 	
-	NO_DISCARD FORCEINLINE FFlecsEntityHandle GetObserverEntity() const
+	FORCEINLINE FFlecsObserverHandle(const flecs::observer& InObserver)
+		: FFlecsEntityHandle(InObserver.world(), InObserver.id())
 	{
-		return FFlecsEntityHandle(*this);
 	}
 	
-private:
-	flecs::observer Observer;
+	NO_DISCARD FORCEINLINE flecs::observer GetObserver() const
+	{
+		return flecs::observer(GetNativeFlecsWorld(), GetFlecsId());
+	}
 	
 }; // struct FFlecsObserverHandle

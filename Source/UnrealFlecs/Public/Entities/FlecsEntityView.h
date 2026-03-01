@@ -36,33 +36,11 @@ struct UNREALFLECS_API FFlecsEntityView : public FFlecsCommonHandle
 	static NO_DISCARD FFlecsEntityView GetNullHandle(const TSolidNotNull<const UFlecsWorld*> InWorld);
 
 public:
+	using FFlecsCommonHandle::FFlecsCommonHandle;
+	
 	SOLID_INLINE FFlecsEntityView() = default;
 	
 	SOLID_INLINE FFlecsEntityView(const flecs::entity& InEntity) : FFlecsCommonHandle(InEntity)
-	{
-	}
-	
-	SOLID_INLINE FFlecsEntityView(const flecs::world& InWorld, const flecs::entity& InEntity)
-		: FFlecsCommonHandle(InWorld, InEntity)
-	{
-	}
-
-	SOLID_INLINE FFlecsEntityView(const flecs::world_t* InWorld, const flecs::entity_t InEntity)
-		: FFlecsCommonHandle(InWorld, InEntity)
-	{
-	}
-
-	SOLID_INLINE explicit FFlecsEntityView(const FFlecsId InEntity) : FFlecsCommonHandle(InEntity)
-	{
-	}
-
-	SOLID_INLINE FFlecsEntityView(const flecs::world& InWorld, const FFlecsId InEntity)
-		: FFlecsCommonHandle(InWorld, InEntity)
-	{
-	}
-
-	SOLID_INLINE FFlecsEntityView(const TSolidNotNull<const UFlecsWorld*> InWorld, const FFlecsId InEntity)
-		: FFlecsCommonHandle(InWorld, InEntity)
 	{
 	}
 

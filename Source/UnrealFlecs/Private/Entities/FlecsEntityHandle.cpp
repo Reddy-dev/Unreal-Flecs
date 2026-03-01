@@ -20,16 +20,6 @@ FFlecsEntityHandle FFlecsEntityHandle::GetNullHandle(const TSolidNotNull<const U
     return flecs::entity::null(InWorld->World);
 }
 
-FFlecsEntityHandle::FFlecsEntityHandle(const TSolidNotNull<const UFlecsWorld*> InWorld, const FFlecsId InEntity)
-    : FFlecsEntityView(InWorld->World, InEntity)
-{
-}
-
-FFlecsEntityHandle::FFlecsEntityHandle(const flecs::world_t* InWorld, const FFlecsId InEntity)
-    : FFlecsEntityView(InWorld, InEntity)
-{
-}
-
 bool FFlecsEntityHandle::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess)
 {
     if (Has<FFlecsNetworkSerializeDefinitionComponent>())

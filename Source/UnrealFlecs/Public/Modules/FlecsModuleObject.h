@@ -25,7 +25,6 @@ public:
 	UFlecsModuleObject(const FObjectInitializer& ObjectInitializer);
 
 	// @TODO: can we make this not accessible from instanced properties of UFlecsModuleObject?
-	
 	UPROPERTY(EditDefaultsOnly, Category = "Flecs Module",
 		meta = (NoElementDuplicate, MustImplement = "/Script/UnrealFlecs.FlecsModuleInterface"))
 	TArray<TSubclassOf<UObject>> HardModuleDependencies;

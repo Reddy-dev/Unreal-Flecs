@@ -6,5 +6,5 @@
 
 FFlecsEntityHandle IFlecsObserverHandleInterface::GetEntityHandle() const
 {
-	return GetObserverHandle().GetObserverEntity();
+	return GetObserverHandle();
 }

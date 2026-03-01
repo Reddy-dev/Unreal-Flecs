@@ -27,14 +27,14 @@ FFlecsQuery FFlecsQueryBuilder::Build() const
 		solid_checkf(QueryEntity.IsValid(), TEXT("Invalid query entity provided to FlecsQueryBuilder"));
 		
 		flecs::query_builder<> Builder = flecs::query_builder<>(World->World, QueryEntity);
-		FFlecsQueryBuilderView BuilderView = MakeQueryBuilderView(Builder);
+		FFlecsQueryBuilderView BuilderView = MakeQueryBuilderView_Internal(Builder);
 		Definition.Apply(World.Get(), BuilderView);
 		return FFlecsQuery(Builder.build());
 	}
 	else
 	{
 		flecs::query_builder<> Builder = flecs::query_builder<>(World->World, StringCast<char>(*Name).Get());
-		FFlecsQueryBuilderView BuilderView = MakeQueryBuilderView(Builder);
+		FFlecsQueryBuilderView BuilderView = MakeQueryBuilderView_Internal(Builder);
 		Definition.Apply(World.Get(), BuilderView);
 		return FFlecsQuery(Builder.build());
 	}

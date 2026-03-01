@@ -10,10 +10,10 @@ void IFlecsObjectRegistrationInterface::RegisterObject(const TSolidNotNull<UFlec
 {
 }
 
-void IFlecsObjectRegistrationInterface::FlecsWorldBeginPlay(const TSolidNotNull<UFlecsWorld*> InFlecsWorld)
+void IFlecsObjectRegistrationInterface::UnregisterObject(const TSolidNotNull<UFlecsWorld*> InFlecsWorld)
 {
 }
 
-/*void IFlecsObjectRegistrationInterface::UnregisterObject(const TSolidNotNull<UFlecsWorld*> InFlecsWorld)
+void IFlecsObjectRegistrationInterface::FlecsWorldBeginPlay(const TSolidNotNull<UFlecsWorld*> InFlecsWorld)
 {
-}*/
+}

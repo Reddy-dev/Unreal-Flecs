@@ -14,7 +14,7 @@
 class UFlecsWorld;
 
 /**
- * @brief A Flecs Id equivalent to flecs::entity_t / flecs::id_t, has the same memory layout as uint64/flecs::id_t
+ * @brief A Flecs Id equivalent to flecs::entity_t / flecs::id_t, has the same memory layout as uint64/flecs::id_t/flecs::entity_t
  */
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsId

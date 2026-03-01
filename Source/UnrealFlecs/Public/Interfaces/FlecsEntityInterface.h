@@ -21,9 +21,7 @@ class UNREALFLECS_API IFlecsEntityInterface
 	GENERATED_BODY()
 
 public:
-	NO_DISCARD virtual FFlecsEntityHandle GetEntityHandle() const
-		PURE_VIRTUAL(IFlecsEntityInterface::GetEntityHandle, return FFlecsEntityHandle(););
-	
+	NO_DISCARD virtual FFlecsEntityHandle GetEntityHandle() const = 0;
 
 	NO_DISCARD FORCEINLINE bool IsValidEntity() const
 	{

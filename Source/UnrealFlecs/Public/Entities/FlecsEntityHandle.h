@@ -61,24 +61,10 @@ public:
 	 static NO_DISCARD FFlecsEntityHandle GetNullHandle(const TSolidNotNull<const UFlecsWorld*> InWorld);
 
 public:
+	using FFlecsEntityView::FFlecsEntityView;
+	
 	FFlecsEntityHandle() = default;
 	
-	SOLID_INLINE FFlecsEntityHandle(const flecs::entity& InEntity) : FFlecsEntityView(InEntity)
-	{
-	}
-
-	SOLID_INLINE explicit FFlecsEntityHandle(const FFlecsId InEntity) : FFlecsEntityView(InEntity)
-	{
-	}
-
-	SOLID_INLINE FFlecsEntityHandle(const flecs::world& InWorld, const FFlecsId InEntity)
-		: FFlecsEntityView(InWorld, InEntity)
-	{
-	}
-
-	FFlecsEntityHandle(const TSolidNotNull<const UFlecsWorld*> InWorld, const FFlecsId InEntity);
-
-	FFlecsEntityHandle(const flecs::world_t* InWorld, const FFlecsId InEntity);
 	
 	template <Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept T>
 	SOLID_INLINE const FSelfType& Add(const T& InValue) const

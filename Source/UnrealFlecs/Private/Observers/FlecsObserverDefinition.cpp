@@ -18,7 +18,7 @@ void FFlecsObserverDefinition::ApplyToObserver(const TSolidNotNull<const UFlecsW
 		EventInput.ApplyToObserver(InFlecsWorld, InObserverBuilder);
 	}
 	
-	FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView<ecs_observer_desc_t, &ecs_observer_desc_t::query>(InFlecsWorld->World, *InObserverBuilder._internal_get_desc());
+	FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView_Internal<ecs_observer_desc_t, &ecs_observer_desc_t::query>(InFlecsWorld->World, *InObserverBuilder._internal_get_desc());
 	
 	QueryDefinition.Apply(InFlecsWorld, QueryBuilderView);
 	

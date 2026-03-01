@@ -69,7 +69,7 @@ TEST_CLASS_WITH_FLAGS(A12_UnrealFlecsQueryDefinitionTests,
 		ASSERT_THAT(AreEqual(QueryDefinition.OtherExpressions.Num(), 0));
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView_Internal(QueryBuilder);
 		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		flecs::query<> Query = QueryBuilder.build();
 		
@@ -91,7 +91,7 @@ TEST_CLASS_WITH_FLAGS(A12_UnrealFlecsQueryDefinitionTests,
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView_Internal(QueryBuilder);
 		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
@@ -120,7 +120,7 @@ TEST_CLASS_WITH_FLAGS(A12_UnrealFlecsQueryDefinitionTests,
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView_Internal(QueryBuilder);
 		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
@@ -157,7 +157,7 @@ TEST_CLASS_WITH_FLAGS(A12_UnrealFlecsQueryDefinitionTests,
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView_Internal(QueryBuilder);
 		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
@@ -186,7 +186,7 @@ TEST_CLASS_WITH_FLAGS(A12_UnrealFlecsQueryDefinitionTests,
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView_Internal(QueryBuilder);
 		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
@@ -229,7 +229,7 @@ TEST_CLASS_WITH_FLAGS(A12_UnrealFlecsQueryDefinitionTests,
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView_Internal(QueryBuilder);
 		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		
 		flecs::query<> Query = QueryBuilder.build();
@@ -264,7 +264,7 @@ TEST_CLASS_WITH_FLAGS(A12_UnrealFlecsQueryDefinitionTests,
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView_Internal(QueryBuilder);
 		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		
 		flecs::query<> Query = QueryBuilder.build();
@@ -299,7 +299,7 @@ TEST_CLASS_WITH_FLAGS(A12_UnrealFlecsQueryDefinitionTests,
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView_Internal(QueryBuilder);
 		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		
 		flecs::query<> Query = QueryBuilder.build();
@@ -334,7 +334,7 @@ TEST_CLASS_WITH_FLAGS(A12_UnrealFlecsQueryDefinitionTests,
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView_Internal(QueryBuilder);
 		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		
 		flecs::query<> Query = QueryBuilder.build();
@@ -376,7 +376,7 @@ TEST_CLASS_WITH_FLAGS(A12_UnrealFlecsQueryDefinitionTests,
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView_Internal(QueryBuilder);
 		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
@@ -417,7 +417,7 @@ TEST_CLASS_WITH_FLAGS(A12_UnrealFlecsQueryDefinitionTests,
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView_Internal(QueryBuilder);
 		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
@@ -458,7 +458,7 @@ TEST_CLASS_WITH_FLAGS(A12_UnrealFlecsQueryDefinitionTests,
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView_Internal(QueryBuilder);
 		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
@@ -499,7 +499,7 @@ TEST_CLASS_WITH_FLAGS(A12_UnrealFlecsQueryDefinitionTests,
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView_Internal(QueryBuilder);
 		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
@@ -540,7 +540,7 @@ TEST_CLASS_WITH_FLAGS(A12_UnrealFlecsQueryDefinitionTests,
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView_Internal(QueryBuilder);
 		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
@@ -581,7 +581,7 @@ TEST_CLASS_WITH_FLAGS(A12_UnrealFlecsQueryDefinitionTests,
 		QueryDefinition.Terms.Add(TermExpression1);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView_Internal(QueryBuilder);
 		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));
@@ -626,7 +626,7 @@ TEST_CLASS_WITH_FLAGS(A12_UnrealFlecsQueryDefinitionTests,
 		QueryDefinition.Terms.Add(TermExpression2);
 		
 		flecs::query_builder<> QueryBuilder(FlecsWorld->World);
-		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView(QueryBuilder);
+		FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView_Internal(QueryBuilder);
 		QueryDefinition.Apply(FlecsWorld, QueryBuilderView);
 		flecs::query<> Query = QueryBuilder.build();
 		ASSERT_THAT(IsNotNull(Query.c_ptr()));

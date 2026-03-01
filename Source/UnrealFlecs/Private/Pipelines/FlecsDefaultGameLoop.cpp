@@ -61,7 +61,7 @@ void UFlecsDefaultGameLoop::InitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWor
 		#else // FLECS_ENABLE_SYSTEM_PRIORITY
 		.order_by(flecs_entity_compare)
 		#endif // FLECS_ENABLE_SYSTEM_PRIORITY
-		//.with(InWorld->GetTagEntity(FlecsTickType_MainLoop))
+		// @TODO: .with(InWorld->GetTagEntity(FlecsTickType_MainLoop))
 		.without(InWorld->GetTagEntity(FlecsTickType_PrePhysics))
 		.without(InWorld->GetTagEntity(FlecsTickType_DuringPhysics))
 		.without(InWorld->GetTagEntity(FlecsTickType_PostPhysics))
@@ -131,7 +131,6 @@ FFlecsEntityHandle UFlecsDefaultGameLoop::CreatePipelineForTickType(const FGamep
 	{
 		return InWorld->CreatePipeline()
 			.with(flecs::System)
-			.with(flecs::Phase).cascade(flecs::DependsOn)
 			.without(flecs::Disabled).up(flecs::DependsOn)
 			.without(flecs::Disabled).up(flecs::ChildOf)
 			#ifdef FLECS_ENABLE_SYSTEM_PRIORITY

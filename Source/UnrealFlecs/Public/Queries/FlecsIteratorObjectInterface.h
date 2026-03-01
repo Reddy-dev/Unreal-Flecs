@@ -8,7 +8,6 @@
 
 #include "UObject/Interface.h"
 
-#include "SolidMacros/Macros.h"
 #include "Types/SolidNotNull.h"
 
 #include "Entities/FlecsId.h"

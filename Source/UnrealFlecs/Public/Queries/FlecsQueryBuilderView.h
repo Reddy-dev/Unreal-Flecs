@@ -31,13 +31,13 @@ private:
 }; // struct FFlecsQueryBuilderView
 
 template <typename TDesc, ecs_query_desc_t TDesc::* QueryMember>
-NO_DISCARD FORCEINLINE FFlecsQueryBuilderView MakeQueryBuilderView(flecs::world_t* InWorld, const TDesc& InDesc)
+NO_DISCARD FORCEINLINE FFlecsQueryBuilderView MakeQueryBuilderView_Internal(flecs::world_t* InWorld, const TDesc& InDesc)
 {
 	return FFlecsQueryBuilderView(InWorld, &(InDesc.*QueryMember));
 }
 
 template <typename ...TArgs>
-NO_DISCARD FORCEINLINE FFlecsQueryBuilderView MakeQueryBuilderView(flecs::query_builder<TArgs...>& InQueryBuilder)
+NO_DISCARD FORCEINLINE FFlecsQueryBuilderView MakeQueryBuilderView_Internal(flecs::query_builder<TArgs...>& InQueryBuilder)
 {
 	return FFlecsQueryBuilderView(InQueryBuilder._internal_world_v(), InQueryBuilder._internal_get_query_desc());
 }

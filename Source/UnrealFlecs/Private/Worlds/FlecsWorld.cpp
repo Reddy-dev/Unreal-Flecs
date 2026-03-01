@@ -47,6 +47,7 @@
 #include "General/FlecsDeveloperSettings.h"
 #include "General/FlecsGameplayTagManagerEntity.h"
 #include "General/FlecsObjectRegistrationInterface.h"
+#include "General/FlecsObjectRegistrationProviderBase.h"
 
 #include "Queries/FlecsQueryBuilder.h"
 #include "Queries/FlecsQueryBuilderView.h"
@@ -190,16 +191,6 @@ UFlecsWorld::UFlecsWorld(const FObjectInitializer& ObjectInitializer)
 
 UFlecsWorld::~UFlecsWorld()
 {
-	const FAssetRegistryModule* AssetRegistryModule
-		= FModuleManager::LoadModulePtr<FAssetRegistryModule>("AssetRegistry");
-
-	if LIKELY_IF(AssetRegistryModule && AssetRegistryModule->IsValid())
-	{
-		IAssetRegistry& AssetRegistry = AssetRegistryModule->Get();
-		AssetRegistry.OnAssetAdded().RemoveAll(this);
-		AssetRegistry.OnAssetRemoved().RemoveAll(this);
-	}
-
 	TypeMapComponent = nullptr;
 
 	if LIKELY_IF(World)
@@ -225,15 +216,6 @@ UFlecsWorld* UFlecsWorld::GetDefaultWorld(const UObject* WorldContextObject)
 void UFlecsWorld::WorldStart()
 {
 	UE_LOGFMT(LogFlecsWorld, Log, "Flecs World started: {WorldObjectName}", *GetName());
-		
-#if WITH_AUTOMATION_TESTS
-	if (!GIsAutomationTesting)
-	{
-#endif // WITH_AUTOMATION_TESTS
-		//InitializeAssetRegistry();
-#if WITH_AUTOMATION_TESTS
-	}
-#endif // WITH_AUTOMATION_TESTS
 
 	InitializeFlecsRegistrationObjects();
 
@@ -455,53 +437,34 @@ void UFlecsWorld::InitializeDefaultComponents() const
 
 void UFlecsWorld::InitializeFlecsRegistrationObjects()
 {
-	for (TObjectIterator<UClass> It = TObjectIterator<UClass>(); It; ++It)
+	TSet<TSubclassOf<UObject>> RegisteredObjectClasses;
+	
+	GetWorld()->ForEachSubsystem<UFlecsObjectRegistrationProviderBase>([this, &RegisteredObjectClasses]
+		(UFlecsObjectRegistrationProviderBase* RegistrationProvider)
 	{
-		const TNotNull<const UClass*> Class = *It;
-			
-		if (Class->ImplementsInterface(UFlecsObjectRegistrationInterface::StaticClass()))
+		const TArray<TSubclassOf<UObject>> ProviderRegisteredObjectClasses = RegistrationProvider->GetClassesToRegister();
+		
+		RegisteredObjectClasses.Append(ProviderRegisteredObjectClasses);
+	});
+	
+	for (const TSubclassOf<UObject> RegisteredClass : RegisteredObjectClasses)
+	{
+		if UNLIKELY_IF(!ensureAlwaysMsgf(IsValid(RegisteredClass), 
+			TEXT("Invalid class in Flecs registration provider: %s"), *GetNameSafe(RegisteredClass)))
 		{
-			// @TODO: should we log if the class is abstract?
-			if (Class->HasAnyClassFlags(CLASS_Abstract))
-			{
-				UE_LOGFMT(LogFlecsWorld, Verbose,
-				          "Skipping registration of {ClassName} because it is abstract",
-				          Class->GetName());
-				continue;
-			}
-				
-			if UNLIKELY_IF(Class->HasAnyClassFlags(CLASS_Deprecated | CLASS_NewerVersionExists))
-			{
-				UE_LOGFMT(LogFlecsWorld, Warning,
-				          "Skipping registration of {ClassName} because it is deprecated or has a newer version",
-				          Class->GetName());
-				continue;
-			}
-				
-			if UNLIKELY_IF(RegisteredObjectTypes.Contains(Class))
-			{
-				continue;
-			}
-
-			TSolidNotNull<UObject*> ObjectPtr = NewObject<UObject>(this, Class);
-				
-			const TScriptInterface<IFlecsObjectRegistrationInterface> ScriptInterface(ObjectPtr);
-			
-			// @TODO: Implement
-			if (!ScriptInterface->ShouldAutoRegister(this))
-			{
-				ObjectPtr->MarkAsGarbage();
-				continue;
-			}
-				
-			ScriptInterface->RegisterObject(this);
-
-			RegisteredObjects.Add(ObjectPtr);
-			RegisteredObjectTypes.Add(Class, ObjectPtr);
-
-			UE_LOGFMT(LogFlecsWorld, Verbose,
-			          "Registering object type {ClassName}", Class->GetName());
+			continue;
 		}
+		
+		if UNLIKELY_IF(IsFlecsObjectRegistered(RegisteredClass))
+		{
+			UE_LOGFMT(LogFlecsWorld, Warning,
+			          "Flecs World {WorldName} Object class {ClassName} is already registered, skipping",
+			          *GetName(),
+			          *RegisteredClass->GetName());
+			continue;
+		}
+		
+		RegisterFlecsObject(RegisteredClass);
 	}
 }
 
@@ -1305,16 +1268,16 @@ void UFlecsWorld::DestroyWorld()
 	AddReferencedObjectsQuery.Destroy();
 
 	TickFunctionQuery.Destroy();
-		
-	const FAssetRegistryModule* AssetRegistryModule
-		= FModuleManager::LoadModulePtr<FAssetRegistryModule>(TEXT("AssetRegistry"));
-
-	if LIKELY_IF(AssetRegistryModule)
+	
+	for (const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface : GameLoopInterfaces)
 	{
-		IAssetRegistry& AssetRegistry = AssetRegistryModule->Get();
-		AssetRegistry.OnAssetAdded().RemoveAll(this);
-		AssetRegistry.OnAssetRemoved().RemoveAll(this);
+		if (GameLoopInterface)
+		{
+			GameLoopInterface->GetModuleEntity().Remove<FFlecsGameLoopTag>();
+		}
 	}
+	
+	CallUnregisterOnRegisteredObjects();
 		
 	World.release();
 	World.world_ = nullptr;
@@ -1613,7 +1576,7 @@ FFlecsEntityHandle UFlecsWorld::RegisterScriptStruct(const UScriptStruct* Script
 		FFlecsComponentHandle ScriptStructComponent;
 
 		const FString StructName = ScriptStruct->GetStructCPPName();
-		const char* StructNameCStr = StringCast<char>(*StructName).Get();
+		const char* StructNameCStr = StringCast<char>(*StructName).Get(); // NOLINT(clang-diagnostic-dangling)
 
 		// Register Member properties can't be deferred
 		DeferEndLambda([this, ScriptStruct, &ScriptStructComponent, StructNameCStr, bComponent, &StructName, bRegisterMemberProperties]()
@@ -1809,7 +1772,7 @@ FFlecsEntityHandle UFlecsWorld::RegisterComponentEnumType(TSolidNotNull<const UE
 		FFlecsComponentHandle ScriptEnumComponent;
 
 		const FString EnumName = ScriptEnum->GetName();
-		const char* EnumNameCStr = StringCast<char>(*EnumName).Get();
+		const char* EnumNameCStr = StringCast<char>(*EnumName).Get();  // NOLINT(clang-diagnostic-dangling)
 
 		DeferEndLambda([this, ScriptEnum, &ScriptEnumComponent, &EnumNameCStr, &EnumName]()
 		{
@@ -1901,7 +1864,7 @@ FFlecsEntityHandle UFlecsWorld::RegisterScriptClassType(TSolidNotNull<UClass*> S
 
 	FFlecsEntityHandle ScriptClassEntity;
 
-	const char* ClassNameCStr = StringCast<char>(*ClassName).Get();
+	const char* ClassNameCStr = StringCast<char>(*ClassName).Get(); // NOLINT(clang-diagnostic-dangling)
 
 	DeferEndLambda([this, ScriptClass, &ScriptClassEntity, ClassNameCStr, &ClassName]()
 	{
@@ -2023,7 +1986,7 @@ void UFlecsWorld::RandomizeTimers() const
 	World.randomize_timers();
 }
 
-flecs::timer UFlecsWorld::CreateTimer(const FString& Name) const
+FFlecsTimerHandle UFlecsWorld::CreateTimer(const FString& Name) const
 {
 	return World.timer(StringCast<char>(*Name).Get());
 }
@@ -2144,7 +2107,7 @@ FFlecsQueryBuilder UFlecsWorld::CreateQueryBuilderWithEntity(const FFlecsEntityH
 FFlecsQuery UFlecsWorld::CreateQuery(const FFlecsQueryDefinition& InDefinition, const FString& InName) const
 {
 	flecs::query_builder<> Builder = flecs::query_builder<>(World, StringCast<char>(*InName).Get());
-	FFlecsQueryBuilderView BuilderView = MakeQueryBuilderView(Builder);
+	FFlecsQueryBuilderView BuilderView = MakeQueryBuilderView_Internal(Builder);
 	InDefinition.Apply(this, BuilderView);
 	return FFlecsQuery(Builder.build());
 }
@@ -2153,7 +2116,7 @@ FFlecsQuery UFlecsWorld::CreateQueryWithEntity(const FFlecsQueryDefinition& InDe
 	const FFlecsEntityHandle& InEntity) const
 {
 	flecs::query_builder<> Builder = flecs::query_builder<>(World, InEntity);
-	FFlecsQueryBuilderView BuilderView = MakeQueryBuilderView(Builder);
+	FFlecsQueryBuilderView BuilderView = MakeQueryBuilderView_Internal(Builder);
 	InDefinition.Apply(this, BuilderView);
 	return FFlecsQuery(Builder.build());
 }
@@ -2216,6 +2179,62 @@ FFlecsEntityHandle UFlecsWorld::GetFlecsTickFunctionByType(const FGameplayTag& I
 	return TickFunctionQuery.first();
 }
 
+UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
+{
+	solid_check(InClass);
+	
+	if UNLIKELY_IF(!InClass->ImplementsInterface(UFlecsObjectRegistrationInterface::StaticClass()))
+	{
+		UE_LOGFMT(LogFlecsWorld, Error,
+			"Class {ClassName} does not implement IFlecsObjectRegistrationInterface, cannot register",
+			*InClass->GetName());
+		return nullptr;
+	}
+	
+	if UNLIKELY_IF(RegisteredObjectTypes.Contains(InClass))
+	{
+		UE_LOGFMT(LogFlecsWorld, Warning,
+			"Class {ClassName} is already registered, returning existing instance",
+			*InClass->GetName());
+		return RegisteredObjectTypes[InClass].GetObject();
+	}
+		
+	const TSolidNotNull<UObject*> FlecsObject = NewObject<UObject>(this, InClass);
+
+	RegisteredObjects.Add(FlecsObject);
+	RegisteredObjectTypes.Add(InClass, FlecsObject);
+	
+	CastChecked<IFlecsObjectRegistrationInterface>(FlecsObject)->RegisterObject(this);
+	
+	if (HasSingleton<FFlecsBeginPlaySingletonComponent>())
+	{
+		CastChecked<IFlecsObjectRegistrationInterface>(FlecsObject)->FlecsWorldBeginPlay(this);
+	}
+	
+	return FlecsObject;
+}
+
+UObject* UFlecsWorld::GetRegisteredFlecsObject(const TSubclassOf<UObject> InClass) const
+{
+	solid_check(InClass);
+	
+	if UNLIKELY_IF(!RegisteredObjectTypes.Contains(InClass))
+	{
+		UE_LOGFMT(LogFlecsWorld, Warning,
+			"Class {ClassName} is not registered, returning nullptr",
+			*InClass->GetName());
+		return nullptr;
+	}
+
+	return RegisteredObjectTypes[InClass].GetObject();
+}
+
+bool UFlecsWorld::IsFlecsObjectRegistered(const TSubclassOf<UObject> InClass) const
+{
+	solid_check(InClass);
+	return RegisteredObjectTypes.Contains(InClass);
+}
+
 void UFlecsWorld::AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector)
 {
 	Super::AddReferencedObjects(InThis, Collector);
@@ -2250,4 +2269,15 @@ void UFlecsWorld::AddReferencedObjects(UObject* InThis, FReferenceCollector& Col
 void UFlecsWorld::GetResourceSizeEx(FResourceSizeEx& CumulativeResourceSize)
 {
 	Super::GetResourceSizeEx(CumulativeResourceSize);
+}
+
+void UFlecsWorld::CallUnregisterOnRegisteredObjects()
+{
+	for (const TScriptInterface<IFlecsObjectRegistrationInterface>& RegisteredObject : RegisteredObjects)
+	{
+		if LIKELY_IF(RegisteredObject)
+		{
+			RegisteredObject->UnregisterObject(this);
+		}
+	}
 }
