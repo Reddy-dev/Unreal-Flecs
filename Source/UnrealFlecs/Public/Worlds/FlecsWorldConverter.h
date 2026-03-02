@@ -11,7 +11,7 @@
 
 class UFlecsWorld;
 
-namespace Unreal::Flecs
+namespace UE::Flecs
 {
 	/**
 	 * @brief Converts a flecs::world to its corresponding UFlecsWorld
@@ -20,4 +20,4 @@ namespace Unreal::Flecs
 	 */
 	UNREALFLECS_API NO_DISCARD TSolidNotNull<UFlecsWorld*> ToUnrealFlecsWorld(const flecs::world& InWorld);
 	
-} // namespace Unreal::Flecs
+} // namespace UE::Flecs

@@ -49,19 +49,19 @@ public:
 	{
 	}
 
-	template <Unreal::Flecs::TFlecsEntityHandleTypeConcept THandle>
+	template <UE::Flecs::TFlecsEntityHandleTypeConcept THandle>
 	NO_DISCARD SOLID_INLINE THandle ToMut(const flecs::entity_view& InView) const
 	{
 		return GetEntityView().mut(InView);
 	}
 
-	template <Unreal::Flecs::TFlecsEntityHandleTypeConcept THandle>
+	template <UE::Flecs::TFlecsEntityHandleTypeConcept THandle>
 	NO_DISCARD SOLID_INLINE THandle ToMut(const flecs::world& InWorld) const
 	{
 		return GetEntityView().mut(InWorld);
 	}
 
-	template <Unreal::Flecs::TFlecsEntityHandleTypeConcept THandle>
+	template <UE::Flecs::TFlecsEntityHandleTypeConcept THandle>
 	NO_DISCARD SOLID_INLINE THandle ToMut(const flecs::iter& InIter) const
 	{
 		return GetEntityView().mut(InIter);
@@ -73,7 +73,7 @@ public:
 		return GetEntityView().has<T>();
 	}
 	
-	template <Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept T>
+	template <UE::Flecs::TFlecsEntityFunctionInputTypeConcept T>
 	SOLID_INLINE bool Has(const T& InValue) const
 	{
 		return GetEntityView().has(FFlecsCommonHandle::GetInputId(*this, InValue));
@@ -120,13 +120,13 @@ public:
 		return GetEntityView().has<TFirst, TSecond>();
 	}
 
-	template <typename TFirst, Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond>
+	template <typename TFirst, UE::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond>
 	NO_DISCARD SOLID_INLINE bool HasPair(const TSecond& InSecond) const
 	{
 		return GetEntityView().has<TFirst>(FFlecsEntityView::GetInputId(*this, InSecond));
 	}
 
-	template <Unreal::Flecs::TFlecsEntityFunctionUEnumTypeConcept TFirst>
+	template <UE::Flecs::TFlecsEntityFunctionUEnumTypeConcept TFirst>
 	NO_DISCARD SOLID_INLINE bool HasPair(const TFirst& InFirst, const int64 InSecond) const
 	{
 		const FFlecsEntityView EnumEntity = ObtainComponentTypeEnum<FFlecsEntityView>(InFirst);
@@ -138,15 +138,15 @@ public:
 		return GetEntityView().has(FFlecsEntityView::GetInputId(*this, InFirst), EnumConstant);
 	}
 	
-	template <Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst,
-		Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond>
+	template <UE::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst,
+		UE::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond>
 	NO_DISCARD SOLID_INLINE bool HasPair(const TFirst& InFirst, const TSecond& InSecond) const
 	{
 		return GetEntityView().has(FFlecsEntityView::GetInputId(*this, InFirst),
 			FFlecsEntityView::GetInputId(*this, InSecond));
 	}
 
-	template <typename TSecond, Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst>
+	template <typename TSecond, UE::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst>
 	NO_DISCARD SOLID_INLINE bool HasPairSecond(const TFirst& InFirst) const
 	{
 		return GetEntityView().has_second<TSecond>(FFlecsEntityView::GetInputId(*this, InFirst));
@@ -176,13 +176,13 @@ public:
 		return GetEntityView().try_get_mut<T>();
 	}
 
-	template <Unreal::Flecs::TFlecsEntityFunctionInputDataTypeConcept T>
+	template <UE::Flecs::TFlecsEntityFunctionInputDataTypeConcept T>
 	NO_DISCARD SOLID_INLINE const void* TryGet(const T& InTypeValue) const
 	{
 		return GetEntityView().try_get(FFlecsEntityView::GetInputId(*this, InTypeValue));
 	}
 
-	template <Unreal::Flecs::TFlecsEntityFunctionInputDataTypeConcept T>
+	template <UE::Flecs::TFlecsEntityFunctionInputDataTypeConcept T>
 	NO_DISCARD SOLID_INLINE void* TryGetMut(const T& InTypeValue) const
 	{
 		return GetEntityView().try_get_mut(FFlecsEntityView::GetInputId(*this, InTypeValue));
@@ -223,13 +223,13 @@ public:
 		return GetEntityView().get_mut<TFirst, TSecond>();
 	}
 
-	template <typename TFirst, Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond>
+	template <typename TFirst, UE::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond>
 	NO_DISCARD SOLID_INLINE const TFirst& GetPairFirst(const TSecond& InSecond) const
 	{
 		return GetEntityView().get<TFirst>(FFlecsEntityView::GetInputId(*this, InSecond));
 	}
 
-	template <typename TFirst, Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond>
+	template <typename TFirst, UE::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond>
 	NO_DISCARD SOLID_INLINE TFirst& GetPairFirstMut(const TSecond& InSecond) const
 	{
 		return GetEntityView().get_mut<TFirst>(FFlecsEntityView::GetInputId(*this, InSecond));
@@ -249,28 +249,28 @@ public:
 		return GetEntityView().try_get_mut<TFirst, TSecond>();
 	}
 
-	template <typename TFirst, Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond>
+	template <typename TFirst, UE::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond>
 	NO_DISCARD SOLID_INLINE const TFirst* TryGetPairFirst(const TSecond& InSecond) const
 	{
 		return GetEntityView().try_get<TFirst>(FFlecsEntityView::GetInputId(*this, InSecond));
 	}
 
-	template <typename TFirst, Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond>
+	template <typename TFirst, UE::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond>
 	NO_DISCARD SOLID_INLINE TFirst* TryGetPairFirstMut(const TSecond& InSecond) const
 	{
 		return GetEntityView().try_get_mut<TFirst>(FFlecsEntityView::GetInputId(*this, InSecond));
 	}
 
-	template <Unreal::Flecs::TFlecsEntityFunctionInputDataTypeConcept First, 
-		Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept Second>
+	template <UE::Flecs::TFlecsEntityFunctionInputDataTypeConcept First, 
+		UE::Flecs::TFlecsEntityFunctionInputTypeConcept Second>
 	NO_DISCARD SOLID_INLINE const void* TryGetPairFirst(const First& InFirstTypeValue, const Second& InSecondTypeValue) const
 	{
 		return GetEntityView().try_get(FFlecsEntityView::GetInputId(*this, InFirstTypeValue),
 			FFlecsEntityView::GetInputId(*this, InSecondTypeValue));
 	}
 
-	template <Unreal::Flecs::TFlecsEntityFunctionInputDataTypeConcept First, 
-		Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept Second>
+	template <UE::Flecs::TFlecsEntityFunctionInputDataTypeConcept First, 
+		UE::Flecs::TFlecsEntityFunctionInputTypeConcept Second>
 	NO_DISCARD SOLID_INLINE void* TryGetPairFirstMut(const First& InFirstTypeValue, const Second& InSecondTypeValue) const
 	{
 		return GetEntityView().try_get_mut(FFlecsEntityView::GetInputId(*this, InFirstTypeValue),
@@ -291,13 +291,13 @@ public:
 		return GetEntityView().get_mut_second<TFirst, TSecond>();
 	}
 
-	template <typename TSecond, Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst>
+	template <typename TSecond, UE::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst>
 	NO_DISCARD SOLID_INLINE const TSecond& GetPairSecond(const TFirst& InFirst) const
 	{
 		return GetEntityView().get_second<TSecond>(FFlecsEntityView::GetInputId(*this, InFirst));
 	}
 
-	template <typename TSecond, Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst>
+	template <typename TSecond, UE::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst>
 	NO_DISCARD SOLID_INLINE TSecond& GetPairSecondMut(const TFirst& InFirst) const
 	{
 		return GetEntityView().get_mut_second<TSecond>(FFlecsEntityView::GetInputId(*this, InFirst));
@@ -315,42 +315,42 @@ public:
 		return GetEntityView().try_get_mut_second<TFirst, TSecond>();
 	}
 
-	template <typename TSecond, Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst>
+	template <typename TSecond, UE::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst>
 	NO_DISCARD SOLID_INLINE const TSecond* TryGetPairSecond(const TFirst& InFirst) const
 	{
 		return GetEntityView().try_get_second<TSecond>(FFlecsEntityView::GetInputId(*this, InFirst));
 	}
 
-	template <typename TSecond, Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst>
+	template <typename TSecond, UE::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst>
 	NO_DISCARD SOLID_INLINE TSecond* TryGetPairSecondMut(const TFirst& InFirst) const
 	{
 		return GetEntityView().try_get_mut_second<TSecond>(FFlecsEntityView::GetInputId(*this, InFirst));
 	}
 
-	template <Unreal::Flecs::TFlecsEntityFunctionInputDataTypeConcept First, 
-		Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept Second>
+	template <UE::Flecs::TFlecsEntityFunctionInputDataTypeConcept First, 
+		UE::Flecs::TFlecsEntityFunctionInputTypeConcept Second>
 	NO_DISCARD SOLID_INLINE const void* TryGetPairSecond(const First& InFirstTypeValue, const Second& InSecondTypeValue) const
 	{
 		return GetEntityView().try_get(FFlecsEntityView::GetInputId(*this, InFirstTypeValue),
 			FFlecsEntityView::GetInputId(*this, InSecondTypeValue));
 	}
 
-	template <Unreal::Flecs::TFlecsEntityFunctionInputDataTypeConcept First, 
-		Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept Second>
+	template <UE::Flecs::TFlecsEntityFunctionInputDataTypeConcept First, 
+		UE::Flecs::TFlecsEntityFunctionInputTypeConcept Second>
 	NO_DISCARD SOLID_INLINE void* TryGetPairSecondMut(const First& InFirstTypeValue, const Second& InSecondTypeValue) const
 	{
 		return GetEntityView().try_get_mut(FFlecsEntityView::GetInputId(*this, InFirstTypeValue),
 			FFlecsEntityView::GetInputId(*this, InSecondTypeValue));
 	}
 
-	template <typename TFirst, Unreal::Flecs::TFlecsEntityHandleTypeConcept THandle>
+	template <typename TFirst, UE::Flecs::TFlecsEntityHandleTypeConcept THandle>
 	NO_DISCARD SOLID_INLINE THandle GetPairTarget(const int32 Index = 0) const
 	{
 		return GetEntityView().target<TFirst>(Index);
 	}
 
-	template <Unreal::Flecs::TFlecsEntityHandleTypeConcept THandle,
-		Unreal::Flecs::TFlecsEntityFunctionDataTypeWithEnumNoValueConcept TFirst>
+	template <UE::Flecs::TFlecsEntityHandleTypeConcept THandle,
+		UE::Flecs::TFlecsEntityFunctionDataTypeWithEnumNoValueConcept TFirst>
 	NO_DISCARD SOLID_INLINE THandle GetPairTarget(const TFirst& InFirstTypeValue, const int32 Index = 0) const
 	{
 		return GetEntityView().target(FFlecsEntityView::GetInputId(*this, InFirstTypeValue), Index);
@@ -376,7 +376,7 @@ public:
 		return Has<flecs::Enum>();
 	}
 
-	template <Unreal::Flecs::TFlecsEntityHandleTypeConcept THandle>
+	template <UE::Flecs::TFlecsEntityHandleTypeConcept THandle>
 	NO_DISCARD SOLID_INLINE THandle GetParent() const
 	{
 		return GetEntityView().parent();
@@ -398,7 +398,7 @@ public:
 		return GetEntityView().owns<T>();
 	}
 
-	template <Unreal::Flecs::TFlecsEntityFunctionInputDataTypeConcept T>
+	template <UE::Flecs::TFlecsEntityFunctionInputDataTypeConcept T>
 	NO_DISCARD SOLID_INLINE bool Owns(const T& InTypeValue) const
 	{
 		return GetEntityView().owns(FFlecsEntityView::GetInputId(*this, InTypeValue));
@@ -410,21 +410,21 @@ public:
 		return GetEntityView().owns<First, Second>();
 	}
 
-	template <typename First, Unreal::Flecs::TFlecsEntityFunctionInputDataTypeConcept Second>
+	template <typename First, UE::Flecs::TFlecsEntityFunctionInputDataTypeConcept Second>
 	NO_DISCARD SOLID_INLINE bool OwnsPair(const Second& InSecondTypeValue) const
 	{
 		return GetEntityView().owns<First>(FFlecsEntityView::GetInputId(*this, InSecondTypeValue));
 	}
 
-	template <Unreal::Flecs::TFlecsEntityFunctionInputDataTypeConcept First,
-		Unreal::Flecs::TFlecsEntityFunctionInputDataTypeConcept Second>
+	template <UE::Flecs::TFlecsEntityFunctionInputDataTypeConcept First,
+		UE::Flecs::TFlecsEntityFunctionInputDataTypeConcept Second>
 	NO_DISCARD SOLID_INLINE bool OwnsPair(const First& InFirstTypeValue, const Second& InSecondTypeValue) const
 	{
 		return GetEntityView().owns(FFlecsEntityView::GetInputId(*this, InFirstTypeValue),
 			FFlecsEntityView::GetInputId(*this, InSecondTypeValue));
 	}
 
-	template <typename Second, Unreal::Flecs::TFlecsEntityFunctionInputDataTypeConcept First>
+	template <typename Second, UE::Flecs::TFlecsEntityFunctionInputDataTypeConcept First>
 	NO_DISCARD SOLID_INLINE bool OwnsPairSecond(const First& InFirstTypeValue) const
 	{
 		return GetEntityView().owns_second<Second>(FFlecsEntityView::GetInputId(*this, InFirstTypeValue));
@@ -442,7 +442,7 @@ public:
 	}
 
 	// @TODO: Optimize this to not require looking up the enum entity each time
-	template <Unreal::Flecs::TFlecsEntityHandleTypeConcept THandle, typename TEnumUnderlying = uint64>
+	template <UE::Flecs::TFlecsEntityHandleTypeConcept THandle, typename TEnumUnderlying = uint64>
 	NO_DISCARD SOLID_INLINE THandle GetEnumConstant(const TSolidNotNull<const UEnum*> EnumType,
 																  const TEnumUnderlying InValue) const
 	{
@@ -453,14 +453,14 @@ public:
 		return EnumEntity.Lookup<THandle>(EnumType->GetNameStringByValue(static_cast<int64>(InValue)));
 	}
 	
-	template <Unreal::Flecs::TFlecsEntityHandleTypeConcept THandle>
+	template <UE::Flecs::TFlecsEntityHandleTypeConcept THandle>
 	NO_DISCARD SOLID_INLINE THandle GetEnumConstant(const FSolidEnumSelector& EnumSelector) const
 	{
 		return GetEnumConstant<THandle>(EnumSelector.Class, EnumSelector.Value);
 	}
 
 	// @TODO: make this default to FFlecsEntityView or handle maybe?
-	template <Unreal::Flecs::TFlecsEntityHandleTypeConcept THandle>
+	template <UE::Flecs::TFlecsEntityHandleTypeConcept THandle>
 	NO_DISCARD SOLID_INLINE THandle Lookup(const FString& InPath, const bool bSearchPath = false) const
 	{
 		return GetEntityView().lookup(StringCast<char>(*InPath).Get(), bSearchPath);
@@ -478,7 +478,7 @@ public:
 		GetEntityView().each<TFirst, FunctionType>(std::forward<FunctionType>(InFunction));
 	}
 
-	template <Unreal::Flecs::TFlecsEntityFunctionInputDataTypeConcept TFirst, typename FunctionType>
+	template <UE::Flecs::TFlecsEntityFunctionInputDataTypeConcept TFirst, typename FunctionType>
 	SOLID_INLINE void Iterate(const TFirst& InFirstTypeValue, FunctionType&& InFunction) const
 	{
 		GetEntityView().each(FFlecsEntityView::GetInputId(*this, InFirstTypeValue),
@@ -497,7 +497,7 @@ public:
 		GetEntityView().children<TFirst, FunctionType>(std::forward<FunctionType>(InFunction));
 	}
 
-	template <Unreal::Flecs::TFlecsEntityFunctionInputDataTypeConcept TFirst, typename FunctionType>
+	template <UE::Flecs::TFlecsEntityFunctionInputDataTypeConcept TFirst, typename FunctionType>
 	SOLID_INLINE void IterateChildren(const TFirst& InFirstTypeValue, FunctionType&& InFunction) const
 	{
 		GetEntityView().children(FFlecsEntityView::GetInputId(*this, InFirstTypeValue),
@@ -545,7 +545,7 @@ public:
 		return GetEntityView().enabled<T>();
 	}
 
-	template <Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept T>
+	template <UE::Flecs::TFlecsEntityFunctionInputTypeConcept T>
 	NO_DISCARD SOLID_INLINE bool IsEnabled(const T& InValue) const
 	{
 		return GetEntityView().enabled(FFlecsEntityView::GetInputId(*this, InValue));
@@ -557,21 +557,21 @@ public:
 		return GetEntityView().enabled<TFirst, TSecond>();
 	}
 
-	template <typename TFirst, Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond>
+	template <typename TFirst, UE::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond>
 	NO_DISCARD SOLID_INLINE bool IsEnabledPair(const TSecond& InSecond) const
 	{
 		return GetEntityView().enabled<TFirst>(FFlecsEntityView::GetInputId(*this, InSecond));
 	}
 
-	template <Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst,
-		Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond>
+	template <UE::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst,
+		UE::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond>
 	NO_DISCARD SOLID_INLINE bool IsEnabledPair(const TFirst& InFirst, const TSecond& InSecond) const
 	{
 		return GetEntityView().enabled(FFlecsEntityView::GetInputId(*this, InFirst),
 			FFlecsEntityView::GetInputId(*this, InSecond));
 	}
 
-	template <typename TSecond, Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst>
+	template <typename TSecond, UE::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst>
 	NO_DISCARD SOLID_INLINE bool IsEnabledPairSecond(const TFirst& InFirst) const
 	{
 		return GetEntityView().enabled_second<TSecond>(FFlecsEntityView::GetInputId(*this, InFirst));
@@ -602,7 +602,7 @@ public:
 		return OwnsPair<flecs::Identifier>(flecs::Symbol);
 	}
 
-	template <Unreal::Flecs::TFlecsEntityHandleTypeConcept THandle>
+	template <UE::Flecs::TFlecsEntityHandleTypeConcept THandle>
 	NO_DISCARD SOLID_INLINE THandle Clone(const bool bCloneValue = true, const FFlecsId DestinationId = 0) const
 	{
 		return GetEntityView().clone(bCloneValue, DestinationId);
@@ -624,7 +624,7 @@ public:
 		return GetEntityView().depth<TEntity>();
 	}
 
-	template <Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TComponent>
+	template <UE::Flecs::TFlecsEntityFunctionInputTypeConcept TComponent>
 	NO_DISCARD SOLID_INLINE int32 GetDepth(const TComponent& InValue) const
 	{
 		return GetEntityView().depth(FFlecsEntityView::GetInputId(*this, InValue));
@@ -636,7 +636,7 @@ public:
 			StringCast<char>(*InitialSeparator).Get()));
 	}
 
-	template <Unreal::Flecs::TFlecsEntityFunctionInputTypeConcept TType>
+	template <UE::Flecs::TFlecsEntityFunctionInputTypeConcept TType>
 	NO_DISCARD SOLID_INLINE FString GetPathFrom(const TType& InTypeValue, const FString& InSeparator = "::",
 		const FString& InitialSeparator = "::") const
 	{

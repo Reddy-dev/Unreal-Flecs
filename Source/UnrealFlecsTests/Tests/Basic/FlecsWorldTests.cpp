@@ -111,7 +111,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A1_FlecsWorldTests, "UnrealFlecs.A1_World",
 
 	TEST_METHOD(B3_CanConvertFlecsWorldToUFlecsWorld)
 	{
-		const TSolidNotNull<UFlecsWorld*> ConvertedWorld = Unreal::Flecs::ToUnrealFlecsWorld(FlecsWorld->World);
+		const TSolidNotNull<UFlecsWorld*> ConvertedWorld = UE::Flecs::ToUnrealFlecsWorld(FlecsWorld->World);
 		ASSERT_THAT(IsTrue(IsValid(ConvertedWorld)));
 		
 		ASSERT_THAT(IsTrue(FlecsWorld == ConvertedWorld));

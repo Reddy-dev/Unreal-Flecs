@@ -35,7 +35,7 @@ enum class EFlecsPairNodeType : uint8
 	//ScriptEnum = 3,
 }; // enum class EFlecsPairNodeType
 
-namespace Unreal::Flecs
+namespace UE::Flecs
 {
 	template <typename T>
 	concept CRecordPairSlotType = std::is_convertible<T, FFlecsId>::value
@@ -57,7 +57,7 @@ namespace Unreal::Flecs
 		
 	} // namespace Entity::Records
 	
-} // namespace Unreal::Flecs
+} // namespace UE::Flecs
 
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsRecordPairSlot
@@ -84,7 +84,7 @@ struct UNREALFLECS_API FFlecsRecordPairSlot
 		return OutSlot;
 	}
 
-	template <Unreal::Flecs::CNonStructUtilScriptStructType T>
+	template <UE::Flecs::CNonStructUtilScriptStructType T>
 	static NO_DISCARD FFlecsRecordPairSlot Make()
 	{
 		FFlecsRecordPairSlot OutSlot;
@@ -93,7 +93,7 @@ struct UNREALFLECS_API FFlecsRecordPairSlot
 		return OutSlot;
 	}
 
-	template <Unreal::Flecs::CNonStructUtilScriptStructType T>
+	template <UE::Flecs::CNonStructUtilScriptStructType T>
 	static NO_DISCARD FFlecsRecordPairSlot Make(const T& InValue)
 	{
 		FFlecsRecordPairSlot OutSlot;
@@ -207,7 +207,7 @@ struct UNREALFLECS_API FFlecsRecordPair
 
 private:
 	
-	template <Unreal::Flecs::CRecordPairSlotType T>
+	template <UE::Flecs::CRecordPairSlotType T>
 	NO_DISCARD FFlecsRecordPairSlot MakeSlot(T&& InValue) const
 	{
 		FFlecsRecordPairSlot OutSlot;
@@ -406,21 +406,21 @@ public:
 			return EntityRecord;
 		}
 		
-		template <Unreal::Flecs::CNonStructUtilScriptStructType T>
+		template <UE::Flecs::CNonStructUtilScriptStructType T>
 		FORCEINLINE FBuilder& Component()
 		{
 			EntityRecord.AddComponent<T>();
 			return *this;
 		}
 
-		template <Unreal::Flecs::CNonStructUtilScriptStructType T>
+		template <UE::Flecs::CNonStructUtilScriptStructType T>
 		FORCEINLINE FBuilder& Component(const T& InValue)
 		{
 			EntityRecord.AddComponent<T>(InValue);
 			return *this;
 		}
 
-		template <Unreal::Flecs::CNonStructUtilScriptStructType T>
+		template <UE::Flecs::CNonStructUtilScriptStructType T>
 		FORCEINLINE FBuilder& Component(T&& InValue)
 		{
 			EntityRecord.AddComponent<T>(MoveTemp(InValue));
@@ -494,7 +494,7 @@ public:
 			return *this;
 		}
 		
-		template <Unreal::Flecs::CNonStructUtilScriptStructType TFragmentType, typename... TArgs>
+		template <UE::Flecs::CNonStructUtilScriptStructType TFragmentType, typename... TArgs>
 		requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 		FORCEINLINE FBuilder& Fragment(TArgs&&... InArgs)
 		{
@@ -509,7 +509,7 @@ public:
 			return *this;
 		}
 		
-		template <Unreal::Flecs::CNonStructUtilScriptStructType TFragmentType>
+		template <UE::Flecs::CNonStructUtilScriptStructType TFragmentType>
 		requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 		struct TFragmentBuilderBase
 		{
@@ -541,13 +541,13 @@ public:
 			
 		}; // struct TFragmentBuilderBase
 		
-		template <Unreal::Flecs::CNonStructUtilScriptStructType TFragmentType, typename... TArgs>
+		template <UE::Flecs::CNonStructUtilScriptStructType TFragmentType, typename... TArgs>
 		requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 		FORCEINLINE auto FragmentScope(TArgs&&... InArgs)
 		{
 			TFragmentType& Fragment = EntityRecord.GetOrAddFragment<TFragmentType>(Forward<TArgs>(InArgs)...);
 
-			if constexpr (Unreal::Flecs::Entity::Records::CHasCustomFragmentBuilder<FBuilder, TFragmentType>)
+			if constexpr (UE::Flecs::Entity::Records::CHasCustomFragmentBuilder<FBuilder, TFragmentType>)
 			{
 				return typename TFragmentType::FBuilder(*this, Fragment);
 			}
@@ -608,7 +608,7 @@ public:
 		
 	}; // struct FBuilder
 	
-	template <Unreal::Flecs::CNonStructUtilScriptStructType TFragmentType>
+	template <UE::Flecs::CNonStructUtilScriptStructType TFragmentType>
 	using FFragmentBuilderType = FBuilder::TFragmentBuilderBase<TFragmentType>;
 	
 	FORCEINLINE FBuilder Builder()
@@ -660,7 +660,7 @@ public:
 		return *this;
 	}
 
-	template <Unreal::Flecs::CNonStructUtilScriptStructType T>
+	template <UE::Flecs::CNonStructUtilScriptStructType T>
 	requires (!std::is_enum_v<T>)
 	FORCEINLINE FFlecsEntityRecord& AddComponent()
 	{
@@ -672,7 +672,7 @@ public:
 		return *this;
 	}
 
-	template <Unreal::Flecs::CNonStructUtilScriptStructType T>
+	template <UE::Flecs::CNonStructUtilScriptStructType T>
 	requires (!std::is_enum_v<T>)
 	FORCEINLINE FFlecsEntityRecord& AddComponent(const T& InComponent)
 	{
@@ -684,7 +684,7 @@ public:
 		return *this;
 	}
 
-	template <Unreal::Flecs::CNonStructUtilScriptStructType T>
+	template <UE::Flecs::CNonStructUtilScriptStructType T>
 	requires (!std::is_enum_v<T>)
 	FORCEINLINE FFlecsEntityRecord& AddComponent(T&& InComponent)
 	{
@@ -824,7 +824,7 @@ public:
 		return SubEntities[InIndex].Record;
 	}
 
-	template <Unreal::Flecs::CNonStructUtilScriptStructType TFragmentType>
+	template <UE::Flecs::CNonStructUtilScriptStructType TFragmentType>
 	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 	FORCEINLINE int32 AddFragment(const TFragmentType& InFragment)
 	{
@@ -838,7 +838,7 @@ public:
 		return Fragments.Add(TInstancedStruct<FFlecsEntityRecordFragment>::Make<TFragmentType>(InFragment));
 	}
 
-	template <Unreal::Flecs::CNonStructUtilScriptStructType TFragmentType, typename... TArgs>
+	template <UE::Flecs::CNonStructUtilScriptStructType TFragmentType, typename... TArgs>
 	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 	FORCEINLINE int32 AddFragment(TArgs&&... InArgs)
 	{
@@ -852,7 +852,7 @@ public:
 		return Fragments.Add(TInstancedStruct<FFlecsEntityRecordFragment>::Make<TFragmentType>(Forward<TArgs>(InArgs)...));
 	}
 
-	template <Unreal::Flecs::CNonStructUtilScriptStructType TFragmentType>
+	template <UE::Flecs::CNonStructUtilScriptStructType TFragmentType>
 	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 	FORCEINLINE int32 AddFragment()
 	{

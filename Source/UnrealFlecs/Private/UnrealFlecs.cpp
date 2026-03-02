@@ -15,11 +15,11 @@
 
 #define LOCTEXT_NAMESPACE "FUnrealFlecsModule"
 
-namespace Unreal::Flecs
+namespace UE::Flecs
 {
 	// ReSharper disable once CppDeclaratorNeverUsed
 	static FOSApiInitializer OSApiInitializer;
-} // namespace Unreal::Flecs
+} // namespace UE::Flecs
 
 void FUnrealFlecsModule::StartupModule()
 {

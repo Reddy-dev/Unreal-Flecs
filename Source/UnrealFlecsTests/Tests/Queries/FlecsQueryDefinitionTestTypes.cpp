@@ -6,7 +6,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsQueryDefinitionTestTypes)
 
-Unreal::Flecs::Queries::FOrderByFunctionType FFlecsQueryOrderByCallbackDefinitionTest_ScriptStruct::GetOrderByFunction() const
+UE::Flecs::Queries::FOrderByFunctionType FFlecsQueryOrderByCallbackDefinitionTest_ScriptStruct::GetOrderByFunction() const
 {
 	if (OrderByFunction == EFlecsTestQueryOrderByFunction::Ascending)
 	{
@@ -28,7 +28,7 @@ Unreal::Flecs::Queries::FOrderByFunctionType FFlecsQueryOrderByCallbackDefinitio
 	}
 }
 
-Unreal::Flecs::Queries::FOrderByFunctionType FFlecsQueryOrderByCallbackDefinitionTest_CPPType::GetOrderByFunction() const
+UE::Flecs::Queries::FOrderByFunctionType FFlecsQueryOrderByCallbackDefinitionTest_CPPType::GetOrderByFunction() const
 {
 	if (OrderByFunction == EFlecsTestQueryOrderByFunction::Ascending)
 	{

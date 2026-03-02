@@ -31,7 +31,7 @@ void FFlecsQueryOrderByExpression::Apply(const TSolidNotNull<const UFlecsWorld*>
 	}
 	
 	InQueryBuilder.order_by(OrderByComponentId, 
-		Unreal::Flecs::Queries::MakeOrderByFunction(OrderByCallback.Get<FFlecsOrderByCallbackDefinition>().GetOrderByFunction()));
+		UE::Flecs::Queries::MakeOrderByFunction(OrderByCallback.Get<FFlecsOrderByCallbackDefinition>().GetOrderByFunction()));
 }
 
 FFlecsQueryOrderByCPPExpressionWrapper::FFlecsQueryOrderByCPPExpressionWrapper() : Super(false /* bInAllowsChildExpressions */)
@@ -57,5 +57,5 @@ void FFlecsQueryOrderByCPPExpressionWrapper::Apply(const TSolidNotNull<const UFl
 		return;
 	}
 	
-	InQueryBuilder.order_by(OrderByComponentId, Unreal::Flecs::Queries::MakeOrderByFunction(OrderByFunction));
+	InQueryBuilder.order_by(OrderByComponentId, UE::Flecs::Queries::MakeOrderByFunction(OrderByFunction));
 }

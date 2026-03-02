@@ -25,7 +25,7 @@ public:
 									, World(InWorld)
 									, OptionalName(InOptionalName)
 	{
-		Unreal::Flecs::Queries::TAddInputTypes<TFlecsSystemBuilder, TComponents...>::Apply(*this);
+		UE::Flecs::Queries::TAddInputTypes<TFlecsSystemBuilder, TComponents...>::Apply(*this);
 	}
 	
 	FFlecsSystemDefinition SystemDefinition;

@@ -12,7 +12,7 @@ FFlecsTermRefAtom_Internal FFlecsQueryGeneratorInput::GetFirstTermRef(const TSol
 
 	const FFlecsTermRef TermRef = First.Get().GetTermRefOutput(InWorld);
 	
-	return Unreal::Flecs::Queries::ToTermRefAtom(TermRef);
+	return UE::Flecs::Queries::ToTermRefAtom(TermRef);
 }
 
 FFlecsTermRefAtom_Internal FFlecsQueryGeneratorInput::GetSecondTermRef(const TSolidNotNull<const UFlecsWorld*> InWorld) const
@@ -21,5 +21,5 @@ FFlecsTermRefAtom_Internal FFlecsQueryGeneratorInput::GetSecondTermRef(const TSo
 
 	const FFlecsTermRef TermRef = Second.Get().GetTermRefOutput(InWorld);
 	
-	return Unreal::Flecs::Queries::ToTermRefAtom(TermRef);
+	return UE::Flecs::Queries::ToTermRefAtom(TermRef);
 }

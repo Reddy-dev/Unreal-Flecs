@@ -17,7 +17,7 @@ struct UNREALFLECS_API FFlecsNetworkSerializeDefinitionComponent
 public:
 	FFlecsNetworkSerializeDefinitionComponent();
 
-	Unreal::Flecs::FEntityNetSerializeFunction NetSerializeFunction = nullptr;
+	UE::Flecs::FEntityNetSerializeFunction NetSerializeFunction = nullptr;
 	
 }; // struct FFlecsNetworkSerializeDefinitionComponent
 

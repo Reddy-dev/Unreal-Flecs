@@ -26,7 +26,7 @@ public:
 	{
 	}
 	
-	virtual NO_DISCARD Unreal::Flecs::Queries::FOrderByFunctionType GetOrderByFunction() const override;
+	virtual NO_DISCARD UE::Flecs::Queries::FOrderByFunctionType GetOrderByFunction() const override;
 	
 	UPROPERTY()
 	EFlecsTestQueryOrderByFunction OrderByFunction;
@@ -44,7 +44,7 @@ public:
 	{
 	}
 	
-	virtual NO_DISCARD Unreal::Flecs::Queries::FOrderByFunctionType GetOrderByFunction() const override;
+	virtual NO_DISCARD UE::Flecs::Queries::FOrderByFunctionType GetOrderByFunction() const override;
 	
 	UPROPERTY()
 	EFlecsTestQueryOrderByFunction OrderByFunction;

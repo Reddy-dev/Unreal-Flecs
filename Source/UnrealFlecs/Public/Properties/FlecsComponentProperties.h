@@ -16,7 +16,7 @@
 
 #include "Entities/FlecsComponentHandle.h"
 
-namespace Unreal::Flecs
+namespace UE::Flecs
 {
 	using FFlecsComponentFunction = std::function<void(flecs::world, const FFlecsComponentHandle&)>;
 
@@ -37,7 +37,7 @@ namespace Unreal::Flecs
 		
 	} // namespace internal
 	
-} // namespace Unreal::Flecs
+} // namespace UE::Flecs
 
 // @TODO: rename this due to it being too generic and risks name collisions
 struct UNREALFLECS_API FFlecsComponentProperties
@@ -48,7 +48,7 @@ struct UNREALFLECS_API FFlecsComponentProperties
 	uint32 Size = 1;
 	uint16 Alignment = 1;
 
-	Unreal::Flecs::FFlecsComponentFunction RegistrationFunction;
+	UE::Flecs::FFlecsComponentFunction RegistrationFunction;
 }; // struct FFlecsComponentProperties
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnComponentPropertiesRegistered, FFlecsComponentProperties);
@@ -66,7 +66,7 @@ public:
 	void RegisterComponentProperties(const std::string& Name,
 	                                 UScriptStruct* Struct,
 	                                 const uint32 Size, const uint16 Alignment,
-	                                 const Unreal::Flecs::FFlecsComponentFunction& RegistrationFunction);
+	                                 const UE::Flecs::FFlecsComponentFunction& RegistrationFunction);
 
 	NO_DISCARD bool ContainsComponentProperties(const std::string_view Name) const;
 
@@ -93,7 +93,7 @@ public:
 					if constexpr (Solid::IsScriptStruct<Name>()) \
 					{ \
 						FFlecsComponentPropertiesRegistry::Get().RegisterComponentProperties( \
-						#Name, Unreal::Flecs::internal::GetScriptStructIf<Name>(), \
+						#Name, UE::Flecs::internal::GetScriptStructIf<Name>(), \
 						sizeof(Name), alignof(Name), RegistrationFunction); \
 						\
 						if constexpr (std::is_move_constructible<Name>::value || std::is_move_assignable<Name>::value) \
@@ -113,7 +113,7 @@ public:
 	}
 
 #define INTERNAL_REGISTER_FLECS_COMPONENT_1(Name) \
-	INTERNAL_REGISTER_FLECS_COMPONENT_IMPL(Name, Unreal::Flecs::FFlecsComponentFunction{})
+	INTERNAL_REGISTER_FLECS_COMPONENT_IMPL(Name, UE::Flecs::FFlecsComponentFunction{})
 
 #define INTERNAL_REGISTER_FLECS_COMPONENT_2(Name, RegistrationFunction) \
 	INTERNAL_REGISTER_FLECS_COMPONENT_IMPL(Name, RegistrationFunction)

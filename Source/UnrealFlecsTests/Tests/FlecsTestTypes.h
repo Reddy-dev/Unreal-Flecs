@@ -17,10 +17,10 @@
 DECLARE_DEFAULT_ENTITY(TestEntityOption);
 DECLARE_DEFAULT_ENTITY(TestEntityOption2WithTrait);
 
-namespace Unreal::Flecs::test::internal
+namespace UE::Flecs::test::internal
 {
 	DECLARE_DEFAULT_ENTITY(TestEntityOption3InNamespace);
-} // namespace Unreal::Flecs::test::internal
+} // namespace UE::Flecs::test::internal
 
 DECLARE_DEFAULT_ENTITY(TestEntityOption4WithComponentValue);
 

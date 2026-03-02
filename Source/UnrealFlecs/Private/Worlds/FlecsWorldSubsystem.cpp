@@ -31,7 +31,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsWorldSubsystem)
 
-FFlecsOnWorldInitializedGlobal Unreal::Flecs::GOnFlecsWorldInitialized;
+FFlecsOnWorldInitializedGlobal UE::Flecs::GOnFlecsWorldInitialized;
 
 bool UFlecsWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
@@ -289,7 +289,7 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	
 	DefaultWorld->bIsInitialized = true;
 	OnWorldCreatedDelegate.Broadcast(DefaultWorld);
-	Unreal::Flecs::GOnFlecsWorldInitialized.Broadcast(DefaultWorld);
+	UE::Flecs::GOnFlecsWorldInitialized.Broadcast(DefaultWorld);
 		
 	return DefaultWorld;
 }

@@ -313,9 +313,9 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A10_UnrealFlecsEntityTests,
 
 	TEST_METHOD(D3_DefaultEntityAPI_GetDefaultEntityInNamespace)
 	{
-		ASSERT_THAT(IsTrue(FlecsWorld->IsAlive(Unreal::Flecs::test::internal::TestEntityOption3InNamespace)));
+		ASSERT_THAT(IsTrue(FlecsWorld->IsAlive(UE::Flecs::test::internal::TestEntityOption3InNamespace)));
 		
-		const FFlecsEntityHandle TestDefaultEntity = FlecsWorld->GetAlive(Unreal::Flecs::test::internal::TestEntityOption3InNamespace);
+		const FFlecsEntityHandle TestDefaultEntity = FlecsWorld->GetAlive(UE::Flecs::test::internal::TestEntityOption3InNamespace);
 		ASSERT_THAT(IsTrue(TestDefaultEntity.IsValid()));
 	}
 	

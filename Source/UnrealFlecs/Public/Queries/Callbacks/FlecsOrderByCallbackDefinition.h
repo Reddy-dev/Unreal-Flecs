@@ -10,7 +10,7 @@
 
 #include "FlecsOrderByCallbackDefinition.generated.h"
 
-namespace Unreal::Flecs::Queries
+namespace UE::Flecs::Queries
 {
 	using FOrderByFunctionType = int32(*)(FFlecsId, const void*, FFlecsId, const void*);
 	
@@ -33,7 +33,7 @@ namespace Unreal::Flecs::Queries
 	
 	MSVC_WARNING_POP
 	
-} // namespace Unreal::Flecs::Queries
+} // namespace UE::Flecs::Queries
 
 USTRUCT(BlueprintInternalUseOnly)
 struct UNREALFLECS_API FFlecsOrderByCallbackDefinition
@@ -44,7 +44,7 @@ public:
 	FORCEINLINE FFlecsOrderByCallbackDefinition() = default;
 	virtual ~FFlecsOrderByCallbackDefinition() = default;
 	
-	virtual Unreal::Flecs::Queries::FOrderByFunctionType GetOrderByFunction() const PURE_VIRTUAL(FFlecsOrderByCallbackDefinition, return nullptr;);
+	virtual UE::Flecs::Queries::FOrderByFunctionType GetOrderByFunction() const PURE_VIRTUAL(FFlecsOrderByCallbackDefinition, return nullptr;);
 	
 }; // struct FFlecsOrderByCallbackDefinition
 

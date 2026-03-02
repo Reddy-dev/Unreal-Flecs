@@ -8,11 +8,11 @@
 
 #include "FlecsDefaultMetaEntityType.generated.h"
 
-namespace Unreal::Flecs
+namespace UE::Flecs
 {
 	// Not using FFlecsEntityHandle as we can't guarantee the entity is in the context of a UFlecsWorld
 	using EntityFunctionPtr = std::function<void(flecs::entity)>;
-} // namespace Unreal::Flecs
+} // namespace UE::Flecs
 
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsDefaultMetaEntity

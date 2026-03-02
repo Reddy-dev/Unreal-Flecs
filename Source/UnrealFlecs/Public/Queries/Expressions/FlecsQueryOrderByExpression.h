@@ -44,6 +44,6 @@ public:
 	UPROPERTY()
 	TInstancedStruct<FFlecsQueryGeneratorInputType> OrderByInput;
 	
-	Unreal::Flecs::Queries::FOrderByFunctionType OrderByFunction;
+	UE::Flecs::Queries::FOrderByFunctionType OrderByFunction;
 	
 }; // struct FFlecsQueryOrderByCPPExpressionWrapper

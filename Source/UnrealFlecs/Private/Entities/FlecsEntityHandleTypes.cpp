@@ -8,7 +8,7 @@
 #include "Entities/FlecsEntityHandle.h"
 #include "Worlds/FlecsWorld.h"
 
-DEFINE_FLECS_ENTITY_NET_SERIALIZE_FUNCTION(Unreal::Flecs::EmptyNetSerializeFunction,
+DEFINE_FLECS_ENTITY_NET_SERIALIZE_FUNCTION(UE::Flecs::EmptyNetSerializeFunction,
 	[](FFlecsEntityHandle& InEntity, TSolidNotNull<UFlecsWorld*> FlecsWorld, FArchive& Ar, UPackageMap* Map, bool& bOutSuccess)
 	{
 		if UNLIKELY_IF(!InEntity.IsValid())
@@ -35,4 +35,4 @@ DEFINE_FLECS_ENTITY_NET_SERIALIZE_FUNCTION(Unreal::Flecs::EmptyNetSerializeFunct
 		return true;
 	});
 
-Unreal::Flecs::FEntityNetSerializeFunction* Unreal::Flecs::GNetSerializeFunctionPtr = &EmptyNetSerializeFunction; 
+UE::Flecs::FEntityNetSerializeFunction* UE::Flecs::GNetSerializeFunctionPtr = &EmptyNetSerializeFunction; 

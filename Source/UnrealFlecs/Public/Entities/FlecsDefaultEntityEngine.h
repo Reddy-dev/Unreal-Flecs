@@ -29,7 +29,7 @@ public:
 	
 	TMap<FString, FFlecsId> DefaultEntityOptions;
 
-	robin_hood::unordered_map<FFlecsId, Unreal::Flecs::EntityFunctionPtr> DefaultEntityFunctions;
+	robin_hood::unordered_map<FFlecsId, UE::Flecs::EntityFunctionPtr> DefaultEntityFunctions;
 	
 	std::vector<FFlecsDefaultMetaEntity> AddedDefaultEntities;
 	std::vector<FFlecsDefaultMetaEntity> CodeAddedDefaultEntities;

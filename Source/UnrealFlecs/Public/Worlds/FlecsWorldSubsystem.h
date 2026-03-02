@@ -26,12 +26,12 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FFlecsOnWorldBeginPlay, TSolidNotNull<UWorld
 DECLARE_MULTICAST_DELEGATE_OneParam(FFlecsOnWorldDestroyed, TSolidNotNull<UFlecsWorld*>);
 DECLARE_MULTICAST_DELEGATE_OneParam(FFlecsOnWorldInitializedGlobal, TSolidNotNull<UFlecsWorld*>);
 
-namespace Unreal::Flecs
+namespace UE::Flecs
 {
 	// A Global alternative to be able to register to the delegate outside of a world context.
 	extern UNREALFLECS_API FFlecsOnWorldInitializedGlobal GOnFlecsWorldInitialized;
 	
-} // namespace Unreal::Flecs
+} // namespace UE::Flecs
 
 UCLASS(BlueprintType)
 class UNREALFLECS_API UFlecsWorldSubsystem final : public UWorldSubsystem

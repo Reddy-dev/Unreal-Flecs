@@ -44,10 +44,10 @@ bool FFlecsEntityHandle::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOut
         }
     }
     
-    if LIKELY_IF(Unreal::Flecs::GNetSerializeFunctionPtr)
+    if LIKELY_IF(UE::Flecs::GNetSerializeFunctionPtr)
     {
         return std::invoke(
-            *Unreal::Flecs::GNetSerializeFunctionPtr,
+            *UE::Flecs::GNetSerializeFunctionPtr,
             *this,
             GetFlecsWorldChecked(),
             Ar,

@@ -15,7 +15,7 @@ class UFlecsCollectionWorldSubsystem;
 class IFlecsCollectionInterface;
 class UFlecsCollectionDataAsset;
 
-namespace Unreal::Flecs::Collections
+namespace UE::Flecs::Collections
 {
 	template <typename FuncType>
 	concept TCollectionBuilderFunc = requires(FuncType Func, FFlecsCollectionBuilder& Builder)
@@ -23,7 +23,7 @@ namespace Unreal::Flecs::Collections
 		{ Func(Builder) } -> std::same_as<void>;
 	}; // concept TCollectionBuilderFunc
 	
-} // namespace Unreal::Flecs::Collections
+} // namespace UE::Flecs::Collections
 
 USTRUCT()
 struct UNREALFLECS_API FFlecsCollectionSubsystemSingleton
@@ -85,7 +85,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Flecs|Collections")
 	FFlecsEntityHandle GetCollectionScope() const;
 
-	template <Unreal::Flecs::Collections::TCollectionBuilderFunc FuncType>
+	template <UE::Flecs::Collections::TCollectionBuilderFunc FuncType>
 	FFlecsEntityHandle RegisterCollectionBuilder(FuncType&& InBuildFunc)
 	{
 		FFlecsCollectionDefinition Definition;
@@ -97,7 +97,7 @@ public:
 		return RegisterCollectionDefinition(Builder.IdName, Definition);
 	}
 
-	template <Unreal::Flecs::Collections::TCollectionBuilderFunc FuncType>
+	template <UE::Flecs::Collections::TCollectionBuilderFunc FuncType>
 	FFlecsEntityHandle RegisterCollectionClass(const TSolidNotNull<UClass*> InClass, FuncType&& InBuildFunc)
 	{
 		checkf(!ClassImplementsCollectionInterface(InClass),

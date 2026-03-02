@@ -18,18 +18,18 @@ struct FFlecsEntityHandle;
 #ifndef DECLARE_FLECS_ENTITY_NET_SERIALIZE_FUNCTION
 
 #define DECLARE_FLECS_ENTITY_NET_SERIALIZE_FUNCTION(Name) \
-	extern Unreal::Flecs::FEntityNetSerializeFunction Name;
+	extern UE::Flecs::FEntityNetSerializeFunction Name;
 
 #endif // DECLARE_FLECS_ENTITY_NET_SERIALIZE_FUNCTION
 
 #ifndef DEFINE_FLECS_ENTITY_NET_SERIALIZE_FUNCTION
 
 #define DEFINE_FLECS_ENTITY_NET_SERIALIZE_FUNCTION(Name, Lambda) \
-	Unreal::Flecs::FEntityNetSerializeFunction Name = Lambda;
+	UE::Flecs::FEntityNetSerializeFunction Name = Lambda;
 
 #endif // DEFINE_FLECS_ENTITY_NET_SERIALIZE_FUNCTION
 
-namespace Unreal::Flecs
+namespace UE::Flecs
 {
 	/** @TODO: Documentation
 	 * Global NetSerialize function pointer(also there is an option for a local override using the FFlecs
@@ -40,7 +40,7 @@ namespace Unreal::Flecs
 
 	UNREALFLECS_API DECLARE_FLECS_ENTITY_NET_SERIALIZE_FUNCTION(EmptyNetSerializeFunction);
 
-	UNREALFLECS_API extern Unreal::Flecs::FEntityNetSerializeFunction* GNetSerializeFunctionPtr;
+	UNREALFLECS_API extern UE::Flecs::FEntityNetSerializeFunction* GNetSerializeFunctionPtr;
 
 	/*
 	 * Runtime Types that may have data associated with them
@@ -106,4 +106,4 @@ namespace Unreal::Flecs
 		
 	}; // concept TFlecsEntityHandleTypeConcept
 	
-} // namespace Unreal::Flecs
+} // namespace UE::Flecs

@@ -9,7 +9,7 @@
 using FFlecsTermRef = TVariant<FFlecsId, FString>;
 using FFlecsTermRefAtom_Internal = TVariant<FFlecsId, char*>;
 
-namespace Unreal::Flecs::Queries
+namespace UE::Flecs::Queries
 {
 	NO_DISCARD FORCEINLINE FFlecsTermRefAtom_Internal ToTermRefAtom(const FFlecsTermRef& InTermRef)
 	{
@@ -48,5 +48,5 @@ namespace Unreal::Flecs::Queries
 		}
 	}
 	
-} // namespace Unreal::Flecs::Queries
+} // namespace UE::Flecs::Queries
 

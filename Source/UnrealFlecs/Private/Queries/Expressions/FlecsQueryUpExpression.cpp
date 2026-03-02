@@ -25,7 +25,7 @@ void FFlecsQueryUpExpression::Apply(const TSolidNotNull<const UFlecsWorld*> InWo
 		{
 			UE_LOG(LogFlecsCore, Error, 
 				TEXT("Traversal input for cascade expression cannot be a string. Cascade will be applied without traversal."));
-			Unreal::Flecs::Queries::FreeTermRefAtom(TraversalTermRef);
+			UE::Flecs::Queries::FreeTermRefAtom(TraversalTermRef);
 			return;
 		}
 		

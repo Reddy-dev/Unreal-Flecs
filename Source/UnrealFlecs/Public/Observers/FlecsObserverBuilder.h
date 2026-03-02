@@ -27,7 +27,7 @@ public:
 									, World(InWorld)
 									, OptionalName(InOptionalName)
 	{
-		Unreal::Flecs::Queries::TAddInputTypes<TFlecsObserverBuilder, TComponents...>::Apply(*this);
+		UE::Flecs::Queries::TAddInputTypes<TFlecsObserverBuilder, TComponents...>::Apply(*this);
 	}
 
 	FFlecsObserverDefinition ObserverDefinition;

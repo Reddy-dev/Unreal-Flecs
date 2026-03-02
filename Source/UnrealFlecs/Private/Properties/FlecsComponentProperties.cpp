@@ -5,7 +5,7 @@
 FFlecsComponentPropertiesRegistry FFlecsComponentPropertiesRegistry::Instance;
 
 void FFlecsComponentPropertiesRegistry::RegisterComponentProperties(const std::string& Name, UScriptStruct* Struct,
-	const uint32 Size, const uint16 Alignment, const Unreal::Flecs::FFlecsComponentFunction& RegistrationFunction)
+	const uint32 Size, const uint16 Alignment, const UE::Flecs::FFlecsComponentFunction& RegistrationFunction)
 {
 	solid_checkf(!Name.empty(), TEXT("Component properties name is empty!"));
 		

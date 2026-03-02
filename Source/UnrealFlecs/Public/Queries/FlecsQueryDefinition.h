@@ -27,7 +27,7 @@ public:
 		return *this;
 	}
 
-	template <Unreal::Flecs::Queries::TQueryExpressionConcept TExpression>
+	template <UE::Flecs::Queries::TQueryExpressionConcept TExpression>
 	FORCEINLINE FFlecsQueryDefinition& AddAdditionalExpression(const TExpression& InExpression)
 	{
 		OtherExpressions.Add(InExpression);

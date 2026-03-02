@@ -21,7 +21,7 @@
 
 void IFlecsModuleInterface::ImportModule(const flecs::world& InWorld)
 {
-	World = Unreal::Flecs::ToUnrealFlecsWorld(InWorld);
+	World = UE::Flecs::ToUnrealFlecsWorld(InWorld);
 	solid_check(IsWorldValid());
 
 	const TSolidNotNull<UFlecsWorld*> FlecsWorld = this->World.Get();

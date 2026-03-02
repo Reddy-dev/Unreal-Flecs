@@ -6,7 +6,7 @@
 #include "Worlds/FlecsWorld.h"
 #include "Worlds/UnrealFlecsWorldTag.h"
 
-TSolidNotNull<UFlecsWorld*> Unreal::Flecs::ToUnrealFlecsWorld(const flecs::world& InWorld)
+TSolidNotNull<UFlecsWorld*> UE::Flecs::ToUnrealFlecsWorld(const flecs::world& InWorld)
 {
 	solid_checkf(InWorld, TEXT("Passed in flecs::world is not valid."));
 	solid_checkf(InWorld.has<FUnrealFlecsWorldTag>(), TEXT("Passed in flecs::world is not an Unreal Flecs World."));

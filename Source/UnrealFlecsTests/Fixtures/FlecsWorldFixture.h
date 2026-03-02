@@ -19,10 +19,10 @@
 #include "Worlds/FlecsWorld.h"
 #include "Pipelines/FlecsDefaultGameLoop.h"
 
-/*namespace Unreal::Flecs::Testing::impl
+/*namespace UE::Flecs::Testing::impl
 {
 	static const FString DefaultTags = TEXT("");
-} // namespace Unreal::Flecs::Testing::impl*/
+} // namespace UE::Flecs::Testing::impl*/
 
 class UNREALFLECSTESTS_API FFlecsTestFixture
 {
@@ -176,6 +176,6 @@ struct UNREALFLECSTESTS_API FFlecsTestFixtureRAII
 #define xTEST_METHOD_WITH_TAGS(_MethodName, _TestTags) \
 	void _MethodName()
 
-#define xTEST_METHOD(_MethodName) xTEST_METHOD_WITH_TAGS(_MethodName, Unreal::Flecs::Testing::impl::DefaultTags)
+#define xTEST_METHOD(_MethodName) xTEST_METHOD_WITH_TAGS(_MethodName, UE::Flecs::Testing::impl::DefaultTags)
 
 #endif // #if WITH_AUTOMATION_TESTS

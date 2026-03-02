@@ -16,7 +16,7 @@
 
 #include "FlecsGroupByCallbackDefinition.generated.h"
 
-namespace Unreal::Flecs::Queries
+namespace UE::Flecs::Queries
 {
 	using FUnrealGroupByFunctionType = uint64(*)(const TSolidNotNull<UFlecsWorld*>, FFlecsTableHandle, FFlecsId, FInstancedStruct);
 	
@@ -26,7 +26,7 @@ namespace Unreal::Flecs::Queries
 		
 	}; // struct FFlecsGroupByContextData
 	
-} // namespace Unreal::Flecs::Queries
+} // namespace UE::Flecs::Queries
 
 // @TODO: Not Implemented
 USTRUCT(BlueprintInternalUseOnly)
@@ -38,7 +38,7 @@ public:
 	FORCEINLINE FFlecsGroupByCallbackDefinition() = default;
 	virtual ~FFlecsGroupByCallbackDefinition() = default;
 	
-	virtual Unreal::Flecs::Queries::FUnrealGroupByFunctionType GetGroupByFunction() const PURE_VIRTUAL(FFlecsGroupByCallbackDefinition, return nullptr;);
+	virtual UE::Flecs::Queries::FUnrealGroupByFunctionType GetGroupByFunction() const PURE_VIRTUAL(FFlecsGroupByCallbackDefinition, return nullptr;);
 	virtual UScriptStruct* GetGroupByContextStruct() const { return nullptr; }
 	
 }; // struct FFlecsGroupByCallbackDefinition

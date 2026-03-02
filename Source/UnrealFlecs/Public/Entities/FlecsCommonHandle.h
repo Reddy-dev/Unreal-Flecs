@@ -270,7 +270,7 @@ public:
 	 */
 	NO_DISCARD FString GetWorldName() const;
 
-	template <Unreal::Flecs::TFlecsEntityHandleTypeConcept THandleType>
+	template <UE::Flecs::TFlecsEntityHandleTypeConcept THandleType>
 	NO_DISCARD SOLID_INLINE THandleType ObtainComponentTypeStruct(const TSolidNotNull<const UScriptStruct*> StructType) const
 	{
 		//return THandleType(GetNativeFlecsWorld(), ObtainComponentTypeStruct(StructType));
@@ -279,7 +279,7 @@ public:
 	
 	NO_DISCARD FFlecsId ObtainComponentTypeStruct(const TSolidNotNull<const UScriptStruct*> StructType) const;
 
-	template <Unreal::Flecs::TFlecsEntityHandleTypeConcept THandleType>
+	template <UE::Flecs::TFlecsEntityHandleTypeConcept THandleType>
 	NO_DISCARD SOLID_INLINE THandleType ObtainComponentTypeEnum(const TSolidNotNull<const UEnum*> EnumType) const
 	{
 		return ObtainComponentTypeEnum(EnumType).ToHandle<THandleType>(GetNativeFlecsWorld());
@@ -287,7 +287,7 @@ public:
 	
 	NO_DISCARD FFlecsId ObtainComponentTypeEnum(const TSolidNotNull<const UEnum*> EnumType) const;
 
-	template <Unreal::Flecs::TFlecsEntityHandleTypeConcept THandleType>
+	template <UE::Flecs::TFlecsEntityHandleTypeConcept THandleType>
 	NO_DISCARD SOLID_INLINE THandleType ObtainTypeClass(const TSolidNotNull<UClass*> ClassType) const
 	{
 		return ObtainTypeClass(ClassType).ToHandle<THandleType>(GetNativeFlecsWorld());
@@ -295,7 +295,7 @@ public:
 
 	NO_DISCARD FFlecsId ObtainTypeClass(const TSolidNotNull<UClass*> ClassType) const;
 
-	template <Unreal::Flecs::TFlecsEntityHandleTypeConcept THandleType>
+	template <UE::Flecs::TFlecsEntityHandleTypeConcept THandleType>
 	NO_DISCARD SOLID_INLINE THandleType GetTagEntity(const FGameplayTag& InTag) const
 	{
 		solid_checkf(InTag.IsValid(), TEXT("Invalid GameplayTag passed to GetTagEntity!"));
@@ -351,7 +351,7 @@ public:
 	 * @tparam THandle The handle type to convert to. Must satisfy TFlecsEntityHandleTypeConcept.
 	 * @return The converted handle.
 	 */
-	template <Unreal::Flecs::TFlecsEntityHandleTypeConcept THandle>
+	template <UE::Flecs::TFlecsEntityHandleTypeConcept THandle>
 	NO_DISCARD SOLID_INLINE THandle ToHandle() const
 	{
 		return THandle(GetNativeFlecsWorld(), GetFlecsId());

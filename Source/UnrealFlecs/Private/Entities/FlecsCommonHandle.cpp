@@ -26,7 +26,7 @@ flecs::world FFlecsCommonHandle::GetNativeFlecsWorld() const
 UFlecsWorld* FFlecsCommonHandle::GetFlecsWorld() const
 {
 	solid_checkf(IsUnrealFlecsWorld(), TEXT("Entity is not in an Unreal Flecs World"));
-	return Unreal::Flecs::ToUnrealFlecsWorld(GetEntity().world());
+	return UE::Flecs::ToUnrealFlecsWorld(GetEntity().world());
 }
 
 TSolidNotNull<UFlecsWorld*> FFlecsCommonHandle::GetFlecsWorldChecked() const
