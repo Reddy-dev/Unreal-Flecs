@@ -49,8 +49,11 @@ char* ecs_cpp_get_type_name(
 
 FLECS_API
 char* ecs_cpp_get_symbol_name(
+    /* If symbol_name is NULL, function allocates a buffer with ecs_os_malloc.
+     * Callers must free the returned pointer with ecs_os_free. */
     char *symbol_name,
     const char *type_name,
+    /* If len is 0, function derives it from type_name. */
     size_t len);
 
 FLECS_API
@@ -65,20 +68,28 @@ const char* ecs_cpp_trim_module(
     ecs_world_t *world,
     const char *type_name);
 
+typedef void (*ecs_cpp_type_action_t)(
+    ecs_world_t *world,
+    ecs_entity_t component);
+
+typedef struct ecs_cpp_component_desc_t {
+    ecs_entity_t id;
+    int32_t ids_index;
+    const char *name;
+    const char *cpp_name;
+    const char *cpp_symbol;
+    size_t size;
+    size_t alignment;
+    ecs_cpp_type_action_t lifecycle_action;
+    ecs_cpp_type_action_t enum_action;
+    bool is_component;
+    bool explicit_registration;
+} ecs_cpp_component_desc_t;
+
 FLECS_API
 ecs_entity_t ecs_cpp_component_register(
     ecs_world_t *world,
-    ecs_entity_t id,
-    int32_t ids_index,
-    const char *name,
-    const char *cpp_name,
-    const char *cpp_symbol,
-    size_t size,
-    size_t alignment,
-    bool is_component,
-    bool explicit_registration,
-    bool *registered_out,
-    bool *existing_out);
+    const ecs_cpp_component_desc_t *desc);
 
 FLECS_API
 void ecs_cpp_enum_init(

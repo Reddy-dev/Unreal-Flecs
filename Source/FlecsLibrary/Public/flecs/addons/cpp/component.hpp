@@ -28,52 +28,39 @@ namespace flecs {
 
 namespace _ {
 
-// Trick to obtain typename from type, as described here
-// https://blog.molecular-matters.com/2015/12/11/getting-the-type-of-a-template-argument-as-string-without-rtti/
-//
-// The code from the link has been modified to work with more types, and across
-// multiple compilers. The resulting string should be the same on all platforms
-// for all compilers.
-//
-
-// Translate a typename into a language-agnostic identifier. This allows for
-// registration of components/modules across language boundaries.
 template <typename T>
-inline const char* symbol_name() {
-    static constexpr size_t len = ECS_FUNC_TYPE_LEN(const char*, symbol_name, ECS_FUNC_NAME);
-    static char result[len + 1] = {};
-    static const char* cppSymbolName = ecs_cpp_get_symbol_name(result, type_name<T>(), len);
-    return cppSymbolName;
+inline const char* component_symbol_name() {
+    return nullptr;
 }
 
-template <> inline const char* symbol_name<uint8_t>() {
+template <> inline const char* component_symbol_name<uint8_t>() {
     return "u8";
 }
-template <> inline const char* symbol_name<uint16_t>() {
+template <> inline const char* component_symbol_name<uint16_t>() {
     return "u16";
 }
-template <> inline const char* symbol_name<uint32_t>() {
+template <> inline const char* component_symbol_name<uint32_t>() {
     return "u32";
 }
-template <> inline const char* symbol_name<uint64_t>() {
+template <> inline const char* component_symbol_name<uint64_t>() {
     return "u64";
 }
-template <> inline const char* symbol_name<int8_t>() {
+template <> inline const char* component_symbol_name<int8_t>() {
     return "i8";
 }
-template <> inline const char* symbol_name<int16_t>() {
+template <> inline const char* component_symbol_name<int16_t>() {
     return "i16";
 }
-template <> inline const char* symbol_name<int32_t>() {
+template <> inline const char* component_symbol_name<int32_t>() {
     return "i32";
 }
-template <> inline const char* symbol_name<int64_t>() {
+template <> inline const char* component_symbol_name<int64_t>() {
     return "i64";
 }
-template <> inline const char* symbol_name<float>() {
+template <> inline const char* component_symbol_name<float>() {
     return "f32";
 }
-template <> inline const char* symbol_name<double>() {
+template <> inline const char* component_symbol_name<double>() {
     return "f64";
 }
 
@@ -110,6 +97,25 @@ void register_lifecycle_actions(
             ecs_add_id(world, component, flecs::Sparse);
         }
     }
+}
+
+template <typename T>
+inline ecs_cpp_type_action_t lifecycle_action() {
+    if constexpr (std::is_trivial<T>::value) {
+        return nullptr;
+    } else {
+        return &register_lifecycle_actions<T>;
+    }
+}
+
+template <typename T>
+inline ecs_cpp_type_action_t enum_action() {
+#if FLECS_CPP_ENUM_REFLECTION_SUPPORT
+    if constexpr (is_enum_v<T>) {
+        return &_::init_enum<T>;
+    }
+#endif
+    return nullptr;
 }
 
 struct FLECS_API type_impl_data {
@@ -226,6 +232,22 @@ struct type_impl {
         s_enum_registered = td.s_enum_registered;
         
         bool registered = false, existing = false;
+        
+        /*ecs_cpp_component_desc_t desc = {
+            id,
+            index(),
+            name,
+            type_name<T>(),
+            component_symbol_name<T>(),
+            size(),
+            alignment(),
+            lifecycle_action<T>(),
+            enum_action<T>(),
+            is_component,
+            explicit_registration
+        };
+
+        flecs::entity_t c = ecs_cpp_component_register(world, &desc);*/
 
         flecs::entity_t c = ecs_cpp_component_register(
             world, id, s_index, name, type_name<T>(), 
@@ -413,6 +435,11 @@ struct type_impl {
         s_enum_registered = false;
     }
 
+    static int32_t index() {
+        static int32_t index_ = flecs_component_ids_index_get();
+        return index_;
+    }
+
     static bool s_set_values;
     static int32_t s_index;
     static size_t s_size;
@@ -544,9 +571,6 @@ untyped_component& on_equals(
  */
 template <typename T>
 struct component : untyped_component {
-        
-        
-    
     /** Register a component.
      * If the component was already registered, this operation will return a handle
      * to the existing component.
