@@ -10,7 +10,7 @@
 
 #include "FlecsEntityInterface.generated.h"
 
-UINTERFACE(BlueprintType)
+UINTERFACE(BlueprintType, meta = (CannotImplementInterfaceInBlueprint))
 class UNREALFLECS_API UFlecsEntityInterface : public UInterface
 {
 	GENERATED_BODY()
