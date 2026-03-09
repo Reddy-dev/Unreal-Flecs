@@ -10,8 +10,7 @@
 
 #include "FlecsAbstractWorldSubsystem.generated.h"
 
-// @TODO:Add Tests for this class!
-// @TODO: auto add a singleton component for each inheritor of this class?
+// @TODO: maybe auto add a singleton component for each inheritor of this class?
 
 class UFlecsWorldSubsystem;
 
