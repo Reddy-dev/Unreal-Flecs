@@ -2460,6 +2460,11 @@ void System_set_group(void) {
     struct TgtB { };
     struct TgtC { };
     struct Tag { };
+    world.component<Rel>();
+    world.component<TgtA>();
+    world.component<TgtB>();
+    world.component<TgtC>();
+    world.component<Tag>();
 
     auto e1 = world.entity().add<Rel, TgtA>();
     auto e2 = world.entity().add<Rel, TgtB>();
@@ -2653,6 +2658,7 @@ END_DEFINE_SPEC(FFlecsSystemTestsSpec);
                 "register_twice_w_run",
                 "register_twice_w_run_each",
                 "register_twice_w_each_run",
+                "set_group",
                 "run_w_0_src_query",
                 "priority_test"
             ]*/
@@ -2731,6 +2737,7 @@ void FFlecsSystemTestsSpec::Define()
     It("register_twice_w_run", [&] { System_register_twice_w_run(); });
     It("register_twice_w_run_each", [&] { System_register_twice_w_run_each(); });
     It("register_twice_w_each_run", [&] { System_register_twice_w_each_run(); });
+    It("set_group", [&] { System_set_group(); });
     It("run_w_0_src_query", [&] { System_run_w_0_src_query(); });
     It("priority_test", [&] { System_priority_test(); });
 }

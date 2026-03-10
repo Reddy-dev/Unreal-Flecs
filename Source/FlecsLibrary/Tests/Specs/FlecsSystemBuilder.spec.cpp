@@ -517,6 +517,8 @@ void SystemBuilder_create_w_no_template_args(void) {
 
 void SystemBuilder_deduce_terms_from_each_callback(void) {
     flecs::world ecs;
+    ecs.component<Position>();
+    ecs.component<Velocity>();
 
     auto e = ecs.entity()
         .set<Position>({10, 20})
@@ -568,6 +570,9 @@ void SystemBuilder_deduce_terms_from_each_callback(void) {
 
 void SystemBuilder_deduce_optional_terms_from_each_callback(void) {
     flecs::world ecs;
+    ecs.component<Position>();
+    ecs.component<Velocity>();
+    ecs.component<Mass>();
 
     auto e1 = ecs.entity()
         .set<Position>({10, 20})
@@ -644,6 +649,9 @@ void SystemBuilder_deduce_optional_terms_from_each_callback(void) {
 
 void SystemBuilder_deduce_pair_term_from_each_callback(void) {
     flecs::world ecs;
+    ecs.component<Position>();
+    ecs.component<Tag>();
+    ecs.component<Tag0>();
 
     ecs.entity()
         .add<Tag0>()
@@ -746,6 +754,7 @@ void SystemBuilder_deduce_singleton_term_from_each_callback(void) {
 
 void SystemBuilder_deduce_singleton_and_component_terms_from_each_callback(void) {
     flecs::world ecs;
+    ecs.component<Position>();
 
     ecs.component<Velocity>().add(flecs::Singleton);
     ecs.set<Velocity>({1, 2});
@@ -800,6 +809,9 @@ void SystemBuilder_deduce_singleton_and_component_terms_from_each_callback(void)
 
 void SystemBuilder_with_terms_after_deduced_terms(void) {
     flecs::world ecs;
+    ecs.component<Position>();
+    ecs.component<Velocity>();
+    ecs.component<Mass>();
 
     auto Likes = ecs.entity();
     auto Bob = ecs.entity();
@@ -934,6 +946,12 @@ END_DEFINE_SPEC(FFlecsSystemBuilderSpec);
 "16_terms",
 "name_arg",
 "create_w_no_template_args",
+"deduce_terms_from_each_callback",
+"deduce_optional_terms_from_each_callback",
+"deduce_pair_term_from_each_callback",
+"deduce_singleton_term_from_each_callback",
+"deduce_singleton_and_component_terms_from_each_callback",
+"with_terms_after_deduced_terms",
 "write_annotation",
 "name_from_root"
 ]*/
@@ -960,6 +978,12 @@ void FFlecsSystemBuilderSpec::Define()
     It("16_terms", [&]() { SystemBuilder_16_terms(); });
     It("name_arg", [&]() { SystemBuilder_name_arg(); });
     It("create_w_no_template_args", [&]() { SystemBuilder_create_w_no_template_args(); });
+    It("deduce_terms_from_each_callback", [&]() { SystemBuilder_deduce_terms_from_each_callback(); });
+    It("deduce_optional_terms_from_each_callback", [&]() { SystemBuilder_deduce_optional_terms_from_each_callback(); });
+    It("deduce_pair_term_from_each_callback", [&]() { SystemBuilder_deduce_pair_term_from_each_callback(); });
+    It("deduce_singleton_term_from_each_callback", [&]() { SystemBuilder_deduce_singleton_term_from_each_callback(); });
+    It("deduce_singleton_and_component_terms_from_each_callback", [&]() { SystemBuilder_deduce_singleton_and_component_terms_from_each_callback(); });
+    It("with_terms_after_deduced_terms", [&]() { SystemBuilder_with_terms_after_deduced_terms(); });
     It("write_annotation", [&]() { SystemBuilder_write_annotation(); });
     It("name_from_root", [&]() { SystemBuilder_name_from_root(); });
 }
