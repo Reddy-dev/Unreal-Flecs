@@ -59,14 +59,14 @@ public:
 		return flecs::system(GetNativeFlecsWorld(), GetFlecsId());
 	}
 	
-	FORCEINLINE FFlecsSystemHandle SetGroup(const uint64 InGroupId) const
+	FORCEINLINE const FFlecsSystemHandle& SetGroup(const uint64 InGroupId) const
 	{
 		GetSystem().set_group(InGroupId);
 		return *this;
 	}
 	
 	template <typename T>
-	FORCEINLINE FFlecsSystemHandle SetGroup() const
+	FORCEINLINE const FFlecsSystemHandle& SetGroup() const
 	{
 		GetSystem().set_group<T>();
 		return *this;
