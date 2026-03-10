@@ -8,6 +8,16 @@
 
 #ifdef FLECS_META
 
+#ifdef FLECS_DEBUG
+static
+bool flecs_meta_is_builtin_type(
+    ecs_entity_t type)
+{
+    return type < EcsFirstUserComponentId ||
+        (type > FLECS_HI_COMPONENT_ID && type < EcsFirstUserEntityId);
+}
+#endif
+
 void flecs_type_serializer_dtor(
     EcsTypeSerializer *ptr) 
 {
@@ -95,6 +105,81 @@ const char* flecs_primitive_type_kind_str(
     }
 }
 
+#ifdef FLECS_DEBUG
+static
+bool flecs_meta_detect_cycles_w_stack(
+    ecs_world_t *world,
+    ecs_entity_t type,
+    ecs_entity_t target,
+    ecs_vec_t *visited)
+{
+    if (!type) {
+        return false;
+    }
+
+    if (type == target) {
+        return true;
+    }
+
+    ecs_entity_t *visited_types = ecs_vec_first_t(visited, ecs_entity_t);
+    int32_t i, count = ecs_vec_count(visited);
+    for (i = 0; i < count; i ++) {
+        if (visited_types[i] == type) {
+            return false;
+        }
+    }
+
+    ecs_vec_append_t(NULL, visited, ecs_entity_t)[0] = type;
+
+    const EcsStruct *struct_info = ecs_get(world, type, EcsStruct);
+    if (struct_info) {
+        ecs_member_t *members = ecs_vec_first_t(&struct_info->members, ecs_member_t);
+        count = ecs_vec_count(&struct_info->members);
+        for (i = 0; i < count; i ++) {
+            if (flecs_meta_detect_cycles_w_stack(
+                world, members[i].type, target, visited))
+            {
+                return true;
+            }
+        }
+    }
+
+    const EcsArray *array_info = ecs_get(world, type, EcsArray);
+    if (array_info) {
+        if (flecs_meta_detect_cycles_w_stack(
+            world, array_info->type, target, visited))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+#endif
+
+void flecs_meta_detect_cycles(
+    ecs_world_t *world,
+    ecs_entity_t type,
+    ecs_entity_t target)
+{
+    (void)world;
+    (void)type;
+    (void)target;
+#ifdef FLECS_DEBUG
+    ecs_vec_t visited;
+    ecs_vec_init_t(NULL, &visited, ecs_entity_t, 0);
+    bool cycles_detected = flecs_meta_detect_cycles_w_stack(
+        world, type, target, &visited);
+    ecs_vec_fini_t(NULL, &visited, ecs_entity_t);
+
+    ecs_assert(
+        !cycles_detected,
+        ECS_CYCLE_DETECTED,
+        "cyclic type definition: '%s' depends on '%s'",
+        flecs_errstr(ecs_get_path(world, target)),
+        flecs_errstr_1(ecs_get_path(world, type)));
+#endif
+}
 
 int flecs_init_type(
     ecs_world_t *world,
@@ -105,6 +190,18 @@ int flecs_init_type(
 {
     ecs_assert(world != NULL, ECS_INTERNAL_ERROR, NULL);
     ecs_assert(type != 0, ECS_INTERNAL_ERROR, NULL);
+
+#ifdef FLECS_DEBUG
+    if (!flecs_meta_is_builtin_type(type)) {
+        const ecs_type_info_t *ti = ecs_get_type_info(world, type);
+        if (ti) {
+            ecs_assert(!(ti->hooks.flags & ECS_TYPE_HOOK_IN_USE),
+                ECS_INVALID_OPERATION,
+                "cannot modify type '%s' after it is in use",
+                ecs_get_name(world, type));
+        }
+    }
+#endif
 
     EcsType *meta_type = ecs_ensure(world, type, EcsType);
     if (meta_type->kind == 0) {

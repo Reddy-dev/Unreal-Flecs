@@ -733,10 +733,13 @@ int flecs_expr_interpolated_string_visit_type(
                 ecs_script_impl_t *impl = flecs_script_impl(script);
 
                 ecs_parser_t parser = {
+                    .name = script->name,
+                    .code = script->code,
                     .script = impl,
                     .scope = impl->root,
                     .significant_newline = false,
-                    .token_cur = impl->token_remaining
+                    .token_cur = impl->token_remaining,
+                    .token_end = &impl->token_buffer[impl->token_buffer_size]
                 };
 
                 ptr = ECS_CONST_CAST(char*, flecs_script_parse_expr(
@@ -1099,6 +1102,11 @@ int flecs_expr_binary_visit_type(
     }
 
     if (flecs_expr_visit_type_priv(script, node->left, cur, desc)) {
+        goto error;
+    }
+
+    if (!node->left || !node->right) {
+        flecs_expr_visit_error(script, node, "invalid binary expression");
         goto error;
     }
 

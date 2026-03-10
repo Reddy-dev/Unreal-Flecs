@@ -1196,6 +1196,8 @@ void flecs_component_update_childof_w_depth(
     ecs_assert(cr != NULL, ECS_INTERNAL_ERROR, NULL);
     ecs_pair_record_t *pair = cr->pair;
     ecs_assert(pair != NULL, ECS_INTERNAL_ERROR, NULL);
+    ecs_assert(depth < (FLECS_DAG_DEPTH_MAX + 1), ECS_INVALID_OPERATION, 
+        "possible cycle detected in ChildOf/Parent hierarchy");
 
     if (cr->flags & EcsIdMarkedForDelete) {
         return;

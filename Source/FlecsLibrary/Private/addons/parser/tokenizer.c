@@ -66,6 +66,23 @@ bool flecs_keyword_match(
         out->kind = _kind;\
         return pos + 1;
 
+static
+char* flecs_tokenizer_write(
+    ecs_parser_t *parser,
+    char *dst,
+    char ch)
+{
+    ecs_assert(dst != NULL, ECS_INTERNAL_ERROR, NULL);
+
+    if (parser && parser->token_end) {
+        ecs_assert(dst < parser->token_end, ECS_INVALID_OPERATION,
+            "out of parser token storage");
+    }
+
+    dst[0] = ch;
+    return dst + 1;
+}
+
 const char* flecs_token_kind_str(
     ecs_token_kind_t kind)
 {
@@ -434,6 +451,9 @@ const char* flecs_tokenizer_identifier(
         if (!is_ident) {
             if (c == '\\') {
                 pos ++;
+                if (!pos[0]) {
+                    goto done;
+                }
             } else if (c == '<') {
                 int32_t indent = 0;
                 do {
@@ -450,8 +470,7 @@ const char* flecs_tokenizer_identifier(
                     }
 
                     if (outpos) {
-                        *outpos = c;
-                        outpos ++;
+                        outpos = flecs_tokenizer_write(parser, outpos, c);
                     }
                     pos ++;
 
@@ -471,8 +490,7 @@ const char* flecs_tokenizer_identifier(
         }
 
         if (outpos) {
-            *outpos = *pos;
-            outpos ++;
+            outpos = flecs_tokenizer_write(parser, outpos, *pos);
         }
 
         pos ++;
@@ -480,9 +498,9 @@ const char* flecs_tokenizer_identifier(
 
 done:
     if (outpos) {
-        *outpos = '\0';
+        outpos = flecs_tokenizer_write(parser, outpos, '\0');
         if (parser) {
-            parser->token_cur = outpos + 1;
+            parser->token_cur = outpos;
         }
     }
 
@@ -521,22 +539,19 @@ const char* flecs_script_number(
     char *outpos = parser->token_cur;
 
     if (pos[0] == '-') {
-        outpos[0] = pos[0];
+        outpos = flecs_tokenizer_write(parser, outpos, pos[0]);
         pos ++;
-        outpos ++;
     }
 
     if (pos[0] == '0' && (pos[1] == 'x' || pos[1] == 'X')) {
         base = 16;
-        outpos[0] = pos[0];
-        outpos[1] = pos[1];
-        outpos += 2;
+        outpos = flecs_tokenizer_write(parser, outpos, pos[0]);
+        outpos = flecs_tokenizer_write(parser, outpos, pos[1]);
         pos += 2;
     } else if (pos[0] == '0' && (pos[1] == 'b' || pos[1] == 'B')) {
         base = 2;
-        outpos[0] = pos[0];
-        outpos[1] = pos[1];
-        outpos += 2;
+        outpos = flecs_tokenizer_write(parser, outpos, pos[0]);
+        outpos = flecs_tokenizer_write(parser, outpos, pos[1]);
         pos += 2;
     }
 
@@ -562,9 +577,8 @@ const char* flecs_script_number(
                     valid_number = true;
                     handled_char = true;
 
-                    outpos[0] = c;
-                    outpos[1] = pos[1];
-                    outpos += 2;
+                    outpos = flecs_tokenizer_write(parser, outpos, c);
+                    outpos = flecs_tokenizer_write(parser, outpos, pos[1]);
                     pos += 2;
                 }
             }
@@ -586,14 +600,13 @@ const char* flecs_script_number(
                 return NULL;
             }
 
-            *outpos = '\0';
-            parser->token_cur = outpos + 1;
+            outpos = flecs_tokenizer_write(parser, outpos, '\0');
+            parser->token_cur = outpos;
             break;
         }
 
         if (!handled_char) {
-            outpos[0] = pos[0];
-            outpos ++;
+            outpos = flecs_tokenizer_write(parser, outpos, pos[0]);
             pos ++;
         }
     } while (true);
@@ -648,12 +661,16 @@ const char* flecs_script_char(
         return NULL;
     }
 
-    ecs_os_memcpy(parser->token_cur, pos + 1, len);
-    parser->token_cur[len] = '\0';
+    char *outpos = parser->token_cur;
+    int32_t i;
+    for (i = 0; i < len; i ++) {
+        outpos = flecs_tokenizer_write(parser, outpos, pos[i + 1]);
+    }
+    outpos = flecs_tokenizer_write(parser, outpos, '\0');
 
     out->kind = EcsTokChar;
     out->value = parser->token_cur;
-    parser->token_cur += len + 1;
+    parser->token_cur = outpos;
     return end + 2;
 }
 
@@ -672,12 +689,16 @@ const char* flecs_script_string(
     end --;
 
     int32_t len = flecs_ito(int32_t, end - pos);
-    ecs_os_memcpy(parser->token_cur, pos + 1, len);
-    parser->token_cur[len] = '\0';
+    char *outpos = parser->token_cur;
+    int32_t i;
+    for (i = 0; i < len; i ++) {
+        outpos = flecs_tokenizer_write(parser, outpos, pos[i + 1]);
+    }
+    outpos = flecs_tokenizer_write(parser, outpos, '\0');
 
     out->kind = EcsTokString;
     out->value = parser->token_cur;
-    parser->token_cur += len + 1;
+    parser->token_cur = outpos;
     return end + 2;
 }
 
@@ -705,12 +726,16 @@ const char* flecs_script_multiline_string(
     end --;
 
     int32_t len = flecs_ito(int32_t, end - pos);
-    ecs_os_memcpy(parser->token_cur, pos + 1, len);
-    parser->token_cur[len] = '\0';
+    char *outpos = parser->token_cur;
+    int32_t i;
+    for (i = 0; i < len; i ++) {
+        outpos = flecs_tokenizer_write(parser, outpos, pos[i + 1]);
+    }
+    outpos = flecs_tokenizer_write(parser, outpos, '\0');
 
     out->kind = EcsTokString;
     out->value = parser->token_cur;
-    parser->token_cur += len + 1;
+    parser->token_cur = outpos;
     return end + 2;
 }
 
@@ -749,17 +774,20 @@ const char* flecs_tokenizer_until(
     }
 
     int32_t len = flecs_ito(int32_t, pos - start);
-    ecs_os_memcpy(parser->token_cur, start, len);
     char *token_start = parser->token_cur;
+    char *outpos = token_start;
+    int32_t i;
+    for (i = 0; i < len; i ++) {
+        outpos = flecs_tokenizer_write(parser, outpos, start[i]);
+    }
     out->value = parser->token_cur;
-    parser->token_cur += len;
+    parser->token_cur = outpos;
 
     while (parser->token_cur != token_start && isspace(parser->token_cur[-1])) {
         parser->token_cur --;
     }
 
-    parser->token_cur[0] = '\0';
-    parser->token_cur ++;
+    parser->token_cur = flecs_tokenizer_write(parser, parser->token_cur, '\0');
 
     return pos;
 }

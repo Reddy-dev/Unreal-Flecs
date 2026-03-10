@@ -415,9 +415,13 @@ int flecs_script_eval_id(
         return 0;
     }
 
-    if (!id->first) {
-        flecs_script_eval_error(v, node, 
-            "invalid component/tag identifier");
+    if (!id->first || !id->first[0]) {
+        flecs_script_eval_error(v, node, "invalid component identifier");
+        return -1;
+    }
+
+    if (id->second && !id->second[0]) {
+        flecs_script_eval_error(v, node, "invalid pair identifier");
         return -1;
     }
 
@@ -1790,8 +1794,6 @@ int ecs_script_eval(
     flecs_script_eval_visit_init(impl, &v, &priv_desc);
     int r = ecs_script_visit(impl, &v, flecs_script_eval_node);
     flecs_script_eval_visit_fini(&v, &priv_desc);
-
-    // printf("%s\n", ecs_script_ast_to_str(script, true));
 
     if (result) {
         result->error = ecs_log_stop_capture();

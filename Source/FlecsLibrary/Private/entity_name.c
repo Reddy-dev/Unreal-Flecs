@@ -198,26 +198,28 @@ const char* flecs_path_elem(
     ecs_size_t size = size_out ? *size_out : 0;
 
     for (ptr = path; (ch = *ptr); ptr ++) {
+        bool escaped = false;
         if (ch == '<') {
             template_nesting ++;
         } else if (ch == '>') {
             template_nesting --;
         } else if (ch == '\\') {
             ptr ++;
-            if (buffer) {
-                buffer[pos] = ptr[0];
+            ch = ptr[0];
+            if (!ch) {
+                break;
             }
-            pos ++;
-            continue;
+            escaped = true;
         }
 
         ecs_check(template_nesting >= 0, ECS_INVALID_PARAMETER, "%s", path);
 
-        if (!template_nesting && flecs_is_sep(&ptr, sep)) {
+        if (!escaped && !template_nesting && flecs_is_sep(&ptr, sep)) {
             break;
         }
 
         if (buffer) {
+            ecs_assert(size > 0, ECS_INTERNAL_ERROR, NULL);
             if (pos >= (size - 1)) {
                 if (size == ECS_NAME_BUFFER_LENGTH) { /* stack buffer */
                     char *new_buffer = ecs_os_malloc(size * 2 + 1);
@@ -880,9 +882,6 @@ void flecs_add_path(
     if (parent) {
         ecs_add_pair(world, entity, EcsChildOf, parent);
     }
-
-    ecs_assert(name[0] != '#', ECS_INVALID_PARAMETER, 
-        "path should not contain identifier with #");
 
     ecs_set_name(world, entity, name);
 
