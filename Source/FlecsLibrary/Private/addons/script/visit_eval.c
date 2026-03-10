@@ -415,9 +415,13 @@ int flecs_script_eval_id(
         return 0;
     }
 
-    if (!id->first) {
-        flecs_script_eval_error(v, node, 
-            "invalid component/tag identifier");
+    if (!id->first || !id->first[0]) {
+        flecs_script_eval_error(v, node, "invalid component identifier");
+        return -1;
+    }
+
+    if (id->second && !id->second[0]) {
+        flecs_script_eval_error(v, node, "invalid pair identifier");
         return -1;
     }
 
@@ -980,23 +984,26 @@ int flecs_script_eval_component(
             return -1;
         }
 
+        bool needs_set = ti->hooks.on_replace != NULL;
         ecs_record_t *r = flecs_entities_get(v->world, src);
         ecs_assert(r != NULL, ECS_INTERNAL_ERROR, NULL);
         ecs_table_t *table = r->table;
  
         ecs_value_t value = {
-            .ptr = ecs_ensure_id(v->world, src, node->id.eval, 
-                flecs_ito(size_t, ti->size)),
+            .ptr = needs_set 
+                ? ecs_os_alloca(ti->size) 
+                : ecs_ensure_id(v->world, src, node->id.eval, 
+                    flecs_ito(size_t, ti->size)),
             .type = ti->component
         };
 
         /* Assign entire value, including members not set by expression. This 
          * prevents uninitialized or unexpected values. */
-        if (r->table != table) {
+        if (needs_set || (r->table != table)) {
             if (!ti->hooks.ctor) {
                 ecs_os_memset(value.ptr, 0, ti->size);
             } else {
-                if (ti->hooks.dtor) {
+                if (!needs_set && ti->hooks.dtor) {
                     flecs_type_info_dtor(value.ptr, 1, ti);
                 }
                 flecs_type_info_ctor(value.ptr, 1, ti);
@@ -1007,7 +1014,12 @@ int flecs_script_eval_component(
             return -1;
         }
 
-        ecs_modified_id(v->world, src, node->id.eval);
+        if (needs_set) {
+            ecs_set_id(v->world, src, node->id.eval, 
+                flecs_itosize(ti->size), value.ptr);
+        } else {
+            ecs_modified_id(v->world, src, node->id.eval);
+        }
     } else {
         ecs_add_id(v->world, src, node->id.eval);
     }
@@ -1782,8 +1794,6 @@ int ecs_script_eval(
     flecs_script_eval_visit_init(impl, &v, &priv_desc);
     int r = ecs_script_visit(impl, &v, flecs_script_eval_node);
     flecs_script_eval_visit_fini(&v, &priv_desc);
-
-    // printf("%s\n", ecs_script_ast_to_str(script, true));
 
     if (result) {
         result->error = ecs_log_stop_capture();

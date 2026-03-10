@@ -2,7 +2,7 @@
 
 #include "flecs/Unreal/FlecsTypeRegisteredDelegate.h"
 
-FFlecsTypeRegisteredDelegate& FlecsLibrary::GetTypeRegisteredDelegate()
+FFlecsTypeRegisteredDelegate& UE::FlecsLibrary::GetTypeRegisteredDelegate()
 {
 	static FFlecsTypeRegisteredDelegate Delegate;
 	return Delegate;

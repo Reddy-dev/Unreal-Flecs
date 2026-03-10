@@ -28,52 +28,39 @@ namespace flecs {
 
 namespace _ {
 
-// Trick to obtain typename from type, as described here
-// https://blog.molecular-matters.com/2015/12/11/getting-the-type-of-a-template-argument-as-string-without-rtti/
-//
-// The code from the link has been modified to work with more types, and across
-// multiple compilers. The resulting string should be the same on all platforms
-// for all compilers.
-//
-
-// Translate a typename into a language-agnostic identifier. This allows for
-// registration of components/modules across language boundaries.
 template <typename T>
-inline const char* symbol_name() {
-    static constexpr size_t len = ECS_FUNC_TYPE_LEN(const char*, symbol_name, ECS_FUNC_NAME);
-    static char result[len + 1] = {};
-    static const char* cppSymbolName = ecs_cpp_get_symbol_name(result, type_name<T>(), len);
-    return cppSymbolName;
+inline const char* component_symbol_name() {
+    return nullptr;
 }
 
-template <> inline const char* symbol_name<uint8_t>() {
+template <> inline const char* component_symbol_name<uint8_t>() {
     return "u8";
 }
-template <> inline const char* symbol_name<uint16_t>() {
+template <> inline const char* component_symbol_name<uint16_t>() {
     return "u16";
 }
-template <> inline const char* symbol_name<uint32_t>() {
+template <> inline const char* component_symbol_name<uint32_t>() {
     return "u32";
 }
-template <> inline const char* symbol_name<uint64_t>() {
+template <> inline const char* component_symbol_name<uint64_t>() {
     return "u64";
 }
-template <> inline const char* symbol_name<int8_t>() {
+template <> inline const char* component_symbol_name<int8_t>() {
     return "i8";
 }
-template <> inline const char* symbol_name<int16_t>() {
+template <> inline const char* component_symbol_name<int16_t>() {
     return "i16";
 }
-template <> inline const char* symbol_name<int32_t>() {
+template <> inline const char* component_symbol_name<int32_t>() {
     return "i32";
 }
-template <> inline const char* symbol_name<int64_t>() {
+template <> inline const char* component_symbol_name<int64_t>() {
     return "i64";
 }
-template <> inline const char* symbol_name<float>() {
+template <> inline const char* component_symbol_name<float>() {
     return "f32";
 }
-template <> inline const char* symbol_name<double>() {
+template <> inline const char* component_symbol_name<double>() {
     return "f64";
 }
 
@@ -110,6 +97,26 @@ void register_lifecycle_actions(
             ecs_add_id(world, component, flecs::Sparse);
         }
     }
+}
+
+template <typename T>
+inline ecs_cpp_type_action_t lifecycle_action() {
+    if constexpr (std::is_trivial<T>::value) {
+        return nullptr;
+    } else {
+        return &register_lifecycle_actions<T>;
+    }
+}
+    
+template <typename T>
+inline ecs_cpp_type_action_t enum_action() {
+    #if FLECS_CPP_ENUM_REFLECTION_SUPPORT
+    if constexpr (is_enum_v<T>) {
+        return &_::init_enum<T>;
+            
+    }
+    #endif
+    return nullptr;
 }
 
 struct FLECS_API type_impl_data {
@@ -166,6 +173,130 @@ FLECSLIBRARY_API extern robin_hood::unordered_map<std::string, type_impl_data> g
         }
         return nullptr;
     }
+    
+template <typename T>
+void register_script_struct_component(
+    ecs_world_t *world,
+    ecs_entity_t component)
+{
+    if constexpr (Solid::IsScriptStruct<T>() && !std::is_same_v<T, FFlecsScriptStructComponent>)
+    {
+        flecs::world P_world(world);
+        UScriptStruct* scriptStruct = TBaseStructure<T>::Get();
+        ecs_assert(scriptStruct != nullptr, ECS_INTERNAL_ERROR, 
+                   "script struct is null");
+
+        flecs::entity entity_id = flecs::entity(world, component);
+                
+        static_cast<FFlecsTypeMapComponent*>(P_world.get_binding_ctx())
+            ->ScriptStructMap.emplace(scriptStruct, entity_id);
+                
+        entity_id.set<FFlecsScriptStructComponent>({ scriptStruct });
+    }
+    
+    UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(component);
+}
+    
+template <typename T>
+void register_script_class_component(
+    ecs_world_t *world,
+    ecs_entity_t component)
+{
+    if constexpr (Solid::IsStaticClass<T>() && !std::is_same_v<T, FFlecsScriptClassComponent>)
+    {
+        flecs::world P_world(world);
+        UClass* scriptClass = StaticClass<T>();
+        ecs_assert(scriptClass != nullptr, ECS_INTERNAL_ERROR, 
+                   "script class is null");
+
+        flecs::entity entity_id = flecs::entity(world, component);
+                
+        static_cast<FFlecsTypeMapComponent*>(P_world.get_binding_ctx())
+            ->ScriptClassMap.emplace(scriptClass, entity_id);
+                
+        entity_id.set<FFlecsScriptClassComponent>({ scriptClass });
+    }
+    
+    UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(component);
+}
+    
+template <Solid::TStaticEnumConcept T>
+void register_enum_component(
+    ecs_world_t *world,
+    ecs_entity_t component)
+{
+#if FLECS_CPP_ENUM_REFLECTION_SUPPORT
+    flecs::world P_world(world);
+    UEnum* scriptEnum = StaticEnum<T>();
+    ecs_assert(scriptEnum != nullptr, ECS_INTERNAL_ERROR, 
+               "script enum is null");
+    
+    flecs::entity entity_id = flecs::entity(world, component);
+    static_cast<FFlecsTypeMapComponent*>(P_world.get_binding_ctx())
+        ->ScriptEnumMap.emplace(scriptEnum, entity_id);
+    
+    entity_id.set<FFlecsScriptEnumComponent>({ scriptEnum });
+#endif   
+        
+        auto* td = get_type_data_if_any<T>();
+        ecs_assert(td != nullptr, ECS_INTERNAL_ERROR, 
+            "type data not found for %s", _::type_name<T>());
+            
+        #if !WITH_EDITOR
+        UE_ASSUME(td != nullptr);
+        #endif // !WITH_EDITOR
+            
+        td->s_enum_registered = true;
+    
+    UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(component);
+}
+    
+    template <typename T>
+    inline void generic_component_post_register_action(
+        ecs_world_t *world,
+        ecs_entity_t component)
+    {
+#if FLECS_CPP_ENUM_REFLECTION_SUPPORT
+        if constexpr (std::is_enum<T>::value) {
+            auto* td = get_type_data_if_any<T>();
+            ecs_assert(td != nullptr, ECS_INTERNAL_ERROR, 
+                "type data not found for %s", _::type_name<T>());
+            
+#if !WITH_EDITOR
+            UE_ASSUME(td != nullptr);
+#endif // !WITH_EDITOR
+            
+            td->s_enum_registered = true;
+        }
+        
+#endif // FLECS_CPP_ENUM_REFLECTION_SUPPORT
+        
+        UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(component);
+    }
+    
+    template <typename T>
+    inline ecs_cpp_type_action_t post_register_action() {
+        return &generic_component_post_register_action<T>;
+    }
+    
+    template <Solid::TScriptStructConcept T>
+    inline ecs_cpp_type_action_t post_register_action() {
+        return &register_script_struct_component<T>;
+    }
+    
+    template <Solid::TStaticClassConcept T>
+    inline ecs_cpp_type_action_t post_register_action() {
+        return &register_script_class_component<T>;
+    }
+    
+    template <Solid::TStaticEnumConcept T>
+    inline ecs_cpp_type_action_t post_register_action() {
+        #if FLECS_CPP_ENUM_REFLECTION_SUPPORT
+        return &register_enum_component<T>;
+        #else
+        return &generic_component_post_register_action<T>;
+        #endif
+    }
 
 template <typename T>
 struct type_impl {
@@ -180,6 +311,11 @@ struct type_impl {
         type_impl_data* td = get_type_data_if_any<T>();
         ecs_assert(td != nullptr, ECS_INTERNAL_ERROR, 
             "type data not found for %s", _::type_name<T>());
+        
+#if !WITH_EDITOR
+        UE_ASSUME(td != nullptr);
+#endif
+        
         s_set_values = td->s_set_values;
         s_index = td->s_index;
         s_size = td->s_size;
@@ -215,8 +351,6 @@ struct type_impl {
         bool explicit_registration = false,
         flecs::id_t id = 0) 
     {
-        ecs_os_perf_trace_push("flecs.type_impl.register_id");
-        
         auto& td = get_or_create_type_data<T>(allow_tag);
         s_set_values = td.s_set_values;
         s_index = td.s_index;
@@ -225,84 +359,25 @@ struct type_impl {
         s_allow_tag = td.s_allow_tag;
         s_enum_registered = td.s_enum_registered;
         
-        bool registered = false, existing = false;
+        ecs_cpp_component_desc_t desc = {
+            id,
+            s_index,
+            name,
+            type_name<T>(),
+            component_symbol_name<T>(),
+            s_size,
+            s_alignment,
+            lifecycle_action<T>(),
+            enum_action<T>(),
+            post_register_action<T>(),
+            is_component,
+            explicit_registration
+        };
 
-        flecs::entity_t c = ecs_cpp_component_register(
-            world, id, s_index, name, type_name<T>(), 
-            symbol_name<T>(), s_size, s_alignment,
-            is_component, explicit_registration, &registered, &existing);
+        flecs::entity_t c = ecs_cpp_component_register(world, &desc);
         
         ecs_assert(c != 0, ECS_INTERNAL_ERROR, NULL);
-
-        if (registered) {
-            // Register lifecycle callbacks, but only if the component has a
-            // size. Components that don't have a size are tags, and tags don't
-            // require construction/destruction/copy/move's.
-            if (size() && !existing) {
-                register_lifecycle_actions<T>(world, c);
-            }
-
-            if constexpr (Solid::IsScriptStruct<T>() && !std::is_same_v<T, FFlecsScriptStructComponent>)
-            {
-                flecs::world P_world(world);
-                UScriptStruct* scriptStruct = TBaseStructure<T>::Get();
-                ecs_assert(scriptStruct != nullptr, ECS_INTERNAL_ERROR, 
-                           "script struct is null");
-
-                flecs::entity entity_id = flecs::entity(world, c);
-                
-                static_cast<FFlecsTypeMapComponent*>(P_world.get_binding_ctx())
-                    ->ScriptStructMap.emplace(scriptStruct, entity_id);
-                
-                entity_id.set<FFlecsScriptStructComponent>({ scriptStruct });
-            }
-
-            if constexpr (Solid::IsStaticClass<T>())
-            {
-                flecs::world P_world(world);
-                UClass* scriptClass = StaticClass<T>();
-                
-                ecs_assert(scriptClass != nullptr, ECS_INTERNAL_ERROR, 
-                           "script class is null");
-
-                flecs::entity entity_id = flecs::entity(world, c);
-                
-                static_cast<FFlecsTypeMapComponent*>(P_world.get_binding_ctx())
-                    ->ScriptClassMap.emplace(scriptClass, entity_id);
-                
-                entity_id.set<FFlecsScriptClassComponent>({ scriptClass });
-            }
-
-            // If component is enum type, register constants. Make sure to do 
-            // this after setting the component id, because the enum code will
-            // be calling type<T>::id().
-            #if FLECS_CPP_ENUM_REFLECTION_SUPPORT
-            _::init_enum<T>(world, c);
-
-            td.s_enum_registered = true;
-            s_enum_registered = td.s_enum_registered;
-
-            if constexpr (Solid::IsStaticEnum<T>())
-            {
-                flecs::world P_world(world);
-                UEnum* scriptEnum = StaticEnum<T>();
-                ecs_assert(scriptEnum != nullptr, ECS_INTERNAL_ERROR, 
-                           "script enum is null");
-
-                flecs::entity entity_id = flecs::entity(world, c);
-                
-                static_cast<FFlecsTypeMapComponent*>(P_world.get_binding_ctx())
-                    ->ScriptEnumMap.emplace(scriptEnum, entity_id);
-                
-                entity_id.set<FFlecsScriptEnumComponent>({ scriptEnum });
-            }
-            
-            #endif
-
-            FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(c);
-        }
-
-        ecs_os_perf_trace_pop("flecs.type_impl.register_id");
+        
         return c;
     }
         
@@ -345,30 +420,28 @@ struct type_impl {
         ecs_os_perf_trace_pop("flecs.type_impl.id");
         return c;
     }
-
-    // Return the size
+        
     static size_t size() {
         if (s_set_values) [[likely]] {
             return s_size;
         }
 
         auto* td = get_type_data_if_any<T>();
-        if (!td) {
+        if (!td) [[unlikely]] {
             return 0;
         }
 
         s_size = td->s_size;
         return s_size;
     }
-
-    // Return the alignment
+        
     static size_t alignment() {
         if (s_set_values) [[likely]] {
             return s_alignment;
         }
 
         auto* td = get_type_data_if_any<T>();
-        if (!td) {
+        if (!td) [[unlikely]] {
             return 0;
         }
 
@@ -382,15 +455,14 @@ struct type_impl {
         }
         
         auto* td = get_type_data_if_any<T>();
-        if (!td) {
+        if (!td) [[unlikely]] {
             return -1;
         }
         
         s_index = td->s_index;
         return s_index;
     }
-
-    // Check if T is registered in the provided world
+        
     static bool registered(flecs::world_t *world) {
         ecs_assert(world != nullptr, ECS_INVALID_PARAMETER, NULL);
 
@@ -544,9 +616,6 @@ untyped_component& on_equals(
  */
 template <typename T>
 struct component : untyped_component {
-        
-        
-    
     /** Register a component.
      * If the component was already registered, this operation will return a handle
      * to the existing component.

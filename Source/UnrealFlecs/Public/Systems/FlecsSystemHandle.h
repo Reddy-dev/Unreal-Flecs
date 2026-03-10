@@ -29,6 +29,16 @@ public:
 	{
 	}
 	
+	FORCEINLINE void SetContext(void* InContext) const
+	{
+		GetSystem().ctx(InContext);
+	}
+	
+	NO_DISCARD FORCEINLINE void* GetContext() const
+	{
+		return GetSystem().ctx();
+	}
+	
 	FORCEINLINE NO_DISCARD FFlecsQuery GetQuery() const
 	{
 		return GetSystem().query();
@@ -38,10 +48,28 @@ public:
 	{
 		return GetSystem().run(InDeltaTime, InParams);
 	}
+	
+	flecs::system_runner_fluent RunWorker(const int32 StageCurrent, const int32 StageCount, const double InDeltaTime = 0.0, void* InParams = nullptr) const
+	{
+		return GetSystem().run_worker(StageCurrent, StageCount, InDeltaTime, InParams);
+	}
 
 	NO_DISCARD FORCEINLINE flecs::system GetSystem() const
 	{
 		return flecs::system(GetNativeFlecsWorld(), GetFlecsId());
+	}
+	
+	FORCEINLINE const FFlecsSystemHandle& SetGroup(const uint64 InGroupId) const
+	{
+		GetSystem().set_group(InGroupId);
+		return *this;
+	}
+	
+	template <typename T>
+	FORCEINLINE const FFlecsSystemHandle& SetGroup() const
+	{
+		GetSystem().set_group<T>();
+		return *this;
 	}
 	
 }; // struct FFlecsSystemHandle

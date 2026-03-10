@@ -162,6 +162,7 @@ void flecs_script_template_instantiate(
     ecs_vec_t prev_using = v.r->using;
     ecs_vec_t prev_with = desc.runtime->with;
     ecs_vec_t prev_with_type_info = desc.runtime->with_type_info;
+
     v.r->using = template->using_;
     v.template_entity = template_entity;
     ecs_vec_init_t(NULL, &desc.runtime->with, ecs_value_t, 0);

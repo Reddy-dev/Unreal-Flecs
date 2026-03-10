@@ -675,6 +675,7 @@
                 "register_twice_w_run",
                 "register_twice_w_run_each",
                 "register_twice_w_each_run",
+                "set_group",
                 "run_w_0_src_query"
             ]
         }, {
@@ -945,6 +946,7 @@
                 "world_each_filter_2_components",
                 "world_each_filter_1_component_no_entity",
                 "world_each_filter_2_components_no_entity",
+                "world_each_entity",
                 "10_terms",
                 "16_terms",
                 "32_terms",
@@ -1073,6 +1075,12 @@
                 "16_terms",
                 "name_arg",
                 "create_w_no_template_args",
+                "deduce_terms_from_each_callback",
+                "deduce_optional_terms_from_each_callback",
+                "deduce_pair_term_from_each_callback",
+                "deduce_singleton_term_from_each_callback",
+                "deduce_singleton_and_component_terms_from_each_callback",
+                "with_terms_after_deduced_terms",
                 "write_annotation",
                 "name_from_root"
             ]
