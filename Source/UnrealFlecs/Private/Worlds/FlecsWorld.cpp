@@ -541,7 +541,7 @@ void UFlecsWorld::RegisterUnrealTypes() const
 
 void UFlecsWorld::InitializeComponentPropertyObserver()
 {
-	ComponentRegisteredDelegateHandle = FlecsLibrary::GetTypeRegisteredDelegate().AddWeakLambda(this,
+	ComponentRegisteredDelegateHandle = UE::FlecsLibrary::GetTypeRegisteredDelegate().AddWeakLambda(this,
 		[this](const flecs::id_t InEntityId)
 	{
 		static const FString USTRUCTAliasPrefix = TEXT("UScriptStruct_");
@@ -606,8 +606,6 @@ void UFlecsWorld::InitializeComponentPropertyObserver()
 			
 			EntityHandle.SetAlias(StringCast<char>(*ScriptEnumAlias).Get());
 		}
-			
-			
 	});
 
 }
@@ -1727,7 +1725,7 @@ FFlecsEntityHandle UFlecsWorld::RegisterScriptStruct(const UScriptStruct* Script
 				RegisterMemberProperties(ScriptStruct, ScriptStructComponent);
 			}
 			
-			FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(ScriptStructComponent);
+			UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(ScriptStructComponent);
 		});
 
 		SetScope(OldScope);
@@ -1842,7 +1840,7 @@ FFlecsEntityHandle UFlecsWorld::RegisterComponentEnumType(TSolidNotNull<const UE
 			
 			ScriptEnumComponent.Set<FFlecsScriptEnumComponent>(FFlecsScriptEnumComponent(ScriptEnum));
 			
-			FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(ScriptEnumComponent);
+			UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(ScriptEnumComponent);
 		});
 
 		SetScope(OldScope);

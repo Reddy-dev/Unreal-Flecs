@@ -82,6 +82,7 @@ typedef struct ecs_cpp_component_desc_t {
     size_t alignment;
     ecs_cpp_type_action_t lifecycle_action;
     ecs_cpp_type_action_t enum_action;
+    ecs_cpp_type_action_t post_register_action;
     bool is_component;
     bool explicit_registration;
 } ecs_cpp_component_desc_t;

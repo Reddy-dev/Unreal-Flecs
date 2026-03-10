@@ -1546,7 +1546,7 @@ uint32_t flecs_get_table_column_version(
     return world->table_column_version[table_id & ECS_TABLE_VERSION_ARRAY_BITMASK];
 }
 
-static int32_t flecs_component_ids_last_index = 0;
+int32_t flecs_component_ids_last_index = 0;
 
 int32_t flecs_component_ids_index_get(void) {
     if (ecs_os_api.ainc_) {

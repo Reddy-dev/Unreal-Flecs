@@ -452,6 +452,11 @@ ecs_entity_t ecs_cpp_component_register(
     if (desc->enum_action) {
        desc->enum_action(world, c);
     }
+    
+    // Added by Elie
+    if (desc->post_register_action && !existing) {
+        desc->post_register_action(world, c);
+    }
 
     return c;
 }

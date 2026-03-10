@@ -310,6 +310,9 @@ int32_t flecs_poly_release_(
 FLECS_API
 int32_t flecs_poly_refcount(
     ecs_poly_t *poly);
+    
+extern FLECS_API int32_t flecs_component_ids_last_index;
+
 
 /** Get unused index for static world local component id array. 
  * This operation returns an unused index for the world-local component id 
