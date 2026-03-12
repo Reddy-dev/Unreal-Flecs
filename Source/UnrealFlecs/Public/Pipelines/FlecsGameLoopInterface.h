@@ -3,10 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Interfaces/FlecsEntityInterface.h"
 
 #include "Types/SolidNotNull.h"
-
-#include "Modules/FlecsModuleInterface.h"
 
 #include "FlecsGameLoopInterface.generated.h"
 
@@ -14,12 +13,12 @@ class UFlecsWorld;
 
 // This class does not need to be modified.
 UINTERFACE(meta = (CannotImplementInterfaceInBlueprint))
-class UNREALFLECS_API UFlecsGameLoopInterface : public UFlecsModuleInterface
+class UNREALFLECS_API UFlecsGameLoopInterface : public UFlecsEntityInterface
 {
 	GENERATED_BODY()
 }; // class UFlecsGameLoopInterface
 
-class UNREALFLECS_API IFlecsGameLoopInterface : public IFlecsModuleInterface
+class UNREALFLECS_API IFlecsGameLoopInterface : public IFlecsEntityInterface
 {
 	GENERATED_BODY()
 

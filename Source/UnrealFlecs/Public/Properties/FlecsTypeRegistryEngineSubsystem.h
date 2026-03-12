@@ -15,6 +15,26 @@
 
 class UFlecsWorld;
 
+USTRUCT()
+struct UNREALFLECS_API FFlecsRegisteredComponentEntry
+{
+	GENERATED_BODY()
+	
+	friend uint32 GetTypeHash(const FFlecsRegisteredComponentEntry& InEntry)
+	{
+		return GetTypeHash(InEntry.ComponentDefinition.Name);
+	}
+	
+public:
+	FORCEINLINE FFlecsRegisteredComponentEntry() = default;
+	
+	
+	
+	UPROPERTY()
+	FFlecsComponentPropertiesDefinition ComponentDefinition; 
+	
+}; // struct FFlecsRegisteredComponentEntry
+
 UCLASS()
 class UNREALFLECS_API UFlecsTypeRegistryEngineSubsystem : public UEngineSubsystem
 {
