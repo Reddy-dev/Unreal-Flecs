@@ -34,8 +34,8 @@ static
 void flecs_from_json_ctx_fini(
     ecs_from_json_ctx_t *ctx)
 {
-    ecs_vec_fini_t(ctx->a, &ctx->table_type, ecs_record_t*);
-    ecs_vec_fini_t(ctx->a, &ctx->remove_ids, ecs_record_t*);
+    ecs_vec_fini_t(ctx->a, &ctx->table_type, ecs_id_t);
+    ecs_vec_fini_t(ctx->a, &ctx->remove_ids, ecs_id_t);
     ecs_map_fini(&ctx->anonymous_ids);
     ecs_map_fini(&ctx->missing_reflection);
 }
@@ -224,7 +224,7 @@ const char* flecs_json_deser_tags(
     } while (true);
 
     if (token_kind != JsonArrayClose) {
-        ecs_parser_error(NULL, expr, json - expr, "expected }");
+        ecs_parser_error(NULL, expr, json - expr, "expected ]");
         goto error;
     }
 

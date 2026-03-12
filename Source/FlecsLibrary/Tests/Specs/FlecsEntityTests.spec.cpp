@@ -1022,6 +1022,24 @@ void Entity_get_mut_r_T(void) {
 	test_int(p->y, 20);
 }
 
+void Entity_get_mut_pair_second_type(void) {
+	flecs::world world;
+	world.component<Position>();
+	world.component<Tag>();
+
+	flecs::entity e = world.entity();
+	e.set_second<Tag, Position>({10, 20});
+
+	Position& p = e.get_mut_second<Tag, Position>();
+	p.x += 5;
+	p.y += 7;
+
+	const Position *ptr = e.try_get_second<Tag, Position>();
+	test_assert(ptr != nullptr);
+	test_int(ptr->x, 15);
+	test_int(ptr->y, 27);
+}
+
 void Entity_try_get_mut_w_id(void) {
     flecs::world world;
 	world.component<Position>();
@@ -1148,6 +1166,30 @@ void Entity_try_get_mut_R_T(void) {
     test_int(p->y, 20);
 }
 
+void Entity_try_get_mut_enum_constant(void) {
+	flecs::world world;
+	world.component<Position>();
+	world.component<Number>();
+
+	flecs::entity e = world.entity();
+
+	Position *p = e.try_get_mut<Position>(One);
+	test_assert(p == nullptr);
+
+	e.set<Position>(One, {10, 20});
+
+	p = e.try_get_mut<Position>(One);
+	test_assert(p != nullptr);
+
+	p->x += 1;
+	p->y += 2;
+
+	const Position *ptr = e.try_get<Position>(One);
+	test_assert(ptr != nullptr);
+	test_int(ptr->x, 11);
+	test_int(ptr->y, 22);
+}
+
 void Entity_try_get_mut_r_T(void) {
     flecs::world world;
 	world.component<Position>();
@@ -1165,6 +1207,30 @@ void Entity_try_get_mut_r_T(void) {
 
     test_int(p->x, 10);
     test_int(p->y, 20);
+}
+
+void Entity_try_get_mut_pair_second_type(void) {
+	flecs::world world;
+	world.component<Position>();
+	world.component<Tag>();
+
+	flecs::entity e = world.entity();
+
+	Position *p = e.try_get_mut_second<Tag, Position>();
+	test_assert(p == nullptr);
+
+	e.set_second<Tag, Position>({10, 20});
+
+	p = e.try_get_mut_second<Tag, Position>();
+	test_assert(p != nullptr);
+
+	p->x += 1;
+	p->y += 2;
+
+	const Position *ptr = e.try_get_second<Tag, Position>();
+	test_assert(ptr != nullptr);
+	test_int(ptr->x, 11);
+	test_int(ptr->y, 22);
 }
 
 void Entity_set_generic(void) {
@@ -7099,13 +7165,16 @@ END_DEFINE_SPEC(FFlecsEntityTestsSpec);
                 "get_mut_R_t",
                 "get_mut_R_T",
                 "get_mut_r_T",
+				"get_mut_pair_second_type",
                 "try_get_mut_w_id",
                 "try_get_mut_T",
                 "try_get_mut_n_T",
                 "try_get_mut_r_t",
                 "try_get_mut_R_t",
                 "try_get_mut_R_T",
+				"try_get_mut_enum_constant",
                 "try_get_mut_r_T",
+				"try_get_mut_pair_second_type",
                 "set_generic",
                 "set_generic_w_id",
                 "set_generic_w_id_t",
@@ -7480,13 +7549,16 @@ void FFlecsEntityTestsSpec::Define()
 	It("Entity_get_mut_R_type_t_entity", [&]() { Entity_get_mut_R_t(); });
 	It("Entity_get_mut_R_type_T_type", [&]() { Entity_get_mut_R_T(); });
 	It("Entity_get_mut_r_entity_T_type", [&]() { Entity_get_mut_r_T(); });
+	It("Entity_get_mut_pair_second_type", [&]() { Entity_get_mut_pair_second_type(); });
 	It("Entity_try_get_mut_w_id", [&]() { Entity_try_get_mut_w_id(); });
 	It("Entity_try_get_mut_T_type", [&]() { Entity_try_get_mut_T(); });
 	It("Entity_try_get_mut_n_T_type", [&]() { Entity_try_get_mut_n_T(); });
 	It("Entity_try_get_mut_r_entity_t_entity", [&]() { Entity_try_get_mut_r_t(); });
 	It("Entity_try_get_mut_R_type_t_entity", [&]() { Entity_try_get_mut_R_t(); });
 	It("Entity_try_get_mut_R_type_T_type", [&]() { Entity_try_get_mut_R_T(); });
+	It("Entity_try_get_mut_enum_constant", [&]() { Entity_try_get_mut_enum_constant(); });
 	It("Entity_try_get_mut_r_entity_T_type", [&]() { Entity_try_get_mut_r_T(); });
+	It("Entity_try_get_mut_pair_second_type", [&]() { Entity_try_get_mut_pair_second_type(); });
 	It("Entity_set_generic", [&]() { Entity_set_generic(); });
 	It("Entity_set_generic_w_id", [&]() { Entity_set_generic_w_id(); });
 	It("Entity_set_generic_w_id_t", [&]() { Entity_set_generic_w_id_t(); });
