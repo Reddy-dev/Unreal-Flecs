@@ -17,9 +17,9 @@
 #include "Concepts/SolidConcepts.h"
 
 #include "FlecsScopedDeferWindow.h"
+#include "Entities/FlecsComponentHandle.h"
 #include "Entities/FlecsId.h"
-#include "Modules/FlecsDependenciesComponent.h"
-#include "Properties/FlecsComponentProperties.h"
+#include "Modules/FlecsDependencyFunctionDefinition.h"
 #include "Queries/FlecsQuery.h"
 #include "Queries/FlecsQueryBuilder.h"
 #include "Observers/FlecsObserverBuilder.h"
@@ -42,23 +42,6 @@ class UFlecsWorldSubsystem;
 class UFlecsModuleInterface;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FFlecsWorldModuleImportedDelegate, const FFlecsEntityHandle& /*InModuleEntity*/);
-
-/**
- * @brief Component type that represents if the World has begun play.
- * Can be found in the World entity.
- */
-USTRUCT(BlueprintType)
-struct UNREALFLECS_API FFlecsBeginPlaySingletonComponent
-{
-	GENERATED_BODY()
-}; // struct FFlecsBeginPlaySingletonComponent
-
-REGISTER_FLECS_COMPONENT(FFlecsBeginPlaySingletonComponent,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponent)
-	{
-		InComponent
-			.Add(flecs::Singleton);
-	});
 
 UCLASS(BlueprintType, NotBlueprintable)
 class UNREALFLECS_API UFlecsWorld : public UObject
@@ -126,7 +109,7 @@ public:
 	 * @param InModuleObject The module object
 	 * @param InFunction The function to call when/if the dependency is imported
 	 */
-	template <Solid::TStaticClassConcept TModule>
+	/*template <Solid::TStaticClassConcept TModule>
 	void RegisterModuleDependency(const TSolidNotNull<const UObject*> InModuleObject,
 		const FFlecsDependencyFunctionDefinition::FDependencyFunctionType& InFunction)
 	{
@@ -138,7 +121,7 @@ public:
 				{
 					std::invoke(InFunction, CastChecked<TModule>(InDependencyObject), InWorld, InDependencyEntity);
 				});
-	}
+	}*/
 
 	/**
 	 * @brief Asynchronously Register a module dependency,
@@ -1195,6 +1178,8 @@ public:
 
 private:
 	void CallUnregisterOnRegisteredObjects();
+	
+	
 	
 	/**
 	 * @brief Get this world as a non-const pointer

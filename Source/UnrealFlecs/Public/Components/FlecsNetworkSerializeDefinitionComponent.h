@@ -21,4 +21,10 @@ public:
 	
 }; // struct FFlecsNetworkSerializeDefinitionComponent
 
+template <>
+struct TFlecsComponentTraits<FFlecsNetworkSerializeDefinitionComponent> : public TFlecsComponentTraitsBase<FFlecsNetworkSerializeDefinitionComponent>
+{
+	static constexpr bool Sparse = true;
+}; // struct TFlecsNetworkSerializeDefinitionComponent
+
 REGISTER_FLECS_COMPONENT(FFlecsNetworkSerializeDefinitionComponent);

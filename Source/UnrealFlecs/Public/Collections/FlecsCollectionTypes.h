@@ -127,8 +127,16 @@ struct UNREALFLECS_API FFlecsCollectionPrefabTag
 	GENERATED_BODY()
 }; // struct FFlecsCollectionPrefabTag
 
+template <>
+struct TFlecsComponentTraits<FFlecsCollectionPrefabTag> : public TFlecsComponentTraitsBase<FFlecsCollectionPrefabTag>
+{
+	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::DontInherit;
+	
+	using WithTypes = TTuple<FFlecsCollectionPrefabTag>;
+};
+
 REGISTER_FLECS_COMPONENT(FFlecsCollectionPrefabTag,
-[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
+	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
 	{
 		InComponentHandle
 			.AddPair(flecs::OnInstantiate, flecs::DontInherit)

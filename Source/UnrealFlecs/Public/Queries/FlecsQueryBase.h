@@ -157,7 +157,7 @@ public:
 				QueryBase.destruct();
 			}
 			
-			QueryBase.query_ = nullptr;
+			QueryBase.~query_base();
 			return true;
 		}
 		

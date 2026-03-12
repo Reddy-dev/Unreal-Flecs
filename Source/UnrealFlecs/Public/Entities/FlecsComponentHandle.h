@@ -9,8 +9,6 @@
 
 #include "FlecsComponentHandle.generated.h"
 
-
-
 /**
  *	@struct FFlecsComponentHandle
  *

@@ -30,6 +30,7 @@
 #include "Entities/FlecsEntityRecord.h"
 
 #include "Components/FlecsAddReferencedObjectsTrait.h"
+#include "Components/FlecsBeginPlaySingletonComponent.h"
 #include "Components/FlecsNetworkSerializeDefinitionComponent.h"
 #include "Components/FlecsUObjectComponent.h"
 #include "Components/ObjectTypes/FFlecsActorComponentTag.h"
@@ -48,6 +49,8 @@
 #include "General/FlecsGameplayTagManagerEntity.h"
 #include "General/FlecsObjectRegistrationInterface.h"
 #include "General/FlecsObjectRegistrationProviderBase.h"
+
+#include "Properties/FlecsTypeRegistryEngineSubsystem.h"
 
 #include "Queries/FlecsQueryBuilder.h"
 #include "Queries/FlecsQueryBuilderView.h"
@@ -395,44 +398,11 @@ void UFlecsWorld::InitializeDefaultComponents() const
 
 	RegisterComponentType<FFlecsAddReferencedObjectsTrait>()
 		.Add(flecs::Trait);
-
-	RegisterComponentType<FFlecsBeginPlaySingletonComponent>();
-
-	RegisterComponentType<FFlecsUObjectComponent>();
-		
-	RegisterComponentType<FFlecsUObjectTag>();
-		
-	RegisterComponentType<FFlecsActorTag>()
-		.SetIsA<FFlecsUObjectTag>();
-		
-	RegisterComponentType<FFlecsActorComponentTag>()
-		.SetIsA<FFlecsUObjectTag>();
-		
-	RegisterComponentType<FFlecsModuleObjectTarget>()
-		.SetIsA<FFlecsUObjectTag>();
-		
-	RegisterComponentType<FFlecsSceneComponentTag>()
-		.SetIsA<FFlecsActorComponentTag>();
-
-	RegisterComponentType<FFlecsModuleComponent>();
-	RegisterComponentType<FFlecsSoftDependenciesComponent>();
-
-	RegisterComponentType<FFlecsEntityRecord>(); // for member registration
-	RegisterComponentType<FFlecsEntityRecordComponent>();
-
-	RegisterComponentType<FFlecsNetworkSerializeDefinitionComponent>()
-		.Add(flecs::Sparse);
-
-	RegisterComponentType<FFlecsGameLoopTag>();
-
-	RegisterComponentType<FFlecsTickFunction>();
-	RegisterComponentType<FFlecsTickFunctionComponent>();
-	RegisterComponentType<FFlecsTickTypeRelationship>();
-	RegisterComponentType<FFlecsTickFunctionPrerequisite>();
-
-	RegisterComponentType<FFlecsOutsideMainLoopTag>();
 	
-	RegisterComponentType<FFlecsSubEntityRecordNameComponent>();
+	const TSolidNotNull<UFlecsTypeRegistryEngineSubsystem*> FlecsTypeRegistry
+		= GEngine->GetEngineSubsystem<UFlecsTypeRegistryEngineSubsystem>();
+	
+	FlecsTypeRegistry->RegisterAllTypes(this);
 }
 
 void UFlecsWorld::InitializeFlecsRegistrationObjects()
@@ -556,15 +526,17 @@ void UFlecsWorld::InitializeComponentPropertyObserver()
 			
 		const FString StructSymbol = EntityHandle.GetSymbol();
 		solid_checkf(!StructSymbol.IsEmpty(),TEXT("Registered component has no symbol"));
+			
+		const TSolidNotNull<const UFlecsTypeRegistryEngineSubsystem*> FlecsTypeRegistry
+				= GEngine->GetEngineSubsystem<UFlecsTypeRegistryEngineSubsystem>();
 						
-		if (FFlecsComponentPropertiesRegistry::Get().ContainsComponentProperties(StructSymbol))
+		if (FlecsTypeRegistry->IsComponentPropertiesRegistered(EntityHandle))
 		{
 			FFlecsComponentHandle InUntypedComponent = EntityHandle.GetUntypedComponent_Unsafe();
 							
-			const FFlecsComponentProperties& Properties = FFlecsComponentPropertiesRegistry::Get()
-				.GetComponentProperties(StructSymbol);
+			const FFlecsComponentPropertiesDefinition* Properties = FlecsTypeRegistry->GetRegisteredComponentPropertiesForComponent(EntityHandle);
 
-			if (!Properties.RegistrationFunction)
+			if UNLIKELY_IF(!Properties->PropertiesFunction)
 			{
 				UE_LOGFMT(LogFlecsComponent, Log,
 					"Component properties {StructName} registration function is null",
@@ -572,7 +544,7 @@ void UFlecsWorld::InitializeComponentPropertyObserver()
 				return;
 			}
 
-			std::invoke(Properties.RegistrationFunction, World, InUntypedComponent);
+			std::invoke(Properties->PropertiesFunction, this, InUntypedComponent);
 
 			UE_LOGFMT(LogFlecsComponent, Log,
 				"Component properties {StructName} registered", StructSymbol);

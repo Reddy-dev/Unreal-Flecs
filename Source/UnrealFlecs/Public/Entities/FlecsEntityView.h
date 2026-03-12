@@ -209,14 +209,14 @@ public:
 		return Target.ToConstant(EnumType);
 	}
 
-	template <typename TFirst, typename TSecond, typename TActual = typename flecs::pair<TFirst, TSecond>::type>
+	template <typename TFirst, typename TSecond, typename TActual = flecs::pair<TFirst, TSecond>::type>
 	requires (std::is_same_v<TFirst, TActual>)
 	NO_DISCARD SOLID_INLINE const TActual& GetPairFirst() const
 	{
 		return GetEntityView().get<TFirst, TSecond>();
 	}
 
-	template <typename TFirst, typename TSecond, typename TActual = typename flecs::pair<TFirst, TSecond>::type>
+	template <typename TFirst, typename TSecond, typename TActual = flecs::pair<TFirst, TSecond>::type>
 	requires (std::is_same_v<TFirst, TActual>)
 	NO_DISCARD SOLID_INLINE TActual& GetPairFirstMut() const
 	{
@@ -235,14 +235,14 @@ public:
 		return GetEntityView().get_mut<TFirst>(FFlecsEntityView::GetInputId(*this, InSecond));
 	}
 
-	template <typename TFirst, typename TSecond, typename TActual = typename flecs::pair<TFirst, TSecond>::type>
+	template <typename TFirst, typename TSecond, typename TActual = flecs::pair<TFirst, TSecond>::type>
 	requires (std::is_same_v<TFirst, TActual>)
 	NO_DISCARD SOLID_INLINE const TActual* TryGetPairFirst() const
 	{
 		return GetEntityView().try_get<TFirst, TSecond>();
 	}
 
-	template <typename TFirst, typename TSecond, typename TActual = typename flecs::pair<TFirst, TSecond>::type>
+	template <typename TFirst, typename TSecond, typename TActual = flecs::pair<TFirst, TSecond>::type>
 	requires (std::is_same_v<TFirst, TActual>)
 	NO_DISCARD SOLID_INLINE TActual* TryGetPairFirstMut() const
 	{
@@ -277,14 +277,14 @@ public:
 			FFlecsEntityView::GetInputId(*this, InSecondTypeValue));
 	}
 	
-	template <typename TFirst, typename TSecond, typename TActual = typename flecs::pair<TFirst, TSecond>::type>
+	template <typename TFirst, typename TSecond, typename TActual = flecs::pair<TFirst, TSecond>::type>
 	requires (std::is_same_v<TSecond, TActual>)
 	NO_DISCARD SOLID_INLINE const TActual& GetPairSecond() const
 	{
 		return GetEntityView().get_second<TFirst, TSecond>();
 	}
 
-	template <typename TFirst, typename TSecond, typename TActual = typename flecs::pair<TFirst, TSecond>::type>
+	template <typename TFirst, typename TSecond, typename TActual = flecs::pair<TFirst, TSecond>::type>
 	requires (std::is_same_v<TSecond, TActual>)
 	NO_DISCARD SOLID_INLINE TActual& GetPairSecondMut() const
 	{
@@ -303,13 +303,13 @@ public:
 		return GetEntityView().get_mut_second<TSecond>(FFlecsEntityView::GetInputId(*this, InFirst));
 	}
 	
-	template <typename TFirst, typename TSecond, typename TActual = typename flecs::pair<TFirst, TSecond>::type>
+	template <typename TFirst, typename TSecond, typename TActual = flecs::pair<TFirst, TSecond>::type>
 	NO_DISCARD SOLID_INLINE const TActual* TryGetPairSecond() const
 	{
 		return GetEntityView().try_get_second<TFirst, TSecond>();
 	}
 
-	template <typename TFirst, typename TSecond, typename TActual = typename flecs::pair<TFirst, TSecond>::type>
+	template <typename TFirst, typename TSecond, typename TActual = flecs::pair<TFirst, TSecond>::type>
 	NO_DISCARD SOLID_INLINE TActual* TryGetPairSecondMut() const
 	{
 		return GetEntityView().try_get_mut_second<TFirst, TSecond>();

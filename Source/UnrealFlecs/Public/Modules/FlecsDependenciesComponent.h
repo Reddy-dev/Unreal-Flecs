@@ -2,39 +2,13 @@
 
 #pragma once
 
-#include <functional>
-
-#include "flecs.h"
-
 #include "CoreMinimal.h"
 
 #include "Entities/FlecsEntityHandle.h"
 #include "Properties/FlecsComponentProperties.h"
+#include "FlecsDependencyFunctionDefinition.h"
 
 #include "FlecsDependenciesComponent.generated.h"
-
-class UFlecsWorld;
-
-USTRUCT()
-struct FFlecsDependencyFunctionDefinition
-{
-	GENERATED_BODY()
-	
-public:
-	using FDependencyFunctionType = std::function<void(UObject*, const UFlecsWorld*, FFlecsEntityHandle)>;
-	
-	FDependencyFunctionType Function;
-
-	void Call(const TSolidNotNull<UObject*> InDependencyObject,
-	                    const TSolidNotNull<const UFlecsWorld*> InWorld,
-	                    const FFlecsEntityHandle& InDependencyEntity) const
-	{
-		solid_check(Function);
-
-		std::invoke(Function, InDependencyObject, InWorld, InDependencyEntity);
-	}
-	
-}; // struct FFlecsDependencyFunctionDefinition
 
 USTRUCT()
 struct UNREALFLECS_API FFlecsSoftDependenciesComponent
@@ -46,9 +20,10 @@ public:
 	
 }; // struct FFlecsDependenciesComponent
 
-REGISTER_FLECS_COMPONENT(FFlecsSoftDependenciesComponent,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponent)
-	{
-		InComponent
-			.Add(flecs::Sparse);
-	});
+template <>
+struct TFlecsComponentTraits<FFlecsSoftDependenciesComponent> : public TFlecsComponentTraitsBase<FFlecsSoftDependenciesComponent>
+{
+	static constexpr bool Sparse = true;
+};
+
+REGISTER_FLECS_COMPONENT(FFlecsSoftDependenciesComponent);

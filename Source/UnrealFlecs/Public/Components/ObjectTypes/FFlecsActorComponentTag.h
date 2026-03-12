@@ -17,9 +17,8 @@ struct UNREALFLECS_API FFlecsActorComponentTag : public FFlecsUObjectTag
 	GENERATED_BODY()
 }; // struct FFlecsActorComponentTag
 
-REGISTER_FLECS_COMPONENT(FFlecsActorComponentTag,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponent)
-	{
-		InComponent
-			.Add(flecs::Target);
-	});
+template <>
+struct TFlecsComponentTraits<FFlecsActorComponentTag> : public TFlecsComponentTraitsBase<FFlecsActorComponentTag>
+{
+	using InheritsFrom = FFlecsUObjectTag;
+}; // struct TFlecsComponentTraits<FFlecsActorComponentTag>

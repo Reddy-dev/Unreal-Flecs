@@ -54,9 +54,8 @@ public:
 	
 }; // struct FFlecsCollectionDefinitionComponent
 
-REGISTER_FLECS_COMPONENT(FFlecsCollectionDefinitionComponent,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
-	{
-		InComponentHandle
-			.AddPair(flecs::OnInstantiate, flecs::DontInherit);
-	});
+template<>
+struct TFlecsComponentTraits<FFlecsCollectionDefinitionComponent> : public TFlecsComponentTraitsBase<FFlecsCollectionDefinitionComponent>
+{
+	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::DontInherit;
+}; // struct TFlecsComponentTraits<FFlecsCollectionDefinitionComponent>
