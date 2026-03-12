@@ -351,9 +351,9 @@ public:
 		ParametersComponent.ParameterType = FInstancedStruct::Make<T>(InParameters);
 		ParametersComponent.ApplyParametersFunction = [InApplyFunction = std::forward<TApplyFunction>(InApplyFunction)]
 			(FFlecsEntityHandle TargetEntity, const FInstancedStruct& Parameters)
-		{
-			InApplyFunction(TargetEntity, Parameters.Get<T>());
-		};
+			{
+				InApplyFunction(TargetEntity, Parameters.Get<T>());
+			};
 		
 		GetCollectionDefinition().Record.AddComponent<FFlecsCollectionParametersComponent>(MoveTemp(ParametersComponent));
 		
