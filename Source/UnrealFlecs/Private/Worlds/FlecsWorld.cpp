@@ -30,6 +30,7 @@
 #include "Entities/FlecsEntityRecord.h"
 
 #include "Components/FlecsAddReferencedObjectsTrait.h"
+#include "Components/FlecsBeginPlayComponent.h"
 #include "Components/FlecsNetworkSerializeDefinitionComponent.h"
 #include "Components/FlecsUObjectComponent.h"
 #include "Components/ObjectTypes/FFlecsActorComponentTag.h"
@@ -250,7 +251,7 @@ void UFlecsWorld::WorldStart()
 
 void UFlecsWorld::WorldBeginPlay()
 {
-	AddSingleton<FFlecsBeginPlaySingletonComponent>();
+	AddSingleton<FFlecsBeginPlayComponent>();
 }
 
 void UFlecsWorld::InitializeDefaultComponents() const
@@ -396,7 +397,7 @@ void UFlecsWorld::InitializeDefaultComponents() const
 	RegisterComponentType<FFlecsAddReferencedObjectsTrait>()
 		.Add(flecs::Trait);
 
-	RegisterComponentType<FFlecsBeginPlaySingletonComponent>();
+	RegisterComponentType<FFlecsBeginPlayComponent>();
 
 	RegisterComponentType<FFlecsUObjectComponent>();
 		
@@ -2204,7 +2205,7 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 	
 	CastChecked<IFlecsObjectRegistrationInterface>(FlecsObject)->RegisterObject(this);
 	
-	if (HasSingleton<FFlecsBeginPlaySingletonComponent>())
+	if (HasSingleton<FFlecsBeginPlayComponent>())
 	{
 		CastChecked<IFlecsObjectRegistrationInterface>(FlecsObject)->FlecsWorldBeginPlay(this);
 	}

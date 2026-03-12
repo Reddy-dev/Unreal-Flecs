@@ -17,6 +17,7 @@
 
 #include "Components/FlecsWorldPtrComponent.h"
 #include "Components/UWorldPtrComponent.h"
+#include "Components/FlecsBeginPlayComponent.h"
 
 #include "General/FlecsGameplayTagManagerEntity.h"
 
@@ -357,7 +358,7 @@ void UFlecsWorldSubsystem::ListenBeginPlay(const FFlecsOnWorldBeginPlay::FDelega
 		return;
 	}
 
-	if (DefaultWorld->HasSingleton<FFlecsBeginPlaySingletonComponent>())
+	if (DefaultWorld->HasSingleton<FFlecsBeginPlayComponent>())
 	{
 		Delegate.ExecuteIfBound(GetWorld());
 	}

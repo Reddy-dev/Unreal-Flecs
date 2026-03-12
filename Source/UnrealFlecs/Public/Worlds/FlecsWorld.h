@@ -43,23 +43,6 @@ class UFlecsModuleInterface;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FFlecsWorldModuleImportedDelegate, const FFlecsEntityHandle& /*InModuleEntity*/);
 
-/**
- * @brief Component type that represents if the World has begun play.
- * Can be found in the World entity.
- */
-USTRUCT(BlueprintType)
-struct UNREALFLECS_API FFlecsBeginPlaySingletonComponent
-{
-	GENERATED_BODY()
-}; // struct FFlecsBeginPlaySingletonComponent
-
-REGISTER_FLECS_COMPONENT(FFlecsBeginPlaySingletonComponent,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponent)
-	{
-		InComponent
-			.Add(flecs::Singleton);
-	});
-
 UCLASS(BlueprintType, NotBlueprintable)
 class UNREALFLECS_API UFlecsWorld : public UObject
 {
