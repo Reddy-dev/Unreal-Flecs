@@ -503,7 +503,9 @@ void* flecs_defer_set(
     }
 
     if (!ptr.ptr) {
-        cmd->kind = EcsCmdSet;
+        bool is_dont_fragment = 
+            flecs_component_get_flags(world, id) & EcsIdDontFragment;
+        cmd->kind = is_dont_fragment ? EcsCmdSetDontFragment : EcsCmdSet;
         cmd->is._1.size = size;
         ptr.ptr = cmd->is._1.value =
             flecs_stack_alloc(&stage->cmd->stack, size, ti->alignment);
@@ -576,7 +578,9 @@ void* flecs_defer_cpp_set(
     }
     
     if (!ptr.ptr) {
-        cmd->kind = EcsCmdSet;
+        bool is_dont_fragment = 
+            flecs_component_get_flags(world, id) & EcsIdDontFragment;
+        cmd->kind = is_dont_fragment ? EcsCmdSetDontFragment : EcsCmdSet;
         cmd->is._1.size = size;
         ptr.ptr = cmd->is._1.value =
             flecs_stack_alloc(&stage->cmd->stack, size, ti->alignment);
@@ -848,6 +852,9 @@ void flecs_cmd_batch_for_entity(
                     
             if (cr && cr->flags & EcsIdDontFragment) {
                 /* Nothing to batch for non-fragmenting components */
+                if (cmd->kind == EcsCmdSet) {
+                    cmd->kind = EcsCmdSetDontFragment;
+                }
                 continue;
             }
 
@@ -921,6 +928,7 @@ void flecs_cmd_batch_for_entity(
         case EcsCmdSkip:
         case EcsCmdModifiedNoHook:
         case EcsCmdModified:
+        case EcsCmdSetDontFragment:
             break;
         }
     } while ((cur = next_for_entity));
@@ -943,8 +951,11 @@ void flecs_cmd_batch_for_entity(
     /* If destination table has new sparse components, make sure they're created
      * for the entity. */
     if ((table_diff.added_flags & (EcsTableHasSparse|EcsTableHasDontFragment)) && added.count) {
-        flecs_sparse_on_add(
-            world, table, ECS_RECORD_TO_ROW(r->row), 1, &added, true);
+        if (flecs_sparse_on_add(
+            world, table, ECS_RECORD_TO_ROW(r->row), 1, &added, true))
+        {
+            table_diff.added_flags |= EcsTableHasOnAdd;
+        }
     }
 
     /* If the batch contains set commands, copy the component value from the 
@@ -1025,6 +1036,7 @@ void flecs_cmd_batch_for_entity(
             case EcsCmdModified:
             case EcsCmdModifiedNoHook:
             case EcsCmdAddModified:
+            case EcsCmdSetDontFragment:
             case EcsCmdPath:
             case EcsCmdDelete:
             case EcsCmdClear:
@@ -1043,7 +1055,7 @@ void flecs_cmd_batch_for_entity(
     if (added.count) {
         ecs_table_diff_t add_diff = ECS_TABLE_DIFF_INIT;
         add_diff.added = added;
-        add_diff.added_flags = diff->added_flags;
+        add_diff.added_flags = table_diff.added_flags;
 
         if (r->row & EcsEntityIsTraversable) {
             /* Update monitors since we didn't do this in flecs_commit. Do this
@@ -1193,6 +1205,7 @@ bool flecs_defer_end(
                     world->info.cmd.other_count ++;
                     break;
                 case EcsCmdSet:
+                case EcsCmdSetDontFragment:
                     flecs_set_id_move(world, dst_stage, e, 
                         cmd->id, flecs_itosize(cmd->is._1.size), 
                         cmd->is._1.value, kind);
