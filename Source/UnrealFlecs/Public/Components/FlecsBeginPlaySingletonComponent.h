@@ -23,5 +23,3 @@ struct TFlecsComponentTraits<FFlecsBeginPlaySingletonComponent> : public TFlecsC
 {
 	static constexpr bool bIsSingleton = true;
 }; // struct TFlecsComponentTraits<FFlecsBeginPlaySingletonComponent>
-
-REGISTER_FLECS_COMPONENT(FFlecsBeginPlaySingletonComponent);

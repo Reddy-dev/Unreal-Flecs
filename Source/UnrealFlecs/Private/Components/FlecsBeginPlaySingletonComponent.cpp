@@ -3,3 +3,5 @@
 #include "Components/FlecsBeginPlaySingletonComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsBeginPlaySingletonComponent)
+
+REGISTER_FLECS_COMPONENT(FFlecsBeginPlaySingletonComponent);
