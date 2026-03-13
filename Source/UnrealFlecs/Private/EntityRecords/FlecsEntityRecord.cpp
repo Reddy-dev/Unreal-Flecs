@@ -1,9 +1,8 @@
 // Elie Wiese-Namir © 2025. All Rights Reserved.
 
-#include "Entities/FlecsEntityRecord.h"
+#include "EntityRecords/FlecsEntityRecord.h"
 
 #include "Components/FlecsSubEntityRecordNameComponent.h"
-#include "UObject/PropertyIterator.h"
 #include "Worlds/FlecsWorld.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsEntityRecord)
@@ -219,16 +218,5 @@ void FFlecsEntityRecord::ApplyRecordToEntity(const TSolidNotNull<const UFlecsWor
 	for (const TInstancedStruct<FFlecsEntityRecordFragment>& Fragment : Fragments)
 	{
 		Fragment.Get<FFlecsEntityRecordFragment>().PostApplyRecordToEntity(InFlecsWorld, InEntityHandle);
-	}
-}
-
-void FFlecsNamedEntityRecordFragment::PreApplyRecordToEntity(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld,
-	const FFlecsEntityHandle& InEntityHandle) const
-{
-	InEntityHandle.SetName(Name);
-	
-	if (bNameInheritedSubEntities)
-	{
-		InEntityHandle.Set<FFlecsSubEntityRecordNameComponent>({ .SubEntityName = Name });
 	}
 }

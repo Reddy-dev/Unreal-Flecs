@@ -43,6 +43,10 @@ static NO_DISCARD FORCEINLINE int flecs_priority_compare(
 
 #endif // FLECS_ENABLE_SYSTEM_PRIORITY
 
+UFlecsDefaultGameLoop::UFlecsDefaultGameLoop()
+{
+}
+
 void UFlecsDefaultGameLoop::InitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsEntityHandle& InGameLoopEntity)
 {
 	MainLoopPipeline = InWorld->CreatePipeline()
@@ -88,7 +92,7 @@ bool UFlecsDefaultGameLoop::Progress(const double DeltaTime, const FGameplayTag&
 	}
 	else if (InTickType == FlecsTickType_PrePhysics)
 	{
-		World->RunPipeline(PrePhysicsPipeline, DeltaTime);
+		InWorld->RunPipeline(PrePhysicsPipeline, DeltaTime);
 	}
 	else if (InTickType == FlecsTickType_DuringPhysics)
 	{

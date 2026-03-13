@@ -17,7 +17,7 @@ struct UNREALFLECS_API FFlecsActorTag : public FFlecsUObjectTag
 }; // struct FFlecsActorTag
 
 template <>
-struct TFlecsComponentTraits<FFlecsActorTag> : public TFlecsComponentTraitsBase<FFlecsActorComponentTag>
+struct TFlecsComponentTraits<FFlecsActorTag> : public TFlecsComponentTraitsBase<FFlecsActorTag>
 {
 	using InheritsFrom = FFlecsUObjectTag;
 }; // struct TFlecsComponentTraits<FFlecsActorTag>

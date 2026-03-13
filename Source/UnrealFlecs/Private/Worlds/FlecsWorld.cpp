@@ -27,18 +27,12 @@
 
 #include "Logs/FlecsCategories.h"
 
-#include "Entities/FlecsEntityRecord.h"
+#include "EntityRecords/FlecsEntityRecord.h"
 
 #include "Components/FlecsAddReferencedObjectsTrait.h"
 #include "Components/FlecsBeginPlayComponent.h"
-#include "Components/FlecsNetworkSerializeDefinitionComponent.h"
 #include "Components/FlecsUObjectComponent.h"
-#include "Components/ObjectTypes/FFlecsActorComponentTag.h"
-#include "Components/ObjectTypes/FFlecsModuleObject.h"
-#include "Components/ObjectTypes/FFlecsSceneComponentTag.h"
-#include "Components/ObjectTypes/FlecsActorTag.h"
-#include "Components/FlecsModuleComponent.h"
-#include "Components/FlecsSubEntityRecordNameComponent.h"
+#include "EntityRecords/FlecsEntityRecordComponent.h"
 
 #include "GameFramework/WorldSettings.h"
 
@@ -54,10 +48,8 @@
 
 #include "Pipelines/FlecsGameLoopInterface.h"
 #include "Pipelines/FlecsGameLoopTag.h"
-#include "Pipelines/FlecsOutsideMainLoopTag.h"
 #include "Pipelines/TickFunctions/FlecsTickFunction.h"
 #include "Pipelines/TickFunctions/FlecsTickFunctionComponent.h"
-#include "Pipelines/TickFunctions/FlecsTickFunctionPrerequisite.h"
 #include "Pipelines/TickFunctions/FlecsTickTypeRelationship.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsWorld)
@@ -528,11 +520,11 @@ void UFlecsWorld::InitializeComponentPropertyObserver()
 		const TSolidNotNull<const UFlecsTypeRegistryEngineSubsystem*> FlecsTypeRegistry
 				= GEngine->GetEngineSubsystem<UFlecsTypeRegistryEngineSubsystem>();
 						
-		if (FlecsTypeRegistry->IsComponentPropertiesRegistered(EntityHandle))
+		if (FlecsTypeRegistry->IsComponentRegistered(StructSymbol))
 		{
 			FFlecsComponentHandle InUntypedComponent = EntityHandle.GetUntypedComponent_Unsafe();
 							
-			const FFlecsComponentPropertiesDefinition* Properties = FlecsTypeRegistry->GetRegisteredComponentPropertiesForComponent(EntityHandle);
+			const FFlecsComponentPropertiesDefinition* Properties = FlecsTypeRegistry->GetRegisteredComponentProperties(StructSymbol);
 
 			if UNLIKELY_IF(!Properties->PropertiesFunction)
 			{
@@ -790,7 +782,7 @@ FFlecsEntityHandle UFlecsWorld::GetGameLoopEntity(const TSubclassOf<UObject> InG
 		if (GameLoopInterface.GetObject()->GetClass() == InGameLoop ||
 		    (bAllowChildren && GameLoopInterface.GetObject()->GetClass()->IsChildOf(InGameLoop)))
 		{
-			return GameLoopInterface->GetModuleEntity();
+			return GameLoopInterface->GetEntityHandle();
 		}
 	}
 
@@ -978,7 +970,7 @@ void UFlecsWorld::DestroyWorld()
 	{
 		if (GameLoopInterface)
 		{
-			GameLoopInterface->GetModuleEntity().Remove<FFlecsGameLoopTag>();
+			GameLoopInterface->GetEntityHandle().Remove<FFlecsGameLoopTag>();
 		}
 	}
 	

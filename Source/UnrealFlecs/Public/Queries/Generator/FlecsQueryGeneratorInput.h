@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "flecs.h"
-
 #include "CoreMinimal.h"
 #include "FlecsGeneratorTermRef.h"
 
@@ -11,8 +9,6 @@
 
 #include "SolidMacros/Macros.h"
 #include "Types/SolidNotNull.h"
-
-#include "Entities/FlecsId.h"
 
 #include "FlecsQueryGeneratorInput.generated.h"
 

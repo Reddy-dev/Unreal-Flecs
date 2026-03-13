@@ -6,7 +6,6 @@
 
 #include "FFlecsUObjectTag.h"
 
-#include "Entities/FlecsComponentHandle.h"
 #include "Properties/FlecsComponentProperties.h"
 
 #include "FFlecsActorComponentTag.generated.h"

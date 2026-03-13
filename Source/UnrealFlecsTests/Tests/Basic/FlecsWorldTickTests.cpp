@@ -23,7 +23,7 @@ TEST_CLASS_WITH_FLAGS(A11_UnrealFlecsWorldTickTests,
 
 	BEFORE_EACH()
 	{
-		Fixture = TUniquePtr<FFlecsTestFixtureRAII>(new FFlecsTestFixtureRAII({}, {}, {}, EWorldType::Game));
+		Fixture = TUniquePtr<FFlecsTestFixtureRAII>(new FFlecsTestFixtureRAII({}, {}, EWorldType::Game));
 		FlecsWorld = Fixture->Fixture.GetFlecsWorld();
 	}
 

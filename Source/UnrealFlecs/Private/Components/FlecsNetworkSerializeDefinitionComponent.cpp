@@ -4,6 +4,8 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsNetworkSerializeDefinitionComponent)
 
+REGISTER_FLECS_COMPONENT(FFlecsNetworkSerializeDefinitionComponent);
+
 FFlecsNetworkSerializeDefinitionComponent::FFlecsNetworkSerializeDefinitionComponent()
 {
 }

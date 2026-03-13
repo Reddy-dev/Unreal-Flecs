@@ -8,7 +8,7 @@
 
 #include "Versioning/SolidVersioningTypes.h"
 
-#include "Entities/FlecsEntityRecord.h"
+#include "EntityRecords/FlecsEntityRecord.h"
 #include "FlecsCollectionTypes.h"
 #include "FlecsCollectionDefinition.h"
 

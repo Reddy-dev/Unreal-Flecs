@@ -37,39 +37,42 @@ struct FFlecsTest_CPPStruct_Traits
 {
 }; // struct FFlecsTest_CppStruct_Traits
 
-REGISTER_FLECS_COMPONENT(FFlecsTest_CPPStruct_Traits,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
-	{
-		InComponentHandle
-			.Add(flecs::Trait)
-			.Add(flecs::PairIsTag);
-	});
+template <>
+struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits> : public TFlecsComponentTraitsBase<FFlecsTest_CPPStruct_Traits>
+{
+	static constexpr bool AutoRegister = false;
+	
+	static constexpr bool Trait = true;
+	static constexpr bool PairIsTag = true;
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
 
 struct FFlecsTest_CPPStructValue_Traits
 {
 	uint32 Value = 0;
 }; // struct FFlecsTest_CPPStruct_Value
 
-REGISTER_FLECS_COMPONENT(FFlecsTest_CPPStructValue_Traits,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
-	{
-		InComponentHandle
-			.Add(flecs::Trait)
-			.Add(flecs::PairIsTag);
-	});
+template <>
+struct TFlecsComponentTraits<FFlecsTest_CPPStructValue_Traits> : public TFlecsComponentTraitsBase<FFlecsTest_CPPStructValue_Traits>
+{
+	static constexpr bool AutoRegister = false;
+	
+	static constexpr bool Trait = true;
+	static constexpr bool PairIsTag = true;
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStructValue_Traits>
 
 struct FFlecsTest_CPPStructValue_Traits_WithTypedComponentHandleInLambda
 {
 	uint32 Value = 0;
 }; // struct FFlecsTest_CPPStructValue_Traits_WithTypedComponentHandleInLambda
 
-REGISTER_FLECS_COMPONENT(FFlecsTest_CPPStructValue_Traits_WithTypedComponentHandleInLambda,
-	[](flecs::world InWorld, const TFlecsComponentHandle<FFlecsTest_CPPStructValue_Traits_WithTypedComponentHandleInLambda>& InComponentHandle)
-	{
-		InComponentHandle
-			.Add(flecs::Trait)
-			.Add(flecs::PairIsTag);
-	});
+template <>
+struct TFlecsComponentTraits<FFlecsTest_CPPStructValue_Traits_WithTypedComponentHandleInLambda> : public TFlecsComponentTraitsBase<FFlecsTest_CPPStructValue_Traits_WithTypedComponentHandleInLambda>
+{
+	static constexpr bool AutoRegister = false;
+	
+	static constexpr bool Trait = true;
+	static constexpr bool PairIsTag = true;
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
 
 USTRUCT()
 struct FFlecsTestStruct_Tag
@@ -77,18 +80,26 @@ struct FFlecsTestStruct_Tag
 	GENERATED_BODY()
 }; // struct FFlecsTestStruct
 
+template <>
+struct TFlecsComponentTraits<FFlecsTestStruct_Tag> : public TFlecsComponentTraitsBase<FFlecsTestStruct_Tag>
+{
+	static constexpr bool AutoRegister = false;
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
+
 USTRUCT()
 struct FFlecsTestStruct_Tag_Inherited
 {
 	GENERATED_BODY()
 }; // struct FFlecsTestStruct
 
-REGISTER_FLECS_COMPONENT(FFlecsTestStruct_Tag_Inherited,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
-	{
-		InComponentHandle
-			.AddPair(flecs::OnInstantiate, flecs::Inherit);
-	});
+template <>
+struct TFlecsComponentTraits<FFlecsTestStruct_Tag_Inherited> : public TFlecsComponentTraitsBase<FFlecsTestStruct_Tag_Inherited>
+{
+	static constexpr bool AutoRegister = false;
+	
+	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::Inherit;
+	
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
 
 USTRUCT(BlueprintType, BlueprintInternalUseOnly)
 struct FFlecsTestStruct_Value
@@ -100,6 +111,12 @@ struct FFlecsTestStruct_Value
 	
 }; // struct FFlecsTestStructWithNameAndValue
 
+template <>
+struct TFlecsComponentTraits<FFlecsTestStruct_Value> : public TFlecsComponentTraitsBase<FFlecsTestStruct_Value>
+{
+	static constexpr bool AutoRegister = false;
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
+
 USTRUCT()
 struct FUSTRUCTPairTestComponent
 {
@@ -108,11 +125,23 @@ struct FUSTRUCTPairTestComponent
 public:
 }; // struct FUSTRUCTPairTestComponent
 
+template <>
+struct TFlecsComponentTraits<FUSTRUCTPairTestComponent> : public TFlecsComponentTraitsBase<FUSTRUCTPairTestComponent>
+{
+	static constexpr bool AutoRegister = false;
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
+
 USTRUCT()
 struct FUSTRUCTPairTestComponent_Second
 {
 	GENERATED_BODY()
 }; // struct FUSTRUCTPairTestComponent_Second
+
+template <>
+struct TFlecsComponentTraits<FUSTRUCTPairTestComponent_Second> : public TFlecsComponentTraitsBase<FUSTRUCTPairTestComponent_Second>
+{
+	static constexpr bool AutoRegister = false;
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
 
 USTRUCT()
 struct FUSTRUCTPairTestComponent_Data
@@ -130,6 +159,12 @@ struct FUSTRUCTPairTestComponent_Data
 	
 }; // struct FUSTRUCTPairTestComponent_Data
 
+template <>
+struct TFlecsComponentTraits<FUSTRUCTPairTestComponent_Data> : public TFlecsComponentTraitsBase<FUSTRUCTPairTestComponent_Data>
+{
+	static constexpr bool AutoRegister = false;
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
+
 USTRUCT()
 struct FFlecsTestComponent_Inherited : public FFlecsTestStruct_Value
 {
@@ -139,11 +174,27 @@ struct FFlecsTestComponent_Inherited : public FFlecsTestStruct_Value
 	int32 Value2;
 }; // struct FFlecsTestComponent_Inherited
 
+template <>
+struct TFlecsComponentTraits<FFlecsTestComponent_Inherited> : public TFlecsComponentTraitsBase<FFlecsTestComponent_Inherited>
+{
+	static constexpr bool AutoRegister = false;
+	
+	using InheritsFrom = FFlecsTestStruct_Value;
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
+
 USTRUCT()
 struct FFlecsTestComponent_NonTagUSTRUCT_Inherited : public FFlecsTestComponent_Inherited
 {
 	GENERATED_BODY()
 }; // struct FUSTRUCTTestComponent_NonTagUSTRUCT_Inherited
+
+template <>
+struct TFlecsComponentTraits<FFlecsTestComponent_NonTagUSTRUCT_Inherited> : public TFlecsComponentTraitsBase<FFlecsTestComponent_NonTagUSTRUCT_Inherited>
+{
+	static constexpr bool AutoRegister = false;
+	
+	using InheritsFrom = FFlecsTestComponent_Inherited;
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
 
 USTRUCT()
 struct FFlecsTestStruct_WithPropertyTraits
@@ -154,27 +205,15 @@ public:
 	
 }; // struct FFlecsTestStruct_WithProperties
 
-REGISTER_FLECS_COMPONENT(FFlecsTestStruct_WithPropertyTraits,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
-	{
-		InComponentHandle
-			.Add(flecs::Trait)
-			.Add(flecs::PairIsTag);
-	});
-
-USTRUCT()
-struct FFlecsTestStruct_WithPropertyTraits_WithTypedComponentHandleInLambda
+template <>
+struct TFlecsComponentTraits<FFlecsTestStruct_WithPropertyTraits> : public TFlecsComponentTraitsBase<FFlecsTestStruct_WithPropertyTraits>
 {
-	GENERATED_BODY()
-}; // struct FFlecsTestStruct_WithPropertyTraits_WithTypedComponentHandleInLambda
-
-REGISTER_FLECS_COMPONENT(FFlecsTestStruct_WithPropertyTraits_WithTypedComponentHandleInLambda,
-	[](flecs::world InWorld, const TFlecsComponentHandle<FFlecsTestStruct_WithPropertyTraits_WithTypedComponentHandleInLambda>& InComponentHandle)
-	{
-		InComponentHandle
-			.Add(flecs::Trait)
-			.Add(flecs::PairIsTag);
-	});
+	static constexpr bool AutoRegister = false;
+	
+	static constexpr bool Trait = true;
+	static constexpr bool PairIsTag = true;
+	
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
 
 USTRUCT()
 struct FFlecsTestStructValue_WithPropertyTraits
@@ -187,13 +226,15 @@ public:
 	
 }; // struct FFlecsTestStruct_WithProperties
 
-REGISTER_FLECS_COMPONENT(FFlecsTestStructValue_WithPropertyTraits,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
-	{
-		InComponentHandle
-			.Add(flecs::Trait)
-			.Add(flecs::PairIsTag);
-	});
+template <>
+struct TFlecsComponentTraits<FFlecsTestStructValue_WithPropertyTraits> : public TFlecsComponentTraitsBase<FFlecsTestStructValue_WithPropertyTraits>
+{
+	static constexpr bool AutoRegister = false;
+	
+	static constexpr bool Trait = true;
+	static constexpr bool PairIsTag = true;
+	
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
 
 USTRUCT()
 struct FFlecsTestStruct_Toggleable
@@ -205,11 +246,14 @@ public:
 	uint32 Value = 0;
 }; // struct FFlecsTestStruct_Toggleable
 
-REGISTER_FLECS_COMPONENT(FFlecsTestStruct_Toggleable,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
-	{
-		InComponentHandle.Add(flecs::CanToggle);
-	});
+template <>
+struct TFlecsComponentTraits<FFlecsTestStruct_Toggleable> : public TFlecsComponentTraitsBase<FFlecsTestStruct_Toggleable>
+{
+	static constexpr bool AutoRegister = false;
+	
+	static constexpr bool CanToggle = true;
+	
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
 
 USTRUCT()
 struct FFlecsTestStruct_PairIsTag
@@ -217,11 +261,14 @@ struct FFlecsTestStruct_PairIsTag
 	GENERATED_BODY()
 }; // struct FFlecsTestStruct_PairIsTag
 
-REGISTER_FLECS_COMPONENT(FFlecsTestStruct_PairIsTag,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
-	{
-		InComponentHandle.Add(flecs::PairIsTag);
-	});
+template <>
+struct TFlecsComponentTraits<FFlecsTestStruct_PairIsTag> : public TFlecsComponentTraitsBase<FFlecsTestStruct_PairIsTag>
+{
+	static constexpr bool AutoRegister = false;
+
+	static constexpr bool PairIsTag = true;
+	
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
 
 USTRUCT()
 struct FFlecsTestStruct_EmptyRegistrationFunction
@@ -229,19 +276,18 @@ struct FFlecsTestStruct_EmptyRegistrationFunction
 	GENERATED_BODY()
 }; // struct FFlecsTestStruct_EmptyRegistrationFunction
 
-REGISTER_FLECS_COMPONENT(FFlecsTestStruct_EmptyRegistrationFunction,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
-	{
-		// Intentionally empty
-	});
+template <>
+struct TFlecsComponentTraits<FFlecsTestStruct_EmptyRegistrationFunction> : public TFlecsComponentTraitsBase<FFlecsTestStruct_EmptyRegistrationFunction>
+{
+	static constexpr bool AutoRegister = false;
+	
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
 
 USTRUCT()
 struct FFlecsTestStruct_NoRegistrationLambda
 {
 	GENERATED_BODY()
 }; // struct FFlecsTestStruct_NoRegistrationLambda
-
-REGISTER_FLECS_COMPONENT(FFlecsTestStruct_NoRegistrationLambda);
 
 enum class ETestEnum : uint8
 {
@@ -281,6 +327,13 @@ struct FUStructTestComponent_NonTagUSTRUCT
 	
 }; // struct FUStructTestComponent_NonTagUSTRUCT
 
+template <>
+struct TFlecsComponentTraits<FUStructTestComponent_NonTagUSTRUCT> : public TFlecsComponentTraitsBase<FUStructTestComponent_NonTagUSTRUCT>
+{
+	static constexpr bool AutoRegister = false;
+	
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
+
 USTRUCT()
 struct FUSTructTestComponent_AccidentalTag
 {
@@ -294,6 +347,13 @@ struct FUSTructTestComponent_AccidentalTag
 	
 }; // struct FUSTructTestComponent_AccidentalTag
 
+template <>
+struct TFlecsComponentTraits<FUSTructTestComponent_AccidentalTag> : public TFlecsComponentTraitsBase<FUSTructTestComponent_AccidentalTag>
+{
+	static constexpr bool AutoRegister = false;
+	
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
+
 USTRUCT()
 struct FFlecsTestComponent_Vector
 {
@@ -303,6 +363,13 @@ struct FFlecsTestComponent_Vector
 	FVector Value;
 	
 }; // struct FFlecsTestComponent_Position
+
+template <>
+struct TFlecsComponentTraits<FFlecsTestComponent_Vector> : public TFlecsComponentTraitsBase<FFlecsTestComponent_Vector>
+{
+	static constexpr bool AutoRegister = false;
+	
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
 
 USTRUCT()
 struct alignas(16) FUStructTestComponent_CustomAlignedUSTRUCT_SixteenBytes
@@ -316,6 +383,13 @@ struct alignas(16) FUStructTestComponent_CustomAlignedUSTRUCT_SixteenBytes
 	int32 Value2;
 
 }; // struct FUStructTestComponent_CustomAlignedUSTRUCT_SixteenBytes
+
+template <>
+struct TFlecsComponentTraits<FUStructTestComponent_CustomAlignedUSTRUCT_SixteenBytes> : public TFlecsComponentTraitsBase<FUStructTestComponent_CustomAlignedUSTRUCT_SixteenBytes>
+{
+	static constexpr bool AutoRegister = false;
+	
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
 
 USTRUCT()
 struct alignas(32) FUStructTestComponent_CustomAlignedUSTRUCT_ThirtyTwoBytes
@@ -336,6 +410,13 @@ struct alignas(32) FUStructTestComponent_CustomAlignedUSTRUCT_ThirtyTwoBytes
 
 }; // struct FUStructTestComponent_CustomAlignedUSTRUCT_ThirtyTwoBytes
 
+template <>
+struct TFlecsComponentTraits<FUStructTestComponent_CustomAlignedUSTRUCT_ThirtyTwoBytes> : public TFlecsComponentTraitsBase<FUStructTestComponent_CustomAlignedUSTRUCT_ThirtyTwoBytes>
+{
+	static constexpr bool AutoRegister = false;
+	
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
+
 USTRUCT()
 struct alignas(64) FUStructTestComponent_CustomAlignedUSTRUCT_SixtyFourBytes
 {
@@ -352,6 +433,13 @@ struct alignas(64) FUStructTestComponent_CustomAlignedUSTRUCT_SixtyFourBytes
 
 }; // struct FUStructTestComponent_CustomAlignedUSTRUCT_SixtyFourBytes
 
+template <>
+struct TFlecsComponentTraits<FUStructTestComponent_CustomAlignedUSTRUCT_SixtyFourBytes> : public TFlecsComponentTraitsBase<FUStructTestComponent_CustomAlignedUSTRUCT_SixtyFourBytes>
+{
+	static constexpr bool AutoRegister = false;
+	
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
+
 USTRUCT()
 struct FUStructTestComponent_MovableUSTRUCT
 {
@@ -367,6 +455,13 @@ struct FUStructTestComponent_MovableUSTRUCT
 	
 }; // struct FUStructTestComponent_MovableUSTRUCT
 
+template <>
+struct TFlecsComponentTraits<FUStructTestComponent_MovableUSTRUCT> : public TFlecsComponentTraitsBase<FUStructTestComponent_MovableUSTRUCT>
+{
+	static constexpr bool AutoRegister = false;
+	
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
+
 USTRUCT()
 struct FUStructTestComponent_MovableNotRegisteredUSTRUCT
 {
@@ -381,6 +476,13 @@ struct FUStructTestComponent_MovableNotRegisteredUSTRUCT
 	FUStructTestComponent_MovableNotRegisteredUSTRUCT() = default;
 	
 }; // struct FUStructTestComponent_MovableNotRegisteredUSTRUCT
+
+template <>
+struct TFlecsComponentTraits<FUStructTestComponent_MovableNotRegisteredUSTRUCT> : public TFlecsComponentTraitsBase<FUStructTestComponent_MovableNotRegisteredUSTRUCT>
+{
+	static constexpr bool AutoRegister = false;
+	
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
 
 USTRUCT()
 struct FUStructTestComponent_LifecycleTracker
@@ -470,6 +572,13 @@ struct FUStructTestComponent_LifecycleTracker
 	
 }; // struct FUStructTestComponent_LifecycleTracker
 
+template <>
+struct TFlecsComponentTraits<FUStructTestComponent_LifecycleTracker> : public TFlecsComponentTraitsBase<FUStructTestComponent_LifecycleTracker>
+{
+	static constexpr bool AutoRegister = false;
+	
+}; // struct TFlecsComponentTraits<FUStructTestComponent_LifecycleTracker>
+
 USTRUCT()
 struct FFlecsTestStruct_LifecycleTracker_NoMoveReg
 {
@@ -557,6 +666,13 @@ struct FFlecsTestStruct_LifecycleTracker_NoMoveReg
 	
 }; // struct FFlecsTestStruct_LifecycleTracker_NoMoveReg
 
+template <>
+struct TFlecsComponentTraits<FFlecsTestStruct_LifecycleTracker_NoMoveReg> : public TFlecsComponentTraitsBase<FFlecsTestStruct_LifecycleTracker_NoMoveReg>
+{
+	static constexpr bool AutoRegister = false;
+	
+}; // struct TFlecsComponentTraits<FUStructTestComponent_LifecycleTracker>
+
 USTRUCT()
 struct FFlecsTestStruct_FlecsHookTracker
 {
@@ -576,6 +692,13 @@ public:
 	int32 OnReplaceCalled = 0;
 	
 }; // struct FFlecsTestStruct_FlecsHookTracker
+
+template <>
+struct TFlecsComponentTraits<FFlecsTestStruct_FlecsHookTracker> : public TFlecsComponentTraitsBase<FFlecsTestStruct_FlecsHookTracker>
+{
+	static constexpr bool AutoRegister = false;
+	
+}; // struct TFlecsComponentTraits<FUStructTestComponent_LifecycleTracker>
 
 /*
 REGISTER_FLECS_COMPONENT(FFlecsTestStruct_FlecsHookTracker,

@@ -25,13 +25,34 @@ struct UNREALFLECS_API FFlecsRegisteredComponentEntry
 		return GetTypeHash(InEntry.ComponentDefinition.Name);
 	}
 	
+	FORCEINLINE bool operator==(const FFlecsRegisteredComponentEntry& Other) const
+	{
+		return ComponentDefinition.Name == Other.ComponentDefinition.Name;
+	}
+	
+	FORCEINLINE bool operator!=(const FFlecsRegisteredComponentEntry& Other) const
+	{
+		return !(*this == Other);
+	}
+	
 public:
 	FORCEINLINE FFlecsRegisteredComponentEntry() = default;
 	
+	FORCEINLINE FFlecsRegisteredComponentEntry(const FFlecsComponentPropertiesDefinition& InDefinition)
+		: ComponentDefinition(InDefinition)
+	{
+	}
 	
-	
+	FORCEINLINE explicit FFlecsRegisteredComponentEntry(const FString& String)
+	{
+		ComponentDefinition.Name = String;
+	}
+
 	UPROPERTY()
 	FFlecsComponentPropertiesDefinition ComponentDefinition; 
+	
+	UPROPERTY()
+	TOptional<FName> ModuleName;
 	
 }; // struct FFlecsRegisteredComponentEntry
 
@@ -43,42 +64,23 @@ class UNREALFLECS_API UFlecsTypeRegistryEngineSubsystem : public UEngineSubsyste
 public:
 	UFlecsTypeRegistryEngineSubsystem();
 	
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	
 	void RegisterAllTypes(const TSolidNotNull<const UFlecsWorld*> InWorld);
 	
 	void AddRegisteredComponentProperties(const FFlecsComponentPropertiesDefinition& InDefinition);
 	
-	NO_DISCARD FORCEINLINE const TArray<FFlecsComponentPropertiesDefinition>& GetRegisteredComponentProperties() const
-	{
-		return RegisteredComponentProperties;
-	}
-	
-	NO_DISCARD FORCEINLINE const TArray<FFlecsComponentPropertiesDefinition>& GetRegisteredComponentPropertiesForModule(const FString& InModuleName) const
-	{
-		if (const TArray<FFlecsComponentPropertiesDefinition>* Found = ModuleRegisteredComponentProperties.Find(InModuleName))
-		{
-			return *Found;
-		}
-		
-		return TArray<FFlecsComponentPropertiesDefinition>();
-	}
-	
-	NO_DISCARD FORCEINLINE bool IsComponentPropertiesRegistered(const FFlecsEntityHandle& InComponent) const
-	{
-		return RegisteredComponentProperties.ContainsByPredicate([&](const FFlecsComponentPropertiesDefinition& Definition)
-		{
-			return Definition.Name == InComponent.GetSymbol();
-		});
-	}
-	
-	NO_DISCARD bool IsComponentPropertiesRegisteredForModule(const FString& InModuleName, const FFlecsEntityHandle& InComponent) const;
-	
-	NO_DISCARD const FFlecsComponentPropertiesDefinition* GetRegisteredComponentPropertiesForComponent(const FFlecsEntityHandle& InComponent) const;
-	NO_DISCARD const FFlecsComponentPropertiesDefinition* GetRegisteredComponentPropertiesForModuleAndComponent(const FString& InModuleName, const FFlecsEntityHandle& InComponent) const;
+	NO_DISCARD bool IsComponentRegistered(const FString& InComponentName) const;
+	NO_DISCARD const FFlecsComponentPropertiesDefinition* GetRegisteredComponentProperties(const FString& InComponentName) const;
 
 	UPROPERTY()
-	TArray<FFlecsComponentPropertiesDefinition> RegisteredComponentProperties;
+	TSet<FFlecsRegisteredComponentEntry> RegisteredComponentEntries;
 	
-	TMap<FString /* ModuleName */, TArray<FFlecsComponentPropertiesDefinition>> ModuleRegisteredComponentProperties;
+	TMultiMap<FName, FString> ComponentNameToModuleNameMap;
 	
+	static TWeakObjectPtr<UFlecsTypeRegistryEngineSubsystem> Singleton;
+	
+private:
+	TArray<FString> SortComponentsByDependencies() const;
 	
 }; // class UFlecsTypeRegistryEngineSubsystem

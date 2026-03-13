@@ -14,11 +14,11 @@
 #include "Standard/robin_hood.h"
 #include "Types/SolidCppStructOps.h"
 
+#include "Worlds/FlecsWorld.h"
 #include "Entities/FlecsComponentHandle.h"
 #include "Components/FlecsAddReferencedObjectsTrait.h"
 #include "Queries/Generator/FlecsQueryGeneratorInput.h"
 #include "Queries/Generator/FlecsQueryGeneratorInputType.h"
-#include "Worlds/FlecsWorld.h"
 
 #include "FlecsComponentProperties.generated.h"
 
@@ -46,7 +46,7 @@ ENUM_RANGE_BY_COUNT(EFlecsOnDelete, EFlecsOnDelete::Count);
 
 namespace UE::Flecs
 {
-	using FFlecsComponentRegistrationFunction = std::function<void(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsComponentPropertiesDefinition& ComponentProperties)>;
+	using FFlecsComponentRegistrationFunction = void(*)(const TSolidNotNull<const UFlecsWorld*>, const FFlecsComponentPropertiesDefinition&);
 	using FFlecsComponentPropertiesFunction = std::function<void(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsComponentHandle& ComponentHandle)>;
 
 	namespace internal
@@ -87,7 +87,6 @@ namespace UE::Flecs
 		{
 			return StaticEnum<T>();
 		}
-		
 		template <typename TTuple, typename TFunction, int32... Indices>
 		void ForEachInTupleImpl(TFunction&& Function, TIntegerSequence<int32, Indices...>)
 		{
@@ -97,7 +96,43 @@ namespace UE::Flecs
 		template <typename TTuple, typename TFunction>
 		void ForEachInTuple(TFunction&& Function)
 		{
-			ForEachInTupleImpl<TTuple>(Forward<TFunction>(Function), TMakeIntegerSequence<int32, TTuple::NumTypes>{});
+			ForEachInTupleImpl<TTuple>(Forward<TFunction>(Function), TMakeIntegerSequence<int32, TTupleArity<TTuple>::Value>{});
+		}
+		
+		NO_DISCARD FORCEINLINE bool TryGetDependencyName(const FFlecsQueryGeneratorInput& Input, FString& OutName)
+		{
+			OutName.Reset();
+
+			if (!Input.First.IsValid())
+			{
+				return false;
+			}
+
+			if LIKELY_IF(const FFlecsQueryGeneratorInputType_CPPType* CPPType = Input.First.GetPtr<FFlecsQueryGeneratorInputType_CPPType>())
+			{
+				OutName = CPPType->SymbolString;
+				return !OutName.IsEmpty();
+			}
+
+			if LIKELY_IF(const FFlecsQueryGeneratorInputType_ScriptStruct* ScriptStructType = Input.First.GetPtr<FFlecsQueryGeneratorInputType_ScriptStruct>())
+			{
+				if (ScriptStructType->ScriptStruct)
+				{
+					OutName = ScriptStructType->ScriptStruct->GetName();
+					return true;
+				}
+			}
+
+			if LIKELY_IF(const FFlecsQueryGeneratorInputType_ScriptEnum* ScriptEnumType = Input.First.GetPtr<FFlecsQueryGeneratorInputType_ScriptEnum>())
+			{
+				if (ScriptEnumType->ScriptEnum)
+				{
+					OutName = ScriptEnumType->ScriptEnum->GetName();
+					return true;
+				}
+			}
+
+			return false;
 		}
 		
 	} // namespace internal
@@ -140,7 +175,13 @@ public:
 	
 	static constexpr bool WithAddReferencedObjects = false;
 	static constexpr bool RegisterMemberProperties = false;
-	static constexpr bool RegisterWithModule = false;
+	//static constexpr bool RegisterWithModule = false;
+	
+	static const TArray<FString>& CustomTypeDependencies()
+	{
+		static const TArray<FString> EmptyArray;
+		return EmptyArray;
+	}
 	
 	// Only get called with Auto-Registration with Typed Components
 	static void PostRegister(const FFlecsComponentHandle& ComponentHandle) {}
@@ -247,6 +288,9 @@ public:
 	UPROPERTY()
 	TOptional<FFlecsQueryGeneratorInput> InheritsFrom;
 	
+	UPROPERTY()
+	TArray<FString> CustomTypeDependencies;
+	
 	UE::Flecs::FFlecsComponentRegistrationFunction RegistrationFunction;
 	UE::Flecs::FFlecsComponentPropertiesFunction PropertiesFunction;
 	
@@ -279,7 +323,7 @@ public:
 			.bFinal = TFlecsComponentTraits<T>::Final,
 			.bWithAddReferencedObjects = TFlecsComponentTraits<T>::WithAddReferencedObjects,
 			.bRegisterMemberProperties = TFlecsComponentTraits<T>::RegisterMemberProperties,
-			.bRegisterWithModule = TFlecsComponentTraits<T>::RegisterWithModule,
+			//.bRegisterWithModule = TFlecsComponentTraits<T>::RegisterWithModule,
 		};
 		
 		UE::Flecs::internal::ForEachInTuple<typename TFlecsComponentTraits<T>::WithTypes>([&Definition](auto Type)
@@ -333,9 +377,56 @@ public:
 			});
 		}
 		
+		const TArray<FString> CustomTypeDependencies = TFlecsComponentTraits<T>::CustomTypeDependencies();
+		Definition.CustomTypeDependencies.Append(CustomTypeDependencies);
+		
 		Definition.PropertiesFunction = [Definition](const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsComponentHandle& ComponentHandle)
 		{
-				
+			switch (Definition.OnInstantiate)
+			{
+				case EFlecsOnInstantiate::Override:
+					ComponentHandle.AddPair(flecs::OnInstantiate, flecs::Override);
+					break;
+				case EFlecsOnInstantiate::Inherit:
+					ComponentHandle.AddPair(flecs::OnInstantiate, flecs::Inherit);
+					break;
+				case EFlecsOnInstantiate::DontInherit:
+					ComponentHandle.AddPair(flecs::OnInstantiate, flecs::DontInherit);
+					break;
+				default:
+					break;
+			}
+			
+			switch (Definition.OnDelete)
+			{
+				case EFlecsOnDelete::Remove:
+					ComponentHandle.AddPair(flecs::OnDelete, flecs::Remove);
+					break;
+				case EFlecsOnDelete::Delete:
+					ComponentHandle.AddPair(flecs::OnDelete, flecs::Delete);
+					break;
+				case EFlecsOnDelete::Panic:
+					ComponentHandle.AddPair(flecs::OnDelete, flecs::Panic);
+					break;
+				default:
+					break;
+			}
+			
+			switch (Definition.OnDeleteTarget)
+			{
+				case EFlecsOnDelete::Remove:
+					ComponentHandle.AddPair(flecs::OnDeleteTarget, flecs::Remove);
+					break;
+				case EFlecsOnDelete::Delete:
+					ComponentHandle.AddPair(flecs::OnDeleteTarget, flecs::Delete);
+					break;
+				case EFlecsOnDelete::Panic:
+					ComponentHandle.AddPair(flecs::OnDeleteTarget, flecs::Panic);
+					break;
+				default:
+					break;
+			}
+			
 			if constexpr (TFlecsComponentTraits<T>::Singleton)
 			{
 				ComponentHandle.Add(flecs::Singleton);
@@ -442,15 +533,28 @@ public:
 			TFlecsComponentTraits<T>::PostRegister(ComponentHandle);
 		};
 		
-		Definition.RegistrationFunction = [](const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsComponentPropertiesDefinition& ComponentProperties)
+		if constexpr (TFlecsComponentTraits<T>::AutoRegister)
 		{
-			if constexpr (!TFlecsComponentTraits<T>::AutoRegister)
+			Definition.RegistrationFunction = [](const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsComponentPropertiesDefinition& ComponentProperties)
 			{
-				return;
-			}
 			
-			InFlecsWorld->RegisterComponentType<T>(ComponentProperties.bRegisterMemberProperties);
-		};
+				if constexpr (Solid::IsScriptStruct<T>())
+				{
+					InFlecsWorld->RegisterComponentType<T>(ComponentProperties.bRegisterMemberProperties);
+				}
+				else
+				{
+					InFlecsWorld->RegisterComponentType<T>();
+				}
+			};
+		}
+		else
+		{
+			Definition.RegistrationFunction = [](const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsComponentPropertiesDefinition& ComponentProperties)
+			{
+				// Do Nothing, user will manually call RegisterComponentType in this case
+			};
+		}
 		
 		return Definition;
 	}
@@ -459,10 +563,35 @@ public:
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnComponentPropertiesRegistered, FFlecsComponentPropertiesDefinition);
 
+namespace UE::Flecs::Private
+{
+	UNREALFLECS_API FCriticalSection& GetRegisteredComponentsMutex();
+	
+	UNREALFLECS_API TArray<FFlecsComponentPropertiesDefinition>& GetPendingRegisteredComponents();
+	UNREALFLECS_API void AddRegisteredComponentProperties_Static(const FFlecsComponentPropertiesDefinition& InDefinition);
+	
+	template <typename T>
+	struct TFlecsComponentPropertiesRegistrar
+	{
+	public:
+		TFlecsComponentPropertiesRegistrar()
+		{
+			FCoreDelegates::OnPostEngineInit.AddLambda([]()
+			{
+				const FFlecsComponentPropertiesDefinition Definition = FFlecsComponentPropertiesDefinition::Make<T>();
+				AddRegisteredComponentProperties_Static(Definition);
+			});
+		}
+	
+	}; // struct TFlecsComponentPropertiesRegistrar
+	
+} // namespace UE::Flecs::Private
 
 #define INTERNAL_REGISTER_FLECS_COMPONENT_IMPL(Name) \
-	
+	namespace \
+	{ \
+		static UE::Flecs::Private::TFlecsComponentPropertiesRegistrar<Name> FlecsComponentPropertiesRegistrarInstance_##Name; \
+	}
 
-// @TODO: Consider adding Auto-Registration
 #define REGISTER_FLECS_COMPONENT(ComponentType) \
 	INTERNAL_REGISTER_FLECS_COMPONENT_IMPL(ComponentType)

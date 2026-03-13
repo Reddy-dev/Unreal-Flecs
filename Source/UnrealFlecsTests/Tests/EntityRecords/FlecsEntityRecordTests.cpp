@@ -5,7 +5,8 @@
 #if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
 
 #include "Components/FlecsSubEntityRecordNameComponent.h"
-#include "Entities/FlecsEntityRecord.h"
+#include "EntityRecords/FlecsEntityRecord.h"
+#include "EntityRecords/FlecsNamedEntityRecordFragment.h"
 
 #include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 

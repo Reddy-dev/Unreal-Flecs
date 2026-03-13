@@ -264,24 +264,6 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 		ASSERT_THAT(IsTrue(StructEntity.Has(flecs::Trait)));
 		ASSERT_THAT(IsTrue(StructEntity.Has(flecs::PairIsTag)));
 	}
-	
-	TEST_METHOD(B11_GetComponentPropertyTraitsWithTypedComponentHandleLambda_ScriptStruct_CPPAPI)
-	{
-		const FFlecsEntityHandle StaticStructEntity = FlecsWorld->RegisterComponentType<FFlecsTestStruct_WithPropertyTraits_WithTypedComponentHandleInLambda>();
-		ASSERT_THAT(IsTrue(StaticStructEntity.IsValid()));
-
-		ASSERT_THAT(IsTrue(StaticStructEntity.Has(flecs::Trait)));
-		ASSERT_THAT(IsTrue(StaticStructEntity.Has(flecs::PairIsTag)));
-	}
-	
-	TEST_METHOD(B12_GetComponentPropertyTraitsWithTypedComponentHandleLambda_ScriptStruct_StaticStructAPI)
-	{
-		const FFlecsEntityHandle StaticStructEntity = FlecsWorld->RegisterComponentType(FFlecsTestStruct_WithPropertyTraits_WithTypedComponentHandleInLambda::StaticStruct());
-		ASSERT_THAT(IsTrue(StaticStructEntity.IsValid()));
-
-		ASSERT_THAT(IsTrue(StaticStructEntity.Has(flecs::Trait)));
-		ASSERT_THAT(IsTrue(StaticStructEntity.Has(flecs::PairIsTag)));
-	}
 
 	TEST_METHOD(C1_EnumComponentRegistration_CPPAPI)
 	{

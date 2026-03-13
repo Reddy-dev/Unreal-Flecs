@@ -3,9 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Interfaces/FlecsEntityInterface.h"
 
 #include "Types/SolidNotNull.h"
+
+#include "Interfaces/FlecsEntityInterface.h"
 
 #include "FlecsGameLoopInterface.generated.h"
 
@@ -24,16 +25,22 @@ class UNREALFLECS_API IFlecsGameLoopInterface : public IFlecsEntityInterface
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-	virtual void InitializeModule(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsEntityHandle& InModuleEntity) override;
+	void InitializeGameLoop_Internal(TSolidNotNull<UFlecsWorld*> InWorld);
 	
-	virtual void InitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsEntityHandle& InGameLoopEntity)
-		PURE_VIRTUAL(IFlecsGameLoopInterface::InitializeGameLoop,);
+	virtual void InitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsEntityHandle& InGameLoopEntity) {}
 	
 	virtual bool Progress(double DeltaTime, const FGameplayTag& InTickType, TSolidNotNull<UFlecsWorld*> InWorld)
 		PURE_VIRTUAL(IFlecsGameLoopInterface::Progress, return false;)
 
 	virtual bool IsMainLoop() const;
+	
+	virtual NO_DISCARD FFlecsEntityHandle GetEntityHandle() const override final
+	{
+		return GameLoopEntity;
+	}
 
 	virtual TArray<FGameplayTag> GetTickTypeTags() const;
+	
+	FFlecsEntityHandle GameLoopEntity;
 	
 }; // class IFlecsGameLoopInterface

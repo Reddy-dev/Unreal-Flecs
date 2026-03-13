@@ -14,5 +14,3 @@ struct UNREALFLECS_API FFlecsGameLoopTag
 	GENERATED_BODY()
 }; // struct FFlecsGameLoopTag
 
-REGISTER_FLECS_COMPONENT(FFlecsGameLoopTag);
-

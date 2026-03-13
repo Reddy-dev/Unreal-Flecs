@@ -7,7 +7,6 @@
 #include "Worlds/FlecsWorldSubsystem.h"
 
 #include "Interfaces/FlecsEntityInterface.h"
-#include "GameFramework/Actor/FlecsEntityActorComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(EntityFunctionLibrary)
 
@@ -16,7 +15,7 @@ FFlecsId UEntityFunctionLibrary::MakePairId(const FFlecsId First, const FFlecsId
 	return FFlecsId::MakePair(First, Second);
 }
 
-bool UEntityFunctionLibrary::HasEntityFromObject(UObject* Object)
+/*bool UEntityFunctionLibrary::HasEntityFromObject(UObject* Object)
 {
 	if UNLIKELY_IF(!ensureMsgf(Object, TEXT("Object is not valid")))
 	{
@@ -54,7 +53,7 @@ FFlecsEntityHandle UEntityFunctionLibrary::GetEntityFromObject(UObject* Object)
 	}
 
 	return FFlecsEntityHandle::GetNullHandle();
-}
+}*/
 
 void UEntityFunctionLibrary::DestroyEntity(const FFlecsEntityHandle& Entity)
 {

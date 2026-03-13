@@ -26,5 +26,3 @@ struct TFlecsComponentTraits<FFlecsNetworkSerializeDefinitionComponent> : public
 {
 	static constexpr bool Sparse = true;
 }; // struct TFlecsNetworkSerializeDefinitionComponent
-
-REGISTER_FLECS_COMPONENT(FFlecsNetworkSerializeDefinitionComponent);

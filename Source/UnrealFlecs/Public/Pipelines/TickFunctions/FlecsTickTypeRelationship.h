@@ -14,9 +14,8 @@ struct UNREALFLECS_API FFlecsTickTypeRelationship
 	GENERATED_BODY()
 }; // struct FFlecsTickTypeRelationship
 
-REGISTER_FLECS_COMPONENT(FFlecsTickTypeRelationship,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponent)
-	{
-		InComponent
-			.Add(flecs::Relationship);
-	});
+template <>
+struct TFlecsComponentTraits<FFlecsTickTypeRelationship> : public TFlecsComponentTraitsBase<FFlecsTickTypeRelationship>
+{
+	static constexpr bool Relationship = true;
+}; // struct TFlecsComponentTraits<FFlecsTickTypeRelationship>
