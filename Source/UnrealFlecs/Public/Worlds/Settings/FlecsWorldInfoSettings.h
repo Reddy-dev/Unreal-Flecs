@@ -5,13 +5,10 @@
 #include "CoreMinimal.h"
 
 #include "Engine/EngineBaseTypes.h"
+#include "StructUtils/SharedStruct.h"
 
 #include "SolidMacros/Macros.h"
 #include "Standard/Hashing.h"
-#include "Types/SolidNotNull.h"
-
-#include "StructUtils/InstancedStruct.h"
-#include "StructUtils/SharedStruct.h"
 
 #include "FlecsWorldInfoSettings.generated.h"
 
@@ -104,7 +101,15 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "World")
     FString WorldName;
-
+    
+    // @TODO: add FLECS_REST and FLECS_STATS checks
+    
+    UPROPERTY(EditAnywhere, Category = "World")
+    bool bImportRest = true;
+    
+    UPROPERTY(EditAnywhere, Category = "World")
+    bool bImportStats = true;
+    
     UPROPERTY(EditAnywhere, Instanced, Category = "Game Loop",
         meta = (ObjectMustImplement = "/Script/UnrealFlecs.FlecsGameLoopInterface", NoElementDuplicate))
     TArray<TObjectPtr<UObject>> GameLoops;

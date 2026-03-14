@@ -534,7 +534,7 @@ void UFlecsWorld::InitializeComponentPropertyObserver()
 				return;
 			}
 
-			std::invoke(Properties->PropertiesFunction, this, InUntypedComponent);
+			std::invoke(Properties->PropertiesFunction, this, InUntypedComponent, *Properties);
 
 			UE_LOGFMT(LogFlecsComponent, Log,
 				"Component properties {StructName} registered", StructSymbol);
@@ -1930,6 +1930,44 @@ bool UFlecsWorld::IsFlecsObjectRegistered(const TSubclassOf<UObject> InClass) co
 {
 	solid_check(InClass);
 	return RegisteredObjectTypes.Contains(InClass);
+}
+
+void UFlecsWorld::ImportRestModule()
+{
+#ifdef FLECS_REST
+	
+	EndScope([this]()
+	{
+		uint16 ClientPIEInstanceOffset = 0;
+		const TSolidNotNull<const UWorld*> UnrealWorld = GetWorld();
+		
+#if WITH_EDITOR
+		
+		if (UnrealWorld->GetNetMode() == NM_Client)
+		{
+			ClientPIEInstanceOffset = static_cast<uint16>(UE::GetPlayInEditorID());
+		}
+		
+#endif // WITH_EDITOR
+		
+		const uint16 RestPort = ECS_REST_DEFAULT_PORT + ClientPIEInstanceOffset;
+		
+		SetSingleton<flecs::Rest>(flecs::Rest{ .port = RestPort });
+	});
+	
+#endif // FLECS_REST
+}
+
+void UFlecsWorld::ImportStatsModule()
+{
+#ifdef FLECS_STATS
+
+	EndScope([this]()
+	{
+		ImportFlecsModule<flecs::stats>();
+	});
+	
+#endif // FLECS_STATS
 }
 
 void UFlecsWorld::AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector)

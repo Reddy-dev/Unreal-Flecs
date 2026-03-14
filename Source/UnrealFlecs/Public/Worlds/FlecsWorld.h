@@ -38,8 +38,6 @@ class IFlecsGameLoopInterface;
 class UFlecsWorldSubsystem;
 class UFlecsModuleInterface;
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FFlecsWorldModuleImportedDelegate, const FFlecsEntityHandle& /*InModuleEntity*/);
-
 UCLASS(BlueprintType, NotBlueprintable)
 class UNREALFLECS_API UFlecsWorld : public UObject
 {
@@ -110,6 +108,12 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
 	void ResetClock() const;
+	
+	template <typename T>
+	FORCEINLINE FFlecsEntityHandle ImportFlecsModule()
+	{
+		return World.import<T>();
+	}
 	
 	/**
 	 * @brief Create a new entity in the world,
@@ -1016,6 +1020,9 @@ public:
 	{
 		return IsFlecsObjectRegistered(T::StaticClass());
 	}
+	
+	void ImportRestModule();
+	void ImportStatsModule();
 
 	static void AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector);
 

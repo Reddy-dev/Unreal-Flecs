@@ -248,6 +248,16 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	{
 		DefaultWorld->SetThreads(FMath::Max(1, FPlatformMisc::NumberOfCores() - 2));
 	}
+	
+	if (Settings.bImportRest)
+	{
+		DefaultWorld->ImportRestModule();
+	}
+	
+	if (Settings.bImportStats)
+	{
+		DefaultWorld->ImportStatsModule();
+	}
 
 	DefaultWorld->WorldStart();
 

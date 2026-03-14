@@ -47,7 +47,7 @@ ENUM_RANGE_BY_COUNT(EFlecsOnDelete, EFlecsOnDelete::Count);
 namespace UE::Flecs
 {
 	using FFlecsComponentRegistrationFunction = void(*)(const TSolidNotNull<const UFlecsWorld*>, const FFlecsComponentPropertiesDefinition&);
-	using FFlecsComponentPropertiesFunction = std::function<void(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsComponentHandle& ComponentHandle)>;
+	using FFlecsComponentPropertiesFunction = void(*)(const TSolidNotNull<const UFlecsWorld*>, const FFlecsComponentHandle&, const FFlecsComponentPropertiesDefinition&);
 
 	namespace internal
 	{
@@ -340,7 +340,7 @@ public:
 		
 		if constexpr (!std::is_same_v<void, typename TFlecsComponentTraits<T>::InheritsFrom>)
 		{
-			using FTypeValue = typename TFlecsComponentTraits<T>::InheritsFrom;
+			using FTypeValue = TFlecsComponentTraits<T>::InheritsFrom;
 			
 			FFlecsQueryGeneratorInput Input;
 			Input.bPair = false;
@@ -380,9 +380,9 @@ public:
 		const TArray<FString> CustomTypeDependencies = TFlecsComponentTraits<T>::CustomTypeDependencies();
 		Definition.CustomTypeDependencies.Append(CustomTypeDependencies);
 		
-		Definition.PropertiesFunction = [Definition](const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsComponentHandle& ComponentHandle)
+		Definition.PropertiesFunction = [](const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsComponentHandle& ComponentHandle, const FFlecsComponentPropertiesDefinition& ComponentProperties)
 		{
-			switch (Definition.OnInstantiate)
+			switch (ComponentProperties.OnInstantiate)
 			{
 				case EFlecsOnInstantiate::Override:
 					ComponentHandle.AddPair(flecs::OnInstantiate, flecs::Override);
@@ -397,7 +397,7 @@ public:
 					break;
 			}
 			
-			switch (Definition.OnDelete)
+			switch (ComponentProperties.OnDelete)
 			{
 				case EFlecsOnDelete::Remove:
 					ComponentHandle.AddPair(flecs::OnDelete, flecs::Remove);
@@ -412,7 +412,7 @@ public:
 					break;
 			}
 			
-			switch (Definition.OnDeleteTarget)
+			switch (ComponentProperties.OnDeleteTarget)
 			{
 				case EFlecsOnDelete::Remove:
 					ComponentHandle.AddPair(flecs::OnDeleteTarget, flecs::Remove);
@@ -507,27 +507,27 @@ public:
 				ComponentHandle.Add<FFlecsAddReferencedObjectsTrait>();
 			}
 			
-			for (const FFlecsQueryGeneratorInput& WithType : Definition.WithTypes)
+			for (const FFlecsQueryGeneratorInput& WithType : ComponentProperties.WithTypes)
 			{
 				ComponentHandle.AddWith(WithType.GetFirstTermRef(InFlecsWorld).Get<FFlecsId>());
 			}
 			
-			for (const FFlecsQueryGeneratorInput& DependsOn : Definition.DependsOn)
+			for (const FFlecsQueryGeneratorInput& DependsOn : ComponentProperties.DependsOn)
 			{
 				ComponentHandle.AddPair(flecs::DependsOn, 
 					DependsOn.GetFirstTermRef(InFlecsWorld).Get<FFlecsId>());
 			}
 			
-			if (Definition.ChildOf.IsSet())
+			if (ComponentProperties.ChildOf.IsSet())
 			{
 				ComponentHandle.AddPair(flecs::ChildOf, 
-					Definition.ChildOf.GetValue().GetFirstTermRef(InFlecsWorld).Get<FFlecsId>());
+					ComponentProperties.ChildOf.GetValue().GetFirstTermRef(InFlecsWorld).Get<FFlecsId>());
 			}
 			
-			if (Definition.InheritsFrom.IsSet())
+			if (ComponentProperties.InheritsFrom.IsSet())
 			{
 				ComponentHandle.AddPair(flecs::IsA, 
-					Definition.InheritsFrom.GetValue().GetFirstTermRef(InFlecsWorld).Get<FFlecsId>());
+					ComponentProperties.InheritsFrom.GetValue().GetFirstTermRef(InFlecsWorld).Get<FFlecsId>());
 			}
 			
 			TFlecsComponentTraits<T>::PostRegister(ComponentHandle);

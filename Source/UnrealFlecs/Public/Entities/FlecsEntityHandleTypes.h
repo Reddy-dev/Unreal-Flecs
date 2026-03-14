@@ -54,8 +54,7 @@ namespace UE::Flecs
 	 * Only Runtime types allowed are types in which it's impossible to have data, e.g. GameplayTags
 	 */
 	template <typename T>
-	concept TFlecsEntityFunctionInputNoDataTypeConcept =
-		std::is_convertible_v<T, const FGameplayTag&>;
+	concept TFlecsEntityFunctionInputNoDataTypeConcept = std::is_convertible_v<T, const FGameplayTag&>;
 
 	/*
 	 * Supports both runtime data and no-data types
@@ -71,8 +70,7 @@ namespace UE::Flecs
 	concept TFlecsEntityFunctionUEnumTypeConcept = std::is_convertible_v<T, const UEnum*>;
 
 	template <typename T>
-	concept TFlecsEntityFunctionValueEnumTypeConcept =
-		std::is_convertible_v<T, const FSolidEnumSelector&>;
+	concept TFlecsEntityFunctionValueEnumTypeConcept = std::is_convertible_v<T, const FSolidEnumSelector&>;
 
 	/*
 	 * Data types that have associated UEnum types (without an Enum Value) or are input types
@@ -86,8 +84,7 @@ namespace UE::Flecs
 	 * Runtime UScriptStruct type and Const Data alongside it
 	 */
 	template <typename T>
-	concept TFlecsEntityFunctionUSTRUCTViewDataTypeConcept
-		= std::is_convertible_v<T, FConstStructView>;
+	concept TFlecsEntityFunctionUSTRUCTViewDataTypeConcept = std::is_convertible_v<T, FConstStructView>;
 
 	// Must have Valid Constructors or be exactly FFlecsId
 	template <typename T>
