@@ -5,7 +5,7 @@
 #include "Logs/FlecsCategories.h"
 
 #include "Pipelines/FlecsOutsideMainLoopTag.h"
-#include "Pipelines/TickFunctions/FlecsTickTypeNativeTags.h"
+#include "Pipelines/FlecsTickTypeNativeTags.h"
 
 #include "Worlds/FlecsWorld.h"
 

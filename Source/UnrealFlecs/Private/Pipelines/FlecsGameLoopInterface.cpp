@@ -3,7 +3,7 @@
 #include "Pipelines/FlecsGameLoopInterface.h"
 
 #include "Pipelines/FlecsGameLoopTag.h"
-#include "Pipelines/TickFunctions/FlecsTickTypeNativeTags.h"
+#include "Pipelines/FlecsTickTypeNativeTags.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsGameLoopInterface)
 

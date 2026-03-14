@@ -27,6 +27,11 @@
 namespace flecs {
 
 namespace _ {
+    
+    template <Solid::TVariantStructConcept T>
+    inline const char* type_name() {
+      return StringCast<char>(*TBaseStructure<T>::Get()->GetStructCPPName()).Get();
+    }
 
 template <typename T>
 inline const char* component_symbol_name() {

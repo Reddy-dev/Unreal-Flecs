@@ -160,8 +160,8 @@ public:
 	static constexpr bool Singleton = false;
 	static constexpr bool Trait = false;
 	
-	static constexpr bool Sparse = false;
 	static constexpr bool DontFragment = false;
+	static constexpr bool Sparse = DontFragment;
 	
 	static constexpr bool Relationship = false;
 	static constexpr bool Target = false;

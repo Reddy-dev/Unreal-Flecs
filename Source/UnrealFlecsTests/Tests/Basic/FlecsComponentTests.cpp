@@ -368,6 +368,46 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 		// @TODO: Can we unify this?
 		ASSERT_THAT(IsTrue(OneByteWithoutUPropertyEntity.IsTag()));
 	}
+	
+	TEST_METHOD(D5_UnrealVariantTypeBidrectional_RegisterCPPAPI_CPPAPI)
+	{
+		const UScriptStruct* ScriptStruct = TBaseStructure<FMatrix>::Get();
+		
+		const FFlecsEntityHandle StructEntity = FlecsWorld->RegisterComponentType<FMatrix>();
+		ASSERT_THAT(IsTrue(StructEntity.IsValid()));
+		
+		const FFlecsEntityHandle StaticStructEntity = FlecsWorld->RegisterComponentType(ScriptStruct);
+		ASSERT_THAT(IsTrue(StaticStructEntity.IsValid()));
+		ASSERT_THAT(IsTrue(StaticStructEntity == StructEntity));
+		
+		const FFlecsEntityHandle SymbolLookupResult = FlecsWorld->LookupEntityBySymbol_Internal(TEXT("FMatrix"));
+		ASSERT_THAT(IsTrue(SymbolLookupResult.IsValid()));
+		ASSERT_THAT(IsTrue(SymbolLookupResult == StructEntity));
+		
+		const FFlecsEntityHandle ScriptStructLookupResult = FlecsWorld->GetScriptStructEntity(ScriptStruct);
+		ASSERT_THAT(IsTrue(ScriptStructLookupResult.IsValid()));
+		ASSERT_THAT(IsTrue(ScriptStructLookupResult == StructEntity));
+	}
+	
+	TEST_METHOD(D6_UnrealVariantTypeBidrectional_RegisterStaticStructAPI_StaticStructAPI)
+	{
+		const UScriptStruct* ScriptStruct = TBaseStructure<FMatrix>::Get();
+		
+		const FFlecsEntityHandle StructEntity = FlecsWorld->RegisterComponentType(ScriptStruct);
+		ASSERT_THAT(IsTrue(StructEntity.IsValid()));
+		
+		const FFlecsEntityHandle CPPRegister = FlecsWorld->RegisterComponentType<FMatrix>();
+		ASSERT_THAT(IsTrue(CPPRegister.IsValid()));
+		ASSERT_THAT(IsTrue(CPPRegister == StructEntity));
+		
+		const FFlecsEntityHandle SymbolLookupResult = FlecsWorld->LookupEntityBySymbol_Internal(TEXT("FMatrix"));
+		ASSERT_THAT(IsTrue(SymbolLookupResult.IsValid()));
+		ASSERT_THAT(IsTrue(SymbolLookupResult == StructEntity));
+		
+		const FFlecsEntityHandle ScriptStructLookupResult = FlecsWorld->GetScriptStructEntity(ScriptStruct);
+		ASSERT_THAT(IsTrue(ScriptStructLookupResult.IsValid()));
+		ASSERT_THAT(IsTrue(ScriptStructLookupResult == StructEntity));
+	}
 
 	/*TEST_METHOD(E1_BasicComponentRegistrationWithCustomName_CPPAPI)
 	{
