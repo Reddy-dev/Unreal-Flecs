@@ -11,79 +11,77 @@ TWeakObjectPtr<UFlecsTypeRegistryEngineSubsystem> UFlecsTypeRegistryEngineSubsys
 TArray<FString> UFlecsTypeRegistryEngineSubsystem::SortComponentsByDependencies() const
 {
     TMap<FString, TArray<FString>> Graph;
-    TMap<FString, const FFlecsComponentPropertiesDefinition*> NameToDef;
+    TMap<FString, const FFlecsComponentPropertiesDefinition*> NameToDefinition;
 
     for (const FFlecsRegisteredComponentEntry& Entry : RegisteredComponentEntries)
     {
         const FString& Name = Entry.ComponentDefinition.Name;
-        NameToDef.Add(Name, &Entry.ComponentDefinition);
-        Graph.FindOrAdd(Name); // ensure entry exists
+        NameToDefinition.Add(Name, &Entry.ComponentDefinition);
+        Graph.FindOrAdd(Name);
     }
 	
     for (const FFlecsRegisteredComponentEntry& Entry : RegisteredComponentEntries)
     {
         const FString& Name = Entry.ComponentDefinition.Name;
-        const FFlecsComponentPropertiesDefinition& Def = Entry.ComponentDefinition;
+        const FFlecsComponentPropertiesDefinition& Definition = Entry.ComponentDefinition;
 
-        TArray<FString> Deps;
+        TArray<FString> Dependencies;
     	
-        auto AddInputDeps = [&](const TArray<FFlecsQueryGeneratorInput>& Inputs)
+        auto AddInputDependencies = [&](const TArray<FFlecsQueryGeneratorInput>& Inputs)
         {
             for (const FFlecsQueryGeneratorInput& Input : Inputs)
             {
-                FString DepName;
-                if (UE::Flecs::internal::TryGetDependencyName(Input, DepName))
+                FString DependencyName;
+                if (UE::Flecs::internal::TryGetDependencyName(Input, DependencyName))
                 {
-                    Deps.Add(DepName);
+                    Dependencies.Add(DependencyName);
                 }
             }
         };
 
-        AddInputDeps(Def.DependsOn);
+        AddInputDependencies(Definition.DependsOn);
     	
-        AddInputDeps(Def.WithTypes);
+        AddInputDependencies(Definition.WithTypes);
     	
-        if (Def.ChildOf.IsSet())
+        if (Definition.ChildOf.IsSet())
         {
             FString DependencyName;
-            if (UE::Flecs::internal::TryGetDependencyName(Def.ChildOf.GetValue(), DependencyName))
+            if (UE::Flecs::internal::TryGetDependencyName(Definition.ChildOf.GetValue(), DependencyName))
             {
-                Deps.Add(DependencyName);
+                Dependencies.Add(DependencyName);
             }
         }
-
-        // InheritsFrom (optional)
-        if (Def.InheritsFrom.IsSet())
+    	
+        if (Definition.InheritsFrom.IsSet())
         {
             FString DepName;
-            if (UE::Flecs::internal::TryGetDependencyName(Def.InheritsFrom.GetValue(), DepName))
+            if (UE::Flecs::internal::TryGetDependencyName(Definition.InheritsFrom.GetValue(), DepName))
             {
-                Deps.Add(DepName);
+                Dependencies.Add(DepName);
             }
         }
-
-        // Add edges from Name to each Dep
-        for (const FString& Dep : Deps)
+    	
+        for (const FString& Dependency : Dependencies)
         {
-            if (!NameToDef.Contains(Dep))
+            if (!NameToDefinition.Contains(Dependency))
             {
                 UE_LOG(LogFlecsCore, Error,
                     TEXT("Component %s depends on %s which is not registered. Skipping dependency."),
-                    *Name, *Dep);
+                    *Name, *Dependency);
                 continue;
             }
         	
-            Graph.FindOrAdd(Dep).Add(Name);
+            Graph.FindOrAdd(Dependency).Add(Name);
         }
     }
 	
     TMap<FString, int32> InDegree;
-    for (const auto& Pair : Graph)
+    for (const TTuple<FString, TArray<FString>>& Pair : Graph)
     {
         InDegree.FindOrAdd(Pair.Key, 0);
-        for (const FString& Dep : Pair.Value)
+        for (const FString& Dependency : Pair.Value)
         {
-            InDegree.FindOrAdd(Dep)++;
+            InDegree.FindOrAdd(Dependency)++;
         }
     }
 
@@ -103,17 +101,17 @@ TArray<FString> UFlecsTypeRegistryEngineSubsystem::SortComponentsByDependencies(
         ZeroQueue.Dequeue(Node);
         Sorted.Add(Node);
 
-        for (const FString& Dep : Graph[Node])
+        for (const FString& Dependency : Graph[Node])
         {
-            int32& Count = InDegree[Dep];
-            if (--Count == 0)
+            int32& Count = InDegree[Dependency];
+        	--Count;
+            if (Count == 0)
             {
-	            ZeroQueue.Enqueue(Dep);
+	            ZeroQueue.Enqueue(Dependency);
             }
         }
     }
-
-    // Check for cycles
+	
     if (Sorted.Num() != Graph.Num())
     {
         UE_LOG(LogFlecsCore, Error,
