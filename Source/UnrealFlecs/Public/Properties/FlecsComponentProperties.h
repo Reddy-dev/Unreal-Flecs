@@ -87,6 +87,7 @@ namespace UE::Flecs
 		{
 			return StaticEnum<T>();
 		}
+		
 		template <typename TTuple, typename TFunction, int32... Indices>
 		void ForEachInTupleImpl(TFunction&& Function, TIntegerSequence<int32, Indices...>)
 		{
@@ -150,6 +151,8 @@ public:
 	using DependsOn = TTuple<>;
 	using InheritsFrom = void;
 	
+	using RegisterUnderModule = void;
+	
 	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::Override;	
 	static constexpr EFlecsOnDelete OnDelete = EFlecsOnDelete::Remove;
 	static constexpr EFlecsOnDelete OnDeleteTarget = EFlecsOnDelete::Remove;
@@ -175,7 +178,7 @@ public:
 	
 	static constexpr bool WithAddReferencedObjects = false;
 	static constexpr bool RegisterMemberProperties = false;
-	//static constexpr bool RegisterWithModule = false;
+	static constexpr bool RegisterWithUnrealModule = false;
 	
 	static const TArray<FString>& CustomTypeDependencies()
 	{
