@@ -177,8 +177,8 @@ public:
 	static constexpr bool Final = false;
 	
 	static constexpr bool WithAddReferencedObjects = false;
-	static constexpr bool RegisterMemberProperties = false;
-	static constexpr bool RegisterWithUnrealModule = false;
+	static constexpr bool RegisterMemberProperties = true;
+	static constexpr bool RegisterWithUnrealModule = true;
 	
 	static const TArray<FString>& CustomTypeDependencies()
 	{
@@ -329,9 +329,9 @@ public:
 			//.bRegisterWithModule = TFlecsComponentTraits<T>::RegisterWithModule,
 		};
 		
-		UE::Flecs::internal::ForEachInTuple<typename TFlecsComponentTraits<T>::WithTypes>([&Definition](auto Type)
+		UE::Flecs::internal::ForEachInTuple<typename TFlecsComponentTraits<T>::WithTypes>([&Definition]<typename TWithType>(TWithType Type)
 		{
-			using FTypeValue = decltype(Type);
+			using FTypeValue = TWithType;
 			
 			FFlecsQueryGeneratorInput Input;
 			Input.bPair = false;
@@ -353,9 +353,9 @@ public:
 			Definition.InheritsFrom = Input;
 		}
 		
-		UE::Flecs::internal::ForEachInTuple<typename TFlecsComponentTraits<T>::DependsOn>([&Definition](auto Type)
+		UE::Flecs::internal::ForEachInTuple<typename TFlecsComponentTraits<T>::DependsOn>([&Definition]<typename TDependsOn>(TDependsOn Type)
 		{
-			using FTypeValue = decltype(Type);
+			using FTypeValue = TDependsOn;
 			
 			FFlecsQueryGeneratorInput Input;
 			Input.bPair = false;
@@ -367,9 +367,9 @@ public:
 		
 		if constexpr (!std::is_same_v<void, typename TFlecsComponentTraits<T>::ChildOf>)
 		{
-			UE::Flecs::internal::ForEachInTuple<typename TFlecsComponentTraits<T>::ChildOf>([&Definition](auto Type)
+			UE::Flecs::internal::ForEachInTuple<typename TFlecsComponentTraits<T>::ChildOf>([&Definition]<typename TChildOf>(TChildOf Type)
 			{
-				using FTypeValue = decltype(Type);
+				using FTypeValue = TChildOf;
 				
 				FFlecsQueryGeneratorInput Input;
 				Input.bPair = false;
