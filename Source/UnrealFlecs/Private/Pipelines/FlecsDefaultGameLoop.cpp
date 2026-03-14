@@ -134,7 +134,7 @@ FFlecsEntityHandle UFlecsDefaultGameLoop::CreatePipelineForTickType(const FGamep
 {
 	auto MakeBasePipeline = [this, InWorld]() -> flecs::pipeline_builder<>
 	{
-		return InWorld->CreatePipeline()
+		flecs::pipeline_builder<> PipelineBuilder = InWorld->CreatePipeline()
 			.with(flecs::System)
 			.without(flecs::Disabled).up(flecs::DependsOn)
 			.without(flecs::Disabled).up(flecs::ChildOf)
@@ -144,6 +144,14 @@ FFlecsEntityHandle UFlecsDefaultGameLoop::CreatePipelineForTickType(const FGamep
 			.without<FFlecsOutsideMainLoopTag>()
 			.without<FFlecsOutsideMainLoopTag>().up(flecs::DependsOn)
 			.without<FFlecsOutsideMainLoopTag>().up(flecs::ChildOf);
+		
+		if (bUsePhasesInUnrealTickGroups)
+		{
+			PipelineBuilder
+				.with(flecs::Phase).cascade(flecs::DependsOn);
+		}
+		
+		return PipelineBuilder;
 	};
 
 	FFlecsEntityHandle ResultPipeline;

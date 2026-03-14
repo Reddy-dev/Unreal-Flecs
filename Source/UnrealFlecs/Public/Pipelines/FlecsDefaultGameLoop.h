@@ -21,6 +21,9 @@ public:
 	
 	virtual bool IsMainLoop() const override;
 	virtual TArray<FGameplayTag> GetTickTypeTags() const override;
+	
+	UPROPERTY(EditAnywhere)
+	bool bUsePhasesInUnrealTickGroups = false;
 
 	// Main Loop
 	UPROPERTY()
