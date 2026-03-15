@@ -45,6 +45,8 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 
 	TEST_METHOD(A1_BasicUSTRUCTComponentRegistration_CPPAPI)
 	{
+		ASSERT_THAT(IsFalse(FlecsWorld->HasScriptStruct(FFlecsTestStruct_Value::StaticStruct())));
+		
 		const FFlecsEntityHandle StructEntity = FlecsWorld->RegisterComponentType<FFlecsTestStruct_Value>();
 		ASSERT_THAT(IsTrue(StructEntity.IsValid()));
 		
