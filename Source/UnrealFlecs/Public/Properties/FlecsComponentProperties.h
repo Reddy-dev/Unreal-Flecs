@@ -14,16 +14,45 @@
 #include "Standard/robin_hood.h"
 #include "Types/SolidCppStructOps.h"
 
+#include "Worlds/FlecsWorld.h"
 #include "Entities/FlecsComponentHandle.h"
+#include "Components/FlecsAddReferencedObjectsTrait.h"
+#include "Queries/Generator/FlecsQueryGeneratorInput.h"
+#include "Queries/Generator/FlecsQueryGeneratorInputType.h"
+
+#include "FlecsComponentProperties.generated.h"
+
+struct FFlecsComponentPropertiesDefinition;
+
+UENUM(BlueprintType)
+enum class EFlecsOnInstantiate : uint8
+{
+	Override,
+	Inherit,
+	DontInherit,
+	Count UMETA(Hidden)
+}; // enum class EFlecsOnInstantiate
+ENUM_RANGE_BY_COUNT(EFlecsOnInstantiate, EFlecsOnInstantiate::Count);
+
+UENUM(BlueprintType)
+enum class EFlecsOnDelete : uint8
+{
+	Remove,
+	Delete,
+	Panic,
+	Count UMETA(Hidden)
+}; // enum class EFlecsOnDelete
+ENUM_RANGE_BY_COUNT(EFlecsOnDelete, EFlecsOnDelete::Count);
 
 namespace UE::Flecs
 {
-	using FFlecsComponentFunction = std::function<void(flecs::world, const FFlecsComponentHandle&)>;
+	using FFlecsComponentRegistrationFunction = void(*)(const TSolidNotNull<const UFlecsWorld*>, const FFlecsComponentPropertiesDefinition&);
+	using FFlecsComponentPropertiesFunction = void(*)(const TSolidNotNull<const UFlecsWorld*>, const FFlecsComponentHandle&, const FFlecsComponentPropertiesDefinition&);
 
 	namespace internal
 	{
 		template <typename T>
-		FORCEINLINE UScriptStruct* GetScriptStructIf()
+		NO_DISCARD FORCEINLINE UScriptStruct* GetScriptStructIf()
 		{
 			if constexpr (Solid::IsScriptStruct<T>())
 			{
@@ -35,91 +64,537 @@ namespace UE::Flecs
 			}
 		}
 		
+		template <typename T>
+		NO_DISCARD FORCEINLINE UStruct* GetMetaTypeIf()
+		{
+			return nullptr;
+		}
+		
+		template <Solid::TScriptStructConcept T>
+		NO_DISCARD FORCEINLINE UStruct* GetMetaTypeIf()
+		{
+			return TBaseStructure<T>::Get();
+		}
+		
+		template <Solid::TStaticClassConcept T>
+		NO_DISCARD FORCEINLINE UStruct* GetMetaTypeIf()
+		{
+			return StaticClass<T>();
+		}
+		
+		template <Solid::TStaticEnumConcept T>
+		NO_DISCARD FORCEINLINE UStruct* GetMetaTypeIf()
+		{
+			return StaticEnum<T>();
+		}
+		
+		template <typename TTuple, typename TFunction, int32... Indices>
+		void ForEachInTupleImpl(TFunction&& Function, TIntegerSequence<int32, Indices...>)
+		{
+			(Function.template operator()<typename TTupleElement<Indices, TTuple>::Type>(), ...);
+		}
+		
+		template <typename TTuple, typename TFunction>
+		void ForEachInTuple(TFunction&& Function)
+		{
+			ForEachInTupleImpl<TTuple>(Forward<TFunction>(Function), TMakeIntegerSequence<int32, TTupleArity<TTuple>::Value>{});
+		}
+		
+		NO_DISCARD FORCEINLINE bool TryGetDependencyName(const FFlecsQueryGeneratorInput& Input, FString& OutName)
+		{
+			OutName.Reset();
+
+			if (!Input.First.IsValid())
+			{
+				return false;
+			}
+
+			if LIKELY_IF(const FFlecsQueryGeneratorInputType_CPPType* CPPType = Input.First.GetPtr<FFlecsQueryGeneratorInputType_CPPType>())
+			{
+				OutName = CPPType->SymbolString;
+				return !OutName.IsEmpty();
+			}
+
+			if LIKELY_IF(const FFlecsQueryGeneratorInputType_ScriptStruct* ScriptStructType = Input.First.GetPtr<FFlecsQueryGeneratorInputType_ScriptStruct>())
+			{
+				if (ScriptStructType->ScriptStruct)
+				{
+					OutName = ScriptStructType->ScriptStruct->GetName();
+					return true;
+				}
+			}
+
+			if LIKELY_IF(const FFlecsQueryGeneratorInputType_ScriptEnum* ScriptEnumType = Input.First.GetPtr<FFlecsQueryGeneratorInputType_ScriptEnum>())
+			{
+				if (ScriptEnumType->ScriptEnum)
+				{
+					OutName = ScriptEnumType->ScriptEnum->GetName();
+					return true;
+				}
+			}
+
+			return false;
+		}
+		
 	} // namespace internal
 	
 } // namespace UE::Flecs
 
-// @TODO: rename this due to it being too generic and risks name collisions
-struct UNREALFLECS_API FFlecsComponentProperties
+template <typename T>
+struct TFlecsComponentTraitsBase
 {
-	std::string Name;
-	TWeakObjectPtr<UScriptStruct> Struct;
+public:
+	static constexpr bool AutoRegister = true;
+	
+	using WithTypes = TTuple<>;
+	using ChildOf = void;
+	using DependsOn = TTuple<>;
+	using InheritsFrom = void;
+	
+	using RegisterUnderModule = void;
+	
+	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::Override;	
+	static constexpr EFlecsOnDelete OnDelete = EFlecsOnDelete::Remove;
+	static constexpr EFlecsOnDelete OnDeleteTarget = EFlecsOnDelete::Remove;
+	
+	static constexpr bool Singleton = false;
+	static constexpr bool Trait = false;
+	
+	static constexpr bool DontFragment = false;
+	static constexpr bool Sparse = DontFragment;
+	
+	static constexpr bool Relationship = false;
+	static constexpr bool Target = false;
+	static constexpr bool PairIsTag = false;
+	static constexpr bool Reflexive = false;
+	static constexpr bool Acyclic = false;
+	static constexpr bool Traversable = false;
+	static constexpr bool Transitive = false;
+	static constexpr bool OneOf = false;
+	
+	static constexpr bool CanToggle = false;
+	static constexpr bool Inheritable = false;
+	static constexpr bool Final = false;
+	
+	static constexpr bool WithAddReferencedObjects = false;
+	static constexpr bool RegisterMemberProperties = true;
+	static constexpr bool RegisterWithUnrealModule = true;
+	
+	static const TArray<FString>& CustomTypeDependencies()
+	{
+		static const TArray<FString> EmptyArray;
+		return EmptyArray;
+	}
+	
+	// Only get called with Auto-Registration with Typed Components
+	static void PostRegister(const FFlecsComponentHandle& ComponentHandle) {}
+	
+}; // struct TFlecsComponentTraitsBase
 
-	uint32 Size = 1;
-	uint16 Alignment = 1;
-
-	UE::Flecs::FFlecsComponentFunction RegistrationFunction;
-}; // struct FFlecsComponentProperties
-
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnComponentPropertiesRegistered, FFlecsComponentProperties);
-
-struct UNREALFLECS_API FFlecsComponentPropertiesRegistry final
+template <typename T>
+struct TFlecsComponentTraits : public TFlecsComponentTraitsBase<T>
 {
-	static FFlecsComponentPropertiesRegistry Instance;
+	
+}; // struct TFlecsComponentTraits
+
+USTRUCT()
+struct UNREALFLECS_API FFlecsComponentPropertiesDefinition
+{
+	GENERATED_BODY()
 	
 public:
-	static NO_DISCARD FFlecsComponentPropertiesRegistry& Get()
-	{
-		return Instance;
-	}
-
-	void RegisterComponentProperties(const std::string& Name,
-	                                 UScriptStruct* Struct,
-	                                 const uint32 Size, const uint16 Alignment,
-	                                 const UE::Flecs::FFlecsComponentFunction& RegistrationFunction);
-
-	NO_DISCARD bool ContainsComponentProperties(const std::string_view Name) const;
-
-	NO_DISCARD bool ContainsComponentProperties(const FString& Name) const;
-
-	NO_DISCARD const FFlecsComponentProperties& GetComponentProperties(const std::string_view Name) const;
-
-	NO_DISCARD const FFlecsComponentProperties& GetComponentProperties(const FString& Name) const;
-
-	robin_hood::unordered_map<std::string, FFlecsComponentProperties> ComponentProperties;
-	FOnComponentPropertiesRegistered OnComponentPropertiesRegistered;
+	UPROPERTY()
+	uint8 bAutoRegister : 1 = true;
 	
-}; // struct FFlecsComponentPropertiesRegistry
+	UPROPERTY()
+	FString Name;
+	
+	UPROPERTY()
+	uint32 Size = 0;
+	
+	UPROPERTY()
+	uint16 Alignment = 0;
+	
+	UPROPERTY()
+	EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::Override;
+	
+	UPROPERTY()
+	EFlecsOnDelete OnDelete = EFlecsOnDelete::Remove;
+	
+	UPROPERTY()
+	EFlecsOnDelete OnDeleteTarget = EFlecsOnDelete::Remove;
+	
+	UPROPERTY()
+	uint32 bSingleton : 1 = false;
+	
+	UPROPERTY()
+	uint32 bTrait : 1 = false;
+	
+	UPROPERTY()
+	uint32 bSparse : 1 = false;
+	
+	UPROPERTY()
+	uint32 bDontFragment : 1 = false;
+	
+	UPROPERTY()
+	uint32 bRelationship : 1 = false;
+	
+	UPROPERTY()
+	uint32 bTarget : 1 = false;
+	
+	UPROPERTY()
+	uint32 bPairIsTag : 1 = false;
+	
+	UPROPERTY()
+	uint32 bReflexive : 1 = false;
+	
+	UPROPERTY()
+	uint32 bAcyclic : 1 = false;
+	
+	UPROPERTY()
+	uint32 bTraversable : 1 = false;
+	
+	UPROPERTY()
+	uint32 bTransitive : 1 = false;
+	
+	UPROPERTY()
+	uint32 bOneOf : 1 = false;
+	
+	UPROPERTY()
+	uint32 bCanToggle : 1 = false;
+	
+	UPROPERTY()
+	uint32 bInheritable : 1 = false;
+	
+	UPROPERTY()
+	uint32 bFinal : 1 = false;
+	
+	UPROPERTY()
+	uint32 bWithAddReferencedObjects : 1 = false;
+	
+	// Only matters if the component is a UScriptStruct Type
+	UPROPERTY()
+	uint32 bRegisterMemberProperties : 1 = false;
+	
+	UPROPERTY()
+	uint32 bRegisterWithModule : 1 = false;
+	
+	UPROPERTY()
+	TArray<FFlecsQueryGeneratorInput> WithTypes;
+	
+	UPROPERTY()
+	TOptional<FFlecsQueryGeneratorInput> ChildOf;
+	
+	UPROPERTY()
+	TArray<FFlecsQueryGeneratorInput> DependsOn;
+	
+	UPROPERTY()
+	TOptional<FFlecsQueryGeneratorInput> InheritsFrom;
+	
+	UPROPERTY()
+	TArray<FString> CustomTypeDependencies;
+	
+	UE::Flecs::FFlecsComponentRegistrationFunction RegistrationFunction;
+	UE::Flecs::FFlecsComponentPropertiesFunction PropertiesFunction;
+	
+	template <typename T>
+	static NO_DISCARD FORCEINLINE FFlecsComponentPropertiesDefinition Make()
+	{
+		FFlecsComponentPropertiesDefinition Definition
+		{
+			.bAutoRegister = TFlecsComponentTraits<T>::AutoRegister,
+			.Name = FString(nameof(T).data()),
+			.Size = sizeof(T),
+			.Alignment = alignof(T),
+			.OnInstantiate = TFlecsComponentTraits<T>::OnInstantiate,
+			.OnDelete = TFlecsComponentTraits<T>::OnDelete,
+			.OnDeleteTarget = TFlecsComponentTraits<T>::OnDeleteTarget,
+			.bSingleton = TFlecsComponentTraits<T>::Singleton,
+			.bTrait = TFlecsComponentTraits<T>::Trait,
+			.bSparse = TFlecsComponentTraits<T>::Sparse,
+			.bDontFragment = TFlecsComponentTraits<T>::DontFragment,
+			.bRelationship = TFlecsComponentTraits<T>::Relationship,
+			.bTarget = TFlecsComponentTraits<T>::Target,
+			.bPairIsTag = TFlecsComponentTraits<T>::PairIsTag,
+			.bReflexive = TFlecsComponentTraits<T>::Reflexive,
+			.bAcyclic = TFlecsComponentTraits<T>::Acyclic,
+			.bTraversable = TFlecsComponentTraits<T>::Traversable,
+			.bTransitive = TFlecsComponentTraits<T>::Transitive,
+			.bOneOf = TFlecsComponentTraits<T>::OneOf,
+			.bCanToggle = TFlecsComponentTraits<T>::CanToggle,
+			.bInheritable = TFlecsComponentTraits<T>::Inheritable,
+			.bFinal = TFlecsComponentTraits<T>::Final,
+			.bWithAddReferencedObjects = TFlecsComponentTraits<T>::WithAddReferencedObjects,
+			.bRegisterMemberProperties = TFlecsComponentTraits<T>::RegisterMemberProperties,
+			//.bRegisterWithModule = TFlecsComponentTraits<T>::RegisterWithModule,
+		};
+		
+		UE::Flecs::internal::ForEachInTuple<typename TFlecsComponentTraits<T>::WithTypes>([&Definition]<typename TWithType>(TWithType Type)
+		{
+			using FTypeValue = TWithType;
+			
+			FFlecsQueryGeneratorInput Input;
+			Input.bPair = false;
+			Input.First.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
+			Input.First.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = FString(nameof(FTypeValue).data());
+			
+			Definition.WithTypes.Add(Input);
+		});
+		
+		if constexpr (!std::is_same_v<void, typename TFlecsComponentTraits<T>::InheritsFrom>)
+		{
+			using FTypeValue = TFlecsComponentTraits<T>::InheritsFrom;
+			
+			FFlecsQueryGeneratorInput Input;
+			Input.bPair = false;
+			Input.First.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
+			Input.First.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = FString(nameof(FTypeValue).data());
+			
+			Definition.InheritsFrom = Input;
+		}
+		
+		UE::Flecs::internal::ForEachInTuple<typename TFlecsComponentTraits<T>::DependsOn>([&Definition]<typename TDependsOn>(TDependsOn Type)
+		{
+			using FTypeValue = TDependsOn;
+			
+			FFlecsQueryGeneratorInput Input;
+			Input.bPair = false;
+			Input.First.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
+			Input.First.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = FString(nameof(FTypeValue).data());
+			
+			Definition.DependsOn.Add(Input);
+		});
+		
+		if constexpr (!std::is_same_v<void, typename TFlecsComponentTraits<T>::ChildOf>)
+		{
+			UE::Flecs::internal::ForEachInTuple<typename TFlecsComponentTraits<T>::ChildOf>([&Definition]<typename TChildOf>(TChildOf Type)
+			{
+				using FTypeValue = TChildOf;
+				
+				FFlecsQueryGeneratorInput Input;
+				Input.bPair = false;
+				Input.First.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
+				Input.First.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = FString(nameof(FTypeValue).data());
+				
+				Definition.ChildOf = Input;
+			});
+		}
+		
+		const TArray<FString> CustomTypeDependencies = TFlecsComponentTraits<T>::CustomTypeDependencies();
+		Definition.CustomTypeDependencies.Append(CustomTypeDependencies);
+		
+		Definition.PropertiesFunction = [](const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsComponentHandle& ComponentHandle, const FFlecsComponentPropertiesDefinition& ComponentProperties)
+		{
+			switch (ComponentProperties.OnInstantiate)
+			{
+				case EFlecsOnInstantiate::Override:
+					ComponentHandle.AddPair(flecs::OnInstantiate, flecs::Override);
+					break;
+				case EFlecsOnInstantiate::Inherit:
+					ComponentHandle.AddPair(flecs::OnInstantiate, flecs::Inherit);
+					break;
+				case EFlecsOnInstantiate::DontInherit:
+					ComponentHandle.AddPair(flecs::OnInstantiate, flecs::DontInherit);
+					break;
+				default:
+					break;
+			}
+			
+			switch (ComponentProperties.OnDelete)
+			{
+				case EFlecsOnDelete::Remove:
+					ComponentHandle.AddPair(flecs::OnDelete, flecs::Remove);
+					break;
+				case EFlecsOnDelete::Delete:
+					ComponentHandle.AddPair(flecs::OnDelete, flecs::Delete);
+					break;
+				case EFlecsOnDelete::Panic:
+					ComponentHandle.AddPair(flecs::OnDelete, flecs::Panic);
+					break;
+				default:
+					break;
+			}
+			
+			switch (ComponentProperties.OnDeleteTarget)
+			{
+				case EFlecsOnDelete::Remove:
+					ComponentHandle.AddPair(flecs::OnDeleteTarget, flecs::Remove);
+					break;
+				case EFlecsOnDelete::Delete:
+					ComponentHandle.AddPair(flecs::OnDeleteTarget, flecs::Delete);
+					break;
+				case EFlecsOnDelete::Panic:
+					ComponentHandle.AddPair(flecs::OnDeleteTarget, flecs::Panic);
+					break;
+				default:
+					break;
+			}
+			
+			if constexpr (TFlecsComponentTraits<T>::Singleton)
+			{
+				ComponentHandle.Add(flecs::Singleton);
+			}
+			
+			if constexpr (TFlecsComponentTraits<T>::Trait)
+			{
+				ComponentHandle.Add(flecs::Trait);
+			}
+			
+			if constexpr (TFlecsComponentTraits<T>::Sparse)
+			{
+				ComponentHandle.Add(flecs::Sparse);
+			}
+			
+			if constexpr (TFlecsComponentTraits<T>::DontFragment)
+			{
+				ComponentHandle.Add(flecs::DontFragment);
+			}
+			
+			if constexpr (TFlecsComponentTraits<T>::Relationship)
+			{
+				ComponentHandle.Add(flecs::Relationship);
+			}
+			
+			if constexpr (TFlecsComponentTraits<T>::Target)
+			{
+				ComponentHandle.Add(flecs::Target);
+			}
+			
+			if constexpr (TFlecsComponentTraits<T>::PairIsTag)
+			{
+				ComponentHandle.Add(flecs::PairIsTag);
+			}
+			
+			if constexpr (TFlecsComponentTraits<T>::Reflexive)
+			{
+				ComponentHandle.Add(flecs::Reflexive);
+			}
+			
+			if constexpr (TFlecsComponentTraits<T>::Acyclic)
+			{
+				ComponentHandle.Add(flecs::Acyclic);
+			}
+			
+			if constexpr (TFlecsComponentTraits<T>::Traversable)
+			{
+				ComponentHandle.Add(flecs::Traversable);
+			}
+			
+			if constexpr (TFlecsComponentTraits<T>::Transitive)
+			{
+				ComponentHandle.Add(flecs::Transitive);
+			}
+			
+			if constexpr (TFlecsComponentTraits<T>::OneOf)
+			{
+				ComponentHandle.Add(flecs::OneOf);
+			}
+			
+			if constexpr (TFlecsComponentTraits<T>::CanToggle)
+			{
+				ComponentHandle.Add(flecs::CanToggle);
+			}
+			
+			if constexpr (TFlecsComponentTraits<T>::Inheritable)
+			{
+				ComponentHandle.Add(flecs::Inherit);
+			}
+			
+			if constexpr (TFlecsComponentTraits<T>::Final)
+			{
+				ComponentHandle.Add(flecs::Final);
+			}
+			
+			if constexpr (TFlecsComponentTraits<T>::WithAddReferencedObjects)
+			{
+				ComponentHandle.Add<FFlecsAddReferencedObjectsTrait>();
+			}
+			
+			for (const FFlecsQueryGeneratorInput& WithType : ComponentProperties.WithTypes)
+			{
+				ComponentHandle.AddWith(WithType.GetFirstTermRef(InFlecsWorld).Get<FFlecsId>());
+			}
+			
+			for (const FFlecsQueryGeneratorInput& DependsOn : ComponentProperties.DependsOn)
+			{
+				ComponentHandle.AddPair(flecs::DependsOn, 
+					DependsOn.GetFirstTermRef(InFlecsWorld).Get<FFlecsId>());
+			}
+			
+			if (ComponentProperties.ChildOf.IsSet())
+			{
+				ComponentHandle.AddPair(flecs::ChildOf, 
+					ComponentProperties.ChildOf.GetValue().GetFirstTermRef(InFlecsWorld).Get<FFlecsId>());
+			}
+			
+			if (ComponentProperties.InheritsFrom.IsSet())
+			{
+				ComponentHandle.AddPair(flecs::IsA, 
+					ComponentProperties.InheritsFrom.GetValue().GetFirstTermRef(InFlecsWorld).Get<FFlecsId>());
+			}
+			
+			TFlecsComponentTraits<T>::PostRegister(ComponentHandle);
+		};
+		
+		if constexpr (TFlecsComponentTraits<T>::AutoRegister)
+		{
+			Definition.RegistrationFunction = [](const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsComponentPropertiesDefinition& ComponentProperties)
+			{
+			
+				if constexpr (Solid::IsScriptStruct<T>())
+				{
+					InFlecsWorld->RegisterComponentType<T>(ComponentProperties.bRegisterMemberProperties);
+				}
+				else
+				{
+					InFlecsWorld->RegisterComponentType<T>();
+				}
+			};
+		}
+		else
+		{
+			Definition.RegistrationFunction = [](const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsComponentPropertiesDefinition& ComponentProperties)
+			{
+				// Do Nothing, user will manually call RegisterComponentType in this case
+			};
+		}
+		
+		return Definition;
+	}
+	
+}; // struct FFlecsComponentProperties
 
-#define INTERNAL_REGISTER_FLECS_COMPONENT_IMPL(Name, RegistrationFunction) \
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnComponentPropertiesRegistered, FFlecsComponentPropertiesDefinition);
+
+namespace UE::Flecs::Private
+{
+	UNREALFLECS_API FCriticalSection& GetRegisteredComponentsMutex();
+	
+	UNREALFLECS_API TArray<FFlecsComponentPropertiesDefinition>& GetPendingRegisteredComponents();
+	UNREALFLECS_API void AddRegisteredComponentProperties_Static(const FFlecsComponentPropertiesDefinition& InDefinition);
+	
+	template <typename T>
+	struct TFlecsComponentPropertiesRegistrar
+	{
+	public:
+		TFlecsComponentPropertiesRegistrar()
+		{
+			FCoreDelegates::OnPostEngineInit.AddLambda([]()
+			{
+				const FFlecsComponentPropertiesDefinition Definition = FFlecsComponentPropertiesDefinition::Make<T>();
+				AddRegisteredComponentProperties_Static(Definition);
+			});
+		}
+	
+	}; // struct TFlecsComponentPropertiesRegistrar
+	
+} // namespace UE::Flecs::Private
+
+#define INTERNAL_REGISTER_FLECS_COMPONENT_IMPL(Name) \
 	namespace \
 	{ \
-		struct FFlecs_AutoRegister_##Name \
-		{ \
-			FFlecs_AutoRegister_##Name() \
-			{ \
-				FCoreDelegates::OnPostEngineInit.AddLambda([]() \
-				{ \
-					if constexpr (Solid::IsScriptStruct<Name>()) \
-					{ \
-						FFlecsComponentPropertiesRegistry::Get().RegisterComponentProperties( \
-						#Name, UE::Flecs::internal::GetScriptStructIf<Name>(), \
-						sizeof(Name), alignof(Name), RegistrationFunction); \
-						\
-						if constexpr (std::is_move_constructible<Name>::value || std::is_move_assignable<Name>::value) \
-						{ \
-							FSolidMoveableStructRegistry::Get().RegisterMovableScriptStruct<Name>(); \
-						} \
-					} \
-					else \
-					{ \
-						FFlecsComponentPropertiesRegistry::Get().RegisterComponentProperties( \
-							#Name, nullptr, sizeof(Name), alignof(Name), RegistrationFunction); \
-					} \
-				}); \
-			} \
-		}; \
-		static FFlecs_AutoRegister_##Name AutoRegister_##Name; \
+		static UE::Flecs::Private::TFlecsComponentPropertiesRegistrar<Name> FlecsComponentPropertiesRegistrarInstance_##Name; \
 	}
 
-#define INTERNAL_REGISTER_FLECS_COMPONENT_1(Name) \
-	INTERNAL_REGISTER_FLECS_COMPONENT_IMPL(Name, UE::Flecs::FFlecsComponentFunction{})
-
-#define INTERNAL_REGISTER_FLECS_COMPONENT_2(Name, RegistrationFunction) \
-	INTERNAL_REGISTER_FLECS_COMPONENT_IMPL(Name, RegistrationFunction)
-
-// @TODO: Consider adding Auto-Registration
-// std::function<void(flecs::world, const FFlecsComponentHandle&)>
-// std::function<void(flecs::world, const TFlecsComponentHandle<T>&)>
-#define REGISTER_FLECS_COMPONENT(...) \
-	UE_APPEND_VA_ARG_COUNT(INTERNAL_REGISTER_FLECS_COMPONENT_, ##__VA_ARGS__)(__VA_ARGS__)
+#define REGISTER_FLECS_COMPONENT(ComponentType) \
+	INTERNAL_REGISTER_FLECS_COMPONENT_IMPL(ComponentType)

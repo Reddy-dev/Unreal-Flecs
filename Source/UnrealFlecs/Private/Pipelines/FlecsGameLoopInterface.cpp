@@ -3,20 +3,16 @@
 #include "Pipelines/FlecsGameLoopInterface.h"
 
 #include "Pipelines/FlecsGameLoopTag.h"
-#include "Pipelines/TickFunctions/FlecsTickTypeNativeTags.h"
+#include "Pipelines/FlecsTickTypeNativeTags.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsGameLoopInterface)
 
-// Add default functionality here for any IFlecsGameLoopInterface functions that are not pure virtual.
-
-void IFlecsGameLoopInterface::InitializeModule(const TSolidNotNull<UFlecsWorld*> InWorld,
-	const FFlecsEntityHandle& InModuleEntity)
+void IFlecsGameLoopInterface::InitializeGameLoop_Internal(TSolidNotNull<UFlecsWorld*> InWorld)
 {
-	IFlecsModuleInterface::InitializeModule(InWorld, InModuleEntity);
+	GameLoopEntity = InWorld->CreateEntity("GameLoop")
+		.Add<FFlecsGameLoopTag>();
 
-	InModuleEntity.Add<FFlecsGameLoopTag>();
-
-	InitializeGameLoop(InWorld, InModuleEntity);
+	InitializeGameLoop(InWorld, GameLoopEntity);
 }
 
 bool IFlecsGameLoopInterface::IsMainLoop() const

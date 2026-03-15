@@ -41,7 +41,7 @@ namespace Solid
 	concept TVariantStructConcept = requires
 	{
 		requires TBaseStructureConcept<T>;
-		requires TIsUECoreVariant<T>::Value;
+		requires !!TIsUECoreVariant<T>::Value;
 	}; // concept TVariantStructConcept
 
 	template <typename T>

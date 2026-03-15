@@ -14,11 +14,10 @@ struct UNREALFLECS_API FFlecsUObjectTag
 	GENERATED_BODY()
 }; // struct FFlecsUObjectTag
 
-REGISTER_FLECS_COMPONENT(FFlecsUObjectTag,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponent)
-	{
-		InComponent
-			.Add(flecs::Target);
-	});
+template <>
+struct TFlecsComponentTraits<FFlecsUObjectTag> : public TFlecsComponentTraitsBase<FFlecsUObjectTag>
+{
+	static constexpr bool Target = true;
+}; // struct TFlecsComponentTraits<FFlecsUObjectTag>
 
 

@@ -10,7 +10,6 @@
 #include "Types/SolidEnumSelector.h"
 
 #include "Entities/FlecsEntityHandle.h"
-#include "Properties/FlecsComponentProperties.h"
 
 #include "FlecsEntityRecord.generated.h"
 
@@ -1016,76 +1015,4 @@ public:
 
 }; // struct FFlecsEntityRecord
 
-REGISTER_FLECS_COMPONENT(FFlecsEntityRecord,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
-	{
-		InComponentHandle
-			.AddPair(flecs::OnInstantiate, flecs::DontInherit);
-	});
 
-// @TODO: add additional settings
-USTRUCT(BlueprintType, DisplayName = "Named Entity Fragment")
-struct UNREALFLECS_API FFlecsNamedEntityRecordFragment : public FFlecsEntityRecordFragment
-{
-	GENERATED_BODY()
-
-public:
-	FORCEINLINE FFlecsNamedEntityRecordFragment() = default;
-	FORCEINLINE FFlecsNamedEntityRecordFragment(const FString& InName, const bool bInNameInheritedSubEntities = true)
-		: Name(InName)
-		, bNameInheritedSubEntities(bInNameInheritedSubEntities)
-	{
-	}
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Entity Record Fragment")
-	FString Name;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, AdvancedDisplay, Category = "Entity Record Fragment")
-	bool bNameInheritedSubEntities = true;
-	
-	virtual void PreApplyRecordToEntity(
-			const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsEntityHandle& InEntityHandle) const override;
-	
-	struct FBuilder;
-	
-}; // struct FFlecsNamedEntityRecordFragment
-
-struct FFlecsNamedEntityRecordFragment::FBuilder : public FFlecsEntityRecord::FFragmentBuilderType<FFlecsNamedEntityRecordFragment>
-{
-	using Super = FFlecsEntityRecord::FFragmentBuilderType<FFlecsNamedEntityRecordFragment>;
-	using Super::Super;
-	
-public:
-	FORCEINLINE FBuilder& Named(const FString& InName)
-	{
-		this->GetSelf().Name = InName;
-		return *this;
-	}
-	
-	FORCEINLINE FBuilder& InheritSubEntityNames(const bool bInInheritSubEntities)
-	{
-		this->GetSelf().bNameInheritedSubEntities = bInInheritSubEntities;
-		return *this;
-	}
-		
-}; // struct FFlecsNamedEntityRecordFragment::FBuilder
-
-USTRUCT(BlueprintType)
-struct UNREALFLECS_API FFlecsEntityRecordComponent
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Entity Record")
-	FFlecsEntityRecord EntityRecord;
-	
-}; // struct FFlecsEntityRecordComponent
-
-REGISTER_FLECS_COMPONENT(FFlecsEntityRecordComponent,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
-	{
-		InComponentHandle
-			.AddPair(flecs::OnInstantiate, flecs::DontInherit);
-	});
-
-	

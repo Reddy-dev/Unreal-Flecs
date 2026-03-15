@@ -45,6 +45,8 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 
 	TEST_METHOD(A1_BasicUSTRUCTComponentRegistration_CPPAPI)
 	{
+		ASSERT_THAT(IsFalse(FlecsWorld->HasScriptStruct(FFlecsTestStruct_Value::StaticStruct())));
+		
 		const FFlecsEntityHandle StructEntity = FlecsWorld->RegisterComponentType<FFlecsTestStruct_Value>();
 		ASSERT_THAT(IsTrue(StructEntity.IsValid()));
 		
@@ -264,24 +266,6 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 		ASSERT_THAT(IsTrue(StructEntity.Has(flecs::Trait)));
 		ASSERT_THAT(IsTrue(StructEntity.Has(flecs::PairIsTag)));
 	}
-	
-	TEST_METHOD(B11_GetComponentPropertyTraitsWithTypedComponentHandleLambda_ScriptStruct_CPPAPI)
-	{
-		const FFlecsEntityHandle StaticStructEntity = FlecsWorld->RegisterComponentType<FFlecsTestStruct_WithPropertyTraits_WithTypedComponentHandleInLambda>();
-		ASSERT_THAT(IsTrue(StaticStructEntity.IsValid()));
-
-		ASSERT_THAT(IsTrue(StaticStructEntity.Has(flecs::Trait)));
-		ASSERT_THAT(IsTrue(StaticStructEntity.Has(flecs::PairIsTag)));
-	}
-	
-	TEST_METHOD(B12_GetComponentPropertyTraitsWithTypedComponentHandleLambda_ScriptStruct_StaticStructAPI)
-	{
-		const FFlecsEntityHandle StaticStructEntity = FlecsWorld->RegisterComponentType(FFlecsTestStruct_WithPropertyTraits_WithTypedComponentHandleInLambda::StaticStruct());
-		ASSERT_THAT(IsTrue(StaticStructEntity.IsValid()));
-
-		ASSERT_THAT(IsTrue(StaticStructEntity.Has(flecs::Trait)));
-		ASSERT_THAT(IsTrue(StaticStructEntity.Has(flecs::PairIsTag)));
-	}
 
 	TEST_METHOD(C1_EnumComponentRegistration_CPPAPI)
 	{
@@ -385,6 +369,46 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 		ASSERT_THAT(IsTrue(OneByteWithoutUPropertyEntity.IsComponent()));
 		// @TODO: Can we unify this?
 		ASSERT_THAT(IsTrue(OneByteWithoutUPropertyEntity.IsTag()));
+	}
+	
+	TEST_METHOD(D5_UnrealVariantTypeBidrectional_RegisterCPPAPI_CPPAPI)
+	{
+		const UScriptStruct* ScriptStruct = TBaseStructure<FMatrix>::Get();
+		
+		const FFlecsEntityHandle StructEntity = FlecsWorld->RegisterComponentType<FMatrix>();
+		ASSERT_THAT(IsTrue(StructEntity.IsValid()));
+		
+		const FFlecsEntityHandle StaticStructEntity = FlecsWorld->RegisterComponentType(ScriptStruct);
+		ASSERT_THAT(IsTrue(StaticStructEntity.IsValid()));
+		ASSERT_THAT(IsTrue(StaticStructEntity == StructEntity));
+		
+		const FFlecsEntityHandle SymbolLookupResult = FlecsWorld->LookupEntityBySymbol_Internal(TEXT("FMatrix"));
+		ASSERT_THAT(IsTrue(SymbolLookupResult.IsValid()));
+		ASSERT_THAT(IsTrue(SymbolLookupResult == StructEntity));
+		
+		const FFlecsEntityHandle ScriptStructLookupResult = FlecsWorld->GetScriptStructEntity(ScriptStruct);
+		ASSERT_THAT(IsTrue(ScriptStructLookupResult.IsValid()));
+		ASSERT_THAT(IsTrue(ScriptStructLookupResult == StructEntity));
+	}
+	
+	TEST_METHOD(D6_UnrealVariantTypeBidrectional_RegisterStaticStructAPI_StaticStructAPI)
+	{
+		const UScriptStruct* ScriptStruct = TBaseStructure<FMatrix>::Get();
+		
+		const FFlecsEntityHandle StructEntity = FlecsWorld->RegisterComponentType(ScriptStruct);
+		ASSERT_THAT(IsTrue(StructEntity.IsValid()));
+		
+		const FFlecsEntityHandle CPPRegister = FlecsWorld->RegisterComponentType<FMatrix>();
+		ASSERT_THAT(IsTrue(CPPRegister.IsValid()));
+		ASSERT_THAT(IsTrue(CPPRegister == StructEntity));
+		
+		const FFlecsEntityHandle SymbolLookupResult = FlecsWorld->LookupEntityBySymbol_Internal(TEXT("FMatrix"));
+		ASSERT_THAT(IsTrue(SymbolLookupResult.IsValid()));
+		ASSERT_THAT(IsTrue(SymbolLookupResult == StructEntity));
+		
+		const FFlecsEntityHandle ScriptStructLookupResult = FlecsWorld->GetScriptStructEntity(ScriptStruct);
+		ASSERT_THAT(IsTrue(ScriptStructLookupResult.IsValid()));
+		ASSERT_THAT(IsTrue(ScriptStructLookupResult == StructEntity));
 	}
 
 	/*TEST_METHOD(E1_BasicComponentRegistrationWithCustomName_CPPAPI)

@@ -3,3 +3,5 @@
 #include "Pipelines/TickFunctions/FlecsTickTypeRelationship.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsTickTypeRelationship)
+
+REGISTER_FLECS_COMPONENT(FFlecsTickTypeRelationship);

@@ -36,12 +36,11 @@ public:
 	
 }; // struct FFlecsCollectionSubsystemSingleton
 
-REGISTER_FLECS_COMPONENT(FFlecsCollectionSubsystemSingleton,
-		[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
-		{
-			InComponentHandle
-				.Add(flecs::Singleton);
-		});
+template <>
+struct TFlecsComponentTraits<FFlecsCollectionSubsystemSingleton> : public TFlecsComponentTraitsBase<FFlecsCollectionSubsystemSingleton>
+{
+	static constexpr bool Singleton = true;
+}; // struct TFlecsComponentTraits<FFlecsCollectionSubsystemSingleton>
 
 UCLASS()
 class UNREALFLECS_API UFlecsCollectionWorldSubsystem final : public UFlecsAbstractWorldSubsystem

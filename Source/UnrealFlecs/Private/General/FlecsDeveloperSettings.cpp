@@ -2,9 +2,11 @@
 
 #include "General/FlecsDeveloperSettings.h"
 
+#include "flecs.h"
+
 #include "HAL/IConsoleManager.h"
 
-#include "flecs.h"
+#include "General/FlecsModuleSettings.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsDeveloperSettings)
 

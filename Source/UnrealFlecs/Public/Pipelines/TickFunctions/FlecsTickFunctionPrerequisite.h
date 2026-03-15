@@ -14,12 +14,11 @@ struct UNREALFLECS_API FFlecsTickFunctionPrerequisite
 	GENERATED_BODY()
 }; // struct FFlecsTickFunctionPrerequisite
 
-REGISTER_FLECS_COMPONENT(FFlecsTickFunctionPrerequisite,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponent)
-	{
-		InComponent
-			.Add(flecs::Relationship)
-			.Add(flecs::Acyclic)
-			.Add(flecs::DontFragment);
-	});
+template <>
+struct TFlecsComponentTraits<FFlecsTickFunctionPrerequisite> : public TFlecsComponentTraitsBase<FFlecsTickFunctionPrerequisite>
+{
+	static constexpr bool Relationship = true;
+	static constexpr bool Acyclic = true;
+	static constexpr bool DontFragment = true;
+}; // struct TFlecsComponentTraits<FFlecsTickFunctionPrerequisite>
 

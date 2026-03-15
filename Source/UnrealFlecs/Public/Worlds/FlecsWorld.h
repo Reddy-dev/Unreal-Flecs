@@ -12,14 +12,12 @@
 #include "CoreMinimal.h"
 
 #include "SolidMacros/Macros.h"
-#include "Standard/Hashing.h"
 #include "Types/SolidNotNull.h"
 #include "Concepts/SolidConcepts.h"
 
 #include "FlecsScopedDeferWindow.h"
+#include "Entities/FlecsComponentHandle.h"
 #include "Entities/FlecsId.h"
-#include "Modules/FlecsDependenciesComponent.h"
-#include "Properties/FlecsComponentProperties.h"
 #include "Queries/FlecsQuery.h"
 #include "Queries/FlecsQueryBuilder.h"
 #include "Observers/FlecsObserverBuilder.h"
@@ -27,7 +25,6 @@
 #include "Timers/FlecsTimerHandle.h"
 
 #include "FlecsWorld.generated.h"
-
 
 struct FFlecsTickFunction;
 struct FFlecsEntityRecord;
@@ -40,8 +37,6 @@ class IFlecsModuleInterface;
 class IFlecsGameLoopInterface;
 class UFlecsWorldSubsystem;
 class UFlecsModuleInterface;
-
-DECLARE_MULTICAST_DELEGATE_OneParam(FFlecsWorldModuleImportedDelegate, const FFlecsEntityHandle& /*InModuleEntity*/);
 
 UCLASS(BlueprintType, NotBlueprintable)
 class UNREALFLECS_API UFlecsWorld : public UObject
@@ -102,41 +97,6 @@ public:
 	void InitializeSystems();
 
 	/**
-	 * @brief Asynchronously Register a module dependency,
-	 * if the dependency is already imported, the function is called immediately
-	 * if the dependency is not imported, the function is called when the dependency is imported (if it is)
-	 * @tparam TModule The module class
-	 * @param InModuleObject The module object
-	 * @param InFunction The function to call when/if the dependency is imported
-	 */
-	template <Solid::TStaticClassConcept TModule>
-	void RegisterModuleDependency(const TSolidNotNull<const UObject*> InModuleObject,
-		const FFlecsDependencyFunctionDefinition::FDependencyFunctionType& InFunction)
-	{
-		RegisterModuleDependency(InModuleObject, TModule::StaticClass(),
-			[InFunction]
-				(const TSolidNotNull<UObject*> InDependencyObject,
-				TSolidNotNull<UFlecsWorld*> InWorld,
-				FFlecsEntityHandle InDependencyEntity)
-				{
-					std::invoke(InFunction, CastChecked<TModule>(InDependencyObject), InWorld, InDependencyEntity);
-				});
-	}
-
-	/**
-	 * @brief Asynchronously Register a module dependency,
-	 * if the dependency is already imported, the function is called immediately
-	 * if the dependency is not imported, the function is called when the dependency is imported (if it is)
-	 * @param InModuleObject The module object
-	 * @param InDependencyClass The dependency class
-	 * @param InFunction The function to call when/if the dependency is imported
-	 */
-	void RegisterModuleDependency(
-		const TSolidNotNull<const UObject*> InModuleObject,
-		const TSubclassOf<UObject>& InDependencyClass,
-		const FFlecsDependencyFunctionDefinition::FDependencyFunctionType& InFunction);
-
-	/**
 	 * @brief Deletes and recreates the world, 
 	 */
 	UFUNCTION()
@@ -148,6 +108,12 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
 	void ResetClock() const;
+	
+	template <typename T>
+	FORCEINLINE FFlecsEntityHandle ImportFlecsModule()
+	{
+		return World.import<T>();
+	}
 	
 	/**
 	 * @brief Create a new entity in the world,
@@ -393,81 +359,6 @@ public:
 	 * @param InName The new name
 	 */
 	void SetWorldName(const FString& InName) const;
-
-	/**
-	 * @brief Import a regular C++/flecs Module to the world
-	 * @tparam T The module type, this MUST NOT be derived from IFlecsModuleInterface nor should it be a UObject
-	 * @return The entity handle of the imported module
-	 */
-	template <typename T>
-	FFlecsEntityHandle ImportFlecsModule()
-	{
-		static_assert(!TIsDerivedFrom<T, IFlecsModuleInterface>::Value,
-			"T must not be derived from IFlecsModuleInterface, use ImportModule (Non-Template) instead");
-		return World.import<T>();
-	}
-
-	// @TODO: finish docs
-	/**
-	 * @brief Import a module to the world
-	 * @param InModule The module to import, must implement IFlecsModuleInterface (will be duplicated when imported)
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	void ImportModule(const TScriptInterface<IFlecsModuleInterface>& InModule);
-
-	void ImportModuleChecked(const TScriptInterface<IFlecsModuleInterface>& InModule);
-
-	NO_DISCARD bool CanImportModule(const TScriptInterface<IFlecsModuleInterface>& InModule, FString& OutFailureReason) const;
-
-	/**
-	 * @brief Check if a module with the given class is imported in the world
-	 * @param InModule The module class to check
-	 * @param bAllowChildren If true, will also check for child classes of the given class
-	 * @return True if the module is imported, false otherwise
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	bool IsModuleImported(const TSubclassOf<UObject> InModule, const bool bAllowChildren = false) const;
-
-	template <Solid::TStaticClassConcept T>
-	NO_DISCARD bool IsModuleImported(const bool bAllowChildren = false) const
-	{
-		return IsModuleImported(T::StaticClass(), bAllowChildren);
-	}
-
-	/**
-	 * @brief Get the entity handle of the module with the given class
-	 * @param InModule The module class
-	 * @param bAllowChildren If true, will also check for child classes of the given class
-	 * @return The entity handle of the module, or an invalid handle if the module is not imported
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	FFlecsEntityHandle GetModuleEntity(const TSubclassOf<UObject> InModule, const bool bAllowChildren = false) const;
-
-	/**
-	 * @brief Get the entity handle of the module with the given class
-	 * @tparam T The module class
-	 * @return The entity handle of the module, or an invalid handle if the module is not imported
-	 */
-	template <Solid::TStaticClassConcept T>
-	NO_DISCARD FFlecsEntityHandle GetModuleEntity(const bool bAllowChildren = false) const
-	{
-		return GetModuleEntity(T::StaticClass(), bAllowChildren);
-	}
-
-	/**
-	 * @brief Get the module object with the given class
-	 * @param InModule The module class
-	 * @param bAllowChildren If true, will also check for child classes of the given class
-	 * @return 
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	UObject* GetModule(const TSubclassOf<UObject> InModule, const bool bAllowChildren = false) const;
-
-	template <Solid::TStaticClassConcept T>
-	NO_DISCARD TSolidNotNull<T*> GetModuleChecked(const bool bAllowChildren = false) const
-	{
-		return CastChecked<T>(GetModule(T::StaticClass(), bAllowChildren));
-	}
 
 	// @TODO: add missing function variations template and checked versions
 
@@ -1129,6 +1020,9 @@ public:
 	{
 		return IsFlecsObjectRegistered(T::StaticClass());
 	}
+	
+	void ImportRestModule();
+	void ImportStatsModule();
 
 	static void AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector);
 
@@ -1142,12 +1036,6 @@ public:
 	TArray<TScriptInterface<IFlecsGameLoopInterface>> GameLoopInterfaces;
 
 	TSortedMap<FGameplayTag, TArray<TScriptInterface<IFlecsGameLoopInterface>>> GameLoopTickTypes;
-
-	UPROPERTY(Transient)
-	TArray<TScriptInterface<IFlecsModuleInterface>> ImportedModules;
-
-	UPROPERTY(Transient)
-	TArray<TScriptInterface<IFlecsModuleInterface>> PendingImportedModules;
 	
 	TMap<const UClass*, TScriptInterface<IFlecsObjectRegistrationInterface>> RegisteredObjectTypes;
 
@@ -1169,8 +1057,6 @@ public:
 	FDelegateHandle ShrinkMemoryGCDelegateHandle;
 	FDelegateHandle DeleteEmptyTablesGCDelegateHandle;
 
-	FFlecsWorldModuleImportedDelegate OnModuleImported;
-
 	UPROPERTY()
 	TOptional<double> PrePauseTimeScale;
 
@@ -1178,6 +1064,8 @@ public:
 
 private:
 	void CallUnregisterOnRegisteredObjects();
+	
+	
 	
 	/**
 	 * @brief Get this world as a non-const pointer

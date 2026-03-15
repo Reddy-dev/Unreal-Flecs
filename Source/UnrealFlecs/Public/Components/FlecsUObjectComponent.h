@@ -130,15 +130,18 @@ public:
     
 }; // struct FFlecsUObjectComponent
 
-REGISTER_FLECS_COMPONENT(FFlecsUObjectComponent,
-    [](flecs::world InWorld, const FFlecsComponentHandle& InComponent)
-    {
-        InComponent
-            .Add(flecs::Relationship)
-            .Add(flecs::Exclusive)
-            .Add(flecs::Acyclic)
-            .AddPair(flecs::OnInstantiate, flecs::DontInherit);
-    });
+template <>
+struct TFlecsComponentTraits<FFlecsUObjectComponent> : public TFlecsComponentTraitsBase<FFlecsUObjectComponent>
+{
+    static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::DontInherit;
+    
+    static constexpr bool Relationship = true;
+    static constexpr bool Exclusive = true;
+    static constexpr bool Acyclic = true;
+    
+    static constexpr bool AddReferencedObjects = true;
+    
+}; // struct TFlecsComponentTraits<FFlecsUObjectComponent>
 
 // @TODO: Currently not used
 USTRUCT(BlueprintType)
@@ -147,11 +150,10 @@ struct UNREALFLECS_API FFlecsNoDeleteUObject
     GENERATED_BODY()
 }; // struct FFlecsNoDeleteUObject
 
-REGISTER_FLECS_COMPONENT(FFlecsNoDeleteUObject,
-    [](const flecs::world& InWorld, const FFlecsComponentHandle& InComponent)
-    {
-        InComponent
-            .AddPair(flecs::OnInstantiate, flecs::DontInherit);
-    });
+template <>
+struct TFlecsComponentTraits<FFlecsNoDeleteUObject> : public TFlecsComponentTraitsBase<FFlecsNoDeleteUObject>
+{
+    static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::DontInherit;
+}; // struct TFlecsComponentTraits<FFlecsNoDeleteUObject>
 
 

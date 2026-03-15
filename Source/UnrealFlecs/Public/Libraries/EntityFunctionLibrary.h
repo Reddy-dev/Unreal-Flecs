@@ -19,11 +19,11 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Entity")
     static FFlecsId MakePairId(const FFlecsId First, const FFlecsId Second);
 
-    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Entity")
+    /*UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Entity")
     static bool HasEntityFromObject(UObject* Object);
 
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Entity")
-    static FFlecsEntityHandle GetEntityFromObject(UObject* Object);
+    static FFlecsEntityHandle GetEntityFromObject(UObject* Object);*/
 
     UFUNCTION(BlueprintCallable, Category = "Flecs | Entity")
     static void DestroyEntity(const FFlecsEntityHandle& Entity);

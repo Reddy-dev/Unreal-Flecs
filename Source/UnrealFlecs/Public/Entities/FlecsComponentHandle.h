@@ -9,8 +9,6 @@
 
 #include "FlecsComponentHandle.generated.h"
 
-
-
 /**
  *	@struct FFlecsComponentHandle
  *
@@ -36,7 +34,7 @@ public:
 	{
 	}
 
-	SOLID_INLINE FFlecsComponentHandle(flecs::world& InWorld, const FFlecsId& InId)
+	SOLID_INLINE FFlecsComponentHandle(const flecs::world& InWorld, const FFlecsId& InId)
 		: FFlecsEntityHandle(InWorld, InId)
 	{
 	}
