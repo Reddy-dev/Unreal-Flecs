@@ -439,24 +439,32 @@ void UFlecsWorld::RegisterUnrealTypes() const
 {
 	RegisterComponentType<FGameplayTagContainer>();
 		
-	// @TODO: Register as Script Structs so that everything is accurately reflected, and maybe have a UE::Module?
+	// @TODO: Register as Script Structs so that everything is accurately reflected, and maybe have a UE Module?
 	RegisterComponentType<FVector>();
 	RegisterComponentType<FQuat>();
 	RegisterComponentType<FRotator>();
 	RegisterComponentType<FTransform>();
-
+	
 	RegisterComponentType<FBox>();
 	RegisterComponentType<FBoxSphereBounds>();
 	RegisterComponentType<FCapsuleShape>();
 	RegisterComponentType<FRay>();
+	RegisterComponentType<FPlane>();
+	RegisterComponentType<FMatrix>();
 
 	RegisterComponentType<FVector4>();
 		
 	RegisterComponentType<FVector2D>();
 	RegisterComponentType<FQuat2D>();
 	RegisterComponentType<FTransform2D>();
-
 	RegisterComponentType<FBox2D>();
+	
+	RegisterComponentType<FIntVector>();
+	RegisterComponentType<FIntVector4>();
+	RegisterComponentType<FIntPoint>();
+	RegisterComponentType<FIntRect>();
+	
+	RegisterComponentType<FRandomStream>();
 
 	RegisterComponentType<FColor>();
 	RegisterComponentType<FLinearColor>();
@@ -470,11 +478,6 @@ void UFlecsWorld::RegisterUnrealTypes() const
 
 	RegisterComponentType<FAssetData>();
 	RegisterComponentType<FAssetBundleData>();
-
-	RegisterComponentType<FIntVector>();
-	RegisterComponentType<FIntVector4>();
-	RegisterComponentType<FIntPoint>();
-	RegisterComponentType<FIntRect>();
 
 	RegisterComponentType<FGuid>();
 	RegisterComponentType<FTimespan>();

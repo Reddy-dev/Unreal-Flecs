@@ -32,6 +32,26 @@ namespace _ {
     inline const char* type_name() {
       return StringCast<char>(*TBaseStructure<T>::Get()->GetStructCPPName()).Get();
     }
+    
+    template <>
+    inline const char* type_name<FBox>() {
+        return "FBox";
+    }
+    
+    template <>
+    inline const char* type_name<FBoxSphereBounds>() {
+        return "FBoxSphereBounds";
+    }
+    
+    template <>
+    inline const char* type_name<FCapsuleShape>() {
+        return "FCapsuleShape";
+    }
+    
+    template <>
+    inline const char* type_name<FIntRect>() {
+        return "FIntRect";
+    }
 
 template <typename T>
 inline const char* component_symbol_name() {
@@ -195,12 +215,107 @@ void register_script_struct_component(
                 
         static_cast<FFlecsTypeMapComponent*>(P_world.get_binding_ctx())
             ->ScriptStructMap.emplace(scriptStruct, entity_id);
-                
+        
         entity_id.set<FFlecsScriptStructComponent>({ scriptStruct });
     }
     
     UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(component);
 }
+    
+    static UScriptStruct* StaticGetBaseStructureInternal(FName InTypeName)
+    {
+        static UPackage* CoreUObjectPkg = FindObjectChecked<UPackage>(nullptr, TEXT("/Script/CoreUObject"));
+
+        UScriptStruct* Result = (UScriptStruct*)StaticFindObjectFastInternal(UScriptStruct::StaticClass(), CoreUObjectPkg, InTypeName, EFindObjectFlags::None, RF_NoFlags, EInternalObjectFlags::None);
+
+#if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
+        if (!Result)
+        {
+            UE_LOG(LogClass, Fatal, TEXT("Failed to find native struct '%s.%s'"), *CoreUObjectPkg->GetName(), *InTypeName.ToString());
+        }
+#endif
+        return Result;
+    }
+    
+template <>
+inline void register_script_struct_component<FBox>(
+    ecs_world_t *world,
+    ecs_entity_t component)
+{
+    flecs::world P_world(world);
+    UScriptStruct* scriptStruct = StaticGetBaseStructureInternal(TEXT("Box"));
+    ecs_assert(scriptStruct != nullptr, ECS_INTERNAL_ERROR, 
+               "script struct is null");
+
+    flecs::entity entity_id = flecs::entity(world, component);
+            
+    static_cast<FFlecsTypeMapComponent*>(P_world.get_binding_ctx())
+        ->ScriptStructMap.emplace(scriptStruct, entity_id);
+    
+    entity_id.set<FFlecsScriptStructComponent>({ scriptStruct });
+    
+    UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(component);
+}
+    
+    template <>
+    inline void register_script_struct_component<FBoxSphereBounds>(
+        ecs_world_t *world,
+        ecs_entity_t component)
+    {
+        flecs::world P_world(world);
+        UScriptStruct* scriptStruct = StaticGetBaseStructureInternal(TEXT("BoxSphereBounds"));
+        ecs_assert(scriptStruct != nullptr, ECS_INTERNAL_ERROR, 
+                   "script struct is null");
+
+        flecs::entity entity_id = flecs::entity(world, component);
+            
+        static_cast<FFlecsTypeMapComponent*>(P_world.get_binding_ctx())
+            ->ScriptStructMap.emplace(scriptStruct, entity_id);
+    
+        entity_id.set<FFlecsScriptStructComponent>({ scriptStruct });
+    
+        UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(component);
+    }
+    
+    template <>
+    inline void register_script_struct_component<FCapsuleShape>(
+        ecs_world_t *world,
+        ecs_entity_t component)
+    {
+        flecs::world P_world(world);
+        UScriptStruct* scriptStruct = StaticGetBaseStructureInternal(TEXT("CapsuleShape"));
+        ecs_assert(scriptStruct != nullptr, ECS_INTERNAL_ERROR, 
+                   "script struct is null");
+
+        flecs::entity entity_id = flecs::entity(world, component);
+            
+        static_cast<FFlecsTypeMapComponent*>(P_world.get_binding_ctx())
+            ->ScriptStructMap.emplace(scriptStruct, entity_id);
+    
+        entity_id.set<FFlecsScriptStructComponent>({ scriptStruct });
+    
+        UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(component);
+    }
+    
+    template <>
+    inline void register_script_struct_component<FIntRect>(
+        ecs_world_t *world,
+        ecs_entity_t component)
+    {
+        flecs::world P_world(world);
+        UScriptStruct* scriptStruct = StaticGetBaseStructureInternal(TEXT("IntRect"));
+        ecs_assert(scriptStruct != nullptr, ECS_INTERNAL_ERROR, 
+                   "script struct is null");
+
+        flecs::entity entity_id = flecs::entity(world, component);
+            
+        static_cast<FFlecsTypeMapComponent*>(P_world.get_binding_ctx())
+            ->ScriptStructMap.emplace(scriptStruct, entity_id);
+    
+        entity_id.set<FFlecsScriptStructComponent>({ scriptStruct });
+    
+        UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(component);
+    }
     
 template <typename T>
 void register_script_class_component(
