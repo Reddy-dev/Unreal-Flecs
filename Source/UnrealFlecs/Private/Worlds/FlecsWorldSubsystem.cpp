@@ -20,6 +20,7 @@
 #include "Components/FlecsBeginPlayComponent.h"
 
 #include "General/FlecsGameplayTagManagerEntity.h"
+#include "General/FlecsModuleRegistry.h"
 
 #include "Pipelines/FlecsGameLoopInterface.h"
 #include "Pipelines/TickFunctions/FlecsTickFunction.h"
@@ -108,6 +109,8 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 
 	// @TODO: Update this to either the FlecsWorldObject or the UWorld
 	DefaultWorld->SetContext(this);
+	
+	UE::Flecs::FFlecsModuleRegistry::Get().InitializeRegisteredModules(DefaultWorld.Get());
 
 	TConstArrayView<TObjectPtr<UObject>> InGameLoops = Settings.GameLoops;
 

@@ -758,6 +758,14 @@ public:
 	{
 		solid_checkf(!IsDeferred(), TEXT("Cannot register component while deferred"));
 		
+		const FFlecsId AlreadyRegisteredId = World.id_if_registered<T>();
+		
+		// avoid calling RegisterMemberProperties if the component is already registered, as it would be redundant and potentially cause issues if the component was registered with different member properties settings
+		if (AlreadyRegisteredId.IsValid())
+		{
+			return World.component<T>();
+		}
+		
 		TFlecsComponentHandle<T> Component = World.component<T>();
 		solid_check(Component.IsValid());
 		

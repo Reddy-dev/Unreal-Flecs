@@ -14,6 +14,7 @@
 #include "Standard/robin_hood.h"
 #include "Types/SolidCppStructOps.h"
 
+#include "Logs/FlecsCategories.h"
 #include "Worlds/FlecsWorld.h"
 #include "Entities/FlecsComponentHandle.h"
 #include "Components/FlecsAddReferencedObjectsTrait.h"
@@ -151,8 +152,6 @@ public:
 	using DependsOn = TTuple<>;
 	using InheritsFrom = void;
 	
-	using RegisterUnderModule = void;
-	
 	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::Override;	
 	static constexpr EFlecsOnDelete OnDelete = EFlecsOnDelete::Remove;
 	static constexpr EFlecsOnDelete OnDeleteTarget = EFlecsOnDelete::Remove;
@@ -178,7 +177,12 @@ public:
 	
 	static constexpr bool WithAddReferencedObjects = false;
 	static constexpr bool RegisterMemberProperties = true;
-	static constexpr bool RegisterWithUnrealModule = true;
+	static constexpr bool RegisterWithUnrealModule = std::is_void<ChildOf>::value;
+	
+	static FName GetOwningModule()
+	{
+		return NAME_None;
+	}
 	
 	static const TArray<FString>& CustomTypeDependencies()
 	{
@@ -187,6 +191,7 @@ public:
 	}
 	
 	// Only get called with Auto-Registration with Typed Components
+	static void PrePropertiesRegistration(const FFlecsComponentHandle& ComponentHandle) {}
 	static void PostRegister(const FFlecsComponentHandle& ComponentHandle) {}
 	
 }; // struct TFlecsComponentTraitsBase
@@ -294,6 +299,9 @@ public:
 	UPROPERTY()
 	TArray<FString> CustomTypeDependencies;
 	
+	UPROPERTY()
+	FName OwningModule;
+	
 	UE::Flecs::FFlecsComponentRegistrationFunction RegistrationFunction;
 	UE::Flecs::FFlecsComponentPropertiesFunction PropertiesFunction;
 	
@@ -326,7 +334,8 @@ public:
 			.bFinal = TFlecsComponentTraits<T>::Final,
 			.bWithAddReferencedObjects = TFlecsComponentTraits<T>::WithAddReferencedObjects,
 			.bRegisterMemberProperties = TFlecsComponentTraits<T>::RegisterMemberProperties,
-			//.bRegisterWithModule = TFlecsComponentTraits<T>::RegisterWithModule,
+			.bRegisterWithModule = TFlecsComponentTraits<T>::RegisterWithUnrealModule,
+			.OwningModule = TFlecsComponentTraits<T>::GetOwningModule()
 		};
 		
 		UE::Flecs::internal::ForEachInTuple<typename TFlecsComponentTraits<T>::WithTypes>([&Definition]<typename TWithType>(TWithType Type)
@@ -385,6 +394,8 @@ public:
 		
 		Definition.PropertiesFunction = [](const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsComponentHandle& ComponentHandle, const FFlecsComponentPropertiesDefinition& ComponentProperties)
 		{
+			TFlecsComponentTraits<T>::PrePropertiesRegistration(ComponentHandle);
+			
 			switch (ComponentProperties.OnInstantiate)
 			{
 				case EFlecsOnInstantiate::Override:
@@ -540,14 +551,32 @@ public:
 		{
 			Definition.RegistrationFunction = [](const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsComponentPropertiesDefinition& ComponentProperties)
 			{
-			
+				FFlecsEntityHandle OwningModuleEntity;
+				if (ComponentProperties.bRegisterWithModule && !ComponentProperties.OwningModule.IsNone())
+				{
+					// @TODO: Query Shit instead of lookups
+					OwningModuleEntity = InFlecsWorld->LookupEntity(ComponentProperties.OwningModule.ToString());
+				}
+				
+				FFlecsComponentHandle RegisteredComponentHandle;
+				
 				if constexpr (Solid::IsScriptStruct<T>())
 				{
-					InFlecsWorld->RegisterComponentType<T>(ComponentProperties.bRegisterMemberProperties);
+					RegisteredComponentHandle = InFlecsWorld->RegisterComponentType<T>(ComponentProperties.bRegisterMemberProperties);
 				}
 				else
 				{
-					InFlecsWorld->RegisterComponentType<T>();
+					RegisteredComponentHandle = InFlecsWorld->RegisterComponentType<T>();
+				}
+				
+				if (OwningModuleEntity.IsValid())
+				{
+					if (!OwningModuleEntity.Has(flecs::Module))
+					{
+						UE_LOGFMT(LogFlecsCore, Error, "Found entity is not registered as a module");
+					}
+					
+					RegisteredComponentHandle.AddPair(flecs::ChildOf, OwningModuleEntity);
 				}
 			};
 		}
@@ -577,11 +606,31 @@ namespace UE::Flecs::Private
 	struct TFlecsComponentPropertiesRegistrar
 	{
 	public:
-		TFlecsComponentPropertiesRegistrar()
+		TFlecsComponentPropertiesRegistrar(const char* InModuleName = nullptr)
 		{
-			FCoreDelegates::OnPostEngineInit.AddLambda([]()
+			FCoreDelegates::OnPostEngineInit.AddLambda([InModuleName]()
 			{
-				const FFlecsComponentPropertiesDefinition Definition = FFlecsComponentPropertiesDefinition::Make<T>();
+				FFlecsComponentPropertiesDefinition Definition = FFlecsComponentPropertiesDefinition::Make<T>();
+				
+				if (Definition.bRegisterWithModule && Definition.OwningModule.IsNone() && InModuleName != nullptr)
+				{
+					Definition.OwningModule = FName(InModuleName);
+				}
+				
+				if (Definition.bRegisterWithModule && Definition.OwningModule.IsNone())
+				{
+					if (const UScriptStruct* ScriptStruct = UE::Flecs::internal::GetScriptStructIf<T>())
+					{
+						FString PackageName = ScriptStruct->GetOutermost()->GetName();
+						FString ModuleStr;
+						
+						if (PackageName.Split(TEXT("/Script/"), nullptr, &ModuleStr) && !ModuleStr.IsEmpty())
+						{
+							Definition.OwningModule = FName(*ModuleStr);
+						}
+					}
+				}
+				
 				AddRegisteredComponentProperties_Static(Definition);
 			});
 		}
@@ -593,8 +642,10 @@ namespace UE::Flecs::Private
 #define INTERNAL_REGISTER_FLECS_COMPONENT_IMPL(Name) \
 	namespace \
 	{ \
-		static UE::Flecs::Private::TFlecsComponentPropertiesRegistrar<Name> FlecsComponentPropertiesRegistrarInstance_##Name; \
+		static UE::Flecs::Private::TFlecsComponentPropertiesRegistrar<Name> FlecsComponentPropertiesRegistrarInstance_##Name { UE_MODULE_NAME }; \
 	}
 
-#define REGISTER_FLECS_COMPONENT(ComponentType) \
+#define REGISTER_FLECS_COMPONENT(ComponentType, ...) \
 	INTERNAL_REGISTER_FLECS_COMPONENT_IMPL(ComponentType)
+	
+	

@@ -399,7 +399,7 @@ void UFlecsWorld::InitializeFlecsRegistrationObjects()
 	TSet<TSubclassOf<UObject>> RegisteredObjectClasses;
 	
 	GetWorld()->ForEachSubsystem<UFlecsObjectRegistrationProviderBase>([this, &RegisteredObjectClasses]
-		(UFlecsObjectRegistrationProviderBase* RegistrationProvider)
+		(const UFlecsObjectRegistrationProviderBase* RegistrationProvider)
 	{
 		const TArray<TSubclassOf<UObject>> ProviderRegisteredObjectClasses = RegistrationProvider->GetClassesToRegister();
 		
@@ -438,8 +438,7 @@ void UFlecsWorld::CallBeginPlayForRegisteredObjects()
 void UFlecsWorld::RegisterUnrealTypes() const
 {
 	RegisterComponentType<FGameplayTagContainer>();
-		
-	// @TODO: Register as Script Structs so that everything is accurately reflected, and maybe have a UE Module?
+	
 	RegisterComponentType<FVector>();
 	RegisterComponentType<FQuat>();
 	RegisterComponentType<FRotator>();

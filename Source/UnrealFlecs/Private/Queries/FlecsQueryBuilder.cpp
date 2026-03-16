@@ -7,8 +7,8 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsQueryBuilder)
 
-FFlecsQueryBuilder::FFlecsQueryBuilder(const UFlecsWorld* InWorld, const FString& InName)
-	: Name(InName)
+FFlecsQueryBuilder::FFlecsQueryBuilder(const UFlecsWorld* InWorld, const FString& InQueryName)
+	: QueryName(InQueryName)
 {
 	World = InWorld;
 }
@@ -33,7 +33,7 @@ FFlecsQuery FFlecsQueryBuilder::Build() const
 	}
 	else
 	{
-		flecs::query_builder<> Builder = flecs::query_builder<>(World->World, StringCast<char>(*Name).Get());
+		flecs::query_builder<> Builder = flecs::query_builder<>(World->World, StringCast<char>(*QueryName).Get());
 		FFlecsQueryBuilderView BuilderView = MakeQueryBuilderView_Internal(Builder);
 		Definition.Apply(World.Get(), BuilderView);
 		return FFlecsQuery(Builder.build());
