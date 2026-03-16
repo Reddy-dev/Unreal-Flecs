@@ -3,3 +3,5 @@
 #include "Collections/FlecsCollectionDefinition.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsCollectionDefinition)
+
+REGISTER_FLECS_COMPONENT(FFlecsCollectionDefinitionComponent);

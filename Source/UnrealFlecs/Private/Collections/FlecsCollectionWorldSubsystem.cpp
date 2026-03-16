@@ -9,11 +9,15 @@
 
 #include "Worlds/FlecsWorldSubsystem.h"
 
+#include "EntityRecords/FlecsNamedEntityRecordFragment.h"
+
 #include "Collections/FlecsCollectionTypes.h"
 #include "Collections/FlecsCollectionDataAsset.h"
 #include "Collections/FlecsCollectionInterface.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsCollectionWorldSubsystem)
+
+REGISTER_FLECS_COMPONENT(FFlecsCollectionSubsystemSingleton);
 
 UFlecsCollectionWorldSubsystem::UFlecsCollectionWorldSubsystem()
 {

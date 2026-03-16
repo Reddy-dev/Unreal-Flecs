@@ -27,38 +27,29 @@
 
 #include "Logs/FlecsCategories.h"
 
-#include "Entities/FlecsEntityRecord.h"
+#include "EntityRecords/FlecsEntityRecord.h"
 
 #include "Components/FlecsAddReferencedObjectsTrait.h"
 #include "Components/FlecsBeginPlayComponent.h"
-#include "Components/FlecsNetworkSerializeDefinitionComponent.h"
 #include "Components/FlecsUObjectComponent.h"
-#include "Components/ObjectTypes/FFlecsActorComponentTag.h"
-#include "Components/ObjectTypes/FFlecsModuleObject.h"
-#include "Components/ObjectTypes/FFlecsSceneComponentTag.h"
-#include "Components/ObjectTypes/FlecsActorTag.h"
-#include "Components/FlecsModuleComponent.h"
-#include "Components/FlecsSubEntityRecordNameComponent.h"
+#include "EntityRecords/FlecsEntityRecordComponent.h"
 
 #include "GameFramework/WorldSettings.h"
-
-#include "Modules/FlecsDependenciesComponent.h"
-#include "Modules/FlecsModuleInterface.h"
 
 #include "General/FlecsDeveloperSettings.h"
 #include "General/FlecsGameplayTagManagerEntity.h"
 #include "General/FlecsObjectRegistrationInterface.h"
 #include "General/FlecsObjectRegistrationProviderBase.h"
 
+#include "Properties/FlecsTypeRegistryEngineSubsystem.h"
+
 #include "Queries/FlecsQueryBuilder.h"
 #include "Queries/FlecsQueryBuilderView.h"
 
 #include "Pipelines/FlecsGameLoopInterface.h"
 #include "Pipelines/FlecsGameLoopTag.h"
-#include "Pipelines/FlecsOutsideMainLoopTag.h"
 #include "Pipelines/TickFunctions/FlecsTickFunction.h"
 #include "Pipelines/TickFunctions/FlecsTickFunctionComponent.h"
-#include "Pipelines/TickFunctions/FlecsTickFunctionPrerequisite.h"
 #include "Pipelines/TickFunctions/FlecsTickTypeRelationship.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsWorld)
@@ -396,44 +387,11 @@ void UFlecsWorld::InitializeDefaultComponents() const
 
 	RegisterComponentType<FFlecsAddReferencedObjectsTrait>()
 		.Add(flecs::Trait);
-
-	RegisterComponentType<FFlecsBeginPlayComponent>();
-
-	RegisterComponentType<FFlecsUObjectComponent>();
-		
-	RegisterComponentType<FFlecsUObjectTag>();
-		
-	RegisterComponentType<FFlecsActorTag>()
-		.SetIsA<FFlecsUObjectTag>();
-		
-	RegisterComponentType<FFlecsActorComponentTag>()
-		.SetIsA<FFlecsUObjectTag>();
-		
-	RegisterComponentType<FFlecsModuleObjectTarget>()
-		.SetIsA<FFlecsUObjectTag>();
-		
-	RegisterComponentType<FFlecsSceneComponentTag>()
-		.SetIsA<FFlecsActorComponentTag>();
-
-	RegisterComponentType<FFlecsModuleComponent>();
-	RegisterComponentType<FFlecsSoftDependenciesComponent>();
-
-	RegisterComponentType<FFlecsEntityRecord>(); // for member registration
-	RegisterComponentType<FFlecsEntityRecordComponent>();
-
-	RegisterComponentType<FFlecsNetworkSerializeDefinitionComponent>()
-		.Add(flecs::Sparse);
-
-	RegisterComponentType<FFlecsGameLoopTag>();
-
-	RegisterComponentType<FFlecsTickFunction>();
-	RegisterComponentType<FFlecsTickFunctionComponent>();
-	RegisterComponentType<FFlecsTickTypeRelationship>();
-	RegisterComponentType<FFlecsTickFunctionPrerequisite>();
-
-	RegisterComponentType<FFlecsOutsideMainLoopTag>();
 	
-	RegisterComponentType<FFlecsSubEntityRecordNameComponent>();
+	const TSolidNotNull<UFlecsTypeRegistryEngineSubsystem*> FlecsTypeRegistry
+		= GEngine->GetEngineSubsystem<UFlecsTypeRegistryEngineSubsystem>();
+	
+	FlecsTypeRegistry->RegisterAllTypes(this);
 }
 
 void UFlecsWorld::InitializeFlecsRegistrationObjects()
@@ -441,7 +399,7 @@ void UFlecsWorld::InitializeFlecsRegistrationObjects()
 	TSet<TSubclassOf<UObject>> RegisteredObjectClasses;
 	
 	GetWorld()->ForEachSubsystem<UFlecsObjectRegistrationProviderBase>([this, &RegisteredObjectClasses]
-		(UFlecsObjectRegistrationProviderBase* RegistrationProvider)
+		(const UFlecsObjectRegistrationProviderBase* RegistrationProvider)
 	{
 		const TArray<TSubclassOf<UObject>> ProviderRegisteredObjectClasses = RegistrationProvider->GetClassesToRegister();
 		
@@ -480,24 +438,32 @@ void UFlecsWorld::CallBeginPlayForRegisteredObjects()
 void UFlecsWorld::RegisterUnrealTypes() const
 {
 	RegisterComponentType<FGameplayTagContainer>();
-		
+	
 	RegisterComponentType<FVector>();
 	RegisterComponentType<FQuat>();
 	RegisterComponentType<FRotator>();
 	RegisterComponentType<FTransform>();
-
+	
 	RegisterComponentType<FBox>();
 	RegisterComponentType<FBoxSphereBounds>();
 	RegisterComponentType<FCapsuleShape>();
 	RegisterComponentType<FRay>();
+	RegisterComponentType<FPlane>();
+	RegisterComponentType<FMatrix>();
 
 	RegisterComponentType<FVector4>();
 		
 	RegisterComponentType<FVector2D>();
 	RegisterComponentType<FQuat2D>();
 	RegisterComponentType<FTransform2D>();
-
 	RegisterComponentType<FBox2D>();
+	
+	RegisterComponentType<FIntVector>();
+	RegisterComponentType<FIntVector4>();
+	RegisterComponentType<FIntPoint>();
+	RegisterComponentType<FIntRect>();
+	
+	RegisterComponentType<FRandomStream>();
 
 	RegisterComponentType<FColor>();
 	RegisterComponentType<FLinearColor>();
@@ -511,11 +477,6 @@ void UFlecsWorld::RegisterUnrealTypes() const
 
 	RegisterComponentType<FAssetData>();
 	RegisterComponentType<FAssetBundleData>();
-
-	RegisterComponentType<FIntVector>();
-	RegisterComponentType<FIntVector4>();
-	RegisterComponentType<FIntPoint>();
-	RegisterComponentType<FIntRect>();
 
 	RegisterComponentType<FGuid>();
 	RegisterComponentType<FTimespan>();
@@ -557,15 +518,17 @@ void UFlecsWorld::InitializeComponentPropertyObserver()
 			
 		const FString StructSymbol = EntityHandle.GetSymbol();
 		solid_checkf(!StructSymbol.IsEmpty(),TEXT("Registered component has no symbol"));
+			
+		const TSolidNotNull<const UFlecsTypeRegistryEngineSubsystem*> FlecsTypeRegistry
+				= GEngine->GetEngineSubsystem<UFlecsTypeRegistryEngineSubsystem>();
 						
-		if (FFlecsComponentPropertiesRegistry::Get().ContainsComponentProperties(StructSymbol))
+		if (FlecsTypeRegistry->IsComponentRegistered(StructSymbol))
 		{
 			FFlecsComponentHandle InUntypedComponent = EntityHandle.GetUntypedComponent_Unsafe();
 							
-			const FFlecsComponentProperties& Properties = FFlecsComponentPropertiesRegistry::Get()
-				.GetComponentProperties(StructSymbol);
+			const FFlecsComponentPropertiesDefinition* Properties = FlecsTypeRegistry->GetRegisteredComponentProperties(StructSymbol);
 
-			if (!Properties.RegistrationFunction)
+			if UNLIKELY_IF(!Properties->PropertiesFunction)
 			{
 				UE_LOGFMT(LogFlecsComponent, Log,
 					"Component properties {StructName} registration function is null",
@@ -573,7 +536,7 @@ void UFlecsWorld::InitializeComponentPropertyObserver()
 				return;
 			}
 
-			std::invoke(Properties.RegistrationFunction, World, InUntypedComponent);
+			std::invoke(Properties->PropertiesFunction, this, InUntypedComponent, *Properties);
 
 			UE_LOGFMT(LogFlecsComponent, Log,
 				"Component properties {StructName} registered", StructSymbol);
@@ -650,88 +613,6 @@ void UFlecsWorld::InitializeSystems()
 		DependenciesComponentQuery = CreateQueryBuilder<FFlecsSoftDependenciesComponent>("DependenciesComponentQuery")
 			.Build();
 
-		OnModuleImported.AddWeakLambda(this, [this](const FFlecsEntityHandle& InModule)
-		{
-			if UNLIKELY_IF(!ensureAlwaysMsgf(InModule.IsValid(), TEXT("Module entity is not alive")))
-			{
-				return;
-			}
-			
-			if UNLIKELY_IF(!InModule.Has<FFlecsModuleComponent>())
-			{
-				UE_LOGFMT(LogFlecsWorld, Warning,
-					"Module entity {ModuleEntityId} does not have FFlecsModuleComponent",
-					InModule.ToString());
-				return;
-			}
-
-			if UNLIKELY_IF((!InModule.HasPair<FFlecsUObjectComponent, FFlecsModuleObjectTarget>()))
-			{
-				UE_LOGFMT(LogFlecsWorld, Warning,
-					"Module entity {ModuleEntityId} does not have FFlecsUObjectComponent pair",
-					InModule.ToString());
-				return;
-			}
-			
-			const TSolidNotNull<UObject*> ModuleObject = InModule.GetPairFirst<FFlecsUObjectComponent>(flecs::Wildcard).GetObjectChecked();
-			solid_check(IsValid(ModuleObject));
-
-			const FFlecsEntityHandle ModuleEntity = GetModuleEntity(ModuleObject->GetClass());
-			solid_check(ModuleEntity.IsValid());
-
-			DependenciesComponentQuery.each([this, ModuleEntity, ModuleObject]
-				(flecs::iter& DependenciesIter, size_t DependenciesIndex, FFlecsSoftDependenciesComponent& DependenciesComponent)
-				{
-					const FFlecsEntityHandle InEntity = DependenciesIter.entity(DependenciesIndex);
-											
-					if (DependenciesComponent.DependencyFunctionPtrs.Contains(ModuleObject->GetClass()))
-					{
-						const FFlecsDependencyFunctionDefinition& FunctionDefinition
-							= DependenciesComponent.DependencyFunctionPtrs[ModuleObject->GetClass()];
-
-						InEntity.AddPair(flecs::DependsOn, ModuleEntity);
-
-						FunctionDefinition.Call(ModuleObject, this, ModuleEntity);
-					}
-				});
-
-				for (int32 Index = PendingImportedModules.Num() - 1; Index >= 0; --Index)
-				{
-					const TScriptInterface<IFlecsModuleInterface>& PendingModule = PendingImportedModules[Index];
-					
-					FString FailureReason;
-					
-					if (CanImportModule(PendingModule, FailureReason))
-					{
-						ImportedModules.Add(PendingModule);
-						ImportedModules.Last()->ImportModule(World);
-						
-						PendingImportedModules.RemoveAt(Index);
-					}
-				}
-		});
-
-		// @TODO: handle hard dependencies being removed?
-		// @TODO: do we have a module object tag type?
-		CreateObserver<const FFlecsUObjectComponent&>(TEXT("RemoveModuleComponentObserver"))
-			.With<FFlecsModuleComponent>().InOutNone() // 1
-			.TermAt(0).Second<FFlecsModuleObjectTarget>().Filter() // FFlecsUObjectComponent (0)
-			.Event(flecs::OnRemove)
-			.each([this](flecs::entity InEntity, const FFlecsUObjectComponent& InUObjectComponent)
-			{
-				for (int32 Index = ImportedModules.Num() - 1; Index >= 0; --Index)
-				{
-					TSolidNotNull<UObject*> ModuleObject = ImportedModules[Index].GetObject();
-					solid_check(IsValid(ModuleObject));
-					
-					if (ModuleObject == InUObjectComponent.GetObjectChecked())
-					{
-						ImportedModules.RemoveAt(Index);
-						break;
-					}
-				}
-			});
-
 	// @TODO: add verification for this
 	CreateObserver<FFlecsTickFunctionComponent&>(TEXT("AddTickFunctionObserver"))
 		.Event(flecs::OnAdd)
@@ -773,36 +654,6 @@ void UFlecsWorld::InitializeSystems()
 				"Unregistered Tick Function for Entity {EntityIdentifier}",
 				EntityHandle.HasName() ? EntityHandle.GetName() : EntityHandle.ToString());
 		});
-}
-
-void UFlecsWorld::RegisterModuleDependency(const TSolidNotNull<const UObject*> InModuleObject,
-                                           const TSubclassOf<UObject>& InDependencyClass,
-                                           const FFlecsDependencyFunctionDefinition::FDependencyFunctionType& InFunction)
-{
-	solid_check(InModuleObject->Implements<UFlecsModuleInterface>());
-
-	solid_checkf(IsModuleImported(InModuleObject->GetClass()),
-	             TEXT("Module %s is not imported"), *InModuleObject->GetClass()->GetName());
-
-	const FFlecsEntityHandle ModuleEntity = GetModuleEntity(InModuleObject->GetClass());
-	solid_check(ModuleEntity.IsValid());
-		
-	auto& [Dependencies] = ModuleEntity.Obtain<FFlecsSoftDependenciesComponent>();
-		
-	Dependencies.Add(InDependencyClass, FFlecsDependencyFunctionDefinition{.Function=InFunction});
-		
-	if (IsModuleImported(InDependencyClass))
-	{
-		const FFlecsEntityHandle DependencyEntity = GetModuleEntity(InDependencyClass);
-			
-		TSolidNotNull<UObject*> DependencyModuleObject = GetModule(InDependencyClass);
-		solid_check(IsValid(DependencyModuleObject));
-
-		solid_check(DependencyEntity.IsValid());
-
-		ModuleEntity.AddPair(flecs::DependsOn, DependencyEntity);
-		std::invoke(InFunction, DependencyModuleObject, this, DependencyEntity);
-	}
 }
 
 void UFlecsWorld::Reset()
@@ -905,157 +756,6 @@ void UFlecsWorld::SetWorldName(const FString& InName) const
 	GetWorldEntity().SetName(InName);
 }
 
-void UFlecsWorld::ImportModule(const TScriptInterface<IFlecsModuleInterface>& InModule)
-{
-	solid_checkf(InModule, TEXT("Module is nullptr"));
-
-	if UNLIKELY_IF(IsModuleImported(InModule.GetObject()->GetClass()))
-	{
-		return;
-	}
-
-	// Doesn't use TSolidNotNull because DuplicateObject works weird with it
-	const UObject* TemplateModuleObject = InModule.GetObject();
-	solid_cassume(TemplateModuleObject != nullptr);
-	solid_check(IsValid(TemplateModuleObject));
-	
-	const TSolidNotNull<UObject*> NewModuleObject = DuplicateObject(TemplateModuleObject, this);
-
-	FString FailureReason;
-	if (!CanImportModule(NewModuleObject, FailureReason))
-	{
-		UE_LOGFMT(LogFlecsWorld, Log,
-			"Cannot import module {ModuleName}: {FailureReason}",
-			NewModuleObject->GetName(),
-			FailureReason);
-		
-		PendingImportedModules.AddUnique(NewModuleObject);
-		return;
-	}
-	
-	ImportedModules.Add(NewModuleObject);
-	ImportedModules.Last()->ImportModule(World);
-}
-
-void UFlecsWorld::ImportModuleChecked(const TScriptInterface<IFlecsModuleInterface>& InModule)
-{
-	solid_checkf(InModule, TEXT("Module is nullptr"));
-
-	if UNLIKELY_IF(IsModuleImported(InModule.GetObject()->GetClass()))
-	{
-		return;
-	}
-
-	FString FailureReason; // Unused
-	
-	solid_checkf(CanImportModule(InModule, FailureReason),
-	             TEXT("Cannot import module %s"), *InModule.GetObject()->GetName());
-
-	// Doesn't use TSolidNotNull because DuplicateObject works weird with it
-	const UObject* TemplateModuleObject = InModule.GetObject();
-	solid_cassume(TemplateModuleObject != nullptr);
-	solid_check(IsValid(TemplateModuleObject));
-
-	const TSolidNotNull<UObject*> NewModuleObject = DuplicateObject(TemplateModuleObject, this);
-	ImportedModules.Add(NewModuleObject);
-		
-	ImportedModules.Last()->ImportModule(World);
-}
-
-bool UFlecsWorld::CanImportModule(const TScriptInterface<IFlecsModuleInterface>& InModule, FString& OutFailureReason) const
-{
-	solid_checkf(InModule, TEXT("Module is nullptr"));
-
-	// @TODO: need to implement waiting for hard dependencies to be imported if they are in the import queue
-	
-	const TArray<TSubclassOf<UObject>> HardModuleDependencies = InModule->GetHardDependentModuleClasses();
-	
-	for (const TSubclassOf<UObject>& DependencyClass : HardModuleDependencies)
-	{
-		if (!ensureAlwaysMsgf(IsValid(DependencyClass),
-		                     TEXT("Module %s has an invalid hard dependency"),
-		                     *InModule.GetObject()->GetName()))
-		{
-			continue;
-		}
-
-		const bool bIsGameLoop = DependencyClass->ImplementsInterface(UFlecsGameLoopInterface::StaticClass());
-
-		if (bIsGameLoop)
-		{
-			if (!HasGameLoop(DependencyClass))
-			{
-				OutFailureReason = FString::Printf(TEXT("Module %s dependency game loop %s is not present"),
-					*InModule.GetObject()->GetName(),
-					*DependencyClass->GetName());
-				return false;
-			}
-		}
-		else
-		{
-			if (!IsModuleImported(DependencyClass))
-			{
-				OutFailureReason = FString::Printf(TEXT("Module %s dependency %s is not imported"),
-					*InModule.GetObject()->GetName(),
-					*DependencyClass->GetName());
-				return false;
-			}
-		}
-	}
-
-	return true;
-}
-
-bool UFlecsWorld::IsModuleImported(const TSubclassOf<UObject> InModule, const bool bAllowChildren) const
-{
-	solid_check(InModule);
-
-	for (const TScriptInterface<IFlecsModuleInterface>& ModuleObject : ImportedModules)
-	{
-		if (ModuleObject.GetObject()->GetClass() == InModule)
-		{
-			return true;
-		}
-		else if (bAllowChildren && ModuleObject.GetObject()->GetClass()->IsChildOf(InModule))
-		{
-			return true;
-		}
-	}
-		
-	return false;
-}
-
-FFlecsEntityHandle UFlecsWorld::GetModuleEntity(const TSubclassOf<UObject> InModule, const bool bAllowChildren) const
-{
-	solid_check(InModule);
-	
-	const FFlecsEntityHandle ModuleEntity = ModuleComponentQuery
-		.find([&InModule, bAllowChildren](flecs::entity InEntity, const FFlecsModuleComponent& InComponent)
-		{
-			return InComponent.ModuleClass == InModule || (bAllowChildren && InComponent.ModuleClass->IsChildOf(InModule));
-		});
-
-	if UNLIKELY_IF(!ModuleEntity.IsValid())
-	{
-		UE_LOGFMT(LogFlecsWorld, Warning,
-			"Module {ModuleName} is not imported", *InModule->GetName());
-	}
-
-	return ModuleEntity;
-}
-
-UObject* UFlecsWorld::GetModule(const TSubclassOf<UObject> InModule, const bool bAllowChildren) const
-{
-	solid_check(IsValid(InModule));
-		
-	const FFlecsEntityHandle ModuleEntity = GetModuleEntity(InModule, bAllowChildren);
-	solid_checkf(ModuleEntity.IsValid(),
-	             TEXT("Module %s is not imported"),
-	             *InModule->GetName());
-	
-	return ModuleEntity.GetPairFirst<FFlecsUObjectComponent, FFlecsModuleObjectTarget>().GetObjectChecked();
-}
-
 bool UFlecsWorld::HasGameLoop(const TSubclassOf<UObject> InGameLoop, const bool bAllowChildren) const
 {
 	solid_check(InGameLoop);
@@ -1084,7 +784,7 @@ FFlecsEntityHandle UFlecsWorld::GetGameLoopEntity(const TSubclassOf<UObject> InG
 		if (GameLoopInterface.GetObject()->GetClass() == InGameLoop ||
 		    (bAllowChildren && GameLoopInterface.GetObject()->GetClass()->IsChildOf(InGameLoop)))
 		{
-			return GameLoopInterface->GetModuleEntity();
+			return GameLoopInterface->GetEntityHandle();
 		}
 	}
 
@@ -1272,7 +972,7 @@ void UFlecsWorld::DestroyWorld()
 	{
 		if (GameLoopInterface)
 		{
-			GameLoopInterface->GetModuleEntity().Remove<FFlecsGameLoopTag>();
+			GameLoopInterface->GetEntityHandle().Remove<FFlecsGameLoopTag>();
 		}
 	}
 	
@@ -2232,6 +1932,44 @@ bool UFlecsWorld::IsFlecsObjectRegistered(const TSubclassOf<UObject> InClass) co
 {
 	solid_check(InClass);
 	return RegisteredObjectTypes.Contains(InClass);
+}
+
+void UFlecsWorld::ImportRestModule()
+{
+#ifdef FLECS_REST
+	
+	EndScope([this]()
+	{
+		uint16 ClientPIEInstanceOffset = 0;
+		const TSolidNotNull<const UWorld*> UnrealWorld = GetWorld();
+		
+#if WITH_EDITOR
+		
+		if (UnrealWorld->GetNetMode() == NM_Client)
+		{
+			ClientPIEInstanceOffset = static_cast<uint16>(UE::GetPlayInEditorID());
+		}
+		
+#endif // WITH_EDITOR
+		
+		const uint16 RestPort = ECS_REST_DEFAULT_PORT + ClientPIEInstanceOffset;
+		
+		SetSingleton<flecs::Rest>(flecs::Rest{ .port = RestPort });
+	});
+	
+#endif // FLECS_REST
+}
+
+void UFlecsWorld::ImportStatsModule()
+{
+#ifdef FLECS_STATS
+
+	EndScope([this]()
+	{
+		ImportFlecsModule<flecs::stats>();
+	});
+	
+#endif // FLECS_STATS
 }
 
 void UFlecsWorld::AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector)

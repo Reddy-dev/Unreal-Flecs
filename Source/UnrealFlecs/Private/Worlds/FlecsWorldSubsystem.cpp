@@ -20,9 +20,7 @@
 #include "Components/FlecsBeginPlayComponent.h"
 
 #include "General/FlecsGameplayTagManagerEntity.h"
-
-#include "Modules/FlecsModuleInterface.h"
-#include "Modules/FlecsModuleSetDataAsset.h"
+#include "General/FlecsModuleRegistry.h"
 
 #include "Pipelines/FlecsGameLoopInterface.h"
 #include "Pipelines/TickFunctions/FlecsTickFunction.h"
@@ -111,6 +109,8 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 
 	// @TODO: Update this to either the FlecsWorldObject or the UWorld
 	DefaultWorld->SetContext(this);
+	
+	UE::Flecs::FFlecsModuleRegistry::Get().InitializeRegisteredModules(DefaultWorld.Get());
 
 	TConstArrayView<TObjectPtr<UObject>> InGameLoops = Settings.GameLoops;
 
@@ -251,42 +251,23 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	{
 		DefaultWorld->SetThreads(FMath::Max(1, FPlatformMisc::NumberOfCores() - 2));
 	}
+	
+	if (Settings.bImportRest)
+	{
+		DefaultWorld->ImportRestModule();
+	}
+	
+	if (Settings.bImportStats)
+	{
+		DefaultWorld->ImportStatsModule();
+	}
 
 	DefaultWorld->WorldStart();
 
 	for (const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface : DefaultWorld->GameLoopInterfaces)
 	{
-		GameLoopInterface->ImportModule(DefaultWorld->World);
+		GameLoopInterface->InitializeGameLoop_Internal(DefaultWorld);
 	}
-
-	for (TSolidNotNull<UObject*> Module : Settings.Modules)
-	{
-		solid_check(Module->GetClass()->ImplementsInterface(UFlecsModuleInterface::StaticClass()));
-			
-		DefaultWorld->ImportModule(Module);
-	}
-
-	for (const TSolidNotNull<UFlecsModuleSetDataAsset*> ModuleSet : Settings.ModuleSets)
-	{
-		ModuleSet->ImportModules(DefaultWorld);
-	}
-
-#if WITH_EDITOR
-
-	for (TSolidNotNull<UObject*> Module : Settings.EditorModules)
-	{
-		solid_checkf(Module->GetClass()->ImplementsInterface(UFlecsModuleInterface::StaticClass()),
-		             TEXT("Module %s does not implement UFlecsModuleInterface"), *Module->GetName());
-			
-		DefaultWorld->ImportModule(Module);
-	}
-
-	for (const TSolidNotNull<UFlecsModuleSetDataAsset*> ModuleSet : Settings.EditorModuleSets)
-	{
-		ModuleSet->ImportModules(DefaultWorld);
-	}
-
-#endif // WITH_EDITOR
 	
 	DefaultWorld->bIsInitialized = true;
 	OnWorldCreatedDelegate.Broadcast(DefaultWorld);

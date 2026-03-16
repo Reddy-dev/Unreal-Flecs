@@ -1374,7 +1374,7 @@ struct world {
      * @tparam T The type for which to obtain the id.
      */
     template <typename T>
-    flecs::id_t id_if_registered() {
+    flecs::id_t id_if_registered() const { // changed to const -Elie
         if (_::type<T>::registered(world_)) {
             return _::type<T>::id(world_);
         }

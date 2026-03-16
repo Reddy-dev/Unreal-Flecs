@@ -19,10 +19,11 @@ public:
 	
 }; // struct FFlecsSubEntityRecordNameComponent
 
-REGISTER_FLECS_COMPONENT(FFlecsSubEntityRecordNameComponent,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
-	{
-		InComponentHandle
-			.Add(flecs::DontFragment)
-			.AddPair(flecs::OnInstantiate, flecs::Override);
-	});
+template <>
+struct TFlecsComponentTraits<FFlecsSubEntityRecordNameComponent> : public TFlecsComponentTraitsBase<FFlecsSubEntityRecordNameComponent>
+{
+	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::Override;
+	
+	static constexpr bool DontFragment = true;
+	
+}; // struct TFlecsComponentTraits<FFlecsSubEntityRecordNameComponent>

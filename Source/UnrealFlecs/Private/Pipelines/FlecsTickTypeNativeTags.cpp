@@ -1,6 +1,6 @@
 ﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
 
-#include "Pipelines/TickFunctions/FlecsTickTypeNativeTags.h"
+#include "Pipelines/FlecsTickTypeNativeTags.h"
 
 UE_DEFINE_GAMEPLAY_TAG(FlecsTickType_Root, "Flecs.TickType");
 UE_DEFINE_GAMEPLAY_TAG(FlecsTickType_MainLoop, "Flecs.TickType.MainLoop");

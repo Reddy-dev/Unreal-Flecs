@@ -3,3 +3,5 @@
 #include "Pipelines/FlecsOutsideMainLoopTag.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsOutsideMainLoopTag)
+
+REGISTER_FLECS_COMPONENT(FFlecsOutsideMainLoopTag);

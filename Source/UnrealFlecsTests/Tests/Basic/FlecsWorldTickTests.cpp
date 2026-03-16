@@ -4,7 +4,7 @@
 
 #if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
 
-#include "Pipelines/TickFunctions/FlecsTickTypeNativeTags.h"
+#include "Pipelines/FlecsTickTypeNativeTags.h"
 #include "Worlds/FlecsWorld.h"
 
 #include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
@@ -23,7 +23,7 @@ TEST_CLASS_WITH_FLAGS(A11_UnrealFlecsWorldTickTests,
 
 	BEFORE_EACH()
 	{
-		Fixture = TUniquePtr<FFlecsTestFixtureRAII>(new FFlecsTestFixtureRAII({}, {}, {}, EWorldType::Game));
+		Fixture = TUniquePtr<FFlecsTestFixtureRAII>(new FFlecsTestFixtureRAII({}, {}, EWorldType::Game));
 		FlecsWorld = Fixture->Fixture.GetFlecsWorld();
 	}
 

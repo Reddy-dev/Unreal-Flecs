@@ -17,5 +17,3 @@ struct UNREALFLECS_API FFlecsBeginPlayComponent
 {
 	GENERATED_BODY()
 }; // struct FFlecsBeginPlayComponent
-
-REGISTER_FLECS_COMPONENT(FFlecsBeginPlayComponent);

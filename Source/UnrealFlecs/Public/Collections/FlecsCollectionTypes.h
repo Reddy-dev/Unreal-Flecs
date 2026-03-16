@@ -113,13 +113,12 @@ public:
 	
 }; // struct FFlecsCollectionReferenceComponent
 
-REGISTER_FLECS_COMPONENT(FFlecsCollectionReferenceComponent,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
-	{
-		InComponentHandle
-			.Add(flecs::Sparse)
-			.AddPair(flecs::OnInstantiate, flecs::DontInherit);
-	});
+template <>
+struct TFlecsComponentTraits<FFlecsCollectionReferenceComponent> : public TFlecsComponentTraitsBase<FFlecsCollectionReferenceComponent>
+{
+	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::DontInherit;
+	static constexpr bool Sparse = true;
+}; // struct TFlecsComponentTraits<FFlecsCollectionReferenceComponent>
 
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsCollectionPrefabTag
@@ -127,13 +126,16 @@ struct UNREALFLECS_API FFlecsCollectionPrefabTag
 	GENERATED_BODY()
 }; // struct FFlecsCollectionPrefabTag
 
-REGISTER_FLECS_COMPONENT(FFlecsCollectionPrefabTag,
-[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
+template <>
+struct TFlecsComponentTraits<FFlecsCollectionPrefabTag> : public TFlecsComponentTraitsBase<FFlecsCollectionPrefabTag>
+{
+	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::DontInherit;
+	
+	static void PostRegister(const FFlecsComponentHandle& ComponentHandle)
 	{
-		InComponentHandle
-			.AddPair(flecs::OnInstantiate, flecs::DontInherit)
-			.AddPair(flecs::With, flecs::Prefab);
-	});
+		ComponentHandle.AddPair(flecs::With, flecs::Prefab);
+	}
+};
 
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsCollectionSlotTag
@@ -141,12 +143,11 @@ struct UNREALFLECS_API FFlecsCollectionSlotTag
 	GENERATED_BODY()
 }; // struct FFlecsCollectionSlotTag
 
-REGISTER_FLECS_COMPONENT(FFlecsCollectionSlotTag,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
-	{
-		InComponentHandle
-			.AddPair(flecs::OnInstantiate, flecs::DontInherit);
-	});
+template <>
+struct TFlecsComponentTraits<FFlecsCollectionSlotTag> : public TFlecsComponentTraitsBase<FFlecsCollectionSlotTag>
+{
+	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::DontInherit;
+}; // struct TFlecsComponentTraits<FFlecsCollectionSlotTag>
 
 // @TODO: Add Ordered Children
 USTRUCT(BlueprintType)
@@ -156,14 +157,13 @@ struct UNREALFLECS_API FFlecsSubEntityIndex
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs")
 	int32 Index = INDEX_NONE;
-};
+}; // struct FFlecsSubEntityIndex
 
-REGISTER_FLECS_COMPONENT(FFlecsSubEntityIndex,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
-	{
-		// Sparse is fine; we just need a storage component for lookup.
-		InComponentHandle.Add(flecs::Sparse);
-	});
+template <>
+struct TFlecsComponentTraits<FFlecsSubEntityIndex> : public TFlecsComponentTraitsBase<FFlecsSubEntityIndex>
+{
+	static constexpr bool Sparse = true;
+}; // struct TFlecsComponentTraits<FFlecsSubEntityIndex>
 
 // @TODO: maybe add an OnSet Event like in templates
 
@@ -195,12 +195,11 @@ public:
 	
 }; // struct FFlecsCollectionParametersComponent
 
-REGISTER_FLECS_COMPONENT(FFlecsCollectionParametersComponent,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponentHandle)
-	{
-		InComponentHandle
-			.AddPair(flecs::OnInstantiate, flecs::DontInherit);
-	});
+template <>
+struct TFlecsComponentTraits<FFlecsCollectionParametersComponent> : public TFlecsComponentTraitsBase<FFlecsCollectionParametersComponent>
+{	
+	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::DontInherit;
+}; // struct TFlecsComponentTraits<FFlecsCollectionParametersComponent>
 
 /*
 USTRUCT(BlueprintType)

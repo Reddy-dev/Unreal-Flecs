@@ -8,6 +8,16 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsCollectionTypes)
 
+REGISTER_FLECS_COMPONENT(FFlecsCollectionReferenceComponent);
+
+REGISTER_FLECS_COMPONENT(FFlecsCollectionPrefabTag);
+
+REGISTER_FLECS_COMPONENT(FFlecsCollectionSlotTag);
+
+REGISTER_FLECS_COMPONENT(FFlecsSubEntityIndex);
+
+REGISTER_FLECS_COMPONENT(FFlecsCollectionParametersComponent);
+
 void FFlecsCollectionParametersComponent::ApplyParameters(const FFlecsEntityHandle& InEntityHandle,
 	const FInstancedStruct& InParameters) const
 {

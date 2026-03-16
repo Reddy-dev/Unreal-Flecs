@@ -49,7 +49,6 @@ public:
 
 #endif // DECLARE_DEFAULT_ENTITY
 
-
 #ifndef DEFINE_DEFAULT_ENTITY
 
 // Should be put in your .cpp file
