@@ -289,13 +289,6 @@ void flecs_meta_import_meta_definitions(
         }
     });
     
-    ecs_struct(world, {
-       .entity = ecs_id(EcsSystemPriority),
-       .members = {
-           { .name = "value", .type = ecs_id(ecs_i32_t) }
-       }
-   });
-    
 }
 
 void flecs_meta_import_definitions(

@@ -63,7 +63,6 @@ public class FlecsLibrary : ModuleRules
                 "FLECS_META",
                 "FLECS_JSON",
                 "FLECS_SCRIPT_MATH",
-                "FLECS_ENABLE_SYSTEM_PRIORITY",
             }
         );
         

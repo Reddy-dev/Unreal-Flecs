@@ -192,16 +192,6 @@ public:
 		return this->GetSelf();
 	}
 	
-#ifdef FLECS_ENABLE_SYSTEM_PRIORITY
-	
-	FORCEINLINE TInherited& Priority(const int32 InPriority)
-	{
-		GetSystemDefinition().Priority = InPriority;
-		return this->GetSelf();
-	}
-	
-#endif // FLECS_ENABLE_SYSTEM_PRIORITY
-	
 	template <typename Func>
 	THandleType run(Func&& func) {
 		using Delegate = typename flecs::_::run_delegate<

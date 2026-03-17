@@ -20,10 +20,6 @@ void FFlecsSystemDefinition::ApplyToSystem(const TSolidNotNull<const UFlecsWorld
 	InSystemBuilder._internal_get_desc()->interval = Interval;
 	InSystemBuilder._internal_get_desc()->rate = Rate;
 	
-#if FLECS_ENABLE_SYSTEM_PRIORITY
-	InSystemBuilder._internal_get_desc()->priority = Priority;
-#endif // FLECS_ENABLE_SYSTEM_PRIORITY
-	
 	InSystemBuilder._internal_get_desc()->multi_threaded = bMultiThreaded;
 	InSystemBuilder._internal_get_desc()->immediate = bImmediate;
 

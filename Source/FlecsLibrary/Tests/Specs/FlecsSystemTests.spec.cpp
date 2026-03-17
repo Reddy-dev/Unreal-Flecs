@@ -2539,47 +2539,6 @@ void System_run_w_0_src_query(void) {
     test_int(count, 1);
 }
 
-void System_priority_test(void) {
-    #ifdef FLECS_ENABLE_SYSTEM_PRIORITY
-    flecs::world ecs;
-    RegisterTestTypeComponents(ecs);
-
-    int32_t count = 0;
-
-    // have system initialize out of order to make sure Ids are not used in ordering
-    
-    ecs.system()
-       .priority(1000)
-       .each([&](flecs::iter& Iter, size_t Index) {
-           test_assert(count == 3);
-           count ++;
-       });
-
-    ecs.system()
-        .each([&](flecs::iter& Iter, size_t Index) {
-            test_assert(count == 2);
-            count ++;
-        });
-    
-    ecs.system()
-        .priority(99)
-        .each([&](flecs::iter& Iter, size_t Index) {
-            test_assert(count == 1);
-            count ++;
-        });
-
-    ecs.system()
-        .priority(50)
-        .each([&](flecs::iter& Iter, size_t Index) {
-            count ++;
-        });
-
-    ecs.progress();
-    test_int(count, 4);
-
-    #endif // FLECS_ENABLE_SYSTEM_PRIORITY
-}
-
 
 END_DEFINE_SPEC(FFlecsSystemTestsSpec);
 
@@ -2660,7 +2619,6 @@ END_DEFINE_SPEC(FFlecsSystemTestsSpec);
                 "register_twice_w_each_run",
                 "set_group",
                 "run_w_0_src_query",
-                "priority_test"
             ]*/
 
 void FFlecsSystemTestsSpec::Define()
@@ -2739,7 +2697,6 @@ void FFlecsSystemTestsSpec::Define()
     It("register_twice_w_each_run", [&] { System_register_twice_w_each_run(); });
     It("set_group", [&] { System_set_group(); });
     It("run_w_0_src_query", [&] { System_run_w_0_src_query(); });
-    It("priority_test", [&] { System_priority_test(); });
 }
 
 #endif // WITH_AUTOMATION_TESTS

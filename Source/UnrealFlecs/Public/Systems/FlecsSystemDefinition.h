@@ -18,16 +18,6 @@ struct UNREALFLECS_API FFlecsSystemDefinition
 {
 	GENERATED_BODY()
 	
-#ifdef FLECS_ENABLE_SYSTEM_PRIORITY
-	
-	static constexpr bool bSupportsSystemPriority = true;
-	
-#else // FLECS_ENABLE_SYSTEM_PRIORITY
-	
-	static constexpr bool bSupportsSystemPriority = false;
-	
-#endif // FLECS_ENABLE_SYSTEM_PRIORITY
-	
 public:
 	FORCEINLINE FFlecsSystemDefinition() = default;
 	
@@ -42,9 +32,6 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 	uint32 Rate;
-	
-	UPROPERTY(EditAnywhere, meta = (EditCondition = "bSupportsSystemPriority", EditConditionHides))
-	uint32 Priority;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FFlecsSystemTickSourceInput TickSourceInput;

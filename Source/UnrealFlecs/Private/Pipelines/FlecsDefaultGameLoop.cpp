@@ -20,29 +20,6 @@ static NO_DISCARD FORCEINLINE int flecs_entity_compare(
 	return (e1 > e2) - (e1 < e2);
 }
 
-#ifdef FLECS_ENABLE_SYSTEM_PRIORITY
-
-static NO_DISCARD FORCEINLINE int flecs_priority_compare(
-	const flecs::entity_t InEntityA,
-	const flecs::SystemPriority* InPtrA,
-	const flecs::entity_t InEntityB,
-	const flecs::SystemPriority* InPtrB) 
-{
-	solid_check(InPtrA);
-	solid_check(InPtrB);
-	
-	if (InPtrA->value == InPtrB->value)
-	{
-		return flecs_entity_compare(InEntityA, InPtrA, InEntityB, InPtrB);
-	}
-	else // lower value has higher priority
-	{
-		return InPtrA->value >= InPtrB->value ? 1 : -1;
-	}
-}
-
-#endif // FLECS_ENABLE_SYSTEM_PRIORITY
-
 void UFlecsDefaultGameLoop::InitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsEntityHandle& InGameLoopEntity)
 {
 	MainLoopPipeline = InWorld->CreatePipeline()
@@ -50,17 +27,10 @@ void UFlecsDefaultGameLoop::InitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWor
 		.with(flecs::Phase).cascade(flecs::DependsOn)
 		.without(flecs::Disabled).up(flecs::DependsOn)
 		.without(flecs::Disabled).up(flecs::ChildOf)
-		#ifdef FLECS_ENABLE_SYSTEM_PRIORITY
-		.with<flecs::SystemPriority>()
-		#endif // FLECS_ENABLE_SYSTEM_PRIORITY
 		.without<FFlecsOutsideMainLoopTag>()
 		.without<FFlecsOutsideMainLoopTag>().up(flecs::DependsOn)
 		.without<FFlecsOutsideMainLoopTag>().up(flecs::ChildOf)
-		#ifdef FLECS_ENABLE_SYSTEM_PRIORITY
-		.order_by<flecs::SystemPriority>(flecs_priority_compare)
-		#else // FLECS_ENABLE_SYSTEM_PRIORITY
 		.order_by(flecs_entity_compare)
-		#endif // FLECS_ENABLE_SYSTEM_PRIORITY
 		// @TODO: .with(InWorld->GetTagEntity(FlecsTickType_MainLoop))
 		.without(InWorld->GetTagEntity(FlecsTickType_PrePhysics))
 		.without(InWorld->GetTagEntity(FlecsTickType_DuringPhysics))
@@ -133,9 +103,6 @@ FFlecsEntityHandle UFlecsDefaultGameLoop::CreatePipelineForTickType(const FGamep
 			.with(flecs::System)
 			.without(flecs::Disabled).up(flecs::DependsOn)
 			.without(flecs::Disabled).up(flecs::ChildOf)
-			#ifdef FLECS_ENABLE_SYSTEM_PRIORITY
-			.with<flecs::SystemPriority>()
-			#endif // FLECS_ENABLE_SYSTEM_PRIORITY
 			.without<FFlecsOutsideMainLoopTag>()
 			.without<FFlecsOutsideMainLoopTag>().up(flecs::DependsOn)
 			.without<FFlecsOutsideMainLoopTag>().up(flecs::ChildOf);
@@ -145,13 +112,7 @@ FFlecsEntityHandle UFlecsDefaultGameLoop::CreatePipelineForTickType(const FGamep
 
 	flecs::pipeline_builder<> PipelineBuilder = MakeBasePipeline();
 
-	#ifdef FLECS_ENABLE_SYSTEM_PRIORITY
-	PipelineBuilder
-			.with<flecs::SystemPriority>()
-		   .order_by<flecs::SystemPriority>(flecs_priority_compare);
-	#else
-		PipelineBuilder.order_by(flecs_entity_compare);
-	#endif
+	PipelineBuilder.order_by(flecs_entity_compare);
 
 	const FString PipelineName = FString::Printf(TEXT("%s_Pipeline"), *InTickType.ToString());
 

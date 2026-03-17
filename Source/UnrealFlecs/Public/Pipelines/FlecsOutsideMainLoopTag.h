@@ -13,5 +13,3 @@ struct UNREALFLECS_API FFlecsOutsideMainLoopTag
 {
 	GENERATED_BODY()
 }; // struct FFlecsOutsideMainLoopTag
-
-REGISTER_FLECS_COMPONENT(FFlecsOutsideMainLoopTag);
