@@ -13,9 +13,9 @@
 
 static NO_DISCARD FORCEINLINE int flecs_entity_compare(
 	const ecs_entity_t e1,
-	MAYBE_UNUSED const void* ptr1,
+	const void* ptr1,
 	const ecs_entity_t e2,
-	MAYBE_UNUSED const void* ptr2)
+	const void* ptr2)
 {
 	return (e1 > e2) - (e1 < e2);
 }
@@ -30,7 +30,7 @@ void UFlecsDefaultGameLoop::InitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWor
 		.without<FFlecsOutsideMainLoopTag>()
 		.without<FFlecsOutsideMainLoopTag>().up(flecs::DependsOn)
 		.without<FFlecsOutsideMainLoopTag>().up(flecs::ChildOf)
-		.order_by(flecs_entity_compare)
+		//.order_by(flecs_entity_compare)
 		// @TODO: .with(InWorld->GetTagEntity(FlecsTickType_MainLoop))
 		.without(InWorld->GetTagEntity(FlecsTickType_PrePhysics))
 		.without(InWorld->GetTagEntity(FlecsTickType_DuringPhysics))
@@ -112,7 +112,7 @@ FFlecsEntityHandle UFlecsDefaultGameLoop::CreatePipelineForTickType(const FGamep
 
 	flecs::pipeline_builder<> PipelineBuilder = MakeBasePipeline();
 
-	PipelineBuilder.order_by(flecs_entity_compare);
+	//PipelineBuilder.order_by(flecs_entity_compare);
 
 	const FString PipelineName = FString::Printf(TEXT("%s_Pipeline"), *InTickType.ToString());
 
