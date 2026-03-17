@@ -64,10 +64,10 @@ template <> inline const char* component_symbol_name<double>() {
     return "f64";
 }
 
-// If type is trivial, don't register lifecycle actions. While the functions
-// that obtain the lifecycle callback do detect whether the callback is required
+// If the type is trivial, don't register lifecycle actions. While the functions
+// that obtain the lifecycle callback do detect whether the callback is required,
 // adding a special case for trivial types eases the burden a bit on the
-// compiler as it reduces the number of templates to evaluate.
+// compiler, as it reduces the number of templates to evaluate.
 template<typename T>
 void register_lifecycle_actions(
     ecs_world_t *world,
@@ -76,7 +76,7 @@ void register_lifecycle_actions(
     (void)world; (void)component;
     if constexpr (!std::is_trivial<T>::value) {
         // If the component is non-trivial, register component lifecycle actions.
-        // Depending on the type not all callbacks may be available.
+        // Depending on the type, not all callbacks may be available.
         ecs_type_hooks_t cl{};
         cl.ctor = ctor<T>(cl.flags);
         cl.dtor = dtor<T>(cl.flags);
@@ -107,7 +107,7 @@ inline ecs_cpp_type_action_t lifecycle_action() {
         return &register_lifecycle_actions<T>;
     }
 }
-    
+
 template <typename T>
 inline ecs_cpp_type_action_t enum_action() {
     #if FLECS_CPP_ENUM_REFLECTION_SUPPORT
@@ -303,7 +303,7 @@ struct type_impl {
     static_assert(is_pointer<T>::value == false,
         "pointer types are not allowed for components");
 
-    // Initialize component identifier
+    // Initialize the component identifier.
     static void init(
         bool allow_tag = true)
     {
@@ -509,11 +509,11 @@ template <typename T>
 struct type<T, if_not_t< is_pair<T>::value >>
     : type_impl<base_type_t<T>> { };
 
-// Pair type
+// Pair type.
 template <typename T>
 struct type<T, if_t< is_pair<T>::value >>
 {
-    // Override id method to return id of pair
+    // Override the id() method to return the ID of a pair.
     static id_t id(world_t *world = nullptr) {
         return ecs_pair(
             type< pair_first_t<T> >::id(world),
@@ -530,11 +530,28 @@ struct type<T, if_t< is_pair<T>::value >>
  */
 struct untyped_component : entity {
     using entity::entity;
-  
+
+    /** Default constructor. */
     untyped_component() : entity() { }
+
+    /** Construct from world and entity ID.
+     *
+     * @param world The world.
+     * @param id The component entity ID.
+     */
     explicit untyped_component(flecs::world_t *world, flecs::entity_t id) : entity(world, id) { }
+
+    /** Construct from entity ID.
+     *
+     * @param id The component entity ID.
+     */
     explicit untyped_component(flecs::entity_t id) : entity(id) { }
 
+    /** Construct from world and name.
+     *
+     * @param world The world.
+     * @param name The component name.
+     */
     explicit untyped_component(flecs::world_t *world, const char *name, const bool bUseLowId = true)
     {
         world_ = world;
@@ -547,6 +564,13 @@ struct untyped_component : entity {
         id_ = ecs_entity_init(world, &desc);
     }
 
+    /** Construct from world, name, and scope separators.
+     *
+     * @param world The world.
+     * @param name The component name.
+     * @param sep The scope separator.
+     * @param root_sep The root scope separator.
+     */
     explicit untyped_component(world_t *world, const char *name, const char *sep, const char *root_sep)
     {
         world_ = world;
@@ -559,24 +583,33 @@ struct untyped_component : entity {
         id_ = ecs_entity_init(world, &desc);
     }
 
-flecs::type_hooks_t get_hooks() const {
-    const flecs::type_hooks_t* h = ecs_get_hooks_id(world_, id_);
-    if (h) {
-        return *h;
-    } else {
-        return {};
+    flecs::type_hooks_t get_hooks() const {
+        const flecs::type_hooks_t* h = ecs_get_hooks_id(world_, id_);
+        if (h) {
+            return *h;
+        } else {
+            return {};
+        }
     }
-}
 
-void set_hooks(flecs::type_hooks_t &h) {
-    h.flags &= ECS_TYPE_HOOKS_ILLEGAL;
-    ecs_set_hooks_id(world_, id_, &h);
-}
+    /** Set the type hooks for this component.
+     *
+     * @param h The type hooks to set.
+     */
+    void set_hooks(flecs::type_hooks_t &h) {
+        h.flags &= ECS_TYPE_HOOKS_ILLEGAL;
+        ecs_set_hooks_id(world_, id_, &h);
+    }
 
 public:
 
+/** Register a custom compare hook for this component.
+ *
+ * @param compare_callback The comparison callback function.
+ * @return Reference to self for chaining.
+ */
 untyped_component& on_compare(
-    ecs_cmp_t compare_callback) 
+    ecs_cmp_t compare_callback)
 {
     ecs_assert(compare_callback, ECS_INVALID_PARAMETER, NULL);
     flecs::type_hooks_t h = get_hooks();
@@ -590,8 +623,13 @@ untyped_component& on_compare(
     return *this;
 }
 
+/** Register a custom equals hook for this component.
+ *
+ * @param equals_callback The equality callback function.
+ * @return Reference to self for chaining.
+ */
 untyped_component& on_equals(
-    ecs_equals_t equals_callback) 
+    ecs_equals_t equals_callback)
 {
     ecs_assert(equals_callback, ECS_INVALID_PARAMETER, NULL);
     flecs::type_hooks_t h = get_hooks();
@@ -623,7 +661,7 @@ struct component : untyped_component {
      * @param world The world for which to register the component.
      * @param name Optional name (overrides typename).
      * @param allow_tag If true, empty types will be registered with size 0.
-     * @param id Optional id to register component with.
+     * @param id Optional component ID to register the component with.
      */
     component(
         flecs::world_t *world,
@@ -635,7 +673,11 @@ struct component : untyped_component {
         id_ = _::type<T>::register_id(world, name, allow_tag, true, true, id);
     }
 
-    /** Register on_add hook. */
+    /** Register on_add hook.
+     *
+     * @param func The callback function.
+     * @return Reference to self for chaining.
+     */
     template <typename Func>
     component<T>& on_add(Func&& func) {
         using Delegate = typename _::each_delegate<typename std::decay<Func>::type, T>;
@@ -650,7 +692,11 @@ struct component : untyped_component {
         return *this;
     }
 
-    /** Register on_remove hook. */
+    /** Register on_remove hook.
+     *
+     * @param func The callback function.
+     * @return Reference to self for chaining.
+     */
     template <typename Func>
     component<T>& on_remove(Func&& func) {
         using Delegate = typename _::each_delegate<
@@ -666,7 +712,11 @@ struct component : untyped_component {
         return *this;
     }
 
-    /** Register on_set hook. */
+    /** Register on_set hook.
+     *
+     * @param func The callback function.
+     * @return Reference to self for chaining.
+     */
     template <typename Func>
     component<T>& on_set(Func&& func) {
         using Delegate = typename _::each_delegate<
@@ -682,14 +732,18 @@ struct component : untyped_component {
         return *this;
     }
 
-    /** Register on_replace hook. */
+    /** Register on_replace hook.
+     *
+     * @param func The callback function.
+     * @return Reference to self for chaining.
+     */
     template <typename Func>
     component<T>& on_replace(Func&& func) {
         using Delegate = typename _::each_delegate<
             typename std::decay<Func>::type, T, T>;
         flecs::type_hooks_t h = get_hooks();
-        ecs_assert(h.on_set == nullptr, ECS_INVALID_OPERATION,
-            "on_set hook is already set");
+        ecs_assert(h.on_replace == nullptr, ECS_INVALID_OPERATION,
+            "on_replace hook is already set");
         BindingCtx *ctx = get_binding_ctx(h);
         h.on_replace = Delegate::run_replace;
         ctx->on_replace = FLECS_NEW(Delegate)(FLECS_FWD(func));
@@ -698,8 +752,12 @@ struct component : untyped_component {
         return *this;
     }
 
-    /** Register operator compare hook. */
     using untyped_component::on_compare;
+
+    /** Register an operator compare hook using type T's comparison operators.
+     *
+     * @return Reference to self for chaining.
+     */
     component<T>& on_compare() {
         ecs_cmp_t handler = _::compare<T>();
         ecs_assert(handler != NULL, ECS_INVALID_OPERATION, 
@@ -708,15 +766,24 @@ struct component : untyped_component {
         return *this;
     }
 
-    /** Type safe variant of compare op function */
     using cmp_hook = int(*)(const T* a, const T* b, const ecs_type_info_t *ti);
+
+    /** Type-safe variant of the compare op function.
+     *
+     * @param callback The comparison callback function.
+     * @return Reference to self for chaining.
+     */
     component<T>& on_compare(cmp_hook callback) {
         on_compare(reinterpret_cast<ecs_cmp_t>(callback));
         return *this;
     }
 
-    /** Register operator equals hook. */
     using untyped_component::on_equals;
+
+    /** Register an operator equals hook using type T's equality operator.
+     *
+     * @return Reference to self for chaining.
+     */
     component<T>& on_equals() {
         ecs_equals_t handler = _::equals<T>();
         ecs_assert(handler != NULL, ECS_INVALID_OPERATION, 
@@ -725,8 +792,13 @@ struct component : untyped_component {
         return *this;
     }
 
-    /** Type safe variant of equals op function */
     using equals_hook = bool(*)(const T* a, const T* b, const ecs_type_info_t *ti);
+
+    /** Type-safe variant of the equals op function.
+     *
+     * @param callback The equality callback function.
+     * @return Reference to self for chaining.
+     */
     component<T>& on_equals(equals_hook callback) {
         on_equals(reinterpret_cast<ecs_equals_t>(callback));
         return *this;
