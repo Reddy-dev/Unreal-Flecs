@@ -5,19 +5,14 @@
 #include "CoreMinimal.h"
 
 #include "Engine/EngineBaseTypes.h"
+#include "StructUtils/SharedStruct.h"
 
 #include "SolidMacros/Macros.h"
 #include "Standard/Hashing.h"
-#include "Types/SolidNotNull.h"
-
-#include "StructUtils/InstancedStruct.h"
-#include "StructUtils/SharedStruct.h"
 
 #include "FlecsWorldInfoSettings.generated.h"
 
 struct FFlecsTickFunction;
-
-class UFlecsModuleSetDataAsset;
 
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsTickFunctionSettingsInfo
@@ -88,11 +83,9 @@ struct UNREALFLECS_API FFlecsWorldSettingsInfo
 public:
     FFlecsWorldSettingsInfo();
     
-    FORCEINLINE FFlecsWorldSettingsInfo(const FString& InWorldName, const TArray<TObjectPtr<UObject>>& InGameLoop,
-        const TArray<TObjectPtr<UObject>>& InModules = {})
+    FORCEINLINE FFlecsWorldSettingsInfo(const FString& InWorldName, const TArray<TObjectPtr<UObject>>& InGameLoop)
         : WorldName(InWorldName)
         , GameLoops(InGameLoop)
-        , Modules(InModules)
     {
     }
 
@@ -108,28 +101,18 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "World")
     FString WorldName;
-
+    
+    // @TODO: add FLECS_REST and FLECS_STATS checks
+    
+    UPROPERTY(EditAnywhere, Category = "World")
+    bool bImportRest = true;
+    
+    UPROPERTY(EditAnywhere, Category = "World")
+    bool bImportStats = true;
+    
     UPROPERTY(EditAnywhere, Instanced, Category = "Game Loop",
         meta = (ObjectMustImplement = "/Script/UnrealFlecs.FlecsGameLoopInterface", NoElementDuplicate))
     TArray<TObjectPtr<UObject>> GameLoops;
-
-    UPROPERTY(EditAnywhere, Instanced, Category = "Modules",
-        meta = (ObjectMustImplement = "/Script/UnrealFlecs.FlecsModuleInterface", NoElementDuplicate))
-    TArray<TObjectPtr<UObject>> Modules;
-
-    UPROPERTY(EditAnywhere, Category = "Modules", meta = (NoElementDuplicate))
-    TArray<TObjectPtr<UFlecsModuleSetDataAsset>> ModuleSets;
-
-#if WITH_EDITORONLY_DATA
-
-    UPROPERTY(EditAnywhere, Instanced, Category = "Editor Modules",
-         meta = (ObjectMustImplement = "/Script/UnrealFlecs.FlecsModuleInterface", NoElementDuplicate))
-    TArray<TObjectPtr<UObject>> EditorModules;
-
-    UPROPERTY(EditAnywhere, Category = "Editor Modules", meta = (NoElementDuplicate))
-    TArray<TObjectPtr<UFlecsModuleSetDataAsset>> EditorModuleSets;
-
-#endif // #if WITH_EDITORONLY_DATA
 
     UPROPERTY(EditAnywhere, Category = "World", AdvancedDisplay)
     TArray<FFlecsTickFunctionSettingsInfo> TickFunctions;

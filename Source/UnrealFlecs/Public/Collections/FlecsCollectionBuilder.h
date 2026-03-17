@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "FlecsCollectionDefinition.h"
 
-#include "Entities/FlecsEntityRecord.h"
+#include "EntityRecords//FlecsEntityRecord.h"
 #include "FlecsCollectionTypes.h"
 
 #include "FlecsCollectionBuilder.generated.h"

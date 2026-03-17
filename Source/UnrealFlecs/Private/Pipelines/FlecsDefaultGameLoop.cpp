@@ -5,7 +5,7 @@
 #include "Logs/FlecsCategories.h"
 
 #include "Pipelines/FlecsOutsideMainLoopTag.h"
-#include "Pipelines/TickFunctions/FlecsTickTypeNativeTags.h"
+#include "Pipelines/FlecsTickTypeNativeTags.h"
 
 #include "Worlds/FlecsWorld.h"
 
@@ -58,7 +58,7 @@ bool UFlecsDefaultGameLoop::Progress(const double DeltaTime, const FGameplayTag&
 	}
 	else if (InTickType == FlecsTickType_PrePhysics)
 	{
-		World->RunPipeline(PrePhysicsPipeline, DeltaTime);
+		InWorld->RunPipeline(PrePhysicsPipeline, DeltaTime);
 	}
 	else if (InTickType == FlecsTickType_DuringPhysics)
 	{
@@ -91,7 +91,8 @@ bool UFlecsDefaultGameLoop::IsMainLoop() const
 
 TArray<FGameplayTag> UFlecsDefaultGameLoop::GetTickTypeTags() const
 {
-	return { FlecsTickType_MainLoop, FlecsTickType_PrePhysics, FlecsTickType_DuringPhysics, FlecsTickType_PostPhysics, FlecsTickType_PostUpdateWork };
+	return { FlecsTickType_MainLoop, 
+		FlecsTickType_PrePhysics, FlecsTickType_DuringPhysics, FlecsTickType_PostPhysics, FlecsTickType_PostUpdateWork };
 }
 
 FFlecsEntityHandle UFlecsDefaultGameLoop::CreatePipelineForTickType(const FGameplayTag& InTickType,
@@ -99,13 +100,21 @@ FFlecsEntityHandle UFlecsDefaultGameLoop::CreatePipelineForTickType(const FGamep
 {
 	auto MakeBasePipeline = [this, InWorld]() -> flecs::pipeline_builder<>
 	{
-		return InWorld->CreatePipeline()
+		flecs::pipeline_builder<> PipelineBuilder = InWorld->CreatePipeline()
 			.with(flecs::System)
 			.without(flecs::Disabled).up(flecs::DependsOn)
 			.without(flecs::Disabled).up(flecs::ChildOf)
 			.without<FFlecsOutsideMainLoopTag>()
 			.without<FFlecsOutsideMainLoopTag>().up(flecs::DependsOn)
 			.without<FFlecsOutsideMainLoopTag>().up(flecs::ChildOf);
+		
+		if (bUsePhasesInUnrealTickGroups)
+		{
+			PipelineBuilder
+				.with(flecs::Phase).cascade(flecs::DependsOn);
+		}
+		
+		return PipelineBuilder;
 	};
 
 	FFlecsEntityHandle ResultPipeline;

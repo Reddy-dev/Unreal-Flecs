@@ -5,3 +5,7 @@
 #include "Types/SolidCppStructOps.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsUObjectComponent)
+
+REGISTER_FLECS_COMPONENT(FFlecsUObjectComponent);
+
+REGISTER_FLECS_COMPONENT(FFlecsNoDeleteUObject);

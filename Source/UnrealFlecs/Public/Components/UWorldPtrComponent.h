@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 
-#include "UObject/Object.h"
 #include "Engine/World.h"
 
 #include "SolidMacros/Macros.h"
+
+#include "Properties/FlecsComponentProperties.h"
 
 #include "UWorldPtrComponent.generated.h"
 
@@ -84,6 +85,12 @@ public:
 	TObjectPtr<UWorld> World;
 	
 }; // struct FUWorldPtrComponent
+
+template <>
+struct TFlecsComponentTraits<FUWorldPtrComponent> : public TFlecsComponentTraitsBase<FUWorldPtrComponent>
+{
+	static constexpr bool AutoRegister = false;
+}; // struct TFlecsComponentTraits<FUWorldPtrComponent>
 
 template<>
 struct TStructOpsTypeTraits<FUWorldPtrComponent> : public TStructOpsTypeTraitsBase2<FUWorldPtrComponent>

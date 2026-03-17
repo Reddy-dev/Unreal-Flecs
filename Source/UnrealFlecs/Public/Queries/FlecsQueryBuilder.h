@@ -58,7 +58,7 @@ struct UNREALFLECS_API FFlecsQueryBuilder
 public:
 	FORCEINLINE FFlecsQueryBuilder() = default;
 	
-	explicit FFlecsQueryBuilder(const UFlecsWorld* InWorld, const FString& InName = FString());
+	explicit FFlecsQueryBuilder(const UFlecsWorld* InWorld, const FString& InQueryName = FString());
 	explicit FFlecsQueryBuilder(const UFlecsWorld* InWorld, const FFlecsEntityHandle& InQueryEntity);
 	
 	NO_DISCARD FORCEINLINE FFlecsQueryDefinition& GetQueryDefinition_Impl() const
@@ -72,7 +72,7 @@ public:
 	TWeakObjectPtr<const UFlecsWorld> World;
 	
 	UPROPERTY()
-	FString Name;
+	FString QueryName;
 	
 	UPROPERTY()
 	TOptional<FFlecsEntityHandle> OptionalQueryEntity;

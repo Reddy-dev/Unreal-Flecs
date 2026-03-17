@@ -6,7 +6,7 @@
 
 void FUnrealFlecsTestsModule::StartupModule()
 {
-    
+	
 }
 
 void FUnrealFlecsTestsModule::ShutdownModule()

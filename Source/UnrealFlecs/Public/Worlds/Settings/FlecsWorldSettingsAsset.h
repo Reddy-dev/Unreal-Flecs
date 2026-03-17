@@ -34,8 +34,6 @@ public:
 #if WITH_EDITOR
 
 	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
-	EDataValidationResult CheckForDuplicateModules(FDataValidationContext& Context, TArrayView<TObjectPtr<UObject>> ImportedModules) const;
-	EDataValidationResult CheckForHardDependencies(FDataValidationContext& Context, TArrayView<TObjectPtr<UObject>> ImportedModules) const;
 
 #endif // WITH_EDITOR
 

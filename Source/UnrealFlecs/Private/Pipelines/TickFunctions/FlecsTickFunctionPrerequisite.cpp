@@ -3,3 +3,5 @@
 #include "Pipelines/TickFunctions/FlecsTickFunctionPrerequisite.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsTickFunctionPrerequisite)
+
+REGISTER_FLECS_COMPONENT(FFlecsTickFunctionPrerequisite);

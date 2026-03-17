@@ -2,48 +2,54 @@
 
 #include "Properties/FlecsComponentProperties.h"
 
-FFlecsComponentPropertiesRegistry FFlecsComponentPropertiesRegistry::Instance;
+#include "Properties/FlecsTypeRegistryEngineSubsystem.h"
 
-void FFlecsComponentPropertiesRegistry::RegisterComponentProperties(const std::string& Name, UScriptStruct* Struct,
-	const uint32 Size, const uint16 Alignment, const UE::Flecs::FFlecsComponentFunction& RegistrationFunction)
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsComponentProperties)
+
+namespace UE::Flecs::Private
 {
-	solid_checkf(!Name.empty(), TEXT("Component properties name is empty!"));
-		
-	ComponentProperties[Name] = FFlecsComponentProperties
+	FCriticalSection& GetRegisteredComponentsMutex()
 	{
-		.Name = Name,
-		.Struct = Struct,
-		.Size = Size, .Alignment = Alignment,
-		.RegistrationFunction = RegistrationFunction
-	};
-		
-	OnComponentPropertiesRegistered.Broadcast(ComponentProperties[Name]);
-}
-
-bool FFlecsComponentPropertiesRegistry::ContainsComponentProperties(const std::string_view Name) const
-{
-	return ComponentProperties.contains(Name.data());
-}
-
-bool FFlecsComponentPropertiesRegistry::ContainsComponentProperties(const FString& Name) const
-{
-	return ComponentProperties.contains(StringCast<char>(*Name).Get());
-}
-
-const FFlecsComponentProperties& FFlecsComponentPropertiesRegistry::GetComponentProperties(
-	const std::string_view Name) const
-{
-	checkf(!Name.empty(), TEXT("Component properties name is empty!"));
-	checkf(ComponentProperties.contains(Name.data()), TEXT("Component properties not found!"));
+		static FCriticalSection Mutex;
+		return Mutex;
+	}
 	
-	return ComponentProperties.at(Name.data());
-}
-
-const FFlecsComponentProperties& FFlecsComponentPropertiesRegistry::GetComponentProperties(const FString& Name) const
-{
-	solid_checkf(!Name.IsEmpty(), TEXT("Component properties name is empty!"));
-	solid_checkf(ComponentProperties.contains(StringCast<char>(*Name).Get()),
-	             TEXT("Component properties not found!"));
+	TArray<FFlecsComponentPropertiesDefinition>& GetPendingRegisteredComponents()
+	{
+		static TArray<FFlecsComponentPropertiesDefinition> PendingDefinitions;
+		return PendingDefinitions;
+	}
 	
-	return ComponentProperties.at(StringCast<char>(*Name).Get());
-}
+	void AddRegisteredComponentProperties_Static(const FFlecsComponentPropertiesDefinition& InDefinition)
+	{
+		solid_checkf(!InDefinition.Name.IsEmpty(),
+			TEXT("Invalid component properties definition provided to RegisterComponentPropertiesStatic: Name is empty!"));
+
+		solid_checkf(InDefinition.RegistrationFunction,
+			TEXT("Invalid component properties definition provided to RegisterComponentPropertiesStatic: RegistrationFunction is null!"));
+
+		FScopeLock Lock(&GetRegisteredComponentsMutex());
+
+		if (UFlecsTypeRegistryEngineSubsystem::Singleton.IsValid())
+		{
+			UFlecsTypeRegistryEngineSubsystem::Singleton.Get()->AddRegisteredComponentProperties(InDefinition);
+			return;
+		}
+
+		TArray<FFlecsComponentPropertiesDefinition>& PendingDefinitions = GetPendingRegisteredComponents();
+
+		const bool bAlreadyPending = PendingDefinitions.ContainsByPredicate(
+			[&InDefinition](const FFlecsComponentPropertiesDefinition& ExistingDefinition)
+			{
+				return ExistingDefinition.Name == InDefinition.Name;
+			});
+
+		// if you are hitting this, you most likely have REGISTER_FLECS_COMPONENT in a header file or inl file
+		solid_checkf(!bAlreadyPending,
+			TEXT("Component with name %s is already pending registration!"),
+			*InDefinition.Name);
+
+		PendingDefinitions.Add(InDefinition);
+	}
+	
+} // namespace UE::Flecs::Private

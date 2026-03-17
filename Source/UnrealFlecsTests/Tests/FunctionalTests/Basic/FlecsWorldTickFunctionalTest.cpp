@@ -2,7 +2,7 @@
 
 #include "FlecsWorldTickFunctionalTest.h"
 
-#include "Pipelines/TickFunctions/FlecsTickTypeNativeTags.h"
+#include "Pipelines/FlecsTickTypeNativeTags.h"
 #include "Worlds/FlecsWorld.h"
 #include "Worlds/FlecsWorldSubsystem.h"
 

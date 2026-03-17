@@ -22,9 +22,8 @@ public:
 	
 }; // struct FFlecsTickFunctionComponent
 
-REGISTER_FLECS_COMPONENT(FFlecsTickFunctionComponent,
-	[](flecs::world InWorld, const FFlecsComponentHandle& InComponent)
-	{
-		InComponent
-			.Add(flecs::Sparse);
-	});
+template <>
+struct TFlecsComponentTraits<FFlecsTickFunctionComponent> : public TFlecsComponentTraitsBase<FFlecsTickFunctionComponent>
+{ 	
+	static constexpr bool Sparse = true;
+}; // struct TFlecsComponentTraits<FFlecs
