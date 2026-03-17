@@ -23,6 +23,7 @@ static NO_DISCARD FORCEINLINE int flecs_entity_compare(
 UFlecsDefaultGameLoop::UFlecsDefaultGameLoop()
 {
 }
+
 void UFlecsDefaultGameLoop::InitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsEntityHandle& InGameLoopEntity)
 {
 	MainLoopPipeline = InWorld->CreatePipeline()
