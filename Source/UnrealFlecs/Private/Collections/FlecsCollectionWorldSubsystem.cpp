@@ -48,23 +48,12 @@ void UFlecsCollectionWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull
 	
 	FlecsWorld->RegisterComponentType<FFlecsCollectionSlotTag>();
 	FlecsWorld->RegisterComponentType<FFlecsCollectionParametersComponent>();
-
-	CollectionScopeEntity = FlecsWorld->CreateEntity("CollectionScope")
-		.Add(flecs::Module);
 	
 	UE_LOG(LogFlecsCollections, Verbose, TEXT("UCollectionsModule registered"));
 }
 
 void UFlecsCollectionWorldSubsystem::Deinitialize()
 {
-	if (MAYBE_UNUSED const UFlecsWorld* FlecsWorld = GetFlecsWorld())
-	{
-		if LIKELY_IF(CollectionScopeEntity.IsValid())
-		{
-			CollectionScopeEntity.Destroy();
-		}
-	}
-		
 	Super::Deinitialize();
 }
 
@@ -223,11 +212,6 @@ FFlecsEntityHandle UFlecsCollectionWorldSubsystem::GetPrefabByClass(const TSubcl
 	
 	const FFlecsCollectionId Id = FFlecsCollectionId(InClass->GetPrefixCPP() + InClass->GetName());
 	return GetPrefabByCollectionId(Id);
-}
-
-FFlecsEntityHandle UFlecsCollectionWorldSubsystem::GetCollectionScope() const
-{
-	return CollectionScopeEntity;
 }
 
 void UFlecsCollectionWorldSubsystem::AddCollectionToEntity(const FFlecsEntityHandle& InEntity,

@@ -48,10 +48,6 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B4_CollectionBasicTests, "UnrealFlecs.B4_Collecti
 	{
 		ASSERT_THAT(IsTrue(IsValid(FlecsWorld)));
 		ASSERT_THAT(IsTrue(IsValid(Collections)));
-		
-		const FFlecsEntityHandle Scope = Collections->GetCollectionScope();
-		ASSERT_THAT(IsTrue(Scope.IsValid()));
-		ASSERT_THAT(IsTrue(Scope.Has(flecs::Module)));
 	}
 
 	TEST_METHOD(B1_RegisterEmptyCollection_CreatesPrefab_DefinitionBuilderAPI)

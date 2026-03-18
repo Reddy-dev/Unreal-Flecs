@@ -81,9 +81,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Flecs|Collections")
 	FFlecsEntityHandle GetPrefabByClass(const TSubclassOf<UObject> InClass) const;
 
-	UFUNCTION(BlueprintCallable, Category = "Flecs|Collections")
-	FFlecsEntityHandle GetCollectionScope() const;
-
 	template <UE::Flecs::Collections::TCollectionBuilderFunc FuncType>
 	FFlecsEntityHandle RegisterCollectionBuilder(FuncType&& InBuildFunc)
 	{
@@ -178,8 +175,5 @@ private:
 	// @TODO: make use of this
 	// Recursion guard
 	TSet<FFlecsCollectionId> InProgressCollections;
-
-	UPROPERTY()
-	FFlecsEntityHandle CollectionScopeEntity;
 	
 }; // class UFlecsCollectionWorldSubsystem
