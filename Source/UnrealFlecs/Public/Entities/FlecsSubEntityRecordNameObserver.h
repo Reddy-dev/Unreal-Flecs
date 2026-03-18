@@ -16,7 +16,7 @@ class UNREALFLECS_API UFlecsSubEntityRecordNameObserver : public UFlecsObserverO
 public:
 	UFlecsSubEntityRecordNameObserver(const FObjectInitializer& ObjectInitializer);
 	
-	virtual void BuildObserver(const TSolidNotNull<const UFlecsWorld*> InWorld, TFlecsObserverBuilder<>& InOutBuilder) const override;
-	virtual void EachIterator(const TSolidNotNull<const UFlecsWorld*> InWorld, flecs::iter& InIterator, const FFlecsId InIndex) override;
+	virtual void BuildObserver(const TSolidNotNull<UFlecsWorld*> InWorld, TFlecsObserverBuilder<>& InOutBuilder) const override;
+	virtual void EachIterator(const TSolidNotNull<UFlecsWorld*> InWorld, flecs::iter& InIterator, const FFlecsId InIndex) override;
 	
 }; // class UFlecsSubEntityRecordNameObserver

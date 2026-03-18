@@ -15,7 +15,7 @@ UFlecsObserverObject::UFlecsObserverObject(const FObjectInitializer& ObjectIniti
 {
 }
 
-void UFlecsObserverObject::BuildObserver(const TSolidNotNull<const UFlecsWorld*> InWorld,
+void UFlecsObserverObject::BuildObserver(const TSolidNotNull<UFlecsWorld*> InWorld,
 	TFlecsObserverBuilder<>& InOutBuilder) const
 {
 	

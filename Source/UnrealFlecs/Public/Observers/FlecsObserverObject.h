@@ -32,7 +32,7 @@ public:
 		return ObserverHandle;
 	}
 	
-	virtual void BuildObserver(const TSolidNotNull<const UFlecsWorld*> InWorld, TFlecsObserverBuilder<>& InOutBuilder) const;
+	virtual void BuildObserver(const TSolidNotNull<UFlecsWorld*> InWorld, TFlecsObserverBuilder<>& InOutBuilder) const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Flecs|Observer")
 	UFlecsWorld* GetFlecsWorld() const;

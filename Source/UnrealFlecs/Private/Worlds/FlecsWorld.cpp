@@ -398,13 +398,43 @@ void UFlecsWorld::InitializeFlecsRegistrationObjects()
 {
 	TSet<TSubclassOf<UObject>> RegisteredObjectClasses;
 	
-	GetWorld()->ForEachSubsystem<UFlecsObjectRegistrationProviderBase>([this, &RegisteredObjectClasses]
-		(const UFlecsObjectRegistrationProviderBase* RegistrationProvider)
+	for (TObjectIterator<UClass> It; It; ++It)
 	{
-		const TArray<TSubclassOf<UObject>> ProviderRegisteredObjectClasses = RegistrationProvider->GetClassesToRegister();
-		
+		UClass* Class = *It;
+
+		if (!IsValid(Class))
+		{
+			continue;
+		}
+
+		if (!Class->IsChildOf(UFlecsObjectRegistrationProviderBase::StaticClass()))
+		{
+			continue;
+		}
+
+		if (Class == UFlecsObjectRegistrationProviderBase::StaticClass())
+		{
+			continue;
+		}
+
+		if (Class->HasAnyClassFlags(CLASS_Abstract | CLASS_Deprecated | CLASS_NewerVersionExists))
+		{
+			continue;
+		}
+
+		const UFlecsObjectRegistrationProviderBase* ProviderCDO =
+			Class->GetDefaultObject<UFlecsObjectRegistrationProviderBase>();
+
+		if (!IsValid(ProviderCDO))
+		{
+			continue;
+		}
+
+		const TArray<TSubclassOf<UObject>> ProviderRegisteredObjectClasses =
+			ProviderCDO->GetClassesToRegister();
+
 		RegisteredObjectClasses.Append(ProviderRegisteredObjectClasses);
-	});
+	}
 	
 	for (const TSubclassOf<UObject> RegisteredClass : RegisteredObjectClasses)
 	{
@@ -612,48 +642,6 @@ void UFlecsWorld::InitializeSystems()
 
 		DependenciesComponentQuery = CreateQueryBuilder<FFlecsSoftDependenciesComponent>("DependenciesComponentQuery")
 			.Build();
-
-	// @TODO: add verification for this
-	CreateObserver<FFlecsTickFunctionComponent&>(TEXT("AddTickFunctionObserver"))
-		.Event(flecs::OnAdd)
-		.YieldExisting()
-		.WithPair<FFlecsTickTypeRelationship>("$TickTypeTag") // 1
-		.each([this](flecs::iter& InIter, size_t InIndex, FFlecsTickFunctionComponent& InTickFunctionComponent)
-		{
-			solid_checkf(InTickFunctionComponent.TickFunction.IsValid(),
-				TEXT("FFlecsTickFunctionComponent has invalid TickFunction"));
-
-			#if !NO_LOGGING
-			const FFlecsEntityHandle EntityHandle = InIter.entity(InIndex);
-			#endif // !NO_LOGGING
-
-			InTickFunctionComponent.TickFunction.Get().OwningWorld = this;
-			InTickFunctionComponent.TickFunction.Get().RegisterTickFunction(GetWorld()->PersistentLevel);
-
-			UE_LOGFMT(LogFlecsWorld, Verbose,
-				"Registered Tick Function for Entity {EntityIdentifier}",
-				EntityHandle.HasName() ? EntityHandle.GetName() : EntityHandle.ToString());
-				
-		});
-
-	CreateObserver<FFlecsTickFunctionComponent&>(TEXT("RemoveTickFunctionObserver"))
-		.Event(flecs::OnRemove)
-		.YieldExisting()
-		.each([this](flecs::iter& InIter, size_t InIndex, FFlecsTickFunctionComponent& InTickFunctionComponent)
-		{
-			solid_checkf(InTickFunctionComponent.TickFunction.IsValid(),
-				TEXT("FFlecsTickFunctionComponent has invalid TickFunction"));
-
-			#if !NO_LOGGING
-			const FFlecsEntityHandle EntityHandle = InIter.entity(InIndex);
-			#endif // !NO_LOGGING
-			
-			InTickFunctionComponent.TickFunction.Get().UnRegisterTickFunction();
-
-			UE_LOGFMT(LogFlecsWorld, Verbose,
-				"Unregistered Tick Function for Entity {EntityIdentifier}",
-				EntityHandle.HasName() ? EntityHandle.GetName() : EntityHandle.ToString());
-		});
 }
 
 void UFlecsWorld::Reset()
@@ -1903,11 +1891,56 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 	RegisteredObjects.Add(FlecsObject);
 	RegisteredObjectTypes.Add(InClass, FlecsObject);
 	
+	const bool bRegisterWithFlecsModule = CastChecked<IFlecsObjectRegistrationInterface>(FlecsObject)->ShouldRegisterWithModule();
+	FName ModuleName = NAME_None;
+	if (bRegisterWithFlecsModule)
+	{
+		ModuleName = CastChecked<IFlecsObjectRegistrationInterface>(FlecsObject)->GetModuleName();
+		
+		if (ModuleName.IsNone())
+		{
+			const FString PackageName = InClass->GetOuterUPackage()->GetName();
+			ModuleName = FName(*FPackageName::GetShortName(PackageName));
+		}
+	}
+	
+	FFlecsEntityHandle ModuleEntity;
+	
+	if (bRegisterWithFlecsModule)
+	{
+		ModuleEntity = LookupEntity(ModuleName.ToString());
+		
+		if (!ModuleEntity.IsValid() || !ModuleEntity.Has(flecs::Module))
+		{
+			UE_LOGFMT(LogFlecsWorld, Warning,
+				"Module {ModuleName} does not exist or is not a valid flecs module, registered object {ObjectName} will not be registered with the module",
+				*ModuleName.ToString(), *FlecsObject->GetName());
+			
+			ModuleEntity = FFlecsEntityHandle::GetNullHandle();
+		}
+	}
+	
+	FFlecsId OldScope;
+	
+	if (bRegisterWithFlecsModule && ModuleEntity.IsValid())
+	{
+		OldScope = SetScope(ModuleEntity);
+	}
+	
 	CastChecked<IFlecsObjectRegistrationInterface>(FlecsObject)->RegisterObject(this);
 	
 	if (HasSingleton<FFlecsBeginPlayComponent>())
 	{
 		CastChecked<IFlecsObjectRegistrationInterface>(FlecsObject)->FlecsWorldBeginPlay(this);
+	}
+	else
+	{
+		
+	}
+	
+	if (OldScope.IsValid())
+	{
+		SetScope(OldScope);
 	}
 	
 	return FlecsObject;
@@ -1932,6 +1965,22 @@ bool UFlecsWorld::IsFlecsObjectRegistered(const TSubclassOf<UObject> InClass) co
 {
 	solid_check(InClass);
 	return RegisteredObjectTypes.Contains(InClass);
+}
+
+FFlecsEntityHandle UFlecsWorld::GetFlecsModule(const FName& InModuleName) const
+{
+	const FFlecsEntityHandle ModuleEntity = LookupEntity(InModuleName.ToString());
+	
+	if (!ModuleEntity.IsValid() || !ModuleEntity.Has(flecs::Module))
+	{
+		UE_LOGFMT(LogFlecsWorld, Warning,
+			"Module {ModuleName} does not exist or is not a valid flecs module",
+			*InModuleName.ToString());
+		
+		return FFlecsEntityHandle::GetNullHandle();
+	}
+	
+	return ModuleEntity;
 }
 
 void UFlecsWorld::ImportRestModule()

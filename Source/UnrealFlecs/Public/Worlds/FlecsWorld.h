@@ -1029,6 +1029,9 @@ public:
 		return IsFlecsObjectRegistered(T::StaticClass());
 	}
 	
+	UFUNCTION(BlueprintCallable, Category = "Flecs")
+	FFlecsEntityHandle GetFlecsModule(const FName& InModuleName) const;
+	
 	void ImportRestModule();
 	void ImportStatsModule();
 

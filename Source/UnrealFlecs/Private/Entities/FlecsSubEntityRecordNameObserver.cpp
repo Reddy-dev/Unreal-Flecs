@@ -11,7 +11,7 @@ UFlecsSubEntityRecordNameObserver::UFlecsSubEntityRecordNameObserver(const FObje
 {
 }
 
-void UFlecsSubEntityRecordNameObserver::BuildObserver(const TSolidNotNull<const UFlecsWorld*> InWorld,
+void UFlecsSubEntityRecordNameObserver::BuildObserver(const TSolidNotNull<UFlecsWorld*> InWorld,
 	TFlecsObserverBuilder<>& InOutBuilder) const
 {
 	InOutBuilder
@@ -22,7 +22,7 @@ void UFlecsSubEntityRecordNameObserver::BuildObserver(const TSolidNotNull<const 
 		.YieldExisting();
 }
 
-void UFlecsSubEntityRecordNameObserver::EachIterator(const TSolidNotNull<const UFlecsWorld*> InWorld,
+void UFlecsSubEntityRecordNameObserver::EachIterator(const TSolidNotNull<UFlecsWorld*> InWorld,
 	flecs::iter& InIterator, const FFlecsId InIndex)
 {
 	const FFlecsEntityHandle EntityHandle = InIterator.entity(InIndex);
