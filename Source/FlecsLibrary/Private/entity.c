@@ -2,12 +2,9 @@
  * @file entity.c
  * @brief Entity API.
  * 
- * This file contains the implementation for the entity API, which includes 
+ * This file contains the implementation for the entity API, which includes
  * creating/deleting entities, adding/removing/setting components, instantiating
  * prefabs, and several other APIs for retrieving entity data.
- * 
- * The file also contains the implementation of the command buffer, which is 
- * located here so it can call functions private to the compilation unit.
  */
 
 #include "private_api.h"
@@ -30,6 +27,7 @@ flecs_component_ptr_t flecs_table_get_component(
     };
 }
 
+static
 flecs_component_ptr_t flecs_get_component_ptr(
     const ecs_world_t *world,
     ecs_table_t *table,
@@ -147,7 +145,7 @@ ecs_entity_t flecs_new_id(
     /* It is possible that the world passed to this function is a stage, so
      * make sure we have the actual world. Cast away const since this is one of
      * the few functions that may modify the world while it is in readonly mode,
-     * since it is thread safe (uses atomic inc when in threading mode) */
+     * since it is thread-safe (uses atomic inc when in threading mode). */
     ecs_world_t *unsafe_world = ECS_CONST_CAST(ecs_world_t*, world);
 
     ecs_assert(!(unsafe_world->flags & EcsWorldMultiThreaded),
@@ -251,9 +249,10 @@ void flecs_commit(
     ecs_assert(src_table != NULL, ECS_INTERNAL_ERROR, NULL);
 
     if (src_table == dst_table) {
-        /* If source and destination table are the same no action is needed *
+        /* If source and destination table are the same no action is needed.
          * However, if a component was added in the process of traversing a
-         * table, this suggests that a union relationship could have changed. */
+         * table, this suggests that a non-fragmenting component could have
+         * changed. */
         ecs_flags32_t non_fragment_flags = 
             src_table->flags & EcsTableHasDontFragment;
         if (non_fragment_flags) {
@@ -281,11 +280,11 @@ void flecs_commit(
 
     flecs_table_traversable_add(src_table, -is_trav);
 
-    /* If the entity is being watched, it is being monitored for changes and
-     * requires rematching systems when components are added or removed. This
-     * ensures that systems that rely on components from containers or prefabs
-     * update the matched tables when the application adds or removes a 
-     * component from, for example, a container. */
+    /* If the entity is traversable, it is being monitored for changes and
+     * requires rematching queries when components are added or removed. This
+     * ensures that queries that rely on components from traversable entities
+     * update the matched tables when the application adds or removes a
+     * component from, for example, a parent. */
     if (is_trav) {
         flecs_update_component_monitors(world, &diff->added, &diff->removed);
     }
@@ -357,7 +356,7 @@ const ecs_entity_t* flecs_bulk_new(
             const ecs_type_info_t *ti = cr->type_info;
             if (!ti) {
                 ecs_assert(ti != NULL, ECS_INVALID_PARAMETER, 
-                    "component '%s' passed to to bulk_new() at index %d is a "
+                    "component '%s' passed to bulk_new() at index %d is a "
                         "tag/zero sized",
                             flecs_errstr(ecs_id_str(world, id)), c_i);
             }
@@ -895,7 +894,7 @@ void flecs_copy_id(
         world, table, ECS_RECORD_TO_ROW(r->row), component, true);
 }
 
-/* Traverse table graph by either adding or removing identifiers parsed from the
+/* Traverse table graph by adding identifiers parsed from the
  * passed in expression. */
 static
 int flecs_traverse_from_expr(
@@ -941,7 +940,7 @@ error:
     return -1;
 }
 
-/* Add/remove components based on the parsed expression. This operation is 
+/* Add components based on the parsed expression. This operation is
  * slower than flecs_traverse_from_expr, but safe to use from a deferred context. */
 static
 void flecs_defer_from_expr(
@@ -1288,12 +1287,12 @@ ecs_entity_t ecs_entity_init(
     bool name_assigned = false;
 
     /* Remove optional prefix from name. Entity names can be derived from 
-     * language identifiers, such as components (typenames) and systems
-     * function names). Because C does not have namespaces, such identifiers
+     * language identifiers, such as components (typenames) and system
+     * function names. Because C does not have namespaces, such identifiers
      * often encode the namespace as a prefix.
-     * To ensure interoperability between C and C++ (and potentially other 
-     * languages with namespacing) the entity must be stored without this prefix
-     * and with the proper namespace, which is what the name_prefix is for */
+     * To ensure interoperability between C and C++ (and potentially other
+     * languages with namespacing), the entity must be stored without this prefix
+     * and with the proper namespace, which is what the name_prefix is for. */
     const char *prefix = world->info.name_prefix;
     if (name && prefix) {
         ecs_size_t len = ecs_os_strlen(prefix);
@@ -1318,7 +1317,7 @@ ecs_entity_t ecs_entity_init(
     /* Find or create entity */
     if (!result) {
         if (name) {
-            /* If add array contains a ChildOf pair, use it as scope instead */
+            /* Look up entity by name in scope */
             result = ecs_lookup_path_w_sep(
                 world, scope, name, sep, root_sep, false);
             if (result) {
@@ -2501,7 +2500,7 @@ void ecs_set_child_order(
         "children array passed to set_child_order() cannot be not-NULL if "
         "child_count is 0");
     ecs_check(!(world->flags & EcsWorldMultiThreaded), ECS_INVALID_OPERATION, 
-        "cannot call set_child_oderder() while in multithreaded mode");
+        "cannot call set_child_order() while in multithreaded mode");
 
     flecs_stage_from_world(&world);
 
@@ -2629,8 +2628,8 @@ bool ecs_owns_id(
 {
     ecs_check(world != NULL, ECS_INVALID_PARAMETER, NULL);
     flecs_assert_entity_valid(world, entity, "owns");
-    ecs_check(component != 0, ECS_INVALID_PARAMETER, 
-        "invalid component passed to has(): component cannot be 0");
+    ecs_check(component != 0, ECS_INVALID_PARAMETER,
+        "invalid component passed to owns(): component cannot be 0");
 
     /* Make sure we're not working with a stage */
     world = ecs_get_world(world);
@@ -2982,7 +2981,7 @@ ecs_entity_t ecs_get_target_for_id(
             for (i = 0; i < count; i ++) {
                 ecs_id_t ent = ids[i];
                 if (ent & ECS_ID_FLAGS_MASK) {
-                    /* Skip ids with pairs, roles since 0 was provided for rel */
+                    /* Skip ids with pairs or flags since 0 was provided for rel */
                     break;
                 }
 
@@ -3150,12 +3149,13 @@ void ecs_make_alive(
 
     /* Set generation if not alive. The sparse set checks if the provided
      * id matches its own generation which is necessary for alive ids. This
-     * check would cause ecs_ensure to fail if the generation of the 'entity'
-     * argument doesn't match with its generation.
-     * 
+     * check would cause flecs_entities_ensure to fail if the generation of the
+     * 'entity' argument doesn't match with its generation.
+     *
      * While this could've been addressed in the sparse set, this is a rare
-     * scenario that can only be triggered by ecs_ensure. Implementing it here
-     * allows the sparse set to not do this check, which is more efficient. */
+     * scenario that can only be triggered by ecs_make_alive. Implementing it
+     * here allows the sparse set to not do this check, which is more
+     * efficient. */
     flecs_entities_make_alive(world, entity);
 
     /* Ensure id exists. The underlying data structure will verify that the
@@ -3297,7 +3297,7 @@ void ecs_enable(
     flecs_assert_entity_valid(world, entity, "enable");
 
     if (ecs_has_id(world, entity, EcsPrefab)) {
-        /* If entity is a type, enable/disable all entities in the type */
+        /* If entity is a prefab, enable/disable all entities in the type */
         const ecs_type_t *type = ecs_get_type(world, entity);
         ecs_assert(type != NULL, ECS_INTERNAL_ERROR, NULL);
         ecs_id_t *ids = type->array;

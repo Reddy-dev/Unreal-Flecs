@@ -1,5 +1,5 @@
 /**
- * @file addons/http.c
+ * @file addons/http/http.c
  * @brief HTTP addon.
  *
  * This is a heavily modified version of the EmbeddableWebServer (see copyright
@@ -858,7 +858,7 @@ void http_send_reply(
         return;
     }
 
-    /* Second, enqueue send request for response body */
+    /* Enqueue send request for response */
     req->sock = conn->sock;
     req->headers = headers;
     req->header_length = headers_length;
@@ -1355,7 +1355,7 @@ ecs_http_server_t* ecs_http_server_init(
 
 #ifndef ECS_TARGET_WINDOWS
     /* Ignore pipe signal. SIGPIPE can occur when a message is sent to a client
-     * but te client already disconnected. */
+     * but the client already disconnected. */
     signal(SIGPIPE, SIG_IGN);
 #endif
 

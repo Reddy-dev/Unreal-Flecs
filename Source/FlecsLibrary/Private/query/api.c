@@ -1,11 +1,11 @@
- /**
- * @file queries/api.c
- * @brief User facing API for rules.
+/**
+ * @file query/api.c
+ * @brief User facing API for queries.
  */
 
 #include "../private_api.h"
 
-/* Placeholder arrays for queries that only have $this variable */
+/* Placeholder arrays for queries that only have the $this variable */
 ecs_query_var_t flecs_this_array = {
     .kind = EcsVarTable,
     .table_id = EcsVarNone
@@ -105,7 +105,7 @@ int flecs_query_set_caching_policy(
              * such as group_by/order_by, also enable caching. */
             kind = EcsQueryCacheAuto;
         } else {
-            /* Be conservative in other scenario's, as caching adds significant
+            /* Be conservative in other scenarios, as caching adds significant
              * overhead to the cost of query creation which doesn't offset the
              * benefit of faster iteration if it's only used once. */
             kind = EcsQueryCacheNone;
@@ -150,8 +150,9 @@ int flecs_query_set_caching_policy(
             impl->pub.cache_kind = EcsQueryCacheNone;
         } else {
             /* Part of the query is cacheable. Make sure to only create a cache
-             * if the cacheable part of the query contains not just not/optional
-             * terms, as this would build a cache that contains all tables. */
+             * if the cacheable part of the query contains more than just
+             * Not/Optional terms, as this would build a cache that contains
+             * all tables. */
             int32_t not_optional_terms = 0, cacheable_terms = 0;
             if (!require_caching) {
                 for (i = 0; i < term_count; i ++) {
@@ -243,7 +244,7 @@ int flecs_query_create_cache(
         ecs_assert(q->cache_kind == EcsQueryCacheNone, ECS_INTERNAL_ERROR, NULL);
 
         if (!(q->flags & EcsQueryNested)) {
-            /* If uncached query is not create to populate a cached query, it 
+            /* If uncached query is not created to populate a cached query, it
              * should not have cascade modifiers */
             int32_t i, count = q->term_count;
             ecs_term_t *terms = q->terms;
@@ -275,6 +276,7 @@ void flecs_query_copy_arrays(
     q->ids = flecs_dup_n(a, ecs_id_t, q->term_count, q->ids);
 }
 
+static
 void flecs_query_free_arrays(
     ecs_query_t *q)
 {
@@ -422,7 +424,7 @@ ecs_query_t* ecs_query_init(
         goto error;
     }
 
-    /* If query terms have itself as source, add term ids to self. This makes it
+    /* If query terms have the query itself as source, add term ids to it. This makes it
      * easy to attach components to queries, which is one of the ways
      * applications can attach data to systems. */
     flecs_query_add_self_ref(&result->pub);
@@ -444,7 +446,7 @@ ecs_query_t* ecs_query_init(
         goto error;
     }
 
-    /* Entity could've been set by finalize query if query is cached */
+    /* Entity could've been set during query finalization if query is cached */
     entity = result->pub.entity;
     if (entity) {
         EcsPoly *poly = flecs_poly_bind(world, entity, ecs_query_t);

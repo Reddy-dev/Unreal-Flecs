@@ -21,11 +21,11 @@ typedef enum ecs_mixin_kind_t {
     EcsMixinMax
 } ecs_mixin_kind_t;
 
-/* The mixin array contains pointers to mixin members for different kinds of
+/* The mixin array contains offsets to mixin members for different kinds of
  * flecs objects. This allows the API to retrieve data from an object regardless
  * of its type. Each mixin array is only stored once per type */
 struct ecs_mixins_t {
-    const char *type_name; /* Include name of mixin type so debug code doesn't
+    const char *type_name; /* Include name of mixin so debug code doesn't
                             * need to know about every object */
     ecs_size_t elems[EcsMixinMax];                        
 };
@@ -82,15 +82,6 @@ void flecs_poly_modified_(
 
 #define flecs_poly_modified(world, entity, T) \
     flecs_poly_modified_(world, entity, T##_tag)
-
-/* Get poly component for an entity */
-const EcsPoly* flecs_poly_bind_get_(
-    const ecs_world_t *world,
-    ecs_entity_t entity,
-    ecs_entity_t tag);
-
-#define flecs_poly_bind_get(world, entity, T) \
-    flecs_poly_bind_get_(world, entity, T##_tag)
 
 /* Get (Poly, Tag) poly object from entity. */
 ecs_poly_t* flecs_poly_get_(

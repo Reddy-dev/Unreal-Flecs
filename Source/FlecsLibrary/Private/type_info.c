@@ -458,8 +458,8 @@ void ecs_set_hooks_id(
             "illegal call to set_hooks() for '%s': component cannot be a tag/zero sized",
                 flecs_errstr(ecs_get_path(world, component)));
         ecs_check(component_ptr->size != 0, ECS_INVALID_PARAMETER,
-            "illegal call to set_hooks() for '%s': cannot register "
-            " component cannot be a tag/zero sized",
+            "illegal call to set_hooks() for '%s': "
+            "component cannot be a tag/zero sized",
                 flecs_errstr(ecs_get_path(world, component)));
 
         ti->size = component_ptr->size;
@@ -665,6 +665,7 @@ void flecs_fini_type_info(
     ecs_map_fini(&world->type_info);
 }
 
+static
 const ecs_type_info_t* flecs_type_info_get(
     const ecs_world_t *world,
     ecs_entity_t component)
@@ -763,7 +764,7 @@ bool flecs_type_info_init_id(
         } 
     }
 
-    /* All non-tag id records with component as object inherit type info,
+    /* All non-tag id records with component as target inherit type info,
      * if relationship doesn't have type info */
     cr = flecs_components_get(world, ecs_pair(EcsWildcard, component));
     if (cr) {

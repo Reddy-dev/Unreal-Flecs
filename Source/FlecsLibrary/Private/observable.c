@@ -4,7 +4,7 @@
  * 
  * The observable implementation contains functions that find the set of 
  * observers to invoke for an event. The code also contains the implementation
- * of a reachable id cache, which is used to speedup event propagation when
+ * of a reachable id cache, which is used to speed up event propagation when
  * relationships are added/removed to/from entities.
  */
 
@@ -59,7 +59,7 @@ ecs_event_record_t* flecs_event_record_get(
 {
     ecs_assert(o != NULL, ECS_INTERNAL_ERROR, NULL);
     
-    /* Builtin events*/
+    /* Builtin events */
     if      (event == EcsOnAdd)    return ECS_CONST_CAST(ecs_event_record_t*, &o->on_add);
     else if (event == EcsOnRemove) return ECS_CONST_CAST(ecs_event_record_t*, &o->on_remove);
     else if (event == EcsOnSet)    return ECS_CONST_CAST(ecs_event_record_t*, &o->on_set);
@@ -490,7 +490,7 @@ void flecs_emit_propagate_invalidate(
         ecs_component_record_t *cr_t = flecs_components_get(
             world, ecs_pair(EcsWildcard, entities[i]));
         if (cr_t) {
-            /* Event is used as target in traversable relationship, propagate */
+            /* Entity is used as target in traversable relationship, propagate */
             flecs_emit_propagate_invalidate_tables(world, cr_t);
         }
     }
@@ -914,7 +914,7 @@ void flecs_emit_forward_table_up(
         int32_t count = ecs_vec_count(reachable_ids);
         count -= rc_child_offset;
 
-        /* Append ids to any ids that already were added /*/
+        /* Append ids to any ids that already were added */
         if (count) {
             ecs_vec_grow_t(a, &rc->ids, ecs_reachable_elem_t, count);
             ecs_reachable_elem_t *dst = ecs_vec_get_t(&rc->ids, 
@@ -1116,7 +1116,7 @@ void flecs_emit_on_set_for_override_on_add(
     }
 
     /* Table has override for component. If this overrides a
-     * component that was already reachable for the table we 
+     * component that was already reachable for the table, we
      * don't need to emit since the value didn't change. */
     ecs_entity_t base = o->entity;
 
@@ -1292,8 +1292,8 @@ void flecs_emit(
 
     /* Event records contain all observers for a specific event. In addition to
      * the emitted event, also request data for the Wildcard event (for 
-     * observers subscribing to the wildcard event), OnSet events. The
-     * latter to are used for automatically emitting OnSet events for 
+     * observers subscribing to the wildcard event), and OnSet events. The
+     * latter is used for automatically emitting OnSet events for
      * inherited components, for example when an IsA relationship is added to an
      * entity. This doesn't add much overhead, as fetching records is cheap for
      * builtin event types. */
@@ -1335,27 +1335,26 @@ void flecs_emit(
     /* When a new (traversable) relationship is added (emitting an OnAdd/OnRemove
      * event) this will cause the components of the target entity to be 
      * propagated to the source entity. This makes it possible for observers to
-     * get notified of any new reachable components though the relationship. */
+     * get notified of any new reachable components through the relationship. */
     bool can_forward = true;
 
-    /* Does table has observed entities */
+    /* Does table have observed entities */
     bool has_observed = table_flags & EcsTableHasTraversable;
 
     ecs_event_id_record_t *iders[5] = {0};
     ecs_table_record_t dummy_tr;
 
 repeat_event:
-    /* This is the core event logic, which is executed for each event. By 
+    /* This is the core event logic, which is executed for each event. By
      * default this is just the event kind from the ecs_event_desc_t struct, but
-     * can also include the Wildcard and UnSet events. The latter is emitted as
-     * counterpart to OnSet, for any removed ids associated with data. */
+     * can also include the Wildcard event. */
     for (i = 0; i < id_count; i ++) {
         /* Emit event for each id passed to the function. In most cases this 
          * will just be one id, like a component that was added, removed or set.
          * In some cases events are emitted for multiple ids.
          * 
-         * One example is when an id was added with a "With" property, or 
-         * inheriting from a prefab with overrides. In these cases an entity is 
+         * One example is when an id was added with a "With" property, or
+         * when inheriting from a prefab with overrides. In these cases an entity is
          * moved directly to the archetype with the additional components. */
         ecs_id_t id = id_array[i];
 
@@ -1404,7 +1403,7 @@ repeat_event:
         }
         ecs_flags32_t cr_flags = cr->flags;
 
-        /* Check if this id is a pair of an traversable relationship. If so, we 
+        /* Check if this id is a pair of a traversable relationship. If so, we
          * may have to forward ids from the pair's target. */
         if (can_forward && ECS_IS_PAIR(id) && (cr_flags & EcsIdTraversable)) {
             const ecs_event_record_t *er_fwd = NULL;
@@ -1471,7 +1470,7 @@ repeat_event:
         bool dont_fragment = cr_flags & EcsIdDontFragment;
         if (!dont_fragment && id != EcsAny && (ECS_PAIR_FIRST(id) != EcsChildOf)) {
             if (tr == NULL) {
-                /* When a single batch contains multiple add's for an exclusive
+                /* When a single batch contains multiple adds for an exclusive
                 * relationship, it's possible that an id was in the added list
                 * that is no longer available for the entity. */
                 continue;
@@ -1508,7 +1507,7 @@ repeat_event:
 
         /* The table->traversable_count value indicates if the table contains any
          * entities that are used as targets of traversable relationships. If the
-         * entity/entities for which the event was generated is used as such a
+         * entity/entities for which the event was generated are used as such a
          * target, events must be propagated downwards. */
         flecs_propagate_entities(
             world, &it, cr, it.entities, count, 0, iders, ider_count);

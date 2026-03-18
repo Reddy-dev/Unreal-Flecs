@@ -1,3 +1,8 @@
+/**
+ * @file storage/entity_index.c
+ * @brief Entity index.
+ */
+
 #include "../private_api.h"
 #include <inttypes.h>
 
@@ -68,7 +73,7 @@ ecs_record_t* flecs_entity_index_get(
     ecs_assert(r->dense < index->alive_count, ECS_INVALID_PARAMETER, 
             "entity is not alive");
     ecs_assert(ecs_vec_get_t(&index->dense, uint64_t, r->dense)[0] == entity,
-        ECS_INVALID_PARAMETER, "mismatching liveliness generation for entity");
+        ECS_INVALID_PARAMETER, "mismatching liveness generation for entity");
     return r;
 }
 
@@ -139,7 +144,7 @@ ecs_record_t* flecs_entity_index_ensure(
 
     ecs_assert(dense != 0, ECS_INTERNAL_ERROR, NULL);
 
-    /* Entity is not alive, swap with first not alive element */
+    /* Entity is not alive, swap with the first not-alive element */
     uint64_t *ids = ecs_vec_first(&index->dense);
     uint64_t e_swap = ids[index->alive_count];
     ecs_record_t *r_swap = flecs_entity_index_get_any(index, e_swap);

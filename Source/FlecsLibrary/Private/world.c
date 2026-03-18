@@ -193,7 +193,7 @@ const ecs_entity_t ecs_id(EcsSystemPriority) =      FLECS_HI_COMPONENT_ID + 129;
 static ecs_entity_t ecs_default_lookup_path[2] = { 0, 0 };
 
 /* Declarations for addons. Located in world.c to avoid issues during linking of
- * static library */
+ * a static library */
 
 #ifdef FLECS_ALERTS
 ECS_COMPONENT_DECLARE(EcsAlert);
@@ -378,7 +378,7 @@ ecs_stage_t* flecs_stage_from_world(
     return ECS_CONST_CAST(ecs_stage_t*, world);
 }
 
-/* Evaluate component monitor. If a monitored entity changed it will have set a
+/* Evaluate component monitor. If a monitored entity changed, it will have set a
  * flag in one of the world's component monitors. Queries can register
  * themselves with component monitors to determine whether they need to rematch
  * with tables. */
@@ -570,7 +570,7 @@ void flecs_clean_tables(
     }
 
     /* Free table types separately so that if application destructors rely on
-     * a type it's still valid. */
+     * a type, it's still valid. */
     for (i = 1; i < count; i ++) {
         ecs_table_t *t = flecs_sparse_get_dense_t(&world->store.tables,
             ecs_table_t, i);
@@ -606,7 +606,7 @@ void flecs_fini_root_tables(
             ecs_table_t *table = tr->hdr.table;
 
             if (table->flags & (EcsTableHasBuiltins|EcsTableHasModule)) {
-                continue; /* Query out modules */
+                continue; /* Skip modules */
             }
 
             int32_t i, count = ecs_table_count(table);
@@ -666,7 +666,7 @@ void flecs_fini_roots(
 
     /* Delete root entities that are not modules. This prioritizes deleting
      * regular entities first, which reduces the chance of components getting
-     * destructed in random order because it got deleted before entities,
+     * destructed in random order because they got deleted before entities,
      * thereby bypassing the OnDeleteTarget policy. */
     flecs_defer_begin(world, world->stages[0]);
     flecs_fini_root_tables(world, cr, true);
@@ -1283,7 +1283,7 @@ int ecs_fini(
 
     world->flags |= EcsWorldFini;
 
-    /* Run fini actions (simple callbacks ran when world is deleted) before
+    /* Run fini actions (simple callbacks run when world is deleted) before
      * destroying the storage */
     ecs_dbg_1("#[bold]run fini actions");
     ecs_log_push_1();

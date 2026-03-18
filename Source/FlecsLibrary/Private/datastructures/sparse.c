@@ -32,14 +32,14 @@ ecs_sparse_page_t* flecs_sparse_page_new(
     ecs_assert(result->sparse == NULL, ECS_INTERNAL_ERROR, NULL);
     ecs_assert(result->data == NULL, ECS_INTERNAL_ERROR, NULL);
 
-    /* Initialize sparse array with zero's, as zero is used to indicate that the
-     * sparse element has not been paired with a dense element. Use zero
-     * as this means we can take advantage of calloc having a possibly better 
-     * performance than malloc + memset. */
+    /* Initialize sparse array with zeros, as zero is used to indicate that the
+     * sparse element has not been paired with a dense element. Using zero
+     * as the sentinel means we can take advantage of calloc, which can have
+     * better performance than malloc + memset. */
     result->sparse = ca ? flecs_bcalloc(ca)
                         : ecs_os_calloc_n(int32_t, FLECS_SPARSE_PAGE_SIZE);
 
-    /* Initialize the data array with zero's to guarantee that data is 
+    /* Initialize the data array with zeros to guarantee that data is
      * always initialized. When an entry is removed, data is reset back to
      * zero. Initialize now, as this can take advantage of calloc. */
     if (sparse->size) {
@@ -120,7 +120,7 @@ void flecs_sparse_assign_index(
     int32_t dense)
 {
     /* Initialize sparse-dense pair. This assigns the dense index to the sparse
-     * array, and the sparse index to the dense array .*/
+     * array, and the sparse index to the dense array. */
     page->sparse[FLECS_SPARSE_OFFSET(id)] = dense;
     dense_array[dense] = id;
 }
@@ -186,7 +186,7 @@ uint64_t flecs_sparse_new_index(
 
     ecs_assert(count <= dense_count, ECS_INTERNAL_ERROR, NULL);
     if (count < dense_count) {
-        /* If there are unused elements in the dense array, return first */
+        /* If there are unused elements in the dense array, return the first */
         uint64_t *dense_array = ecs_vec_first_t(&sparse->dense, uint64_t);
         ecs_os_perf_trace_pop("flecs.sparse.new_index");
         return dense_array[count];
@@ -469,7 +469,6 @@ bool flecs_sparse_remove(
             ecs_os_memset(ptr, 0, size);
         }
 
-        /* Reset memory to zero on remove */
         return true;
     } else {
         /* Element is not paired and thus not alive, nothing to be done */
@@ -482,7 +481,7 @@ uint64_t flecs_sparse_inc_gen(
     uint64_t index)
 {
     /* When an index is deleted, its generation is increased so that we can do
-     * liveliness checking while recycling ids */
+     * liveness checking while recycling ids */
     return ECS_GENERATION_INC(index);
 }
 

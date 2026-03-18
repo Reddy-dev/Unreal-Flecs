@@ -113,6 +113,7 @@ ecs_query_lbl_t flecs_query_op_insert(
     return flecs_itolbl(count - 1);
 }
 
+static
 ecs_query_op_t* flecs_query_begin_block(
     ecs_query_op_kind_t kind,
     ecs_query_compile_ctx_t *ctx)
@@ -123,6 +124,7 @@ ecs_query_op_t* flecs_query_begin_block(
     return ecs_vec_get_t(ctx->ops, ecs_query_op_t, ctx->cur->lbl_begin);
 }
 
+static
 void flecs_query_end_block(
     ecs_query_compile_ctx_t *ctx,
     bool reset)
@@ -247,7 +249,7 @@ void flecs_query_begin_block_or(
     or_op->kind = EcsQueryOr;
     or_op->field_index = term->field_index;
 
-    /* Set the source of the evaluate terms as source of the Or instruction. 
+    /* Set the source of the evaluated terms as source of the Or instruction. 
      * This lets the engine determine whether the variable has already been
      * written. When the source is not yet written, an OR operation needs to
      * take the union of all the terms in the OR chain. When the variable is
@@ -1072,7 +1074,7 @@ void flecs_query_set_op_kind(
     (void)query;
 
     /* Default instruction for And operators. If the source is fixed (like for
-     * singletons or terms with an entity source), use With, which like And but
+     * singletons or terms with an entity source), use With, which is like And but
      * just matches against a source (vs. finding a source). */
     op->kind = src_is_var ? EcsQueryAnd : EcsQueryWith;
 
@@ -1087,7 +1089,7 @@ void flecs_query_set_op_kind(
     } else if (term->oper == EcsNotFrom) {
         op->kind = EcsQueryNotFrom;
 
-    /* If query is transitive, use Trav(ersal) instruction */
+    /* If term is transitive, use Trav(ersal) instruction */
     } else if (term->flags_ & EcsTermTransitive) {
         ecs_assert(ecs_term_ref_is_set(&term->second), 
             ECS_INTERNAL_ERROR, NULL);

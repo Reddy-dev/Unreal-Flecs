@@ -1,10 +1,10 @@
- /**
+/**
  * @file query/types.h
  * @brief Internal types and functions for queries.
  */
 
-#ifndef FLECS_QUERY_TYPES
-#define FLECS_QUERY_TYPES
+#ifndef FLECS_QUERY_TYPES_H
+#define FLECS_QUERY_TYPES_H
 
 typedef struct ecs_query_impl_t ecs_query_impl_t;
 typedef uint8_t ecs_var_id_t;
@@ -36,7 +36,7 @@ typedef struct ecs_query_var_t {
 #endif
 } ecs_query_var_t;
 
-/* Placeholder values for queries with only $this variable */
+/* Placeholder values for queries with only the $this variable */
 extern ecs_query_var_t flecs_this_array;
 extern char *flecs_this_name_array;
 
@@ -69,7 +69,7 @@ typedef enum {
     EcsQueryIfSet,          /* Conditional execution on whether term is set */
     EcsQueryNot,            /* Sets iterator state after term was not matched */
     EcsQueryEnd,            /* End of control flow block */
-    EcsQueryPredEq,         /* Test if variable is equal to, or assign to if not set */
+    EcsQueryPredEq,         /* Test if variable is equal to, or assign if not set */
     EcsQueryPredNeq,        /* Test if variable is not equal to */
     EcsQueryPredEqName,     /* Same as EcsQueryPredEq but with matching by name */
     EcsQueryPredNeqName,    /* Same as EcsQueryPredNeq but with matching by name */
@@ -109,7 +109,7 @@ typedef enum {
     EcsQueryNothing         /* Must be last */
 } ecs_query_op_kind_t;
 
-/* Op flags to indicate if ecs_query_ref_t is entity or variable */
+/* Op flags to indicate if ecs_query_ref_t is an entity or variable */
 #define EcsQueryIsEntity  (1 << 0)
 #define EcsQueryIsVar     (1 << 1)
 #define EcsQueryIsSelf    (1 << 6)
@@ -237,9 +237,9 @@ typedef struct {
     ecs_component_record_t *cr_with;
     ecs_component_record_t *cr_trav;
 
-    /* If queried for component is a ChilOf pair that uses the non-fragmenting
-     * ChildOf storage, iterate ordered children vector instead of tables with
-     * ChildOf pairs as roots for down cache. */
+    /* If the queried-for component is a ChildOf pair that uses the non-fragmenting
+     * ChildOf storage, iterate the ordered children vector instead of tables with
+     * ChildOf pairs as roots for the down cache. */
     ecs_entity_t *entities;
     int32_t entities_cur;
     int32_t entities_count;
@@ -394,7 +394,7 @@ typedef struct {
     ecs_query_lbl_t lbl_query; /* Used to find the op that does the actual searching */
     ecs_query_lbl_t lbl_begin;
     ecs_query_lbl_t lbl_cond_eval;
-    ecs_write_flags_t written_or; /* Cond written flags at start of or chain */
+    ecs_write_flags_t written_or; /* Written flags at start of or chain */
     ecs_write_flags_t cond_written_or; /* Cond written flags at start of or chain */
     ecs_query_ref_t src_or;  /* Source for terms in current or chain */
     bool src_written_or; /* Was src populated before OR chain */

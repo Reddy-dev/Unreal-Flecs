@@ -1,5 +1,5 @@
 /**
- * @file addons/script/expr_ast.c
+ * @file addons/script/expr/ast.c
  * @brief Script expression AST implementation.
  */
 
@@ -176,18 +176,6 @@ ecs_expr_interpolated_string_t* flecs_expr_interpolated_string(
     return result;
 }
 
-ecs_expr_value_node_t* flecs_expr_entity(
-    ecs_parser_t *parser,
-    ecs_entity_t value)
-{
-    ecs_expr_value_node_t *result = flecs_expr_ast_new(
-        parser, ecs_expr_value_node_t, EcsExprValue);
-    result->storage.entity = value;
-    result->ptr = &result->storage.entity;
-    result->node.type = ecs_id(ecs_entity_t);
-    return result;
-}
-
 ecs_expr_initializer_t* flecs_expr_initializer(
     ecs_parser_t *parser)
 {
@@ -290,7 +278,7 @@ bool flecs_expr_explicit_cast_allowed(
     ecs_assert(from_type != NULL, ECS_INTERNAL_ERROR, NULL);
     ecs_assert(to_type != NULL, ECS_INTERNAL_ERROR, NULL);
 
-    /* Treat opaque types asthe types that they're pretending to be*/
+    /* Treat opaque types as the types that they're pretending to be */
     if (from_type->kind == EcsOpaqueType) {
         const EcsOpaque *o = ecs_get(world, from, EcsOpaque);
         ecs_assert(o != NULL, ECS_INTERNAL_ERROR, NULL);
@@ -329,12 +317,12 @@ bool flecs_expr_explicit_cast_allowed(
         return false;
     }
 
-    /* Anything can be casted to a number */
+    /* Anything can be cast to a number */
     if (flecs_expr_is_type_number(to)) {
         return true;
     }
 
-    /* Anything can be casted to a number */
+    /* Anything can be cast to a string */
     if (to == ecs_id(ecs_string_t)) {
         return true;
     }

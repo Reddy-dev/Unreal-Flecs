@@ -24,7 +24,7 @@ static void flecs_constants_dtor(
 static void flecs_ordered_constants_dtor(
     ecs_vec_t *ordered_constants)
 {
-    /* shallow fini of is ok since map deallocs name c-string member */
+    /* Shallow fini is ok since map deallocs name c-string member */
     ecs_vec_fini_t(NULL, ordered_constants, ecs_enum_constant_t);
 }
 
@@ -488,7 +488,7 @@ ecs_entity_t ecs_enum_init(
             if (m_desc->value) {
                 if (ut_is_unsigned) {
                     char *path = ecs_get_path(world, c);
-                    ecs_err("use desc::value_unsigned for constant '%s' which"
+                    ecs_err("use desc::value_unsigned for constant '%s' which "
                         "has an unsigned underlying type", path);
                     ecs_os_free(path);
                     return 0;
@@ -497,7 +497,7 @@ ecs_entity_t ecs_enum_init(
             } else {
                 if (!ut_is_unsigned) {
                     char *path = ecs_get_path(world, c);
-                    ecs_err("use desc::value for constant '%s' which"
+                    ecs_err("use desc::value for constant '%s' which "
                         "has a signed underlying type", path);
                     ecs_os_free(path);
                     return 0;

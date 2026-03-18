@@ -1,5 +1,5 @@
 /**
- * @file addons/script/visit_validate.c
+ * @file addons/script/visit_check.c
  * @brief Script AST validation.
  */
 
@@ -132,7 +132,7 @@ int flecs_script_check_tag(
     }
 
     if (v->is_with_scope) {
-        flecs_script_eval_error(v, node, "invalid component in with scope"); 
+        flecs_script_eval_error(v, node, "invalid tag in with scope");
         return -1;
     }
 
@@ -142,7 +142,7 @@ int flecs_script_check_tag(
                 v, node, "missing entity for pair (%s, %s)",
                 node->id.first, node->id.second);
         } else {
-            flecs_script_eval_error(v, node, "missing entity for tag %s", 
+            flecs_script_eval_error(v, node, "missing entity for tag %s",
                 node->id.first);
         }
         return -1;
@@ -509,31 +509,6 @@ int flecs_script_check_node(
     }
 
     ecs_abort(ECS_INTERNAL_ERROR, "corrupt AST node kind");
-}
-
-int flecs_script_check(
-    const ecs_script_t *script,
-    const ecs_script_eval_desc_t *desc)
-{
-    ecs_script_eval_visitor_t v;
-    ecs_script_impl_t *impl = flecs_script_impl(
-        /* Safe, script will only be used for reading by visitor */
-        ECS_CONST_CAST(ecs_script_t*, script));
-
-    ecs_script_eval_desc_t priv_desc = {0};
-    if (desc) {
-        priv_desc = *desc;
-    }
-
-    if (!priv_desc.runtime) {
-        priv_desc.runtime = flecs_script_runtime_get(script->world);
-    }
-
-    flecs_script_eval_visit_init(impl, &v, &priv_desc);
-    int result = ecs_script_visit(impl, &v, flecs_script_check_node);
-    flecs_script_eval_visit_fini(&v, &priv_desc);
-
-    return result;
 }
 
 #endif

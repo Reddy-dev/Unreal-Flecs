@@ -1,5 +1,5 @@
 /**
- * @file addons/monitor.c
+ * @file addons/stats/monitor.c
  * @brief Stats addon module.
  */
 
@@ -107,7 +107,7 @@ void MonitorStats(ecs_iter_t *it) {
             /* Still in same interval, combine with last measurement */
             ctx->api.reduce_last(stats, last, hdr->reduce_count);
         } else if (dif > 1) {
-            /* More than 16ms has passed, backfill */
+            /* More than one interval has passed, backfill */
             for (i = 1; i < dif; i ++) {
                 ctx->api.repeat_last(stats);
             }
@@ -204,7 +204,7 @@ void AggregateStats(ecs_iter_t *it) {
             ctx->api.copy_last(last, dst);
         }
 
-        /* Reduce from minutes to the current day */
+        /* Reduce stats into the current aggregation interval */
         ctx->api.reduce(dst, src);
 
         if (dst_hdr->reduce_count != 0) {
@@ -220,7 +220,7 @@ void AggregateStats(ecs_iter_t *it) {
         }
     } while (true);
 
-    /* A day has 60 24 minute intervals */
+    /* Increment reduce count, reset when interval is reached */
     dst_hdr->reduce_count ++;
     if (dst_hdr->reduce_count >= interval) {
         dst_hdr->reduce_count = 0;
@@ -330,7 +330,7 @@ void flecs_stats_api_import(
         });
     }
 
-    // Called each minute, reduces into 60 measurements per day
+    // Called each minute, reduces into 24 measurements per day
     {
         ecs_aggregate_stats_ctx_t *ctx = ecs_os_calloc_t(ecs_aggregate_stats_ctx_t);
         ctx->api = *api;
@@ -353,7 +353,7 @@ void flecs_stats_api_import(
         });
     }
 
-    // Called each hour, reduces into 60 measurements per week
+    // Called each hour, reduces into 168 measurements per week
     {
         ecs_aggregate_stats_ctx_t *ctx = ecs_os_calloc_t(ecs_aggregate_stats_ctx_t);
         ctx->api = *api;

@@ -1,6 +1,6 @@
 /**
- * @file query/cache/cache_order_by.c
- * @brief Query sorting (order_by) implenentation.
+ * @file query/cache/order_by.c
+ * @brief Query sorting (order_by) implementation.
  */
 
 #include "../../private_api.h"

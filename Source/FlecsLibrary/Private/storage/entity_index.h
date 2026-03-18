@@ -1,8 +1,8 @@
 /**
- * @file datastructures/entity_index.h
+ * @file storage/entity_index.h
  * @brief Entity index data structure.
  *
- * The entity index stores the table, row for an entity id.
+ * The entity index stores the table and row for an entity id.
  */
  
 #ifndef FLECS_ENTITY_INDEX_H
@@ -62,7 +62,7 @@ void flecs_entity_index_remove(
     ecs_entity_index_t *index,
     uint64_t entity);
 
-/* Set generation of entity */
+/* Make entity alive */
 void flecs_entity_index_make_alive(
     ecs_entity_index_t *index,
     uint64_t entity);
@@ -121,7 +121,7 @@ void flecs_entity_index_clear(
 void flecs_entity_index_shrink(
     ecs_entity_index_t *index);
 
-/* Return number of alive entities in index */
+/* Return ids of alive entities in index */
 const uint64_t* flecs_entity_index_ids(
     const ecs_entity_index_t *index);
 

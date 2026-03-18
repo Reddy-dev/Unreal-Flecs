@@ -15,8 +15,8 @@ typedef struct ecs_pipeline_op_t {
     int32_t count;              /* Number of systems to run before next op */
     double time_spent;          /* Time spent merging commands for sync point */
     int64_t commands_enqueued;  /* Number of commands enqueued for sync point */
-    bool multi_threaded;        /* Whether systems can be ran multi threaded */
-    bool immediate;           /* Whether systems are staged or not */
+    bool multi_threaded;        /* Whether systems can be run multi-threaded */
+    bool immediate;           /* Whether systems run in immediate mode */
 } ecs_pipeline_op_t;
 
 struct ecs_pipeline_state_t {
@@ -24,8 +24,8 @@ struct ecs_pipeline_state_t {
     ecs_vec_t ops;              /* Pipeline schedule */
     ecs_vec_t systems;          /* Vector with system ids */
 
-    ecs_entity_t last_system;   /* Last system ran by pipeline */
-    int32_t match_count;        /* Used to track of rebuild is necessary */
+    ecs_entity_t last_system;   /* Last system run by pipeline */
+    int32_t match_count;        /* Used to track if rebuild is necessary */
     int32_t rebuild_count;      /* Number of pipeline rebuilds */
     ecs_iter_t *iters;          /* Iterator for worker(s) */
     int32_t iter_count;
@@ -34,22 +34,17 @@ struct ecs_pipeline_state_t {
     ecs_pipeline_op_t *cur_op;  /* Current pipeline op */
     int32_t cur_i;              /* Index in current result */
     int32_t ran_since_merge;    /* Index in current op */
-    bool immediate;           /* Is pipeline in readonly mode */
+    bool immediate;           /* Is pipeline in immediate mode */
 };
 
 typedef struct EcsPipeline {
-    /* Stable ptr so threads can safely access while entity/components move */
+    /* Stable ptr so threads can safely access while entities/components move */
     ecs_pipeline_state_t *state;
 } EcsPipeline;
 
 ////////////////////////////////////////////////////////////////////////////////
 //// Pipeline API
 ////////////////////////////////////////////////////////////////////////////////
-
-bool flecs_pipeline_update(
-    ecs_world_t *world,
-    ecs_pipeline_state_t *pq,
-    bool start_of_frame);
 
 void flecs_run_pipeline(
     ecs_world_t *world,

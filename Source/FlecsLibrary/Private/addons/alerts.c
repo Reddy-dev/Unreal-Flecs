@@ -11,12 +11,12 @@ ECS_COMPONENT_DECLARE(FlecsAlerts);
 
 typedef struct EcsAlert {
     char *message;
-    ecs_map_t instances;        /* Active instances for metric */
+    ecs_map_t instances;        /* Active instances for alert */
     ecs_ftime_t retain_period;  /* How long to retain the alert */
     ecs_vec_t severity_filters; /* Severity filters */
     
     /* Member range monitoring */
-    ecs_id_t id;                /* (Component) id that contains to monitor member */
+    ecs_id_t id;                /* (Component) id that contains member to monitor */
     ecs_entity_t member;        /* Member to monitor */
     int32_t offset;             /* Offset of member in component */
     int32_t size;               /* Size of component */
@@ -306,7 +306,7 @@ void MonitorAlerts(ecs_iter_t *it) {
                         continue;
                     }
                     if (range_severity < src_severity) {
-                        /* Range severity should not exceed alert severity */
+                        /* Actual severity should not exceed range severity */
                         src_severity = range_severity;
                     }
                 }
@@ -514,17 +514,17 @@ ecs_entity_t ecs_alert_init(
 
     ecs_query_t *q = ecs_query_init(world, &private_desc);
     if (!q) {
-        ecs_err("failed to create alert filter");
+        ecs_err("failed to create alert query");
         return 0;
     }
 
     if (!(q->flags & EcsQueryMatchThis)) {
-        ecs_err("alert filter must have at least one '$this' term");
+        ecs_err("alert query must have at least one '$this' term");
         ecs_query_fini(q);
         return 0;
     }
 
-    /* Initialize Alert component which identifiers entity as alert */
+    /* Initialize Alert component which identifies entity as alert */
     EcsAlert *alert = ecs_ensure(world, result, EcsAlert);
     ecs_assert(alert != NULL, ECS_INTERNAL_ERROR, NULL);
     alert->message = ecs_os_strdup(desc->message);

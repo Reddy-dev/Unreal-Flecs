@@ -10,6 +10,10 @@
 
 #include "../private_api.h"
 
+ecs_type_t flecs_type_copy(
+    ecs_world_t *world,
+    const ecs_type_t *src);
+
 /* Id sequence (type) utilities */
 
 static
@@ -360,6 +364,7 @@ void flecs_type_add(
 }
 
 /* Remove from type */
+static
 void flecs_type_remove(
     ecs_world_t *world,
     ecs_type_t *type,
@@ -436,6 +441,7 @@ void flecs_table_diff_build_type(
     }
 }
 
+static
 void flecs_table_diff_build(
     ecs_world_t *world,
     ecs_table_diff_builder_t *builder,
@@ -888,7 +894,7 @@ void flecs_compute_table_diff(
         !ecs_id_is_wildcard(id) && !(added_flags|removed_flags);
 
     if (trivial_edge) {
-        /* If edge is trivial there's no need to create a diff element for it */
+        /* If edge is trivial, there's no need to create a diff element for it */
         return;
     }
 
@@ -966,7 +972,7 @@ void flecs_add_overrides_for_base(
                     to_add = 0;
 
                     /* Add flag to base table. Cheaper to do here vs adding an
-                     * observer for OnAdd AUTO_OVERRIDE|* / during table 
+                     * observer for (OnAdd, AUTO_OVERRIDE|*) during table
                      * creation. */
                     base_table->flags |= EcsTableOverrideDontFragment;
                 }

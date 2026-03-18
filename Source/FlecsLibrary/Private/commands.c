@@ -225,7 +225,7 @@ bool flecs_defer_bulk_new(
     if (flecs_defer_cmd(stage)) {
         ecs_entity_t *ids = ecs_os_malloc(count * ECS_SIZEOF(ecs_entity_t));
 
-        /* Use ecs_new_id as this is thread safe */
+        /* Use ecs_new as this is thread safe */
         int i;
         for (i = 0; i < count; i ++) {
             ids[i] = ecs_new(world);
@@ -233,7 +233,7 @@ bool flecs_defer_bulk_new(
 
         *ids_out = ids;
 
-        /* Store data in op */
+        /* Store data in cmd */
         ecs_cmd_t *cmd = flecs_cmd_new(stage);
         cmd->kind = EcsCmdBulkNew;
         cmd->id = id;
@@ -273,8 +273,8 @@ bool flecs_defer_remove(
         cmd->id = id;
         cmd->entity = entity;
 
-        /* If an override is removed, restore to the component to the value of 
-         * the overridden component. This serves to purposes:
+        /* If an override is removed, restore the component to the value of
+         * the overridden component. This serves two purposes:
          *
          * - the application immediately sees the correct component value
          * - if a remove command is followed up by an add command, the override
@@ -331,7 +331,7 @@ flecs_component_ptr_t flecs_defer_get_existing(
             if (world->flags & EcsWorldMultiThreaded) {
                 ptr.ti = ecs_get_type_info(world, id);
             } else {
-                /* When not in multi threaded mode, it's safe to find or 
+                /* When not in multithreaded mode, it's safe to find or
                 * create the component record. */
                 cr = flecs_components_ensure(world, id);
                 ecs_assert(cr != NULL, ECS_INTERNAL_ERROR, NULL);
@@ -491,7 +491,7 @@ void* flecs_defer_set(
                 cmd->is._1.size = size;
                 cmd->is._1.value = ptr.ptr;
             } else {
-                /* No OnSet observers, so only thing we need to do is make sure
+                /* No OnSet observers, so the only thing we need to do is make sure
                 * that a preceding remove command doesn't cause the entity to
                 * end up without the component. */
                 cmd->kind = EcsCmdAdd;
@@ -566,7 +566,7 @@ void* flecs_defer_cpp_set(
                 cmd->is._1.size = size;
                 cmd->is._1.value = ptr.ptr;
             } else {
-                /* No OnSet observers, so only thing we need to do is make sure
+                /* No OnSet observers, so the only thing we need to do is make sure
                  * that a preceding remove command doesn't cause the entity to
                  * end up without the component. */
                 cmd->kind = EcsCmdAdd;
@@ -576,9 +576,9 @@ void* flecs_defer_cpp_set(
             return ptr.ptr;
         }
     }
-    
+
     if (!ptr.ptr) {
-        bool is_dont_fragment = 
+        bool is_dont_fragment =
             flecs_component_get_flags(world, id) & EcsIdDontFragment;
         cmd->kind = is_dont_fragment ? EcsCmdSetDontFragment : EcsCmdSet;
         cmd->is._1.size = size;
@@ -772,7 +772,7 @@ bool flecs_remove_invalid(
         } else {
             ecs_entity_t tgt = ECS_PAIR_SECOND(id);
             if (!flecs_entities_is_valid(world, tgt)) {
-                /* Check the relationship's policy for deleted objects */
+                /* Check the relationship's policy for deleted targets */
                 ecs_component_record_t *cr = flecs_components_get(world, 
                     ecs_pair(rel, EcsWildcard));
                 if (cr) {
@@ -782,7 +782,7 @@ bool flecs_remove_invalid(
                          * other ids */
                         return false;
                     } else if (action == EcsPanic) {
-                        /* If policy is throw this object should not have
+                        /* If policy is Panic, this target should not have
                          * been deleted */
                         flecs_throw_invalid_delete(world, id);
                     } else {
@@ -798,7 +798,7 @@ bool flecs_remove_invalid(
     } else {
         id &= ECS_COMPONENT_MASK;
         if (!flecs_entities_is_valid(world, id)) {
-            /* After relationship is deleted we can no longer see what its
+            /* After component is deleted we can no longer see what its
              * delete action was, so pretend this never happened */
             *id_out = 0;
             return true;
@@ -935,9 +935,10 @@ void flecs_cmd_batch_for_entity(
 
     ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
 
-    /* Invoke OnAdd handlers after commit. This ensures that observers with 
-     * mixed OnAdd/OnSet events won't get called with uninitialized values for
-     * an OnSet field. */
+    /* Save added ids and clear from diff so that they won't be emitted as
+     * part of the commit below. OnAdd events will be emitted separately after
+     * the commit, so that observers with mixed OnAdd/OnSet events won't get
+     * called with uninitialized values for an OnSet field. */
     ecs_type_t added = { diff->added.array, diff->added.count };
     diff->added.array = NULL;
     diff->added.count = 0;
@@ -1059,11 +1060,11 @@ void flecs_cmd_batch_for_entity(
 
         if (r->row & EcsEntityIsTraversable) {
             /* Update monitors since we didn't do this in flecs_commit. Do this
-             * before calling flecs_actions_move_add() since this can trigger 
+             * before calling flecs_actions_move_add() since this can trigger
              * prefab instantiation logic. When that happens, prefab children
              * can be created for this instance which would mean that the table
-             * count of r->cr would always be >0.
-             * Since those tables are new, we don't have to invoke component 
+             * count of cr would always be >0.
+             * Since those tables are new, we don't have to invoke component
              * monitors since queries will have correctly matched them. */
             ecs_component_record_t *cr = flecs_components_get(
                 world, ecs_pair(EcsWildcard, entity));
@@ -1095,7 +1096,7 @@ bool flecs_defer_end(
     flecs_check_exclusive_world_access_write(world);
 
     if (stage->defer < 0) {
-        /* Defer suspending makes it possible to do operations on the storage
+        /* Suspending defer makes it possible to do operations on the storage
          * without flushing the commands in the queue */
         return false;
     }
@@ -1331,7 +1332,7 @@ bool flecs_defer_end(
     return false;
 }
 
-/* Delete operations from queue without executing them. */
+/* Discard commands from queue without executing them. */
 bool flecs_defer_purge(
     ecs_world_t *world,
     ecs_stage_t *stage)

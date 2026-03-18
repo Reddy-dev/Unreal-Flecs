@@ -54,6 +54,7 @@ static ECS_DTOR(EcsTypeSerializer, ptr, {
     flecs_type_serializer_dtor(ptr);
 })
 
+static
 const char* flecs_type_kind_str(
     ecs_type_kind_t kind)
 {
@@ -69,31 +70,6 @@ const char* flecs_type_kind_str(
     }
 }
 
-const char* flecs_primitive_type_kind_str(
-    ecs_primitive_kind_t kind)
-{
-    switch(kind) {
-    case EcsBool: return "Bool";
-    case EcsChar: return "Char";
-    case EcsByte: return "Byte";
-    case EcsU8: return "U8";
-    case EcsU16: return "U16";
-    case EcsU32: return "U32";
-    case EcsU64: return "U64";
-    case EcsI8: return "I8";
-    case EcsI16: return "I16";
-    case EcsI32: return "I32";
-    case EcsI64: return "I64";
-    case EcsF32: return "F32";
-    case EcsF64: return "F64";
-    case EcsUPtr: return "UPtr";
-    case EcsIPtr: return "IPtr";
-    case EcsString: return "String";
-    case EcsEntity: return "Entity";
-    case EcsId: return "Id";
-    default: return "unknown";
-    }
-}
 
 #ifdef FLECS_DEBUG
 static
@@ -216,9 +192,9 @@ int flecs_init_type(
 
             if(kind == EcsEnumType) {
                 /* Generate compare/equals hooks for enums, copying
-                   the underlying type's hooks, which should be 
+                   the underlying type's hooks, which should be
                    any of the default primitive integral compare hooks,
-                   i.e. ecs_compare_i8, _i16 _32... */
+                   i.e. ecs_compare_i8, _i16, _i32... */
                 const EcsEnum* enum_info = ecs_get(world, type, EcsEnum);
                 ecs_assert(enum_info != NULL, ECS_INTERNAL_ERROR, NULL);
                 const ecs_type_hooks_t *enum_hooks = ecs_get_hooks_id(

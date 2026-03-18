@@ -927,7 +927,7 @@ void flecs_world_stats_to_json(
     ECS_COUNTER_APPEND(reply, stats, commands.delete_count, "Delete commands executed");
     ECS_COUNTER_APPEND(reply, stats, commands.clear_count, "Clear commands executed");
     ECS_COUNTER_APPEND(reply, stats, commands.set_count, "Set commands executed");
-    ECS_COUNTER_APPEND(reply, stats, commands.ensure_count, "Get_mut commands executed");
+    ECS_COUNTER_APPEND(reply, stats, commands.ensure_count, "Ensure commands executed");
     ECS_COUNTER_APPEND(reply, stats, commands.modified_count, "Modified commands executed");
     ECS_COUNTER_APPEND(reply, stats, commands.other_count, "Misc commands executed");
     ECS_COUNTER_APPEND(reply, stats, commands.discard_count, "Commands for already deleted entities");
@@ -2044,7 +2044,7 @@ bool flecs_rest_reply(
         } else if (!ecs_os_strncmp(req->path, "components", 10)) {
             return flecs_rest_get_components(world, req, reply);
 
-        /* Tables endpoint */
+        /* Queries endpoint */
         } else if (!ecs_os_strncmp(req->path, "queries", 7)) {
             return flecs_rest_get_queries(world, req, reply);
 
@@ -2062,7 +2062,7 @@ bool flecs_rest_reply(
         }
 
     } else if (req->method == EcsHttpPut) {
-        /* Component PUT endpoint */
+        /* Entity PUT endpoint */
         if (!ecs_os_strncmp(req->path, "entity/", 7)) {
             return flecs_rest_put_entity(world, reply, &req->path[7]);
 

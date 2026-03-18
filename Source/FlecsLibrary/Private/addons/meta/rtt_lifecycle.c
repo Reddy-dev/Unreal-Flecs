@@ -1,6 +1,6 @@
-/*
+/**
  * @file addons/meta/rtt_lifecycle.c
- * @brief Runtime components lifecycle management
+ * @brief Runtime component lifecycle management.
  */
 
 #include "flecs.h"
@@ -9,7 +9,7 @@
 #ifdef FLECS_META
 
 /* Stores all the information necessary to forward a hook call to a
- * struct's member type */
+ * struct member's type */
 typedef struct ecs_rtt_call_data_t {
     union {
         ecs_xtor_t xtor;
@@ -73,7 +73,7 @@ void flecs_rtt_default_move(
  *
  */
 
-/* Invokes struct member type's constructor/destructor using saved information
+/* Invokes struct member types' constructor/destructor using saved information
  * in the lifecycle context */
 static
 void flecs_rtt_struct_xtor(
@@ -97,9 +97,9 @@ void flecs_rtt_struct_xtor(
     }
 }
 
-/* Generic struct constructor. It will read hook information call data from
- * the structs's lifecycle context and call the constructors configured when
- * the type was created. */
+/* Generic struct constructor. It will read hook call data from the struct's
+ * lifecycle context and call the constructors configured when the type was
+ * created. */
 static
 void flecs_rtt_struct_ctor(
     void *ptr,
@@ -111,9 +111,9 @@ void flecs_rtt_struct_ctor(
     flecs_rtt_struct_xtor(&rtt_ctx->vctor, ptr, count, type_info);
 }
 
-/* Generic struct destructor. It will read hook information call data from
- * the structs's lifecycle context and call the constructors configured when
- * the type was created. */
+/* Generic struct destructor. It will read hook call data from the struct's
+ * lifecycle context and call the destructors configured when the type was
+ * created. */
 static
 void flecs_rtt_struct_dtor(
     void *ptr,
@@ -125,9 +125,8 @@ void flecs_rtt_struct_dtor(
     flecs_rtt_struct_xtor(&rtt_ctx->vdtor, ptr, count, type_info);
 }
 
-/* Generic move hook. It will read hook information call data from the
- * structs's lifecycle context and call the move hooks configured when
- * the type was created. */
+/* Generic move hook. It will read hook call data from the struct's lifecycle
+ * context and call the move hooks configured when the type was created. */
 static
 void flecs_rtt_struct_move(
     void *dst_ptr,
@@ -156,9 +155,8 @@ void flecs_rtt_struct_move(
     }
 }
 
-/* Generic copy hook. It will read hook information call data from the
- * structs's lifecycle context and call the copy hooks configured when
- * the type was created. */
+/* Generic copy hook. It will read hook call data from the struct's lifecycle
+ * context and call the copy hooks configured when the type was created. */
 static
 void flecs_rtt_struct_copy(
     void *dst_ptr,
@@ -187,9 +185,9 @@ void flecs_rtt_struct_copy(
     }
 }
 
-/* Generic compare hook. It will read hook information call data from the
- * structs's lifecycle context and call the compare hooks configured when
- * the type was created. */
+/* Generic compare hook. It will read hook call data from the struct's
+ * lifecycle context and call the compare hooks configured when the type was
+ * created. */
 static
 int flecs_rtt_struct_cmp(
     const void *a_ptr,
@@ -219,9 +217,9 @@ int flecs_rtt_struct_cmp(
     return 0;
 }
 
-/* Generic equals hook. It will read hook information call data from the
- * structs's lifecycle context and call the equals hooks configured when
- * the type was created. */
+/* Generic equals hook. It will read hook call data from the struct's
+ * lifecycle context and call the equals hooks configured when the type was
+ * created. */
 static
 bool flecs_rtt_struct_equals(
     const void *a_ptr,
@@ -337,9 +335,9 @@ ecs_rtt_struct_ctx_t * flecs_rtt_configure_struct_hooks(
     return rtt_ctx;
 }
 
-/* Checks if a struct member's types have hooks installed. If so, it generates
- * and installs required hooks for the struct type itself. These hooks will
- * invoke the member hooks when necessary  */
+/* Checks if a struct's member types have hooks installed. If so, it generates
+ * and installs the required hooks for the struct type itself. These hooks will
+ * invoke the member hooks when necessary. */
 static
 void flecs_rtt_init_default_hooks_struct(
     ecs_world_t *world,
@@ -507,7 +505,7 @@ void flecs_rtt_array_ctor(
     }
 }
 
-/* Generic array constructor. It will invoke the destructor of the underlying
+/* Generic array destructor. It will invoke the destructor of the underlying
  * type for all the elements */
 static
 void flecs_rtt_array_dtor(
@@ -618,7 +616,7 @@ bool flecs_rtt_array_equals(
 }
 
 /* Checks if an array's underlying type has hooks installed. If so, it generates
- * and installs required hooks for the array type itself. These hooks will
+ * and installs the required hooks for the array type itself. These hooks will
  * invoke the underlying type's hook for each element in the array. */
 static
 void flecs_rtt_init_default_hooks_array(
@@ -959,14 +957,14 @@ void flecs_rtt_init_default_hooks(
         /* If a component is defined from reflection data, configure appropriate
          * default hooks.
          * - For trivial types, at least set a default constructor so memory is
-         * zero-initialized
+         *   zero-initialized.
          * - For struct types, configure a hook that in turn calls hooks of
-         * member types, if those member types have hooks defined themselves.
+         *   member types, if those member types have hooks defined themselves.
          * - For array types, configure a hook that in turn calls hooks for the
-         * underlying type, for each element in the array.
-         *  - For vector types, configure hooks to manage the vector structure
-         * itself, move the vector and deep-copy vector elements
-         * */
+         *   underlying type, for each element in the array.
+         * - For vector types, configure hooks to manage the vector structure
+         *   itself, move the vector and deep-copy vector elements.
+         */
 
         ecs_entity_t component = it->entities[i];
 

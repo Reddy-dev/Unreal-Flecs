@@ -1,6 +1,6 @@
 /**
- * @file addons/script/exor_visit.h
- * @brief Script AST visitor utilities.
+ * @file addons/script/expr/visit.h
+ * @brief Script expression AST visitor utilities.
  */
 
 #ifndef FLECS_EXPR_SCRIPT_VISIT_H
@@ -33,9 +33,5 @@ int flecs_expr_visit_eval(
 void flecs_expr_visit_free(
     ecs_script_t *script,
     ecs_expr_node_t *node);
-
-ecs_script_var_t flecs_expr_find_var(
-    ecs_script_t *script,
-    const char *name);
 
 #endif

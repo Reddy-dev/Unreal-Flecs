@@ -1,6 +1,6 @@
 /**
- * @file addons/script/expr_ast.c
- * @brief Script expression AST implementation.
+ * @file addons/script/expr/visit_eval.c
+ * @brief Script expression evaluation visitor.
  */
 
 #include "flecs.h"
@@ -491,7 +491,7 @@ int flecs_expr_cast_visit_eval(
         goto error;
     }
 
-    /* Copy expression result to storage of casted-to type */
+    /* Copy expression result to storage of cast-to type */
     if (flecs_value_copy_to(ctx->world, &out->value, expr)) {
         flecs_expr_visit_error(ctx->script, node, "failed to cast value");
         goto error;
@@ -1186,7 +1186,7 @@ int flecs_expr_visit_eval(
                 goto error;
             }
         } else {
-            /* Values not owned by runtime should be copied */
+            /* Values not owned by the runtime should be copied */
             if (flecs_value_copy_to(ctx.world, out, val)) {
                 flecs_expr_visit_error(script, node, "failed to write to output");
                 goto error;

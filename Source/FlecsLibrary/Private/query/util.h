@@ -1,7 +1,10 @@
 /**
  * @file query/util.h
- * @brief Utility functions
+ * @brief Utility functions.
  */
+
+#ifndef FLECS_QUERY_UTIL_H
+#define FLECS_QUERY_UTIL_H
 
 #include "types.h"
 
@@ -40,7 +43,7 @@ const char* flecs_term_ref_var_name(
 bool flecs_term_ref_is_wildcard(
     ecs_term_ref_t *ref);
 
-/* Does term use builtin predicates (eq, neq, ...)*/
+/* Does term use builtin predicates (eq, neq, ...) */
 bool flecs_term_is_builtin_pred(
     ecs_term_t *term);
 
@@ -54,7 +57,7 @@ bool flecs_term_is_or(
     const ecs_query_t *q,
     const ecs_term_t *term);
 
-/* Get ref flags (IsEntity) or IsVar) for ref (Src, First, Second) */
+/* Get ref flags (IsEntity or IsVar) for ref (Src, First, Second) */
 ecs_flags16_t flecs_query_ref_flags(
     ecs_flags16_t flags,
     ecs_flags16_t kind);
@@ -64,7 +67,7 @@ bool flecs_query_is_written(
     ecs_var_id_t var_id,
     uint64_t written);
 
-/* Check if ref is written (calls flecs_query_is_written)*/
+/* Check if ref is written (calls flecs_query_is_written) */
 bool flecs_ref_is_written(
     const ecs_query_op_t *op,
     const ecs_query_ref_t *ref,
@@ -95,4 +98,6 @@ ecs_id_t flecs_query_iter_set_id(
     ecs_iter_t *it,
     int8_t field,
     ecs_id_t id);
+
+#endif
 

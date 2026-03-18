@@ -1,3 +1,10 @@
+/**
+ * @file addons/http/http.h
+ * @brief HTTP addon internals.
+ */
+
+#ifndef FLECS_HTTP_IMPL_H
+#define FLECS_HTTP_IMPL_H
 
 #ifdef ECS_TARGET_MSVC
 #pragma comment(lib, "Ws2_32.lib")
@@ -168,9 +175,9 @@ typedef struct {
     ecs_http_connection_t pub;
     ecs_http_socket_t sock;
 
-    /* Connection is purged after both timeout expires and connection has
-     * exceeded retry count. This ensures that a connection does not immediately
-     * timeout when a frame takes longer than usual */
+    /* Connection is purged after both the timeout expires and the connection has
+     * exceeded the retry count. This ensures that a connection does not
+     * immediately timeout when a frame takes longer than usual */
     double dequeue_timeout;
     int32_t dequeue_retries;    
 } ecs_http_connection_impl_t;
@@ -181,3 +188,5 @@ typedef struct {
     char *res;
     int32_t req_len;
 } ecs_http_request_impl_t;
+
+#endif

@@ -225,6 +225,8 @@ next:
             ecs_vec_t *v_children = &cr->pair->ordered_children;
             if (bulk_return) {
                 op_ctx->state = EcsQueryTreeIterNext;
+                it->table = NULL;
+                it->offset = 0;
                 it->entities = ecs_vec_first_t(v_children, ecs_entity_t);
                 it->count = ecs_vec_count(v_children);
                 goto done;
@@ -496,11 +498,13 @@ bool flecs_query_children_select(
         if ((!pr->disabled_tables || !(filter & EcsTableIsDisabled)) &&
             (!pr->prefab_tables || !(filter & EcsTableIsPrefab))) 
         {
+            it->table = NULL;
+            it->offset = 0;
             it->entities = ecs_vec_first_t(v_children, ecs_entity_t);
             it->count = ecs_vec_count(v_children);
             return true;
         } else {
-           /* Flags that we're going to iterate each entity separately because we
+           /* Flag that we're going to iterate each entity separately because we
             * need to filter out disabled entities. */
            op_ctx->state = EcsQueryTreeIterEntities;
            op_ctx->entities = ecs_vec_first_t(v_children, ecs_entity_t);
@@ -560,7 +564,7 @@ bool flecs_query_children_with(
     }
 
     if (!(range.table->flags & EcsTableHasParent)) {
-        /* If table doesn't have ChildOf or Parent its entities don't have 
+        /* If table doesn't have ChildOf or Parent, its entities don't have
          * parents. */
         return false;
     }
@@ -679,9 +683,9 @@ bool flecs_query_tree_post(
         return !redo;
     }
 
-    /* Shouldn't have gotten here if the table has neither ChildOf or Parent */
+    /* Shouldn't have gotten here if the table has neither ChildOf nor Parent */
     ecs_assert(range.table->flags & EcsTableHasParent, ECS_INTERNAL_ERROR, NULL);
-    
+
     return flecs_query_tree_with(op, redo, ctx);
 }
 
@@ -773,7 +777,7 @@ bool flecs_query_tree_up_post(
         return !redo;
     }
 
-    /* Shouldn't have gotten here if the table has neither ChildOf or Parent */
+    /* Shouldn't have gotten here if the table has neither ChildOf nor Parent */
     ecs_assert(range.table->flags & EcsTableHasParent, ECS_INTERNAL_ERROR, NULL);
 
     const ecs_term_t *term = &ctx->query->pub.terms[op->term_index];

@@ -8,7 +8,7 @@
  * - Invoking hooks
  * - Notifying observers
  * - Updating sparse storage
- * - Update name lookup index
+ * - Updating name lookup index
  */
 
 #include "private_api.h"
@@ -419,19 +419,6 @@ void flecs_actions_new(
 {
     flecs_actions_on_add_intern(
         world, table, NULL, row, count, diff, flags, construct, sparse);
-}
-
-void flecs_actions_delete(
-    ecs_world_t *world,
-    ecs_table_t *table,
-    int32_t row,
-    int32_t count,
-    const ecs_table_diff_t *diff)
-{
-    if (diff->removed.count) {
-        flecs_actions_on_remove_intern_w_reparent(
-            world, table, NULL, row, count, diff);
-    }
 }
 
 void flecs_actions_delete_tree(

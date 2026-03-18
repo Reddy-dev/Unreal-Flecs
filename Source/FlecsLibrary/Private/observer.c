@@ -361,6 +361,38 @@ void flecs_default_uni_observer_run_callback(ecs_iter_t *it) {
 }
 
 static
+bool flecs_observer_query_has_range(
+    const ecs_query_t *query,
+    ecs_table_range_t *range,
+    const ecs_term_t *term,
+    ecs_id_t event_id,
+    ecs_iter_t *it)
+{
+    bool first_var = (term->first.id & EcsIsVariable) && term->first.name;
+    bool second_var = (term->second.id & EcsIsVariable) && term->second.name;
+    if (!first_var && !second_var) {
+        return ecs_query_has_range(query, range, it);
+    }
+
+    *it = ecs_query_iter(query->world, query);
+    ecs_iter_set_var_as_range(it, 0, range);
+    if (first_var) {
+        ecs_iter_set_var(it, ecs_query_find_var(query, term->first.name),
+            ECS_IS_PAIR(event_id) ? ECS_PAIR_FIRST(event_id) : event_id);
+    }
+    if (second_var) {
+        if (!ECS_IS_PAIR(event_id)) {
+            ecs_iter_fini(it);
+            return false;
+        }
+        ecs_iter_set_var(it, ecs_query_find_var(query, term->second.name),
+            ECS_PAIR_SECOND(event_id));
+    }
+
+    return ecs_query_next(it);
+}
+
+static
 void flecs_observer_invoke(
     ecs_observer_t *o,
     ecs_iter_t *it)
@@ -554,6 +586,7 @@ void flecs_multi_observer_invoke(
         prev_table = it->table;
     }
 
+    ecs_table_t *lock_table = table;
     table = table ? table : &world->store.root;
     prev_table = prev_table ? prev_table : &world->store.root;
 
@@ -561,14 +594,18 @@ void flecs_multi_observer_invoke(
 
     bool match;
     if (is_not) {
-        match = ecs_query_has_table(o->query, table, &user_it);
+        ecs_table_range_t range = { .table = table };
+        match = flecs_observer_query_has_range(
+            o->query, &range, term, it->event_id, &user_it);
         if (match) {
             /* The target table matches but the entity hasn't moved to it yet. 
              * Now match the not_query, which will populate the iterator with
              * data from the table the entity is still stored in. */
             user_it.flags |= EcsIterSkip; /* Prevent change detection on fini */
             ecs_iter_fini(&user_it);
-            match = ecs_query_has_table(impl->not_query, prev_table, &user_it);
+            ecs_table_range_t prev_range = { .table = prev_table };
+            match = flecs_observer_query_has_range(
+                impl->not_query, &prev_range, term, it->event_id, &user_it);
 
             /* A not query replaces Not terms with Optional terms, so if the 
              * regular query matches, the not_query should also match. */
@@ -581,7 +618,8 @@ void flecs_multi_observer_invoke(
             .count = it->count
         };
 
-        match = ecs_query_has_range(o->query, &range, &user_it);
+        match = flecs_observer_query_has_range(
+            o->query, &range, term, it->event_id, &user_it);
     }
 
     if (match) {
@@ -589,7 +627,10 @@ void flecs_multi_observer_invoke(
          * time with an entity */
         if (impl->flags & EcsObserverIsMonitor) {
             ecs_iter_t table_it;
-            if (ecs_query_has_table(o->query, prev_table, &table_it)) {
+            ecs_table_range_t prev_range = { .table = prev_table };
+            if (flecs_observer_query_has_range(
+                o->query, &prev_range, term, it->event_id, &table_it)) 
+            {
                 /* Prevent change detection on fini */
                 user_it.flags |= EcsIterSkip;
                 table_it.flags |= EcsIterSkip;
@@ -626,7 +667,7 @@ void flecs_multi_observer_invoke(
 
         ecs_entity_t old_system = flecs_stage_set_system(
             world->stages[0], o->entity);
-        ecs_table_lock(it->world, table);
+        ecs_table_lock(it->world, lock_table);
 
         if (o->run) {
             user_it.next = flecs_default_next_callback;
@@ -638,7 +679,7 @@ void flecs_multi_observer_invoke(
         user_it.flags |= EcsIterSkip; /* Prevent change detection on fini */
         ecs_iter_fini(&user_it);
 
-        ecs_table_unlock(it->world, table);
+        ecs_table_unlock(it->world, lock_table);
         flecs_stage_set_system(world->stages[0], old_system);
     } else {
         /* While the observer query was strictly speaking evaluated, it's more
@@ -1062,7 +1103,7 @@ ecs_observer_t* flecs_observer_init(
     o->world = world;
     impl->dtor = flecs_observer_poly_fini;
 
-    /* Make writeable copy of query desc so that we can set name. This will
+    /* Make writable copy of query desc so that we can set name. This will
      * make debugging easier, as any error messages related to creating the
      * query will have the name of the observer. */
     ecs_query_desc_t query_desc = desc->query;
@@ -1164,7 +1205,7 @@ ecs_observer_t* flecs_observer_init(
          "cannot set yield_existing and YieldOn* flags at the same time");
 
     /* Check if observer is monitor. Monitors are created as multi observers
-     * since they require pre/post checking of the filter to test if the
+     * since they require pre/post checking of the query to test if the
      * entity is entering/leaving the monitor. */
     for (i = 0; i < FLECS_EVENT_DESC_MAX; i ++) {
         ecs_entity_t event = desc->events[i];

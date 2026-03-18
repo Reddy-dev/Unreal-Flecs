@@ -3,15 +3,12 @@
  * @brief Data structure for fast table iteration/lookups.
  * 
  * A table cache is a data structure that provides constant time operations for
- * insertion and removal of tables, and to testing whether a table is registered
+ * insertion and removal of tables, and for testing whether a table is registered
  * with the cache. A table cache also provides functions to iterate the tables
  * in a cache.
  * 
  * The world stores a table cache per (component) id inside the component record 
  * administration. Cached queries store a table cache with matched tables.
- * 
- * A table cache has separate lists for non-empty tables and empty tables. This
- * improves performance as applications don't waste time iterating empty tables.
  */
 
 #include "../private_api.h"

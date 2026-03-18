@@ -1036,7 +1036,7 @@ int flecs_script_eval_var_component(
         v->vars, node->name, v->dynamic_variable_binding ? NULL : &node->sp);
     ecs_value_t var_value = {0};
     if (!var) {
-        /* If we cannot find local variable, try find as const var */
+        /* If we cannot find local variable, try to find as const var */
         ecs_entity_t var_entity = 0;
         if (flecs_script_find_entity(
             v, 0, node->name, NULL, NULL, &var_entity, NULL)) 
@@ -1164,7 +1164,7 @@ int flecs_script_eval_with_var(
     }
 
     ecs_allocator_t *a = &v->r->allocator;
-    ecs_value_t *value = flecs_script_with_append(a, v, NULL); // TODO: vars of non trivial types
+    ecs_value_t *value = flecs_script_with_append(a, v, NULL); // TODO: vars of non-trivial types
     *value = var->value;
 
     return 0;
@@ -1262,6 +1262,7 @@ error:
     return result;
 }
 
+static
 int flecs_script_eval_using(
     ecs_script_eval_visitor_t *v,
     ecs_script_using_t *node)
@@ -1525,7 +1526,7 @@ int flecs_script_eval_pair_scope(
         value->ptr = NULL;
         v->with_relationship_sp = flecs_script_with_count(v) - 1;
     } else {
-        /* Get existing with element for current relationhip stack */
+        /* Get existing with element for current relationship stack */
         ecs_value_t *value = ecs_vec_get_t(
             &v->r->with, ecs_value_t, v->with_relationship_sp);
         ecs_assert(ECS_PAIR_FIRST(value->type) == (uint32_t)first, 

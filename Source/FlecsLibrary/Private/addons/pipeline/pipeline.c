@@ -215,7 +215,7 @@ bool flecs_pipeline_check_terms(
     int32_t t, term_count = query->term_count;
 
     /* Check This terms first. This way if a term indicating writing to a stage
-     * was added before the term, it won't cause merging. */
+     * was added before a This term, it won't cause merging. */
     for (t = 0; t < term_count; t ++) {
         ecs_term_t *term = &terms[t];
         if (ecs_term_match_this(term)) {
@@ -223,7 +223,7 @@ bool flecs_pipeline_check_terms(
         }
     }
 
-    /* Now check staged terms */
+    /* Now check non-$this terms */
     for (t = 0; t < term_count; t ++) {
         ecs_term_t *term = &terms[t];
         if (!ecs_term_match_this(term)) {
@@ -472,6 +472,7 @@ void flecs_pipeline_next_system(
     }    
 }
 
+static
 bool flecs_pipeline_update(
     ecs_world_t *world,
     ecs_pipeline_state_t *pq,
@@ -481,7 +482,7 @@ bool flecs_pipeline_update(
     ecs_assert(!(world->flags & EcsWorldReadonly), ECS_INVALID_OPERATION, 
         "cannot update pipeline while world is in readonly mode");
 
-    /* If any entity mutations happened that could have affected query matching
+    /* If any entity mutations happened that could have affected query matching,
      * notify appropriate queries so caches are up to date. This includes the
      * pipeline query. */
     if (start_of_frame) {
@@ -517,7 +518,7 @@ void ecs_run_pipeline(
         pipeline = world->pipeline;
     }
 
-    /* create any worker task threads request */
+    /* Create any worker task threads requested */
     if (ecs_using_task_threads(world)) {
         flecs_create_worker_threads(world);
     }
@@ -553,7 +554,7 @@ int32_t flecs_run_pipeline_ops(
     for (; i < count; i++) {
         ecs_system_t* sys = systems[i];
 
-        /* Keep track of the last frame for which the system has ran, so we
+        /* Keep track of the last frame for which the system has run, so we
          * know from where to resume the schedule in case the schedule
          * changes during a merge. */
         if (stage_index == 0) {
@@ -563,7 +564,7 @@ int32_t flecs_run_pipeline_ops(
         ecs_stage_t* s = NULL;
         if (!op->immediate) {
             /* If system is immediate it operates on the actual world, not
-             * the stage. Only pass stage to system if it's readonly. */
+             * the stage. Only pass stage to system if it is not immediate. */
             s = stage;
         }
 
@@ -746,7 +747,7 @@ bool ecs_progress(
         flecs_run_startup_systems(world);
     }
 
-    /* create any worker task threads request */
+    /* Create any worker task threads requested */
     if (ecs_using_task_threads(world)) {
         flecs_create_worker_threads(world);
     }

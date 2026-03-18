@@ -1,6 +1,6 @@
 /**
  * @file addons/script/expr/stack.h
- * @brief Script expression AST.
+ * @brief Script expression stack.
  */
 
 #ifndef FLECS_SCRIPT_EXPR_STACK_H
@@ -58,10 +58,6 @@ void flecs_expr_stack_init(
 
 void flecs_expr_stack_fini(
     ecs_expr_stack_t *stack);
-
-ecs_expr_value_t* flecs_expr_stack_alloc(
-    ecs_expr_stack_t *stack,
-    const ecs_type_info_t *ti);
 
 ecs_expr_value_t* flecs_expr_stack_result(
     ecs_expr_stack_t *stack,

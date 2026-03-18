@@ -233,7 +233,7 @@ int32_t flecs_table_search_relation(
         cr_r = world->cr_childof_wildcard;
 
         if (table->flags & EcsTableHasParent) {
-            /* Can't resolve parent on */
+            /* Can't resolve parent on table */
             ecs_assert(record != NULL, ECS_INVALID_PARAMETER,
                 "cannot traverse ChildOf on table with Parent component, "
                 "search on entity instead");
@@ -375,8 +375,8 @@ int32_t flecs_relation_depth_walk(
         ecs_entity_t o = ecs_pair_second(world, table->type.array[i]);
         if (!o) {
             /* Rare, but can happen during cleanup when an intermediate table is
-             * created that contains a pair that is about to be removed but 
-             * hasn't yet, where the target is not alive. 
+             * created that contains a pair that is about to be removed but
+             * hasn't been yet, where the target is not alive.
              * Would be better if this intermediate table wouldn't get created,
              * but that requires a refactor of the cleanup logic. */
             return 0;

@@ -2,7 +2,7 @@
  * @file query/cache/cache.c
  * @brief Cached query implementation.
  * 
- * Implements a cache that stores a list of tables that matches the query. 
+ * Implements a cache that stores a list of tables that match the query. 
  * Cached queries outperform uncached queries in many scenarios since they don't
  * have to search for tables that match a query, but just iterate a list.
  * 
@@ -41,12 +41,12 @@
  *                            single group by default, but can have more (see 
  *                            group_by).
  * 
- * There are three cache features that significantly alter the way how elements
+ * There are three cache features that significantly alter how elements
  * are stored in the cache, which are group_by, order_by and wildcards.
  * 
  * Group_by
  * ========
- * Group_by assigns a group id (unsigned 64bit integer) to each table. This 
+ * Group_by assigns a group id (unsigned 64-bit integer) to each table. This
  * number is computed by a group_by function that can be provided by the 
  * application. A group can only be computed from which components are stored in
  * a table (the table type).
@@ -75,7 +75,7 @@
  * 
  * Groups are stored in a linked list that's ordered by the group id. This can
  * be in ascending or descending order, depending on the query. Because of this
- * ordering, group insertion and group removal is an O(N) operation where N is
+ * ordering, group insertion and group removal are O(N) operations where N is
  * the number of groups in the query. The head of the list is stored in the
  * first_group member of the query.
  * 
@@ -95,11 +95,11 @@
  * used for sorting is qsort.
  * 
  * Resorting is a very expensive operation. Queries use change detection, which
- * at a table level can detect if any changes occurred to the entities or ordered
- * by component. Only if a change has been detected will resorting occur. Even
- * then, this remains an expensive feature and should only be used for data that
- * doesn't change often. Flecs uses the query sorting feature to ensure that
- * pipeline queries return systems in a well defined order.
+ * at a table level can detect if any changes occurred to the entities or the
+ * ordered-by component. Only if a change has been detected will resorting
+ * occur. Even then, this remains an expensive feature and should only be used
+ * for data that doesn't change often. Flecs uses the query sorting feature to
+ * ensure that pipeline queries return systems in a well-defined order.
  * 
  * The sorted list of slices is stored in the table_slices member of the cache,
  * and is only populated for sorted queries.
@@ -407,13 +407,13 @@ error:
     return;
 }
 
-/* Callback for the observer that is subscribed for table events. This function
+/* Callback for the observer that is subscribed to table events. This function
  * is the entry point for matching/unmatching new tables with the query. */
 static
 void flecs_query_cache_on_event(
     ecs_iter_t *it)
 {
-    /* Because this is the observer::run callback, checking if this is event is
+    /* Because this is the observer::run callback, checking if this event is
      * already handled is not done for us. */
     ecs_world_t *world = it->world;
     ecs_observer_t *o = it->ctx;
@@ -612,7 +612,7 @@ ecs_query_cache_t* flecs_query_cache_init(
 
     /* Set flag for trivial caches which allows for faster iteration */
     if (impl->pub.flags & EcsQueryIsCacheable) {
-        /* Trivial caches may only contain And/Not operators. */
+        /* Trivial caches may only contain And/Not/Optional operators. */
         int32_t t, count = q->term_count;
         for (t = 0; t < count; t ++) {
             if (q->terms[t].oper != EcsAnd && q->terms[t].oper != EcsNot && q->terms[t].oper != EcsOptional) {
@@ -680,7 +680,7 @@ ecs_query_cache_t* flecs_query_cache_init(
 
     flecs_query_cache_allocators_init(result);
 
-    /* Zero'd out sources array that's used for results that only match $this. 
+    /* Zeroed-out sources array that's used for results that only match $this. 
      * This reduces the amount of memory used by the cache, and improves CPU
      * cache locality during iteration when doing source checks. */
     if (result->query->term_count) {

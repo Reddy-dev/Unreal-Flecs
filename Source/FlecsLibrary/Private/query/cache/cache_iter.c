@@ -91,7 +91,7 @@ ecs_query_cache_match_t* flecs_query_cache_next(
         if (qit->cur >= ecs_vec_count(qit->tables)) {
             /* We're iterating the table vector of the group */
             if (qit->tables == qit->all_tables) {   
-                /* If a group is set, we might have to iterate multiple */
+                /* If a group is set, we might have to iterate multiple groups */
                 ecs_query_cache_group_t *group = qit->group;
                 if (!group || qit->iter_single_group) {
                     return NULL;
@@ -305,14 +305,14 @@ bool flecs_query_is_cache_search(
     return true;
 }
 
-/* Iterate cache for query that's entirely cached */
+/* Iterate trivial cache for query that's entirely cached */
 bool flecs_query_is_trivial_cache_search(
     const ecs_query_run_ctx_t *ctx)
 {
     return flecs_query_trivial_cache_next(ctx) != NULL;
 }
 
-/* Test if query that is entirely cached matches constrained $this */
+/* Test if query that is partially cached matches constrained $this */
 bool flecs_query_cache_test(
     const ecs_query_run_ctx_t *ctx,
     bool redo)

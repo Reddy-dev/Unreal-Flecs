@@ -1,5 +1,5 @@
 /**
- * @file query/compiler/compile.c
+ * @file query/compiler/compiler.c
  * @brief Compile query program from query.
  */
 
@@ -297,7 +297,7 @@ int flecs_query_discover_vars(
                 var->table_id = base_table_id;
             } else if (anonymous_table_count) {
                 /* Scan for implicit anonymous table variables that haven't been
-                 * inserted yet (happens after this step). Doing this here vs.
+                 * inserted yet (happens after this step). Doing this here
                  * ensures that anonymous variables are appended at the end of
                  * the variable array, while also ensuring that variable ids are
                  * stable (no swapping of table var ids that are in use). */
@@ -585,7 +585,7 @@ void flecs_query_insert_trivial_search(
             continue;
         }
 
-        /* We can only add trivial terms to plan if they no up traversal */
+        /* We can only add trivial terms to plan if they have no up traversal */
         if ((term->src.id & EcsTraverseFlags) != EcsSelf) {
             continue;
         }
@@ -1000,8 +1000,8 @@ int flecs_query_compile(
 
             if (term->oper == EcsOptional && start_term) {
                 /* Don't reorder past the first optional term that's not in the
-                 * initial list of optional terms. This protects short
-                 * circuiting branching in the query. 
+                 * initial list of optional terms. This protects short-circuiting
+                 * branching in the query. 
                  * A future algorithm could look at which variables are 
                  * accessed by optional terms, and continue reordering terms 
                  * that don't access those variables. */
@@ -1044,8 +1044,8 @@ int flecs_query_compile(
         }
     } while (true);
 
-    /* If this is the last term and it's a Tree instruction, replace it 
-     * with Children. If the queried for parent has the OrderedChildren
+    /* If there is only one term and it's a Tree instruction, replace it
+     * with Children. If the queried-for parent has the OrderedChildren
      * trait, the Children instruction will return the array with child
      * entities vs. returning children one by one. */
     if (term_count == 1 && ecs_vec_count(ctx.ops)) {

@@ -34,13 +34,6 @@ flecs_component_ptr_t flecs_get_mut(
     ecs_record_t *r,
     ecs_size_t size);
 
-/* Get component pointer with type info. */
-flecs_component_ptr_t flecs_get_component_ptr(
-    const ecs_world_t *world,
-    ecs_table_t *table,
-    int32_t row,
-    ecs_component_record_t *cr);
-
 /* Get component pointer. */
 void* flecs_get_component(
     const ecs_world_t *world,
@@ -69,8 +62,7 @@ void flecs_add_to_root_table(
     ecs_world_t *world,
     ecs_entity_t e);
 
-/* Mark an entity as being watched. This is used to trigger automatic rematching
- * when entities used in system expressions change their components. */
+/* Add a flag to an entity record (e.g. EcsEntityIsTraversable). */
 void flecs_add_flag(
     ecs_world_t *world,
     ecs_entity_t entity,
@@ -86,13 +78,13 @@ ecs_entity_t flecs_get_oneof(
     const ecs_world_t *world,
     ecs_entity_t e);
 
-/* Compute relationship depth for table */
+/* Compute relationship depth for table. */
 int32_t flecs_relation_depth(
     const ecs_world_t *world,
     ecs_entity_t r,
     const ecs_table_t *table);
 
-/* Get component from base entity (follows IsA relationship) */
+/* Get component from base entity (follows IsA relationship). */
 void* flecs_get_base_component(
     const ecs_world_t *world,
     ecs_table_t *table,
@@ -100,7 +92,7 @@ void* flecs_get_base_component(
     ecs_component_record_t *table_index,
     int32_t recur_depth);
 
-/* Commit entity to (new) table */
+/* Commit entity to (new) table. */
 void flecs_commit(
     ecs_world_t *world,
     ecs_entity_t entity,
@@ -110,21 +102,21 @@ void flecs_commit(
     bool construct,
     ecs_flags32_t evt_flags);
 
-/* Add multiple component ids to entity */
+/* Add multiple component ids to entity. */
 void flecs_add_ids(
     ecs_world_t *world,
     ecs_entity_t entity,
     ecs_id_t *ids,
     int32_t count);
 
-/* Like regular modified, but doesn't assert if entity doesn't have component */
+/* Like regular modified, but doesn't assert if entity doesn't have component. */
 void flecs_modified_id_if(
     ecs_world_t *world,
     ecs_entity_t entity,
     ecs_id_t id,
     bool invoke_hook);
 
-/* Like regular set, but uses move instead of copy */
+/* Like regular set, but uses move instead of copy. */
 void flecs_set_id_move(
     ecs_world_t *world,
     ecs_stage_t *stage,
@@ -134,19 +126,19 @@ void flecs_set_id_move(
     void *ptr,
     ecs_cmd_kind_t cmd_kind);
 
-/* Add single component id */
+/* Add single component id. */
 void flecs_add_id(
     ecs_world_t *world,
     ecs_entity_t entity,
     ecs_id_t id);
 
-/* Remove single component id */
+/* Remove single component id. */
 void flecs_remove_id(
     ecs_world_t *world,
     ecs_entity_t entity,
     ecs_id_t id);
 
-/* Run on delete action */
+/* Run on delete action. */
 void flecs_on_delete(
     ecs_world_t *world,
     ecs_id_t id,
@@ -154,15 +146,11 @@ void flecs_on_delete(
     bool delete_id,
     bool force_delete);
 
-/* Remove non-fragmenting components from entity */
+/* Remove non-fragmenting components from entity. */
 void flecs_entity_remove_non_fragmenting(
     ecs_world_t *world,
     ecs_entity_t e,
     ecs_record_t *r);
-
-const char* flecs_entity_invalid_reason(
-    const ecs_world_t *world,
-    ecs_entity_t entity);
 
 ecs_table_range_t flecs_range_from_entity(
     const ecs_world_t *world,
@@ -174,5 +162,9 @@ ecs_entity_t flecs_set_identifier(
     ecs_entity_t entity,
     ecs_entity_t tag,
     const char *name);
+
+const char* flecs_entity_invalid_reason(
+    const ecs_world_t *world,
+    ecs_entity_t entity);
 
 #endif

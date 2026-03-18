@@ -3,8 +3,8 @@
  * @brief Functions for managing poly objects.
  * 
  * The poly framework makes it possible to generalize common functionality for
- * different kinds of API objects, as well as improved type safety checks. Poly
- * objects have a header that identifiers what kind of object it is. This can
+ * different kinds of API objects, as well as improve type safety checks. Poly
+ * objects have a header that identifies what kind of object it is. This can
  * then be used to discover a set of "mixins" implemented by the type.
  * 
  * Mixins are like a vtable, but for members. Each type populates the table with
@@ -149,7 +149,7 @@ EcsPoly* flecs_poly_bind_(
     ecs_entity_t tag)
 {
     /* Add tag to the entity for easy querying. This will make it possible to
-     * query for `Query` instead of `(Poly, Query) */
+     * query for `Query` instead of `(Poly, Query)` */
     if (!ecs_has_id(world, entity, tag)) {
         ecs_add_id(world, entity, tag);
     }
@@ -162,7 +162,7 @@ EcsPoly* flecs_poly_bind_(
     }
 
     /* If this is a new poly, leave the actual creation up to the caller so they
-     * call tell the difference between a create or an update */
+     * can tell the difference between a create or an update */
     EcsPoly *result = ecs_ensure_pair(world, entity, EcsPoly, tag);
 
     if (deferred) {
@@ -180,6 +180,7 @@ void flecs_poly_modified_(
     ecs_modified_pair(world, entity, ecs_id(EcsPoly), tag);
 }
 
+static
 const EcsPoly* flecs_poly_bind_get_(
     const ecs_world_t *world,
     ecs_entity_t entity,

@@ -54,7 +54,7 @@ void flecs_script_template_ctor(
     ecs_world_t *world = ti->hooks.ctx;
     ecs_entity_t template_entity = ti->component;
 
-    /* Initialize object so copy hooks can safely overwrite members with dtors. */
+    /* Zero-initialize memory so that hooks can safely run destructors. */
     flecs_default_ctor(ptr, count, ti);
     
     const EcsStruct *st = ecs_get(world, template_entity, EcsStruct);
@@ -217,8 +217,8 @@ void flecs_script_template_instantiate(
             for (m = 0; m < st->members.count; m ++) {
                 const ecs_member_t *member = &members[m];
 
-                /* Assign template property from template instance. Don't 
-                 * set name as variables will be resolved by frame offset. */
+                /* Assign template property from template instance. Don't
+                 * set the name, as variables will be resolved by frame offset. */
                 ecs_script_var_t *var = ecs_script_vars_declare(
                     vars, NULL /* member->name */);
                 var->value.type = member->type;
@@ -498,6 +498,7 @@ int flecs_script_template_hoist_vars(
     return 0;
 }
 
+static
 ecs_script_template_t* flecs_script_template_init(
     ecs_script_impl_t *script)
 {
@@ -551,7 +552,7 @@ int flecs_script_eval_template(
     template->entity = template_entity;
     template->node = node;
 
-    /* Variables are always presented to a template in a well defined order, so
+    /* Variables are always presented to a template in a well-defined order, so
      * we don't need dynamic variable binding. */
     bool old_dynamic_variable_binding = v->dynamic_variable_binding;
     v->dynamic_variable_binding = false;
