@@ -1012,6 +1012,32 @@ void Observer_on_add_with_pair_singleton(void) {
 	test_int(count, 1);
 }
 
+void Observer_on_set_singleton_set_component_named_entity(void) {
+	flecs::world world;
+
+	struct MyComponent {
+		int v = 0;
+	};
+
+	struct MySingletonComponent {
+		int v = 0;
+	};
+
+	world.component<MyComponent>();
+	world.component<MySingletonComponent>().add(flecs::Singleton);
+
+	world.observer<const MySingletonComponent>()
+		.write<MySingletonComponent>()
+		.event(flecs::OnSet)
+		.each([](flecs::iter &it, size_t, const MySingletonComponent &c1) {
+			it.world().entity("A").set<MyComponent>({c1.v});
+		});
+
+	world.set<MySingletonComponent>({1});
+
+	test_int(world.entity("A").get<MyComponent>().v, 1);
+}
+
 void Observer_add_in_yield_existing(void) {
 	flecs::world world;
 	RegisterTestTypeComponents(world);
@@ -1605,6 +1631,126 @@ void Observer_trigger_on_set_in_on_add_implicit_registration_namespaced(void) {
 }
 
 
+void Observer_query_eval_w_component_that_triggered_observer(void) {
+    flecs::world world;
+
+    auto entry_event = world.entity();
+    auto sequence_shared = world.entity().add(flecs::Trait);
+    auto sequence = world.entity().add(sequence_shared);
+    auto child = world.entity();
+
+    int32_t invoked = 0;
+
+    world.observer()
+        .with("$Sequence")
+        .with(sequence_shared).src("$Sequence").filter()
+        .event(entry_event)
+        .each([&](flecs::iter& it, size_t i) {
+            test_assert(it.id(0) == sequence);
+            if (!invoked ++) {
+                auto e = it.entity(i).add(child);
+                e.world().event(entry_event).entity(e).id(child).enqueue();
+            }
+        });
+
+    world.event(entry_event).entity(world.entity().add(sequence)).id(sequence)
+        .enqueue();
+
+    test_int(invoked, 1);
+}
+
+void Observer_query_eval_w_pair_first_var_that_triggered_observer(void) {
+    flecs::world world;
+
+    auto entry_event = world.entity();
+    auto rel_tag = world.entity("RelTag");
+    auto rel = world.entity("MatchRel").add(rel_tag);
+    auto tgt = world.entity("MatchTgt");
+    auto other_rel = world.entity("OtherRel");
+    int32_t invoked = 0;
+
+    world.observer()
+        .expr("($Rel, MatchTgt), RelTag($Rel)")
+        .event(entry_event)
+        .each([&](flecs::iter& it, size_t i) {
+            test_assert(it.id(0) == ecs_pair(rel, tgt));
+            test_assert(it.get_var("Rel") == rel);
+            if (!invoked ++) {
+                auto e = it.entity(i).add(other_rel, tgt);
+                e.world().event(entry_event).entity(e).id(ecs_pair(other_rel, tgt))
+                    .enqueue();
+            }
+        });
+
+    world.event(entry_event).entity(world.entity().add(rel, tgt)).id(ecs_pair(rel, tgt))
+        .enqueue();
+
+    test_int(invoked, 1);
+}
+
+void Observer_query_eval_w_pair_second_var_that_triggered_observer(void) {
+    flecs::world world;
+
+    auto entry_event = world.entity();
+    auto tgt_tag = world.entity("TgtTag");
+    auto rel = world.entity("MatchRel");
+    auto tgt = world.entity("MatchTgt").add(tgt_tag);
+    auto other_tgt = world.entity("OtherTgt");
+    int32_t invoked = 0;
+
+    world.observer()
+        .expr("(MatchRel, $Tgt), TgtTag($Tgt)")
+        .event(entry_event)
+        .each([&](flecs::iter& it, size_t i) {
+            test_assert(it.id(0) == ecs_pair(rel, tgt));
+            test_assert(it.get_var("Tgt") == tgt);
+            if (!invoked ++) {
+                auto e = it.entity(i).add(rel, other_tgt);
+                e.world().event(entry_event).entity(e).id(ecs_pair(rel, other_tgt))
+                    .enqueue();
+            }
+        });
+
+    world.event(entry_event).entity(world.entity().add(rel, tgt)).id(ecs_pair(rel, tgt))
+        .enqueue();
+
+    test_int(invoked, 1);
+}
+
+void Observer_query_eval_w_pair_both_vars_that_triggered_observer(void) {
+    flecs::world world;
+
+    auto entry_event = world.entity();
+    auto rel_tag = world.entity("RelTag");
+    auto tgt_tag = world.entity("TgtTag");
+    auto rel = world.entity("MatchRel").add(rel_tag);
+    auto tgt = world.entity("MatchTgt").add(tgt_tag);
+    auto other_rel = world.entity("OtherRel");
+    auto other_tgt = world.entity("OtherTgt");
+    int32_t invoked = 0;
+
+    world.observer()
+        .expr("($Rel, $Tgt), RelTag($Rel), TgtTag($Tgt)")
+        .event(entry_event)
+        .each([&](flecs::iter& it, size_t i) {
+            test_assert(it.id(0) == ecs_pair(rel, tgt));
+            test_assert(it.get_var("Rel") == rel);
+            test_assert(it.get_var("Tgt") == tgt);
+            if (!invoked ++) {
+                auto e = it.entity(i).add(other_rel, other_tgt);
+                e.world().event(entry_event)
+                    .entity(e)
+                    .id(ecs_pair(other_rel, other_tgt))
+                    .enqueue();
+            }
+        });
+
+    world.event(entry_event).entity(world.entity().add(rel, tgt)).id(ecs_pair(rel, tgt))
+        .enqueue();
+
+    test_int(invoked, 1);
+}
+
 void Observer_fixed_src_w_each(void) {
 	flecs::world world;
 	RegisterTestTypeComponents(world);
@@ -1730,6 +1876,7 @@ END_DEFINE_SPEC(FFlecsObserverTestsSpec);
                 "on_add_pair_singleton",
                 "on_add_pair_wildcard_singleton",
                 "on_add_with_pair_singleton",
+                "on_set_singleton_set_component_named_entity",
                 "add_in_yield_existing",
                 "add_in_yield_existing_multi",
                 "name_from_root",
@@ -1754,6 +1901,10 @@ END_DEFINE_SPEC(FFlecsObserverTestsSpec);
                 "on_set_w_override_after_clear",
                 "trigger_on_set_in_on_add_implicit_registration",
                 "trigger_on_set_in_on_add_implicit_registration_namespaced",
+				"query_eval_w_component_that_triggered_observer",
+				"query_eval_w_pair_first_var_that_triggered_observer",
+				"query_eval_w_pair_second_var_that_triggered_observer",
+				"query_eval_w_pair_both_vars_that_triggered_observer",
                 "fixed_src_w_each",
                 "fixed_src_w_run",
                 "untyped_field"
@@ -1798,6 +1949,7 @@ void FFlecsObserverTestsSpec::Define()
 	It("on_add_pair_singleton", [&]() { Observer_on_add_pair_singleton(); });
 	It("on_add_pair_wildcard_singleton", [&]() { Observer_on_add_pair_wildcard_singleton(); });
 	It("on_add_with_pair_singleton", [&]() { Observer_on_add_with_pair_singleton(); });
+	It("on_set_singleton_set_component_named_entity", [&]() { Observer_on_set_singleton_set_component_named_entity(); });
 	It("add_in_yield_existing", [&]() { Observer_add_in_yield_existing(); });
 	It("add_in_yield_existing_multi", [&]() { Observer_add_in_yield_existing_multi(); });
 	It("name_from_root", [&]() { Observer_name_from_root(); });
@@ -1822,6 +1974,10 @@ void FFlecsObserverTestsSpec::Define()
 	It("on_set_w_override_after_clear", [&]() { Observer_on_set_w_override_after_clear(); });
 	It("trigger_on_set_in_on_add_implicit_registration", [&]() { Observer_trigger_on_set_in_on_add_implicit_registration(); });
 	It("trigger_on_set_in_on_add_implicit_registration_namespaced", [&]() { Observer_trigger_on_set_in_on_add_implicit_registration_namespaced(); });
+	It("query_eval_w_component_that_triggered_observer", [&]() { Observer_query_eval_w_component_that_triggered_observer(); });
+	It("query_eval_w_pair_first_var_that_triggered_observer", [&]() { Observer_query_eval_w_pair_first_var_that_triggered_observer(); });
+	It("query_eval_w_pair_second_var_that_triggered_observer", [&]() { Observer_query_eval_w_pair_second_var_that_triggered_observer(); });
+	It("query_eval_w_pair_both_vars_that_triggered_observer", [&]() { Observer_query_eval_w_pair_both_vars_that_triggered_observer(); });
 	It("fixed_src_w_each", [&]() { Observer_fixed_src_w_each(); });
 	It("fixed_src_w_run", [&]() { Observer_fixed_src_w_run(); });
 	It("untyped_field", [&]() { Observer_untyped_field(); });
