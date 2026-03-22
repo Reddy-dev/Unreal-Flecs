@@ -3,10 +3,10 @@
 #pragma once
 
 #include "Misc/AutomationTest.h"
+#include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 
 #if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
 
-#include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 #include "Worlds/FlecsWorld.h"
 
 /** Layout of the tests:

@@ -1,6 +1,7 @@
 ﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
 
 #include "Misc/AutomationTest.h"
+#include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 
 #if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
 
@@ -10,7 +11,6 @@
 
 #include "Queries/FlecsQueryDefinition.h"
 #include "Queries/Generator/FlecsQueryGeneratorInputType.h"
-#include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 
 // @TODO: add pair testing
 

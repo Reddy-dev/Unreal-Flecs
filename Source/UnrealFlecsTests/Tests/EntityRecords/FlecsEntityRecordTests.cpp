@@ -1,14 +1,13 @@
 ﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
 
 #include "Misc/AutomationTest.h"
+#include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 
 #if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
 
 #include "Components/FlecsSubEntityRecordNameComponent.h"
 #include "EntityRecords/FlecsEntityRecord.h"
 #include "EntityRecords/FlecsNamedEntityRecordFragment.h"
-
-#include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 
 /*
  * Layout of the Tests:

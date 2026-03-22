@@ -1,13 +1,13 @@
 ﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
 
 #include "Misc/AutomationTest.h"
+#include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 
 #if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
 
 #include "CQTest.h"
 #include "UnrealFlecsTests/Fixtures/FlecsWorldFixture.h"
 #include "Misc/AutomationTest.h"
-#include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 #include "UnrealFlecsTests/Tests/Types/FlecsClassTestTypes.h"
 #include "Worlds/FlecsWorld.h"
 

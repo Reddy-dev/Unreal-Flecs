@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 
+#include "UnrealFlecsConfigMacros.h"
+
 #include "UObject/Object.h"
 #include "GameplayTagsManager.h"
 #include "Developer/CQTest/Public/CQTest.h"
