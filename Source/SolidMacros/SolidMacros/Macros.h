@@ -605,9 +605,9 @@ namespace Solid
 #ifndef UNREACHABLE
 
 #if defined(__GNUC__) || defined(__clang__)
-#define UNREACHABLE check(!"Unreachable"); __builtin_unreachable();
+#define UNREACHABLE 
 #else // defined(__GNUC__) || defined(__clang__)
-#define UNREACHABLE check(!"Unreachable"); UE_ASSUME(false);
+#define UNREACHABLE
 #endif // defined(__GNUC__) || defined(__clang__)
 
 #endif // UNREACHABLE
