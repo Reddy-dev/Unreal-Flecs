@@ -1935,7 +1935,7 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 	}
 	else
 	{
-		
+		// do nothing
 	}
 	
 	if (OldScope.IsValid())
