@@ -10,6 +10,7 @@
 
 #include "SolidMacros/Macros.h"
 
+// dont define as of now, not tested
 #ifndef ENABLE_SOLID_NOT_NULL
 
 template <typename T>
