@@ -140,6 +140,10 @@ inline ecs_cpp_type_action_t enum_action() {
         return &_::init_enum<T>;
             
     }
+    else
+    {
+        return nullptr;
+    }
  #else
     return nullptr;
  #endif
