@@ -144,9 +144,9 @@ inline ecs_cpp_type_action_t enum_action() {
     {
         return nullptr;
     }
- #else
+    #else // FLECS_CPP_ENUM_REFLECTION_SUPPORT
     return nullptr;
- #endif
+    #endif // FLECS_CPP_ENUM_REFLECTION_SUPPORT
 }
 
 struct FLECS_API type_impl_data {
