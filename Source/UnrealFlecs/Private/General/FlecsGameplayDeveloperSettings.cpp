@@ -30,5 +30,5 @@ void UFlecsGameplayDeveloperSettings::RegisterModuleSettings(const TSolidNotNull
 
 	TObjectPtr<UFlecsModuleSettings>& FoundModuleEntry = ModuleSettings.FindOrAdd(EntryName, 
 		TObjectPtr<UFlecsModuleSettings>(InModuleSettings));
-	FoundModuleEntry = *InModuleSettings;
+	FoundModuleEntry = InModuleSettings;
 }
