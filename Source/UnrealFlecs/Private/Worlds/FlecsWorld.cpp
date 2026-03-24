@@ -1950,13 +1950,20 @@ UObject* UFlecsWorld::GetRegisteredFlecsObject(const TSubclassOf<UObject> InClas
 {
 	solid_check(InClass);
 	
-	if UNLIKELY_IF(!RegisteredObjectTypes.Contains(InClass))
+	if (!RegisteredObjectTypes.Contains(InClass))
 	{
-		UE_LOGFMT(LogFlecsWorld, Warning,
-			"Class {ClassName} is not registered, returning nullptr",
-			*InClass->GetName());
 		return nullptr;
 	}
+
+	return RegisteredObjectTypes[InClass].GetObject();
+}
+
+UObject* UFlecsWorld::GetRegisteredFlecsObjectChecked(const TSubclassOf<UObject> InClass) const
+{
+	solid_check(InClass);
+	
+	solid_checkf(RegisteredObjectTypes.Contains(InClass),
+		TEXT("Class %s is not registered as a flecs object"), *InClass->GetName());
 
 	return RegisteredObjectTypes[InClass].GetObject();
 }

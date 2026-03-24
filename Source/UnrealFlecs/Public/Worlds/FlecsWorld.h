@@ -1017,6 +1017,15 @@ public:
 	template <Solid::TStaticClassConcept T>
 	NO_DISCARD FORCEINLINE T* GetRegisteredFlecsObject() const
 	{
+		return Cast<T>(GetRegisteredFlecsObject(T::StaticClass()));
+	}
+	
+	UFUNCTION(BlueprintCallable, Category = "Flecs")
+	UObject* GetRegisteredFlecsObjectChecked(const TSubclassOf<UObject> InClass) const;
+	
+	template <Solid::TStaticClassConcept T>
+	NO_DISCARD FORCEINLINE T* GetRegisteredFlecsObjectChecked() const
+	{
 		return CastChecked<T>(GetRegisteredFlecsObject(T::StaticClass()));
 	}
 	
