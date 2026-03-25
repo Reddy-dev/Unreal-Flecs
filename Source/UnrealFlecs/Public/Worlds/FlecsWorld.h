@@ -1086,7 +1086,6 @@ private:
 	void CallUnregisterOnRegisteredObjects();
 	
 	
-	
 	/**
 	 * @brief Get this world as a non-const pointer
 	 * @return This world as a non-const pointer

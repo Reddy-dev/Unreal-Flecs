@@ -1976,9 +1976,9 @@ bool UFlecsWorld::IsFlecsObjectRegistered(const TSubclassOf<UObject> InClass) co
 
 FFlecsEntityHandle UFlecsWorld::GetFlecsModule(const FName& InModuleName) const
 {
-	const FFlecsEntityHandle ModuleEntity = LookupEntity(InModuleName.ToString());
+	FFlecsEntityHandle ModuleEntity = LookupEntity(InModuleName.ToString());
 	
-	if (!ModuleEntity.IsValid() || !ModuleEntity.Has(flecs::Module))
+	if UNLIKELY_IF(!ModuleEntity.IsValid() || !ModuleEntity.Has(flecs::Module))
 	{
 		UE_LOGFMT(LogFlecsWorld, Warning,
 			"Module {ModuleName} does not exist or is not a valid flecs module",
