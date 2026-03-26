@@ -1,0 +1,70 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Source code
+*.cpp text diff=cpp
+*.h text diff=cpp
+*.hpp text diff=cpp
+*.c text diff=cpp
+*.cs text diff=csharp
+*.py text diff=python
+
+# Unreal Engine
+*.uproject text
+*.uplugin text
+*.Build.cs text diff=csharp
+*.Target.cs text diff=csharp
+*.ini text
+*.json text
+
+# Config and docs
+*.md text
+*.txt text
+*.xml text
+*.yaml text
+*.yml text
+
+# Shaders
+*.usf text
+*.ush text
+*.hlsl text
+*.glsl text
+
+# Scripts
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.sh text eol=lf
+
+# Binary assets
+*.uasset binary
+*.umap binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.bmp binary
+*.tga binary
+*.dds binary
+*.exr binary
+*.hdr binary
+*.wav binary
+*.ogg binary
+*.mp3 binary
+*.mp4 binary
+*.avi binary
+*.fbx binary
+*.obj binary
+*.abc binary
+*.blend binary
+*.psd binary
+*.ttf binary
+*.otf binary
+
+# Compiled / intermediate
+*.dll binary
+*.exe binary
+*.lib binary
+*.pdb binary
+*.so binary
+*.dylib binary
+*.a binary
