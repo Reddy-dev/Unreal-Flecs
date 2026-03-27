@@ -4,8 +4,6 @@
 
 #include "CoreMinimal.h"
 
-#include "Properties/FlecsComponentProperties.h"
-
 #include "FlecsBeginPlayComponent.generated.h"
 
 /**
