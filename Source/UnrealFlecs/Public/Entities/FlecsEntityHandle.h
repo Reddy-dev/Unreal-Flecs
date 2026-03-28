@@ -580,8 +580,6 @@ public:
 	{
 		return GetEntity().from_json(StringCast<char>(*InJson).Get());
 	}
-	
-	bool NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess);
 
 	template <typename TFirst, typename TSecond>
 	SOLID_INLINE const FSelfType& AddPair() const
@@ -969,7 +967,6 @@ struct TStructOpsTypeTraits<FFlecsEntityHandle> : public TStructOpsTypeTraitsBas
 {
 	enum
 	{
-		WithNetSerializer = true,
 		WithIdenticalViaEquality = true,
 	}; // enum
 	
