@@ -633,11 +633,11 @@ namespace Solid
 #endif // SOLID_NOT_EXISTS
 
 #ifndef SOLID_IF_EXISTS
-#define SOLID_IF_EXISTS(x) if constexpr EXISTS(x)
+#define SOLID_IF_EXISTS(x) if constexpr SOLID_EXISTS(x)
 #endif // SOLID_IF_EXISTS
 
 #ifndef SOLID_IF_NOT_EXISTS
-#define SOLID_IF_NOT_EXISTS(x) if constexpr NOT_EXISTS(x)
+#define SOLID_IF_NOT_EXISTS(x) if constexpr SOLID_NOT_EXISTS(x)
 #endif // SOLID_IF_NOT_EXISTS
 
 #ifndef SOLID_FUNCTION_TEXT
