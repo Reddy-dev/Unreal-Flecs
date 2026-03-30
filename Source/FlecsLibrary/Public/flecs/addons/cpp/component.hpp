@@ -30,7 +30,12 @@ namespace _ {
     
     template <Solid::TVariantStructConcept T>
     inline const char* type_name() {
-      return StringCast<char>(*TBaseStructure<T>::Get()->GetStructCPPName()).Get();
+        static const std::string cached = []{
+            return std::string(
+                StringCast<char>(*TBaseStructure<T>::Get()->GetStructCPPName()).Get()
+            );
+        }();
+        return cached.c_str();
     }
     
     template <>
@@ -158,21 +163,35 @@ struct FLECS_API type_impl_data {
     bool s_enum_registered;
 };
 
-FLECSLIBRARY_API extern robin_hood::unordered_map<std::string, type_impl_data> g_type_to_impl_data;
+struct FTypeImplDataHash {
+    using is_transparent = void;
+    size_t operator()(std::string_view s) const noexcept {
+        return robin_hood::hash<std::string_view>{}(s);
+    }
+};
+
+struct FTypeImplDataEqual {
+    using is_transparent = void;
+    bool operator()(std::string_view a, std::string_view b) const noexcept {
+        return a == b;
+    }
+};
+
+FLECSLIBRARY_API extern robin_hood::unordered_map<std::string, type_impl_data, FTypeImplDataHash, FTypeImplDataEqual> g_type_to_impl_data;
 
     template <typename T>
-    inline type_impl_data& get_or_create_type_data(bool allow_tag) 
+    inline type_impl_data& get_or_create_type_data(bool allow_tag)
     {
         ecs_os_perf_trace_push("flecs.type_impl.init");
-        
-        std::string key = std::string(_::type_name<T>());  // => Solid::type_name<T>()
-    
-        auto it = g_type_to_impl_data.find(key);
+
+        const char* name = _::type_name<T>();
+
+        auto it = g_type_to_impl_data.find(std::string_view(name));
         if LIKELY_IF(it != g_type_to_impl_data.end()) {
             ecs_os_perf_trace_pop("flecs.type_impl.init");
             return it->second;
         }
-        
+
         type_impl_data data = type_impl_data {
             .s_set_values = true,
             .s_index = flecs_component_ids_index_get(),
@@ -187,7 +206,7 @@ FLECSLIBRARY_API extern robin_hood::unordered_map<std::string, type_impl_data> g
             data.s_alignment = 0;
         }
 
-        auto [ins_it, _] = g_type_to_impl_data.emplace(key, data);
+        auto [ins_it, _] = g_type_to_impl_data.emplace(std::string(name), data);
 
         ecs_os_perf_trace_pop("flecs.type_impl.init");
         return ins_it->second;
@@ -196,8 +215,7 @@ FLECSLIBRARY_API extern robin_hood::unordered_map<std::string, type_impl_data> g
     template <typename T>
     inline type_impl_data* get_type_data_if_any()
     {
-        const std::string key = std::string(_::type_name<T>());
-        auto it = g_type_to_impl_data.find(key);
+        auto it = g_type_to_impl_data.find(std::string_view(_::type_name<T>()));
         if LIKELY_IF(it != g_type_to_impl_data.end()) {
             return &it->second;
         }
@@ -432,20 +450,13 @@ struct type_impl {
     static void init(
         bool allow_tag = true)
     {
-        get_or_create_type_data<T>(allow_tag);
-        type_impl_data* td = get_type_data_if_any<T>();
-        ecs_assert(td != nullptr, ECS_INTERNAL_ERROR, 
-            "type data not found for %s", _::type_name<T>());
-        
-#if !WITH_EDITOR
-        UE_ASSUME(td != nullptr);
-#endif
-        
-        s_set_values = td->s_set_values;
-        s_index = td->s_index;
-        s_size = td->s_size;
-        s_alignment = td->s_alignment;
-        s_allow_tag = td->s_allow_tag;
+        type_impl_data& td = get_or_create_type_data<T>(allow_tag);
+
+        s_set_values = td.s_set_values;
+        s_index      = td.s_index;
+        s_size       = td.s_size;
+        s_alignment  = td.s_alignment;
+        s_allow_tag  = td.s_allow_tag;
 
         if (is_empty<T>::value && allow_tag) {
             s_size = 0;
@@ -461,10 +472,11 @@ struct type_impl {
         auto &td = get_or_create_type_data<T>(allow_tag);
         flecs_component_ids_set(world, td.s_index, id);
 
-        s_index = td.s_index;
-        s_size = td.s_size;
-        s_alignment = td.s_alignment;
-        s_allow_tag = td.s_allow_tag;
+        s_set_values = td.s_set_values;
+        s_index      = td.s_index;
+        s_size       = td.s_size;
+        s_alignment  = td.s_alignment;
+        s_allow_tag  = td.s_allow_tag;
     }
 
     // Register component id.
@@ -474,15 +486,21 @@ struct type_impl {
         bool allow_tag = true,
         bool is_component = true,
         bool explicit_registration = false,
-        flecs::id_t id = 0) 
+        flecs::id_t id = 0)
     {
-        auto& td = get_or_create_type_data<T>(allow_tag);
-        s_set_values = td.s_set_values;
-        s_index = td.s_index;
-        s_size = td.s_size;
-        s_alignment = td.s_alignment;
-        s_allow_tag = td.s_allow_tag;
-        s_enum_registered = td.s_enum_registered;
+        if UNLIKELY_IF(!s_set_values)
+        {
+            // Cold path
+            auto& td = get_or_create_type_data<T>(allow_tag);
+            s_set_values = td.s_set_values;
+            s_index = td.s_index;
+            s_size = td.s_size;
+            s_alignment = td.s_alignment;
+            s_allow_tag = td.s_allow_tag;
+            s_enum_registered = td.s_enum_registered;
+        }
+        
+        // Warm path
         
         ecs_cpp_component_desc_t desc = {
             id,
