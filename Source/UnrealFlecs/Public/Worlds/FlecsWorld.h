@@ -28,9 +28,7 @@
 
 struct FFlecsTickFunction;
 struct FFlecsEntityRecord;
-struct FFlecsSoftDependenciesComponent;
 struct FFlecsUObjectComponent;
-struct FFlecsModuleComponent;
 
 class IFlecsObjectRegistrationInterface;
 class IFlecsModuleInterface;
@@ -1062,13 +1060,11 @@ public:
 	UPROPERTY(Transient)
 	TArray<TScriptInterface<IFlecsObjectRegistrationInterface>> RegisteredObjects;
 
-	TTypedFlecsQuery<FFlecsModuleComponent> ModuleComponentQuery;
 	TTypedFlecsQuery<FFlecsUObjectComponent> ObjectComponentQuery;
-	TTypedFlecsQuery<FFlecsSoftDependenciesComponent> DependenciesComponentQuery;
 
 	FFlecsQuery TickFunctionQuery;
 
-	TTypedFlecsQuery<const FFlecsScriptStructComponent>  AddReferencedObjectsQuery;
+	TTypedFlecsQuery<const FFlecsScriptStructComponent> AddReferencedObjectsQuery;
 
 	FFlecsTypeMapComponent* TypeMapComponent;
 

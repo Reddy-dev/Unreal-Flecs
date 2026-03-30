@@ -8,6 +8,7 @@
 
 #include "SolidMacros/Macros.h"
 #include "Standard/Hashing.h"
+#include "Types/SolidNotNull.h"
 
 #include "FlecsId.generated.h"
 
@@ -142,6 +143,13 @@ public:
         solid_checkf(IsPair(), TEXT("Id is not a pair."));
         return TTuple<FFlecsId, FFlecsId>(GetFirst(), GetSecond());
     }
+    
+    NO_DISCARD FORCEINLINE const ecs_type_info_t* GetTypeInfo(const flecs::world& World) const
+    {
+        return ecs_get_type_info(World.c_ptr(), Id);
+    }
+    
+    NO_DISCARD FORCEINLINE const ecs_type_info_t* GetTypeInfo(const TSolidNotNull<const UFlecsWorld*> World) const;
 
     FORCEINLINE operator flecs::id_t() const
     {

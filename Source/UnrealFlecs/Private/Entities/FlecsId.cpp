@@ -6,6 +6,11 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsId)
 
+const ecs_type_info_t* FFlecsId::GetTypeInfo(const TSolidNotNull<const UFlecsWorld*> World) const
+{
+	return GetTypeInfo(World->World);
+}
+
 FString FFlecsId::ToString() const
 {
 	return FString::Printf(TEXT("Index: %d, Generation: %d"), GetIndex(), GetGeneration());

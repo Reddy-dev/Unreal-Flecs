@@ -616,32 +616,31 @@ void UFlecsWorld::InitializeSystems()
 			.Build();
 
 		AddReferencedObjectsQuery = CreateQueryBuilder<const FFlecsScriptStructComponent>("AddReferencedObjectsQuery") // 0 (FFlecsScriptStructComponent)
-			.With<FFlecsAddReferencedObjectsTrait>().Src("$Component") //  1
 			.TermAt(0).Src("$Component") // 0
-			.With("$Component") // 2
+			.With<FFlecsAddReferencedObjectsTrait>().Src("$Component") //  1
+			.With("$Component").Or() // 2
+			.WithPair("$Component", flecs::Wildcard).Or() // 2
+			.WithPair(flecs::Wildcard, "$Component") // 2
 			.Build();
 
 		FCoreUObjectDelegates::GarbageCollectComplete.AddWeakLambda(this, [this]
 		{
-			ObjectComponentQuery.each([](flecs::iter& Iter, size_t Index, const FFlecsUObjectComponent& InUObjectComponent)
+			Defer([this]()
 			{
-				const FFlecsEntityHandle EntityHandle = Iter.entity(Index);
-					
-				if (!InUObjectComponent.IsValid())
+				ObjectComponentQuery.each([](flecs::iter& Iter, size_t Index, const FFlecsUObjectComponent& InUObjectComponent)
 				{
-					UE_CLOGFMT(EntityHandle.HasName(), LogFlecsWorld, Verbose,
-						"Entity Garbage Collected: {EntityName}", EntityHandle.GetName());
-					
-					EntityHandle.Destroy();
-				}
+					const FFlecsEntityHandle EntityHandle = Iter.entity(Index);
+						
+					if (!InUObjectComponent.IsValid())
+					{
+						UE_CLOGFMT(EntityHandle.HasName(), LogFlecsWorld, Verbose,
+							"Entity Garbage Collected: {EntityName}", EntityHandle.GetName());
+						
+						EntityHandle.Destroy();
+					}
+				});
 			});
 		});
-		
-		ModuleComponentQuery = CreateQueryBuilder<FFlecsModuleComponent>("ModuleComponentQuery")
-			.Build();
-
-		DependenciesComponentQuery = CreateQueryBuilder<FFlecsSoftDependenciesComponent>("DependenciesComponentQuery")
-			.Build();
 }
 
 void UFlecsWorld::Reset()
@@ -948,9 +947,7 @@ void UFlecsWorld::DestroyWorld()
 	}
 
 	FCoreUObjectDelegates::GarbageCollectComplete.RemoveAll(this);
-
-	ModuleComponentQuery.Destroy();
-	DependenciesComponentQuery.Destroy();
+	
 	ObjectComponentQuery.Destroy();
 	AddReferencedObjectsQuery.Destroy();
 
@@ -2047,8 +2044,18 @@ void UFlecsWorld::AddReferencedObjects(UObject* InThis, FReferenceCollector& Col
 	    {
 		    const FFlecsEntityHandle Component = Iter.get_var("Component");
 		    solid_check(Component.IsValid());
+		
+			void* ComponentPtr = nullptr;
 
-		    void* ComponentPtr = Iter.field_at(1, Index);
+			if (FFlecsId(FFlecsId(Iter.id(2)).GetTypeInfo(Iter.world())->component) == Component)
+			{
+				ComponentPtr = Iter.field_at(2, Index);
+			}
+			else
+			{
+				return;
+			}
+		    
 		    solid_cassume(ComponentPtr);
 
 		    Collector.AddPropertyReferencesWithStructARO(InScriptStructComponent.ScriptStruct.Get(),

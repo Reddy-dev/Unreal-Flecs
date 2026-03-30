@@ -760,6 +760,25 @@ class UNREALFLECSTESTS_API UFlecsUObjectComponentTestObject : public UObject
 	GENERATED_BODY()
 }; // class UFlecsUObjectComponentTestObject
 
+USTRUCT()
+struct FFlecsTestStruct_WithUObjectProperty
+{
+	GENERATED_BODY()
+	
+public:
+	UPROPERTY()
+	TObjectPtr<UFlecsUObjectComponentTestObject> Object;
+}; // struct FFlecsTestStruct_WithUObjectProperty
+
+template <>
+struct TFlecsComponentTraits<FFlecsTestStruct_WithUObjectProperty> : public TFlecsComponentTraitsBase<FFlecsTestStruct_WithUObjectProperty>
+{
+	static constexpr bool AutoRegister = false;
+	
+	static constexpr bool WithAddReferencedObjects = true;
+	
+}; // struct TFlecsComponentTraits<FFlecsTestStruct_WithUObjectProperty>
+
 
 
 

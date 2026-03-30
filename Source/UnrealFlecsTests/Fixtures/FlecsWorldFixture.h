@@ -59,6 +59,7 @@ public:
 
 		WorldSubsystem = TestWorld->GetSubsystem<UFlecsWorldSubsystem>();
 		check(IsValid(WorldSubsystem));
+		WorldSubsystem->AddToRoot();
 
 		/*StandalonePlayerController = NewObject<APlayerController>(TestWorld.Get());
 		check(IsValid(StandalonePlayerController));*/
@@ -85,6 +86,7 @@ public:
 		}
 
 		FlecsWorld = WorldSubsystem->CreateWorld("TestWorld", WorldSettings);
+		FlecsWorld->AddToRoot();
 
 		TestWorldWrapper->BeginPlayInTestWorld();
 	}
@@ -98,11 +100,13 @@ public:
 	{
 		if (FlecsWorld)
 		{
+			FlecsWorld->RemoveFromRoot();
 			FlecsWorld = nullptr;
 		}
 
 		if (WorldSubsystem)
 		{
+			WorldSubsystem->RemoveFromRoot();
 			WorldSubsystem = nullptr;
 		}
 

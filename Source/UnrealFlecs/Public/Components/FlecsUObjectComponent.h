@@ -139,8 +139,6 @@ struct TFlecsComponentTraits<FFlecsUObjectComponent> : public TFlecsComponentTra
     static constexpr bool Exclusive = true;
     static constexpr bool Acyclic = true;
     
-    static constexpr bool AddReferencedObjects = true;
-    
 }; // struct TFlecsComponentTraits<FFlecsUObjectComponent>
 
 // @TODO: Currently not used
