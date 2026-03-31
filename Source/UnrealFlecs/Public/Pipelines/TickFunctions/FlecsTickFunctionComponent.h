@@ -26,4 +26,4 @@ template <>
 struct TFlecsComponentTraits<FFlecsTickFunctionComponent> : public TFlecsComponentTraitsBase<FFlecsTickFunctionComponent>
 { 	
 	static constexpr bool Sparse = true;
-}; // struct TFlecsComponentTraits<FFlecs
+}; // struct TFlecsComponentTraits<FFlecsTickFunctionComponent>
