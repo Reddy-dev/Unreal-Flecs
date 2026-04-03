@@ -139,21 +139,18 @@ inline ecs_cpp_type_action_t lifecycle_action() {
     }
 }
 
-template <typename T>
-inline ecs_cpp_type_action_t enum_action() {
-    #if FLECS_CPP_ENUM_REFLECTION_SUPPORT
-    if constexpr (is_enum_v<T>) {
-        return &_::init_enum<T>;
-            
-    }
-    else
-    {
+    template <typename T>
+    inline ecs_cpp_type_action_t enum_action() {
+        #if FLECS_CPP_ENUM_REFLECTION_SUPPORT
+        if constexpr (is_enum_v<T>) {
+            return &_::init_enum<T>;
+        } else {
+            return nullptr;
+        }
+        #else
         return nullptr;
+        #endif
     }
-    #else // FLECS_CPP_ENUM_REFLECTION_SUPPORT
-    return nullptr;
-    #endif // FLECS_CPP_ENUM_REFLECTION_SUPPORT
-}
 
 struct FLECS_API type_impl_data {
     bool s_set_values;
