@@ -31,6 +31,7 @@ public:
 	
 	// Impl must be safe to call on the CDO
 	virtual NO_DISCARD bool ShouldAutoRegisterFromCDO() const { return true; }
+	virtual NO_DISCARD bool ShouldAutoRegisterWithWorld(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld) const { return true; }
 	virtual NO_DISCARD bool ShouldRegisterWithModule() const { return false; }
 	
 	// Optional, if not defined will use the package name of the UObject implementing this interface

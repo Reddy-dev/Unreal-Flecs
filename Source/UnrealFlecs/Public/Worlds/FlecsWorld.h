@@ -1000,13 +1000,15 @@ public:
 
 	NO_DISCARD FFlecsEntityHandle GetFlecsTickFunctionByType(const FGameplayTag& InTickType) const;
 	
+	// CAN RETURN NULL
 	UFUNCTION(BlueprintCallable, Category = "Flecs")
 	UObject* RegisterFlecsObject(const TSubclassOf<UObject> InClass);
 	
+	// CAN RETURN NULL
 	template <Solid::TStaticClassConcept T>
 	FORCEINLINE T* RegisterFlecsObject()
 	{
-		return CastChecked<T>(RegisterFlecsObject(T::StaticClass()));
+		return Cast<T>(RegisterFlecsObject(T::StaticClass()));
 	}
 	
 	UFUNCTION(BlueprintCallable, Category = "Flecs")

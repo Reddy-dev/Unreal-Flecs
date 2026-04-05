@@ -1884,6 +1884,12 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 	}
 		
 	const TSolidNotNull<UObject*> FlecsObject = NewObject<UObject>(this, InClass);
+	
+	if (!CastChecked<IFlecsObjectRegistrationInterface>(FlecsObject)->ShouldAutoRegisterWithWorld(this))
+	{
+		FlecsObject->MarkAsGarbage();
+		return nullptr;
+	}
 
 	RegisteredObjects.Add(FlecsObject);
 	RegisteredObjectTypes.Add(InClass, FlecsObject);
