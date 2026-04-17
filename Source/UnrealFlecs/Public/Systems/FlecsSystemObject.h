@@ -38,6 +38,10 @@ public:
 	virtual void UnregisterObject(const TSolidNotNull<UFlecsWorld*> InFlecsWorld) override;
 	virtual void FlecsWorldBeginPlay(const TSolidNotNull<UFlecsWorld*> InFlecsWorld) override;
 	
+	void SetContext(void* InContext) const;
+	
+	void RunSystem(const double InDeltaTime = 0.0, void* InParams = nullptr) const;
+	
 protected:
 	UPROPERTY(Transient)
 	FFlecsSystemHandle SystemHandle;

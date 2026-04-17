@@ -45,6 +45,16 @@ void UFlecsSystemObject::FlecsWorldBeginPlay(const TSolidNotNull<UFlecsWorld*> I
 	InitializeSystem(InFlecsWorld);
 }
 
+void UFlecsSystemObject::RunSystem(const double InDeltaTime, void* InParams) const
+{
+	GetSystemHandle().Run(InDeltaTime, InParams);
+}
+
+void UFlecsSystemObject::SetContext(void* InContext) const
+{
+	GetSystemHandle().SetContext(InContext);
+}
+
 void UFlecsSystemObject::InitializeSystem(const TSolidNotNull<const UFlecsWorld*> InWorld)
 {
 	const FString SystemName = GetName();
