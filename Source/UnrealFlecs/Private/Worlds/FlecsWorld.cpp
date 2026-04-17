@@ -1941,10 +1941,7 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 		// do nothing
 	}
 	
-	if (OldScope.IsValid())
-	{
-		SetScope(OldScope);
-	}
+	SetScope(OldScope);
 	
 	return FlecsObject;
 }
