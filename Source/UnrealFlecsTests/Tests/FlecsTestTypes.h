@@ -299,6 +299,13 @@ enum class ETestEnum : uint8
 	Three
 }; // enum class ETestEnum
 
+template <>
+struct TFlecsComponentTraits<ETestEnum> : public TFlecsComponentTraitsBase<ETestEnum>
+{
+	static constexpr bool AutoRegister = false;
+	
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
+
 UENUM()
 enum class EFlecsTestEnum_UENUM : uint8
 {
@@ -307,6 +314,12 @@ enum class EFlecsTestEnum_UENUM : uint8
 	Two,
 	Three
 }; // enum class EFlecsTestEnum_UENUM
+
+template <>
+struct TFlecsComponentTraits<EFlecsTestEnum_UENUM> : public TFlecsComponentTraitsBase<EFlecsTestEnum_UENUM>
+{
+	static constexpr bool AutoRegister = false;
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
 
 UENUM()
 enum class EFlecsTestEnum_SparseUENUM : uint8
@@ -318,6 +331,12 @@ enum class EFlecsTestEnum_SparseUENUM : uint8
 	Five = 5,
 	Ten = 10,
 }; // enum class EFlecsTestEnum_SparseUENUM
+
+template <>
+struct TFlecsComponentTraits<EFlecsTestEnum_SparseUENUM> : public TFlecsComponentTraitsBase<EFlecsTestEnum_SparseUENUM>
+{
+	static constexpr bool AutoRegister = false;
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
 
 USTRUCT()
 struct FUStructTestComponent_NonTagUSTRUCT

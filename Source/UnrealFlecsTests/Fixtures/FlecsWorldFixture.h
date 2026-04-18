@@ -59,6 +59,7 @@ public:
 
 		WorldSubsystem = TestWorld->GetSubsystem<UFlecsWorldSubsystem>();
 		check(IsValid(WorldSubsystem));
+		
 		WorldSubsystem->AddToRoot();
 
 		/*StandalonePlayerController = NewObject<APlayerController>(TestWorld.Get());
