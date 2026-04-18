@@ -2,6 +2,8 @@
 
 #include "Systems/FlecsSystemObject.h"
 
+#include "Components/FlecsUObjectComponent.h"
+#include "Components/ObjectTypes/FFlecsUObjectTag.h"
 #include "Worlds/FlecsWorld.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsSystemObject)
@@ -66,4 +68,6 @@ void UFlecsSystemObject::InitializeSystem(const TSolidNotNull<const UFlecsWorld*
 	{
 		this->RunIterator(GetFlecsWorld(), InIterator);
 	});
+	
+	SystemHandle.SetPair<FFlecsUObjectComponent, FFlecsUObjectTag>(FFlecsUObjectComponent(this));
 }

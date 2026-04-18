@@ -2,6 +2,8 @@
 
 #include "Observers/FlecsObserverObject.h"
 
+#include "Components/FlecsUObjectComponent.h"
+#include "Components/ObjectTypes/FFlecsUObjectTag.h"
 #include "Worlds/FlecsWorld.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsObserverObject)
@@ -57,4 +59,6 @@ void UFlecsObserverObject::InitializeObserver(const TSolidNotNull<UFlecsWorld*> 
 	{
 		this->RunIterator(GetFlecsWorld(), InIter);
 	});
+	
+	ObserverHandle.SetPair<FFlecsUObjectComponent, FFlecsUObjectTag>(FFlecsUObjectComponent(this));
 }

@@ -461,7 +461,46 @@ void UFlecsWorld::CallBeginPlayForRegisteredObjects()
 {
 	for (const TScriptInterface<IFlecsObjectRegistrationInterface>& RegisteredObject : RegisteredObjects)
 	{
+		const bool bRegisterWithModule = RegisteredObject->ShouldRegisterWithModule();
+		FName ModuleName = NAME_None;
+		
+		if (bRegisterWithModule)
+		{
+			ModuleName = RegisteredObject->GetModuleName();
+			
+			if (ModuleName.IsNone())
+			{
+				const FString PackageName = RegisteredObject.GetObject()->GetClass()->GetOuterUPackage()->GetName();
+				ModuleName = FName(*FPackageName::GetShortName(PackageName));			
+			}
+		}
+		
+		FFlecsEntityHandle ModuleEntity;
+		
+		if (bRegisterWithModule)
+		{
+			ModuleEntity = GetFlecsModule(ModuleName);
+			
+			if UNLIKELY_IF(!ModuleEntity.IsValid() || !ModuleEntity.Has(flecs::Module))
+			{
+				UE_LOGFMT(LogFlecsWorld, Warning,
+					"Module {ModuleName} does not exist or is not a valid flecs module, registered object {ObjectName} will not be registered with the module",
+					*ModuleName.ToString(), *RegisteredObject.GetObject()->GetName());
+			
+				ModuleEntity = FFlecsEntityHandle::GetNullHandle();
+			}
+		}
+		
+		FFlecsId OldScope = FFlecsId::Null();
+		
+		if (bRegisterWithModule && ModuleEntity.IsValid())
+		{
+			OldScope = SetScope(ModuleEntity);
+		}
+		
 		RegisteredObject->FlecsWorldBeginPlay(this);
+		
+		SetScope(OldScope);
 	}
 }
 
@@ -1913,7 +1952,7 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 	{
 		ModuleEntity = LookupEntity(ModuleName.ToString());
 		
-		if (!ModuleEntity.IsValid() || !ModuleEntity.Has(flecs::Module))
+		if UNLIKELY_IF(!ModuleEntity.IsValid() || !ModuleEntity.Has(flecs::Module))
 		{
 			UE_LOGFMT(LogFlecsWorld, Warning,
 				"Module {ModuleName} does not exist or is not a valid flecs module, registered object {ObjectName} will not be registered with the module",
@@ -1923,7 +1962,7 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 		}
 	}
 	
-	FFlecsId OldScope;
+	FFlecsId OldScope = FFlecsId::Null();
 	
 	if (bRegisterWithFlecsModule && ModuleEntity.IsValid())
 	{
