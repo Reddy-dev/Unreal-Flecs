@@ -540,49 +540,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
 	void PreallocateEntities(const int32 InEntityCount) const;
-
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	void SetEntityRange(const FFlecsId InMin, const FFlecsId InMax) const;
-
-	/**
-	 * @brief Set entity range and invoke a function/lambda
-	 * @tparam FunctionType The function type
-	 * @param InMin Minimum entity id issued.
-	 * @param InMax Maximum entity id issued.
-	 * @param bEnforceEntityRange Whether to enforce the entity range. Enforce that operations cannot modify entities outside of range.
-	 * @param Function The function to invoke
-	 */
-	template <typename FunctionType>
-	void SetEntityRange(const FFlecsId InMin, const FFlecsId InMax,
-	                                           const bool bEnforceEntityRange,
-	                                           FunctionType&& Function) const
-	{
-		const int32 OldMin = static_cast<int32>(ecs_get_world_info(World.c_ptr())->min_id);
-		const int32 OldMax = static_cast<int32>(ecs_get_world_info(World.c_ptr())->max_id);
-		
-		World.set_entity_range(InMin, InMax);
-		
-		EnforceEntityRange(bEnforceEntityRange);
-		std::invoke(std::forward<FunctionType>(Function));
-		EnforceEntityRange(false);
-
-		World.set_entity_range(OldMin, OldMax);
-	}
-
-	/**
-	 * Enforce that operations cannot modify entities outside of range.
-	 * This function ensures that only entities within the specified range can
-	 * be modified. Use this function if specific parts of the code only are
-	 * allowed to modify a certain set of entities, as could be the case for
-	 * networked applications.
-	 *
-	 * @param bInEnforce True if range check should be enabled, false if not.
-	 *
-	 * @see ecs_enable_range_check()
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	void EnforceEntityRange(const bool bInEnforce) const;
-
+	
 	/**
 	 * @brief Iterate over all Child Entities of the 0 Entity
 	 * @tparam FunctionType The function type

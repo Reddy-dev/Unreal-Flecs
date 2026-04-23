@@ -1068,16 +1068,6 @@ void UFlecsWorld::PreallocateEntities(const int32 InEntityCount) const
 	World.dim(InEntityCount);
 }
 
-void UFlecsWorld::SetEntityRange(const FFlecsId InMin, const FFlecsId InMax) const
-{
-	World.set_entity_range(InMin, InMax);
-}
-
-void UFlecsWorld::EnforceEntityRange(const bool bInEnforce) const
-{
-	World.enable_range_check(bInEnforce);
-}
-
 void UFlecsWorld::SetThreads(const int32 InThreadCount) const
 {
 	World.set_threads(InThreadCount);

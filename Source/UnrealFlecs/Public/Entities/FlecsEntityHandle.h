@@ -700,7 +700,7 @@ public:
 		return *this;
 	}
 
-	template <typename TFirst, typename TSecond, typename TActual = typename flecs::pair<TFirst, TSecond>::type>
+	template <typename TFirst, typename TSecond, typename TActual = flecs::pair<TFirst, TSecond>::type>
 	SOLID_INLINE const FSelfType& AssignPair(const TActual& InValue) const
 	{
 		GetEntity().assign<TFirst, TSecond>(InValue);
