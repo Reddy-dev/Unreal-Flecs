@@ -11,20 +11,9 @@
 #include "Developer/CQTest/Public/CQTest.h"
 
 #include "UnrealFlecsTests/Fixtures/FlecsWorldFixture.h"
-#include "Entities/FlecsDefaultEntityEngine.h"
 #include "Properties/FlecsComponentProperties.h"
 
 #include "FlecsTestTypes.generated.h"
-
-DECLARE_DEFAULT_ENTITY(TestEntityOption);
-DECLARE_DEFAULT_ENTITY(TestEntityOption2WithTrait);
-
-namespace UE::Flecs::test::internal
-{
-	DECLARE_DEFAULT_ENTITY(TestEntityOption3InNamespace);
-} // namespace UE::Flecs::test::internal
-
-DECLARE_DEFAULT_ENTITY(TestEntityOption4WithComponentValue);
 
 struct FFlecsTest_CPPStruct
 {

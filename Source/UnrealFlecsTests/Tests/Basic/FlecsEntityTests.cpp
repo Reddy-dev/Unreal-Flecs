@@ -10,7 +10,6 @@
  * A. General Entity Operation Tests
  * B. Entity Handle/View API Tests
  * C. Entity Hierarchy Tests
- * D. Default Entity Tests
  */
 TEST_CLASS_WITH_FLAGS_AND_TAGS(A10_UnrealFlecsEntityTests,
 							   "UnrealFlecs.A10_Entities",
@@ -291,31 +290,6 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A10_UnrealFlecsEntityTests,
 			ASSERT_THAT(AreEqual(ChildrenArray[1], ChildEntityA));
 			ASSERT_THAT(AreEqual(ChildrenArray[2], ChildEntityB));
 		}
-	}
-
-	TEST_METHOD(D1_DefaultEntityAPI_CheckExists)
-	{
-		ASSERT_THAT(IsTrue(FlecsWorld->IsAlive(TestEntityOption)));
-
-		const FFlecsEntityHandle TestDefaultEntity = FlecsWorld->GetAlive(TestEntityOption);
-		ASSERT_THAT(IsTrue(TestDefaultEntity.IsValid()));
-	}
-
-	TEST_METHOD(D2_DefaultEntityAPI_GetDefaultEntityWithTrait)
-	{
-		ASSERT_THAT(IsTrue(FlecsWorld->IsAlive(TestEntityOption2WithTrait)));
-		
-		const FFlecsEntityHandle TestDefaultEntity = FlecsWorld->GetAlive(TestEntityOption2WithTrait);
-		ASSERT_THAT(IsTrue(TestDefaultEntity.IsValid()));
-		ASSERT_THAT(IsTrue(TestDefaultEntity.Has(flecs::Trait)));
-	}
-
-	TEST_METHOD(D3_DefaultEntityAPI_GetDefaultEntityInNamespace)
-	{
-		ASSERT_THAT(IsTrue(FlecsWorld->IsAlive(UE::Flecs::test::internal::TestEntityOption3InNamespace)));
-		
-		const FFlecsEntityHandle TestDefaultEntity = FlecsWorld->GetAlive(UE::Flecs::test::internal::TestEntityOption3InNamespace);
-		ASSERT_THAT(IsTrue(TestDefaultEntity.IsValid()));
 	}
 	
 }; // End of A10_UnrealFlecsComponentRegistrationTests
