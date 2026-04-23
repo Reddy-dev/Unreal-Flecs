@@ -284,23 +284,47 @@ bool flecs_defer_remove(
         ecs_world_t *world = stage->world;
         ecs_record_t *r = flecs_entities_get(world, entity);
         ecs_table_t *table = r->table;
-        ecs_table_overrides_t *o = table->data.overrides;
-        if (o) {
+        if (table->flags & EcsTableHasIsA) {
             ecs_component_record_t *cr = flecs_components_get(world, id);
             const ecs_type_info_t *ti;
             if (cr && (ti = cr->type_info)) {
-                const ecs_table_record_t *tr = flecs_component_get_table(
-                    cr, table);
-                if (tr) {
-                    ecs_assert(tr->column != -1, ECS_INTERNAL_ERROR, NULL);
-                    ecs_ref_t *ref = &o->refs[tr->column];
-                    if (ref->entity) {
-                        void *dst = ECS_OFFSET(
-                            table->data.columns[tr->column].data, 
-                            ti->size * ECS_RECORD_TO_ROW(r->row));
-                        const void *src = ecs_ref_get_id(
-                            world, &o->refs[tr->column], id);
-                        flecs_type_info_copy(dst, src, 1, ti);
+                if (cr->flags & (EcsIdSparse | EcsIdDontFragment)) {
+                    void *dst = flecs_component_sparse_get(
+                        world, cr, table, entity);
+                    if (dst) {
+                        ecs_entity_t base = 0;
+                        if (ecs_search_relation(world, table, 0, id,
+                            EcsIsA, EcsUp, &base, NULL, NULL) != -1 && base)
+                        {
+                            ecs_record_t *base_r = flecs_entities_get(
+                                world, base);
+                            ecs_table_t *base_table = base_r ?
+                                base_r->table : NULL;
+                            void *src = flecs_component_sparse_get(
+                                world, cr, base_table, base);
+                            if (src) {
+                                flecs_type_info_copy(dst, src, 1, ti);
+                            }
+                        }
+                    }
+                } else {
+                    ecs_table_overrides_t *o = table->data.overrides;
+                    if (o) {
+                        const ecs_table_record_t *tr =
+                            flecs_component_get_table(cr, table);
+                        if (tr) {
+                            ecs_assert(tr->column != -1,
+                                ECS_INTERNAL_ERROR, NULL);
+                            ecs_ref_t *ref = &o->refs[tr->column];
+                            if (ref->entity) {
+                                void *dst = ECS_OFFSET(
+                                    table->data.columns[tr->column].data,
+                                    ti->size * ECS_RECORD_TO_ROW(r->row));
+                                const void *src = ecs_ref_get_id(
+                                    world, &o->refs[tr->column], id);
+                                flecs_type_info_copy(dst, src, 1, ti);
+                            }
+                        }
                     }
                 }
             }
@@ -946,14 +970,14 @@ void flecs_cmd_batch_for_entity(
     /* Move entity to destination table in single operation */
     flecs_table_diff_build_noalloc(diff, &table_diff);
     flecs_defer_begin(world, world->stages[0]);
-    flecs_commit(world, entity, r, table, &table_diff, true, 0);
+    flecs_commit(world, entity, r, table, &table_diff, 0, 0);
     flecs_defer_end(world, world->stages[0]);
 
     /* If destination table has new sparse components, make sure they're created
      * for the entity. */
     if ((table_diff.added_flags & (EcsTableHasSparse|EcsTableHasDontFragment)) && added.count) {
         if (flecs_sparse_on_add(
-            world, table, ECS_RECORD_TO_ROW(r->row), 1, &added, true))
+            world, table, ECS_RECORD_TO_ROW(r->row), 1, &added, 0))
         {
             table_diff.added_flags |= EcsTableHasOnAdd;
         }
@@ -1075,7 +1099,7 @@ void flecs_cmd_batch_for_entity(
 
         flecs_defer_begin(world, world->stages[0]);
         flecs_actions_move_add(world, r->table, start_table,
-            ECS_RECORD_TO_ROW(r->row), 1, &add_diff, 0, true, false);
+            ECS_RECORD_TO_ROW(r->row), 1, &add_diff, 0, false, 0);
         flecs_defer_end(world, world->stages[0]);
     }
 

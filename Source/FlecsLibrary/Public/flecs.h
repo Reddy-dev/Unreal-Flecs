@@ -125,6 +125,9 @@
 #ifndef FLECS_DEBUG_INFO
 #define FLECS_DEBUG_INFO
 #endif
+#ifndef FLECS_EXCLUSIVE_ACCESS
+#define FLECS_EXCLUSIVE_ACCESS /* Enable exclusive access checks in debug mode */
+#endif
 #endif
 
 /* Tip: if you see weird behavior that you think might be a bug, make sure to
@@ -247,31 +250,31 @@
 #define FLECS_NO_OS_API_IMPL
 
 #ifndef FLECS_CUSTOM_BUILD
-#define FLECS_ALERTS         /**< Monitor conditions for errors */
-#define FLECS_APP            /**< Application addon */
-// #define FLECS_C           /**< C API convenience macros, always enabled */
-#define FLECS_CPP            /**< C++ API */
-#define FLECS_DOC            /**< Document entities & components */
-// #define FLECS_JOURNAL     /**< Journaling addon (disabled by default) */
-#define FLECS_JSON           /**< Parsing JSON to/from component values */
-#define FLECS_HTTP           /**< Tiny HTTP server for connecting to remote UI */
-#define FLECS_LOG            /**< When enabled ECS provides more detailed logs */
-//#define FLECS_META           /**< Reflection support */
-#define FLECS_METRICS        /**< Expose component data as statistics */
-#define FLECS_MODULE         /**< Module support */
-//#define FLECS_OS_API_IMPL    /**< Default implementation for OS API */
-// #define FLECS_PERF_TRACE  /**< Enable performance tracing (disabled by default) */
-// #define FLECS_PERF_TRACE  /**< Enable performance tracing */
-#define FLECS_PIPELINE       /**< Pipeline support */
-#define FLECS_REST           /**< REST API for querying application data */
-#define FLECS_PARSER         /**< Utilities for script and query DSL parsers */
-#define FLECS_QUERY_DSL      /**< Flecs query DSL parser */
-#define FLECS_SCRIPT         /**< Flecs entity notation language */
-// #define FLECS_SCRIPT_MATH /**< Math functions for flecs script (may require linking with libm) */
-#define FLECS_SYSTEM         /**< System support */
-#define FLECS_STATS          /**< Track runtime statistics */
-#define FLECS_TIMER          /**< Timer support */
- #define FLECS_UNITS          /**< Builtin standard units */
+#define FLECS_ALERTS         /**< Monitor conditions for errors. */
+#define FLECS_APP            /**< Application addon. */
+// #define FLECS_C           /**< C API convenience macros, always enabled. */
+#define FLECS_CPP            /**< C++ API. */
+#define FLECS_DOC            /**< Document entities and components. */
+// #define FLECS_EXCLUSIVE_ACCESS /**< Enable exclusive world access checks. */
+// #define FLECS_JOURNAL     /**< Journaling addon. */
+#define FLECS_JSON           /**< Parsing JSON to/from component values. */
+#define FLECS_HTTP           /**< Tiny HTTP server for connecting to remote UI. */
+#define FLECS_LOG            /**< When enabled, ECS provides more detailed logs. */
+#define FLECS_META           /**< Reflection support. */
+#define FLECS_METRICS        /**< Expose component data as statistics. */
+#define FLECS_MODULE         /**< Module support. */
+#define FLECS_OS_API_IMPL    /**< Default implementation for OS API. */
+// #define FLECS_PERF_TRACE  /**< Enable performance tracing. */
+#define FLECS_PIPELINE       /**< Pipeline support. */
+#define FLECS_REST           /**< REST API for querying application data. */
+#define FLECS_PARSER         /**< Utilities for script and query DSL parsers. */
+#define FLECS_QUERY_DSL      /**< Flecs query DSL parser. */
+#define FLECS_SCRIPT         /**< Flecs entity notation language. */
+// #define FLECS_SCRIPT_MATH /**< Math functions for Flecs script (may require linking with libm). */
+#define FLECS_SYSTEM         /**< System support. */
+#define FLECS_STATS          /**< Track runtime statistics. */
+#define FLECS_TIMER          /**< Timer support. */
+#define FLECS_UNITS          /**< Built-in standard units. */
 #endif // ifndef FLECS_CUSTOM_BUILD
 
 // Elie - overriden by FlecsLibraryConfigMacros.h
@@ -1507,8 +1510,6 @@ typedef struct ecs_build_info_t {
 /** Type that contains information about the world. */
 typedef struct ecs_world_info_t {
     ecs_entity_t last_component_id;   /**< Last issued component entity ID. */
-    ecs_entity_t min_id;              /**< First allowed entity ID. */
-    ecs_entity_t max_id;              /**< Last allowed entity ID. */
 
     ecs_ftime_t delta_time_raw;       /**< Raw delta time (no time scaling). */
     ecs_ftime_t delta_time;           /**< Time passed to or computed by ecs_progress(). */
@@ -1573,6 +1574,16 @@ typedef struct ecs_query_group_info_t {
     int32_t table_count;  /**< Number of tables in group. */
     void *ctx;            /**< Group context, returned by on_group_create. */
 } ecs_query_group_info_t;
+
+/** Type that stores an entity id range.
+ * Returned by ecs_entity_range_new(), used with ecs_entity_range_set().
+ */
+typedef struct ecs_entity_range_t {
+    uint32_t min;           /**< First id in range (inclusive). */
+    uint32_t max;           /**< Last id in range (inclusive, 0 = unlimited). */
+    uint32_t cur;           /**< Last issued id in range. */
+    ecs_vec_t recycled;     /**< Recycled entity ids (vec<entity_t>). */
+} ecs_entity_range_t;
 
 /** @} */
 
@@ -2693,41 +2704,55 @@ FLECS_API
 void ecs_shrink(
     ecs_world_t *world);
 
-/** Set a range for issuing new entity IDs.
- * This function constrains the entity identifiers returned by ecs_new_w() to the
- * specified range. This operation can be used to ensure that multiple processes
- * can run in the same simulation without requiring a central service that
- * coordinates issuing identifiers.
+/** Create a new entity range.
+ * This function creates a range that constrains new entity identifiers returned 
+ * by the specified [min, max] interval. Each range maintains its own list of 
+ * recycled entity ids, which ensures that recycled ids always respect the 
+ * configured range. If `max` is set to 0, the range is unbounded.
  *
- * If `id_end` is set to 0, the range is infinite. If `id_end` is set to a non-zero
- * value, it has to be larger than `id_start`. If `id_end` is set and ecs_new() is
- * invoked after an ID is issued that is equal to `id_end`, the application will
- * abort.
+ * Entity ranges cannot be deleted once created. Use ecs_entity_range_set() to 
+ * activate a range.
  *
  * @param world The world.
- * @param id_start The start of the range.
- * @param id_end The end of the range.
+ * @param min The first entity id in the range (inclusive).
+ * @param max The last entity id in the range (inclusive, 0 = unlimited).
+ * @return A pointer to the new range. Does not need to be freed.
  */
 FLECS_API
-void ecs_set_entity_range(
+const ecs_entity_range_t* ecs_entity_range_new(
     ecs_world_t *world,
-    ecs_entity_t id_start,
-    ecs_entity_t id_end);
+    uint32_t min,
+    uint32_t max);
 
-/** Enable or disable range limits.
- * When an application is both a receiver of range-limited entities and a
- * producer of range-limited entities, range checking needs to be temporarily
- * disabled when inserting received entities. Range checking is disabled on a
- * stage, so setting this value is thread-safe.
+/** Set the active entity range.
+ * This function activates a range created with ecs_entity_range_new().
+ * When a range is activated, new entity identifiers will fall within the 
+ * specified [min, max] interval, including recycled identifiers.
+ *
+ * When the active range is out of available ids, operations that create new
+ * entity ids will assert.
+ * 
+ * The operation only accepts ranges that have been created by 
+ * ecs_entity_range_new().
  *
  * @param world The world.
- * @param enable True if range checking should be enabled, false to disable.
- * @return The previous value.
+ * @param range The range to activate.
  */
 FLECS_API
-bool ecs_enable_range_check(
+void ecs_entity_range_set(
     ecs_world_t *world,
-    bool enable);
+    const ecs_entity_range_t *range);
+
+/** Get the currently active entity id range.
+ * Returns the range set by ecs_entity_range_set(), or NULL if no range is
+ * active.
+ *
+ * @param world The world.
+ * @return The active range, or NULL.
+ */
+FLECS_API
+const ecs_entity_range_t* ecs_entity_range_get(
+    const ecs_world_t *world);
 
 /** Get the largest issued entity ID (not counting generation).
  *
@@ -6190,8 +6215,8 @@ void internal_ecs_table_enable_lock(
 	ecs_table_t *table,
 	int32_t count);
 
-	/** Test a table for flags.
-	 * Test if a table has all of the provided flags. See
+/** Test a table for flags.
+ * Test if a table has all of the provided flags. See
  * include/flecs/private/api_flags.h for a list of table flags that can be used
  * with this function.
  *
