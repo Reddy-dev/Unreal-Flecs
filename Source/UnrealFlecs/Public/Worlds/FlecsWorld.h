@@ -33,6 +33,7 @@ class IFlecsModuleInterface;
 class IFlecsGameLoopInterface;
 class UFlecsWorldSubsystem;
 class UFlecsModuleInterface;
+class UFlecsStage;
 
 UCLASS(BlueprintType, NotBlueprintable)
 class UNREALFLECS_API UFlecsWorld final : public UFlecsWorldInterfaceObject
@@ -174,16 +175,16 @@ public:
 	}
 	
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	void SetStageCount(const int32 InStageCount) const;
+	void SetStageCount(const int32 InStageCount);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
 	void PreallocateEntities(const int32 InEntityCount) const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	void SetThreads(const int32 InThreadCount) const;
+	void SetThreads(const int32 InThreadCount);
 
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	void SetTaskThreads(const int32 InThreadCount) const;
+	void SetTaskThreads(const int32 InThreadCount);
 
 	// @TODO: Re-implement bitmask registration
 	/*
@@ -313,6 +314,12 @@ public:
 		return Cast<T>(RegisterFlecsObject(T::StaticClass()));
 	}
 	
+	UFUNCTION(BlueprintCallable, Category = "Flecs")
+	UFlecsStage* GetStage(const int32 InStageId) const;
+	
+	UFUNCTION()
+	UFlecsStage* CreateAsyncStage();
+	
 	void ImportRestModule();
 	void ImportStatsModule();
 
@@ -345,6 +352,9 @@ public:
 
 	UPROPERTY()
 	TOptional<double> PrePauseTimeScale;
+	
+	UPROPERTY()
+	TArray<TObjectPtr<UFlecsStage>> Stages;
 
 	robin_hood::unordered_flat_map<FGameplayTag, FFlecsId> TagEntityMap;
 	

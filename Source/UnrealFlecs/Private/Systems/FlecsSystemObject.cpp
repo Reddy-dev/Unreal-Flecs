@@ -4,6 +4,7 @@
 
 #include "Components/FlecsUObjectComponent.h"
 #include "Components/ObjectTypes/FFlecsUObjectTag.h"
+#include "Worlds/FlecsStage.h"
 #include "Worlds/FlecsWorld.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsSystemObject)
@@ -66,7 +67,18 @@ void UFlecsSystemObject::InitializeSystem(const TSolidNotNull<const UFlecsWorldI
 	
 	SystemHandle = SystemBuilder.run([this](flecs::iter& InIterator)
 	{
-		this->RunIterator(GetFlecsWorld(), InIterator);
+		UFlecsWorldInterfaceObject* IteratorWorld = nullptr;
+		
+		if (InIterator.world().is_stage())
+		{
+			IteratorWorld = GetFlecsWorld()->GetStage(InIterator.world().get_stage_id());
+		}
+		else
+		{
+			IteratorWorld = GetFlecsWorld();
+		}
+		
+		this->RunIterator(IteratorWorld, InIterator);
 	});
 	
 	SystemHandle.SetPair<FFlecsUObjectComponent, FFlecsUObjectTag>(FFlecsUObjectComponent(this));

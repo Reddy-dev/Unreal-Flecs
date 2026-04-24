@@ -20,6 +20,7 @@
 
 #include "FlecsWorldInterfaceObject.generated.h"
 
+class UFlecsStage;
 struct FFlecsEntityRecord;
 
 class UFlecsWorld;
@@ -39,6 +40,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Flecs|World")
 	UFlecsWorld* GetFlecsWorld() const;
+	
+	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
+	UFlecsStage* AsStage() const;
 	
 	NO_DISCARD flecs::world GetNativeFlecsWorld() const;
 	
@@ -151,20 +155,6 @@ public:
 	{
 		return GetNativeFlecsWorld_Internal()->id_if_registered<T>();
 	}
-	
-	/**
-	 * Merge world or stage.
-	 * When automatic merging is disabled, an application can call this
-	 * operation on either an individual stage, or on the world which will merge
-	 * all stages. This operation may only be called when staging is not enabled
-	 * (either after progress() or after readonly_end()).
-	 *
-	 * This operation may be called on an already merged stage or world.
-	 *
-	 * @see ecs_merge()
-	 */
-	UFUNCTION()
-	void Merge() const;
 	
 	NO_DISCARD void* GetContext() const;
 	

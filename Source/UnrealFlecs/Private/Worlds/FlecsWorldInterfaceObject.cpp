@@ -7,6 +7,7 @@
 #include "Logs/FlecsCategories.h"
 #include "Pipelines/FlecsGameLoopInterface.h"
 #include "Queries/FlecsQueryBuilderView.h"
+#include "Worlds/FlecsStage.h"
 #include "Worlds/FlecsWorld.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsWorldInterfaceObject)
@@ -125,6 +126,16 @@ UFlecsWorld* UFlecsWorldInterfaceObject::GetFlecsWorld() const
 	return CastChecked<UFlecsWorld>(const_cast<UFlecsWorldInterfaceObject*>(OuterWorld ? OuterWorld : this));
 }
 
+UFlecsStage* UFlecsWorldInterfaceObject::AsStage() const
+{
+	if UNLIKELY_IF(!IsStage())
+	{
+		return nullptr;
+	}
+	
+	return CastChecked<UFlecsStage>(const_cast<UFlecsWorldInterfaceObject*>(this));
+}
+
 flecs::world UFlecsWorldInterfaceObject::GetNativeFlecsWorld() const
 {
 	return *GetNativeFlecsWorld_Internal();
@@ -213,11 +224,6 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::MakeAlive(const FFlecsId InId) co
 double UFlecsWorldInterfaceObject::GetDeltaTime() const
 {
 	return GetNativeFlecsWorld_Internal()->delta_time();
-}
-
-void UFlecsWorldInterfaceObject::Merge() const
-{
-	GetNativeFlecsWorld_Internal()->merge();
 }
 
 void* UFlecsWorldInterfaceObject::GetContext() const

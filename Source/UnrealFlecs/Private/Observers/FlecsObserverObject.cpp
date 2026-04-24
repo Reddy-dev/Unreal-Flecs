@@ -4,6 +4,7 @@
 
 #include "Components/FlecsUObjectComponent.h"
 #include "Components/ObjectTypes/FFlecsUObjectTag.h"
+#include "Worlds/FlecsStage.h"
 #include "Worlds/FlecsWorldInterfaceObject.h"
 #include "Worlds/FlecsWorld.h"
 
@@ -56,9 +57,20 @@ void UFlecsObserverObject::InitializeObserver(const TSolidNotNull<UFlecsWorldInt
 	TFlecsObserverBuilder<> ObserverBuilder = InWorld->CreateObserverWithDefinition(ObserverDefinition, ObserverName);
 	BuildObserver(InWorld, ObserverBuilder);
 	
-	ObserverHandle = ObserverBuilder.run([this](flecs::iter& InIter)
+	ObserverHandle = ObserverBuilder.run([this](flecs::iter& InIterator)
 	{
-		this->RunIterator(GetFlecsWorld(), InIter);
+		UFlecsWorldInterfaceObject* IteratorWorld = nullptr;
+		
+		if (InIterator.world().is_stage())
+		{
+			IteratorWorld = GetFlecsWorld()->GetStage(InIterator.world().get_stage_id());
+		}
+		else
+		{
+			IteratorWorld = GetFlecsWorld();
+		}
+		
+		this->RunIterator(IteratorWorld, InIterator);
 	});
 	
 	ObserverHandle.SetPair<FFlecsUObjectComponent, FFlecsUObjectTag>(FFlecsUObjectComponent(this));
