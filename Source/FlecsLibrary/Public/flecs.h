@@ -245,7 +245,7 @@
  *
  * which outputs the full list of addons Flecs was compiled with.
  */
-#define FLECS_CUSTOM_BUILD
+#define FLECS_CUSTOM_BUILD // -Always Enabled by Elie
 
 #define FLECS_NO_OS_API_IMPL
 
