@@ -32,14 +32,14 @@ public:
 		return ObserverHandle;
 	}
 	
-	virtual void BuildObserver(const TSolidNotNull<UFlecsWorld*> InWorld, TFlecsObserverBuilder<>& InOutBuilder) const;
+	virtual void BuildObserver(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld, TFlecsObserverBuilder<>& InOutBuilder) const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Flecs|Observer")
 	UFlecsWorld* GetFlecsWorld() const;
 	
-	virtual void RegisterObject(const TSolidNotNull<UFlecsWorld*> InFlecsWorld) override final;
-	virtual void UnregisterObject(const TSolidNotNull<UFlecsWorld*> InFlecsWorld) override;
-	virtual void FlecsWorldBeginPlay(const TSolidNotNull<UFlecsWorld*> InFlecsWorld) override;
+	virtual void RegisterObject(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld) override final;
+	virtual void UnregisterObject(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld) override;
+	virtual void FlecsWorldBeginPlay(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld) override;
 
 protected:
 	UPROPERTY(Transient)
@@ -50,6 +50,6 @@ protected:
 	
 private:
 	
-	void InitializeObserver(const TSolidNotNull<UFlecsWorld*> InWorld);
+	void InitializeObserver(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld);
 	
 }; // class UFlecsObserverObject

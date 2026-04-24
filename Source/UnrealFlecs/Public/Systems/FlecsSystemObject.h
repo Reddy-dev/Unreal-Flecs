@@ -29,14 +29,14 @@ public:
 		return SystemHandle;
 	}
 	
-	virtual void BuildSystem(const TSolidNotNull<const UFlecsWorld*> InWorld, TFlecsSystemBuilder<>& InBuilder) const;
+	virtual void BuildSystem(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, TFlecsSystemBuilder<>& InBuilder) const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Flecs|Observer")
 	UFlecsWorld* GetFlecsWorld() const;
 	
-	virtual void RegisterObject(const TSolidNotNull<UFlecsWorld*> InFlecsWorld) override final;
-	virtual void UnregisterObject(const TSolidNotNull<UFlecsWorld*> InFlecsWorld) override;
-	virtual void FlecsWorldBeginPlay(const TSolidNotNull<UFlecsWorld*> InFlecsWorld) override;
+	virtual void RegisterObject(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld) override final;
+	virtual void UnregisterObject(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld) override;
+	virtual void FlecsWorldBeginPlay(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld) override;
 	
 	void SetContext(void* InContext) const;
 	
@@ -50,6 +50,6 @@ protected:
 	FFlecsSystemDefinition SystemDefinition;
 	
 private:
-	void InitializeSystem(const TSolidNotNull<const UFlecsWorld*> InWorld);
+	void InitializeSystem(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld);
 	
 }; // class UFlecsSystemObject

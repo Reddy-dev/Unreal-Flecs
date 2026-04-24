@@ -10,7 +10,7 @@ FFlecsEntityHandle UDefaultEntitiesLibrary::GetNullEntity(const UObject* WorldCo
 {
 	solid_cassume(WorldContextObject);
 	
-	const TSolidNotNull<const UFlecsWorld*> FlecsWorld = UFlecsWorld::GetDefaultWorld(WorldContextObject);
+	const UFlecsWorld* FlecsWorld = UFlecsWorld::GetDefaultWorld(WorldContextObject);
 
 	return FFlecsEntityHandle::GetNullHandle(FlecsWorld);
 }

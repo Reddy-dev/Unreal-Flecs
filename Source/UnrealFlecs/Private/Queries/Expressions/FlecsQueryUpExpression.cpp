@@ -13,7 +13,7 @@ FFlecsQueryUpExpression::FFlecsQueryUpExpression() : Super(false /* bInAllowsChi
 {
 }
 
-void FFlecsQueryUpExpression::Apply(const TSolidNotNull<const UFlecsWorld*> InWorld,
+void FFlecsQueryUpExpression::Apply(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld,
                                     FFlecsQueryBuilderView& InQueryBuilder) const
 {
 	if (Traversal.IsSet())

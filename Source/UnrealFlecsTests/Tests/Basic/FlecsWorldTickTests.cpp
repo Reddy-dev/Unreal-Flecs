@@ -36,7 +36,7 @@ TEST_CLASS_WITH_FLAGS(A11_UnrealFlecsWorldTickTests,
 		static constexpr double TickDeltaTime = 1.0 / 60.0;
 		
 		int32 Counter = 0;
-		flecs::system TestSystem = FlecsWorld->World.system<>()
+		flecs::system TestSystem = FlecsWorld->GetNativeFlecsWorld().system<>()
 			.kind(flecs::OnUpdate)
 			.each([this, &Counter](flecs::iter& Iter, size_t Index)
 			{
@@ -51,7 +51,7 @@ TEST_CLASS_WITH_FLAGS(A11_UnrealFlecsWorldTickTests,
 			});
 
 		int32 PostUpdateCounter = 0;
-		flecs::system TestSystemPostUpdate = FlecsWorld->World.system<>()
+		flecs::system TestSystemPostUpdate = FlecsWorld->GetNativeFlecsWorld().system<>()
 			.kind(flecs::PostUpdate)
 			.each([this, &PostUpdateCounter](flecs::iter& Iter, size_t Index)
 			{
@@ -87,7 +87,7 @@ TEST_CLASS_WITH_FLAGS(A11_UnrealFlecsWorldTickTests,
 		// @TODO: use FFlecsSystem instead of FFlecsEntityHandle
 
 		int32 MainLoopCounter = 0;
-		FFlecsEntityHandle MainLoopSystem = FlecsWorld->World.system<>()
+		FFlecsEntityHandle MainLoopSystem = FlecsWorld->GetNativeFlecsWorld().system<>()
 			.kind(flecs::OnUpdate)
 			.each([&MainLoopCounter](flecs::iter& Iter, size_t Index)
 			{
@@ -96,7 +96,7 @@ TEST_CLASS_WITH_FLAGS(A11_UnrealFlecsWorldTickTests,
 			//.add(FlecsWorld->GetTagEntity(FlecsTickType_MainLoop).GetFlecsId());
 		
 		int32 PrePhysicsCounter = 0;
-		FFlecsEntityHandle PrePhysicsSystem = FlecsWorld->World.system<>()
+		FFlecsEntityHandle PrePhysicsSystem = FlecsWorld->GetNativeFlecsWorld().system<>()
 			.kind(flecs::OnUpdate)
 			.each([&PrePhysicsCounter](flecs::iter& Iter, size_t Index)
 			{
@@ -105,7 +105,7 @@ TEST_CLASS_WITH_FLAGS(A11_UnrealFlecsWorldTickTests,
 			.add(FlecsWorld->GetTagEntity(FlecsTickType_PrePhysics).GetFlecsId());
 
 		int32 DuringPhysicsCounter = 0;
-		FFlecsEntityHandle DuringPhysicsSystem = FlecsWorld->World.system<>()
+		FFlecsEntityHandle DuringPhysicsSystem = FlecsWorld->GetNativeFlecsWorld().system<>()
 			.kind(flecs::OnUpdate)
 			.each([&DuringPhysicsCounter](flecs::iter& Iter, size_t Index)
 			{
@@ -114,7 +114,7 @@ TEST_CLASS_WITH_FLAGS(A11_UnrealFlecsWorldTickTests,
 			.add(FlecsWorld->GetTagEntity(FlecsTickType_DuringPhysics).GetFlecsId());
 
 		int32 PostPhysicsCounter = 0;
-		FFlecsEntityHandle PostPhysicsSystem = FlecsWorld->World.system<>()
+		FFlecsEntityHandle PostPhysicsSystem = FlecsWorld->GetNativeFlecsWorld().system<>()
 			.kind(flecs::OnUpdate)
 			.each([&PostPhysicsCounter](flecs::iter& Iter, size_t Index)
 			{
@@ -123,7 +123,7 @@ TEST_CLASS_WITH_FLAGS(A11_UnrealFlecsWorldTickTests,
 			.add(FlecsWorld->GetTagEntity(FlecsTickType_PostPhysics).GetFlecsId());
 
 		int32 PostUpdateWorkCounter = 0;
-		FFlecsEntityHandle PostUpdateWorkSystem = FlecsWorld->World.system<>()
+		FFlecsEntityHandle PostUpdateWorkSystem = FlecsWorld->GetNativeFlecsWorld().system<>()
 			.kind(flecs::OnUpdate)
 			.each([&PostUpdateWorkCounter](flecs::iter& Iter, size_t Index)
 			{
@@ -165,7 +165,7 @@ TEST_CLASS_WITH_FLAGS(A11_UnrealFlecsWorldTickTests,
 		static constexpr double TickDeltaTime = 1.0 / 30.0;
 		
 		int32 Counter = 0;
-		flecs::system TestSystem = FlecsWorld->World.system<>()
+		flecs::system TestSystem = FlecsWorld->GetNativeFlecsWorld().system<>()
 			.kind(flecs::OnUpdate)
 			.each([this, &Counter](flecs::iter& Iter, size_t Index)
 			{

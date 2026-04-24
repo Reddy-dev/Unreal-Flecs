@@ -19,7 +19,7 @@ struct UNREALFLECS_API FFlecsObserverHandle final : public FFlecsEntityHandle
 public:
 	using FFlecsEntityHandle::FFlecsEntityHandle;
 	
-	FFlecsObserverHandle(const TSolidNotNull<const UFlecsWorld*> InWorld, 
+	FFlecsObserverHandle(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, 
 		const FFlecsObserverDefinition& InObserverBuilder, const FString& InObserverName);
 	
 	FORCEINLINE FFlecsObserverHandle(const flecs::observer& InObserver)

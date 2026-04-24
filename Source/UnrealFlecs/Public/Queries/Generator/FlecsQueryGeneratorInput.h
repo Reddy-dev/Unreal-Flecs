@@ -41,8 +41,8 @@ public:
 		return bPair;
 	}
 	
-	NO_DISCARD FFlecsTermRefAtom_Internal GetFirstTermRef(const TSolidNotNull<const UFlecsWorld*> InWorld) const;
-	NO_DISCARD FFlecsTermRefAtom_Internal GetSecondTermRef(const TSolidNotNull<const UFlecsWorld*> InWorld) const;
+	NO_DISCARD FFlecsTermRefAtom_Internal GetFirstTermRef(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const;
+	NO_DISCARD FFlecsTermRefAtom_Internal GetSecondTermRef(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const;
 	
 private:
 	

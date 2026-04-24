@@ -83,8 +83,8 @@ void UFlecsWorldSubsystem::Deinitialize()
 {
 	if (IsValid(DefaultWorld))
 	{
-		DefaultWorld->RemoveSingleton<FFlecsWorldPtrComponent>();
-		DefaultWorld->RemoveSingleton<FUWorldPtrComponent>();
+		DefaultWorld->Remove<FFlecsWorldPtrComponent>();
+		DefaultWorld->Remove<FUWorldPtrComponent>();
 		DefaultWorld->DestroyWorld();
 	}
 
@@ -164,12 +164,12 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 				.Add(flecs::Singleton);
 	});
 
-	DefaultWorld->AddSingleton<FUnrealFlecsWorldTag>();
+	DefaultWorld->Add<FUnrealFlecsWorldTag>();
 	
-	DefaultWorld->SetSingleton<FFlecsWorldPtrComponent>(FFlecsWorldPtrComponent{ DefaultWorld });
-	DefaultWorld->SetSingleton<FUWorldPtrComponent>(FUWorldPtrComponent{ GetWorld() });
+	DefaultWorld->Set<FFlecsWorldPtrComponent>(FFlecsWorldPtrComponent{ DefaultWorld });
+	DefaultWorld->Set<FUWorldPtrComponent>(FUWorldPtrComponent{ GetWorld() });
 
-	solid_checkf(DefaultWorld->GetSingleton<FFlecsWorldPtrComponent>().World == DefaultWorld,
+	solid_checkf(DefaultWorld->Get<FFlecsWorldPtrComponent>().World == DefaultWorld,
 	             TEXT("Singleton world ptr component does not point to the correct world"));
 
 	DefaultWorld->InitializeSystems();
@@ -234,7 +234,7 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 
 	for (const FFlecsDefaultMetaEntity& DefaultEntity : DefaultEntities)
 	{
-		flecs::entity NewDefaultEntity = FFlecsDefaultEntityEngine::Get().CreateDefaultEntity(DefaultEntity, DefaultWorld->World);
+		flecs::entity NewDefaultEntity = FFlecsDefaultEntityEngine::Get().CreateDefaultEntity(DefaultEntity, DefaultWorld->GetNativeFlecsWorld());
 
 		UE_LOGFMT(LogFlecsCore, Log,
 		          "Created default entity {EntityName} with id {EntityId}",
@@ -342,7 +342,7 @@ void UFlecsWorldSubsystem::ListenBeginPlay(const FFlecsOnWorldBeginPlay::FDelega
 		return;
 	}
 
-	if (DefaultWorld->HasSingleton<FFlecsBeginPlayComponent>())
+	if (DefaultWorld->Has<FFlecsBeginPlayComponent>())
 	{
 		Delegate.ExecuteIfBound(GetWorld());
 	}

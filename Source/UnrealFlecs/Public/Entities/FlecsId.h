@@ -12,7 +12,7 @@
 
 #include "FlecsId.generated.h"
 
-class UFlecsWorld;
+class UFlecsWorldInterfaceObject;
 
 /**
  * @brief A Flecs Id equivalent to flecs::entity_t / flecs::id_t, has the same memory layout as uint64/flecs::id_t/flecs::entity_t
@@ -149,7 +149,7 @@ public:
         return ecs_get_type_info(World.c_ptr(), Id);
     }
     
-    NO_DISCARD FORCEINLINE const ecs_type_info_t* GetTypeInfo(const TSolidNotNull<const UFlecsWorld*> World) const;
+    NO_DISCARD FORCEINLINE const ecs_type_info_t* GetTypeInfo(const TSolidNotNull<const UFlecsWorldInterfaceObject*> World) const;
 
     FORCEINLINE operator flecs::id_t() const
     {

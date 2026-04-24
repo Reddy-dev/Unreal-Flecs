@@ -37,6 +37,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (EditCondition = "InputType == EFlecsSystemPipelineInputType::Type", EditConditionHides, AllowStringInput = false))
 	FFlecsQueryGeneratorInput TypeInput;
 	
-	void ApplyToSystemEntity(const TSolidNotNull<const UFlecsWorld*> InWorld, const FFlecsSystemHandle& InSystem) const;
+	void ApplyToSystemEntity(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, const FFlecsSystemHandle& InSystem) const;
 	
 }; // struct FFlecsSystemPipelineInput

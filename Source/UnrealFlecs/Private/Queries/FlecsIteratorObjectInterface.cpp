@@ -4,7 +4,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsIteratorObjectInterface)
 
-void IFlecsIteratorObjectInterface::RunIterator(const TSolidNotNull<UFlecsWorld*> InWorld, flecs::iter& InIterator)
+void IFlecsIteratorObjectInterface::RunIterator(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld, flecs::iter& InIterator)
 {
 	while (InIterator.next())
 	{
@@ -15,7 +15,7 @@ void IFlecsIteratorObjectInterface::RunIterator(const TSolidNotNull<UFlecsWorld*
 	}
 }
 
-void IFlecsIteratorObjectInterface::EachIterator(const TSolidNotNull<UFlecsWorld*> InWorld,
+void IFlecsIteratorObjectInterface::EachIterator(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld,
 	flecs::iter& InIterator, const FFlecsId InIndex)
 {
 	// Empty

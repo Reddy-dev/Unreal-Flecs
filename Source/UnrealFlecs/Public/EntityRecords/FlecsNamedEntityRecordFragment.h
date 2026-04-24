@@ -31,7 +31,7 @@ public:
 	bool bNameInheritedSubEntities = true;
 	
 	virtual void PreApplyRecordToEntity(
-			const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsEntityHandle& InEntityHandle) const override;
+			const TSolidNotNull<const UFlecsWorldInterfaceObject*> InFlecsWorld, const FFlecsEntityHandle& InEntityHandle) const override;
 	
 	struct FBuilder;
 	

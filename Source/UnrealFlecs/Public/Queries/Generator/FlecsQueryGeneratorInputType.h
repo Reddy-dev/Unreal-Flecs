@@ -40,18 +40,18 @@ public:
 		return FString();
 	}
 	
-	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorld*> InWorld) const
+	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const
 	{
 		solid_checkf(false, TEXT("FFlecsQueryGeneratorInputType::GetFlecsIdOutput: Pure virtual function called on base class! Did you forget to override it?"));
 		return FFlecsId();
 	}
 	
-	virtual void CustomBuilderOutput(FFlecsQueryBuilderView& Builder, const TSolidNotNull<const UFlecsWorld*> InWorld) const
+	virtual void CustomBuilderOutput(FFlecsQueryBuilderView& Builder, const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const
 	{
 		solid_checkf(false, TEXT("FFlecsQueryGeneratorInputType::CustomBuilderOutput: Pure virtual function called on base class! Did you forget to override it?"));
 	}
 	
-	NO_DISCARD FFlecsTermRef GetTermRefOutput(const TSolidNotNull<const UFlecsWorld*> InWorld) const;
+	NO_DISCARD FFlecsTermRef GetTermRefOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const;
 
 }; // struct FFlecsQueryGeneratorInputType
 
@@ -69,7 +69,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Query Generator")
 	TObjectPtr<const UScriptStruct> ScriptStruct;
 	
-	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorld*> InWorld) const override;
+	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const override;
 	
 }; // struct FFlecsQueryGeneratorInputType_ScriptStruct
 
@@ -87,7 +87,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Query Generator")
 	TObjectPtr<const UEnum> ScriptEnum;
 	
-	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorld*> InWorld) const override;
+	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const override;
 	
 }; // struct FFlecsQueryGeneratorInputType_ScriptEnum
 
@@ -123,7 +123,7 @@ public:
 	UPROPERTY()
 	FString SymbolString;
 	
-	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorld*> InWorld) const override;
+	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const override;
 	
 }; // struct FFlecsQueryGeneratorInputType_CPPType
 
@@ -141,7 +141,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Query Generator")
 	FFlecsId FlecsId;
 	
-	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorld*> InWorld) const override;
+	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const override;
 	
 }; // struct FFlecsQueryGeneratorInputType_FlecsId
 
@@ -159,7 +159,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Query Generator")
 	FSolidEnumSelector EnumValue;
 	
-	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorld*> InWorld) const override;
+	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const override;
 	
 }; // struct FFlecsQueryGeneratorInputType_ScriptEnumConstant
 
@@ -175,7 +175,7 @@ public:
 		ReturnType = EFlecsQueryGeneratorReturnType::FlecsId;
 	}
 	
-	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorld*> InWorld) const override
+	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const override
 	{
 		return flecs::Wildcard;
 	}
@@ -193,7 +193,7 @@ public:
 		ReturnType = EFlecsQueryGeneratorReturnType::FlecsId;
 	}
 	
-	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorld*> InWorld) const override
+	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const override
 	{
 		return flecs::Any;
 	}

@@ -26,6 +26,6 @@ public:
 	UPROPERTY(EditAnywhere)
 	EFlecsQueryScopeExpressionType ScopeType = EFlecsQueryScopeExpressionType::Open;
 	
-	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const override;
+	virtual void Apply(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const override;
 	
 }; // struct FFlecsQueryScopeExpression

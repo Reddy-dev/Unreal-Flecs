@@ -7,7 +7,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsTickFunctionObservers)
 
-void UFlecsAddTickFunctionObserver::BuildObserver(const TSolidNotNull<UFlecsWorld*> InWorld,
+void UFlecsAddTickFunctionObserver::BuildObserver(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld,
 	TFlecsObserverBuilder<>& InOutBuilder) const
 {
 	InOutBuilder
@@ -17,7 +17,7 @@ void UFlecsAddTickFunctionObserver::BuildObserver(const TSolidNotNull<UFlecsWorl
 		.YieldExisting();
 }
 
-void UFlecsAddTickFunctionObserver::EachIterator(const TSolidNotNull<UFlecsWorld*> InWorld,
+void UFlecsAddTickFunctionObserver::EachIterator(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld,
 	flecs::iter& InIterator, const FFlecsId InIndex)
 {
 	const FFlecsTickFunctionComponent& InTickFunctionComponent = InIterator.field_at<FFlecsTickFunctionComponent>(0, InIndex);
@@ -29,7 +29,7 @@ void UFlecsAddTickFunctionObserver::EachIterator(const TSolidNotNull<UFlecsWorld
 	const FFlecsEntityHandle EntityHandle = InIterator.entity(InIndex);
 #endif // !NO_LOGGING
 
-	InTickFunctionComponent.TickFunction.Get().OwningWorld = InWorld;
+	InTickFunctionComponent.TickFunction.Get().OwningWorld = InWorld->GetFlecsWorld();
 	InTickFunctionComponent.TickFunction.Get().RegisterTickFunction(GetWorld()->PersistentLevel);
 
 	UE_LOGFMT(LogFlecsWorld, Verbose,
@@ -37,7 +37,7 @@ void UFlecsAddTickFunctionObserver::EachIterator(const TSolidNotNull<UFlecsWorld
 		EntityHandle.HasName() ? EntityHandle.GetName() : EntityHandle.ToString());
 }
 
-void UFlecsRemoveTickFunctionObserver::BuildObserver(const TSolidNotNull<UFlecsWorld*> InWorld,
+void UFlecsRemoveTickFunctionObserver::BuildObserver(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld,
 	TFlecsObserverBuilder<>& InOutBuilder) const
 {
 	InOutBuilder
@@ -46,7 +46,7 @@ void UFlecsRemoveTickFunctionObserver::BuildObserver(const TSolidNotNull<UFlecsW
 		.YieldExisting();
 }
 
-void UFlecsRemoveTickFunctionObserver::EachIterator(const TSolidNotNull<UFlecsWorld*> InWorld, flecs::iter& InIterator,
+void UFlecsRemoveTickFunctionObserver::EachIterator(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld, flecs::iter& InIterator,
 	const FFlecsId InIndex)
 {
 	const FFlecsTickFunctionComponent& InTickFunctionComponent = InIterator.field_at<FFlecsTickFunctionComponent>(0, InIndex);

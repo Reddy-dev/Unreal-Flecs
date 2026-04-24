@@ -9,7 +9,7 @@
 
 #include "FlecsQueryBuilder.generated.h"
 
-class UFlecsWorld;
+class UFlecsWorldInterfaceObject;
 
 namespace UE::Flecs::Queries
 {
@@ -58,8 +58,8 @@ struct UNREALFLECS_API FFlecsQueryBuilder
 public:
 	FORCEINLINE FFlecsQueryBuilder() = default;
 	
-	explicit FFlecsQueryBuilder(const UFlecsWorld* InWorld, const FString& InQueryName = FString());
-	explicit FFlecsQueryBuilder(const UFlecsWorld* InWorld, const FFlecsEntityHandle& InQueryEntity);
+	explicit FFlecsQueryBuilder(const UFlecsWorldInterfaceObject* InWorld, const FString& InQueryName = FString());
+	explicit FFlecsQueryBuilder(const UFlecsWorldInterfaceObject* InWorld, const FFlecsEntityHandle& InQueryEntity);
 	
 	NO_DISCARD FORCEINLINE FFlecsQueryDefinition& GetQueryDefinition_Impl() const
 	{
@@ -69,7 +69,7 @@ public:
 	NO_DISCARD FFlecsQuery Build() const;
 	
 	UPROPERTY()
-	TWeakObjectPtr<const UFlecsWorld> World;
+	TWeakObjectPtr<const UFlecsWorldInterfaceObject> FlecsWorld;
 	
 	UPROPERTY()
 	FString QueryName;

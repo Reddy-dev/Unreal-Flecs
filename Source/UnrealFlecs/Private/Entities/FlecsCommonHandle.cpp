@@ -8,9 +8,9 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsCommonHandle)
 
-FFlecsCommonHandle::FFlecsCommonHandle(const TSolidNotNull<const UFlecsWorld*> InWorld, const FFlecsId InEntity)
+FFlecsCommonHandle::FFlecsCommonHandle(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, const FFlecsId InEntity)
 {
-	SetEntity(flecs::entity(InWorld->World, InEntity));
+	SetEntity(flecs::entity(InWorld->GetNativeFlecsWorld(), InEntity));
 }
 
 FFlecsCommonHandle::FFlecsCommonHandle(const flecs::world_t* InWorld, const FFlecsId InEntity)
@@ -23,15 +23,15 @@ flecs::world FFlecsCommonHandle::GetNativeFlecsWorld() const
 	return Entity.world();
 }
 
-UFlecsWorld* FFlecsCommonHandle::GetFlecsWorld() const
+UFlecsWorldInterfaceObject* FFlecsCommonHandle::GetFlecsWorld() const
 {
 	solid_checkf(IsUnrealFlecsWorld(), TEXT("Entity is not in an Unreal Flecs World"));
 	return UE::Flecs::ToUnrealFlecsWorld(GetEntity().world());
 }
 
-TSolidNotNull<UFlecsWorld*> FFlecsCommonHandle::GetFlecsWorldChecked() const
+TSolidNotNull<UFlecsWorldInterfaceObject*> FFlecsCommonHandle::GetFlecsWorldChecked() const
 {
-	UFlecsWorld* FlecsWorld = GetFlecsWorld();
+	UFlecsWorldInterfaceObject* FlecsWorld = GetFlecsWorld();
 	
 	solid_cassumef(FlecsWorld, TEXT("Flecs World not found"));
 	solid_checkf(::IsValid(FlecsWorld), TEXT("Flecs World not found"));
@@ -49,11 +49,6 @@ TSolidNotNull<UWorld*> FFlecsCommonHandle::GetOuterWorld() const
 	solid_checkf(IsUnrealFlecsWorld(), TEXT("Entity is not in an Unreal Flecs World"));
 	solid_checkf(::IsValid(GetFlecsWorld()), TEXT("Flecs World not found"));
 	return GetFlecsWorldChecked()->GetWorld();
-}
-
-FString FFlecsCommonHandle::GetWorldName() const
-{
-	return GetFlecsWorldChecked()->GetWorldName();
 }
 
 FFlecsId FFlecsCommonHandle::ObtainComponentTypeStruct(const TSolidNotNull<const UScriptStruct*> StructType) const

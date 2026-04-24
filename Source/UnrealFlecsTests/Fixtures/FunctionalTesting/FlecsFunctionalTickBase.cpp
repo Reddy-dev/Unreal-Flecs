@@ -36,7 +36,7 @@ void AFlecsFunctionalTickBase::StartTest()
 
 	const TSolidNotNull<const UFlecsWorld*> FlecsWorld = GetOwningFlecsWorldChecked();
 
-	MainLoopSystem = FlecsWorld->World.system<>()
+	MainLoopSystem = FlecsWorld->GetNativeFlecsWorld().system<>()
 				.kind(flecs::OnUpdate)
 				.each([this](flecs::iter& Iter, size_t Index)
 				{
@@ -50,7 +50,7 @@ void AFlecsFunctionalTickBase::StartTest()
 				});
 	//.add(FlecsWorld->GetTagEntity(FlecsTickType_MainLoop).GetFlecsId());
 	
-	PrePhysicsSystem = FlecsWorld->World.system<>()
+	PrePhysicsSystem = FlecsWorld->GetNativeFlecsWorld().system<>()
 		.kind(flecs::OnUpdate)
 		.each([this](flecs::iter& Iter, size_t Index)
 		{
@@ -63,7 +63,7 @@ void AFlecsFunctionalTickBase::StartTest()
 		})
 		.add(FlecsWorld->GetTagEntity(FlecsTickType_PrePhysics).GetFlecsId());
 	
-	DuringPhysicsSystem = FlecsWorld->World.system<>()
+	DuringPhysicsSystem = FlecsWorld->GetNativeFlecsWorld().system<>()
 		.kind(flecs::OnUpdate)
 		.each([this](flecs::iter& Iter, size_t Index)
 		{
@@ -76,7 +76,7 @@ void AFlecsFunctionalTickBase::StartTest()
 		})
 		.add(FlecsWorld->GetTagEntity(FlecsTickType_DuringPhysics).GetFlecsId());
 	
-	PostPhysicsSystem = FlecsWorld->World.system<>()
+	PostPhysicsSystem = FlecsWorld->GetNativeFlecsWorld().system<>()
 		.kind(flecs::OnUpdate)
 		.each([this](flecs::iter& Iter, size_t Index)
 		{
@@ -89,7 +89,7 @@ void AFlecsFunctionalTickBase::StartTest()
 		})
 		.add(FlecsWorld->GetTagEntity(FlecsTickType_PostPhysics).GetFlecsId());
 	
-	PostUpdateWorkSystem = FlecsWorld->World.system<>()
+	PostUpdateWorkSystem = FlecsWorld->GetNativeFlecsWorld().system<>()
 		.kind(flecs::OnUpdate)
 		.each([this](flecs::iter& Iter, size_t Index)
 		{

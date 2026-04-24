@@ -35,7 +35,7 @@ public:
 		meta = (EditCondition = "Type == EFlecsSystemPhaseInputType::Type", EditConditionHides, AllowStringInput = false))
 	FFlecsQueryGeneratorInput PhaseInput;
 	
-	void ApplyToSystemDefinition(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, flecs::system_builder<>& InSystemBuilder) const;
+	void ApplyToSystemDefinition(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InFlecsWorld, flecs::system_builder<>& InSystemBuilder) const;
 	
 }; // struct FFlecsSystemPhaseInput
 

@@ -14,7 +14,7 @@
 
 #include "FlecsObserverEventInput.generated.h"
 
-class UFlecsWorld;
+class UFlecsWorldInterfaceObject;
 
 UENUM(BlueprintType)
 enum class EFlecsObserverEvent : uint8
@@ -50,7 +50,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (EditCondition = "bCustomEventType", EditConditionHides, AllowPair = false))
 	FFlecsQueryGeneratorInput CustomEventType;
 	
-	void ApplyToObserver(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld,
+	void ApplyToObserver(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InFlecsWorld,
 		flecs::observer_builder<>& InObserverBuilder) const;
 	
 }; // struct FFlecsObserverEventInput

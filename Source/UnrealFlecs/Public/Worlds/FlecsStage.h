@@ -4,16 +4,17 @@
 
 #include "CoreMinimal.h"
 
-#include "FlecsWorld.h"
+#include "FlecsWorldInterfaceObject.h"
 
 #include "FlecsStage.generated.h"
 
 // @TODO: Implement tracking stages properly
 UCLASS()
-class UNREALFLECS_API UFlecsStage : public UFlecsWorld
+class UNREALFLECS_API UFlecsStage final : public UFlecsWorldInterfaceObject
 {
 	GENERATED_BODY()
 
 public:
+	
 	
 }; // class UFlecsStage

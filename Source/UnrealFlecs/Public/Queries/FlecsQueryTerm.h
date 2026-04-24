@@ -15,7 +15,7 @@
 struct FFlecsQueryBuilderView;
 struct FFlecsQueryGeneratorInputType;
 
-class UFlecsWorld;
+class UFlecsWorldInterfaceObject;
 
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsQueryTerm
@@ -26,6 +26,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Query")
 	FFlecsQueryGeneratorInput Input;
 
-	void ApplyToQueryBuilder(const TSolidNotNull<const UFlecsWorld*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const;
+	void ApplyToQueryBuilder(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const;
 	
 }; // struct FFlecsQueryTerm

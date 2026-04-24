@@ -3,7 +3,7 @@
 #include "Worlds/FlecsScopedDeferWindow.h"
 #include "Worlds/FlecsWorld.h"
 
-FFlecsScopedDeferWindow::FFlecsScopedDeferWindow(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld)
+FFlecsScopedDeferWindow::FFlecsScopedDeferWindow(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InFlecsWorld)
 	: FlecsWorld(InFlecsWorld)
 {
 	if (!ensureMsgf(FlecsWorld->BeginDefer(),

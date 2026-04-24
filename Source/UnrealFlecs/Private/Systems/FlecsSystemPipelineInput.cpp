@@ -6,7 +6,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsSystemPipelineInput)
 
-void FFlecsSystemPipelineInput::ApplyToSystemEntity(const TSolidNotNull<const UFlecsWorld*> InWorld,
+void FFlecsSystemPipelineInput::ApplyToSystemEntity(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld,
 	const FFlecsSystemHandle& InSystem) const
 {
 	solid_checkf(InSystem.IsValid(), TEXT("Invalid system handle provided when applying pipeline input to system entity."));

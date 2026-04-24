@@ -39,7 +39,7 @@ public:
 	{
 	}
 
-	SOLID_INLINE FFlecsComponentHandle(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsId& InId)
+	SOLID_INLINE FFlecsComponentHandle(TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld, const FFlecsId& InId)
 		: FFlecsEntityHandle(InWorld, InId)
 	{
 	}
@@ -510,7 +510,7 @@ public:
 	{
 	}
 
-	SOLID_INLINE TFlecsComponentHandle(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsId& InId)
+	SOLID_INLINE TFlecsComponentHandle(TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld, const FFlecsId& InId)
 		: FFlecsComponentHandle(InWorld, InId)
 	{
 	}

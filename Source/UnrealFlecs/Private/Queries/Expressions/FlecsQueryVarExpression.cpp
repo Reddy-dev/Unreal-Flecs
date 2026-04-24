@@ -10,7 +10,7 @@ FFlecsQueryVarExpression::FFlecsQueryVarExpression() : Super(false /* bInAllowsC
 {
 }
 
-void FFlecsQueryVarExpression::Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const
+void FFlecsQueryVarExpression::Apply(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const
 {
 	InQueryBuilder.var(StringCast<char>(*VarName).Get());
 }
