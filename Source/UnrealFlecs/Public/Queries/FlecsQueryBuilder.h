@@ -88,13 +88,13 @@ struct TFlecsQueryBuilder : public FFlecsQueryBuilder
 public:
 	using FFlecsQueryBuilder::FFlecsQueryBuilder;
 	
-	FORCEINLINE explicit TFlecsQueryBuilder(const UFlecsWorld* InWorld, const FString& InName = FString())
+	FORCEINLINE explicit TFlecsQueryBuilder(const UFlecsWorldInterfaceObject* InWorld, const FString& InName = FString())
 		: FFlecsQueryBuilder(InWorld, InName)
 	{
 		UE::Flecs::Queries::TAddInputTypes<TFlecsQueryBuilder, TArgs...>::Apply(*this);
 	}
 	
-	FORCEINLINE explicit TFlecsQueryBuilder(const UFlecsWorld* InWorld, const FFlecsEntityHandle& InQueryEntity)
+	FORCEINLINE explicit TFlecsQueryBuilder(const UFlecsWorldInterfaceObject* InWorld, const FFlecsEntityHandle& InQueryEntity)
 		: FFlecsQueryBuilder(InWorld, InQueryEntity)
 	{
 		UE::Flecs::Queries::TAddInputTypes<TFlecsQueryBuilder, TArgs...>::Apply(*this);
