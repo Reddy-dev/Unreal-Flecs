@@ -558,6 +558,10 @@ struct type_impl {
         
         ecs_assert(c != 0, ECS_INTERNAL_ERROR, NULL);
         
+        #ifdef FLECS_META
+        register_cpp_meta<T>(world, c);
+        #endif
+        
         return c;
     }
         
