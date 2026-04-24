@@ -1052,6 +1052,11 @@ int32 UFlecsWorld::GetStageCount() const
 	return World.get_stage_count();
 }
 
+void UFlecsWorld::SetStageCount(const int32 InStageCount) const
+{
+	World.set_stage_count(InStageCount);
+}
+
 bool UFlecsWorld::IsReadOnly() const
 {
 	return World.is_readonly();

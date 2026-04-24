@@ -523,6 +523,9 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
 	int32 GetStageCount() const;
+	
+	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
+	void SetStageCount(const int32 InStageCount) const;
 
 	/**
 	 * Test whether the current world object is readonly.
