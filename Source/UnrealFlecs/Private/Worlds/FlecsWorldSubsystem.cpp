@@ -151,15 +151,18 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 
 	DefaultWorld->InitializeComponentPropertyObserver();
 	DefaultWorld->InitializeDefaultComponents();
-
-	DefaultWorld->RegisterComponentType<FUnrealFlecsWorldTag>()
-	            .Add(flecs::Singleton);
+	
+	DefaultWorld->Scope(DefaultWorld->GetFlecsModule("UnrealFlecs"), [this]()
+	{
+		DefaultWorld->RegisterComponentType<FUnrealFlecsWorldTag>()
+				.Add(flecs::Singleton);
 		
-	DefaultWorld->RegisterComponentType<FFlecsWorldPtrComponent>()
-	            .Add(flecs::Singleton);
+		DefaultWorld->RegisterComponentType<FFlecsWorldPtrComponent>()
+				.Add(flecs::Singleton);
 		
-	DefaultWorld->RegisterComponentType<FUWorldPtrComponent>()
-	            .Add(flecs::Singleton);
+		DefaultWorld->RegisterComponentType<FUWorldPtrComponent>()
+				.Add(flecs::Singleton);
+	});
 
 	DefaultWorld->AddSingleton<FUnrealFlecsWorldTag>();
 	

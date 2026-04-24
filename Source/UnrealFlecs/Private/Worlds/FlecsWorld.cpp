@@ -384,9 +384,12 @@ void UFlecsWorld::InitializeDefaultComponents() const
 	     .opaque<flecs::Map>(flecs::meta::MapType); */
 
 	RegisterUnrealTypes();
-
-	RegisterComponentType<FFlecsAddReferencedObjectsTrait>()
-		.Add(flecs::Trait);
+	
+	Scope(GetFlecsModule(FName("UnrealFlecs")), [this]()
+	{
+		RegisterComponentType<FFlecsAddReferencedObjectsTrait>()
+			.Add(flecs::Trait);
+	});
 	
 	const TSolidNotNull<UFlecsTypeRegistryEngineSubsystem*> FlecsTypeRegistry
 		= GEngine->GetEngineSubsystem<UFlecsTypeRegistryEngineSubsystem>();
@@ -402,7 +405,7 @@ void UFlecsWorld::InitializeFlecsRegistrationObjects()
 	{
 		UClass* Class = *It;
 
-		if (!IsValid(Class))
+		if UNLIKELY_IF(!IsValid(Class))
 		{
 			continue;
 		}
@@ -422,21 +425,19 @@ void UFlecsWorld::InitializeFlecsRegistrationObjects()
 			continue;
 		}
 
-		const UFlecsObjectRegistrationProviderBase* ProviderCDO =
-			Class->GetDefaultObject<UFlecsObjectRegistrationProviderBase>();
+		const UFlecsObjectRegistrationProviderBase* ProviderCDO = Class->GetDefaultObject<UFlecsObjectRegistrationProviderBase>();
 
-		if (!IsValid(ProviderCDO))
+		if UNLIKELY_IF(!IsValid(ProviderCDO))
 		{
 			continue;
 		}
 
-		const TArray<TSubclassOf<UObject>> ProviderRegisteredObjectClasses =
-			ProviderCDO->GetClassesToRegister();
+		const TArray<TSubclassOf<UObject>> ProviderRegisteredObjectClasses = ProviderCDO->GetClassesToRegister();
 
 		RegisteredObjectClasses.Append(ProviderRegisteredObjectClasses);
 	}
 	
-	for (const TSubclassOf<UObject> RegisteredClass : RegisteredObjectClasses)
+	for (const TSubclassOf<UObject>& RegisteredClass : RegisteredObjectClasses)
 	{
 		if UNLIKELY_IF(!ensureAlwaysMsgf(IsValid(RegisteredClass), 
 			TEXT("Invalid class in Flecs registration provider: %s"), *GetNameSafe(RegisteredClass)))
