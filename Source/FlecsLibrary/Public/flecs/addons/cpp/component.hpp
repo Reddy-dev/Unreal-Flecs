@@ -138,10 +138,24 @@ inline ecs_cpp_type_action_t lifecycle_action() {
         return &register_lifecycle_actions<T>;
     }
 }
+    
+    #ifdef FLECS_META
+    template <typename T, typename = void>
+    struct has_cpp_meta_desc : std::false_type {};
+
+    template <typename T>
+    struct has_cpp_meta_desc<T, decltype(void(
+        flecs_meta_cpp_desc(static_cast<T*>(nullptr))))> : std::true_type {};
+    #endif
 
     template <typename T>
     inline ecs_cpp_type_action_t enum_action() {
         #if FLECS_CPP_ENUM_REFLECTION_SUPPORT
+        #ifdef FLECS_META
+        if constexpr (has_cpp_meta_desc<T>::value) {
+            return nullptr;
+        } else
+        #endif
         if constexpr (is_enum_v<T>) {
             return &_::init_enum<T>;
         } else {
@@ -151,6 +165,31 @@ inline ecs_cpp_type_action_t lifecycle_action() {
         return nullptr;
         #endif
     }
+    
+    #ifdef FLECS_META
+
+    template <typename T>
+    inline void register_cpp_meta(ecs_world_t *world, ecs_entity_t component) {
+        (void)world; (void)component;
+        if constexpr (has_cpp_meta_desc<T>::value) {
+            ecs_type_kind_t kind = flecs_meta_cpp_kind(static_cast<T*>(nullptr));
+            if (kind == EcsStructType && ecs_has_id(world, component,
+                    ecs_id(EcsStruct))) {
+                return;
+                    }
+            if (kind == EcsEnumType && ecs_has_id(world, component,
+                    ecs_id(EcsEnum))) {
+                return;
+                    }
+            if (kind == EcsBitmaskType && ecs_has_id(world, component,
+                    ecs_id(EcsBitmask))) {
+                return;
+                    }
+            ecs_meta_from_desc(world, component, kind,
+                flecs_meta_cpp_desc(static_cast<T*>(nullptr)));
+        }
+    }
+    #endif
 
 struct FLECS_API type_impl_data {
     bool s_set_values;
