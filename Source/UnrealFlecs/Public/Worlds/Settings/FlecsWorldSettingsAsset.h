@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 
 #include "Engine/DataAsset.h"
-#include "Misc/DataValidation.h"
 
 #include "Versioning/SolidVersioningTypes.h"
 

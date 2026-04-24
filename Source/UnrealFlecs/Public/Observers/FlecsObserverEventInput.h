@@ -6,8 +6,6 @@
 
 #include "CoreMinimal.h"
 
-#include "StructUtils/InstancedStruct.h"
-
 #include "SolidMacros/Macros.h"
 #include "Types/SolidNotNull.h"
 

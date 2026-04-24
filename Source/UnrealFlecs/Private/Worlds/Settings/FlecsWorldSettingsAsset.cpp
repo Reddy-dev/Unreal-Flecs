@@ -3,8 +3,7 @@
 #include "Worlds/Settings/FlecsWorldSettingsAsset.h"
 
 #include "Logging/StructuredLog.h"
-
-#include "Logs/FlecsCategories.h"
+#include "Misc/DataValidation.h"
 
 #include "Pipelines/FlecsDefaultGameLoop.h"
 
