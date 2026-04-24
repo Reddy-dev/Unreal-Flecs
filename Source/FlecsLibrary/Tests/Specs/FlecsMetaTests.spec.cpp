@@ -83,6 +83,29 @@ struct CppEntity {
     flecs::entity entity;
 };
 
+
+ECS_STRUCT(EcsStructMacroPosition, {
+    float x;
+    float y;
+});
+
+ECS_STRUCT(EcsStructMacroLine, {
+    EcsStructMacroPosition start;
+    EcsStructMacroPosition stop;
+});
+
+ECS_ENUM(EcsEnumMacroColor, {
+    EcsEnumMacroRed,
+    EcsEnumMacroGreen,
+    EcsEnumMacroBlue
+});
+
+ECS_BITMASK(EcsBitmaskMacroFlags, {
+    EcsBitmaskMacroA = 1,
+    EcsBitmaskMacroB = 2,
+    EcsBitmaskMacroC = 4
+});
+
 BEGIN_DEFINE_SPEC(FFlecsMetaTestsSpec,
                   "FlecsLibrary.Meta",
                   EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter);
@@ -518,6 +541,7 @@ void Meta_type_w_std_string(void) {
     test_str(json, "{\"v\":\"hello world\"}");
 }
 
+// @TODO: Fix this test
 /*void Meta_type_w_std_vector_std_string(void) {
     flecs::world ecs;
 
@@ -987,6 +1011,7 @@ void Meta_ser_deser_flecs_entity(void) {
     test_assert(v == e2);
 }
 
+// @TODO: Fix this test
 void Meta_world_ser_deser_flecs_entity(void) {
     flecs::world world;
 
@@ -1252,6 +1277,7 @@ void Meta_component_as_array(void) {
     test_int(ptr->count, 2);
 }
 
+// @TODO: Fix this test
 /*void Meta_out_of_order_member_declaration(void) {
     flecs::world ecs;
 
@@ -1481,6 +1507,74 @@ void Meta_ser_deser_alias(void) {
 }
 #pragma warning(pop)
 
+void Meta_ecs_struct_macro(void) {
+    flecs::world ecs;
+
+    auto c = ecs.component<EcsStructMacroPosition>();
+    test_assert(c != 0);
+
+    test_assert(ecs_struct_get_member(ecs, c, "x") != NULL);
+    test_uint(ecs_struct_get_member(ecs, c, "x")->type, flecs::F32);
+
+    test_assert(ecs_struct_get_member(ecs, c, "y") != NULL);
+    test_uint(ecs_struct_get_member(ecs, c, "y")->type, flecs::F32);
+}
+
+void Meta_ecs_struct_macro_nested(void) {
+    flecs::world ecs;
+
+    auto p = ecs.component<EcsStructMacroPosition>();
+    auto l = ecs.component<EcsStructMacroLine>();
+    test_assert(l != 0);
+
+    test_assert(ecs_struct_get_member(ecs, l, "start") != NULL);
+    test_uint(ecs_struct_get_member(ecs, l, "start")->type, p);
+
+    test_assert(ecs_struct_get_member(ecs, l, "stop") != NULL);
+    test_uint(ecs_struct_get_member(ecs, l, "stop")->type, p);
+}
+
+void Meta_ecs_struct_macro_idempotent(void) {
+    flecs::world ecs;
+
+    auto c1 = ecs.component<EcsStructMacroPosition>();
+    auto c2 = ecs.component<EcsStructMacroPosition>();
+    test_assert(c1 == c2);
+
+    test_assert(ecs_struct_get_member(ecs, c1, "x") != NULL);
+    test_assert(ecs_struct_get_member(ecs, c1, "y") != NULL);
+
+    const EcsStruct *s = ecs.entity(c1).try_get<flecs::Struct>();
+    test_assert(s != NULL);
+    test_int(s->members.count, 2);
+}
+
+void Meta_ecs_enum_macro(void) {
+    flecs::world ecs;
+
+    auto c = ecs.component<EcsEnumMacroColor>();
+    test_assert(c != 0);
+    test_assert(ecs.entity(c).has<flecs::Enum>());
+}
+
+void Meta_ecs_bitmask_macro(void) {
+    flecs::world ecs;
+
+    auto c = ecs.component<EcsBitmaskMacroFlags>();
+    test_assert(c != 0);
+    test_assert(ecs.entity(c).has<flecs::Bitmask>());
+}
+
+void Meta_ecs_struct_macro_no_reflection_for_plain_struct(void) {
+    flecs::world ecs;
+
+    struct Plain { int32_t a; int32_t b; };
+
+    auto c = ecs.component<Plain>();
+    test_assert(c != 0);
+    test_assert(!ecs.entity(c).has<flecs::Struct>());
+}
+
 END_DEFINE_SPEC(FFlecsMetaTestsSpec);
 
 /*"id": "Meta",
@@ -1552,7 +1646,13 @@ END_DEFINE_SPEC(FFlecsMetaTestsSpec);
                 "ser_deser_std_optional_int",
                 "ser_deser_std_optional_std_vector_int",
                 "ser_deser_std_optional_std_string",
-                "ser_deser_alias"
+                "ser_deser_alias",,
+                "ecs_struct_macro",
+                "ecs_struct_macro_nested",
+                "ecs_struct_macro_idempotent",
+                "ecs_enum_macro",
+                "ecs_bitmask_macro",
+                "ecs_struct_macro_no_reflection_for_plain_struct"
             ]*/
 
 void FFlecsMetaTestsSpec::Define()
@@ -1625,6 +1725,12 @@ void FFlecsMetaTestsSpec::Define()
     It("Meta_ser_deser_std_optional_std_vector_int", [&]() { Meta_ser_deser_std_optional_std_vector_int(); });
     It("Meta_ser_deser_std_optional_std_string", [&]() { Meta_ser_deser_std_optional_std_string(); });
     It("Meta_ser_deser_alias", [&]() { Meta_ser_deser_alias(); });
+    It("Meta_ecs_struct_macro", [&]() { Meta_ecs_struct_macro(); });
+    It("Meta_ecs_struct_macro_nested", [&]() { Meta_ecs_struct_macro_nested(); });
+    It("Meta_ecs_struct_macro_idempotent", [&]() { Meta_ecs_struct_macro_idempotent(); });
+    It("Meta_ecs_enum_macro", [&]() { Meta_ecs_enum_macro(); });
+    It("Meta_ecs_bitmask_macro", [&]() { Meta_ecs_bitmask_macro(); });
+    It("Meta_ecs_struct_macro_no_reflection_for_plain_struct", [&]() { Meta_ecs_struct_macro_no_reflection_for_plain_struct(); });
 }
 
 #endif // WITH_AUTOMATION_TESTS
