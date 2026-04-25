@@ -128,7 +128,7 @@ UFlecsWorld* UFlecsWorldInterfaceObject::GetFlecsWorld() const
 
 UFlecsStage* UFlecsWorldInterfaceObject::AsStage() const
 {
-	if UNLIKELY_IF(!IsStage())
+	if UNLIKELY_IF(!ensure(IsStage()))
 	{
 		return nullptr;
 	}

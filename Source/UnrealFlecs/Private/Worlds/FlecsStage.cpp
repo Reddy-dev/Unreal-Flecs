@@ -20,6 +20,7 @@ UFlecsStage::~UFlecsStage()
 void UFlecsStage::DestroyStage()
 {
 	StageWorld.release();
+	MarkAsGarbage();
 }
 
 void UFlecsStage::SetStageWorld(const flecs::world& InStageWorld)

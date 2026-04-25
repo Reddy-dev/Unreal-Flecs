@@ -735,34 +735,9 @@ void UFlecsWorld::SetPipeline(const FFlecsEntityHandle& InPipeline) const
 
 void UFlecsWorld::SetStageCount(const int32 InStageCount)
 {
-	const int32 OldStageCount = GetStageCount();
-	
 	GetNativeFlecsWorld().set_stage_count(InStageCount);
 	
-	for (UFlecsStage* Stage : Stages)
-	{
-		if (Stage)
-		{
-			Stage->DestroyStage();
-		}
-	}
-	
-	Stages.Empty();
-	
-	if (InStageCount <= 1)
-	{
-		return;
-	}
-	
-	for (int32 StageIndex = 1; StageIndex < InStageCount; ++StageIndex)
-	{
-		const TSolidNotNull<UFlecsStage*> NewStage = NewObject<UFlecsStage>(this);
-		NewStage->SetStageWorld(GetNativeFlecsWorld().get_stage(StageIndex));
-		
-		Stages.Add(NewStage);
-		solid_checkf(Stages.Num() == StageIndex, TEXT("Stage index does not match stage array index"));
-		solid_checkf(Stages.Num() == NewStage->GetStageId(), TEXT("Stage ID does not match stage array index"));
-	}
+	RegisterStages(InStageCount);
 }
 
 void UFlecsWorld::PreallocateEntities(const int32 InEntityCount) const
@@ -780,60 +755,14 @@ void UFlecsWorld::SetThreads(const int32 InThreadCount)
 {
 	GetNativeFlecsWorld().set_threads(InThreadCount);
 	
-	for (UFlecsStage* Stage : Stages)
-	{
-		if (Stage)
-		{
-			Stage->DestroyStage();
-		}
-	}
-	
-	Stages.Empty();
-	
-	if (InThreadCount <= 1)
-	{
-		return;
-	}
-	
-	for (int32 StageIndex = 1; StageIndex < InThreadCount; ++StageIndex)
-	{
-		const TSolidNotNull<UFlecsStage*> NewStage = NewObject<UFlecsStage>(this);
-		NewStage->SetStageWorld(GetNativeFlecsWorld().get_stage(StageIndex));
-		
-		Stages.Add(NewStage);
-		solid_checkf(Stages.Num() == StageIndex, TEXT("Stage index does not match stage array index"));
-		solid_checkf(Stages.Num() == NewStage->GetStageId(), TEXT("Stage ID does not match stage array index"));
-	}
+	RegisterStages(InThreadCount);
 }
 
 void UFlecsWorld::SetTaskThreads(const int32 InThreadCount)
 {
 	GetNativeFlecsWorld().set_task_threads(InThreadCount);
 	
-	for (UFlecsStage* Stage : Stages)
-	{
-		if (Stage)
-		{
-			Stage->DestroyStage();
-		}
-	}
-	
-	Stages.Empty();
-	
-	if (InThreadCount <= 1)
-	{
-		return;
-	}
-	
-	for (int32 StageIndex = 1; StageIndex < InThreadCount; ++StageIndex)
-	{
-		const TSolidNotNull<UFlecsStage*> NewStage = NewObject<UFlecsStage>(this);
-		NewStage->SetStageWorld(GetNativeFlecsWorld().get_stage(StageIndex));
-		
-		Stages.Add(NewStage);
-		solid_checkf(Stages.Num() == StageIndex, TEXT("Stage index does not match stage array index"));
-		solid_checkf(Stages.Num() == NewStage->GetStageId(), TEXT("Stage ID does not match stage array index"));
-	}
+	RegisterStages(InThreadCount);
 }
 
 void UFlecsWorld::RunPipeline(const FFlecsId InPipeline, const double DeltaTime) const
@@ -973,8 +902,43 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 UFlecsStage* UFlecsWorld::GetStage(const int32 InStageId) const
 {
 	solid_cassumef(InStageId > 0, TEXT("Stage ID must be non-negative and can't be the same as the main world (0)"));
-	solid_checkf(Stages.IsValidIndex(InStageId - 1), TEXT("Stage ID %d is out of bounds"), InStageId);
+	solid_checkf(Stages.IsValidIndex(InStageId), TEXT("Stage ID %d is out of bounds"), InStageId);
 	return Stages[InStageId];
+}
+
+void UFlecsWorld::RegisterStages(const int32 InStageCount)
+{
+	for (UFlecsStage* Stage : Stages)
+	{
+		if (Stage)
+		{
+			Stage->DestroyStage();
+		}
+	}
+	
+	Stages.Empty();
+	
+	if (InStageCount <= 1)
+	{
+		Stages.Add(nullptr);
+		return;
+	}
+	
+	for (int32 StageIndex = 0; StageIndex < InStageCount; ++StageIndex)
+	{
+		if (StageIndex == 0)
+		{
+			Stages.Add(nullptr);
+			continue;
+		}
+		
+		const TSolidNotNull<UFlecsStage*> NewStage = NewObject<UFlecsStage>(this);
+		NewStage->SetStageWorld(GetNativeFlecsWorld().get_stage(StageIndex));
+		
+		Stages.Add(NewStage);
+		solid_checkf(Stages.Num() - 1 == StageIndex, TEXT("Stage index does not match stage array index"));
+		solid_checkf(Stages.Num() - 1 == NewStage->GetStageId(), TEXT("Stage ID does not match stage array index"));
+	}
 }
 
 UFlecsStage* UFlecsWorld::CreateAsyncStage()

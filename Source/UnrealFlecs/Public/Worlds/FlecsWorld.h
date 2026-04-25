@@ -144,12 +144,6 @@ public:
 		EndReadOnly();
 	}
 
-	template <typename TFunction>
-	void WithScoped(const FFlecsId InId, TFunction&& Function) const
-	{
-		World.with(InId, std::forward<TFunction>(Function));
-	}
-
 	void SetContext(void* InContext) const;
 
 	void HandleWorldPause();
@@ -317,8 +311,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Flecs")
 	UFlecsStage* GetStage(const int32 InStageId) const;
 	
-	UFUNCTION()
-	UFlecsStage* CreateAsyncStage();
+	void RegisterStages(const int32 InStageCount);
+	
+	NO_DISCARD UFlecsStage* CreateAsyncStage();
 	
 	void ImportRestModule();
 	void ImportStatsModule();

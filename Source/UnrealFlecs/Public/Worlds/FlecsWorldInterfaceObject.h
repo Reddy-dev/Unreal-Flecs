@@ -545,6 +545,12 @@ public:
 	FFlecsEntityHandle CreateEntityWithRecordWithId(const FFlecsEntityRecord& InRecord,
 													const FFlecsId InId) const;
 	
+	template <typename TFunction>
+	void WithScoped(const FFlecsId InId, TFunction&& Function) const
+	{
+		GetNativeFlecsWorld_Internal()->with(InId, std::forward<TFunction>(Function));
+	}
+	
 	/**
 	 * @brief Iterate over all Child Entities of the 0 Entity
 	 * @tparam FunctionType The function type
