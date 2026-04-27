@@ -311,6 +311,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Flecs")
 	UFlecsStage* GetStage(const int32 InStageId) const;
 	
+	NO_DISCARD UFlecsStage* GetStage(const flecs::world& InStageWorld) const;
+	
 	void RegisterStages(const int32 InStageCount);
 	
 	NO_DISCARD UFlecsStage* CreateAsyncStage();

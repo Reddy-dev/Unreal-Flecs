@@ -18,9 +18,11 @@
 #include "Components/FlecsWorldPtrComponent.h"
 #include "Components/UWorldPtrComponent.h"
 #include "Components/FlecsBeginPlayComponent.h"
+#include "General/FlecsDeveloperSettings.h"
 
 #include "General/FlecsGameplayTagManagerEntity.h"
 #include "General/FlecsModuleRegistry.h"
+#include "General/FlecsThreadAllocationPolicyBaseAsset.h"
 
 #include "Pipelines/FlecsGameLoopInterface.h"
 #include "Pipelines/TickFunctions/FlecsTickFunction.h"
@@ -234,25 +236,25 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 
 	for (const FFlecsDefaultMetaEntity& DefaultEntity : DefaultEntities)
 	{
-		flecs::entity NewDefaultEntity = FFlecsDefaultEntityEngine::Get().CreateDefaultEntity(DefaultEntity, DefaultWorld->GetNativeFlecsWorld());
+		flecs::entity NewDefaultEntity = FFlecsDefaultEntityEngine::Get()
+			.CreateDefaultEntity(DefaultEntity, DefaultWorld->GetNativeFlecsWorld());
 
 		UE_LOGFMT(LogFlecsCore, Log,
 		          "Created default entity {EntityName} with id {EntityId}",
 		          DefaultEntity.EntityName, NewDefaultEntity.id());
 	}
 
-	const IConsoleManager& ConsoleManager = IConsoleManager::Get();
+	const UFlecsThreadAllocationPolicyBaseAsset* ThreadAllocationPolicy = GetDefault<UFlecsDeveloperSettings>()->ThreadAllocationPolicy.LoadSynchronous();
+	solid_checkf(IsValid(ThreadAllocationPolicy), TEXT("Thread allocation policy cannot be null"));
 
-	if (ConsoleManager.FindConsoleVariable(TEXT("Flecs.UseTaskThreads"))->GetBool())
+	TTuple<EFlecsThreadAllocationType, int32> ThreadAllocationResult = ThreadAllocationPolicy->GetThreadCountAllocation(DefaultWorld);
+	if (ThreadAllocationResult.Get<0>() == EFlecsThreadAllocationType::TaskThreads)
 	{
-		const TSolidNotNull<IConsoleVariable*> TaskThreads
-			= ConsoleManager.FindConsoleVariable(TEXT("Flecs.TaskThreadCount"));
-			
-		DefaultWorld->SetTaskThreads(TaskThreads->GetInt());
+		DefaultWorld->SetTaskThreads(ThreadAllocationResult.Get<1>());
 	}
 	else
 	{
-		DefaultWorld->SetThreads(FMath::Max(1, FPlatformMisc::NumberOfCores() - 2));
+		DefaultWorld->SetThreads(ThreadAllocationResult.Get<1>());
 	}
 	
 	if (Settings.bImportRest)

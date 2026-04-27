@@ -15,7 +15,7 @@ public:
 
 private:
     void RegisterExplorerMenuExtension();
-    void AddPrimaryAssetTypes();
+    void AddPrimaryAssetTypes() const;
     
     TSharedPtr<FFlecsIdPinFactory> FlecsIdPinFactory;
     

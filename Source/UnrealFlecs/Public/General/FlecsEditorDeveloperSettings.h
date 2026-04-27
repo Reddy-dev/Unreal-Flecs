@@ -29,6 +29,12 @@ public:
 	UPROPERTY(EditAnywhere, Config, Category = "Explorer")
 	FFlecsEditorExplorerURL FlecsExplorerURL;
 
+	/**
+	 * @brief Suppresses the startup warning about FlecsThreadAllocationPolicy not being registered in the Asset Manager.
+	 */
+	UPROPERTY(EditAnywhere, Config, Category = "Warnings")
+	bool bIgnoreThreadAllocationPolicyWarning = false;
+
 	NO_DISCARD FFlecsEditorExplorerURL GetFlecsExplorerURL() const;
 
 #if WITH_EDITOR

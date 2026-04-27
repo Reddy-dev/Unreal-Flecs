@@ -649,8 +649,7 @@ public:
 	NO_DISCARD SOLID_INLINE FString GetPathFrom(const FString& InSeparator = "::",
 		const FString& InitialSeparator = "::") const
 	{
-		return FString(GetEntityView().path_from<T>(
-			StringCast<char>(*InSeparator).Get(),
+		return FString(GetEntityView().path_from<T>(StringCast<char>(*InSeparator).Get(),
 			StringCast<char>(*InitialSeparator).Get()));
 	}
 

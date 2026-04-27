@@ -906,6 +906,17 @@ UFlecsStage* UFlecsWorld::GetStage(const int32 InStageId) const
 	return Stages[InStageId];
 }
 
+UFlecsStage* UFlecsWorld::GetStage(const flecs::world& InStageWorld) const
+{
+	if UNLIKELY_IF(!InStageWorld.is_stage())
+	{
+		return nullptr;
+	}
+	
+	const int32 StageId = InStageWorld.get_stage_id();
+	return GetStage(StageId);
+}
+
 void UFlecsWorld::RegisterStages(const int32 InStageCount)
 {
 	for (UFlecsStage* Stage : Stages)
