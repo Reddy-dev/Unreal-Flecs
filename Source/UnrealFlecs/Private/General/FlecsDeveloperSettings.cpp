@@ -37,6 +37,7 @@ static FAutoConsoleVariableSink CVarFlecsLogLevelSink(FConsoleCommandDelegate::C
 UFlecsDeveloperSettings::UFlecsDeveloperSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+	ThreadAllocationPolicy = TSoftObjectPtr<UFlecsThreadAllocationPolicyBaseAsset>(FSoftObjectPath(TEXT("/UnrealFlecs/DA_DefaultFlecsThreadAllocation.DA_DefaultFlecsThreadAllocation")));
 }
 
 void UFlecsDeveloperSettings::PostInitProperties()
