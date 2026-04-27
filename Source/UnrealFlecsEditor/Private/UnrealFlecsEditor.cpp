@@ -182,7 +182,7 @@ void FUnrealFlecsEditorModule::AddPrimaryAssetTypes() const
 			if (const TSharedPtr<SNotificationItem> Pinned = WeakNotification->Pin())
 			{
 				Pinned->SetCompletionState(SNotificationItem::CS_Success);
-				Pinned->ExpireAndFadeout();
+				Pinned->Fadeout();
 			}
 		}),
 		SNotificationItem::CS_None
@@ -196,7 +196,7 @@ void FUnrealFlecsEditorModule::AddPrimaryAssetTypes() const
 			if (TSharedPtr<SNotificationItem> Pinned = WeakNotification->Pin())
 			{
 				Pinned->SetCompletionState(SNotificationItem::CS_None);
-				Pinned->ExpireAndFadeout();
+				Pinned->Fadeout();
 			}
 		}),
 		SNotificationItem::CS_None
@@ -216,7 +216,7 @@ void FUnrealFlecsEditorModule::AddPrimaryAssetTypes() const
 			if (TSharedPtr<SNotificationItem> Pinned = WeakNotification->Pin())
 			{
 				Pinned->SetCompletionState(SNotificationItem::CS_None);
-				Pinned->ExpireAndFadeout();
+				Pinned->Fadeout();
 			}
 		}),
 		SNotificationItem::CS_None
