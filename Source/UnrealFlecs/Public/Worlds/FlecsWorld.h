@@ -312,6 +312,7 @@ public:
 	UFlecsStage* GetStage(const int32 InStageId) const;
 	
 	NO_DISCARD UFlecsStage* GetStage(const flecs::world& InStageWorld) const;
+	NO_DISCARD UFlecsStage* GetStage(const flecs::iter& InIter) const;
 	
 	void RegisterStages(const int32 InStageCount);
 	

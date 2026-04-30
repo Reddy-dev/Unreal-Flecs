@@ -901,19 +901,35 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 
 UFlecsStage* UFlecsWorld::GetStage(const int32 InStageId) const
 {
-	solid_cassumef(InStageId > 0, TEXT("Stage ID must be non-negative and can't be the same as the main world (0)"));
+	if (InStageId == 0)
+	{
+		return nullptr;
+	}
+	
+	solid_cassumef(InStageId >= 0, TEXT("Stage ID must be non-negative and can't be the same as the main world (0)"));
 	solid_checkf(Stages.IsValidIndex(InStageId), TEXT("Stage ID %d is out of bounds"), InStageId);
 	return Stages[InStageId];
 }
 
 UFlecsStage* UFlecsWorld::GetStage(const flecs::world& InStageWorld) const
 {
-	if UNLIKELY_IF(!InStageWorld.is_stage())
+	if (!InStageWorld.is_stage())
 	{
 		return nullptr;
 	}
 	
 	const int32 StageId = InStageWorld.get_stage_id();
+	return GetStage(StageId);
+}
+
+UFlecsStage* UFlecsWorld::GetStage(const flecs::iter& InIter) const
+{
+	if (!InIter.world().is_stage())
+	{
+		return nullptr;
+	}
+	
+	const int32 StageId = InIter.world().get_stage_id();
 	return GetStage(StageId);
 }
 
