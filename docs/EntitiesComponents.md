@@ -414,113 +414,100 @@ world.SetVersion(versionedId);
 </div>
 
 ### Ranges
-An application can instruct Flecs to issue ids from a specific offset and up to a certain limit with the `ecs_set_entity_range` operation. This example ensures that id generation starts from id 5000:
+An application can instruct Flecs to issue new entity ids from a specific `[min, max]` interval. A range is created with `ecs_entity_range_new` and activated with `ecs_entity_range_set`. While a range is active, both newly issued and recycled ids fall within the range:
 
 <div class="flecs-snippet-tabs">
 <ul>
 <li><b class="tab-title">C</b>
 
 ```c
-ecs_set_entity_range(world, 5000, 0);
+const ecs_entity_range_t *range = ecs_entity_range_new(world, 5000, 10000);
+ecs_entity_range_set(world, range);
+
+ecs_entity_t e = ecs_new(world); // 5000
 ```
 
 </li>
 <li><b class="tab-title">C++</b>
 
 ```cpp
-world.set_entity_range(5000, 0);
+auto range = world.range_new(5000, 10000);
+world.range_set(range);
+
+flecs::entity e = world.entity(); // 5000
 ```
 
-</li>
-<li><b class="tab-title">C#</b>
-
-```cs
-world.SetEntityRange(5000, 0);
-```
-
-</li>
-<li><b class="tab-title">Rust</b>
-
-```rust
-world.set_entity_range(5000, 0);
-```
 </li>
 </ul>
 </div>
 
-If the last issued id was higher than 5000, the operation will not cause the last id to be reset to 5000. An application can also specify the highest id that can be generated:
+If `0` is passed for `max`, the range has no upper bound. When the active range runs out of available ids, operations that create new entities will assert.
+
+Each range maintains its own list of recycled ids. This means recycled ids never leak across ranges, and the recycled ids of a range are preserved when switching to a different range and back:
 
 <div class="flecs-snippet-tabs">
 <ul>
 <li><b class="tab-title">C</b>
 
 ```c
-ecs_set_entity_range(world, 5000, 10000);
+const ecs_entity_range_t *range_a = ecs_entity_range_new(world, 1000, 2000);
+const ecs_entity_range_t *range_b = ecs_entity_range_new(world, 3000, 4000);
+
+ecs_entity_range_set(world, range_a);
+ecs_entity_t e1 = ecs_new(world);    // 1000
+ecs_delete(world, e1);
+
+ecs_entity_range_set(world, range_b);
+ecs_entity_t e2 = ecs_new(world);    // 3000, not a recycled 1000
+
+ecs_entity_range_set(world, range_a);
+ecs_entity_t e3 = ecs_new(world);    // recycles 1000 from range_a
 ```
 
 </li>
 <li><b class="tab-title">C++</b>
 
 ```cpp
-world.set_entity_range(5000, 10000);
+auto range_a = world.range_new(1000, 2000);
+auto range_b = world.range_new(3000, 4000);
+
+world.range_set(range_a);
+auto e1 = world.entity();     // 1000
+e1.destruct();
+
+world.range_set(range_b);
+auto e2 = world.entity();     // 3000, not a recycled 1000
+
+world.range_set(range_a);
+auto e3 = world.entity();     // recycles 1000 from range_a
 ```
 
-</li>
-<li><b class="tab-title">C#</b>
-
-```cs
-world.SetEntityRange(5000, 10000);
-```
-
-</li>
-<li><b class="tab-title">Rust</b>
-
-```rust
-world.set_entity_range(5000, 10000);
-```
 </li>
 </ul>
 </div>
 
-If invoking `ecs_new` would result in an id higher than `10000`, the application would assert. If `0` is provided for the maximum id, no upper bound will be enforced.
-
-Note that at the moment setting the range _does not_ affect recycled ids. It is therefore possible that `ecs_new` returns an id outside of the specified range if a recycle-able id is available. This is an issue that will be addressed in future versions.
-
-It is possible for an application to enforce that entity operations are only allowed for the configured range with the `ecs_enable_range_check` operation:
+The currently active range can be queried with `ecs_entity_range_get`, which returns `NULL` when no range is active:
 
 <div class="flecs-snippet-tabs">
 <ul>
 <li><b class="tab-title">C</b>
 
 ```c
-ecs_enable_range_check(world, true);
+const ecs_entity_range_t *active = ecs_entity_range_get(world);
 ```
 
 </li>
 <li><b class="tab-title">C++</b>
 
 ```cpp
-world.enable_range_check();
+auto active = world.range_get();
 ```
 
-</li>
-<li><b class="tab-title">C#</b>
-
-```cs
-world.EnableRangeCheck(true);
-```
-
-</li>
-<li><b class="tab-title">Rust</b>
-
-```rust
-world.enable_range_check(true);
-```
 </li>
 </ul>
 </div>
 
-This can be useful for enforcing simple ownership behavior, where different id ranges are mapped out for different owners (often game clients or servers).
+Ranges cannot be deleted; they live for the lifetime of the world. To stop using a range, activate a different one. This makes ranges useful for enforcing simple ownership behavior, where different id ranges are mapped out for different owners (often game clients or servers).
 
 ### Names
 Entity can be given names, which allows them to be looked up on the world. An example:
