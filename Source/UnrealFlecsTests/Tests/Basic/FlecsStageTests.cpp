@@ -54,6 +54,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A12_UnrealFlecsStageTests,
 				while (Iter.next())
 				{
 					bSystemFired = true;
+					// idk how legal this is
 					CapturedStage = FlecsWorld->GetStage(Iter);
 				}
 			});
