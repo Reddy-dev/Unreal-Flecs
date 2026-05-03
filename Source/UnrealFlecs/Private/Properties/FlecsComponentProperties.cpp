@@ -45,9 +45,7 @@ namespace UE::Flecs::Private
 			});
 
 		// if you are hitting this, you most likely have REGISTER_FLECS_COMPONENT in a header file or inl file
-		solid_checkf(!bAlreadyPending,
-			TEXT("Component with name %s is already pending registration!"),
-			*InDefinition.Name);
+		solid_checkf(!bAlreadyPending, TEXT("Component with name %s is already pending registration!"), *InDefinition.Name);
 
 		PendingDefinitions.Add(InDefinition);
 	}
