@@ -14,8 +14,8 @@ class UNREALFLECS_API UFlecsAddTickFunctionObserver final : public UFlecsObserve
 	GENERATED_BODY()
 	
 public:
-	virtual void BuildObserver(const TSolidNotNull<UFlecsWorld*> InWorld, TFlecsObserverBuilder<>& InOutBuilder) const override;
-	virtual void EachIterator(const TSolidNotNull<UFlecsWorld*> InWorld, flecs::iter& InIterator, const FFlecsId InIndex) override;
+	virtual void BuildObserver(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld, TFlecsObserverBuilder<>& InOutBuilder) const override;
+	virtual void EachIterator(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld, flecs::iter& InIterator, const FFlecsId InIndex) override;
 	
 }; // class UFlecsAddTickFunctionObserver
 
@@ -25,8 +25,8 @@ class UNREALFLECS_API UFlecsRemoveTickFunctionObserver final : public UFlecsObse
 	GENERATED_BODY()
 	
 public:
-	virtual void BuildObserver(const TSolidNotNull<UFlecsWorld*> InWorld, TFlecsObserverBuilder<>& InOutBuilder) const override;
-	virtual void EachIterator(const TSolidNotNull<UFlecsWorld*> InWorld, flecs::iter& InIterator, const FFlecsId InIndex) override;
+	virtual void BuildObserver(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld, TFlecsObserverBuilder<>& InOutBuilder) const override;
+	virtual void EachIterator(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld, flecs::iter& InIterator, const FFlecsId InIndex) override;
 	
 }; // class UFlecsRemoveTickFunctionObserver
 

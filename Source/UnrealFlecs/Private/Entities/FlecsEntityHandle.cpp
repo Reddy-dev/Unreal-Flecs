@@ -13,9 +13,9 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsEntityHandle)
 
-FFlecsEntityHandle FFlecsEntityHandle::GetNullHandle(const TSolidNotNull<const UFlecsWorld*> InWorld)
+FFlecsEntityHandle FFlecsEntityHandle::GetNullHandle(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld)
 {
-    return flecs::entity::null(InWorld->World);
+    return flecs::entity::null(InWorld->GetNativeFlecsWorld());
 }
 
 const FFlecsEntityHandle::FSelfType& FFlecsEntityHandle::AddCollection(const FFlecsId InCollection,

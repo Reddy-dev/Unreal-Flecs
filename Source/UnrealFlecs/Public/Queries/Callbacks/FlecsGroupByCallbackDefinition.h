@@ -17,7 +17,7 @@
 
 namespace UE::Flecs::Queries
 {
-	using FUnrealGroupByFunctionType = uint64(*)(const TSolidNotNull<UFlecsWorld*>, FFlecsTableHandle, FFlecsId, FInstancedStruct);
+	using FUnrealGroupByFunctionType = uint64(*)(const TSolidNotNull<UFlecsWorldInterfaceObject*>, FFlecsTableHandle, FFlecsId, FInstancedStruct);
 	
 	struct FFlecsGroupByContextData
 	{

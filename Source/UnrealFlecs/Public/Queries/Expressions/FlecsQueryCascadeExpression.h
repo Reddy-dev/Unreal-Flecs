@@ -19,7 +19,7 @@ struct UNREALFLECS_API FFlecsQueryCascadeExpression : public FFlecsQueryExpressi
 public:
 	FFlecsQueryCascadeExpression();
 	
-	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const override;
+	virtual void Apply(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const override;
 	
 	UPROPERTY(EditAnywhere, meta = (AllowPairInput = false, AllowStringInput = false))
 	TOptional<FFlecsQueryGeneratorInput> Traversal;

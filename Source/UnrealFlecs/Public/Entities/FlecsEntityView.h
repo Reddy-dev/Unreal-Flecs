@@ -14,7 +14,7 @@
 
 #include "FlecsEntityView.generated.h"
 
-class UFlecsWorld;
+class UFlecsWorldInterfaceObject;
 
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsEntityView : public FFlecsCommonHandle
@@ -33,7 +33,7 @@ struct UNREALFLECS_API FFlecsEntityView : public FFlecsCommonHandle
 		return FFlecsEntityView(flecs::entity::null());
 	}
 
-	static NO_DISCARD FFlecsEntityView GetNullHandle(const TSolidNotNull<const UFlecsWorld*> InWorld);
+	static NO_DISCARD FFlecsEntityView GetNullHandle(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld);
 
 public:
 	using FFlecsCommonHandle::FFlecsCommonHandle;
@@ -649,8 +649,7 @@ public:
 	NO_DISCARD SOLID_INLINE FString GetPathFrom(const FString& InSeparator = "::",
 		const FString& InitialSeparator = "::") const
 	{
-		return FString(GetEntityView().path_from<T>(
-			StringCast<char>(*InSeparator).Get(),
+		return FString(GetEntityView().path_from<T>(StringCast<char>(*InSeparator).Get(),
 			StringCast<char>(*InitialSeparator).Get()));
 	}
 

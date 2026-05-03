@@ -10,7 +10,7 @@ FFlecsQueryScopeExpression::FFlecsQueryScopeExpression() : Super(true /* bInAllo
 {
 }
 
-void FFlecsQueryScopeExpression::Apply(const TSolidNotNull<const UFlecsWorld*> InWorld,
+void FFlecsQueryScopeExpression::Apply(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld,
 	FFlecsQueryBuilderView& InQueryBuilder) const
 {
 	if (ScopeType == EFlecsQueryScopeExpressionType::Open)

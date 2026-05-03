@@ -8,7 +8,7 @@
 #include "FlecsObserverHandle.h"
 #include "Queries/FlecsQueryBuilder.h"
 
-class UFlecsWorld;
+class UFlecsWorldInterfaceObject;
 
 template <typename ...TComponents>
 struct TFlecsObserverBuilder : public TFlecsObserverBuilderBase<TFlecsObserverBuilder<TComponents...>, FFlecsObserverHandle, TComponents...>
@@ -21,10 +21,10 @@ public:
 		return const_cast<FFlecsObserverDefinition&>(ObserverDefinition);
 	}
 	
-	FORCEINLINE TFlecsObserverBuilder(const TSolidNotNull<const UFlecsWorld*> InWorld, const FString& InOptionalName, 
+	FORCEINLINE TFlecsObserverBuilder(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, const FString& InOptionalName, 
 		const FFlecsObserverDefinition& InObserverDefinition = FFlecsObserverDefinition())
 									: ObserverDefinition(InObserverDefinition)
-									, World(InWorld)
+									, FlecsWorld(InWorld)
 									, OptionalName(InOptionalName)
 	{
 		UE::Flecs::Queries::TAddInputTypes<TFlecsObserverBuilder, TComponents...>::Apply(*this);
@@ -32,7 +32,7 @@ public:
 
 	FFlecsObserverDefinition ObserverDefinition;
 	
-	TWeakObjectPtr<const UFlecsWorld> World;
+	TWeakObjectPtr<const UFlecsWorldInterfaceObject> FlecsWorld;
 	
 	FString OptionalName;
 	
@@ -40,9 +40,9 @@ protected:
 	
 	FORCEINLINE FFlecsObserverHandle CreateObserver() const
 	{
-		solid_checkf(World.IsValid(), TEXT("World is not valid."));
+		solid_checkf(FlecsWorld.IsValid(), TEXT("World is not valid."));
 		
-		return FFlecsObserverHandle(World.Get(), ObserverDefinition, OptionalName);
+		return FFlecsObserverHandle(FlecsWorld.Get(), ObserverDefinition, OptionalName);
 	}
 
 	FORCEINLINE FFlecsObserverHandle CreateRunObserver() const

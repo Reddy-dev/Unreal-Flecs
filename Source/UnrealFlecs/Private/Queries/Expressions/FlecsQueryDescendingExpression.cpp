@@ -10,7 +10,7 @@ FFlecsQueryDescendingExpression::FFlecsQueryDescendingExpression() : Super(false
 {
 }
 
-void FFlecsQueryDescendingExpression::Apply(const TSolidNotNull<const UFlecsWorld*> InWorld,
+void FFlecsQueryDescendingExpression::Apply(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld,
                                             FFlecsQueryBuilderView& InQueryBuilder) const
 {
 	InQueryBuilder.desc();

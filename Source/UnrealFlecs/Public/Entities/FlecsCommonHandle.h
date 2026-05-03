@@ -9,7 +9,7 @@
 
 #include "FlecsCommonHandle.generated.h"
 
-class UFlecsWorld;
+class UFlecsWorldInterfaceObject;
 
 /**
  * @brief A common handle to a flecs entity. This is the base for all entity handles in Unreal-Flecs.
@@ -117,7 +117,7 @@ public:
 		Entity = flecs::entity(InWorld, InEntity);
 	}
 
-	FFlecsCommonHandle(const TSolidNotNull<const UFlecsWorld*> InWorld, const FFlecsId InEntity);
+	FFlecsCommonHandle(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, const FFlecsId InEntity);
 	FFlecsCommonHandle(const flecs::world_t* InWorld, const FFlecsId InEntity);
 	
 	SOLID_INLINE FFlecsCommonHandle(const flecs::entity_view& View)
@@ -247,9 +247,9 @@ public:
 	 * @brief Get the UnrealFlecs world, will assert if the world is not an UnrealFlecs world.
 	 * @return The UnrealFlecs world.
 	 */
-	NO_DISCARD UFlecsWorld* GetFlecsWorld() const;
+	NO_DISCARD UFlecsWorldInterfaceObject* GetFlecsWorld() const;
 
-	NO_DISCARD TSolidNotNull<UFlecsWorld*> GetFlecsWorldChecked() const;
+	NO_DISCARD TSolidNotNull<UFlecsWorldInterfaceObject*> GetFlecsWorldChecked() const;
 	
 	/**
 	 * @brief Check if the world is an UnrealFlecs world.
@@ -263,12 +263,6 @@ public:
 	 * @return The outer world.
 	 */
 	NO_DISCARD TSolidNotNull<UWorld*> GetOuterWorld() const;
-	
-	/**
-	 * @brief Get the name of the flecs world, World must be an UnrealFlecs world.
-	 * @return The name of the flecs world.
-	 */
-	NO_DISCARD FString GetWorldName() const;
 
 	template <UE::Flecs::TFlecsEntityHandleTypeConcept THandleType>
 	NO_DISCARD SOLID_INLINE THandleType ObtainComponentTypeStruct(const TSolidNotNull<const UScriptStruct*> StructType) const
@@ -361,11 +355,3 @@ protected:
 	flecs::id Entity;
 	
 }; // struct FFlecsCommonHandle
-
-template <typename TInherited>
-struct UNREALFLECS_API TTypedFlecsCommonHandle : public FFlecsCommonHandle
-{
-	using InheritedType = TInherited;
-	using SelfType = InheritedType;
-	
-}; // struct TTypedFlecsCommonHandle

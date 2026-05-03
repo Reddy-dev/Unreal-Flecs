@@ -521,27 +521,30 @@ public:
 				ComponentHandle.Add<FFlecsAddReferencedObjectsTrait>();
 			}
 			
+			const TSolidNotNull<const UFlecsWorldInterfaceObject*> WorldInterface =
+				static_cast<const UFlecsWorldInterfaceObject*>(static_cast<const UFlecsWorld*>(InFlecsWorld));
+
 			for (const FFlecsQueryGeneratorInput& WithType : ComponentProperties.WithTypes)
 			{
-				ComponentHandle.AddWith(WithType.GetFirstTermRef(InFlecsWorld).Get<FFlecsId>());
+				ComponentHandle.AddWith(WithType.GetFirstTermRef(WorldInterface).Get<FFlecsId>());
 			}
-			
+
 			for (const FFlecsQueryGeneratorInput& DependsOn : ComponentProperties.DependsOn)
 			{
-				ComponentHandle.AddPair(flecs::DependsOn, 
-					DependsOn.GetFirstTermRef(InFlecsWorld).Get<FFlecsId>());
+				ComponentHandle.AddPair(flecs::DependsOn,
+					DependsOn.GetFirstTermRef(WorldInterface).Get<FFlecsId>());
 			}
-			
+
 			if (ComponentProperties.ChildOf.IsSet())
 			{
-				ComponentHandle.AddPair(flecs::ChildOf, 
-					ComponentProperties.ChildOf.GetValue().GetFirstTermRef(InFlecsWorld).Get<FFlecsId>());
+				ComponentHandle.AddPair(flecs::ChildOf,
+					ComponentProperties.ChildOf.GetValue().GetFirstTermRef(WorldInterface).Get<FFlecsId>());
 			}
-			
+
 			if (ComponentProperties.InheritsFrom.IsSet())
 			{
-				ComponentHandle.AddPair(flecs::IsA, 
-					ComponentProperties.InheritsFrom.GetValue().GetFirstTermRef(InFlecsWorld).Get<FFlecsId>());
+				ComponentHandle.AddPair(flecs::IsA,
+					ComponentProperties.InheritsFrom.GetValue().GetFirstTermRef(WorldInterface).Get<FFlecsId>());
 			}
 			
 			TFlecsComponentTraits<T>::PostRegister(ComponentHandle);

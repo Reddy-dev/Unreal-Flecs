@@ -16,18 +16,6 @@ static TAutoConsoleVariable<bool> CVarEnableFlecs(
 	TEXT("Enable Unreal Flecs Plugin.")
 );
 
-static TAutoConsoleVariable<bool> CVarUseTaskThreads(
-	TEXT("Flecs.UseTaskThreads"),
-	true,
-	TEXT("Enable task threads for Flecs.")
-);
-
-static TAutoConsoleVariable<int32> CVarTaskThreadCount(
-	TEXT("Flecs.TaskThreadCount"),
-	8,
-	TEXT("Number of threads to use for Flecs task processing.")
-);
-
 // Sets the Flecs log level based on the console variable and when the CVar changes
 static void FlecsLogLevelSink()
 {
@@ -45,6 +33,12 @@ static TAutoConsoleVariable<int32> CVarFlecsLogLevel(
 	ECVF_Default);
 
 static FAutoConsoleVariableSink CVarFlecsLogLevelSink(FConsoleCommandDelegate::CreateStatic(&FlecsLogLevelSink));
+
+UFlecsDeveloperSettings::UFlecsDeveloperSettings(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+	ThreadAllocationPolicy = TSoftObjectPtr<UFlecsThreadAllocationPolicyBaseAsset>(FSoftObjectPath(TEXT("/UnrealFlecs/DA_DefaultFlecsThreadAllocation.DA_DefaultFlecsThreadAllocation")));
+}
 
 void UFlecsDeveloperSettings::PostInitProperties()
 {
@@ -72,7 +66,7 @@ void UFlecsDeveloperSettings::PostEditChangeProperty(FPropertyChangedEvent& Prop
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-	if (PropertyChangedEvent.Property)
+	if (PropertyChangedEvent.Property && PropertyChangedEvent.Property->HasAnyPropertyFlags(CPF_Config) && PropertyChangedEvent.Property->HasMetaData(TEXT("ConsoleVariable")))
 	{
 		ExportValuesToConsoleVariables(PropertyChangedEvent.Property);
 	}

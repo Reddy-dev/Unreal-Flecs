@@ -13,7 +13,7 @@ FFlecsQueryCascadeExpression::FFlecsQueryCascadeExpression() : Super(false /* bI
 {
 }
 
-void FFlecsQueryCascadeExpression::Apply(const TSolidNotNull<const UFlecsWorld*> InWorld,
+void FFlecsQueryCascadeExpression::Apply(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld,
 	FFlecsQueryBuilderView& InQueryBuilder) const
 {
 	if (Traversal.IsSet())

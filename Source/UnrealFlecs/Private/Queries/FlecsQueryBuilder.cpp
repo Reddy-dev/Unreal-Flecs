@@ -3,19 +3,19 @@
 #include "Queries/FlecsQueryBuilder.h"
 
 #include "Queries/FlecsQueryBuilderView.h"
-#include "Worlds/FlecsWorld.h"
+#include "Worlds/FlecsWorldInterfaceObject.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsQueryBuilder)
 
-FFlecsQueryBuilder::FFlecsQueryBuilder(const UFlecsWorld* InWorld, const FString& InQueryName)
+FFlecsQueryBuilder::FFlecsQueryBuilder(const UFlecsWorldInterfaceObject* InWorld, const FString& InQueryName)
 	: QueryName(InQueryName)
 {
-	World = InWorld;
+	FlecsWorld = InWorld;
 }
 
-FFlecsQueryBuilder::FFlecsQueryBuilder(const UFlecsWorld* InWorld, const FFlecsEntityHandle& InQueryEntity)
+FFlecsQueryBuilder::FFlecsQueryBuilder(const UFlecsWorldInterfaceObject* InWorld, const FFlecsEntityHandle& InQueryEntity)
 {
-	World = InWorld;
+	FlecsWorld = InWorld;
 	OptionalQueryEntity = InQueryEntity;
 }
 
@@ -26,16 +26,16 @@ FFlecsQuery FFlecsQueryBuilder::Build() const
 		const FFlecsEntityHandle QueryEntity = OptionalQueryEntity.GetValue();
 		solid_checkf(QueryEntity.IsValid(), TEXT("Invalid query entity provided to FlecsQueryBuilder"));
 		
-		flecs::query_builder<> Builder = flecs::query_builder<>(World->World, QueryEntity);
+		flecs::query_builder<> Builder = flecs::query_builder<>(FlecsWorld->GetNativeFlecsWorld(), QueryEntity);
 		FFlecsQueryBuilderView BuilderView = MakeQueryBuilderView_Internal(Builder);
-		Definition.Apply(World.Get(), BuilderView);
+		Definition.Apply(FlecsWorld.Get(), BuilderView);
 		return FFlecsQuery(Builder.build());
 	}
 	else
 	{
-		flecs::query_builder<> Builder = flecs::query_builder<>(World->World, StringCast<char>(*QueryName).Get());
+		flecs::query_builder<> Builder = flecs::query_builder<>(FlecsWorld->GetNativeFlecsWorld(), StringCast<char>(*QueryName).Get());
 		FFlecsQueryBuilderView BuilderView = MakeQueryBuilderView_Internal(Builder);
-		Definition.Apply(World.Get(), BuilderView);
+		Definition.Apply(FlecsWorld.Get(), BuilderView);
 		return FFlecsQuery(Builder.build());
 	}
 }

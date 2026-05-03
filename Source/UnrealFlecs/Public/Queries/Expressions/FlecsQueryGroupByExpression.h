@@ -19,7 +19,7 @@ struct UNREALFLECS_API FFlecsQueryGroupByExpression : public FFlecsQueryExpressi
 public:
 	FFlecsQueryGroupByExpression();
 	
-	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const override;
+	virtual void Apply(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const override;
 	
 	UPROPERTY(EditAnywhere)
 	TInstancedStruct<FFlecsQueryGeneratorInputType> GroupByInput;

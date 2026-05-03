@@ -12,7 +12,7 @@ FFlecsQueryGroupByExpression::FFlecsQueryGroupByExpression() : Super(true /* bIn
 {
 }
 
-void FFlecsQueryGroupByExpression::Apply(const TSolidNotNull<const UFlecsWorld*> InWorld,
+void FFlecsQueryGroupByExpression::Apply(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld,
 	FFlecsQueryBuilderView& InQueryBuilder) const
 {
 	FFlecsId GroupByComponentId;

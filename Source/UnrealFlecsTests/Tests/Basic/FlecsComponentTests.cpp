@@ -465,7 +465,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A3_UnrealFlecsBasicComponentTests,
 		ToggleableEntityTest = FlecsWorld->CreateEntity("ToggleableEntityTest")
 			.Add<FFlecsTestStruct_Toggleable>();
 
-		Query = FlecsWorld->World.query_builder<FFlecsTestStruct_Value>()
+		Query = FlecsWorld->GetNativeFlecsWorld().query_builder<FFlecsTestStruct_Value>()
 			.cached()
 			.detect_changes()
 			.build();

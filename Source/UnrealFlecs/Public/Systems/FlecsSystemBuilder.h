@@ -19,10 +19,10 @@ public:
 		return const_cast<FFlecsSystemDefinition&>(SystemDefinition);
 	}
 	
-	FORCEINLINE TFlecsSystemBuilder(const TSolidNotNull<const UFlecsWorld*> InWorld, const FString& InOptionalName, 
+	FORCEINLINE TFlecsSystemBuilder(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, const FString& InOptionalName, 
 		const FFlecsSystemDefinition& InObserverDefinition = FFlecsSystemDefinition())
 									: SystemDefinition(InObserverDefinition)
-									, World(InWorld)
+									, FlecsWorld(InWorld)
 									, OptionalName(InOptionalName)
 	{
 		UE::Flecs::Queries::TAddInputTypes<TFlecsSystemBuilder, TComponents...>::Apply(*this);
@@ -30,7 +30,7 @@ public:
 	
 	FFlecsSystemDefinition SystemDefinition;
 	
-	TWeakObjectPtr<const UFlecsWorld> World;
+	TWeakObjectPtr<const UFlecsWorldInterfaceObject> FlecsWorld;
 	
 	FString OptionalName;
 	
@@ -38,9 +38,9 @@ protected:
 	
 	FORCEINLINE FFlecsSystemHandle CreateSystem() const
 	{
-		solid_checkf(World.IsValid(), TEXT("World is not valid."));
+		solid_checkf(FlecsWorld.IsValid(), TEXT("World is not valid."));
 		
-		return FFlecsSystemHandle(World.Get(), SystemDefinition, OptionalName);
+		return FFlecsSystemHandle(FlecsWorld.Get(), SystemDefinition, OptionalName);
 	}
 	
 	FORCEINLINE FFlecsSystemHandle CreateRunSystem() const

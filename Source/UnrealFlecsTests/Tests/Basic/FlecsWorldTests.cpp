@@ -111,7 +111,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A1_FlecsWorldTests, "UnrealFlecs.A1_World",
 
 	TEST_METHOD(B3_CanConvertFlecsWorldToUFlecsWorld)
 	{
-		const TSolidNotNull<UFlecsWorld*> ConvertedWorld = UE::Flecs::ToUnrealFlecsWorld(FlecsWorld->World);
+		const TSolidNotNull<UFlecsWorld*> ConvertedWorld = UE::Flecs::ToUnrealFlecsWorld(FlecsWorld->GetNativeFlecsWorld());
 		ASSERT_THAT(IsTrue(IsValid(ConvertedWorld)));
 		
 		ASSERT_THAT(IsTrue(FlecsWorld == ConvertedWorld));
@@ -119,7 +119,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A1_FlecsWorldTests, "UnrealFlecs.A1_World",
 
 	TEST_METHOD(B4_IsUnrealFlecsWorld)
 	{
-		ASSERT_THAT(IsTrue(FlecsWorld->HasSingleton<FUnrealFlecsWorldTag>()));
+		ASSERT_THAT(IsTrue(FlecsWorld->Has<FUnrealFlecsWorldTag>()));
 
 		flecs::world non_unreal_world;
 		non_unreal_world.component<FUnrealFlecsWorldTag>();
@@ -142,7 +142,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A1_FlecsWorldTests, "UnrealFlecs.A1_World",
 		
 		ASSERT_THAT(IsTrue(FlecsWorld->IsAlive(EntityWithId)));
 		
-		ASSERT_THAT(AreEqual(EntityWithId, FlecsWorld->GetEntity(TestId)));
+		ASSERT_THAT(AreEqual(EntityWithId, FlecsWorld->GetAlive(TestId)));
 	}
 
 	TEST_METHOD(C3_CanAddRemoveTag)

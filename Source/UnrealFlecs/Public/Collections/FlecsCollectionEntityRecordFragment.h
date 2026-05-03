@@ -25,7 +25,7 @@ public:
 	UPROPERTY(EditAnywhere, Category="Flecs|Entity")
 	TArray<FFlecsCollectionInstancedReference> CollectionInstancedReferences;
 
-	virtual void PostApplyRecordToEntity(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld,
+	virtual void PostApplyRecordToEntity(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InFlecsWorld,
 		const FFlecsEntityHandle& InEntityHandle) const override;
 	
 	struct FBuilder;

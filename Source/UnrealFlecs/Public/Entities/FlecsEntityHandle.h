@@ -29,7 +29,7 @@ struct FFlecsEntityHandle;
 struct FFlecsCollectionReference;
 struct FFlecsCollectionInstancedReference;
 
-class UFlecsWorld;
+class UFlecsWorldInterfaceObject;
 
 /**
  * @struct FFlecsEntityHandle
@@ -37,7 +37,7 @@ class UFlecsWorld;
  * A handle for managing flecs entities in Unreal Engine with added blueprint support.
  * The structure provides several utility functions to interact with flecs entities,
  * including validation, component addition/removal, and direct data access.
- * This must be used with a valid `UFlecsWorld` instance to function correctly.
+ * This must be used with a valid `UFlecsWorldInterfaceObject` instance to function correctly.
  */
 USTRUCT(BlueprintType, meta = (DisableSplitPin))
 struct alignas(8) UNREALFLECS_API FFlecsEntityHandle : public FFlecsEntityView
@@ -58,13 +58,12 @@ public:
 		return FFlecsEntityHandle(flecs::entity::null());
 	}
 
-	 static NO_DISCARD FFlecsEntityHandle GetNullHandle(const TSolidNotNull<const UFlecsWorld*> InWorld);
+	 static NO_DISCARD FFlecsEntityHandle GetNullHandle(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld);
 
 public:
 	using FFlecsEntityView::FFlecsEntityView;
 	
 	FFlecsEntityHandle() = default;
-	
 	
 	template <UE::Flecs::TFlecsEntityFunctionInputTypeConcept T>
 	SOLID_INLINE const FSelfType& Add(const T& InValue) const

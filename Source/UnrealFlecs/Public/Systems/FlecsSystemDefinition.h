@@ -78,6 +78,6 @@ public:
 	/** Callback to free run ctx. */
 	ecs_ctx_free_t run_ctx_free;
 	
-	void ApplyToSystem(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, flecs::system_builder<>& InSystemBuilder) const;
+	void ApplyToSystem(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InFlecsWorld, flecs::system_builder<>& InSystemBuilder) const;
 	
 }; // struct FFlecsSystemDefinition

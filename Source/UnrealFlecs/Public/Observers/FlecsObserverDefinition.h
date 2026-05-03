@@ -68,6 +68,6 @@ public:
 
 	//ecs_observable_t *observable; /**< Observable for observer */
 	
-	void ApplyToObserver(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, flecs::observer_builder<>& InObserverBuilder) const;
+	void ApplyToObserver(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InFlecsWorld, flecs::observer_builder<>& InObserverBuilder) const;
 	
 }; // struct FFlecsObserverDefinition

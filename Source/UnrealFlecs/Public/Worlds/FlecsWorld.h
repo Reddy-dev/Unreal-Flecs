@@ -16,13 +16,11 @@
 #include "Concepts/SolidConcepts.h"
 
 #include "FlecsScopedDeferWindow.h"
+#include "FlecsWorldInterfaceObject.h"
 #include "Entities/FlecsComponentHandle.h"
 #include "Entities/FlecsId.h"
 #include "Queries/FlecsQuery.h"
-#include "Queries/FlecsQueryBuilder.h"
-#include "Observers/FlecsObserverBuilder.h"
-#include "Systems/FlecsSystemBuilder.h"
-#include "Timers/FlecsTimerHandle.h"
+#include "Worlds/FlecsWorldInterfaceObject.h"
 
 #include "FlecsWorld.generated.h"
 
@@ -35,9 +33,10 @@ class IFlecsModuleInterface;
 class IFlecsGameLoopInterface;
 class UFlecsWorldSubsystem;
 class UFlecsModuleInterface;
+class UFlecsStage;
 
 UCLASS(BlueprintType, NotBlueprintable)
-class UNREALFLECS_API UFlecsWorld : public UObject
+class UNREALFLECS_API UFlecsWorld final : public UFlecsWorldInterfaceObject
 {
 	GENERATED_BODY()
 
@@ -112,84 +111,6 @@ public:
 	{
 		return World.import<T>();
 	}
-	
-	/**
-	 * @brief Create a new entity in the world,
-	 * currently if an entity of the same name exists, it will return the already existing entity
-	 * @param Name Optional Name Parameter
-	 * @return The created entity handle
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World", 
-		meta = (AdvancedDisplay = "Separator, RootSeparator"))
-	FFlecsEntityHandle CreateEntity(const FString& Name = "",
-		const FString& Separator = "::", const FString& RootSeparator = "::") const;
-
-	/**
-	 * @brief Obtain a typed entity handle for the given Type
-	 * @tparam T The type to obtain the entity for
-	 * @return The entity obtained
-	 */
-	template <typename T>
-	FFlecsEntityHandle ObtainTypedEntity() const
-	{
-		const FFlecsEntityHandle EntityHandle = World.entity<T>();
-		return EntityHandle;
-	}
-
-	/**
-	 * @brief 
-	 * @param InClass The class to obtain the entity for
-	 * @return The entity obtained
-	 */
-	FFlecsEntityHandle ObtainTypedEntity(const TSolidNotNull<UClass*> InClass) const;
-
-	/**
-	 * @brief Create a new entity in the world with the given Id, if the Id already exists, it will return the existing entity
-	 * @param InId The Id to create the entity with
-	 * @return The created entity handle
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	FFlecsEntityHandle CreateEntityWithId(const FFlecsId InId) const;
-
-	/**
-	 * @brief Create a new entity in the world with the given prefab in an IsA relationship (IsA, InPrefab)
-	 * @param InPrefab The prefab to create the entity with
-	 * @return The created entity handle
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	FFlecsEntityHandle CreateEntityWithPrefab(const FFlecsId InPrefab) const;
-
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	FFlecsEntityHandle CreateEntityWithRecord(const FFlecsEntityRecord& InRecord,
-	                                          const FString& Name = "") const;
-
-	FFlecsEntityHandle CreateEntityWithRecordWithId(const FFlecsEntityRecord& InRecord,
-	                                                const FFlecsId InId) const;
-	
-	/**
-	 * @brief Lookup an entity by name, if it does not exist, it will return an invalid handle
-	 * @param Name The name of the entity to lookup
-	 * @param Separator The separator to use for nested scopes, defaults to "::"
-	 * @param RootSeparator The root separator, if the name starts with this, it will search from the root scope
-	 * @param bRecursive If true, will search recursively in the scopes(Up), otherwise only in the current scope
-	 * @return 
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World",
-		meta = (AdvancedDisplay = "Separator, RootSeparator, bRecursive"))
-	FFlecsEntityHandle LookupEntity(const FString& Name,
-	                                const FString& Separator = "::",
-	                                const FString& RootSeparator = "::",
-	                                const bool bRecursive = true) const;
-	
-	NO_DISCARD FFlecsEntityHandle LookupEntityBySymbol_Internal(const FString& Symbol,
-		const bool bLookupAsPath = false, const bool bRecursive = true) const;
-
-	/**
-	 * @brief Destroy an entity by its handle, if the entity does not exist, nothing happens
-	 * @param Name The name of the entity to destroy
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	void DestroyEntityByName(const FString& Name) const;
 
 	template <typename FunctionType>
 	void ForEach(FunctionType&& Function) const
@@ -209,226 +130,6 @@ public:
 		World.each(InTermId, Function);
 	}
 
-	/**
-	 * @brief Add a singleton component to the world
-	 * @tparam T The component type
-	 * @return The world object for chaining/builder pattern
-	 */
-	template <typename T>
-	UFlecsWorld* AddSingleton() const
-	{
-		World.add<T>();
-		return GetSelf();
-	}
-
-	/**
-	 * @brief Set the value of a singleton component in the world, if the singleton does not exist, it will be created
-	 * @tparam T The component type
-	 * @param Value The value to set the singleton to
-	 * @return The world object for chaining/builder pattern
-	 */
-	template <typename T>
-	UFlecsWorld* SetSingleton(const T& Value) const
-	{
-		World.set<T>(Value);
-		return GetSelf();
-	}
-
-	template <typename T>
-	UFlecsWorld* SetSingleton(T&& Value) const
-	{
-		World.set<T>(FLECS_FWD(Value));
-		return GetSelf();
-	}
-
-	/**
-	 * @brief Remove a singleton component from the world
-	 * @tparam T The component type
-	 * @return The world object for chaining/builder pattern
-	 */
-	template <typename T>
-	UFlecsWorld* RemoveSingleton() const
-	{
-		World.remove<T>();
-		return GetSelf();
-	}
-	
-	/**
-	 * @brief Check if the world has a singleton component of the given type
-	 * @tparam T The component type, this must be already registered in the world or it will assert
-	 * @return True if the singleton exists, false otherwise
-	 */
-	template <typename T>
-	NO_DISCARD bool HasSingleton() const
-	{
-		return World.has<T>();
-	}
-
-	/**
-	 * @brief Get a singleton component from the world, will assert if the singleton does not exist
-	 * @tparam T The component type
-	 * @return The singleton component
-	 */
-	template <typename T>
-	NO_DISCARD const T& GetSingleton() const
-	{
-		solid_checkf(HasSingleton<T>(), TEXT("Singleton %hs not found"), nameof(T).data());
-		return World.get<T>();
-	}
-
-	/**
-	 * @brief Get a mutable singleton component from the world, will assert if the singleton does not exist
-	 * @tparam T The component type
-	 * @return The singleton component
-	 */
-	template <typename T>
-	NO_DISCARD T& GetMutSingleton() const
-	{
-		solid_checkf(HasSingleton<T>(), TEXT("Singleton %hs not found"), nameof(T).data());
-		return World.get_mut<T>();
-	}
-	
-	/**
-	 * @brief Try to get a singleton component from the world, will return nullptr if the singleton does not exist
-	 * @tparam T The component type
-	 * @return The singleton component or nullptr if it does not exist
-	 */
-	template <typename T>
-	NO_DISCARD const T* TryGetSingleton() const
-	{
-		return World.try_get<T>();
-	}
-
-	/**
-	 * @brief Try to get a mutable singleton component from the world, will return nullptr if the singleton does not exist
-	 * @tparam T The component type
-	 * @return The singleton component or nullptr if it does not exist
-	 */
-	template <typename T>
-	NO_DISCARD T* TryGetMutSingleton() const
-	{
-		return World.try_get_mut<T>();
-	}
-	
-	/**
-	 * @brief Obtain the entity handle of a singleton component, will assert if the singleton does not exist
-	 * @tparam T The singleton type, must be registered in the world
-	 * @return The entity handle of the singleton
-	 */
-	template <typename T>
-	NO_DISCARD FFlecsEntityHandle ObtainSingletonEntity() const
-	{
-		solid_checkf(HasSingleton<T>(), TEXT("Singleton %hs not found"), nameof(T).data());
-		return World.singleton<T>();
-	}
-
-	/**
-	 * @brief Notify the world that a singleton component has been modified
-	 * @tparam T The singleton type, must be registered in the world
-	 */
-	template <typename T>
-	void ModifiedSingleton() const
-	{
-		World.modified<T>();
-	}
-
-	/**
-	 * Merge world or stage.
-	 * When automatic merging is disabled, an application can call this
-	 * operation on either an individual stage, or on the world which will merge
-	 * all stages. This operation may only be called when staging is not enabled
-	 * (either after progress() or after readonly_end()).
-	 *
-	 * This operation may be called on an already merged stage or world.
-	 *
-	 * @see ecs_merge()
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	void Merge() const;
-
-	/**
-	 * @return The Name of the World Entity
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	FString GetWorldName() const;
-
-	/**
-	 * @brief Set the Name of the World Entity
-	 * @param InName The new name
-	 */
-	void SetWorldName(const FString& InName) const;
-
-	// @TODO: add missing function variations template and checked versions
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	bool HasGameLoop(const TSubclassOf<UObject> InGameLoop, const bool bAllowChildren = false) const;
-	
-	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	FFlecsEntityHandle GetGameLoopEntity(const TSubclassOf<UObject> InGameLoop, const bool bAllowChildren = false) const;
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	UObject* GetGameLoop(const TSubclassOf<UObject> InGameLoop, const bool bAllowChildren = false) const;
-	
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	bool BeginDefer() const;
-
-	NO_DISCARD FFlecsScopedDeferWindow DeferWindow() const;
-
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	bool EndDefer() const;
-
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	void ResumeDefer() const;
-
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	void SuspendDefer() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	bool IsDeferred() const;
-
-	template <typename TFunction>
-	void Defer(TFunction&& Function) const
-	{
-		World.defer<TFunction>(std::forward<TFunction>(Function));
-	}
-
-	/**
-	 * @brief End or Suspend the defer state and execute the lambda function.
-	 * @param Function The function to execute after the defer state is ended or suspended.
-	 * @param bEndDefer If true, the defer state will be ended after the function is executed, otherwise it will be suspended and resumed after the function is executed.
-	 */
-	template <typename TFunction>
-	void DeferEndLambda(TFunction&& Function, const bool bEndDefer = false) const
-	{
-		const bool bIsDeferred = IsDeferred();
-		
-		if (bIsDeferred)
-		{
-			if (bEndDefer)
-			{
-				EndDefer();
-			}
-			else
-			{
-				SuspendDefer();
-			}
-		}
-
-		std::invoke(std::forward<TFunction>(Function));
-
-		if (bIsDeferred)
-		{
-			if (bEndDefer)
-			{
-				BeginDefer();
-			}
-			else
-			{
-				ResumeDefer();
-			}
-		}
-	}
-
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
 	bool BeginReadOnly() const;
 
@@ -441,12 +142,6 @@ public:
 		BeginReadOnly();
 		std::invoke(std::forward<TFunction>(Function));
 		EndReadOnly();
-	}
-
-	template <typename TFunction>
-	void WithScoped(const FFlecsId InId, TFunction&& Function) const
-	{
-		World.with(InId, std::forward<TFunction>(Function));
 	}
 
 	void SetContext(void* InContext) const;
@@ -462,9 +157,6 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
 	double SetTimeScale(const double InTimeScale) const;
 
-	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	double GetTimeScale() const;
-
 	void DestroyWorld();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
@@ -475,171 +167,18 @@ public:
 	{
 		World.set_pipeline<T>();
 	}
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	FFlecsEntityHandle GetPipeline() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	double GetDeltaTime() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	FFlecsEntityHandle GetAlive(const FFlecsId InId) const;
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	bool IsAlive(const FFlecsId InId) const;
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	FFlecsEntityHandle GetEntity(const FFlecsId InId) const;
-
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	FFlecsEntityHandle MakeAlive(const FFlecsId& InId) const;
-
-	template <typename ...TComponents>
-	NO_DISCARD TFlecsSystemBuilder<TComponents...> CreateSystem(const FString& InName = "") const
-	{
-		return TFlecsSystemBuilder<TComponents...>(this, InName);
-	}
-	
-	NO_DISCARD TFlecsSystemBuilder<> CreateSystemWithDefinition(const FFlecsSystemDefinition& InDefinition, const FString& InName = "") const
-	{
-		return TFlecsSystemBuilder<>(this, InName, InDefinition);
-	}
-	
-	/**
-	 * @brief Equivalent to World.entity(flecs::World)
-	 * @return The World Entity
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	FFlecsEntityHandle GetWorldEntity() const;
-
-	/**
-	 * Get number of configured stages.
-	 * Return number of stages set by set_stage_count().
-	 *
-	 * @return The number of stages used for threading.
-	 *
-	 * @see ecs_get_stage_count()
-	 * @see flecs::world::set_stage_count()
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	int32 GetStageCount() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	void SetStageCount(const int32 InStageCount) const;
-
-	/**
-	 * Test whether the current world object is readonly.
-	 * This function allows the code to test whether the currently used world
-	 * object is readonly or whether it allows for writing.
-	 *
-	 * @return True if the world or stage is readonly.
-	 *
-	 * @see ecs_stage_is_readonly()
-	 * @see flecs::world::readonly_begin()
-	 * @see flecs::world::readonly_end()
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	bool IsReadOnly() const;
+	void SetStageCount(const int32 InStageCount);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
 	void PreallocateEntities(const int32 InEntityCount) const;
 	
-	/**
-	 * @brief Iterate over all Child Entities of the 0 Entity
-	 * @tparam FunctionType The function type
-	 * @param Function Function to invoke
-	 */
-	template <typename FunctionType>
-	void ForEachChild(FunctionType&& Function) const
-	{
-		World.children(std::forward<FunctionType>(Function));
-	}
-
-	template <typename T, typename FunctionType>
-	void ForEachChild(FunctionType&& Function) const
-	{
-		World.children<T>(std::forward<FunctionType>(Function));
-	}
-
-	template <typename FunctionType>
-	void ForEachChild(const FFlecsId& InRelationId, FunctionType&& Function) const
-	{
-		World.children(InRelationId, std::forward<FunctionType>(Function));
-	}
-	
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	void SetThreads(const int32 InThreadCount) const;
+	void SetThreads(const int32 InThreadCount);
 
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	int32 GetThreads() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	bool UsingTaskThreads() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	void SetTaskThreads(const int32 InThreadCount) const;
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	bool HasScriptStruct(const UScriptStruct* ScriptStruct) const;
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	bool HasScriptEnum(const UEnum* ScriptEnum) const;
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	FFlecsEntityHandle GetScriptStructEntity(const UScriptStruct* ScriptStruct) const;
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	FFlecsEntityHandle GetScriptEnumEntity(const UEnum* ScriptEnum) const;
-
-	template <Solid::TScriptStructConcept T>
-	NO_DISCARD FFlecsEntityHandle GetScriptStructEntity() const
-	{
-		return GetScriptStructEntity(TBaseStructure<T>::Get());
-	}
-
-	template <Solid::TScriptStructConcept T>
-	NO_DISCARD bool HasScriptStruct() const
-	{
-		return HasScriptStruct(TBaseStructure<T>::Get());
-	}
-
-	template <Solid::TStaticEnumConcept T>
-	NO_DISCARD FFlecsEntityHandle GetScriptEnumEntity() const
-	{
-		return GetScriptEnumEntity(StaticEnum<T>());
-	}
-
-	template <Solid::TStaticEnumConcept T>
-	NO_DISCARD bool HasScriptEnum() const
-	{
-		return HasScriptEnum(StaticEnum<T>());
-	}
-
-	void RegisterMemberProperties(const TSolidNotNull<const UStruct*> InStruct,
-	                              const FFlecsComponentHandle& InComponent) const;
-
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
-	FFlecsEntityHandle RegisterScriptStruct(const UScriptStruct* ScriptStruct, const bool bComponent = true, const bool bRegisterMemberProperties = true) const;
-
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
-	FFlecsEntityHandle RegisterScriptEnum(const UEnum* ScriptEnum) const;
-
-	template <typename T>
-	requires (std::is_enum<T>::value)
-	FFlecsEntityHandle RegisterScriptEnum() const
-	{
-		return World.component<T>();
-	}
-	
-	FFlecsEntityHandle RegisterComponentEnumType(TSolidNotNull<const UEnum*> ScriptEnum) const;
-
-	FFlecsEntityHandle RegisterScriptClassType(TSolidNotNull<UClass*> ScriptClass) const;
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	bool HasScriptClass(const TSubclassOf<UObject> InClass) const;
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	FFlecsEntityHandle GetScriptClassEntity(const TSubclassOf<UObject> InClass) const;
+	void SetTaskThreads(const int32 InThreadCount);
 
 	// @TODO: Re-implement bitmask registration
 	/*
@@ -702,63 +241,6 @@ public:
 	*/
 
 	template <typename T>
-	TFlecsComponentHandle<T> RegisterComponentType() const
-	{
-		solid_checkf(!IsDeferred(), TEXT("Cannot register component while deferred"));
-		
-		TFlecsComponentHandle<T> Component = World.component<T>();
-		solid_check(Component.IsValid());
-
-		return Component;
-	}
-	
-	template <Solid::TScriptStructConcept T>
-	TFlecsComponentHandle<T> RegisterComponentType(const bool bRegisterMemberProperties = true) const
-	{
-		solid_checkf(!IsDeferred(), TEXT("Cannot register component while deferred"));
-		
-		const FFlecsId AlreadyRegisteredId = World.id_if_registered<T>();
-		
-		// avoid calling RegisterMemberProperties if the component is already registered, as it would be redundant and potentially cause issues if the component was registered with different member properties settings
-		if (AlreadyRegisteredId.IsValid())
-		{
-			return World.component<T>();
-		}
-		
-		TFlecsComponentHandle<T> Component = World.component<T>();
-		solid_check(Component.IsValid());
-		
-		if (bRegisterMemberProperties)
-		{
-			RegisterMemberProperties(TBaseStructure<T>::Get(), Component);
-		}
-
-		return Component;
-	}
-
-	/*template <typename T>
-	FFlecsComponentHandle RegisterComponentType(const FString& InName, const bool bAllowTag = true, const FFlecsId InId = FFlecsId()) const
-	{
-		solid_checkf(!IsDeferred(), TEXT("Cannot register component while deferred"));
-
-		FFlecsComponentHandle Component;
-
-		World.component<T>(StringCast<char>(*InName).Get(), bAllowTag, InId);
-		solid_check(Component.IsValid());
-
-		if constexpr (Solid::IsScriptStruct<T>())
-		{
-			RegisterMemberProperties(TBaseStructure<T>::Get(), Component);
-		}
-
-		return Component;
-	}*/
-	
-	FFlecsEntityHandle RegisterComponentType(const TSolidNotNull<const UScriptStruct*> ScriptStruct, const bool bRegisterMemberProperties = true) const;
-
-	FFlecsEntityHandle RegisterComponentType(const TSolidNotNull<const UEnum*> ScriptEnum) const;
-
-	template <typename T>
 	FFlecsComponentHandle ObtainComponentTypeStruct() const
 	{
 		solid_checkf(World.is_valid(flecs::_::type<T>::id(World)),
@@ -766,147 +248,8 @@ public:
 		return World.component<T>();
 	}
 
-	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	bool IsIdInUse(const FFlecsId InId) const;
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	FFlecsId GetTypeId(const FFlecsId InId) const;
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	bool IsIdType(const FFlecsId InId) const;
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	bool IsIdTag(const FFlecsId InId) const;
-
-	template <typename ...TComponents>
-	TFlecsObserverBuilder<TComponents...> CreateObserver(const FString& Name = "") const
-	{
-		return TFlecsObserverBuilder<TComponents...>(GetSelf(), Name);
-	}
-	
-	NO_DISCARD FORCEINLINE TFlecsObserverBuilder<> CreateObserverWithDefinition(
-		const FFlecsObserverDefinition& InDefinition, const FString& Name = "") const
-	{
-		return TFlecsObserverBuilder<>(GetSelf(), Name, InDefinition);
-	}
-
-	NO_DISCARD flecs::event_builder Event(const FFlecsEntityHandle& InEntity) const
-	{
-		return World.event(InEntity.GetEntity());
-	}
-
-	template <typename TEvent>
-	flecs::event_builder_typed<TEvent> Event() const
-	{
-		return World.event<TEvent>();
-	}
-
-	NO_DISCARD flecs::pipeline_builder<> CreatePipeline() const
-	{
-		return World.pipeline();
-	}
-
-	template <typename ...TComponents>
-	NO_DISCARD flecs::pipeline_builder<TComponents...> CreatePipeline() const
-	{
-		return World.pipeline<TComponents...>();
-	}
-
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
 	void RunPipeline(const FFlecsId InPipeline, const double DeltaTime = 0.0) const;
-
-	void RandomizeTimers() const;
-
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
-	FFlecsTimerHandle CreateTimer(const FString& Name) const;
-
-	template <typename T>
-	NO_DISCARD FFlecsTimerHandle CreateTimer() const
-	{
-		return World.timer<T>();
-	}
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	bool HasEntityWithName(const FString& Name, FFlecsEntityHandle& OutEntity) const;
-
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
-	FFlecsEntityHandle GetTagEntity(const FGameplayTag& Tag) const;
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	FFlecsEntityHandle CreatePrefabWithRecord(const FFlecsEntityRecord& InRecord, const FString& Name = "") const;
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	FFlecsEntityHandle CreatePrefab(const FString& Name = "") const;
-
-	template <typename T>
-	FFlecsEntityHandle CreatePrefab() const
-	{
-		return World.prefab<T>();
-	}
-
-	FFlecsEntityHandle CreatePrefab(const TSolidNotNull<UClass*> InClass) const;
-	FFlecsEntityHandle CreatePrefabWithRecord(const FFlecsEntityRecord& InRecord, const TSolidNotNull<UClass*> InClass) const;
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	void DestroyPrefab(const FFlecsEntityHandle& InPrefab) const;
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	bool ShouldQuit() const;
-
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
-	FFlecsId ClearScope() const;
-
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
-	FFlecsId SetScope(const FFlecsId InScope) const;
-
-	template <typename T>
-	void Scope() const
-	{
-		World.scope<T>();
-	}
-
-	template <typename T, typename FunctionType>
-	void Scope(FunctionType&& Function) const
-	{
-		World.scope<T>(std::forward<FunctionType>(Function));
-	}
-
-	template <typename FunctionType>
-	void Scope(FFlecsId InId, FunctionType&& Function) const
-	{
-		World.scope(InId, std::forward<FunctionType>(Function));
-	}
-
-	template <typename FunctionType>
-	void EndScope(FunctionType&& Function) const
-	{
-		const flecs::entity OldScope = World.set_scope(0);
-
-		std::invoke(std::forward<FunctionType>(Function));
-
-		World.set_scope(OldScope);
-	}
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	FFlecsEntityHandle GetScope() const;
-	
-	UFUNCTION()
-	FFlecsQueryBuilder CreateQueryBuilder(const FString& InName = "") const;
-	
-	UFUNCTION()
-	FFlecsQueryBuilder CreateQueryBuilderWithEntity(const FFlecsEntityHandle& InEntity) const;
-	
-	template <typename ...TComponents>
-	NO_DISCARD TFlecsQueryBuilder<TComponents...> CreateQueryBuilder(const FString& InName = "")
-	{
-		return TFlecsQueryBuilder<TComponents...>(GetSelf(), InName);
-	}
-	
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
-	FFlecsQuery CreateQuery(const FFlecsQueryDefinition& InDefinition, const FString& InName = "") const;
-	
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
-	FFlecsQuery CreateQueryWithEntity(const FFlecsQueryDefinition& InDefinition, const FFlecsEntityHandle& InEntity) const;
 	
 	/*UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
 	FFlecsQuery GetQueryFromEntity(const FFlecsEntityHandle& InEntity) const;*/
@@ -914,11 +257,6 @@ public:
 	virtual bool IsSupportedForNetworking() const override;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-	virtual bool IsNameStableForNetworking() const override;
-
-	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	UFlecsWorldSubsystem* GetContext() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
 	void ShrinkWorld() const;
@@ -957,8 +295,6 @@ public:
 	int32 DeleteEmptyTables(const double TimeBudgetSeconds, const uint16 ClearGeneration = 1,
 	                        const uint16 DeleteGeneration = 1) const;
 
-	NO_DISCARD FFlecsTypeMapComponent* GetTypeMapComponent() const;
-
 	NO_DISCARD FFlecsEntityHandle GetFlecsTickFunctionByType(const FGameplayTag& InTickType) const;
 	
 	// CAN RETURN NULL
@@ -973,34 +309,14 @@ public:
 	}
 	
 	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	UObject* GetRegisteredFlecsObject(const TSubclassOf<UObject> InClass) const;
+	UFlecsStage* GetStage(const int32 InStageId) const;
 	
-	template <Solid::TStaticClassConcept T>
-	NO_DISCARD FORCEINLINE T* GetRegisteredFlecsObject() const
-	{
-		return Cast<T>(GetRegisteredFlecsObject(T::StaticClass()));
-	}
+	NO_DISCARD UFlecsStage* GetStage(const flecs::world& InStageWorld) const;
+	NO_DISCARD UFlecsStage* GetStage(const flecs::iter& InIter) const;
 	
-	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	UObject* GetRegisteredFlecsObjectChecked(const TSubclassOf<UObject> InClass) const;
+	void RegisterStages(const int32 InStageCount);
 	
-	template <Solid::TStaticClassConcept T>
-	NO_DISCARD FORCEINLINE T* GetRegisteredFlecsObjectChecked() const
-	{
-		return CastChecked<T>(GetRegisteredFlecsObject(T::StaticClass()));
-	}
-	
-	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	bool IsFlecsObjectRegistered(const TSubclassOf<UObject> InClass) const;
-	
-	template <Solid::TStaticClassConcept T>
-	NO_DISCARD FORCEINLINE bool IsFlecsObjectRegistered() const
-	{
-		return IsFlecsObjectRegistered(T::StaticClass());
-	}
-	
-	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	FFlecsEntityHandle GetFlecsModule(const FName& InModuleName) const;
+	NO_DISCARD UFlecsStage* CreateAsyncStage();
 	
 	void ImportRestModule();
 	void ImportStatsModule();
@@ -1008,8 +324,6 @@ public:
 	static void AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector);
 
 	virtual void GetResourceSizeEx(FResourceSizeEx& CumulativeResourceSize) override;
-
-	flecs::world World;
 
 	bool bIsInitialized = false;
 
@@ -1029,8 +343,6 @@ public:
 
 	TTypedFlecsQuery<const FFlecsScriptStructComponent> AddReferencedObjectsQuery;
 
-	FFlecsTypeMapComponent* TypeMapComponent;
-
 	FDelegateHandle ComponentRegisteredDelegateHandle;
 
 	FDelegateHandle ShrinkMemoryGCDelegateHandle;
@@ -1038,12 +350,22 @@ public:
 
 	UPROPERTY()
 	TOptional<double> PrePauseTimeScale;
+	
+	UPROPERTY()
+	TArray<TObjectPtr<UFlecsStage>> Stages;
 
 	robin_hood::unordered_flat_map<FGameplayTag, FFlecsId> TagEntityMap;
+	
+protected:
+	virtual flecs::world* GetNativeFlecsWorld_Internal() const override
+	{
+		return const_cast<flecs::world*>(&World);
+	}
 
 private:
-	void CallUnregisterOnRegisteredObjects();
+	flecs::world World;
 	
+	void CallUnregisterOnRegisteredObjects();
 	
 	/**
 	 * @brief Get this world as a non-const pointer

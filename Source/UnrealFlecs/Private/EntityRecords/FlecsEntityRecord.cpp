@@ -3,7 +3,7 @@
 #include "EntityRecords/FlecsEntityRecord.h"
 
 #include "Components/FlecsSubEntityRecordNameComponent.h"
-#include "Worlds/FlecsWorld.h"
+#include "Worlds/FlecsWorldInterfaceObject.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsEntityRecord)
 
@@ -132,7 +132,7 @@ void FFlecsRecordPair::AddToEntity(const FFlecsEntityHandle& InEntityHandle) con
 	}
 }
 
-void FFlecsEntityRecord::ApplyRecordToEntity(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsEntityHandle& InEntityHandle) const
+void FFlecsEntityRecord::ApplyRecordToEntity(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InFlecsWorld, const FFlecsEntityHandle& InEntityHandle) const
 {
 	solid_checkf(InEntityHandle.IsValid(), TEXT("Entity Handle is not valid"));
 

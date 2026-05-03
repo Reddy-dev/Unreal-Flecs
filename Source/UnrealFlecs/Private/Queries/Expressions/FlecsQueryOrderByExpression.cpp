@@ -12,7 +12,7 @@ FFlecsQueryOrderByExpression::FFlecsQueryOrderByExpression() : Super(false /* bI
 {
 }
 
-void FFlecsQueryOrderByExpression::Apply(const TSolidNotNull<const UFlecsWorld*> InWorld,
+void FFlecsQueryOrderByExpression::Apply(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld,
 	FFlecsQueryBuilderView& InQueryBuilder) const
 {
 	FFlecsId OrderByComponentId;
@@ -38,7 +38,7 @@ FFlecsQueryOrderByCPPExpressionWrapper::FFlecsQueryOrderByCPPExpressionWrapper()
 {
 }
 
-void FFlecsQueryOrderByCPPExpressionWrapper::Apply(const TSolidNotNull<const UFlecsWorld*> InWorld,
+void FFlecsQueryOrderByCPPExpressionWrapper::Apply(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld,
 	FFlecsQueryBuilderView& InQueryBuilder) const
 {
 	FFlecsId OrderByComponentId;

@@ -15,7 +15,7 @@ class UFlecsModuleSettings;
 /**
  * 
  */
-UCLASS(BlueprintType, Config = Flecs, DisplayName = "Flecs Gameplay Settings", AutoExpandCategories = "Flecs")
+UCLASS(BlueprintType, Config = Flecs, DefaultConfig, DisplayName = "Flecs Gameplay Settings", AutoExpandCategories = "Flecs")
 class UNREALFLECS_API UFlecsGameplayDeveloperSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()

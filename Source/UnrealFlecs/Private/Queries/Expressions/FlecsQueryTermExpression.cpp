@@ -11,7 +11,7 @@ FFlecsQueryTermExpression::FFlecsQueryTermExpression() : Super(true /* bInAllows
 {
 }
 
-void FFlecsQueryTermExpression::Apply(TSolidNotNull<const UFlecsWorld*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const
+void FFlecsQueryTermExpression::Apply(TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const
 {
 	Term.ApplyToQueryBuilder(InWorld, InQueryBuilder);
 	

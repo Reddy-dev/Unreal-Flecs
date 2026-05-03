@@ -4,6 +4,7 @@
 
 #include "Components/FlecsUObjectComponent.h"
 #include "Components/ObjectTypes/FFlecsUObjectTag.h"
+#include "Worlds/FlecsStage.h"
 #include "Worlds/FlecsWorld.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsSystemObject)
@@ -17,7 +18,7 @@ UFlecsSystemObject::UFlecsSystemObject(const FObjectInitializer& ObjectInitializ
 {
 }
 
-void UFlecsSystemObject::BuildSystem(const TSolidNotNull<const UFlecsWorld*> InWorld,
+void UFlecsSystemObject::BuildSystem(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld,
 	TFlecsSystemBuilder<>& InBuilder) const
 {
 }
@@ -29,11 +30,11 @@ UFlecsWorld* UFlecsSystemObject::GetFlecsWorld() const
 	return GetTypedOuter<UFlecsWorld>();
 }
 
-void UFlecsSystemObject::RegisterObject(const TSolidNotNull<UFlecsWorld*> InFlecsWorld)
+void UFlecsSystemObject::RegisterObject(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld)
 {
 }
 
-void UFlecsSystemObject::UnregisterObject(const TSolidNotNull<UFlecsWorld*> InFlecsWorld)
+void UFlecsSystemObject::UnregisterObject(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld)
 {
 	if LIKELY_IF(SystemHandle.IsValid())
 	{
@@ -42,7 +43,7 @@ void UFlecsSystemObject::UnregisterObject(const TSolidNotNull<UFlecsWorld*> InFl
 	}
 }
 
-void UFlecsSystemObject::FlecsWorldBeginPlay(const TSolidNotNull<UFlecsWorld*> InFlecsWorld)
+void UFlecsSystemObject::FlecsWorldBeginPlay(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld)
 {
 	InitializeSystem(InFlecsWorld);
 }
@@ -57,7 +58,7 @@ void UFlecsSystemObject::SetContext(void* InContext) const
 	GetSystemHandle().SetContext(InContext);
 }
 
-void UFlecsSystemObject::InitializeSystem(const TSolidNotNull<const UFlecsWorld*> InWorld)
+void UFlecsSystemObject::InitializeSystem(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld)
 {
 	const FString SystemName = GetName();
 	
@@ -66,7 +67,18 @@ void UFlecsSystemObject::InitializeSystem(const TSolidNotNull<const UFlecsWorld*
 	
 	SystemHandle = SystemBuilder.run([this](flecs::iter& InIterator)
 	{
-		this->RunIterator(GetFlecsWorld(), InIterator);
+		UFlecsWorldInterfaceObject* IteratorWorld = nullptr;
+		
+		if (InIterator.world().is_stage())
+		{
+			IteratorWorld = GetFlecsWorld()->GetStage(InIterator.world().get_stage_id());
+		}
+		else
+		{
+			IteratorWorld = GetFlecsWorld();
+		}
+		
+		this->RunIterator(IteratorWorld, InIterator);
 	});
 	
 	SystemHandle.SetPair<FFlecsUObjectComponent, FFlecsUObjectTag>(FFlecsUObjectComponent(this));

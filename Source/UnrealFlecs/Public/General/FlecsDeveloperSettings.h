@@ -6,32 +6,26 @@
 
 #include "Engine/DeveloperSettings.h"
 
+#include "FlecsThreadAllocationPolicyBaseAsset.h"
+
 #include "FlecsDeveloperSettings.generated.h"
 
-UCLASS(BlueprintType, Config = Flecs, meta = (DisplayName = "Flecs Settings"))
+UCLASS(BlueprintType, Config = Flecs, DefaultConfig, meta = (DisplayName = "Flecs Settings"))
 class UNREALFLECS_API UFlecsDeveloperSettings final : public UDeveloperSettings
 {
 	GENERATED_BODY()
 	
 public:
+	UFlecsDeveloperSettings(const FObjectInitializer& ObjectInitializer);
+	
 	/**
 	 * @brief Enable Unreal Flecs Plugin.
 	 */
 	UPROPERTY(EditAnywhere, Config, Category = "Flecs", meta = (ConsoleVariable = "Flecs.UseFlecs"))
 	bool bEnableFlecs = true;
-
-	/**
-	 * @brief Enable task threads for Flecs.
-	 */
-	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Threading", meta = (ConsoleVariable = "Flecs.UseTaskThreads"))
-	bool bUseTaskThreads = false;
-
-	/**
-	 * @brief Number of threads to use for Flecs task processing.
-	 */
-	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Threading",
-		meta = (EditCondition = "bUseTaskThreads", ConsoleVariable = "Flecs.TaskThreadCount"))
-	int32 TaskThreadCount = 8;
+	
+	UPROPERTY(EditAnywhere, Config, NoClear, Category = "Flecs | Thread Allocation")
+	TSoftObjectPtr<UFlecsThreadAllocationPolicyBaseAsset> ThreadAllocationPolicy;
 
 	/**
 	 * @brief Delete empty Flecs tables during Unreal Garbage Collection.

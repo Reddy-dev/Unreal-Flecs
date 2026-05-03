@@ -7,7 +7,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsObserverDefinition)
 
-void FFlecsObserverDefinition::ApplyToObserver(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld,
+void FFlecsObserverDefinition::ApplyToObserver(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InFlecsWorld,
 	flecs::observer_builder<>& InObserverBuilder) const
 {
 	solid_checkf(Events.Num() > 0, TEXT("Observer must have at least one event type specified."));
@@ -18,7 +18,7 @@ void FFlecsObserverDefinition::ApplyToObserver(const TSolidNotNull<const UFlecsW
 		EventInput.ApplyToObserver(InFlecsWorld, InObserverBuilder);
 	}
 	
-	FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView_Internal<ecs_observer_desc_t, &ecs_observer_desc_t::query>(InFlecsWorld->World, *InObserverBuilder._internal_get_desc());
+	FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView_Internal<ecs_observer_desc_t, &ecs_observer_desc_t::query>(InFlecsWorld->GetNativeFlecsWorld(), *InObserverBuilder._internal_get_desc());
 	
 	QueryDefinition.Apply(InFlecsWorld, QueryBuilderView);
 	

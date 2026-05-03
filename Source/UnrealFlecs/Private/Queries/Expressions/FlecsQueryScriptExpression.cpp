@@ -10,7 +10,7 @@ FFlecsQueryScriptExpression::FFlecsQueryScriptExpression() : Super(true /* bInAl
 {
 }
 
-void FFlecsQueryScriptExpression::Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const
+void FFlecsQueryScriptExpression::Apply(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const
 {
 	InQueryBuilder.expr(StringCast<char>(*ScriptExpr.Expr).Get());
 	

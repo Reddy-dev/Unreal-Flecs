@@ -6,14 +6,14 @@
 
 // Add default functionality here for any IFlecsObjectRegistrationInterface functions that are not pure virtual.
 
-void IFlecsObjectRegistrationInterface::RegisterObject(const TSolidNotNull<UFlecsWorld*> InFlecsWorld)
+void IFlecsObjectRegistrationInterface::RegisterObject(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld)
 {
 }
 
-void IFlecsObjectRegistrationInterface::UnregisterObject(const TSolidNotNull<UFlecsWorld*> InFlecsWorld)
+void IFlecsObjectRegistrationInterface::UnregisterObject(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld)
 {
 }
 
-void IFlecsObjectRegistrationInterface::FlecsWorldBeginPlay(const TSolidNotNull<UFlecsWorld*> InFlecsWorld)
+void IFlecsObjectRegistrationInterface::FlecsWorldBeginPlay(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld)
 {
 }

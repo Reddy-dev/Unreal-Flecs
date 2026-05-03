@@ -8,6 +8,7 @@
 
 #include "Types/SolidNotNull.h"
 
+class UFlecsWorldInterfaceObject;
 class UFlecsWorld;
 
 // @TODO: this isn't RAII compliant with multiple worlds.
@@ -16,7 +17,7 @@ class UFlecsWorld;
 struct UNREALFLECS_API FFlecsScopedDeferWindow
 {
 public:
-	explicit FFlecsScopedDeferWindow(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld);
+	explicit FFlecsScopedDeferWindow(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InFlecsWorld);
 	~FFlecsScopedDeferWindow();
 
 	FFlecsScopedDeferWindow(const FFlecsScopedDeferWindow&) = delete;
@@ -46,18 +47,18 @@ public:
 		return FlecsWorld.IsValid();
 	}
 
-	NO_DISCARD FORCEINLINE const UFlecsWorld* GetFlecsWorld() const
+	NO_DISCARD FORCEINLINE const UFlecsWorldInterfaceObject* GetFlecsWorld() const
 	{
 		return FlecsWorld.Get();
 	}
 
-	NO_DISCARD FORCEINLINE TSolidNotNull<const UFlecsWorld*> GetFlecsWorldChecked() const
+	NO_DISCARD FORCEINLINE TSolidNotNull<const UFlecsWorldInterfaceObject*> GetFlecsWorldChecked() const
 	{
 		solid_checkf(FlecsWorld.IsValid(), TEXT("FlecsWorld is not valid!"));
 		return FlecsWorld.Get();
 	}
 	
-	TWeakObjectPtr<const UFlecsWorld> FlecsWorld;
+	TWeakObjectPtr<const UFlecsWorldInterfaceObject> FlecsWorld;
 	
 }; // struct FFlecsScopedDeferWindow
 

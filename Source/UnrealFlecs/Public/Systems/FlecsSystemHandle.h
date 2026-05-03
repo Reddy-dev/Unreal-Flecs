@@ -21,7 +21,7 @@ struct UNREALFLECS_API FFlecsSystemHandle : public FFlecsEntityHandle
 public:
 	using FFlecsEntityHandle::FFlecsEntityHandle;
 	
-	FFlecsSystemHandle(const TSolidNotNull<const UFlecsWorld*> InWorld, 
+	FFlecsSystemHandle(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, 
 		const FFlecsSystemDefinition& InSystemBuilder, const FString& InSystemName);
 	
 	FORCEINLINE FFlecsSystemHandle(const flecs::system& InSystem)

@@ -43,6 +43,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bStage = false;
 
-	virtual void Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const override;
+	virtual void Apply(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const override;
 	
 }; // struct FFlecsQueryTermExpression

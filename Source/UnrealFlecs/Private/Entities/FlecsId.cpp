@@ -2,13 +2,13 @@
 
 #include "Entities/FlecsId.h"
 
-#include "Worlds/FlecsWorld.h"
+#include "Worlds/FlecsWorldInterfaceObject.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsId)
 
-const ecs_type_info_t* FFlecsId::GetTypeInfo(const TSolidNotNull<const UFlecsWorld*> World) const
+const ecs_type_info_t* FFlecsId::GetTypeInfo(const TSolidNotNull<const UFlecsWorldInterfaceObject*> World) const
 {
-	return GetTypeInfo(World->World);
+	return GetTypeInfo(World->GetNativeFlecsWorld());
 }
 
 FString FFlecsId::ToString() const

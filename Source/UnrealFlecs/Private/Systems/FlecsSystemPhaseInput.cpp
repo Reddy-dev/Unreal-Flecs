@@ -2,11 +2,11 @@
 
 #include "Systems/FlecsSystemPhaseInput.h"
 
-#include "Worlds/FlecsWorld.h"
+#include "Worlds/FlecsWorldInterfaceObject.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsSystemPhaseInput)
 
-void FFlecsSystemPhaseInput::ApplyToSystemDefinition(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld,
+void FFlecsSystemPhaseInput::ApplyToSystemDefinition(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InFlecsWorld,
 	flecs::system_builder<>& InSystemBuilder) const
 {
 	if (Type == EFlecsSystemPhaseInputType::None)

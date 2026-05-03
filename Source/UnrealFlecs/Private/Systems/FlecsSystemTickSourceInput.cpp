@@ -3,11 +3,11 @@
 #include "Systems/FlecsSystemTickSourceInput.h"
 
 #include "Systems/FlecsSystemObject.h"
-#include "Worlds/FlecsWorld.h"
+#include "Worlds/FlecsWorldInterfaceObject.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsSystemTickSourceInput)
 
-void FFlecsSystemTickSourceInput::ApplyToSystemDefinition(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld,
+void FFlecsSystemTickSourceInput::ApplyToSystemDefinition(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InFlecsWorld,
 	flecs::system_builder<>& InSystemBuilder) const
 {
 	if (InputType == EFlecsSystemTickSourceInput::None)

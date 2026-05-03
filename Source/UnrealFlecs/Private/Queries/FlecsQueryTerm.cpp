@@ -4,11 +4,11 @@
 
 #include "Queries/FlecsQueryBuilderView.h"
 #include "Queries/Generator/FlecsQueryGeneratorInputType.h"
-#include "Worlds/FlecsWorld.h"
+#include "Worlds/FlecsWorldInterfaceObject.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsQueryTerm)
 
-void FFlecsQueryTerm::ApplyToQueryBuilder(const TSolidNotNull<const UFlecsWorld*> InWorld,
+void FFlecsQueryTerm::ApplyToQueryBuilder(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld,
 	FFlecsQueryBuilderView& InQueryBuilder) const
 {
 	FFlecsTermRefAtom_Internal TermRef = Input.GetFirstTermRef(InWorld);

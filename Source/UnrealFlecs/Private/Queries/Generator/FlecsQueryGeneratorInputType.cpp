@@ -3,11 +3,11 @@
 #include "Queries/Generator/FlecsQueryGeneratorInputType.h"
 
 #include "Queries/FlecsQueryBuilderView.h"
-#include "Worlds/FlecsWorld.h"
+#include "Worlds/FlecsWorldInterfaceObject.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsQueryGeneratorInputType)
 
-FFlecsTermRef FFlecsQueryGeneratorInputType::GetTermRefOutput(const TSolidNotNull<const UFlecsWorld*> InWorld) const
+FFlecsTermRef FFlecsQueryGeneratorInputType::GetTermRefOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const
 {
 	if (ReturnType == EFlecsQueryGeneratorReturnType::FlecsId)
 	{
@@ -25,7 +25,7 @@ FFlecsTermRef FFlecsQueryGeneratorInputType::GetTermRefOutput(const TSolidNotNul
 }
 
 FFlecsId FFlecsQueryGeneratorInputType_ScriptStruct::GetFlecsIdOutput(
-	const TSolidNotNull<const UFlecsWorld*> InWorld) const
+	const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const
 {
 	solid_checkf(ScriptStruct != nullptr, TEXT("FFlecsQueryGeneratorInputType_ScriptStruct::GetFlecsIdOutput: ScriptStruct is null!"));
 	
@@ -33,7 +33,7 @@ FFlecsId FFlecsQueryGeneratorInputType_ScriptStruct::GetFlecsIdOutput(
 }
 
 FFlecsId FFlecsQueryGeneratorInputType_ScriptEnum::GetFlecsIdOutput(
-	const TSolidNotNull<const UFlecsWorld*> InWorld) const
+	const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const
 {
 	solid_checkf(ScriptEnum != nullptr, TEXT("FFlecsQueryGeneratorInputType_ScriptEnum::GetFlecsIdOutput: ScriptEnum is null!"));
 	
@@ -45,18 +45,18 @@ FString FFlecsQueryGeneratorInputType_String::GetStringOutput() const
 	return InputString;
 }
 
-FFlecsId FFlecsQueryGeneratorInputType_CPPType::GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorld*> InWorld) const
+FFlecsId FFlecsQueryGeneratorInputType_CPPType::GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const
 {
 	return InWorld->LookupEntityBySymbol_Internal(SymbolString);
 }
 
-FFlecsId FFlecsQueryGeneratorInputType_FlecsId::GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorld*> InWorld) const
+FFlecsId FFlecsQueryGeneratorInputType_FlecsId::GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const
 {
 	return FlecsId;
 }
 
 FFlecsId FFlecsQueryGeneratorInputType_ScriptEnumConstant::GetFlecsIdOutput(
-	const TSolidNotNull<const UFlecsWorld*> InWorld) const
+	const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const
 {
 	const TSolidNotNull<const UEnum*> EnumClass = EnumValue.Class;
 	const FString EnumValueName = EnumClass->GetNameStringByValue(EnumValue.Value);

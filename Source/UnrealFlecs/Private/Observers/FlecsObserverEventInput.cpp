@@ -60,7 +60,7 @@ FFlecsObserverEventInput FFlecsObserverEventInput::Make(const EFlecsObserverEven
 	return Result;
 }
 
-void FFlecsObserverEventInput::ApplyToObserver(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, flecs::observer_builder<>& InObserverBuilder) const
+void FFlecsObserverEventInput::ApplyToObserver(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InFlecsWorld, flecs::observer_builder<>& InObserverBuilder) const
 {
 	if (bCustomEventType)
 	{

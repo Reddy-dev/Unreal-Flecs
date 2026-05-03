@@ -41,6 +41,8 @@
 #include "General/FlecsObjectRegistrationInterface.h"
 #include "General/FlecsObjectRegistrationProviderBase.h"
 
+#include "Worlds/FlecsStage.h"
+
 #include "Properties/FlecsTypeRegistryEngineSubsystem.h"
 
 #include "Queries/FlecsQueryBuilder.h"
@@ -69,105 +71,6 @@ DECLARE_CYCLE_STAT(TEXT("FlecsWorld::Progress"),
 DECLARE_CYCLE_STAT(TEXT("FlecsWorld::Progress::ProgressModule"),
 	STAT_FlecsWorldProgressModule, STATGROUP_FlecsWorld);
 
-namespace
-{
-	inline void ScriptStructConstructor(void* Ptr, int32_t Count, const ecs_type_info_t* TypeInfo)
-	{
-		solid_cassume(TypeInfo != nullptr);
-		solid_cassume(Ptr != nullptr);
-		solid_cassume(TypeInfo->hooks.ctx != nullptr);
-
-		const UScriptStruct* ScriptStruct = static_cast<UScriptStruct*>(TypeInfo->hooks.ctx);
-		solid_check(IsValid(ScriptStruct));
-
-		ScriptStruct->InitializeStruct(Ptr, Count);
-	}
-
-	inline void ScriptStructDestructor(void* Ptr, int32_t Count, const ecs_type_info_t* TypeInfo)
-	{
-		solid_cassume(TypeInfo != nullptr);
-		solid_cassume(Ptr != nullptr);
-		solid_cassume(TypeInfo->hooks.ctx != nullptr);
-
-		const UScriptStruct* ScriptStruct = static_cast<UScriptStruct*>(TypeInfo->hooks.ctx);
-		solid_check(IsValid(ScriptStruct));
-
-		ScriptStruct->DestroyStruct(Ptr, Count);
-	}
-
-	// @TODO: maybe add a RESTRICT keyword?
-	
-	inline void ScriptStructCopy(void* Destination, const void* Source, int32_t Count, const ecs_type_info_t* TypeInfo)
-	{
-		solid_cassume(TypeInfo != nullptr);
-		solid_cassume(Destination != nullptr);
-		solid_cassume(Source != nullptr);
-		solid_cassume(TypeInfo->hooks.ctx != nullptr);
-
-		const UScriptStruct* ScriptStruct = static_cast<UScriptStruct*>(TypeInfo->hooks.ctx);
-		solid_check(IsValid(ScriptStruct));
-
-		ScriptStruct->CopyScriptStruct(Destination, Source, Count);
-	}
-
-	inline void ScriptStructMove(void* Destination, void* Source, int32_t Count, const ecs_type_info_t* TypeInfo)
-	{
-		solid_cassume(TypeInfo != nullptr);
-		solid_cassume(Destination != nullptr);
-		solid_cassume(Source != nullptr);
-		solid_cassume(TypeInfo->hooks.ctx != nullptr);
-
-		const UScriptStruct* ScriptStruct = static_cast<UScriptStruct*>(TypeInfo->hooks.ctx);
-		solid_check(IsValid(ScriptStruct));
-
-		Solid::MoveAssignScriptStruct(ScriptStruct, Destination, Source, Count);
-	}
-
-	inline void ScriptStructMoveConstruct(void* Destination, void* Source, int32_t Count, const ecs_type_info_t* TypeInfo)
-	{
-		solid_cassume(TypeInfo != nullptr);
-		solid_cassume(Destination != nullptr);
-		solid_cassume(Source != nullptr);
-		solid_cassume(TypeInfo->hooks.ctx != nullptr);
-
-		const UScriptStruct* ScriptStruct = static_cast<UScriptStruct*>(TypeInfo->hooks.ctx);
-		solid_check(IsValid(ScriptStruct));
-
-		Solid::MoveConstructScriptStruct(ScriptStruct, Destination, Source, Count);
-	}
-
-	// @TODO: implement
-	inline int32 ScriptStructCompare(const void* A, const void* B, const ecs_type_info_t* TypeInfo)
-	{
-		// empty
-		return 0;
-	}
-	
-	inline bool ScriptStructEquals(const void* A, const void* B, const ecs_type_info_t* TypeInfo)
-	{
-		solid_cassume(TypeInfo != nullptr);
-		solid_cassume(A != nullptr);
-		solid_cassume(B != nullptr);
-		solid_cassume(TypeInfo->hooks.ctx != nullptr);
-
-		const UScriptStruct* ScriptStruct = static_cast<UScriptStruct*>(TypeInfo->hooks.ctx);
-		solid_check(IsValid(ScriptStruct));
-
-		return ScriptStruct->CompareScriptStruct(A, B, PPF_None);
-	}
-
-	inline bool ScriptStructEqualsSimple(const void* A, const void* B, const ecs_type_info_t* TypeInfo)
-	{
-		solid_cassume(TypeInfo != nullptr);
-		solid_cassume(A != nullptr);
-		solid_cassume(B != nullptr);
-		solid_cassume(TypeInfo->hooks.ctx != nullptr);
-
-		return FMemory::Memcmp(A, B, TypeInfo->size) == 0;
-	}
-	
-} // namespace
-
 UFlecsWorld::UFlecsWorld(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
@@ -176,15 +79,10 @@ UFlecsWorld::UFlecsWorld(const FObjectInitializer& ObjectInitializer)
 	char* argv[] = { const_cast<char*>(ObjectNameCStr) };
 		
 	World = flecs::world(1, argv);
-		
-	TypeMapComponent = GetTypeMapComponent();  // NOLINT(cppcoreguidelines-prefer-member-initializer)
-	solid_cassume(TypeMapComponent);
 }
 
 UFlecsWorld::~UFlecsWorld()
 {
-	TypeMapComponent = nullptr;
-
 	if LIKELY_IF(World)
 	{
 		World.release();
@@ -242,7 +140,7 @@ void UFlecsWorld::WorldStart()
 
 void UFlecsWorld::WorldBeginPlay()
 {
-	AddSingleton<FFlecsBeginPlayComponent>();
+	Add<FFlecsBeginPlayComponent>();
 }
 
 void UFlecsWorld::InitializeDefaultComponents() const
@@ -581,7 +479,7 @@ void UFlecsWorld::InitializeComponentPropertyObserver()
 			
 		solid_checkf(!IsDeferred(), TEXT("Cannot register component properties while world is deferred."));
 		
-		const FFlecsEntityHandle EntityHandle = FFlecsEntityHandle(World, InEntityId);
+		const FFlecsEntityHandle EntityHandle = FFlecsEntityHandle(GetNativeFlecsWorld(), InEntityId);
 			
 		const bool bIsScriptStructComponent = EntityHandle.Has<FFlecsScriptStructComponent>();
 		const bool bIsScriptEnumComponent = EntityHandle.Has<FFlecsScriptEnumComponent>();
@@ -685,200 +583,27 @@ void UFlecsWorld::InitializeSystems()
 
 void UFlecsWorld::Reset()
 {
-	World.reset();
+	GetNativeFlecsWorld().reset();
 }
 
 void UFlecsWorld::ResetClock() const
 {
-	World.reset_clock();
-}
-
-FFlecsEntityHandle UFlecsWorld::CreateEntity(const FString& Name, const FString& Separator, const FString& RootSeparator) const
-{
-	return World.entity(StringCast<char>(*Name).Get(), 
-	                    StringCast<char>(*Separator).Get(),
-	                    StringCast<char>(*RootSeparator).Get());
-}
-
-FFlecsEntityHandle UFlecsWorld::ObtainTypedEntity(const TSolidNotNull<UClass*> InClass) const
-{
-	const FFlecsEntityHandle EntityHandle = World.entity(RegisterScriptClassType(InClass));
-	return EntityHandle;
-}
-
-FFlecsEntityHandle UFlecsWorld::CreateEntityWithId(const FFlecsId InId) const
-{
-	solid_checkf(!IsAlive(InId), TEXT("Entity with ID %s is already alive"), *InId.ToString());
-	return MakeAlive(InId);
-}
-
-FFlecsEntityHandle UFlecsWorld::CreateEntityWithPrefab(const FFlecsId InPrefab) const
-{
-	return CreateEntity().SetIsA(InPrefab);
-}
-
-FFlecsEntityHandle UFlecsWorld::CreateEntityWithRecord(const FFlecsEntityRecord& InRecord, const FString& Name) const
-{
-	const FFlecsEntityHandle Entity = CreateEntity(Name);
-	InRecord.ApplyRecordToEntity(this, Entity);
-	return Entity;
-}
-
-FFlecsEntityHandle UFlecsWorld::CreateEntityWithRecordWithId(const FFlecsEntityRecord& InRecord,
-	const FFlecsId InId) const
-{
-	const FFlecsEntityHandle Entity = CreateEntityWithId(InId);
-	InRecord.ApplyRecordToEntity(this, Entity);
-	return Entity;
-}
-
-FFlecsEntityHandle UFlecsWorld::LookupEntity(const FString& Name,
-	const FString& Separator, const FString& RootSeparator,
-	const bool bRecursive) const
-{
-	return World.lookup(StringCast<char>(*Name).Get(),
-						StringCast<char>(*Separator).Get(),
-	                    StringCast<char>(*RootSeparator).Get(),
-	                    bRecursive);
-}
-
-FFlecsEntityHandle UFlecsWorld::LookupEntityBySymbol_Internal(const FString& Symbol, const bool bLookupAsPath,
-	const bool bRecursive) const
-{
-	return FFlecsEntityHandle(this, ecs_lookup_symbol(
-		World.world_,
-		StringCast<char>(*Symbol).Get(),
-		bLookupAsPath,
-		bRecursive));
-}
-
-void UFlecsWorld::DestroyEntityByName(const FString& Name) const
-{
-	solid_checkf(!Name.IsEmpty(), TEXT("Name is empty"));
-
-	const FFlecsEntityHandle Handle = LookupEntity(Name);
-		
-	if LIKELY_IF(Handle.IsValid())
-	{
-		Handle.Destroy();
-	}
-	else
-	{
-		UE_LOGFMT(LogFlecsWorld, Warning, "Entity {EntityName} not found", Name);
-	}
-}
-
-void UFlecsWorld::Merge() const
-{
-	World.merge();
-}
-
-FString UFlecsWorld::GetWorldName() const
-{
-	return GetWorldEntity().GetName();
-}
-
-void UFlecsWorld::SetWorldName(const FString& InName) const
-{
-	GetWorldEntity().SetName(InName);
-}
-
-bool UFlecsWorld::HasGameLoop(const TSubclassOf<UObject> InGameLoop, const bool bAllowChildren) const
-{
-	solid_check(InGameLoop);
-
-	for (const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface : GameLoopInterfaces)
-	{
-		if (GameLoopInterface.GetObject()->GetClass() == InGameLoop)
-		{
-			return true;
-		}
-		else if (bAllowChildren && GameLoopInterface.GetObject()->GetClass()->IsChildOf(InGameLoop))
-		{
-			return true;
-		}
-	}
-		
-	return false;
-}
-
-FFlecsEntityHandle UFlecsWorld::GetGameLoopEntity(const TSubclassOf<UObject> InGameLoop, const bool bAllowChildren) const
-{
-	solid_check(InGameLoop);
-	
-	for (const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface : GameLoopInterfaces)
-	{
-		if (GameLoopInterface.GetObject()->GetClass() == InGameLoop ||
-		    (bAllowChildren && GameLoopInterface.GetObject()->GetClass()->IsChildOf(InGameLoop)))
-		{
-			return GameLoopInterface->GetEntityHandle();
-		}
-	}
-
-	// @TODO: Log warning?
-	return FFlecsEntityHandle();
-}
-
-UObject* UFlecsWorld::GetGameLoop(const TSubclassOf<UObject> InGameLoop, const bool bAllowChildren) const
-{
-	solid_check(IsValid(InGameLoop));
-		
-	for (const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface : GameLoopInterfaces)
-	{
-		if (GameLoopInterface.GetObject()->GetClass() == InGameLoop ||
-		    (bAllowChildren && GameLoopInterface.GetObject()->GetClass()->IsChildOf(InGameLoop)))
-		{
-			return GameLoopInterface.GetObject();
-		}
-	}
-
-	// @TODO: Log warning?
-	return nullptr;
-}
-
-bool UFlecsWorld::BeginDefer() const
-{
-	return World.defer_begin();
-}
-
-FFlecsScopedDeferWindow UFlecsWorld::DeferWindow() const
-{
-	return FFlecsScopedDeferWindow(this);
-}
-
-bool UFlecsWorld::EndDefer() const
-{
-	return World.defer_end();
-}
-
-void UFlecsWorld::ResumeDefer() const
-{
-	World.defer_resume();
-}
-
-void UFlecsWorld::SuspendDefer() const
-{
-	World.defer_suspend();
-}
-
-bool UFlecsWorld::IsDeferred() const
-{
-	return World.is_deferred();
+	GetNativeFlecsWorld().reset_clock();
 }
 
 bool UFlecsWorld::BeginReadOnly() const
 {
-	return World.readonly_begin();
+	return GetNativeFlecsWorld().readonly_begin();
 }
 
 void UFlecsWorld::EndReadOnly() const
 {
-	World.readonly_end();
+	GetNativeFlecsWorld().readonly_end();
 }
 
 void UFlecsWorld::SetContext(void* InContext) const
 {
-	World.set_ctx(InContext);
+	GetNativeFlecsWorld().set_ctx(InContext);
 }
 
 void UFlecsWorld::HandleWorldPause()
@@ -964,18 +689,13 @@ bool UFlecsWorld::ProgressGameLoops(const FGameplayTag& TickTypeTag, const doubl
 
 bool UFlecsWorld::Progress(const double DeltaTime)
 {
-	return World.progress(DeltaTime);
+	return GetNativeFlecsWorld().progress(DeltaTime);
 }
 
 double UFlecsWorld::SetTimeScale(const double InTimeScale) const
 {
-	World.set_time_scale(InTimeScale);
+	GetNativeFlecsWorld().set_time_scale(InTimeScale);
 	return GetTimeScale();
-}
-
-double UFlecsWorld::GetTimeScale() const
-{
-	return World.get_info()->time_scale;
 }
 
 void UFlecsWorld::DestroyWorld()
@@ -1010,57 +730,14 @@ void UFlecsWorld::DestroyWorld()
 
 void UFlecsWorld::SetPipeline(const FFlecsEntityHandle& InPipeline) const
 {
-	World.set_pipeline(InPipeline);
+	GetNativeFlecsWorld().set_pipeline(InPipeline);
 }
 
-FFlecsEntityHandle UFlecsWorld::GetPipeline() const
+void UFlecsWorld::SetStageCount(const int32 InStageCount)
 {
-	return World.get_pipeline();
-}
-
-double UFlecsWorld::GetDeltaTime() const
-{
-	return World.delta_time();
-}
-
-FFlecsEntityHandle UFlecsWorld::GetAlive(const FFlecsId InId) const
-{
-	return World.get_alive(InId);
-}
-
-bool UFlecsWorld::IsAlive(const FFlecsId InId) const
-{
-	return World.is_alive(InId);
-}
-
-FFlecsEntityHandle UFlecsWorld::GetEntity(const FFlecsId InId) const
-{
-	return World.get_alive(InId);
-}
-
-FFlecsEntityHandle UFlecsWorld::MakeAlive(const FFlecsId& InId) const
-{
-	return World.make_alive(InId);
-}
-
-FFlecsEntityHandle UFlecsWorld::GetWorldEntity() const
-{
-	return World.entity(flecs::World);
-}
-
-int32 UFlecsWorld::GetStageCount() const
-{
-	return World.get_stage_count();
-}
-
-void UFlecsWorld::SetStageCount(const int32 InStageCount) const
-{
-	World.set_stage_count(InStageCount);
-}
-
-bool UFlecsWorld::IsReadOnly() const
-{
-	return World.is_readonly();
+	GetNativeFlecsWorld().set_stage_count(InStageCount);
+	
+	RegisterStages(InStageCount);
 }
 
 void UFlecsWorld::PreallocateEntities(const int32 InEntityCount) const
@@ -1071,625 +748,21 @@ void UFlecsWorld::PreallocateEntities(const int32 InEntityCount) const
 		return;
 	}
 		
-	World.dim(InEntityCount);
+	GetNativeFlecsWorld().dim(InEntityCount);
 }
 
-void UFlecsWorld::SetThreads(const int32 InThreadCount) const
+void UFlecsWorld::SetThreads(const int32 InThreadCount)
 {
-	World.set_threads(InThreadCount);
-}
-
-int32 UFlecsWorld::GetThreads() const
-{
-	return World.get_threads();
-}
-
-bool UFlecsWorld::UsingTaskThreads() const
-{
-	return World.using_task_threads();
-}
-
-void UFlecsWorld::SetTaskThreads(const int32 InThreadCount) const
-{
-	World.set_task_threads(InThreadCount);
-}
-
-bool UFlecsWorld::HasScriptStruct(const UScriptStruct* ScriptStruct) const
-{
-	solid_cassume(ScriptStruct);
-		
-	if (TypeMapComponent->ScriptStructMap.contains(ScriptStruct))
-	{
-		const FFlecsId Component = TypeMapComponent->ScriptStructMap.at(ScriptStruct);
-		return ecs_is_valid(World.c_ptr(), Component);
-	}
-		
-	return false;
-}
-
-bool UFlecsWorld::HasScriptEnum(const UEnum* ScriptEnum) const
-{
-	solid_cassume(ScriptEnum);
-		
-	if (TypeMapComponent->ScriptEnumMap.contains(ScriptEnum))
-	{
-		const FFlecsId Component = TypeMapComponent->ScriptEnumMap.at(ScriptEnum);
-		return ecs_is_valid(World.c_ptr(), Component);
-	}
-
-	return false;
-}
-
-FFlecsEntityHandle UFlecsWorld::GetScriptStructEntity(const UScriptStruct* ScriptStruct) const
-{
-	solid_cassume(ScriptStruct)
-
-	solid_checkf(HasScriptStruct(ScriptStruct),
-		TEXT("Script struct %s is not registered"), *ScriptStruct->GetStructCPPName());
-		
-	const FFlecsId Component = TypeMapComponent->ScriptStructMap.at(ScriptStruct);
-	solid_checkf(IsAlive(Component), TEXT("Entity is not alive"));
-		
-	return GetAlive(Component);
-}
-
-FFlecsEntityHandle UFlecsWorld::GetScriptEnumEntity(const UEnum* ScriptEnum) const
-{
-	solid_cassume(ScriptEnum);
+	GetNativeFlecsWorld().set_threads(InThreadCount);
 	
-	solid_checkf(HasScriptEnum(ScriptEnum),
-		TEXT("Script enum %s is not registered"), *ScriptEnum->GetName());
-		
-	const FFlecsId Component = TypeMapComponent->ScriptEnumMap.at(ScriptEnum);
-	solid_checkf(ecs_is_valid(World.c_ptr(), Component), TEXT("Entity is not alive"));
-	return GetAlive(Component);
+	RegisterStages(InThreadCount);
 }
 
-void UFlecsWorld::RegisterMemberProperties(const TSolidNotNull<const UStruct*> InStruct,
-	const FFlecsComponentHandle& InComponent) const
+void UFlecsWorld::SetTaskThreads(const int32 InThreadCount)
 {
-	solid_checkf(InComponent.IsValid(), TEXT("Entity is nullptr"));
-
-	for (TFieldIterator<FProperty> PropertyIt(InStruct, EFieldIterationFlags::IncludeSuper);
-	     PropertyIt; ++PropertyIt)
-	{
-		TSolidNotNull<FProperty*> Property = *PropertyIt;
-		
-		if (Property->IsA<FBoolProperty>())
-		{
-			InComponent.AddMember<bool>(Property->GetName(),
-			                            0, Property->GetOffset_ForInternal());
-		}
-		else if (Property->IsA<FByteProperty>())
-		{
-			InComponent.AddMember<uint8>(Property->GetName(),
-			                             0, Property->GetOffset_ForInternal());
-		}
-		else if (Property->IsA<FInt16Property>())
-		{
-			InComponent.AddMember<int16>(Property->GetName(),
-			                             0, Property->GetOffset_ForInternal());
-		}
-		else if (Property->IsA<FUInt16Property>())
-		{
-			InComponent.AddMember<uint16>(Property->GetName(),
-			                              0, Property->GetOffset_ForInternal());
-		}
-		else if (Property->IsA<FIntProperty>())
-		{
-			InComponent.AddMember<int32>(Property->GetName(),
-			                             0, Property->GetOffset_ForInternal());
-		}
-		else if (Property->IsA<FUInt32Property>())
-		{
-			InComponent.AddMember<uint32>(Property->GetName(),
-			                              0, Property->GetOffset_ForInternal());
-		}
-		else if (Property->IsA<FInt64Property>())
-		{
-			InComponent.AddMember<int64>(Property->GetName(),
-			                             0, Property->GetOffset_ForInternal());
-		}
-		else if (Property->IsA<FUInt64Property>())
-		{
-			InComponent.AddMember<uint64>(Property->GetName(),
-			                              0, Property->GetOffset_ForInternal());
-		}
-		else if (Property->IsA<FFloatProperty>())
-		{
-			InComponent.AddMember<float>(Property->GetName(),
-			                             0, Property->GetOffset_ForInternal());
-		}
-		else if (Property->IsA<FDoubleProperty>())
-		{
-			InComponent.AddMember<double>(Property->GetName(),
-			                              0, Property->GetOffset_ForInternal());
-		}
-		else if (Property->IsA<FStrProperty>())
-		{
-			InComponent.AddMember<FString>(Property->GetName(),
-			                               0, Property->GetOffset_ForInternal());
-		}
-		else if (Property->IsA<FNameProperty>())
-		{
-			InComponent.AddMember<FName>(Property->GetName(),
-			                             0, Property->GetOffset_ForInternal());
-		}
-		else if (Property->IsA<FTextProperty>())
-		{
-			InComponent.AddMember<FText>(Property->GetName(),
-			                             0, Property->GetOffset_ForInternal());
-		}
-		else if (Property->IsA<FObjectProperty>())
-		{
-			InComponent.AddMember<FObjectPtr>(Property->GetName(),
-			                                  0, Property->GetOffset_ForInternal());
-
-			if UNLIKELY_IF(IsIdInUse(InComponent))
-			{
-				continue;
-			}
-		}
-		else if (Property->IsA<FWeakObjectProperty>())
-		{
-			InComponent.AddMember<FWeakObjectPtr>(Property->GetName(),
-			                                      0, Property->GetOffset_ForInternal());
-		}
-		else if (Property->IsA<FSoftObjectProperty>())
-		{
-			InComponent.AddMember<FSoftObjectPtr>(Property->GetName(),
-			                                      0, Property->GetOffset_ForInternal());
-		}
-		else if (Property->IsA<FClassProperty>())
-		{
-			InComponent.AddMember<TSubclassOf<UObject>>(Property->GetName(),
-			                                            0, Property->GetOffset_ForInternal());
-		}
-		else if (Property->IsA<FStructProperty>())
-		{
-			FFlecsEntityHandle StructComponent;
-			if (!HasScriptStruct(CastFieldChecked<FStructProperty>(Property)->Struct))
-			{
-				UE_LOGFMT(LogFlecsWorld, Log,
-				          "Property Type Script struct {StructName} is not registered for entity {ComponentName}",
-				          CastFieldChecked<FStructProperty>(Property)->Struct->GetStructCPPName(),
-				          InComponent.GetName());
-				continue;
-			}
-			else
-			{
-				StructComponent = GetScriptStructEntity(CastFieldChecked<FStructProperty>(Property)->Struct);
-			}
-
-			if (!StructComponent.Has<flecs::Type>())
-			{
-				UE_LOGFMT(LogFlecsWorld, Log,
-				          "Property Type Script struct {StructName} does not have flecs::Type for entity {ComponentName}",
-				          CastFieldChecked<FStructProperty>(Property)->Struct->GetStructCPPName(),
-				          InComponent.GetName());
-				continue;
-			}
-			 		
-			InComponent.AddMember(StructComponent, Property->GetName(),
-			                      0, Property->GetOffset_ForInternal());
-		}
-		else UNLIKELY_ATTRIBUTE
-		{
-			UE_LOGFMT(LogFlecsWorld, Log,
-			          "Property Type: {PropertyName}({TypeName} is not supported for member serialization",
-			          Property->GetNameCPP(),
-			          Property->GetOwnerStruct()->GetName());
-		}
-	}
-}
-
-FFlecsEntityHandle UFlecsWorld::RegisterScriptStruct(const UScriptStruct* ScriptStruct, const bool bComponent, const bool bRegisterMemberProperties) const
-{
-	solid_cassume(ScriptStruct);
-
-		const FFlecsId OldScope = ClearScope();
-
-		solid_checkf(!TypeMapComponent->ScriptStructMap.contains(ScriptStruct),
-			TEXT("Script struct %s is already registered"), *ScriptStruct->GetStructCPPName());
-		
-		FFlecsComponentHandle ScriptStructComponent;
-
-		const FString StructName = ScriptStruct->GetStructCPPName();
-		const char* StructNameCStr = StringCast<char>(*StructName).Get(); // NOLINT(clang-diagnostic-dangling)
-
-		// Register Member properties can't be deferred
-		DeferEndLambda([this, ScriptStruct, &ScriptStructComponent, StructNameCStr, bComponent, &StructName, bRegisterMemberProperties]()
-		{
-			ScriptStructComponent = World.component(StructNameCStr);
-			solid_check(ScriptStructComponent.IsValid());
-			
-			ScriptStructComponent.GetEntity().set_symbol(StructNameCStr);
-			
-			const TFieldIterator<FProperty> PropertyIt(ScriptStruct);
-			const bool bIsTag = ScriptStruct->GetStructureSize() <= 1 && !PropertyIt;
-
-			if (bComponent)
-			{
-				ScriptStructComponent.Set<flecs::Component>({
-					.size = bIsTag ? 0 : ScriptStruct->GetStructureSize(),
-					.alignment = bIsTag ? 0 : ScriptStruct->GetMinAlignment()
-				});
-
-				if (!bIsTag)
-				{
-					if (ScriptStruct->GetCppStructOps()->HasNoopConstructor())
-					{
-						UE_LOGFMT(LogFlecsComponent, Log,
-							"Script struct {StructName} has a No-op constructor, this will not be used in flecs",
-							ScriptStruct->GetName());
-					}
-
-					ScriptStructComponent.ModifyHooksLambda([ScriptStruct, &ScriptStructComponent](flecs::type_hooks_t& Hooks)
-					{
-						const bool bIsPOD = ScriptStruct->GetCppStructOps()->IsPlainOldData();
-						
-						const bool bHasCtor = !ScriptStruct->GetCppStructOps()->HasZeroConstructor();
-						const bool bHasDtor = ScriptStruct->GetCppStructOps()->HasDestructor();
-						const bool bHasCopy = ScriptStruct->GetCppStructOps()->HasCopy();
-						const bool bHasMove = FSolidMoveableStructRegistry::Get().IsStructMoveAssignable(ScriptStruct);
-						const bool bHasMoveCtor = FSolidMoveableStructRegistry::Get().IsStructMoveConstructible(ScriptStruct);
-
-						const bool bHasIdentical = ScriptStruct->GetCppStructOps()->HasIdentical();
-						
-						Hooks.ctx = const_cast<UScriptStruct*>(ScriptStruct);  // NOLINT(cppcoreguidelines-pro-type-const-cast)
-						
-						if (bIsPOD)
-						{
-							Hooks.ctor = nullptr;
-							Hooks.dtor = nullptr;
-							Hooks.copy = nullptr;
-							Hooks.move = nullptr;
-						}
-						else
-						{
-							if (bHasCtor)
-							{
-								Hooks.ctor = ScriptStructConstructor;
-							}
-							else
-							{
-								Hooks.ctor = nullptr;
-							}
-						
-							if (bHasDtor)
-							{
-								Hooks.dtor = ScriptStructDestructor;
-							}
-							else
-							{
-								Hooks.dtor = nullptr;
-							}
-
-							if (bHasCopy)
-							{
-								Hooks.copy = ScriptStructCopy;
-							}
-							else
-							{
-								Hooks.copy = nullptr;
-							}
-
-							if (bHasMove)
-							{
-								Hooks.move = ScriptStructMove;
-							}
-							else
-							{
-								Hooks.move = nullptr;
-							}
-
-							if (bHasMoveCtor)
-							{
-								Hooks.move_ctor = ScriptStructMoveConstruct;
-							}
-							else
-							{
-								Hooks.move_ctor = nullptr;
-							}
-
-							if (!bHasCopy && !bHasMove)
-							{
-								ScriptStructComponent.Add(flecs::Sparse);
-							
-								UE_LOGFMT(LogFlecsComponent, Log,
-									"Script struct {StructName} registered as Sparse component due to missing copy/move operations",
-									ScriptStruct->GetName());
-							}
-						}
-
-						if (!bHasIdentical && bIsPOD)
-						{
-							Hooks.equals = ScriptStructEqualsSimple;
-						}
-						else
-						{
-							Hooks.equals = ScriptStructEquals;
-						}
-
-						// @TODO: Implement this
-						Hooks.cmp = nullptr;
-					});
-				}
-			}
-
-			std::string StructNameStdString(StructNameCStr, StructName.Len());
-			
-			if (!flecs::_::g_type_to_impl_data.contains(StructNameStdString))
-			{
-				flecs::_::type_impl_data NewData;  // NOLINT(cppcoreguidelines-pro-type-member-init)
-				NewData.s_set_values = true;
-				NewData.s_index = flecs_component_ids_index_get();
-				NewData.s_size = bIsTag ? 0 : ScriptStruct->GetStructureSize();
-				NewData.s_alignment = bIsTag ? 0 : ScriptStruct->GetMinAlignment();
-				NewData.s_allow_tag = bIsTag;
-				NewData.s_enum_registered = false;
-				
-				flecs::_::g_type_to_impl_data.emplace(StructNameStdString, NewData);
-			}
-
-			solid_check(flecs::_::g_type_to_impl_data.contains(StructNameStdString));
-			flecs::_::type_impl_data& Data = flecs::_::g_type_to_impl_data.at(StructNameStdString);
-
-			flecs_component_ids_set(World, Data.s_index, ScriptStructComponent);
-
-			TypeMapComponent->ScriptStructMap.emplace(ScriptStruct, ScriptStructComponent);
-			
-			ScriptStructComponent.Set<FFlecsScriptStructComponent>({ ScriptStruct });
-
-			if (bRegisterMemberProperties)
-			{
-				RegisterMemberProperties(ScriptStruct, ScriptStructComponent);
-			}
-			
-			UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(ScriptStructComponent);
-		});
-
-		SetScope(OldScope);
-		return ScriptStructComponent;
-}
-
-FFlecsEntityHandle UFlecsWorld::RegisterScriptEnum(const UEnum* ScriptEnum) const
-{
-	solid_cassume(ScriptEnum);
-	solid_check(IsValid(ScriptEnum));
-
-	if (HasScriptEnum(ScriptEnum))
-	{
-		UE_LOGFMT(LogFlecsWorld, Log,
-		          "Script enum {EnumName} is already registered", ScriptEnum->GetName());
-		return GetScriptEnumEntity(ScriptEnum);
-	}
-
-	solid_checkf(!ScriptEnum->HasAnyEnumFlags(EEnumFlags::Flags),
-	             TEXT("Script enum %s is not supported, use RegisterScriptBitmask instead"),
-	             *ScriptEnum->GetName());
-
-	// if (ScriptEnum->HasAnyEnumFlags(EEnumFlags::Flags))
-	// {
-	// 	return RegisterComponentBitmaskType(ScriptEnum);
-	// }
-	// else
-	// {
-	// 	return RegisterComponentEnumType(ScriptEnum);
-	// }
-		
-	return RegisterComponentEnumType(ScriptEnum);
-}
-
-FFlecsEntityHandle UFlecsWorld::RegisterComponentEnumType(TSolidNotNull<const UEnum*> ScriptEnum) const
-{
-	const FFlecsId OldScope = ClearScope();
-
-		solid_checkf(!TypeMapComponent->ScriptEnumMap.contains(FFlecsScriptEnumComponent(ScriptEnum)),
-			TEXT("Script enum %s is already registered"), *ScriptEnum->GetName());
-
-		FFlecsComponentHandle ScriptEnumComponent;
-
-		const FString EnumName = ScriptEnum->GetName();
-		const char* EnumNameCStr = StringCast<char>(*EnumName).Get();  // NOLINT(clang-diagnostic-dangling)
-
-		DeferEndLambda([this, ScriptEnum, &ScriptEnumComponent, &EnumNameCStr, &EnumName]()
-		{
-			ScriptEnumComponent = World.component(EnumNameCStr);
-			solid_check(ScriptEnumComponent.IsValid());
-			
-			ScriptEnumComponent.GetEntity().set_symbol(EnumNameCStr);
-
-			ScriptEnumComponent.Set<flecs::Component>({
-				.size = sizeof(uint8),
-				.alignment = alignof(uint8)
-			});
-			
-			ScriptEnumComponent.GetLambda([](flecs::Enum& InEnumComponent)
-			{
-				InEnumComponent.underlying_type = flecs::U8;
-			});
-
-			const int32 EnumCount = ScriptEnum->NumEnums();
-
-			const uint64 MaxEnumValue = ScriptEnum->GetMaxEnumValue();
-			const bool bUint8 = MaxEnumValue < std::numeric_limits<uint8>::max();
-			
-			for (int32 EnumIndex = 0; EnumIndex < EnumCount; ++EnumIndex)
-			{
-				const int64 EnumValue = ScriptEnum->GetValueByIndex(EnumIndex);
-				solid_cassume(EnumValue >= 0);
-				
-				const FString EnumValueName = ScriptEnum->GetNameStringByIndex(EnumIndex);
-
-				if (std::cmp_equal(MaxEnumValue, EnumValue))
-				{
-					continue;
-				}
-
-				if (bUint8)
-				{
-					ScriptEnumComponent.AddConstant<uint8>(EnumValueName, static_cast<uint8>(EnumValue));
-				}
-				else
-				{
-					ScriptEnumComponent.AddConstant<uint64>(EnumValueName, static_cast<uint64>(EnumValue));
-				}
-			}
-
-			std::string EnumNameStdString(EnumNameCStr, EnumName.Len());
-			if (!flecs::_::g_type_to_impl_data.contains(EnumNameStdString))
-			{
-				flecs::_::type_impl_data NewData{};
-				NewData.s_set_values = true;
-				NewData.s_index = flecs_component_ids_index_get();
-				NewData.s_size = sizeof(uint8);
-				NewData.s_alignment = alignof(uint8);
-				NewData.s_allow_tag = false;
-				NewData.s_enum_registered = false;
-				
-				flecs::_::g_type_to_impl_data.emplace(EnumNameStdString, NewData);
-			}
-
-			solid_check(flecs::_::g_type_to_impl_data.contains(EnumNameStdString));
-			
-			auto& [s_set_values, s_index, s_size, s_alignment, s_allow_tag, s_enum_registered]
-				= flecs::_::g_type_to_impl_data.at(EnumNameStdString);
-			
-			flecs_component_ids_set(World, s_index, ScriptEnumComponent);
-			TypeMapComponent->ScriptEnumMap.emplace(ScriptEnum, ScriptEnumComponent);
-			
-			ScriptEnumComponent.Set<FFlecsScriptEnumComponent>(FFlecsScriptEnumComponent(ScriptEnum));
-			
-			UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(ScriptEnumComponent);
-		});
-
-		SetScope(OldScope);
-		return ScriptEnumComponent;
-}
-
-FFlecsEntityHandle UFlecsWorld::RegisterScriptClassType(TSolidNotNull<UClass*> ScriptClass) const
-{
-	const FFlecsId OldScope = ClearScope();
-
-	const FString ClassName = ScriptClass->GetPrefixCPP() + ScriptClass->GetName();
-
-	if (HasScriptClass(ScriptClass))
-	{
-		UE_LOGFMT(LogFlecsWorld, Log,
-			"Script class {ClassName} is already registered", ClassName);
-		return GetScriptClassEntity(ScriptClass);
-	}
-
-	FFlecsEntityHandle ScriptClassEntity;
-
-	const char* ClassNameCStr = StringCast<char>(*ClassName).Get(); // NOLINT(clang-diagnostic-dangling)
-
-	DeferEndLambda([this, ScriptClass, &ScriptClassEntity, ClassNameCStr, &ClassName]()
-	{
-		ScriptClassEntity = CreateEntity(ClassName);
-		solid_check(ScriptClassEntity.IsValid());
-
-		ScriptClassEntity.GetEntity().set_symbol(ClassNameCStr);
-		TypeMapComponent->ScriptClassMap.emplace(ScriptClass, ScriptClassEntity);
-
-		ScriptClassEntity.Set<FFlecsScriptClassComponent>(FFlecsScriptClassComponent(ScriptClass));
-
-		//RegisterMemberProperties(ScriptClass, ScriptClassComponent);
-
-		std::string ClassNameStdString(ClassNameCStr, ClassName.Len());
-
-		if (!flecs::_::g_type_to_impl_data.contains(ClassNameStdString))
-		{
-			flecs::_::type_impl_data NewData;  // NOLINT(cppcoreguidelines-pro-type-member-init)]
-			NewData.s_set_values = true;
-			NewData.s_index = flecs_component_ids_index_get();
-			NewData.s_size = 0;
-			NewData.s_alignment = 0;
-			NewData.s_allow_tag = true;
-			NewData.s_enum_registered = false;
-				
-			flecs::_::g_type_to_impl_data.emplace(ClassNameStdString, NewData);
-		}
-
-		solid_check(flecs::_::g_type_to_impl_data.contains(ClassNameStdString));
-
-		flecs::_::type_impl_data& Data = flecs::_::g_type_to_impl_data.at(ClassNameStdString);
-			
-		flecs_component_ids_set(World, Data.s_index, ScriptClassEntity);
-		TypeMapComponent->ScriptClassMap.emplace(ScriptClass, ScriptClassEntity);
-	});
-
-	SetScope(OldScope);
-		
-	return ScriptClassEntity;
-}
-
-bool UFlecsWorld::HasScriptClass(const TSubclassOf<UObject> InClass) const
-{
-	solid_check(InClass);
-		
-	if (TypeMapComponent->ScriptClassMap.contains(FFlecsScriptClassComponent(InClass)))
-	{
-		const FFlecsId Component = TypeMapComponent->ScriptClassMap.at(FFlecsScriptClassComponent(InClass));
-		return ecs_is_valid(World.c_ptr(), Component);
-	}
-
-	return false;
-}
-
-FFlecsEntityHandle UFlecsWorld::GetScriptClassEntity(const TSubclassOf<UObject> InClass) const
-{
-	solid_check(InClass);
-		
-	const FFlecsId Component = TypeMapComponent->ScriptClassMap.at(FFlecsScriptClassComponent(InClass));
-	solid_checkf(IsAlive(Component), TEXT("Entity is not alive"));
-		
-	return FFlecsEntityHandle(World, Component);
-}
-
-FFlecsEntityHandle UFlecsWorld::RegisterComponentType(const TSolidNotNull<const UScriptStruct*> ScriptStruct, const bool bRegisterMemberProperties) const
-{
-	solid_checkf(!IsDeferred(), TEXT("Cannot register component while deferred"));
+	GetNativeFlecsWorld().set_task_threads(InThreadCount);
 	
-	if (HasScriptStruct(ScriptStruct))
-	{
-		return GetScriptStructEntity(ScriptStruct);
-	}
-
-	return RegisterScriptStruct(ScriptStruct, true, bRegisterMemberProperties);
-}
-
-FFlecsEntityHandle UFlecsWorld::RegisterComponentType(const TSolidNotNull<const UEnum*> ScriptEnum) const
-{
-	solid_checkf(!IsDeferred(), TEXT("Cannot register component while deferred"));
-	
-	if (HasScriptEnum(ScriptEnum))
-	{
-		return GetScriptEnumEntity(ScriptEnum);
-	}
-
-	return RegisterScriptEnum(ScriptEnum);
-}
-
-bool UFlecsWorld::IsIdInUse(const FFlecsId InId) const
-{
-	return ecs_id_in_use(World.c_ptr(), InId);
-}
-
-FFlecsId UFlecsWorld::GetTypeId(const FFlecsId InId) const
-{
-	return ecs_get_typeid(World.c_ptr(), InId);
-}
-
-bool UFlecsWorld::IsIdType(const FFlecsId InId) const
-{
-	return GetTypeId(InId) != FFlecsId::Null();
-}
-
-bool UFlecsWorld::IsIdTag(const FFlecsId InId) const
-{
-	return ecs_id_is_tag(World.c_ptr(), InId);
+	RegisterStages(InThreadCount);
 }
 
 void UFlecsWorld::RunPipeline(const FFlecsId InPipeline, const double DeltaTime) const
@@ -1697,147 +770,7 @@ void UFlecsWorld::RunPipeline(const FFlecsId InPipeline, const double DeltaTime)
 	solid_checkf(InPipeline.IsValid(), TEXT("Pipeline is not valid"));
 	solid_checkf(IsAlive(InPipeline), TEXT("Pipeline entity is not alive"));
 	
-	World.run_pipeline(InPipeline, DeltaTime);
-}
-
-void UFlecsWorld::RandomizeTimers() const
-{
-	World.randomize_timers();
-}
-
-FFlecsTimerHandle UFlecsWorld::CreateTimer(const FString& Name) const
-{
-	return World.timer(StringCast<char>(*Name).Get());
-}
-
-bool UFlecsWorld::HasEntityWithName(const FString& Name, FFlecsEntityHandle& OutEntity) const
-{
-	const FFlecsEntityHandle Entity = LookupEntity(Name);
-	
-	if (Entity.IsValid())
-	{
-		OutEntity = Entity;
-		return true;
-	}
-
-	return false;
-}
-
-FFlecsEntityHandle UFlecsWorld::GetTagEntity(const FGameplayTag& Tag) const
-{
-	solid_checkf(Tag.IsValid(), TEXT("Tag is not valid"));
-
-	solid_checkf(TagEntityMap.contains(Tag), TEXT("Tag %s is not registered"), *Tag.ToString());
-	solid_checkf(IsAlive(TagEntityMap.at(Tag).GetId()), TEXT("Tag entity is not alive"));
-		
-	return GetAlive(TagEntityMap.at(Tag).GetId());
-}
-
-FFlecsEntityHandle UFlecsWorld::CreatePrefabWithRecord(const FFlecsEntityRecord& InRecord, const FString& Name) const
-{
-	const FFlecsEntityHandle PrefabEntity = World.prefab(StringCast<char>(*Name).Get());
-	solid_checkf(PrefabEntity.IsPrefab(), TEXT("Entity is not a prefab"));
-		
-	InRecord.ApplyRecordToEntity(this, PrefabEntity);
-	
-	PrefabEntity.Set<FFlecsEntityRecordComponent>(
-	{
-		.EntityRecord = InRecord
-	});
-		
-#if WITH_EDITOR
-
-	if (!Name.IsEmpty())
-	{
-		PrefabEntity.SetDocName(Name);
-	}
-
-#endif // WITH_EDITOR
-		
-	return PrefabEntity;
-}
-
-FFlecsEntityHandle UFlecsWorld::CreatePrefab(const FString& Name) const
-{
-	return World.prefab(StringCast<char>(*Name).Get());
-}
-
-FFlecsEntityHandle UFlecsWorld::CreatePrefab(const TSolidNotNull<UClass*> InClass) const
-{
-	const FFlecsEntityHandle PrefabEntity = ObtainTypedEntity(InClass)
-		.Add(flecs::Prefab);
-		
-	return PrefabEntity;
-}
-
-FFlecsEntityHandle UFlecsWorld::CreatePrefabWithRecord(const FFlecsEntityRecord& InRecord,
-	const TSolidNotNull<UClass*> InClass) const
-{
-	const FFlecsEntityHandle PrefabEntity = CreatePrefab(InClass);
-	solid_checkf(PrefabEntity.IsPrefab(), TEXT("Entity is not a prefab"));
-
-	InRecord.ApplyRecordToEntity(this, PrefabEntity);
-	PrefabEntity.Set<FFlecsEntityRecordComponent>(
-	{
-		.EntityRecord = InRecord
-	});
-		
-	return PrefabEntity;
-}
-
-void UFlecsWorld::DestroyPrefab(const FFlecsEntityHandle& InPrefab) const
-{
-	solid_checkf(InPrefab.IsValid(), TEXT("Prefab entity is not valid"));
-	InPrefab.Destroy();
-}
-
-bool UFlecsWorld::ShouldQuit() const
-{
-	return World.should_quit();
-}
-
-FFlecsId UFlecsWorld::ClearScope() const
-{
-	return World.set_scope(0);
-}
-
-FFlecsId UFlecsWorld::SetScope(const FFlecsId InScope) const
-{
-	return World.set_scope(InScope);
-}
-
-FFlecsEntityHandle UFlecsWorld::GetScope() const
-{
-	return World.get_scope();
-}
-
-FFlecsQueryBuilder UFlecsWorld::CreateQueryBuilder(const FString& InName) const
-{
-	return FFlecsQueryBuilder(this, InName);
-}
-
-FFlecsQueryBuilder UFlecsWorld::CreateQueryBuilderWithEntity(const FFlecsEntityHandle& InEntity) const
-{
-	solid_checkf(InEntity.IsValid(), TEXT("Entity is not valid"));
-
-	return FFlecsQueryBuilder(this, InEntity);
-}
-
-FFlecsQuery UFlecsWorld::CreateQuery(const FFlecsQueryDefinition& InDefinition, const FString& InName) const
-{
-	flecs::query_builder<> Builder = flecs::query_builder<>(World, StringCast<char>(*InName).Get());
-	FFlecsQueryBuilderView BuilderView = MakeQueryBuilderView_Internal(Builder);
-	InDefinition.Apply(this, BuilderView);
-	return FFlecsQuery(Builder.build());
-}
-
-FFlecsQuery UFlecsWorld::CreateQueryWithEntity(const FFlecsQueryDefinition& InDefinition,
-	const FFlecsEntityHandle& InEntity) const
-{
-	flecs::query_builder<> Builder = flecs::query_builder<>(World, InEntity);
-	FFlecsQueryBuilderView BuilderView = MakeQueryBuilderView_Internal(Builder);
-	InDefinition.Apply(this, BuilderView);
-	return FFlecsQuery(Builder.build());
+	GetNativeFlecsWorld().run_pipeline(InPipeline, DeltaTime);
 }
 
 /*
@@ -1852,7 +785,7 @@ FFlecsQuery UFlecsWorld::GetQueryFromEntity(const FFlecsEntityHandle& InEntity) 
 
 bool UFlecsWorld::IsSupportedForNetworking() const
 {
-	return true;
+	return false;
 }
 
 void UFlecsWorld::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -1860,19 +793,9 @@ void UFlecsWorld::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 }
 
-bool UFlecsWorld::IsNameStableForNetworking() const
-{
-	return true;
-}
-
-UFlecsWorldSubsystem* UFlecsWorld::GetContext() const
-{
-	return static_cast<UFlecsWorldSubsystem*>(World.get_ctx());
-}
-
 void UFlecsWorld::ShrinkWorld() const
 {
-	World.shrink();
+	GetNativeFlecsWorld().shrink();
 }
 
 int32 UFlecsWorld::DeleteEmptyTables(const double TimeBudgetSeconds,
@@ -1884,12 +807,7 @@ int32 UFlecsWorld::DeleteEmptyTables(const double TimeBudgetSeconds,
 	Desc.delete_generation = DeleteGeneration;
 	Desc.time_budget_seconds = TimeBudgetSeconds;
 	
-	return ecs_delete_empty_tables(World, &Desc);
-}
-
-FFlecsTypeMapComponent* UFlecsWorld::GetTypeMapComponent() const
-{
-	return static_cast<FFlecsTypeMapComponent*>(World.get_binding_ctx());
+	return ecs_delete_empty_tables(GetNativeFlecsWorld(), &Desc);
 }
 
 FFlecsEntityHandle UFlecsWorld::GetFlecsTickFunctionByType(const FGameplayTag& InTickType) const
@@ -1967,7 +885,7 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 	
 	CastChecked<IFlecsObjectRegistrationInterface>(FlecsObject)->RegisterObject(this);
 	
-	if (HasSingleton<FFlecsBeginPlayComponent>())
+	if (Has<FFlecsBeginPlayComponent>())
 	{
 		CastChecked<IFlecsObjectRegistrationInterface>(FlecsObject)->FlecsWorldBeginPlay(this);
 	}
@@ -1981,48 +899,83 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 	return FlecsObject;
 }
 
-UObject* UFlecsWorld::GetRegisteredFlecsObject(const TSubclassOf<UObject> InClass) const
+UFlecsStage* UFlecsWorld::GetStage(const int32 InStageId) const
 {
-	solid_check(InClass);
-	
-	if (!RegisteredObjectTypes.Contains(InClass))
+	if (InStageId == 0)
 	{
 		return nullptr;
 	}
-
-	return RegisteredObjectTypes[InClass].GetObject();
-}
-
-UObject* UFlecsWorld::GetRegisteredFlecsObjectChecked(const TSubclassOf<UObject> InClass) const
-{
-	solid_check(InClass);
 	
-	solid_checkf(RegisteredObjectTypes.Contains(InClass),
-		TEXT("Class %s is not registered as a flecs object"), *InClass->GetName());
-
-	return RegisteredObjectTypes[InClass].GetObject();
+	solid_cassumef(InStageId >= 0, TEXT("Stage ID must be non-negative and can't be the same as the main world (0)"));
+	solid_checkf(Stages.IsValidIndex(InStageId), TEXT("Stage ID %d is out of bounds"), InStageId);
+	return Stages[InStageId];
 }
 
-bool UFlecsWorld::IsFlecsObjectRegistered(const TSubclassOf<UObject> InClass) const
+UFlecsStage* UFlecsWorld::GetStage(const flecs::world& InStageWorld) const
 {
-	solid_check(InClass);
-	return RegisteredObjectTypes.Contains(InClass);
-}
-
-FFlecsEntityHandle UFlecsWorld::GetFlecsModule(const FName& InModuleName) const
-{
-	FFlecsEntityHandle ModuleEntity = LookupEntity(InModuleName.ToString());
-	
-	if UNLIKELY_IF(!ModuleEntity.IsValid() || !ModuleEntity.Has(flecs::Module))
+	if (!InStageWorld.is_stage())
 	{
-		UE_LOGFMT(LogFlecsWorld, Warning,
-			"Module {ModuleName} does not exist or is not a valid flecs module",
-			*InModuleName.ToString());
-		
-		return FFlecsEntityHandle::GetNullHandle();
+		return nullptr;
 	}
 	
-	return ModuleEntity;
+	const int32 StageId = InStageWorld.get_stage_id();
+	return GetStage(StageId);
+}
+
+UFlecsStage* UFlecsWorld::GetStage(const flecs::iter& InIter) const
+{
+	if (!InIter.world().is_stage())
+	{
+		return nullptr;
+	}
+	
+	const int32 StageId = InIter.world().get_stage_id();
+	return GetStage(StageId);
+}
+
+void UFlecsWorld::RegisterStages(const int32 InStageCount)
+{
+	for (UFlecsStage* Stage : Stages)
+	{
+		if (Stage)
+		{
+			Stage->DestroyStage();
+		}
+	}
+	
+	Stages.Empty();
+	
+	if (InStageCount <= 1)
+	{
+		Stages.Add(nullptr);
+		return;
+	}
+	
+	for (int32 StageIndex = 0; StageIndex < InStageCount; ++StageIndex)
+	{
+		if (StageIndex == 0)
+		{
+			Stages.Add(nullptr);
+			continue;
+		}
+		
+		const TSolidNotNull<UFlecsStage*> NewStage = NewObject<UFlecsStage>(this);
+		NewStage->SetStageWorld(GetNativeFlecsWorld().get_stage(StageIndex));
+		
+		Stages.Add(NewStage);
+		solid_checkf(Stages.Num() - 1 == StageIndex, TEXT("Stage index does not match stage array index"));
+		solid_checkf(Stages.Num() - 1 == NewStage->GetStageId(), TEXT("Stage ID does not match stage array index"));
+	}
+}
+
+UFlecsStage* UFlecsWorld::CreateAsyncStage()
+{
+	flecs::world AsyncStage = GetNativeFlecsWorld().async_stage();
+	
+	const TSolidNotNull<UFlecsStage*> NewStage = NewObject<UFlecsStage>(this);
+	NewStage->SetStageWorld(AsyncStage);
+	
+	return NewStage;
 }
 
 void UFlecsWorld::ImportRestModule()
@@ -2045,7 +998,7 @@ void UFlecsWorld::ImportRestModule()
 		
 		const uint16 RestPort = ECS_REST_DEFAULT_PORT + ClientPIEInstanceOffset;
 		
-		SetSingleton<flecs::Rest>(flecs::Rest{ .port = RestPort });
+		Set<flecs::Rest>(flecs::Rest{ .port = RestPort });
 	});
 	
 #endif // FLECS_REST
@@ -2070,12 +1023,12 @@ void UFlecsWorld::AddReferencedObjects(UObject* InThis, FReferenceCollector& Col
 	const TSolidNotNull<UFlecsWorld*> This = CastChecked<UFlecsWorld>(InThis);
 	solid_check(IsValid(This));
 	
-	if UNLIKELY_IF(!This->TypeMapComponent || !This->bIsInitialized)
+	if UNLIKELY_IF(!This->GetTypeMapComponent() || !This->bIsInitialized)
 	{
 		return;
 	}
 
-	ecs_exclusive_access_begin(This->World, "Garbage Collection ARO");
+	ecs_exclusive_access_begin(This->GetNativeFlecsWorld(), "Garbage Collection ARO");
 		
 	This->AddReferencedObjectsQuery.each([InThis, &Collector](flecs::iter& Iter, size_t Index,
 	                               const FFlecsScriptStructComponent& InScriptStructComponent)
@@ -2101,7 +1054,7 @@ void UFlecsWorld::AddReferencedObjects(UObject* InThis, FReferenceCollector& Col
 	    	
 	    });
 
-	ecs_exclusive_access_end(This->World, false);
+	ecs_exclusive_access_end(This->GetNativeFlecsWorld(), false);
 }
 
 void UFlecsWorld::GetResourceSizeEx(FResourceSizeEx& CumulativeResourceSize)

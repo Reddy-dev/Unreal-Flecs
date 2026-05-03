@@ -10,7 +10,7 @@ FFlecsQueryNameExpression::FFlecsQueryNameExpression() : Super(false /* bInAllow
 {
 }
 
-void FFlecsQueryNameExpression::Apply(const TSolidNotNull<const UFlecsWorld*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const
+void FFlecsQueryNameExpression::Apply(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const
 {
 	solid_checkf(!Name.IsEmpty(), TEXT("Name is empty"));
 	InQueryBuilder.name(StringCast<char>(*Name).Get());
