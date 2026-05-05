@@ -142,6 +142,16 @@ struct query_base {
         return ecs_query_get_group_info(query_, group_id);
     }
 
+    /** Iterate the active groups of a grouped query.
+     * Returns a range over (group_id, value) entries from the query's group
+     * map. The map value type is currently opaque, so V is exposed as void*.
+     *
+     * @return A flecs::map range over the query's active groups.
+     */
+    flecs::map<uint64_t, void*> groups() const {
+        return flecs::map<uint64_t, void*>(ecs_query_get_groups(query_));
+    }
+
     /** Get context for a group.
      *
      * @param group_id The group ID for which to retrieve the context.
@@ -184,6 +194,38 @@ struct query_base {
     /** Find a variable by name. */
     int32_t find_var(const char *name) const {
         return ecs_query_find_var(query_, name);
+    }
+
+    bool has(flecs::entity_t e) const {
+        ecs_iter_t it;
+        bool result = ecs_query_has(query_, e, &it);
+        if (result) {
+            ecs_iter_fini(&it);
+        }
+        return result;
+    }
+
+    bool has(const flecs::table& t) const {
+        ecs_iter_t it;
+        bool result = ecs_query_has_table(query_, t.get_table(), &it);
+        if (result) {
+            ecs_iter_fini(&it);
+        }
+        return result;
+    }
+
+    bool has(const flecs::table_range& range) const {
+        ecs_table_range_t r = {
+            range.get_table(),
+            range.offset(),
+            range.count()
+        };
+        ecs_iter_t it;
+        bool result = ecs_query_has_range(query_, &r, &it);
+        if (result) {
+            ecs_iter_fini(&it);
+        }
+        return result;
     }
 
     /** Convert the query to a string expression. */

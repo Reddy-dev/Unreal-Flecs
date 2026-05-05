@@ -7,10 +7,12 @@
 
 #ifdef FLECS_JSON
 
-const char* flecs_json_skip_array(
+static
+const char* flecs_json_skip_scope(
     const char *json,
     char *token,
-    const ecs_from_json_desc_t *desc);
+    const ecs_from_json_desc_t *desc,
+    ecs_json_token_t close_kind);
 
 static
 const char* flecs_json_token_str(
@@ -49,25 +51,16 @@ const char* flecs_json_parse(
 
     char ch = json[0];
 
-    if (ch == '{') {
-        token_kind[0] = JsonObjectOpen;
-        return json + 1;
-    } else if (ch == '}') {
-        token_kind[0] = JsonObjectClose;
-        return json + 1;
-    } else if (ch == '[') {
-        token_kind[0] = JsonArrayOpen;
-        return json + 1;
-    } else if (ch == ']') {
-        token_kind[0] = JsonArrayClose;
-        return json + 1;
-    } else if (ch == ':') {
-        token_kind[0] = JsonColon;
-        return json + 1;
-    } else if (ch == ',') {
-        token_kind[0] = JsonComma;
-        return json + 1;
-    } else if (ch == '"') {
+    switch (ch) {
+    case '{': token_kind[0] = JsonObjectOpen; return json + 1;
+    case '}': token_kind[0] = JsonObjectClose; return json + 1;
+    case '[': token_kind[0] = JsonArrayOpen; return json + 1;
+    case ']': token_kind[0] = JsonArrayClose; return json + 1;
+    case ':': token_kind[0] = JsonColon; return json + 1;
+    case ',': token_kind[0] = JsonComma; return json + 1;
+    }
+
+    if (ch == '"') {
         const char *start = json;
         char *token_ptr = token;
         json ++;
@@ -154,11 +147,7 @@ const char* flecs_json_parse_large_string(
         ecs_strbuf_appendch(buf, ch_out);
     }
 
-    if (!ch) {
-        return NULL;
-    } else {
-        return json;
-    }
+    return ch ? json : NULL;
 }
 
 const char* flecs_json_parse_next_member(
@@ -327,11 +316,43 @@ const char* flecs_json_skip_string(
         json = flecs_chrparse(json, &ch_out);
     }
 
-    if (!ch) {
-        return NULL;
-    } else {
-        return json;
+    return ch ? json : NULL;
+}
+
+static
+const char* flecs_json_skip_scope(
+    const char *json,
+    char *token,
+    const ecs_from_json_desc_t *desc,
+    ecs_json_token_t close_kind)
+{
+    ecs_assert(json != NULL, ECS_INTERNAL_ERROR, NULL);
+    const char *expect = (close_kind == JsonObjectClose) ? "}" : "]";
+    ecs_json_token_t token_kind = 0;
+
+    while ((json = flecs_json_parse(json, &token_kind, token))) {
+        if (token_kind == JsonObjectOpen) {
+            json = flecs_json_skip_scope(json, token, desc, JsonObjectClose);
+        } else if (token_kind == JsonArrayOpen) {
+            json = flecs_json_skip_scope(json, token, desc, JsonArrayClose);
+        } else if (token_kind == JsonLargeString) {
+            json = flecs_json_skip_string(json);
+        } else if (token_kind == close_kind) {
+            return json;
+        } else if (token_kind == JsonObjectClose ||
+                   token_kind == JsonArrayClose)
+        {
+            ecs_parser_error(desc->name, desc->expr, json - desc->expr,
+                "expected %s", expect);
+            return NULL;
+        }
+
+        ecs_assert(json != NULL, ECS_INTERNAL_ERROR, NULL);
     }
+
+    ecs_parser_error(desc->name, desc->expr, json ? json - desc->expr : 0,
+        "expected %s, got end of string", expect);
+    return NULL;
 }
 
 const char* flecs_json_skip_object(
@@ -339,60 +360,7 @@ const char* flecs_json_skip_object(
     char *token,
     const ecs_from_json_desc_t *desc)
 {
-    ecs_assert(json != NULL, ECS_INTERNAL_ERROR, NULL);
-    ecs_json_token_t token_kind = 0;
-
-    while ((json = flecs_json_parse(json, &token_kind, token))) {
-        if (token_kind == JsonObjectOpen) {
-            json = flecs_json_skip_object(json, token, desc);
-        } else if (token_kind == JsonArrayOpen) {
-            json = flecs_json_skip_array(json, token, desc);
-        } else if (token_kind == JsonLargeString) {
-            json = flecs_json_skip_string(json);
-        } else if (token_kind == JsonObjectClose) {
-            return json;
-        } else if (token_kind == JsonArrayClose) {
-            ecs_parser_error(desc->name, desc->expr, json - desc->expr, 
-                "expected }, got ]");
-            return NULL;
-        }
-
-        ecs_assert(json != NULL, ECS_INTERNAL_ERROR, NULL);
-    }
-
-    ecs_parser_error(desc->name, json, 0, 
-        "expected }, got end of string");
-    return NULL;
-}
-
-const char* flecs_json_skip_array(
-    const char *json,
-    char *token,
-    const ecs_from_json_desc_t *desc)
-{
-    ecs_assert(json != NULL, ECS_INTERNAL_ERROR, NULL);
-    ecs_json_token_t token_kind = 0;
-
-    while ((json = flecs_json_parse(json, &token_kind, token))) {
-        if (token_kind == JsonObjectOpen) {
-            json = flecs_json_skip_object(json, token, desc);
-        } else if (token_kind == JsonArrayOpen) {
-            json = flecs_json_skip_array(json, token, desc);
-        } else if (token_kind == JsonLargeString) {
-            json = flecs_json_skip_string(json);
-        } else if (token_kind == JsonObjectClose) {
-            ecs_parser_error(desc->name, desc->expr, json - desc->expr, 
-                "expected ]");
-            return NULL;
-        } else if (token_kind == JsonArrayClose) {
-            return json;
-        }
-
-        ecs_assert(json != NULL, ECS_INTERNAL_ERROR, NULL);
-    }
-
-    ecs_parser_error(desc->name, desc->expr, json - desc->expr, "expected ]");
-    return NULL;
+    return flecs_json_skip_scope(json, token, desc, JsonObjectClose);
 }
 
 void flecs_json_next(
@@ -472,9 +440,7 @@ void flecs_json_string(
     ecs_strbuf_t *buf,
     const char *value)
 {
-    ecs_strbuf_appendch(buf, '"');
-    ecs_strbuf_appendstr(buf, value);
-    ecs_strbuf_appendch(buf, '"');
+    flecs_json_string_escape(buf, value);
 }
 
 void flecs_json_string_escape(
@@ -713,5 +679,68 @@ void flecs_json_mark_serialized(
     if (ecs_map_is_init(&ser_ctx->serialized)) {
         ecs_map_ensure(&ser_ctx->serialized, entity);
     }
+}
+
+void flecs_json_accum_type_info(
+    const ecs_world_t *world,
+    ecs_entity_t typeid,
+    ecs_json_ser_ctx_t *ser_ctx)
+{
+    if (!typeid || !ser_ctx || !ser_ctx->type_info_buf) {
+        return;
+    }
+    if (ecs_map_get(&ser_ctx->type_info_seen, typeid) != NULL) {
+        return;
+    }
+    ecs_map_ensure(&ser_ctx->type_info_seen, typeid);
+
+    ecs_strbuf_t *buf = ser_ctx->type_info_buf;
+    flecs_json_next(buf);
+    ecs_strbuf_appendch(buf, '"');
+    ecs_get_path_w_sep_buf(world, 0, typeid, ".", "", buf, true);
+    ecs_strbuf_appendlit(buf, "\":");
+    if (ecs_type_info_to_json_buf(world, typeid, buf) != 0) {
+        ecs_strbuf_appendlit(buf, "0");
+    }
+}
+
+void flecs_json_type_info_accum_init(
+    ecs_json_ser_ctx_t *ser_ctx,
+    ecs_strbuf_t *type_info_buf,
+    const ecs_world_t *world)
+{
+    ser_ctx->type_info_buf = type_info_buf;
+    ecs_map_init(&ser_ctx->type_info_seen,
+        &ECS_CONST_CAST(ecs_world_t*, world)->allocator);
+    flecs_json_object_push(type_info_buf);
+}
+
+void flecs_json_type_info_accum_fini(
+    ecs_json_ser_ctx_t *ser_ctx,
+    ecs_strbuf_t *type_info_buf)
+{
+    if (ser_ctx->type_info_buf) {
+        flecs_json_object_pop(type_info_buf);
+        ecs_map_fini(&ser_ctx->type_info_seen);
+    }
+}
+
+void flecs_json_assemble_output(
+    ecs_strbuf_t *out,
+    ecs_strbuf_t *type_info_buf,
+    ecs_strbuf_t *body_buf)
+{
+    flecs_json_object_push(out);
+    if (type_info_buf) {
+        flecs_json_memberl(out, "type_info");
+        ecs_strbuf_mergebuff(out, type_info_buf);
+    }
+    int32_t body_len = ecs_strbuf_written(body_buf);
+    if (body_len > 2) {
+        ecs_strbuf_list_next(out);
+        ecs_strbuf_appendstrn(out, body_buf->content + 1, body_len - 2);
+    }
+    flecs_json_object_pop(out);
+    ecs_strbuf_reset(body_buf);
 }
 #endif
