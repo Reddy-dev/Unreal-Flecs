@@ -2671,6 +2671,9 @@ END_DEFINE_SPEC(FFlecsSystemTestsSpec);
                 "register_twice_w_run",
                 "register_twice_w_run_each",
                 "register_twice_w_each_run",
+                "lookup_and_update_each",
+                "lookup_and_update_run",
+                "lookup_and_update_ctx",
                 "set_group",
                 "run_w_0_src_query",
             ]*/
@@ -2749,6 +2752,9 @@ void FFlecsSystemTestsSpec::Define()
     It("register_twice_w_run", [&] { System_register_twice_w_run(); });
     It("register_twice_w_run_each", [&] { System_register_twice_w_run_each(); });
     It("register_twice_w_each_run", [&] { System_register_twice_w_each_run(); });
+    It("lookup_and_update_each", [&] { System_lookup_and_update_each(); });
+    It("lookup_and_update_run", [&] { System_lookup_and_update_run(); });
+    It("lookup_and_update_ctx", [&] { System_lookup_and_update_ctx(); });
     It("set_group", [&] { System_set_group(); });
     It("run_w_0_src_query", [&] { System_run_w_0_src_query(); });
 }

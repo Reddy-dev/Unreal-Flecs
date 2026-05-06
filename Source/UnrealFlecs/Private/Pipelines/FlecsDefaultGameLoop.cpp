@@ -96,7 +96,8 @@ bool UFlecsDefaultGameLoop::IsMainLoop() const
 TArray<FGameplayTag> UFlecsDefaultGameLoop::GetTickTypeTags() const
 {
 	return { FlecsTickType_MainLoop, 
-		FlecsTickType_PrePhysics, FlecsTickType_DuringPhysics, FlecsTickType_PostPhysics, FlecsTickType_PostUpdateWork };
+		FlecsTickType_PrePhysics, FlecsTickType_DuringPhysics, 
+		FlecsTickType_PostPhysics, FlecsTickType_PostUpdateWork };
 }
 
 FFlecsEntityHandle UFlecsDefaultGameLoop::CreatePipelineForTickType(const FGameplayTag& InTickType,

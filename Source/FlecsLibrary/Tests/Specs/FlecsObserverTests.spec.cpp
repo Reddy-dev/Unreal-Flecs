@@ -1209,11 +1209,11 @@ void Observer_add_to_named_in_emit_for_named_entity_w_defer(void) {
 
 void Observer_register_twice_w_each(void) {
 	flecs::world ecs;
-	RegisterTestTypeComponents(ecs);
+	ecs.component<Position>();
 
 	int count1 = 0, count2 = 0;
 
-	ecs.observer<Position>("Test")
+	auto o = ecs.observer<Position>("Test")
 		.event(flecs::OnSet)
 		.each([&](Position&) {
 			count1 ++;
@@ -1222,11 +1222,9 @@ void Observer_register_twice_w_each(void) {
 	ecs.entity().set(Position{10, 20});
 	test_int(count1, 1);
 
-	ecs.observer<Position>("Test")
-		.event(flecs::OnSet)
-		.each([&](Position&) {
-			count2 ++;
-		});
+	o.each([&](Position&) {
+		count2 ++;
+	});
 
 	ecs.entity().set(Position{10, 20});
 	test_int(count2, 1);
@@ -1234,11 +1232,11 @@ void Observer_register_twice_w_each(void) {
 
 void Observer_register_twice_w_run(void) {
 	flecs::world ecs;
-	RegisterTestTypeComponents(ecs);
+	ecs.component<Position>();
 
 	int count1 = 0, count2 = 0;
 
-	ecs.observer<Position>("Test")
+	auto o = ecs.observer<Position>("Test")
 		.event(flecs::OnSet)
 		.run([&](flecs::iter&) {
 			count1 ++;
@@ -1247,24 +1245,21 @@ void Observer_register_twice_w_run(void) {
 	ecs.entity().set(Position{10, 20});
 	test_int(count1, 1);
 
-	ecs.observer<Position>("Test")
-		.event(flecs::OnSet)
-		.run([&](flecs::iter&) {
-			count2 ++;
-		});
+	o.run([&](flecs::iter&) {
+		count2 ++;
+	});
 
 	ecs.entity().set(Position{10, 20});
 	test_int(count2, 1);
 }
 
-
 void Observer_register_twice_w_run_each(void) {
 	flecs::world ecs;
-	RegisterTestTypeComponents(ecs);
+	ecs.component<Position>();
 
 	int count1 = 0, count2 = 0;
 
-	ecs.observer<Position>("Test")
+	auto o = ecs.observer<Position>("Test")
 		.event(flecs::OnSet)
 		.run([&](flecs::iter&) {
 			count1 ++;
@@ -1273,11 +1268,9 @@ void Observer_register_twice_w_run_each(void) {
 	ecs.entity().set(Position{10, 20});
 	test_int(count1, 1);
 
-	ecs.observer<Position>("Test")
-		.event(flecs::OnSet)
-		.each([&](Position&) {
-			count2 ++;
-		});
+	o.each([&](Position&) {
+		count2 ++;
+	});
 
 	ecs.entity().set(Position{10, 20});
 	test_int(count2, 1);
@@ -1285,11 +1278,11 @@ void Observer_register_twice_w_run_each(void) {
 
 void Observer_register_twice_w_each_run(void) {
 	flecs::world ecs;
-	RegisterTestTypeComponents(ecs);
+	ecs.component<Position>();
 
 	int count1 = 0, count2 = 0;
 
-	ecs.observer<Position>("Test")
+	auto o = ecs.observer<Position>("Test")
 		.event(flecs::OnSet)
 		.each([&](Position&) {
 			count1 ++;
@@ -1298,14 +1291,29 @@ void Observer_register_twice_w_each_run(void) {
 	ecs.entity().set(Position{10, 20});
 	test_int(count1, 1);
 
-	ecs.observer<Position>("Test")
-		.event(flecs::OnSet)
-		.run([&](flecs::iter&) {
-			count2 ++;
-		});
+	o.run([&](flecs::iter&) {
+		count2 ++;
+	});
 
 	ecs.entity().set(Position{10, 20});
 	test_int(count2, 1);
+}
+
+void Observer_lookup_and_update_ctx(void) {
+	flecs::world ecs;
+	ecs.component<Position>();
+
+	int my_ctx = 42;
+
+	ecs.observer<Position>("Test")
+		.event(flecs::OnSet)
+		.each([](Position&) { });
+
+	flecs::observer o = ecs.observer(ecs.lookup("Test"));
+	test_assert(o.ctx() == nullptr);
+
+	o.ctx(&my_ctx);
+	test_assert(o.ctx() == &my_ctx);
 }
 
 void Observer_other_table(void) {
@@ -1962,6 +1970,7 @@ void FFlecsObserverTestsSpec::Define()
 	It("register_twice_w_run", [&]() { Observer_register_twice_w_run(); });
 	It("register_twice_w_run_each", [&]() { Observer_register_twice_w_run_each(); });
 	It("register_twice_w_each_run", [&]() { Observer_register_twice_w_each_run(); });
+	It("lookup_and_update_ctx", [&]() { Observer_lookup_and_update_ctx(); });
 	It("other_table", [&]() { Observer_other_table(); });
 	It("other_table_w_pair", [&]() { Observer_other_table_w_pair(); });
 	It("other_table_w_pair_wildcard", [&]() { Observer_other_table_w_pair_wildcard(); });
