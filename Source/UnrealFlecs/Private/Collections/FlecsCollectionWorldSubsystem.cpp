@@ -407,7 +407,7 @@ FFlecsEntityHandle UFlecsCollectionWorldSubsystem::ResolveCollectionReference(co
 					const FFlecsEntityHandle ClassPrefab = GetPrefabByClass(Reference.Class);
 					
 					if LIKELY_IF(ensureMsgf(ClassPrefab.IsValid(),
-						TEXT("UFlecsCollectionWorldSubsystem::ResolveReference: Class '{Class}' not registered"),
+						TEXT("UFlecsCollectionWorldSubsystem::ResolveReference: Class '%s' not registered"),
 							*Reference.Class->GetName()))
 					{
 						return ClassPrefab;
