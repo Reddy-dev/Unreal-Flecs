@@ -25,7 +25,6 @@ public class FlecsLibrary : ModuleRules
             new string[] {
                 ModuleDirectory + "/Private",
                 ModuleDirectory + "/Tests",
-                ModuleDirectory + "/Fixtures",
             }
         );
         
