@@ -834,8 +834,9 @@ void flecs_emit_forward_table_up(
         }
 
         /* Id has the same relationship, traverse to find ids for forwarding */
-        if (ECS_PAIR_FIRST(id) == trav || ECS_PAIR_FIRST(id) == EcsIsA || (
-            (trav == EcsChildOf) && id == ecs_id(EcsParent))) 
+        if ((ECS_IS_PAIR(id) && (ECS_PAIR_FIRST(id) == trav ||
+            ECS_PAIR_FIRST(id) == EcsIsA)) ||
+            ((trav == EcsChildOf) && id == ecs_id(EcsParent)))
         {
             ecs_table_t **t = ecs_vec_append_t(&world->allocator, stack, 
                 ecs_table_t*);
@@ -1003,7 +1004,7 @@ void flecs_emit_forward(
         ecs_vec_t stack;
         ecs_vec_init_t(&world->allocator, &stack, ecs_table_t*, 0);
         ecs_vec_reset_t(&world->allocator, &rc->ids, ecs_reachable_elem_t);
-        flecs_emit_forward_up(world, er, er_onset, emit_ids, it, table, 
+        flecs_emit_forward_up(world, er, er_onset, emit_ids, it, table,
             cr, &stack, &rc->ids, 0);
         it->sources[0] = 0;
         ecs_vec_fini_t(&world->allocator, &stack, ecs_table_t*);
@@ -1093,7 +1094,16 @@ void flecs_emit_forward(
                 int32_t ider_count = flecs_event_observers_get(
                     er, rc_cr->id, iders);
 
-                flecs_propagate_entities(world, it, rc_cr, it->entities, 
+                it->ids[0] = rc_cr->id;
+                it->event_id = rc_cr->id;
+                it->trs[0] = tr;
+                ECS_CONST_CAST(int32_t*, it->sizes)[0] = 0;
+                if (rc_cr->type_info) {
+                    ECS_CONST_CAST(int32_t*, it->sizes)[0] = 
+                        rc_cr->type_info->size;
+                }
+
+                flecs_propagate_entities(world, it, rc_cr, it->entities,
                     it->count, elem->src, iders, ider_count);
             }
         }
@@ -1472,7 +1482,9 @@ repeat_event:
         };
 
         bool dont_fragment = cr_flags & EcsIdDontFragment;
-        if (!dont_fragment && id != EcsAny && (ECS_PAIR_FIRST(id) != EcsChildOf)) {
+        if (!dont_fragment && id != EcsAny &&
+            !(ECS_IS_PAIR(id) && ECS_PAIR_FIRST(id) == EcsChildOf))
+        {
             if (tr == NULL) {
                 /* When a single batch contains multiple adds for an exclusive
                 * relationship, it's possible that an id was in the added list
