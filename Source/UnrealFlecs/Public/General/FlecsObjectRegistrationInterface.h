@@ -8,6 +8,8 @@
 
 #include "Types/SolidNotNull.h"
 
+#include "FlecsObjectRegistrationNetworkFlags.h"
+
 #include "FlecsObjectRegistrationInterface.generated.h"
 
 class UFlecsWorldInterfaceObject;
@@ -33,6 +35,11 @@ public:
 	virtual NO_DISCARD bool ShouldAutoRegisterFromCDO() const { return true; }
 	virtual NO_DISCARD bool ShouldAutoRegisterWithWorld(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InFlecsWorld) const { return true; }
 	virtual NO_DISCARD bool ShouldRegisterWithModule() const { return true; }
+	
+	virtual NO_DISCARD EFlecsObjectRegistrationNetworkFlags GetObjectRegistrationNetworkFlags() const
+	{
+		return EFlecsObjectRegistrationNetworkFlags::All;
+	}
 	
 	// Optional, if not defined will use the package name of the UObject implementing this interface
 	virtual NO_DISCARD FName GetModuleName() const { return NAME_None; }
