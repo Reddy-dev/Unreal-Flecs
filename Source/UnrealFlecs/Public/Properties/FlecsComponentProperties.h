@@ -49,6 +49,7 @@ namespace UE::Flecs
 {
 	using FFlecsComponentRegistrationFunction = void(*)(const TSolidNotNull<const UFlecsWorld*>, const FFlecsComponentPropertiesDefinition&);
 	using FFlecsComponentPropertiesFunction = void(*)(const TSolidNotNull<const UFlecsWorld*>, const FFlecsComponentHandle&, const FFlecsComponentPropertiesDefinition&);
+	using FFlecsSetSingletonDefaultValueFunction = void(*)(const TSolidNotNull<const UFlecsWorld*>, void* OutValue);
 
 	namespace internal
 	{
@@ -157,6 +158,8 @@ public:
 	static constexpr EFlecsOnDelete OnDeleteTarget = EFlecsOnDelete::Remove;
 	
 	static constexpr bool Singleton = false;
+	static constexpr bool CustomSingletonValue = false;
+	
 	static constexpr bool Trait = false;
 	
 	static constexpr bool DontFragment = false;
@@ -193,6 +196,10 @@ public:
 	// Only get called with Auto-Registration with Typed Components
 	static void PrePropertiesRegistration(const FFlecsComponentHandle& ComponentHandle) {}
 	static void PostRegister(const FFlecsComponentHandle& ComponentHandle) {}
+	
+	static void SetSingletonDefaultValue(const TSolidNotNull<const UFlecsWorld*> World, OUT T& OutValue)
+	{
+	}
 	
 }; // struct TFlecsComponentTraitsBase
 
@@ -231,6 +238,9 @@ public:
 	
 	UPROPERTY()
 	uint32 bSingleton : 1 = false;
+	
+	UPROPERTY()
+	uint32 bCustomSingletonValue : 1 = false;
 	
 	UPROPERTY()
 	uint32 bTrait : 1 = false;
@@ -304,6 +314,7 @@ public:
 	
 	UE::Flecs::FFlecsComponentRegistrationFunction RegistrationFunction;
 	UE::Flecs::FFlecsComponentPropertiesFunction PropertiesFunction;
+	UE::Flecs::FFlecsSetSingletonDefaultValueFunction SetSingletonDefaultValueFunction;
 	
 	template <typename T>
 	static NO_DISCARD FORCEINLINE FFlecsComponentPropertiesDefinition Make()
@@ -318,6 +329,7 @@ public:
 			.OnDelete = TFlecsComponentTraits<T>::OnDelete,
 			.OnDeleteTarget = TFlecsComponentTraits<T>::OnDeleteTarget,
 			.bSingleton = TFlecsComponentTraits<T>::Singleton,
+			.bCustomSingletonValue = TFlecsComponentTraits<T>::CustomSingletonValue,
 			.bTrait = TFlecsComponentTraits<T>::Trait,
 			.bSparse = TFlecsComponentTraits<T>::Sparse,
 			.bDontFragment = TFlecsComponentTraits<T>::DontFragment,
@@ -441,11 +453,6 @@ public:
 					break;
 			}
 			
-			if constexpr (TFlecsComponentTraits<T>::Singleton)
-			{
-				ComponentHandle.Add(flecs::Singleton);
-			}
-			
 			if constexpr (TFlecsComponentTraits<T>::Trait)
 			{
 				ComponentHandle.Add(flecs::Trait);
@@ -519,6 +526,29 @@ public:
 			if constexpr (TFlecsComponentTraits<T>::WithAddReferencedObjects)
 			{
 				ComponentHandle.Add<FFlecsAddReferencedObjectsTrait>();
+			}
+			
+			if constexpr (TFlecsComponentTraits<T>::Singleton)
+			{
+				ComponentHandle.Add(flecs::Singleton);
+				
+				if constexpr (TFlecsComponentTraits<T>::CustomSingletonValue)
+				{
+					if constexpr (!std::is_empty_v<T>)
+					{
+						if UNLIKELY_IF(!InFlecsWorld->Has<T>())
+						{
+							UE_LOGFMT(LogFlecsCore, Warning, 
+								"Singleton component {ComponentName} does not exist in the world, adding it now. This should have been added when flecs::Singleton was added to the component!", 
+								*ComponentProperties.Name);
+						
+							InFlecsWorld->Add<T>();
+						}
+					
+						T& SingletonValue = InFlecsWorld->GetMut<T>();
+						TFlecsComponentTraits<T>::SetSingletonDefaultValue(InFlecsWorld, SingletonValue);
+					}
+				}
 			}
 			
 			const TSolidNotNull<const UFlecsWorldInterfaceObject*> WorldInterface =
