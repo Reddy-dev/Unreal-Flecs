@@ -843,6 +843,13 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 		FlecsObject->MarkAsGarbage();
 		return nullptr;
 	}
+	
+	if (!UE::Flecs::Net::ShouldRegisterInWorld(GetWorld(), 
+		CastChecked<IFlecsObjectRegistrationInterface>(FlecsObject)->GetObjectRegistrationNetworkFlags()))
+	{
+		FlecsObject->MarkAsGarbage();
+		return nullptr;
+	}
 
 	RegisteredObjects.Add(FlecsObject);
 	RegisteredObjectTypes.Add(InClass, FlecsObject);

@@ -26,7 +26,7 @@ public:
 	virtual void OnFlecsWorldInitialized(const TSolidNotNull<UFlecsWorld*> InWorld);
 	virtual void Deinitialize() override;
 
-	virtual bool DoesSupportWorldType(const EWorldType::Type WorldType) const override final;
+	virtual bool DoesSupportWorldType(const EWorldType::Type WorldType) const override;
 
 	NO_DISCARD UFlecsWorldSubsystem* GetFlecsWorldSubsystem() const;
 	NO_DISCARD TSolidNotNull<UFlecsWorldSubsystem*> GetFlecsWorldSubsystemChecked() const;

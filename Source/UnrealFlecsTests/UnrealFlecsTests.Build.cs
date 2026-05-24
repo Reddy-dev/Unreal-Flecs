@@ -39,5 +39,17 @@ public class UnrealFlecsTests : ModuleRules
                 "UnrealFlecs",
             }
         );
+
+        if (Target.bBuildEditor)
+        {
+            PrivateDependencyModuleNames.AddRange(
+                new string[]
+                {
+                    "EngineSettings",
+                    "LevelEditor",
+                    "UnrealEd",
+                }
+            );
+        }
     }
 }

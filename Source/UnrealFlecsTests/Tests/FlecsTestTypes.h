@@ -10,6 +10,7 @@
 #include "GameplayTagsManager.h"
 #include "Developer/CQTest/Public/CQTest.h"
 
+#include "General/FlecsObjectRegistrationInterface.h"
 #include "UnrealFlecsTests/Fixtures/FlecsWorldFixture.h"
 #include "Properties/FlecsComponentProperties.h"
 
@@ -768,6 +769,54 @@ class UNREALFLECSTESTS_API UFlecsUObjectComponentTestObject : public UObject
 	GENERATED_BODY()
 }; // class UFlecsUObjectComponentTestObject
 
+UCLASS()
+class UNREALFLECSTESTS_API UFlecsServerOnlyObjectRegistrationTestObject final : public UObject
+	, public IFlecsObjectRegistrationInterface
+{
+	GENERATED_BODY()
+
+public:
+	virtual bool ShouldRegisterWithModule() const override
+	{
+		return false;
+	}
+	
+	virtual bool ShouldAutoRegisterFromCDO() const override
+	{
+		return false;
+	}
+
+	virtual EFlecsObjectRegistrationNetworkFlags GetObjectRegistrationNetworkFlags() const override
+	{
+		return EFlecsObjectRegistrationNetworkFlags::Server;
+	}
+	
+}; // class UFlecsServerOnlyObjectRegistrationTestObject
+
+UCLASS()
+class UNREALFLECSTESTS_API UFlecsClientOnlyObjectRegistrationTestObject final : public UObject
+	, public IFlecsObjectRegistrationInterface
+{
+	GENERATED_BODY()
+
+public:
+	virtual bool ShouldRegisterWithModule() const override
+	{
+		return false;
+	}
+	
+	virtual bool ShouldAutoRegisterFromCDO() const override
+	{
+		return false;
+	}
+
+	virtual EFlecsObjectRegistrationNetworkFlags GetObjectRegistrationNetworkFlags() const override
+	{
+		return EFlecsObjectRegistrationNetworkFlags::Client;
+	}
+	
+}; // class UFlecsClientOnlyObjectRegistrationTestObject
+
 USTRUCT()
 struct FFlecsTestStruct_WithUObjectProperty
 {
@@ -786,7 +835,6 @@ struct TFlecsComponentTraits<FFlecsTestStruct_WithUObjectProperty> : public TFle
 	static constexpr bool WithAddReferencedObjects = true;
 	
 }; // struct TFlecsComponentTraits<FFlecsTestStruct_WithUObjectProperty>
-
 
 
 

@@ -26,7 +26,8 @@ public class UnrealFlecs : ModuleRules
                 "Chaos",
                 "ChaosCore",
                 "ChaosSolverEngine",
-                "DeveloperSettings",
+                "DeveloperSettings", 
+                "AIModule",
 			}
 			);
 			

@@ -48,7 +48,7 @@ public:
 	static NO_DISCARD UFlecsWorld* GetDefaultWorld(const UObject* WorldContextObject);
 
 	void WorldStart();
-
+ 
 	// ReSharper disable once CppMemberFunctionMayBeConst
 	void WorldBeginPlay();
 
@@ -58,7 +58,7 @@ public:
 	void CallBeginPlayForRegisteredObjects();
 
 	void RegisterUnrealTypes() const;
-
+	
 	/**
 	 * @brief HACKY: Progress the iterator while unlocking the table lock for the duration of the function call.
 	 * does not loop over the iterator, only progresses it after each function call.
