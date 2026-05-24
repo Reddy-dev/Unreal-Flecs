@@ -780,11 +780,17 @@ public:
 	{
 		return false;
 	}
+	
+	virtual bool ShouldAutoRegisterFromCDO() const override
+	{
+		return false;
+	}
 
 	virtual EFlecsObjectRegistrationNetworkFlags GetObjectRegistrationNetworkFlags() const override
 	{
 		return EFlecsObjectRegistrationNetworkFlags::Server;
 	}
+	
 }; // class UFlecsServerOnlyObjectRegistrationTestObject
 
 UCLASS()
@@ -798,11 +804,17 @@ public:
 	{
 		return false;
 	}
+	
+	virtual bool ShouldAutoRegisterFromCDO() const override
+	{
+		return false;
+	}
 
 	virtual EFlecsObjectRegistrationNetworkFlags GetObjectRegistrationNetworkFlags() const override
 	{
 		return EFlecsObjectRegistrationNetworkFlags::Client;
 	}
+	
 }; // class UFlecsClientOnlyObjectRegistrationTestObject
 
 USTRUCT()

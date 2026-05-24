@@ -105,6 +105,7 @@ NETWORK_TEST_CLASS(FlecsObjectRegistrationNetworkFlagsDedicatedServerTests,
 				ASSERT_THAT(IsNotNull(ClientState.RegisteredObject));
 			});
 	}
+	
 }; // End of NETWORK_TEST_CLASS(FlecsObjectRegistrationNetworkFlagsDedicatedServerTests)
 
 NETWORK_TEST_CLASS(FlecsObjectRegistrationNetworkFlagsListenServerTests,
@@ -151,6 +152,7 @@ NETWORK_TEST_CLASS(FlecsObjectRegistrationNetworkFlagsListenServerTests,
 				ASSERT_THAT(IsNotNull(ServerState.RegisteredObject));
 			});
 	}
+	
 }; // End of NETWORK_TEST_CLASS(FlecsObjectRegistrationNetworkFlagsListenServerTests)
 
 #endif // ENABLE_PIE_NETWORK_TEST && ENABLE_UNREAL_FLECS_TESTS
