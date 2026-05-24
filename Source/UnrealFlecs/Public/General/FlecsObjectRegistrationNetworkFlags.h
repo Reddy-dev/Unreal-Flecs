@@ -24,6 +24,6 @@ ENUM_CLASS_FLAGS(EFlecsObjectRegistrationNetworkFlags);
 
 namespace UE::Flecs::Net
 {
-	NO_DISCARD EFlecsObjectRegistrationNetworkFlags GetFlagsForWorld(const TSolidNotNull<const UWorld*> InWorld);
-	NO_DISCARD bool ShouldRegisterInWorld(const TSolidNotNull<const UWorld*> InWorld, const EFlecsObjectRegistrationNetworkFlags InFlags);
+	NO_DISCARD UNREALFLECS_API EFlecsObjectRegistrationNetworkFlags GetFlagsForWorld(const TSolidNotNull<const UWorld*> InWorld);
+	NO_DISCARD UNREALFLECS_API bool ShouldRegisterInWorld(const TSolidNotNull<const UWorld*> InWorld, const EFlecsObjectRegistrationNetworkFlags InFlags);
 } // namespace UE::Flecs::Net
