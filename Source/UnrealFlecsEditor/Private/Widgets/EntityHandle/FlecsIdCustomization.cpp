@@ -9,6 +9,8 @@
 #include "Entities/FlecsDefaultEntityEngine.h"
 
 #include "Widgets/EntityHandle/FlecsIdSelector.h"
+#include "Widgets/Input/SEditableTextBox.h"
+#include "Widgets/Layout/SBox.h"
 
 #define LOCTEXT_NAMESPACE "FlecsIdCustomization"
 
@@ -33,6 +35,14 @@ void FFlecsIdCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> Struct
 {
 	PropertyHandle = StructPropertyHandle;
 
+	FString CurrentRawVal;
+	FText InitialIdText = FText::GetEmpty();
+	if (StructPropertyHandle->GetValueAsFormattedString(CurrentRawVal) == FPropertyAccess::Success)
+	{
+		CurrentRawVal.RemoveFromStart(TEXT("FlecsId="));
+		InitialIdText = FText::FromString(CurrentRawVal);
+	}
+
 	StructBuilder.AddCustomRow(LOCTEXT("FlecsEntityHandle", "Flecs Entity Handle"))
 	.NameContent()
 	[
@@ -41,37 +51,103 @@ void FFlecsIdCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> Struct
 		.Font(IDetailLayoutBuilder::GetDetailFont())
 	]
 	.ValueContent()
-	.MinDesiredWidth(250.f)
-	.MaxDesiredWidth(250.f)
+	.MinDesiredWidth(300.f)
+	.MaxDesiredWidth(500.f)
 	[
-		SNew(SFlecsIdSelector)
-		.SelectedItem(GetSelectedItem())
-		.NoneEntityText(FName(TEXT("None")))
-		.PropertyHandle(StructPropertyHandle)
-		.OnEntitySelected(FOnFlecsEntitySelected::CreateLambda([this](const FFlecsId NewEntity)
-		{
-			if (PropertyHandle.IsValid() && PropertyHandle->IsValidHandle())
+		SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot()
+		.FillWidth(1.f)
+		[
+			SNew(SFlecsIdSelector)
+			.SelectedItem(TAttribute<TSharedPtr<FName>>::CreateLambda([this]() -> TSharedPtr<FName>
 			{
-				const FScopedTransaction Transaction(LOCTEXT("ChangeEntity", "Change Entity"));
-				PropertyHandle->NotifyPreChange();
-
-				PropertyHandle->EnumerateRawData([this, &NewEntity](void* RawData, int32 DataIndex, int32 NumDatas)
+				return GetSelectedItem();
+			}))
+			.NoneEntityText(FName(TEXT("")))
+			.PropertyHandle(StructPropertyHandle)
+			.OnEntitySelected(FOnFlecsEntitySelected::CreateLambda([this](const FFlecsId NewEntity)
+			{
+				if (IdTextInput.IsValid())
 				{
-					if (RawData == nullptr)
+					IdTextInput->SetText(FText::FromString(FString::Printf(TEXT("%llu"), NewEntity.Id)));
+				}
+
+				if (PropertyHandle.IsValid() && PropertyHandle->IsValidHandle())
+				{
+					const FScopedTransaction Transaction(LOCTEXT("ChangeEntity", "Change Entity"));
+					PropertyHandle->NotifyPreChange();
+
+					PropertyHandle->EnumerateRawData([&NewEntity](void* RawData, int32, int32)
 					{
-						return false;
+						if (RawData == nullptr)
+						{
+							return false;
+						}
+
+						*static_cast<FFlecsId*>(RawData) = NewEntity;
+						return true;
+					});
+
+					PropertyHandle->NotifyPostChange(EPropertyChangeType::ValueSet);
+					PropertyHandle->NotifyFinishedChangingProperties();
+				}
+			}))
+		]
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		.Padding(4.f, 0.f, 0.f, 0.f)
+		[
+			SNew(SBox)
+			.WidthOverride(120.f)
+			[
+				SAssignNew(IdTextInput, SEditableTextBox)
+				.Text(InitialIdText)
+				.HintText(LOCTEXT("CustomIdHint", "ID"))
+				.OnVerifyTextChanged(FOnVerifyTextChanged::CreateLambda([](const FText& InText, FText& OutError) -> bool
+				{
+					for (const TCHAR Ch : InText.ToString())
+					{
+						if (!FChar::IsDigit(Ch))
+						{
+							OutError = LOCTEXT("NumericOnly", "Numeric input only");
+							return false;
+						}
+					}
+					return true;
+				}))
+				.OnTextCommitted(FOnTextCommitted::CreateLambda([this](const FText& NewText, ETextCommit::Type CommitType)
+				{
+					if (CommitType == ETextCommit::OnCleared)
+					{
+						return;
 					}
 
-					FFlecsId* EntityId = static_cast<FFlecsId*>(RawData);
-					*EntityId = NewEntity;
+					const FString TextStr = NewText.ToString();
+					const uint64 Id = TextStr.IsNumeric()
+						? FCString::Strtoui64(*TextStr, nullptr, 10)
+						: 0;
 
-					return true;
-				});
+					if (PropertyHandle.IsValid() && PropertyHandle->IsValidHandle())
+					{
+						const FScopedTransaction Transaction(LOCTEXT("ChangeEntityId", "Change Entity ID"));
+						PropertyHandle->NotifyPreChange();
 
-				PropertyHandle->NotifyPostChange(EPropertyChangeType::ValueSet);
-				PropertyHandle->NotifyFinishedChangingProperties();
-			}
-		}))
+						PropertyHandle->EnumerateRawData([Id](void* RawData, int32, int32)
+						{
+							if (RawData)
+							{
+								static_cast<FFlecsId*>(RawData)->Id = Id;
+							}
+
+							return true;
+						});
+
+						PropertyHandle->NotifyPostChange(EPropertyChangeType::ValueSet);
+						PropertyHandle->NotifyFinishedChangingProperties();
+					}
+				}))
+			]
+		]
 	];
 }
 

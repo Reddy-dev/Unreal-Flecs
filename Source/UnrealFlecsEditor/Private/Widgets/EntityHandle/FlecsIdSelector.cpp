@@ -76,12 +76,8 @@ void SFlecsIdSelector::Construct(const FArguments& InArgs)
 
 FText SFlecsIdSelector::GetCurrentItemText() const
 {
-	if (SelectedItem.Get().IsValid())
-	{
-		return FText::FromName(*CurrentSelectedItem);
-	}
-	
-	return FText::GetEmpty();
+	const TSharedPtr<FName> Item = SelectedItem.Get();
+	return Item.IsValid() ? FText::FromName(*Item) : FText::GetEmpty();
 }
 
 TSharedRef<SWidget> SFlecsIdSelector::GetComboContent()

@@ -6,12 +6,14 @@
 #include "SGraphPin.h"
 #include "Entities/FlecsId.h"
 
+class SEditableTextBox;
+
 class SGraphPinFlecsId : public SGraphPin
 {
 public:
 	SLATE_BEGIN_ARGS(SGraphPinFlecsId) {}
 	SLATE_END_ARGS()
-	
+
 	virtual void Construct(const FArguments& InArgs, UEdGraphPin* InGraphPinObj);
 
 protected:
@@ -20,4 +22,6 @@ protected:
 
 	TArray<TSharedPtr<FName>> Options;
 	TArray<FFlecsId> EntityOptions;
+	TSharedPtr<SEditableTextBox> IdTextInput;
+	
 }; // class SGraphPinFlecsId

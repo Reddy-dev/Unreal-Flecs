@@ -5,6 +5,8 @@
 #include "EdGraph/EdGraphPin.h"
 
 #include "Widgets/EntityHandle/FlecsIdSelector.h"
+#include "Widgets/Input/SEditableTextBox.h"
+#include "Widgets/Layout/SBox.h"
 #include "Entities/FlecsDefaultEntityEngine.h"
 
 #define LOCTEXT_NAMESPACE "SGraphPinFlecsId"
@@ -16,45 +18,93 @@ void SGraphPinFlecsId::Construct(const FArguments& InArgs, UEdGraphPin* InGraphP
 
 TSharedRef<SWidget> SGraphPinFlecsId::GetDefaultValueWidget()
 {
-	Options.Add(MakeShared<FName>(FName(TEXT("None"))));
+	Options.Empty();
+	EntityOptions.Empty();
+
+	Options.Add(MakeShared<FName>(FName(TEXT(""))));
 	EntityOptions.Add(FFlecsId(flecs::entity::null().id()));
-	
-	// Populate options using the default entity engine.
+
 	FFlecsDefaultEntityEngine::Get().DefaultEntityQuery.each([this](flecs::entity Entity)
 	{
-		const uint64 Id = Entity.id();
-		EntityOptions.Add(FFlecsId(Id));
+		EntityOptions.Add(FFlecsId(Entity.id()));
 		Options.Add(MakeShared<FName>(FName(Entity.name().c_str())));
 	});
-	
-	FString DefaultValueString = GraphPinObj->GetDefaultAsString();
-	DefaultValueString.RemoveFromStart(TEXT("FlecsId="));
-	uint64 DefaultId = FCString::Strtoui64(*DefaultValueString, nullptr, 10);
-	
-	TSharedPtr<FName> InitialSelectedItem = Options[0];
-	for (int32 Index = 0; Index < EntityOptions.Num(); ++Index)
-	{
-		if (EntityOptions[Index].Id == DefaultId)
+
+	FString InitialRawVal = GraphPinObj->GetDefaultAsString();
+	InitialRawVal.RemoveFromStart(TEXT("FlecsId="));
+	const FText InitialIdText = FText::FromString(InitialRawVal);
+
+	return SNew(SHorizontalBox)
+	+ SHorizontalBox::Slot()
+	.FillWidth(1.f)
+	[
+		SNew(SFlecsIdSelector)
+		.SelectedItem(TAttribute<TSharedPtr<FName>>::CreateLambda([this]() -> TSharedPtr<FName>
 		{
-			InitialSelectedItem = Options[Index];
-			break;
-		}
-	}
-	
-	return SNew(SFlecsIdSelector)
-		.SelectedItem(GetSelectedName())
-		.InitialSelectedItem(InitialSelectedItem)
-		.NoneEntityText(FName(TEXT("None")))
+			return GetSelectedName();
+		}))
+		.NoneEntityText(FName(TEXT("")))
 		.PropertyHandle(nullptr)
 		.Visibility(this, &SGraphPin::GetDefaultValueVisibility)
 		.OnEntitySelected(FOnFlecsEntitySelected::CreateLambda([this](const FFlecsId NewEntity)
 		{
+			if (IdTextInput.IsValid())
+			{
+				IdTextInput->SetText(FText::FromString(FString::Printf(TEXT("%llu"), NewEntity.Id)));
+			}
+
 			if (GraphPinObj)
 			{
 				const FString NewDefaultValue = FString::Printf(TEXT("FlecsId=%llu"), NewEntity.Id);
 				GraphPinObj->GetSchema()->TrySetDefaultValue(*GraphPinObj, NewDefaultValue);
 			}
-		}));
+		}))
+	]
+	+ SHorizontalBox::Slot()
+	.AutoWidth()
+	.Padding(4.f, 0.f, 0.f, 0.f)
+	[
+		SNew(SBox)
+		.WidthOverride(80.f)
+		[
+			SAssignNew(IdTextInput, SEditableTextBox)
+			.Text(InitialIdText)
+			.HintText(LOCTEXT("IdHint", "ID"))
+			.Visibility(this, &SGraphPin::GetDefaultValueVisibility)
+			.OnVerifyTextChanged(FOnVerifyTextChanged::CreateLambda([](const FText& InText, FText& OutError) -> bool
+			{
+				for (const TCHAR Ch : InText.ToString())
+				{
+					if (!FChar::IsDigit(Ch))
+					{
+						OutError = LOCTEXT("NumericOnly", "Numeric input only");
+						return false;
+					}
+				}
+				
+				return true;
+			}))
+			.OnTextCommitted(FOnTextCommitted::CreateLambda([this](const FText& NewText, ETextCommit::Type CommitType)
+			{
+				if (CommitType == ETextCommit::OnCleared)
+				{
+					return;
+				}
+
+				const FString TextStr = NewText.ToString();
+				const uint64 Id = TextStr.IsNumeric()
+					? FCString::Strtoui64(*TextStr, nullptr, 10)
+					: 0;
+
+				if (GraphPinObj)
+				{
+					const FString NewDefaultValue = FString::Printf(TEXT("FlecsId=%llu"), Id);
+					GraphPinObj->GetSchema()->TrySetDefaultValue(*GraphPinObj, NewDefaultValue);
+				}
+				
+			}))
+		]
+	];
 }
 
 TSharedPtr<FName> SGraphPinFlecsId::GetSelectedName() const
@@ -62,16 +112,16 @@ TSharedPtr<FName> SGraphPinFlecsId::GetSelectedName() const
 	FString CurrentValue = GraphPinObj->GetDefaultAsString();
 	CurrentValue.RemoveFromStart(TEXT("FlecsId="));
 	const uint64 CurrentId = FCString::Strtoui64(*CurrentValue, nullptr, 10);
-	
-	for (int32 Index = 0; Index < Options.Num(); ++Index)
+
+	for (int32 Index = 1; Index < EntityOptions.Num(); ++Index)
 	{
 		if (EntityOptions[Index].Id == CurrentId)
 		{
 			return Options[Index];
 		}
 	}
-	
-	return Options[0];
+
+	return MakeShared<FName>(FName(TEXT("")));
 }
 
 #undef LOCTEXT_NAMESPACE

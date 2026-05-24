@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 
+class SEditableTextBox;
+
 class UNREALFLECSEDITOR_API FFlecsIdCustomization : public IPropertyTypeCustomization
 {
 public:
@@ -16,7 +18,8 @@ public:
 
 protected:
 	TSharedPtr<FName> GetSelectedItem() const;
-	
+
 	TSharedPtr<IPropertyHandle> PropertyHandle;
-	
+	TSharedPtr<SEditableTextBox> IdTextInput;
+
 }; // class FFlecsIdCustomization
