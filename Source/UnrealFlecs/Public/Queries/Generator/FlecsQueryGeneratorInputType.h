@@ -55,7 +55,7 @@ public:
 
 }; // struct FFlecsQueryGeneratorInputType
 
-USTRUCT(BlueprintType, meta = (DisplayName = "Script Struct"))
+USTRUCT(BlueprintType, meta = (DisplayName = "Query: Script Struct"))
 struct UNREALFLECS_API FFlecsQueryGeneratorInputType_ScriptStruct final : public FFlecsQueryGeneratorInputType
 {
 	GENERATED_BODY()
@@ -73,7 +73,7 @@ public:
 	
 }; // struct FFlecsQueryGeneratorInputType_ScriptStruct
 
-USTRUCT(BlueprintType, meta = (DisplayName = "Script Enum"))
+USTRUCT(BlueprintType, meta = (DisplayName = "Query: Script Enum"))
 struct UNREALFLECS_API FFlecsQueryGeneratorInputType_ScriptEnum final : public FFlecsQueryGeneratorInputType
 {
 	GENERATED_BODY()
@@ -91,7 +91,7 @@ public:
 	
 }; // struct FFlecsQueryGeneratorInputType_ScriptEnum
 
-USTRUCT(BlueprintType, meta = (DisplayName = "String"))
+USTRUCT(BlueprintType, meta = (DisplayName = "Query: String"))
 struct UNREALFLECS_API FFlecsQueryGeneratorInputType_String final : public FFlecsQueryGeneratorInputType
 {
 	GENERATED_BODY()
@@ -127,7 +127,7 @@ public:
 	
 }; // struct FFlecsQueryGeneratorInputType_CPPType
 
-USTRUCT(BlueprintType, meta = (DisplayName = "Flecs Id"))
+USTRUCT(BlueprintType, meta = (DisplayName = "Query: Flecs Id"))
 struct UNREALFLECS_API FFlecsQueryGeneratorInputType_FlecsId final : public FFlecsQueryGeneratorInputType
 {
 	GENERATED_BODY()
@@ -145,7 +145,7 @@ public:
 	
 }; // struct FFlecsQueryGeneratorInputType_FlecsId
 
-USTRUCT(BlueprintType, meta = (DisplayName = "Script Enum Constant"))
+USTRUCT(BlueprintType, meta = (DisplayName = "Query: Script Enum Constant"))
 struct UNREALFLECS_API FFlecsQueryGeneratorInputType_ScriptEnumConstant final : public FFlecsQueryGeneratorInputType
 {
 	GENERATED_BODY()
@@ -164,7 +164,7 @@ public:
 }; // struct FFlecsQueryGeneratorInputType_ScriptEnumConstant
 
 
-USTRUCT(BlueprintType, meta = (DisplayName = "Wildcard"))
+USTRUCT(BlueprintType, meta = (DisplayName = "Query: Wildcard"))
 struct UNREALFLECS_API FFlecsQueryGeneratorInputType_Wildcard final : public FFlecsQueryGeneratorInputType
 {
 	GENERATED_BODY()
@@ -182,7 +182,7 @@ public:
 	
 }; // struct FFlecsQueryGeneratorInputType_Wildcard
 
-USTRUCT(BlueprintType, meta = (DisplayName = "Any"))
+USTRUCT(BlueprintType, meta = (DisplayName = "Query: Any"))
 struct UNREALFLECS_API FFlecsQueryGeneratorInputType_Any final : public FFlecsQueryGeneratorInputType
 {
 	GENERATED_BODY()
