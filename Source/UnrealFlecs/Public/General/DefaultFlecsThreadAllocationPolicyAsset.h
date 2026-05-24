@@ -25,6 +25,5 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category = "Flecs | Thread Allocation")
 	uint32 ThreadCount = 8;
-
 	
 }; // class UDefaultFlecsThreadAllocationPolicy
