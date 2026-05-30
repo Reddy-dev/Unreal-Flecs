@@ -485,10 +485,12 @@ void flecs_uni_observer_invoke(
             int32_t i, count = it->count;
             ecs_entity_t src = it->sources[0];
             ecs_table_t *old_table = it->table;
+            int16_t old_column = it->columns[0];
 
             it->entities = NULL;
             it->count = 0;
             it->table = NULL;
+            ECS_CONST_CAST(int16_t*, it->columns)[0] = -1;
 
             /* Loop all entities for which the event was emitted. Usually this is
             * just one, but it is possible to emit events for a table range. */
@@ -518,6 +520,7 @@ void flecs_uni_observer_invoke(
             it->entities = entities;
             it->count = count;
             it->table = old_table;
+            ECS_CONST_CAST(int16_t*, it->columns)[0] = old_column;
         }
 
         it->row_fields = row_fields;
@@ -542,7 +545,7 @@ void flecs_observers_invoke(
     ecs_entity_t trav)
 {
     if (ecs_map_is_init(observers)) {
-        ecs_table_lock(it->world, table);
+        ECS_TABLE_LOCK(it->world, table);
 
         ecs_map_iter_t oit = ecs_map_iter(observers);
         while (ecs_map_next(&oit)) {
@@ -550,12 +553,12 @@ void flecs_observers_invoke(
             ecs_assert(it->table == table, ECS_INTERNAL_ERROR, NULL);
             flecs_uni_observer_invoke(world, o, it, table, trav);
 
-            ecs_assert(ecs_map_iter_valid(&oit), ECS_INVALID_OPERATION, 
+            ecs_assert(ecs_map_iter_valid(&oit), ECS_INVALID_OPERATION,
                 "observer list modified while notifying: "
                 "cannot create observer from observer");
         }
 
-        ecs_table_unlock(it->world, table);
+        ECS_TABLE_UNLOCK(it->world, table);
     }
 }
 
@@ -588,6 +591,7 @@ void flecs_multi_observer_invoke(
     }
 
     ecs_table_t *lock_table = table;
+    (void)lock_table;
     table = table ? table : &world->store.root;
     prev_table = prev_table ? prev_table : &world->store.root;
 
@@ -613,14 +617,24 @@ void flecs_multi_observer_invoke(
             ecs_assert(match, ECS_INTERNAL_ERROR, NULL);
         }
     } else {
-        ecs_table_range_t range = {
-            .table = table,
-            .offset = it->offset,
-            .count = it->count
-        };
+        int trivial = -1;
+        if (!(impl->flags & EcsObserverIsMonitor)) {
+            trivial = flecs_query_trivial_has_range(o->query, &user_it,
+                it->world, table, it->offset, it->count);
+        }
 
-        match = flecs_observer_query_has_range(
-            o->query, &range, term, it->event_id, &user_it);
+        if (trivial >= 0) {
+            match = trivial != 0;
+        } else {
+            ecs_table_range_t range = {
+                .table = table,
+                .offset = it->offset,
+                .count = it->count
+            };
+
+            match = flecs_observer_query_has_range(
+                o->query, &range, term, it->event_id, &user_it);
+        }
     }
 
     if (match) {
@@ -654,6 +668,8 @@ void flecs_multi_observer_invoke(
         user_it.ids[pivot_field] = it->event_id;
         user_it.trs[pivot_field] = it->trs[0];
         user_it.sources[pivot_field] = it->sources[0];
+        ECS_CONST_CAST(int16_t*, user_it.columns)[pivot_field] =
+            it->sources[0] ? -1 : it->columns[0];
         user_it.term_index = pivot_term;
 
         user_it.ctx = o->ctx;
@@ -668,7 +684,7 @@ void flecs_multi_observer_invoke(
 
         ecs_entity_t old_system = flecs_stage_set_system(
             world->stages[0], o->entity);
-        ecs_table_lock(it->world, lock_table);
+        ECS_TABLE_LOCK(it->world, lock_table);
 
         if (o->run) {
             user_it.next = flecs_default_next_callback;
@@ -680,7 +696,7 @@ void flecs_multi_observer_invoke(
         user_it.flags |= EcsIterSkip; /* Prevent change detection on fini */
         ecs_iter_fini(&user_it);
 
-        ecs_table_unlock(it->world, lock_table);
+        ECS_TABLE_UNLOCK(it->world, lock_table);
         flecs_stage_set_system(world->stages[0], old_system);
     } else {
         /* While the observer query was strictly speaking evaluated, it's more
@@ -701,7 +717,6 @@ void flecs_multi_observer_invoke_no_query(
     flecs_poly_assert(o, ecs_observer_t);
 
     ecs_world_t *world = it->real_world;
-    ecs_table_t *table = it->table;
     ecs_iter_t user_it = *it;
 
     user_it.ctx = o->ctx;
@@ -714,7 +729,7 @@ void flecs_multi_observer_invoke_no_query(
 
     ecs_entity_t old_system = flecs_stage_set_system(
         world->stages[0], o->entity);
-    ecs_table_lock(it->world, table);
+    ECS_TABLE_LOCK(it->world, it->table);
 
     if (o->run) {
         user_it.next = flecs_default_next_callback;
@@ -723,7 +738,7 @@ void flecs_multi_observer_invoke_no_query(
         user_it.callback(&user_it);
     }
 
-    ecs_table_unlock(it->world, table);
+    ECS_TABLE_UNLOCK(it->world, it->table);
     flecs_stage_set_system(world->stages[0], old_system);
 }
 
@@ -961,7 +976,7 @@ int flecs_multi_observer_init(
 
     bool self_term_handled = false;
     for (i = 0; i < term_count; i ++) {
-        if (query->terms[i].inout == EcsInOutFilter) {
+        if (query->terms[i].inout == EcsInOutFilter && !only_table_events) {
             continue;
         }
 

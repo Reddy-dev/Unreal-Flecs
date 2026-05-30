@@ -156,6 +156,30 @@ void flecs_query_self_change_detection(
     flecs_query_change_detection(it, qit, impl);
 }
 
+#ifdef FLECS_DEBUG
+static
+void flecs_iter_assert_columns(
+    ecs_iter_t *it)
+{
+    const int16_t *columns = it->columns;
+    const ecs_table_record_t **trs = it->trs;
+    const ecs_entity_t *sources = it->sources;
+    ecs_termset_t up_fields = it->up_fields;
+    int8_t i, count = it->field_count;
+    for (i = 0; i < count; i ++) {
+        const ecs_table_record_t *tr = trs[i];
+        int16_t expected = (tr && !sources[i] && !(up_fields & (1llu << i)))
+            ? tr->column : -1;
+        ecs_assert(columns[i] == expected, ECS_INTERNAL_ERROR,
+            "it->columns[%d]=%d does not match expected %d "
+            "(tr=%p src=%llu up=%d)",
+            i, columns[i], expected, (const void*)tr,
+            (unsigned long long)sources[i],
+            (int)((up_fields >> i) & 1));
+    }
+}
+#endif
+
 bool ecs_query_next(
     ecs_iter_t *it)
 {
@@ -246,13 +270,16 @@ bool ecs_query_next(
 
             /* Default iterator mode. This enters the query VM dispatch loop. */
             if (flecs_query_run_until(
-                redo, &ctx, ops, -1, qit->op, impl->op_count - 1)) 
+                redo, &ctx, ops, -1, qit->op, impl->op_count - 1))
             {
-                ecs_assert(ops[ctx.op_index].kind == EcsQueryYield, 
+                ecs_assert(ops[ctx.op_index].kind == EcsQueryYield,
                     ECS_INTERNAL_ERROR, NULL);
                 flecs_query_set_iter_this(it, &ctx);
                 ecs_assert(it->count >= 0, ECS_INTERNAL_ERROR, NULL);
                 qit->op = flecs_itolbl(ctx.op_index - 1);
+#ifdef FLECS_DEBUG
+                flecs_iter_assert_columns(it);
+#endif
                 goto yield;
             }
         }
@@ -548,6 +575,88 @@ ecs_iter_t flecs_query_iter(
 error:
     ecs_os_perf_trace_pop("flecs.query.iter");
     return it;
+}
+
+int flecs_query_trivial_has_range(
+    const ecs_query_t *q,
+    ecs_iter_t *it,
+    const ecs_world_t *world,
+    ecs_table_t *table,
+    int32_t offset,
+    int32_t count)
+{
+    ecs_query_impl_t *impl = flecs_query_impl(q);
+    ecs_flags32_t flags = q->flags;
+    ecs_flags32_t trivial_flags = EcsQueryIsTrivial|EcsQueryMatchOnlySelf;
+
+    if (impl->cache ||
+        ((flags & trivial_flags) != trivial_flags) ||
+        (flags & EcsQueryMatchWildcards) ||
+        q->row_fields)
+    {
+        return -1;
+    }
+
+    ECS_CONST_CAST(ecs_query_t*, q)->eval_count ++;
+
+    if (table && ((offset + count) > ecs_table_count(table))) {
+        return 0;
+    }
+
+    if (!flecs_table_bloom_filter_test(table, q->bloom_filter)) {
+        return 0;
+    }
+
+    ecs_iter_t lit = {0};
+    lit.world = ECS_CONST_CAST(ecs_world_t*, world);
+    lit.real_world = q->real_world;
+    lit.query = q;
+    lit.system = q->entity;
+    lit.field_count = q->field_count;
+    lit.sizes = q->sizes;
+    lit.set_fields = q->set_fields;
+    lit.table = table;
+    lit.offset = offset;
+    lit.count = count;
+
+    flecs_iter_init(lit.world, &lit, true);
+    lit.flags |= EcsIterIsValid;
+
+    ecs_os_memcpy_n(ECS_CONST_CAST(ecs_id_t*, lit.ids), q->ids,
+        ecs_id_t, q->field_count);
+
+    const ecs_term_t *terms = q->terms;
+    int16_t *columns = ECS_CONST_CAST(int16_t*, lit.columns);
+    int32_t t, term_count = q->term_count;
+    for (t = 0; t < term_count; t ++) {
+        const ecs_term_t *term = &terms[t];
+        ecs_component_record_t *cr = flecs_components_get(
+            lit.real_world, term->id);
+        if (!cr) {
+            goto no_match;
+        }
+
+        const ecs_table_record_t *tr = flecs_component_get_table(cr, table);
+        if (!tr) {
+            goto no_match;
+        }
+
+        lit.trs[term->field_index] = tr;
+        columns[term->field_index] = tr->column;
+    }
+
+    const ecs_entity_t *entities = ecs_table_entities(table);
+    if (entities) {
+        lit.entities = &entities[offset];
+    }
+
+    *it = lit;
+    return 1;
+
+no_match:
+    lit.flags |= EcsIterSkip;
+    ecs_iter_fini(&lit);
+    return 0;
 }
 
 ecs_iter_t ecs_query_iter(

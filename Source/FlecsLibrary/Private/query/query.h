@@ -38,6 +38,14 @@ ecs_iter_t flecs_query_iter(
     const ecs_world_t *world,
     const ecs_query_t *q);
 
+int flecs_query_trivial_has_range(
+    const ecs_query_t *q,
+    ecs_iter_t *it,
+    const ecs_world_t *world,
+    ecs_table_t *table,
+    int32_t offset,
+    int32_t count);
+
 /* Internal function for initializing an iterator after vars are constrained */
 void flecs_query_iter_constrain(
     ecs_iter_t *it);
