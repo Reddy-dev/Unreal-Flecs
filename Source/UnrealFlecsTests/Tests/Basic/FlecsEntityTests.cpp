@@ -123,7 +123,8 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A10_UnrealFlecsEntityTests,
 		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTest_CPPStructValue>()));
 		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Value>()));
 		
-		auto [CPPStructValue, UStructValue] = TestEntity.GetN<FFlecsTest_CPPStructValue, FFlecsTestStruct_Value>();
+		auto [CPPStructValue, UStructValue] 
+			= TestEntity.GetN<FFlecsTest_CPPStructValue, FFlecsTestStruct_Value>();
 		ASSERT_THAT(IsTrue(CPPStructValue.Value == 42));
 		ASSERT_THAT(IsTrue(UStructValue.Value == 100));
 	}
