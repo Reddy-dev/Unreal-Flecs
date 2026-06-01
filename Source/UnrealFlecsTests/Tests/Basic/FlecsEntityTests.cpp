@@ -110,6 +110,24 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A10_UnrealFlecsEntityTests,
 		ASSERT_THAT(AreEqual(ParentEntity, ChildEntity.GetParent<FFlecsEntityHandle>()));
 	}
 	
+	TEST_METHOD(B1_SpawnEntityWithComponent_GetNComponents_API)
+	{
+		FlecsWorld->RegisterComponentType<FFlecsTest_CPPStructValue>();
+		FlecsWorld->RegisterComponentType<FFlecsTestStruct_Value>();
+		
+		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity("TestEntity")
+			.Set<FFlecsTest_CPPStructValue>({ 42 })
+			.Set<FFlecsTestStruct_Value>({ 100 });
+
+		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTest_CPPStructValue>()));
+		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Value>()));
+		
+		auto [CPPStructValue, UStructValue] = TestEntity.GetN<FFlecsTest_CPPStructValue, FFlecsTestStruct_Value>();
+		ASSERT_THAT(IsTrue(CPPStructValue.Value == 42));
+		ASSERT_THAT(IsTrue(UStructValue.Value == 100));
+	}
+	
 	TEST_METHOD(C1_SpawnEntityWithChildrenInOrder_SetChildOrder_C_API)
 	{
 		const FFlecsEntityHandle ParentEntity = FlecsWorld->CreateEntity("ParentEntity")

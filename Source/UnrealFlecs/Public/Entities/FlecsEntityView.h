@@ -187,6 +187,18 @@ public:
 	{
 		return GetEntityView().try_get_mut(FFlecsEntityView::GetInputId(*this, InTypeValue));
 	}
+	
+	template <typename ...TArgs>
+	NO_DISCARD SOLID_INLINE auto GetN() const
+	{
+		return GetEntityView().get_n<TArgs...>();
+	}
+	
+	template <typename ...TArgs>
+	NO_DISCARD SOLID_INLINE auto GetMutN() const
+	{		
+		return GetEntityView().get_mut_n<TArgs...>();
+	}
 
 	template <typename TFunction>
 	requires (flecs::is_callable<TFunction>::value)
