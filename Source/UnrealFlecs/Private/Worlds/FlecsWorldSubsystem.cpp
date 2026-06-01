@@ -247,14 +247,16 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	const UFlecsThreadAllocationPolicyBaseAsset* ThreadAllocationPolicy = GetDefault<UFlecsDeveloperSettings>()->ThreadAllocationPolicy.LoadSynchronous();
 	solid_checkf(IsValid(ThreadAllocationPolicy), TEXT("Thread allocation policy cannot be null"));
 
-	TTuple<EFlecsThreadAllocationType, int32> ThreadAllocationResult = ThreadAllocationPolicy->GetThreadCountAllocation(DefaultWorld);
-	if (ThreadAllocationResult.Get<0>() == EFlecsThreadAllocationType::TaskThreads)
+	auto [ThreadAllocType, ThreadAllocCount] 
+		= ThreadAllocationPolicy->GetThreadCountAllocation(DefaultWorld);
+	
+	if (ThreadAllocType == EFlecsThreadAllocationType::TaskThreads)
 	{
-		DefaultWorld->SetTaskThreads(ThreadAllocationResult.Get<1>());
+		DefaultWorld->SetTaskThreads(ThreadAllocCount);
 	}
 	else
 	{
-		DefaultWorld->SetThreads(ThreadAllocationResult.Get<1>());
+		DefaultWorld->SetThreads(ThreadAllocCount);
 	}
 	
 	if (Settings.bImportRest)
