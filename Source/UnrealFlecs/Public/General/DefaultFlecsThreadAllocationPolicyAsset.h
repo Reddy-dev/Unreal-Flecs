@@ -24,6 +24,6 @@ public:
 	EFlecsThreadAllocationType ThreadAllocationType = EFlecsThreadAllocationType::RunnableThreads;
 	
 	UPROPERTY(EditAnywhere, Category = "Flecs | Thread Allocation")
-	uint32 ThreadCount = 8;
+	uint32 ThreadCount = 4;
 	
 }; // class UDefaultFlecsThreadAllocationPolicy
