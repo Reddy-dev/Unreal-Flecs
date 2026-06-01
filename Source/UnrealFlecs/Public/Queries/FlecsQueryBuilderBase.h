@@ -15,6 +15,7 @@
 #include "Expressions/FlecsQueryDescendingExpression.h"
 #include "Expressions/FlecsQueryGroupByExpression.h"
 #include "Expressions/FlecsQueryOrderByExpression.h"
+#include "Expressions/FlecsQueryScriptExpression.h"
 #include "Expressions/FlecsQueryUpExpression.h"
 
 namespace UE::Flecs::Queries
@@ -194,6 +195,11 @@ public:
 	FORCEINLINE_DEBUGGABLE FInheritedType& OrFrom()
 	{
 		return Oper(EFlecsQueryOperator::OrFrom);
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& NotFrom()
+	{
+		return Oper(EFlecsQueryOperator::NotFrom);
 	}
 	
 #pragma endregion TermOperatorExpressions
@@ -1079,6 +1085,19 @@ public:
 		DescExpr.InitializeAs<FFlecsQueryDescendingExpression>();
 		
 		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(DescExpr);
+		return GetSelf();
+	}
+	
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& ScriptExpr(const FFlecsQueryScriptExpr& InExpression)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		
+		TInstancedStruct<FFlecsQueryExpression> ScriptExpr;
+		ScriptExpr.InitializeAs<FFlecsQueryScriptExpression>();
+		ScriptExpr.GetMutable<FFlecsQueryScriptExpression>().ScriptExpr = InExpression;
+		
+		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(ScriptExpr);
 		return GetSelf();
 	}
 	
