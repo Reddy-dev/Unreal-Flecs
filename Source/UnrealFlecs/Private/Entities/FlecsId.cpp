@@ -13,6 +13,16 @@ const ecs_type_info_t* FFlecsId::GetTypeInfo(const TSolidNotNull<const UFlecsWor
 
 FString FFlecsId::ToString() const
 {
+	if (Id == 0)
+	{
+		return TEXT("Null Id");
+	}
+	
+	if (IsPair())
+	{
+		return FString::Printf(TEXT("First: %d, Second: %d"), GetFirst().GetIndex(), GetSecond().GetIndex());
+	}
+	
 	return FString::Printf(TEXT("Index: %d, Generation: %d"), GetIndex(), GetGeneration());
 }
 
