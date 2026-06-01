@@ -34,7 +34,7 @@ public:
 	/**
 	 * @brief Host used to connect to the Flecs Explorer. (ip or domain)
 	 */
-	UPROPERTY(EditAnywhere, config)
+	UPROPERTY(EditAnywhere, Config)
 	FString Host = TEXT("localhost");
 
 	/**
