@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 
+#include "SolidMacros/Macros.h"
+
 #include "FlecsQueryScriptExpr.generated.h"
 
 /**
@@ -13,6 +15,11 @@ USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsQueryScriptExpr
 {
 	GENERATED_BODY()
+	
+	static NO_DISCARD FFlecsQueryScriptExpr FromString(const FString& InString)
+	{
+		return FFlecsQueryScriptExpr(InString);
+	}
 
 public:
 	UPROPERTY(EditAnywhere)
