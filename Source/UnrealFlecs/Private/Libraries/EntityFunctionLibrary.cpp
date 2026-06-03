@@ -10,11 +10,6 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(EntityFunctionLibrary)
 
-FFlecsId UEntityFunctionLibrary::MakePairId(const FFlecsId First, const FFlecsId Second)
-{
-	return FFlecsId::MakePair(First, Second);
-}
-
 /*bool UEntityFunctionLibrary::HasEntityFromObject(UObject* Object)
 {
 	if UNLIKELY_IF(!ensureMsgf(Object, TEXT("Object is not valid")))

@@ -16,8 +16,6 @@ class UNREALFLECS_API UEntityFunctionLibrary final : public UBlueprintFunctionLi
     GENERATED_BODY()
 
 public:
-    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Entity")
-    static FFlecsId MakePairId(const FFlecsId First, const FFlecsId Second);
 
     UFUNCTION(BlueprintCallable, Category = "Flecs | Entity")
     static void DestroyEntity(const FFlecsEntityHandle& Entity);
