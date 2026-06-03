@@ -18,7 +18,7 @@ enum class EFlecsObjectRegistrationNetworkFlags : uint8
 	Client = 1 << 2,
 	//Editor = 1 << 3,
 	//EditorWorld = 1 << 4,
-	All= Standalone | Server | Client UMETA(Hidden),
+	All = Standalone | Server | Client UMETA(Hidden),
 }; // enum class EFlecsObjectRegistrationNetworkFlags
 ENUM_CLASS_FLAGS(EFlecsObjectRegistrationNetworkFlags);
 
