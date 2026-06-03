@@ -11,10 +11,8 @@ UFlecsStage::UFlecsStage(const FObjectInitializer& ObjectInitializer)
 
 UFlecsStage::~UFlecsStage()
 {
-	if (!IsValid(GetOuter()))
-	{
-		StageWorld.world_ = nullptr;
-	}
+	StageWorld.world_ = nullptr;
+	
 }
 
 void UFlecsStage::DestroyStage()

@@ -13,6 +13,8 @@ public class FlecsLibrary : ModuleRules
         CppStandard = CppStandardVersion.Cpp20;
         CStandard = CStandardVersion.C17;
         
+        CppCompileWarningSettings.UnreachableCodeWarningLevel = WarningLevel.Off;
+        
         bool bIsMonolithic = Target.LinkType == TargetLinkType.Monolithic;
         
         PublicIncludePaths.AddRange(
