@@ -6,8 +6,6 @@
 
 #include "CoreMinimal.h"
 
-#include "Entities/FlecsEntityHandle.h"
-
 #include "FlecsObserverEventInput.h"
 #include "FlecsObserverFlags.h"
 #include "Queries/FlecsQueryDefinition.h"
