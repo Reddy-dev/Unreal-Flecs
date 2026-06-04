@@ -20,7 +20,7 @@ void FUnrealFlecsModule::StartupModule()
 {
 	UE::Flecs::FFlecsModuleRegistry::Get().RegisterUnrealFlecsModule("UnrealFlecs");
 	
-	FCoreDelegates::OnPostEngineInit.AddLambda([]()
+	FCoreDelegates::GetOnPostEngineInit().AddLambda([]()
 	{
 		FFlecsDefaultEntityEngine::Get().Initialize();
 	});

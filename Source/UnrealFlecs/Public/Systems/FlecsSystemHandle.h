@@ -72,6 +72,59 @@ public:
 		return *this;
 	}
 	
+	FORCEINLINE const FFlecsSystemHandle& SetInterval(const double InInterval) const
+	{
+		GetSystem().interval(InInterval);
+		return *this;
+	}
+	
+	NO_DISCARD FORCEINLINE double GetInterval() const
+	{
+		return GetSystem().interval();
+	}
+	
+	FORCEINLINE const FFlecsSystemHandle& SetTimeout(const double InTimeout) const
+	{
+		GetSystem().timeout(InTimeout);
+		return *this;
+	}
+	
+	NO_DISCARD FORCEINLINE double GetTimeout() const
+	{
+		return GetSystem().timeout();
+	}
+	
+	FORCEINLINE const FFlecsSystemHandle& SetRate(const int32 InRate) const
+	{
+		GetSystem().rate(InRate);
+		return *this;
+	}
+	
+	FORCEINLINE const FFlecsSystemHandle& StartTimer() const
+	{
+		GetSystem().start();
+		return *this;
+	}
+	
+	FORCEINLINE const FFlecsSystemHandle& StopTimer() const
+	{
+		GetSystem().stop();
+		return *this;
+	}
+	
+	FORCEINLINE const FFlecsSystemHandle& SetTickSource(const FFlecsId InTickSource) const
+	{
+		GetSystem().set_tick_source(InTickSource);
+		return *this;
+	}
+	
+	template <typename T>
+	FORCEINLINE const FFlecsSystemHandle& SetTickSource() const
+	{
+		GetSystem().set_tick_source<T>();
+		return *this;
+	}
+	
 }; // struct FFlecsSystemHandle
 
 

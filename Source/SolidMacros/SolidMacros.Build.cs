@@ -45,5 +45,7 @@ public class SolidMacros : ModuleRules
 				}
 				);
 		}
+		
+		CppCompileWarningSettings.NonInlinedGenCppWarningLevel = WarningLevel.Error;
 	}
 }

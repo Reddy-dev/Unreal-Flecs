@@ -40,5 +40,7 @@ public class UnrealFlecsEditor : ModuleRules
                 "StructUtilsEditor",
             }
         );
+        
+        CppCompileWarningSettings.NonInlinedGenCppWarningLevel = WarningLevel.Error;
     }
 }

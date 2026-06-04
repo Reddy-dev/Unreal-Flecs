@@ -51,5 +51,7 @@ public class UnrealFlecsTests : ModuleRules
                 }
             );
         }
+        
+        CppCompileWarningSettings.NonInlinedGenCppWarningLevel = WarningLevel.Error;
     }
 }

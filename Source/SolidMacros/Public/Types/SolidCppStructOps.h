@@ -163,7 +163,7 @@ namespace Solid
 		{ \
 			FSolidOpsAutoReg_##StructType() \
 			{ \
-				FCoreDelegates::OnPostEngineInit.AddLambda([]() \
+				FCoreDelegates::GetOnPostEngineInit().AddLambda([]() \
 				{ \
 					static_assert(Solid::TStaticStructConcept<StructType>, "StructType must be a USTRUCT"); \
 					 \

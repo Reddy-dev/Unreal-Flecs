@@ -641,7 +641,7 @@ namespace UE::Flecs::Private
 	public:
 		TFlecsComponentPropertiesRegistrar(const char* InModuleName = nullptr)
 		{
-			FCoreDelegates::OnPostEngineInit.AddLambda([InModuleName]()
+			FCoreDelegates::GetOnPostEngineInit().AddLambda([InModuleName]()
 			{
 				FFlecsComponentPropertiesDefinition Definition = FFlecsComponentPropertiesDefinition::Make<T>();
 				

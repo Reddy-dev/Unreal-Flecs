@@ -41,5 +41,7 @@ public class UnrealFlecs : ModuleRules
 				"SlateCore"
 			}
 			);
+		
+		CppCompileWarningSettings.NonInlinedGenCppWarningLevel = WarningLevel.Error;
 	}
 }

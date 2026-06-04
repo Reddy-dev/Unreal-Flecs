@@ -27,14 +27,21 @@ public class SolidMacrosEditor : ModuleRules
                 "SlateCore",
                 "InputCore",
                 "Kismet",
-                "UnrealEd",
-                "PropertyEditor",
             }
         );
         
         if (Target.bBuildEditor)
         {
-            PrivateDependencyModuleNames.Add("ToolWidgets");
+            PrivateDependencyModuleNames.AddRange(
+                new string[]               
+                {
+                    "UnrealEd",
+                    "PropertyEditor",
+                    "ToolWidgets",
+                }
+            );
         }
+        
+        CppCompileWarningSettings.NonInlinedGenCppWarningLevel = WarningLevel.Error;
     }
 }

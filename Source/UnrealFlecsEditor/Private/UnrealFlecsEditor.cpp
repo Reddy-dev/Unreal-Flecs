@@ -37,7 +37,10 @@ void FUnrealFlecsEditorModule::StartupModule()
 			)
 		);
 
-	FCoreDelegates::OnPostEngineInit.AddLambda([this]() { AddPrimaryAssetTypes(); });
+	FCoreDelegates::GetOnPostEngineInit().AddLambda([this]()
+	{
+		AddPrimaryAssetTypes();
+	});
 
 	PropertyEditorModule.NotifyCustomizationModuleChanged();
 
