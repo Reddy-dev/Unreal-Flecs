@@ -110,7 +110,7 @@ inline void system::set_tick_source() {
 }
 
 /** Set the tick source for a system by entity. */
-inline void system::set_tick_source(flecs::entity e) {
+inline void system::set_tick_source(flecs::entity_t e) {
     ecs_set_tick_source(world_, id_, e);
 }
 

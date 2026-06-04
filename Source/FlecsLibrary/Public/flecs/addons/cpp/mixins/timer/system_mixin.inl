@@ -54,6 +54,6 @@ void set_tick_source();
 /** Set external tick source.
  * @see ecs_set_tick_source()
  */
-void set_tick_source(flecs::entity e);
+void set_tick_source(flecs::entity_t e);
 
 /** @} */
