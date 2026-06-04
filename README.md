@@ -8,7 +8,7 @@
 
 Many Features are not complete
 
-Only tested on Version: UE 5.7 MSVC/partially Clang
+Only tested on Version: UE 5.8 MSVC/partially Clang
 
 ### Contributors to Unreal-Flecs:
 
