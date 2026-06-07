@@ -1,6 +1,6 @@
 ﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
 
-#include "Libraries/EntityFunctionLibrary.h"
+#include "Libraries/FlecsEntityHandleFunctionLibrary.h"
 
 #include "GameFramework/Actor.h"
 
@@ -8,7 +8,7 @@
 
 #include "Interfaces/FlecsEntityInterface.h"
 
-#include UE_INLINE_GENERATED_CPP_BY_NAME(EntityFunctionLibrary)
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsEntityHandleFunctionLibrary)
 
 /*bool UEntityFunctionLibrary::HasEntityFromObject(UObject* Object)
 {
@@ -50,7 +50,7 @@ FFlecsEntityHandle UEntityFunctionLibrary::GetEntityFromObject(UObject* Object)
 	return FFlecsEntityHandle::GetNullHandle();
 }*/
 
-void UEntityFunctionLibrary::DestroyEntity(const FFlecsEntityHandle& Entity)
+void UFlecsEntityHandleFunctionLibrary::DestroyEntity(const FFlecsEntityHandle& Entity)
 {
 	Entity.Destroy();
 }

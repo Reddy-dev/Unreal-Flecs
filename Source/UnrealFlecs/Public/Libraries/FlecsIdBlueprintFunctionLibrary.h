@@ -28,12 +28,23 @@ public:
 		return Id.IsValid();
 	}
 	
+	/**
+	 * @brief Returns the index(first) part of the Id. MUST NOT BE A PAIR ID.
+	 * @param Id The Id to get the index from.
+	 * @return The index part of the Id.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Id", meta = (BlueprintThreadSafe))
 	static FORCEINLINE int32 GetIdIndex(const FFlecsId Id)
 	{
 		return Id.GetIndex();
 	}
 	
+	/**
+	 * @brief Returns the generation(second) part of the Id.
+	 * This is the part that is used to identify the generation of the component, tag,
+	 * @param Id 
+	 * @return 
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Id", meta = (BlueprintThreadSafe))
 	static FORCEINLINE int32 GetIdGeneration(const FFlecsId Id)
 	{

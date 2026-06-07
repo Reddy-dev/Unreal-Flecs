@@ -8,10 +8,10 @@
 
 #include "Entities/FlecsEntityHandle.h"
 
-#include "EntityFunctionLibrary.generated.h"
+#include "FlecsEntityHandleFunctionLibrary.generated.h"
 
 UCLASS(BlueprintType)
-class UNREALFLECS_API UEntityFunctionLibrary final : public UBlueprintFunctionLibrary
+class UNREALFLECS_API UFlecsEntityHandleFunctionLibrary final : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 
@@ -19,5 +19,7 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Flecs | Entity")
     static void DestroyEntity(const FFlecsEntityHandle& Entity);
+    
+    
 
 }; // class UEntityFunctionLibrary

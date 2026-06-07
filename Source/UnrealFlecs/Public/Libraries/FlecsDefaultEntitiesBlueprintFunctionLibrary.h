@@ -8,10 +8,10 @@
 
 #include "Entities/FlecsEntityHandle.h"
 
-#include "DefaultEntitiesLibrary.generated.h"
+#include "FlecsDefaultEntitiesBlueprintFunctionLibrary.generated.h"
 
 UCLASS()
-class UNREALFLECS_API UDefaultEntitiesLibrary final : public UBlueprintFunctionLibrary
+class UNREALFLECS_API UFlecsDefaultEntitiesBlueprintFunctionLibrary final : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
