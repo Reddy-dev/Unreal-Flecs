@@ -44,6 +44,11 @@
 			"Name": "UnrealFlecsTests",
 			"Type": "DeveloperTool",
 			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "UnrealFlecsUncooked",
+			"Type": "UncookedOnly",
+			"LoadingPhase": "Default"
 		}
 	],
 	"Plugins": [
