@@ -9,6 +9,9 @@
 
 #include "FlecsEntityRecordComponent.generated.h"
 
+/**
+ * @brief 
+ */
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsEntityRecordComponent
 {
