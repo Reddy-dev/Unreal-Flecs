@@ -26,6 +26,11 @@ struct UNREALFLECS_API FFlecsId
     {
         return GetTypeHash(InId.Id);
     }
+    
+    NO_DISCARD FORCEINLINE constexpr static FFlecsId Make(const uint32 InIndex, const uint32 InGeneration = 0)
+    {
+        return FFlecsId(InIndex, InGeneration);
+    }
 
     /**
      * @brief Make a new Pair Id from the given First and Second Elements
@@ -56,6 +61,11 @@ public:
 
     FORCEINLINE FFlecsId(const flecs::entity InEntity)
         : Id(InEntity.id())
+    {
+    }
+    
+    FORCEINLINE explicit constexpr FFlecsId(const uint32 InIndex, const uint32 InGeneration = 0)
+        : Id(ecs_entity_t_comb(InIndex, InGeneration))
     {
     }
 
