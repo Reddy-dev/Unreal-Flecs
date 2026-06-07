@@ -19,7 +19,10 @@ public class UnrealFlecsUncooked : ModuleRules
                 "CoreUObject",
                 "Engine",
                 "Slate",
-                "SlateCore"
+                "SlateCore",
+                "UnrealFlecs",
+                "KismetCompiler",
+                "UnrealEd",
             }
         );
         
