@@ -584,10 +584,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
 	FFlecsEntityHandle GetTagEntity(const FGameplayTag& Tag) const;
 
-	UFUNCTION(BlueprintCallable, Category = "Flecs")
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
 	FFlecsEntityHandle CreatePrefabWithRecord(const FFlecsEntityRecord& InRecord, const FString& Name = "") const;
 
-	UFUNCTION(BlueprintCallable, Category = "Flecs")
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
 	FFlecsEntityHandle CreatePrefab(const FString& Name = "") const;
 
 	template <typename T>
