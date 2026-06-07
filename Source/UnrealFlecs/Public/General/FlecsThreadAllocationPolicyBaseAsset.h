@@ -6,6 +6,8 @@
 
 #include "Types/SolidNotNull.h"
 
+#include "Engine/DataAsset.h"
+
 #include "FlecsThreadAllocationPolicyBaseAsset.generated.h"
 
 class UFlecsWorld;
