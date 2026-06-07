@@ -50,3 +50,8 @@ FString UFlecsIdBlueprintFunctionLibrary::ToString_FlecsId(const FFlecsId Id)
 {
 	return Id.ToString();
 }
+
+bool UFlecsIdBlueprintFunctionLibrary::ToBool_FlecsId(const FFlecsId Id)
+{
+	return Id.IsValid();
+}

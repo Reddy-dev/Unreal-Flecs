@@ -50,6 +50,11 @@ FFlecsEntityHandle UEntityFunctionLibrary::GetEntityFromObject(UObject* Object)
 	return FFlecsEntityHandle::GetNullHandle();
 }*/
 
+bool UFlecsEntityHandleFunctionLibrary::IsValid(const FFlecsEntityHandle& Entity)
+{
+	return Entity.IsValid();
+}
+
 void UFlecsEntityHandleFunctionLibrary::DestroyEntity(const FFlecsEntityHandle& Entity)
 {
 	Entity.Destroy();
