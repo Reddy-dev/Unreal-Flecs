@@ -4,6 +4,17 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsIdBlueprintFunctionLibrary)
 
+FFlecsId UFlecsIdBlueprintFunctionLibrary::MakeFlecsId(const int32 Index, const int32 Generation)
+{
+	return FFlecsId(Index, Generation);
+}
+
+void UFlecsIdBlueprintFunctionLibrary::BreakFlecsId(const FFlecsId Id, int32& OutIndex, int32& OutGeneration)
+{
+	OutIndex = Id.GetIndex();
+	OutGeneration = Id.GetGeneration();
+}
+
 FFlecsId UFlecsIdBlueprintFunctionLibrary::MakePairId(const FFlecsId First, const FFlecsId Second)
 {
 	return FFlecsId::MakePair(First, Second);

@@ -21,6 +21,12 @@ class UNREALFLECS_API UFlecsIdBlueprintFunctionLibrary : public UBlueprintFuncti
 	// @TODO: Handle Errored Inputs
 
 public:
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Id", meta = (NativeMakeFunc, BlueprintThreadSafe))
+	static FFlecsId MakeFlecsId(const int32 Index, const int32 Generation = 0);
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Id", meta = (NativeBreakFunc, BlueprintThreadSafe))
+	static void BreakFlecsId(const FFlecsId Id, int32& OutIndex, int32& OutGeneration);
+	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Id", 
 		meta = (ScriptMethod = "IsValid", ScriptOperator = "bool", BlueprintThreadSafe))
 	static FORCEINLINE bool IsValidFlecsId(const FFlecsId Id)
@@ -51,10 +57,10 @@ public:
 		return Id.GetGeneration();
 	}
 	
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Id", meta = (BlueprintThreadSafe))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Id", meta = (NativeMakeFunc, BlueprintThreadSafe))
 	static FFlecsId MakePairId(const FFlecsId First, const FFlecsId Second);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Id", meta = (BlueprintThreadSafe))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Id", meta = (NativeBreakFunc, BlueprintThreadSafe))
 	static bool BreakPairId(const FFlecsId PairId, FFlecsId& OutFirst, FFlecsId& OutSecond);
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Id", meta = (BlueprintThreadSafe))
