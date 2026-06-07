@@ -538,26 +538,6 @@ public:
 		GetEntity().observe(FFlecsEntityHandle::GetInputId(*this, InValue), std::forward<FunctionType>(InFunction));
 		return *this;
 	}
-
-	NO_DISCARD SOLID_INLINE bool operator==(const FFlecsEntityHandle& Other) const
-	{
-		return GetEntity() == Other.GetEntity();
-	}
-	
-	NO_DISCARD SOLID_INLINE bool operator!=(const FFlecsEntityHandle& Other) const
-	{
-		return GetEntity() != Other.GetEntity();
-	}
-	
-	NO_DISCARD SOLID_INLINE bool operator==(const FFlecsId& Other) const
-	{
-		return GetFlecsId() == Other;
-	}
-
-	NO_DISCARD SOLID_INLINE bool operator!=(const FFlecsId& Other) const
-	{
-		return GetFlecsId() != Other;
-	}
 	
 	SOLID_INLINE flecs::entity operator->() const
 	{

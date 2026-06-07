@@ -337,7 +337,7 @@ public:
 	 */
 	NO_DISCARD SOLID_INLINE FString ToString() const
 	{
-		return FString::Printf(TEXT("Entity: %hs"), GetEntity().str().c_str());
+		return FString::Printf(TEXT("%hs"), GetEntity().str().c_str());
 	}
 
 	/**
@@ -349,6 +349,26 @@ public:
 	NO_DISCARD SOLID_INLINE THandle ToHandle() const
 	{
 		return THandle(GetNativeFlecsWorld(), GetFlecsId());
+	}
+	
+	NO_DISCARD SOLID_INLINE bool operator==(const FFlecsCommonHandle& Other) const
+	{
+		return GetEntity() == Other.GetEntity();
+	}
+	
+	NO_DISCARD SOLID_INLINE bool operator!=(const FFlecsCommonHandle& Other) const
+	{
+		return GetEntity() != Other.GetEntity();
+	}
+	
+	NO_DISCARD SOLID_INLINE bool operator==(const FFlecsId& Other) const
+	{
+		return GetFlecsId() == Other;
+	}
+
+	NO_DISCARD SOLID_INLINE bool operator!=(const FFlecsId& Other) const
+	{
+		return GetFlecsId() != Other;
 	}
 
 protected:
