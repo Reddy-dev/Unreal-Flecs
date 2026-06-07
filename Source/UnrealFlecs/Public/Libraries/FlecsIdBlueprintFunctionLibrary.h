@@ -83,7 +83,11 @@ public:
 		meta = (DisplayName = "To String (FlecsId)", CompactNodeTitle = "->", BlueprintThreadSafe))
 	static FString ToString_FlecsId(const FFlecsId Id);
 	
-	
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Id", 
+		meta = (DisplayName = "To Bool (FlecsId)", CompactNodeTitle = "->", BlueprintThreadSafe))
+	static bool ToBool_FlecsId(const FFlecsId Id);
+
+
 #pragma endregion // Operators
 	
 	

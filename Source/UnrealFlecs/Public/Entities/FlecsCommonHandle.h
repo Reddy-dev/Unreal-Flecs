@@ -188,7 +188,7 @@ public:
 	
 	SOLID_INLINE operator FFlecsId() const
 	{
-		return FFlecsId(GetEntity());
+		return GetFlecsId();
 	}
 
 	/**
