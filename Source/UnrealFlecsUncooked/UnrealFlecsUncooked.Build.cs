@@ -23,6 +23,7 @@ public class UnrealFlecsUncooked : ModuleRules
                 "UnrealFlecs",
                 "KismetCompiler",
                 "UnrealEd",
+                "BlueprintGraph"
             }
         );
         
