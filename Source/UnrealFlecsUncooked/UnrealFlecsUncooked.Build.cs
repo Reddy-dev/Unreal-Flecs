@@ -20,6 +20,7 @@ public class UnrealFlecsUncooked : ModuleRules
                 "Engine",
                 "Slate",
                 "SlateCore",
+                "FlecsLibrary",
                 "UnrealFlecs",
                 "KismetCompiler",
                 "UnrealEd",
