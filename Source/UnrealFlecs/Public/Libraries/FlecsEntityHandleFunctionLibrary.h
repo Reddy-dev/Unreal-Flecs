@@ -122,6 +122,22 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Flecs | Entity")
     static void DestroyEntity(const FFlecsEntityHandle& Entity);
     
+    UFUNCTION(BlueprintCallable, Category = "Flecs | Entity")
+    static void ClearEntity(const FFlecsEntityHandle& Entity);
     
+    UFUNCTION(BlueprintCallable, Category = "Flecs | Entity")
+    static void EnableEntity(const FFlecsEntityHandle& Entity);
+    
+    UFUNCTION(BlueprintCallable, Category = "Flecs | Entity")
+    static void DisableEntity(const FFlecsEntityHandle& Entity);
+    
+    UFUNCTION(BlueprintCallable, Category = "Flecs | Entity")
+    static bool ToggleEntity(const FFlecsEntityHandle& Entity);
+    
+    UFUNCTION(BlueprintCallable, Category = "Flecs | Entity")
+    static void SetName(const FFlecsEntityHandle& Entity, const FString& Name);
+    
+    UFUNCTION(BlueprintCallable, Category = "Flecs | Entity")
+    static void SetParent(const FFlecsEntityHandle& Entity, const FFlecsEntityHandle& Parent, const bool bDontFragment = false);
 
 }; // class UEntityFunctionLibrary

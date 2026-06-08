@@ -205,3 +205,41 @@ void UFlecsEntityHandleFunctionLibrary::DestroyEntity(const FFlecsEntityHandle& 
 {
 	Entity.Destroy();
 }
+
+void UFlecsEntityHandleFunctionLibrary::ClearEntity(const FFlecsEntityHandle& Entity)
+{
+	Entity.Clear();
+}
+
+void UFlecsEntityHandleFunctionLibrary::EnableEntity(const FFlecsEntityHandle& Entity)
+{
+	Entity.Enable();
+}
+
+void UFlecsEntityHandleFunctionLibrary::DisableEntity(const FFlecsEntityHandle& Entity)
+{
+	Entity.Disable();
+}
+
+bool UFlecsEntityHandleFunctionLibrary::ToggleEntity(const FFlecsEntityHandle& Entity)
+{
+	return Entity.Toggle();
+}
+
+void UFlecsEntityHandleFunctionLibrary::SetName(const FFlecsEntityHandle& Entity, const FString& Name)
+{
+	Entity.SetName(Name);
+}
+
+void UFlecsEntityHandleFunctionLibrary::SetParent(const FFlecsEntityHandle& Entity, const FFlecsEntityHandle& Parent,
+	const bool bDontFragment)
+{
+	if (bDontFragment)
+	{
+		Entity.SetParent(Parent);
+	}
+	else
+	{
+		Entity.SetChildOf(Parent);
+	}
+}
