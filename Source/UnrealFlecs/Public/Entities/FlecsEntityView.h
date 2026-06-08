@@ -16,7 +16,8 @@
 
 class UFlecsWorldInterfaceObject;
 
-USTRUCT(BlueprintType)
+USTRUCT(BlueprintType, meta = (DisableSplitPin,
+	HasNativeMake = "/Script/UnrealFlecs.FlecsEntityHandleFunctionLibrary.MakeFlecsEntityView"))
 struct UNREALFLECS_API FFlecsEntityView : public FFlecsCommonHandle
 {
 	GENERATED_BODY()

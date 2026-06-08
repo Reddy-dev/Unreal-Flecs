@@ -35,7 +35,7 @@ public:
     static bool IsValid_FlecsEntityView(const FFlecsEntityView& Id);
     
     UFUNCTION(BlueprintCallable, Category = "Flecs | Entity", 
-        meta = (DisplayName = "Is Valid Entity (Branch)", BlueprintThreadSafe, ExpandBoolAsExecs="ReturnValue"))
+        meta = (DisplayName = "Is Valid Entity (Branch)", BlueprintThreadSafe, ExpandBoolAsExecs = "ReturnValue"))
     static bool IsValidBranch_FlecsEntityView(const FFlecsEntityView& Id);
     
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Entity", 
@@ -43,7 +43,7 @@ public:
     static bool IsAlive_FlecsEntityView(const FFlecsEntityView& Id);
     
     UFUNCTION(BlueprintCallable, Category = "Flecs | Entity", 
-        meta = (DisplayName = "Is Alive Entity (Branch)", BlueprintThreadSafe, ExpandBoolAsExecs="ReturnValue"))
+        meta = (DisplayName = "Is Alive Entity (Branch)", BlueprintThreadSafe, ExpandBoolAsExecs = "ReturnValue"))
     static bool IsAliveBranch_FlecsEntityView(const FFlecsEntityView& Id);
     
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Entity", 

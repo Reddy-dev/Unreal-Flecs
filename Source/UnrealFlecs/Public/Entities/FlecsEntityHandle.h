@@ -39,7 +39,8 @@ class UFlecsWorldInterfaceObject;
  * including validation, component addition/removal, and direct data access.
  * This must be used with a valid `UFlecsWorldInterfaceObject` instance to function correctly.
  */
-USTRUCT(BlueprintType, meta = (DisableSplitPin))
+USTRUCT(BlueprintType, meta = (DisableSplitPin,
+	HasNativeMake = "/Script/UnrealFlecs.FlecsEntityHandleFunctionLibrary.MakeFlecsEntityHandle"))
 struct alignas(8) UNREALFLECS_API FFlecsEntityHandle : public FFlecsEntityView
 {
 	GENERATED_BODY()
