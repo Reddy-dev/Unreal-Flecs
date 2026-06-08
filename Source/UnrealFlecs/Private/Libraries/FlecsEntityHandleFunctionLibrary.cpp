@@ -51,6 +51,20 @@ FFlecsEntityHandle UEntityFunctionLibrary::GetEntityFromObject(UObject* Object)
 	return FFlecsEntityHandle::GetNullHandle();
 }*/
 
+FFlecsEntityView UFlecsEntityHandleFunctionLibrary::MakeFlecsEntityViewHandle(const FFlecsId Id,
+	const UFlecsWorldInterfaceObject* World)
+{
+	solid_cassumef(World, TEXT("World is not valid"));
+	return FFlecsEntityView(World, Id);
+}
+
+FFlecsEntityHandle UFlecsEntityHandleFunctionLibrary::MakeFlecsEntityHandle(const FFlecsId Id,
+	const UFlecsWorldInterfaceObject* World)
+{
+	solid_cassumef(World, TEXT("World is not valid"));
+	return FFlecsEntityHandle(World, Id);
+}
+
 bool UFlecsEntityHandleFunctionLibrary::ToBool_FlecsEntityView(const FFlecsEntityView& Id)
 {
 	return Id;
@@ -61,7 +75,17 @@ bool UFlecsEntityHandleFunctionLibrary::IsValid_FlecsEntityView(const FFlecsEnti
 	return Id.IsValid();
 }
 
+bool UFlecsEntityHandleFunctionLibrary::IsValidBranch_FlecsEntityView(const FFlecsEntityView& Id)
+{
+	return Id.IsValid();
+}
+
 bool UFlecsEntityHandleFunctionLibrary::IsAlive_FlecsEntityView(const FFlecsEntityView& Id)
+{
+	return Id.IsAlive();
+}
+
+bool UFlecsEntityHandleFunctionLibrary::IsAliveBranch_FlecsEntityView(const FFlecsEntityView& Id)
 {
 	return Id.IsAlive();
 }

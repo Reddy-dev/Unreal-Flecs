@@ -19,16 +19,32 @@ class UNREALFLECS_API UFlecsEntityHandleFunctionLibrary final : public UBlueprin
 public:
     
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Entity", 
+       meta = (NativeMakeFunc, BlueprintThreadSafe))
+    static FFlecsEntityView MakeFlecsEntityViewHandle(const FFlecsId Id, const UFlecsWorldInterfaceObject* World);
+    
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Entity", 
+        meta = (NativeMakeFunc, BlueprintThreadSafe))
+    static FFlecsEntityHandle MakeFlecsEntityHandle(const FFlecsId Id, const UFlecsWorldInterfaceObject* World);
+    
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Entity", 
         meta = (DisplayName = "To Bool (Flecs Entity View)", CompactNodeTitle = "->", BlueprintThreadSafe))
     static bool ToBool_FlecsEntityView(const FFlecsEntityView& Id);
     
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Entity", 
-        meta = (DisplayName = "Is Valid (Flecs Entity View)", CompactNodeTitle = "Is Valid", BlueprintThreadSafe))
+        meta = (DisplayName = "Is Valid Entity", CompactNodeTitle = "Is Valid", BlueprintThreadSafe))
     static bool IsValid_FlecsEntityView(const FFlecsEntityView& Id);
     
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Entity", 
-       meta = (DisplayName = "Is Alive (Flecs Entity View)", BlueprintThreadSafe))
+        meta = (DisplayName = "Is Valid Entity (Branch)", CompactNodeTitle = "Is Valid (Branch)", BlueprintThreadSafe, ExpandBoolAsExecs="ReturnValue"))
+    static bool IsValidBranch_FlecsEntityView(const FFlecsEntityView& Id);
+    
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Entity", 
+       meta = (DisplayName = "Is Alive Entity", BlueprintThreadSafe))
     static bool IsAlive_FlecsEntityView(const FFlecsEntityView& Id);
+    
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Entity", 
+        meta = (DisplayName = "Is Alive Entity (Branch)", CompactNodeTitle = "Is Alive (Branch)", BlueprintThreadSafe, ExpandBoolAsExecs="ReturnValue"))
+    static bool IsAliveBranch_FlecsEntityView(const FFlecsEntityView& Id);
     
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Entity", 
         meta = (DisplayName = "To Flecs Id (Flecs Entity View)", CompactNodeTitle = "->", BlueprintThreadSafe))
@@ -139,5 +155,7 @@ public:
     
     UFUNCTION(BlueprintCallable, Category = "Flecs | Entity")
     static void SetParent(const FFlecsEntityHandle& Entity, const FFlecsEntityHandle& Parent, const bool bDontFragment = false);
+    
+    
 
 }; // class UEntityFunctionLibrary
