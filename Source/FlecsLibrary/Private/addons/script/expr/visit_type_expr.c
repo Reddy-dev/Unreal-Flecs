@@ -540,12 +540,22 @@ int flecs_expr_type_for_operator(
         flecs_expr_visit_error(script, node, 
             "invalid types for binary expression (%s, %s)", 
             flecs_errstr(ecs_get_path(world, left->type)),
-            flecs_errstr_1(ecs_get_path(world, right->type)))
+            flecs_errstr_1(ecs_get_path(world, right->type)));
         goto error;
     }
 
     /* If left and right types are the same, do nothing */
     if (left_type == right->type) {
+        if (operator == EcsTokEq || operator == EcsTokNeq) {
+            if (left_type == ecs_id(ecs_f32_t) ||
+                left_type == ecs_id(ecs_f64_t))
+            {
+                flecs_expr_visit_error(script, node,
+                    "floating point value is invalid in equality comparison");
+                goto error;
+            }
+        }
+
         *operand_type = left->type;
         goto done;
     }
@@ -738,6 +748,8 @@ int flecs_expr_interpolated_string_visit_type(
                 ecs_parser_t parser = {
                     .name = script->name,
                     .code = script->code,
+                    .pos = node->node.pos,
+                    .fixed_pos = node->node.pos,
                     .script = impl,
                     .scope = impl->root,
                     .significant_newline = false,
@@ -2106,6 +2118,7 @@ int flecs_expr_element_visit_type(
     const ecs_type_info_t *elem_ti = ecs_get_type_info(
         script->world, node->node.type);
     node->elem_size = elem_ti->size;
+    node->elem_count = cur->scope[cur->depth - 1].elem_count;
 
     return 0;
 

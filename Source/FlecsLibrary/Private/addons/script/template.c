@@ -196,10 +196,17 @@ void flecs_script_template_instantiate(
         instance_node.eval = entities[i];
 
         /* Apply annotations, if any */
+        bool annot_failed = false;
         for (a = 0; a < ecs_vec_count(&template->annot); a ++) {
             ecs_script_annot_t *annot = ecs_vec_get_t(
                 &template->annot, ecs_script_annot_t*, a)[0];
-            flecs_script_apply_annot(&v, &instance_node, annot);
+            if (flecs_script_apply_annot(&v, &instance_node, annot)) {
+                annot_failed = true;
+                break;
+            }
+        }
+        if (annot_failed) {
+            break;
         }
 
         /* Create variables to hold template properties */
@@ -358,9 +365,11 @@ int flecs_script_template_eval_prop(
         }
 
         var->value.type = type;
-        var->value.ptr = flecs_stack_alloc(
+        var->value.ptr = flecs_stack_calloc(
             &v->r->stack, ti->size, ti->alignment);
         var->type_info = ti;
+
+        flecs_type_info_ctor(var->value.ptr, 1, ti);
 
         if (flecs_script_eval_expr(v, &node->expr, &var->value)) {
             return -1;

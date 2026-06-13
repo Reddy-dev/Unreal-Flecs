@@ -870,7 +870,7 @@ void flecs_emit_forward_table_up(
             } else {
                 /* Cache is dirty, traverse upwards */
                 do {
-                    flecs_emit_forward_up(world, er, er_onset, emit_ids, it, 
+                    flecs_emit_forward_up(world, er, er_onset, emit_ids, it,
                         table, cr, stack, reachable_ids, depth);
                     if (++i >= id_count) {
                         break;
@@ -880,6 +880,8 @@ void flecs_emit_forward_table_up(
                     if (ECS_PAIR_FIRST(id) != trav) {
                         break;
                     }
+
+                    cr = tgt_table->_->records[i].hdr.cr;
                 } while (true);
             }
 
@@ -1389,8 +1391,8 @@ repeat_event:
         }
 
         /* Forward events for Parent component as ChildOf pairs. */
-        if (id == ecs_id(EcsParent) && !table_event && 
-            (table->flags & EcsTableHasParent)) 
+        if (id == ecs_id(EcsParent) && !table_event && can_forward &&
+            (table->flags & EcsTableHasParent))
         {
             ecs_event_desc_t pdesc = *desc;
 

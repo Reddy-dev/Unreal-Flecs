@@ -207,10 +207,14 @@ next:
 
     /* Select next (ChildOf, parent) pair */
     case EcsQueryTreeIterNext: {
-        ecs_component_record_t *cr = op_ctx->cr = 
+        ecs_component_record_t *cr = op_ctx->cr =
             flecs_component_first_next(op_ctx->cr);
         if (!cr) {
             return false;
+        }
+
+        if (cr == ctx->world->cr_childof_0) {
+            goto next;
         }
 
         flecs_query_var_reset(0, ctx);
@@ -795,7 +799,7 @@ bool flecs_query_tree_up_post(
 
         op_ctx->cur ++;
 
-        if (op_ctx->cur >= op_ctx->range.count) {
+        if (op_ctx->cur >= (op_ctx->range.offset + op_ctx->range.count)) {
             flecs_query_src_set_range(op, &op_ctx->range, ctx);
             return false;
         }

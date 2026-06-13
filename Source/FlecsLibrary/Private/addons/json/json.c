@@ -79,6 +79,10 @@ const char* flecs_json_parse(
             }
 
             json = flecs_chrparse(json, token_ptr ++);
+            if (!json) {
+                token_kind[0] = JsonInvalid;
+                return NULL;
+            }
         }
 
         if (!ch) {
@@ -90,8 +94,12 @@ const char* flecs_json_parse(
         }
     } else if (isdigit(ch) || (ch == '-')) {
         token_kind[0] = JsonNumber;
-        const char *result = flecs_parse_digit(json, token);
-        
+        const char *result = flecs_parse_digit(json, token, ECS_MAX_TOKEN_SIZE);
+        if (!result) {
+            token_kind[0] = JsonInvalid;
+            return NULL;
+        }
+
         /* Cheap initial check if parsed token could represent large int */
         if (result - json > 15) {
             /* Less cheap secondary check to see if number is integer */
@@ -144,6 +152,9 @@ const char* flecs_json_parse_large_string(
         }
 
         json = flecs_chrparse(json, &ch_out);
+        if (!json) {
+            return NULL;
+        }
         ecs_strbuf_appendch(buf, ch_out);
     }
 
@@ -314,6 +325,9 @@ const char* flecs_json_skip_string(
         }
 
         json = flecs_chrparse(json, &ch_out);
+        if (!json) {
+            return NULL;
+        }
     }
 
     return ch ? json : NULL;
@@ -466,6 +480,41 @@ void flecs_json_string_escape(
         ecs_strbuf_appendstr(buf, out);
         ecs_os_free(out);
     }
+}
+
+void flecs_json_string_escape_ctrl(
+    ecs_strbuf_t *buf,
+    const char *value)
+{
+    if (!value) {
+        ecs_strbuf_appendlit(buf, "null");
+        return;
+    }
+
+    ecs_strbuf_appendch(buf, '"');
+
+    const char *ptr;
+    for (ptr = value; ptr[0]; ptr ++) {
+        char ch = ptr[0];
+        switch(ch) {
+        case '"':  ecs_strbuf_appendlit(buf, "\\\""); break;
+        case '\\': ecs_strbuf_appendlit(buf, "\\\\"); break;
+        case '\b': ecs_strbuf_appendlit(buf, "\\b"); break;
+        case '\f': ecs_strbuf_appendlit(buf, "\\f"); break;
+        case '\n': ecs_strbuf_appendlit(buf, "\\n"); break;
+        case '\r': ecs_strbuf_appendlit(buf, "\\r"); break;
+        case '\t': ecs_strbuf_appendlit(buf, "\\t"); break;
+        default:
+            if ((unsigned char)ch < 0x20) {
+                ecs_strbuf_append(buf, "\\u%04x", (unsigned char)ch);
+            } else {
+                ecs_strbuf_appendch(buf, ch);
+            }
+            break;
+        }
+    }
+
+    ecs_strbuf_appendch(buf, '"');
 }
 
 void flecs_json_member(

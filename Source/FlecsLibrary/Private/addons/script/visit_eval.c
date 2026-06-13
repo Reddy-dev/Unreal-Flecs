@@ -39,11 +39,18 @@ void flecs_script_eval_error_(
     char *msg = flecs_vasprintf(fmt, args);
     va_end(args);
 
-    if (node) {
-        int32_t line = ecs_script_node_line_number(v->base.script, node);
-        ecs_parser_error(v->base.script->pub.name, NULL, 0, "%d: %s", line, msg);
+    if (!node && v->base.depth > 0) {
+        node = v->base.nodes[v->base.depth - 1];
+    }
+
+    const char *name = v->base.script->pub.name;
+    const char *code = v->base.script->pub.code;
+    const char *pos = node ? node->pos : NULL;
+
+    if (code && pos && (pos >= code) && (pos <= &code[ecs_os_strlen(code)])) {
+        ecs_parser_error(name, code, pos - code, "%s", msg);
     } else {
-        ecs_parser_error(v->base.script->pub.name, NULL, 0, "%s", msg);
+        ecs_parser_error(name, NULL, 0, "%s", msg);
     }
 
     ecs_os_free(msg);
@@ -181,7 +188,8 @@ ecs_entity_t flecs_script_eval_name_expr(
         .lookup_ctx = v,
         .vars = v->vars,
         .type = ecs_id(ecs_string_t),
-        .runtime = v->r
+        .runtime = v->r,
+        .disable_dynamic_variable_binding = !v->dynamic_variable_binding
     };
 
     ecs_expr_node_t *expr = *expr_ptr;
@@ -579,6 +587,15 @@ int flecs_script_eval_scope(
         }
     }
 
+    if (v->base.depth > 0) {
+        ecs_script_node_t *prev = v->base.nodes[v->base.depth - 1];
+        if ((prev->kind == EcsAstIf || prev->kind == EcsAstFor) &&
+            node->parent)
+        {
+            node->default_component_eval = node->parent->default_component_eval;
+        }
+    }
+
     ecs_allocator_t *a = &v->r->allocator;
     v->vars = flecs_script_vars_push(v->vars, &v->r->stack, a);
 
@@ -815,7 +832,9 @@ int flecs_script_eval_entity(
     if (count) {
         ecs_script_annot_t **annots = ecs_vec_first(&v->r->annot);
         for (i = 0; i < count ; i ++) {
-            flecs_script_apply_annot(v, node, annots[i]);
+            if (flecs_script_apply_annot(v, node, annots[i])) {
+                return -1;
+            }
         }
         ecs_vec_clear(&v->r->annot);
     }
@@ -990,25 +1009,44 @@ int flecs_script_eval_component(
         }
 
         bool needs_set = ti->hooks.on_replace != NULL;
-        ecs_record_t *r = flecs_entities_get(v->world, src);
-        ecs_assert(r != NULL, ECS_INTERNAL_ERROR, NULL);
-        ecs_table_t *table = r->table;
- 
+
+        bool partial = false;
+        if (node->expr->kind == EcsExprInitializer) {
+            partial = ((ecs_expr_initializer_t*)node->expr)->is_partial;
+        }
+
+        const void *existing = NULL;
+        if (partial) {
+            existing = ecs_get_id(v->world, src, node->id.eval);
+        }
+
         ecs_value_t value = {
-            .ptr = needs_set 
-                ? ecs_os_alloca(ti->size) 
-                : ecs_ensure_id(v->world, src, node->id.eval, 
+            .ptr = needs_set
+                ? ecs_os_alloca(ti->size)
+                : ecs_ensure_id(v->world, src, node->id.eval,
                     flecs_ito(size_t, ti->size)),
             .type = ti->component
         };
 
-        /* Assign entire value, including members not set by expression. This 
-         * prevents uninitialized or unexpected values. */
-        if (needs_set || (r->table != table)) {
+        /* For full assignments, assign entire value including members not set
+         * by expression. This prevents uninitialized or unexpected values. For
+         * partial assignments, members not set by the expression keep the
+         * existing component value. */
+        if (needs_set) {
             if (!ti->hooks.ctor) {
                 ecs_os_memset(value.ptr, 0, ti->size);
             } else {
-                if (!needs_set && ti->hooks.dtor) {
+                flecs_type_info_ctor(value.ptr, 1, ti);
+            }
+
+            if (existing) {
+                ecs_value_copy_w_type_info(v->world, ti, value.ptr, existing);
+            }
+        } else if (!existing) {
+            if (!ti->hooks.ctor) {
+                ecs_os_memset(value.ptr, 0, ti->size);
+            } else {
+                if (ti->hooks.dtor) {
                     flecs_type_info_dtor(value.ptr, 1, ti);
                 }
                 flecs_type_info_ctor(value.ptr, 1, ti);
@@ -1140,11 +1178,32 @@ int flecs_script_eval_default_component(
         return -1;
     }
 
+    bool partial = false;
+    if (node->expr->kind == EcsExprInitializer) {
+        partial = ((ecs_expr_initializer_t*)node->expr)->is_partial;
+    }
+
+    const void *existing = NULL;
+    if (partial) {
+        existing = ecs_get_id(v->world, v->entity->eval, default_type);
+    }
+
     ecs_value_t value = {
-        .ptr = ecs_ensure_id(v->world, v->entity->eval, default_type, 
+        .ptr = ecs_ensure_id(v->world, v->entity->eval, default_type,
             flecs_ito(size_t, ti->size)),
         .type = default_type
     };
+
+    if (!existing) {
+        if (!ti->hooks.ctor) {
+            ecs_os_memset(value.ptr, 0, ti->size);
+        } else {
+            if (ti->hooks.dtor) {
+                flecs_type_info_dtor(value.ptr, 1, ti);
+            }
+            flecs_type_info_ctor(value.ptr, 1, ti);
+        }
+    }
 
     if (flecs_script_eval_expr(v, &node->expr, &value)) {
         return -1;
@@ -2258,6 +2317,7 @@ int ecs_script_eval(
 
     if (result) {
         result->error = ecs_log_stop_capture();
+        flecs_log_get_captured_error_pos(&result->line, &result->column);
     }
 
     if (r) {

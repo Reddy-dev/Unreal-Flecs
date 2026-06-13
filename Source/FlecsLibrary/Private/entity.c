@@ -123,7 +123,7 @@ void* flecs_get_base_component(
         } else {
             if (cr->flags & EcsIdSparse) {
                 return flecs_component_sparse_get(world, cr, table, base);
-            } else {
+            } else if (tr->column != -1) {
                 int32_t row = ECS_RECORD_TO_ROW(r->row);
                 return flecs_table_get_component(table, tr->column, row).ptr;
             }
@@ -225,7 +225,7 @@ void flecs_move_entity(
     flecs_table_delete(world, src_table, src_row, false);
 
     flecs_actions_move_add(world, dst_table, src_table, dst_row, 1, diff,
-        evt_flags, true, emplace_id);
+        evt_flags, true, emplace_id, true);
 
     ecs_assert(record->table == dst_table, ECS_INTERNAL_ERROR, NULL);
 }
@@ -262,7 +262,7 @@ void flecs_commit(
 
             flecs_actions_move_add(world, src_table, src_table,
                 ECS_RECORD_TO_ROW(record->row), 1, diff, evt_flags,
-                    true, emplace_id);
+                    true, emplace_id, true);
 
             flecs_actions_move_remove(world, src_table, src_table,
                 ECS_RECORD_TO_ROW(record->row), 1, diff);
@@ -333,7 +333,7 @@ const ecs_entity_t* flecs_bulk_new(
     }
 
     flecs_actions_move_add(world, table, NULL, row, count, diff,
-        (component_data == NULL) ? 0 : EcsEventNoOnSet, true, 0);
+        (component_data == NULL) ? 0 : EcsEventNoOnSet, true, 0, true);
 
     if (component_data) {
         int32_t c_i;
@@ -1827,7 +1827,7 @@ ecs_entity_t ecs_clone(
             }
 
             const void *src_ptr = ecs_get_id(world, src, component);
-            const ecs_type_info_t *ti = src_table->data.columns[i].ti;
+            const ecs_type_info_t *ti = dst_table->data.columns[i].ti;
             flecs_type_info_copy(dst_ptr, src_ptr, 1, ti);
 
             flecs_notify_on_set(world, dst_table, row, component, true);
@@ -2431,17 +2431,13 @@ void ecs_enable_id(
         return;
     }
 
-    ecs_record_t *r = flecs_entities_get(world, entity);    
+    ecs_record_t *r = flecs_entities_get(world, entity);
     ecs_table_t *table = r->table;
-    int32_t index = ecs_table_get_type_index(world, table, bs_id);
-    ecs_assert(index != -1, ECS_INTERNAL_ERROR, NULL);
 
     ecs_assert(table->_ != NULL, ECS_INTERNAL_ERROR, NULL);
-    index -= table->_->bs_offset;
-    ecs_assert(index >= 0, ECS_INTERNAL_ERROR, NULL);
 
     /* Data cannot be NULL, since entity is stored in the table */
-    ecs_bitset_t *bs = &table->_->bs_columns[index];
+    ecs_bitset_t *bs = flecs_table_get_toggle(table, component);
     ecs_assert(bs != NULL, ECS_INTERNAL_ERROR, NULL);
 
     flecs_bitset_set(bs, ECS_RECORD_TO_ROW(r->row), enable);
@@ -2468,18 +2464,12 @@ bool ecs_is_enabled_id(
     ecs_table_t *table = r->table;
     ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
 
-    ecs_entity_t bs_id = component | ECS_TOGGLE;
-    int32_t index = ecs_table_get_type_index(world, table, bs_id);
-    if (index == -1) {
+    ecs_bitset_t *bs = flecs_table_get_toggle(table, component);
+    if (!bs) {
         /* If table does not have TOGGLE column for component, component is
          * always enabled, if the entity has it */
         return ecs_has_id(world, entity, component);
     }
-
-    ecs_assert(table->_ != NULL, ECS_INTERNAL_ERROR, NULL);
-    index -= table->_->bs_offset;
-    ecs_assert(index >= 0, ECS_INTERNAL_ERROR, NULL);
-    ecs_bitset_t *bs = &table->_->bs_columns[index];
 
     return flecs_bitset_get(bs, ECS_RECORD_TO_ROW(r->row));
 error:
@@ -2722,7 +2712,7 @@ ecs_entity_t flecs_get_prefab_instance_child(
 
     ecs_vec_t *v = &childof_cr->pair->ordered_children;
     int32_t index = flecs_uto(int32_t, *index_ptr);
-    ecs_check(ecs_vec_count(v) >= index, ECS_INVALID_OPERATION, 
+    ecs_check(ecs_vec_count(v) > index, ECS_INVALID_OPERATION,
         "cannot get target for '%s': children of '%s' have changed since "
         "prefab instantiation",
             flecs_errstr(ecs_id_str(world, prefab_child)),
@@ -3306,6 +3296,9 @@ void ecs_enable(
         int32_t i, count = type->count;
         for (i = 0; i < count; i ++) {
             ecs_id_t component = ids[i];
+            if (component & ECS_ID_FLAGS_MASK) {
+                continue;
+            }
             ecs_flags32_t flags = ecs_id_get_flags(world, component);
             if (!(flags & EcsIdOnInstantiateDontInherit)){
                 ecs_enable(world, component, enabled);

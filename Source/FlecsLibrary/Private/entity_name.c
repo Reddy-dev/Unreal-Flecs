@@ -933,7 +933,7 @@ ecs_entity_t ecs_add_path_w_sep(
         }
 
         if (parent) {
-            ecs_add_pair(world, entity, EcsChildOf, entity);
+            ecs_add_pair(world, entity, EcsChildOf, parent);
         }
 
         ecs_os_perf_trace_pop("flecs.entity_name.add_path_w_sep");

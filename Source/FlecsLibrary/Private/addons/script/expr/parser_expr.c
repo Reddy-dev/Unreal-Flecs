@@ -198,6 +198,16 @@ const char* flecs_script_parse_initializer(
             goto error;
         }
 
+        if (elem->member) {
+            node->is_partial = true;
+        }
+
+        if (elem->value && elem->value->kind == EcsExprInitializer &&
+            ((ecs_expr_initializer_t*)elem->value)->is_partial)
+        {
+            node->is_partial = true;
+        }
+
         {
             /* Parse next element or end of initializer */
             LookAhead(
@@ -207,7 +217,7 @@ const char* flecs_script_parse_initializer(
                 }
 
                 case ')':
-                case '}': 
+                case '}':
                     /* Return last character of initializer */
                     pos = lookahead - 1;
 
@@ -260,6 +270,12 @@ const char* flecs_script_parse_collection_initializer(
         pos = flecs_script_parse_expr(parser, pos, 0, &elem->value);
         if (!pos) {
             goto error;
+        }
+
+        if (elem->value && elem->value->kind == EcsExprInitializer &&
+            ((ecs_expr_initializer_t*)elem->value)->is_partial)
+        {
+            node->is_partial = true;
         }
 
         {
@@ -720,7 +736,8 @@ const char* flecs_script_parse_expr(
     ecs_expr_node_t **out)
 {
     if (parser->expr_depth >= ECS_PARSER_MAX_RECURSION_DEPTH) {
-        ecs_parser_error(parser->name, parser->code, pos - parser->code,
+        ecs_parser_error(parser->name, parser->code,
+            flecs_parser_errpos(parser, pos),
             "maximum expression nesting depth exceeded");
         return NULL;
     }
@@ -765,10 +782,12 @@ ecs_script_t* ecs_expr_parse(
 
     ecs_script_t *script = flecs_script_new(world);
     ecs_script_impl_t *impl = flecs_script_impl(script);
+    script->code = ecs_os_strdup(expr);
 
     ecs_parser_t parser = {
         .name = script->name,
         .code = script->code,
+        .pos = script->code,
         .script = impl,
         .scope = impl->root,
         .significant_newline = false,
@@ -781,12 +800,13 @@ ecs_script_t* ecs_expr_parse(
     parser.token_cur = impl->token_buffer;
     parser.token_end = &impl->token_buffer[impl->token_buffer_size];
 
-    const char *ptr = flecs_script_parse_expr(&parser, expr, 0, &impl->expr);
+    const char *ptr = flecs_script_parse_expr(
+        &parser, script->code, 0, &impl->expr);
     if (!ptr) {
         goto error;
     }
 
-    impl->next_token = ptr;
+    impl->next_token = &expr[ptr - script->code];
     impl->token_remaining = parser.token_cur;
 
     if (flecs_expr_visit_type(script, impl->expr, &priv_desc)) {

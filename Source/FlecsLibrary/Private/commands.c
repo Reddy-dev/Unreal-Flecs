@@ -163,7 +163,7 @@ bool flecs_defer_delete(
     ecs_entity_t entity)
 {
     if (flecs_defer_cmd(stage)) {
-        ecs_cmd_t *cmd = flecs_cmd_new(stage);
+        ecs_cmd_t *cmd = flecs_cmd_new_batched(stage, entity);
         cmd->kind = EcsCmdDelete;
         cmd->entity = entity;
         return true;
@@ -878,6 +878,8 @@ void flecs_cmd_batch_for_entity(
                 /* Nothing to batch for non-fragmenting components */
                 if (cmd->kind == EcsCmdSet) {
                     cmd->kind = EcsCmdSetDontFragment;
+                } else if (cmd->kind == EcsCmdEnsure) {
+                    cmd->kind = EcsCmdEnsureDontFragment;
                 }
                 continue;
             }
@@ -941,10 +943,13 @@ void flecs_cmd_batch_for_entity(
             world->info.cmd.batched_command_count ++;
             cmd->kind = EcsCmdSkip;
             break;
+        case EcsCmdDelete:
+            /* Entity is deleted, don't batch commands after the delete */
+            next_for_entity = 0;
+            break;
         case EcsCmdClone:
         case EcsCmdBulkNew:
         case EcsCmdPath:
-        case EcsCmdDelete:
         case EcsCmdOnDeleteAction:
         case EcsCmdEnable:
         case EcsCmdDisable:
@@ -953,6 +958,7 @@ void flecs_cmd_batch_for_entity(
         case EcsCmdModifiedNoHook:
         case EcsCmdModified:
         case EcsCmdSetDontFragment:
+        case EcsCmdEnsureDontFragment:
             break;
         }
     } while ((cur = next_for_entity));
@@ -1014,15 +1020,20 @@ void flecs_cmd_batch_for_entity(
                     const ecs_type_info_t *ti = dst.ti;
                     if (ti->hooks.on_replace) {
                         ecs_table_t *prev_table = r->table;
-                        flecs_invoke_replace_hook(world, prev_table, entity, 
+                        flecs_invoke_replace_hook(world, prev_table, entity,
                             cmd->id, dst.ptr, ptr, ti);
-                        if (prev_table != r->table) {
-                            if (!r->table) {
-                                /* Entity was deleted */
-                                goto done;
-                            }
-                            dst = flecs_get_mut(
-                                world, entity, cmd->id, r, cmd->is._1.size);
+                        if (!r->table) {
+                            /* Entity was deleted */
+                            goto done;
+                        }
+
+                        /* Refetch pointer as the hook could have grown the
+                         * table or moved the entity to a different table. */
+                        dst = flecs_get_mut(
+                            world, entity, cmd->id, r, cmd->is._1.size);
+                        if (!dst.ptr) {
+                            cmd->kind = EcsCmdSkip;
+                            break;
                         }
                     }
 
@@ -1053,6 +1064,10 @@ void flecs_cmd_batch_for_entity(
                 }
                 break;
             }
+            case EcsCmdDelete:
+                /* Entity is deleted, don't process commands after delete */
+                next_for_entity = 0;
+                break;
             case EcsCmdRemove:
             case EcsCmdClone:
             case EcsCmdBulkNew:
@@ -1062,8 +1077,8 @@ void flecs_cmd_batch_for_entity(
             case EcsCmdModifiedNoHook:
             case EcsCmdAddModified:
             case EcsCmdSetDontFragment:
+            case EcsCmdEnsureDontFragment:
             case EcsCmdPath:
-            case EcsCmdDelete:
             case EcsCmdClear:
             case EcsCmdOnDeleteAction:
             case EcsCmdEnable:
@@ -1097,9 +1112,13 @@ void flecs_cmd_batch_for_entity(
             }
         }
 
+        bool update_parent_records = !table_diff.removed.count ||
+            !(start_table->flags & EcsTableHasParent);
+
         flecs_defer_begin(world, world->stages[0]);
         flecs_actions_move_add(world, r->table, start_table,
-            ECS_RECORD_TO_ROW(r->row), 1, &add_diff, 0, false, 0);
+            ECS_RECORD_TO_ROW(r->row), 1, &add_diff, 0, false, 0,
+            update_parent_records);
         flecs_defer_end(world, world->stages[0]);
     }
 
@@ -1255,8 +1274,9 @@ bool flecs_defer_end(
                     world->info.cmd.ensure_count ++;
                     break;
                 case EcsCmdEnsure:
-                    flecs_set_id_move(world, dst_stage, e, 
-                        cmd->id, flecs_itosize(cmd->is._1.size), 
+                case EcsCmdEnsureDontFragment:
+                    flecs_set_id_move(world, dst_stage, e,
+                        cmd->id, flecs_itosize(cmd->is._1.size),
                         cmd->is._1.value, kind);
                     world->info.cmd.ensure_count ++;
                     break;

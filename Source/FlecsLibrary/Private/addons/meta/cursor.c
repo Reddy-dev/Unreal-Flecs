@@ -1367,7 +1367,33 @@ int ecs_meta_set_value(
             goto error;
         }
     } else if (mt->kind == EcsEnumType) {
-        return ecs_meta_set_int(cursor, *(int32_t*)value->ptr);
+        const EcsEnum *et = ecs_get(cursor->world, type, EcsEnum);
+        ecs_entity_t ut = et ? et->underlying_type : 0;
+        const EcsPrimitive *prim = ut
+            ? ecs_get(cursor->world, ut, EcsPrimitive)
+            : NULL;
+        ecs_primitive_kind_t kind = prim ? prim->kind : EcsI32;
+        switch(kind) {
+        case EcsU8:  return ecs_meta_set_uint(cursor, *(uint8_t*)value->ptr);
+        case EcsU16: return ecs_meta_set_uint(cursor, *(uint16_t*)value->ptr);
+        case EcsU32: return ecs_meta_set_uint(cursor, *(uint32_t*)value->ptr);
+        case EcsU64: return ecs_meta_set_uint(cursor, *(uint64_t*)value->ptr);
+        case EcsI8:  return ecs_meta_set_int(cursor, *(int8_t*)value->ptr);
+        case EcsI16: return ecs_meta_set_int(cursor, *(int16_t*)value->ptr);
+        case EcsI64: return ecs_meta_set_int(cursor, *(int64_t*)value->ptr);
+        case EcsI32:
+        case EcsBool:
+        case EcsChar:
+        case EcsByte:
+        case EcsF32:
+        case EcsF64:
+        case EcsUPtr:
+        case EcsIPtr:
+        case EcsString:
+        case EcsEntity:
+        case EcsId:
+        default:     return ecs_meta_set_int(cursor, *(int32_t*)value->ptr);
+        }
     } else if (mt->kind == EcsBitmaskType) {
         return ecs_meta_set_int(cursor, *(uint32_t*)value->ptr);
     } else {
@@ -1510,12 +1536,21 @@ int ecs_meta_set_string(
     case EcsOpU64:
     case EcsOpIPtr:
     case EcsOpUPtr:
-    case EcsOpF32:
-    case EcsOpF64:
         if (!flecs_meta_valid_digit(value)) {
             ecs_err("expected number, got '%s'", value);
             goto error;
         }
+        break;
+    case EcsOpF32:
+    case EcsOpF64: {
+        char *endptr;
+        strtod(value, &endptr);
+        if (endptr == value) {
+            ecs_err("expected number, got '%s'", value);
+            goto error;
+        }
+        break;
+    }
     case EcsOpEnum:
     case EcsOpBitmask:
     case EcsOpPushStruct:
@@ -1571,18 +1606,22 @@ int ecs_meta_set_string(
         set_T(ecs_i32_t, ptr, atol(value));
         break;
     case EcsOpI64:
-    case EcsOpU64:
         set_T(ecs_i64_t, ptr, atoll(value));
         break;
+    case EcsOpU64:
+        set_T(ecs_u64_t, ptr, strtoull(value, NULL, 10));
+        break;
     case EcsOpIPtr:
-    case EcsOpUPtr:
         set_T(ecs_iptr_t, ptr, atoll(value));
         break;
+    case EcsOpUPtr:
+        set_T(ecs_uptr_t, ptr, strtoull(value, NULL, 10));
+        break;
     case EcsOpF32:
-        set_T(ecs_f32_t, ptr, atof(value));
+        set_T(ecs_f32_t, ptr, strtod(value, NULL));
         break;
     case EcsOpF64:
-        set_T(ecs_f64_t, ptr, atof(value));
+        set_T(ecs_f64_t, ptr, strtod(value, NULL));
         break;
     case EcsOpString: {
         if (*(ecs_string_t*)ptr == value) {
@@ -1715,7 +1754,7 @@ int ecs_meta_set_string_literal(
     }
 
     ecs_size_t len = ecs_os_strlen(value);
-    if (value[0] != '\"' || value[len - 1] != '\"') {
+    if (len < 2 || value[0] != '\"' || value[len - 1] != '\"') {
         ecs_err("invalid string literal '%s'", value);
         goto error;
     }
@@ -2034,8 +2073,8 @@ char ecs_meta_get_char(
     ecs_meta_op_t *op = flecs_cursor_get_op(scope);
     void *ptr = flecs_meta_cursor_get_ptr(cursor->world, cursor, scope);
     switch(op->kind) {
-    case EcsOpChar: 
-        return *(ecs_char_t*)ptr != 0;
+    case EcsOpChar:
+        return *(ecs_char_t*)ptr;
     case EcsOpPushStruct:
     case EcsOpPushArray:
     case EcsOpPushVector:

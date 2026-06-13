@@ -396,14 +396,13 @@ bool flecs_query_cache(
     const ecs_query_run_ctx_t *ctx)
 {
     (void)op;
-    (void)redo;
 
     uint64_t written = ctx->written[ctx->op_index];
     ctx->written[ctx->op_index + 1] |= 1ull;
     if (written & 1ull) {
         return flecs_query_cache_test(ctx, redo);
     } else {
-        return flecs_query_cache_search(ctx);
+        return flecs_query_cache_search(ctx, redo);
     }
 }
 
@@ -420,7 +419,7 @@ bool flecs_query_is_cache(
     if (written & 1ull) {
         return flecs_query_is_cache_test(ctx, redo);
     } else {
-        return flecs_query_is_cache_search(ctx);
+        return flecs_query_is_cache_search(ctx, redo);
     }
 }
 
@@ -709,9 +708,12 @@ bool flecs_query_idsright(
         ecs_id_t id = flecs_query_op_get_id(op, ctx);
         cur = op_ctx->cur = flecs_components_get(ctx->world, id);
         if (!ecs_id_is_wildcard(id)) {
-            /* If id is not a wildcard, we can directly return it. This can 
+            /* If id is not a wildcard, we can directly return it. This can
              * happen if a variable was constrained by an iterator. */
             op_ctx->cur = NULL;
+            if (!cur) {
+                return false;
+            }
             flecs_query_set_vars(op, id, ctx);
             it->ids[op->field_index] = id;
             it->sources[op->field_index] = EcsWildcard;

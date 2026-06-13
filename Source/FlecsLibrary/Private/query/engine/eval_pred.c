@@ -161,6 +161,7 @@ bool flecs_query_pred_neq_w_range(
 
         /* Cache old value */
         op_ctx->range = l;
+        op_ctx->redo = false;
     } else {
         l_offset = op_ctx->range.offset;
         l_count = op_ctx->range.count;
@@ -173,8 +174,8 @@ bool flecs_query_pred_neq_w_range(
     ecs_var_t *var = &ctx->vars[src_var];
     if (!redo && r.offset > l_offset) {
         int32_t end = r.offset;
-        if (end > l_count) {
-            end = l_count;
+        if (end > (l_offset + l_count)) {
+            end = l_offset + l_count;
         }
 
         /* Return first slice */
@@ -194,10 +195,17 @@ bool flecs_query_pred_neq_w_range(
             return false;
         }
 
-        /* Return second slice */
+        /* Return second slice. Clamp the start to the source range in case the
+         * excluded range starts before it, so rows outside the source range are
+         * not returned. */
+        int32_t r_start = r_end;
+        if (r_start < l_offset) {
+            r_start = l_offset;
+        }
+
         var->range.table = l.table;
-        var->range.offset = r_end;
-        var->range.count = l_end - r_end;
+        var->range.offset = r_start;
+        var->range.count = l_end - r_start;
 
         /* Flag so we know we're done on the next redo */
         op_ctx->redo = true;
