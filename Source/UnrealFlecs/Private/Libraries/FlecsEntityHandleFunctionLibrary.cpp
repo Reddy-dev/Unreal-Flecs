@@ -37,6 +37,7 @@ namespace UE::Flecs::ComponentValue
 	{
 		const void* ComponentValue = Entity.TryGet(ComponentId);
 		solid_checkf(ComponentValue, TEXT("Entity does not have the requested component value"));
+		
 		ValidateLayout(Entity, ComponentId, ValueProperty);
 		ValueProperty.Struct->CopyScriptStruct(ValueAddress, ComponentValue);
 	}
@@ -48,10 +49,12 @@ namespace UE::Flecs::ComponentValue
 	{
 		void* ComponentValue = Reference.TryGetMutable();
 		solid_checkf(ComponentValue, TEXT("Component reference is not valid"));
+		
 		ValidateLayout(Reference.Entity, Reference.ComponentId, ValueProperty);
 		ValueProperty.Struct->CopyScriptStruct(ComponentValue, ValueAddress);
 		Reference.Modified();
 	}
+	
 } // namespace UE::Flecs::ComponentValue
 
 /*bool UEntityFunctionLibrary::HasEntityFromObject(UObject* Object)
