@@ -316,24 +316,21 @@ void UFlecsEntityHandleFunctionLibrary::EntityHandle_AddId(const FFlecsEntityHan
 	Entity.Add(ComponentId);
 }
 
-void UFlecsEntityHandleFunctionLibrary::EntityHandle_AddScriptStruct(
-	const FFlecsEntityHandle& Entity,
+void UFlecsEntityHandleFunctionLibrary::EntityHandle_AddScriptStruct(const FFlecsEntityHandle& Entity,
 	const UScriptStruct* ScriptStruct)
 {
 	solid_cassumef(ScriptStruct, TEXT("ScriptStruct is not valid"));
 	Entity.Add(ScriptStruct);
 }
 
-void UFlecsEntityHandleFunctionLibrary::EntityHandle_AddEnum(
-	const FFlecsEntityHandle& Entity,
+void UFlecsEntityHandleFunctionLibrary::EntityHandle_AddEnum(const FFlecsEntityHandle& Entity,
 	const UEnum* Enum)
 {
 	solid_cassumef(Enum, TEXT("Enum is not valid"));
 	Entity.Add(FFlecsCommonHandle::GetInputId(Entity, Enum));
 }
 
-void UFlecsEntityHandleFunctionLibrary::EntityHandle_AddEnumConstant(
-	const FFlecsEntityHandle& Entity,
+void UFlecsEntityHandleFunctionLibrary::EntityHandle_AddEnumConstant(const FFlecsEntityHandle& Entity,
 	FSolidEnumSelector EnumConstant)
 {
 	solid_checkf(EnumConstant.Class, TEXT("Enum constant class is not valid"));
@@ -343,15 +340,13 @@ void UFlecsEntityHandleFunctionLibrary::EntityHandle_AddEnumConstant(
 	Entity.Add(EnumConstantId);
 }
 
-void UFlecsEntityHandleFunctionLibrary::EntityHandle_AddGameplayTag(
-	const FFlecsEntityHandle& Entity,
+void UFlecsEntityHandleFunctionLibrary::EntityHandle_AddGameplayTag(const FFlecsEntityHandle& Entity,
 	FGameplayTag GameplayTag)
 {
 	Entity.Add(GameplayTag);
 }
 
-void UFlecsEntityHandleFunctionLibrary::EntityHandle_AddSolidEnumSelector(
-	const FFlecsEntityHandle& Entity,
+void UFlecsEntityHandleFunctionLibrary::EntityHandle_AddSolidEnumSelector(const FFlecsEntityHandle& Entity,
 	FSolidEnumSelector EnumSelector)
 {
 	solid_checkf(EnumSelector.Class, TEXT("Enum selector class is not valid"));
@@ -362,8 +357,7 @@ void UFlecsEntityHandleFunctionLibrary::EntityHandle_AddSolidEnumSelector(
 	Entity.AddPair(EnumId, EnumConstantId);
 }
 
-void UFlecsEntityHandleFunctionLibrary::EntityHandle_AddPairIds(
-	const FFlecsEntityHandle& Entity,
+void UFlecsEntityHandleFunctionLibrary::EntityHandle_AddPairIds(const FFlecsEntityHandle& Entity,
 	const FFlecsId RelationId,
 	const FFlecsId TargetId)
 {
@@ -375,8 +369,7 @@ void UFlecsEntityHandleFunctionLibrary::EntityHandle_AddPairIds(
 	Entity.AddPair(RelationId, TargetId);
 }
 
-void UFlecsEntityHandleFunctionLibrary::EntityHandle_SetId(
-	const FFlecsEntityHandle&,
+void UFlecsEntityHandleFunctionLibrary::EntityHandle_SetId(const FFlecsEntityHandle&,
 	const FFlecsId,
 	const int32&)
 {
