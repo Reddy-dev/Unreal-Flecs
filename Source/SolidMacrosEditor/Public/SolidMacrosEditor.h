@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
+class FSolidEnumSelectorPinFactory;
+
 class FSolidMacrosEditorModule : public IModuleInterface
 {
 public:
@@ -11,4 +13,7 @@ public:
 
     void RegisterDetailsCustomizations();
     void UnregisterDetailsCustomizations();
+
+private:
+	TSharedPtr<FSolidEnumSelectorPinFactory> SolidEnumSelectorPinFactory;
 };

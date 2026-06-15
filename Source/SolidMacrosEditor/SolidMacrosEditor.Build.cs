@@ -38,6 +38,8 @@ public class SolidMacrosEditor : ModuleRules
                     "UnrealEd",
                     "PropertyEditor",
                     "ToolWidgets",
+                    "GraphEditor",
+                    "BlueprintGraph",
                 }
             );
         }
