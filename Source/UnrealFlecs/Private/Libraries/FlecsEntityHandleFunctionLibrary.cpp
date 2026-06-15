@@ -392,14 +392,12 @@ DEFINE_FUNCTION(UFlecsEntityHandleFunctionLibrary::execEntityHandle_SetId)
 	Stack.MostRecentPropertyContainer = nullptr;
 	Stack.StepCompiledIn<FStructProperty>(nullptr);
 
-	const FStructProperty* ValueProperty = CastField<FStructProperty>(Stack.MostRecentProperty);
-	const void* ValueAddress = Stack.MostRecentPropertyAddress;
+	const TSolidNotNull<const FStructProperty*> ValueProperty = CastField<FStructProperty>(Stack.MostRecentProperty);
+	const TSolidNotNull<const void*> ValueAddress = Stack.MostRecentPropertyAddress;
 
 	P_FINISH;
 	P_NATIVE_BEGIN;
-
-	solid_checkf(ValueProperty, TEXT("Set value property is not a struct"));
-	solid_checkf(ValueAddress, TEXT("Set value address is not valid"));
+	
 	solid_checkf(ComponentId.IsValid(), TEXT("Set component id is not valid"));
 
 	Entity.Set(ComponentId, ValueProperty->Struct->GetStructureSize(), ValueAddress);
@@ -424,14 +422,12 @@ DEFINE_FUNCTION(UFlecsEntityHandleFunctionLibrary::execEntityHandle_SetSolidEnum
 	Stack.MostRecentPropertyContainer = nullptr;
 	Stack.StepCompiledIn<FStructProperty>(nullptr);
 
-	const FStructProperty* ValueProperty = CastField<FStructProperty>(Stack.MostRecentProperty);
-	const void* ValueAddress = Stack.MostRecentPropertyAddress;
+	const TSolidNotNull<const FStructProperty*> ValueProperty = CastField<FStructProperty>(Stack.MostRecentProperty);
+	const TSolidNotNull<const void*> ValueAddress = Stack.MostRecentPropertyAddress;
 
 	P_FINISH;
 	P_NATIVE_BEGIN;
-
-	solid_checkf(ValueProperty, TEXT("Set value property is not a struct"));
-	solid_checkf(ValueAddress, TEXT("Set value address is not valid"));
+	
 	solid_checkf(EnumSelector.Class, TEXT("Enum selector class is not valid"));
 
 	const FFlecsId EnumId = FFlecsCommonHandle::GetInputId(Entity, EnumSelector.Class);
@@ -473,14 +469,12 @@ DEFINE_FUNCTION(UFlecsEntityHandleFunctionLibrary::execEntityView_GetId)
 	Stack.MostRecentPropertyContainer = nullptr;
 	Stack.StepCompiledIn<FStructProperty>(nullptr);
 
-	const FStructProperty* ValueProperty = CastField<FStructProperty>(Stack.MostRecentProperty);
-	void* ValueAddress = Stack.MostRecentPropertyAddress;
+	const TSolidNotNull<const FStructProperty*> ValueProperty = CastField<FStructProperty>(Stack.MostRecentProperty);
+	const TSolidNotNull<void*> ValueAddress = Stack.MostRecentPropertyAddress;
 
 	P_FINISH;
 	P_NATIVE_BEGIN;
-
-	solid_checkf(ValueProperty, TEXT("Get value property is not a struct"));
-	solid_checkf(ValueAddress, TEXT("Get value address is not valid"));
+	
 	UE::Flecs::ComponentValue::CopyToStruct(
 		Entity,
 		ComponentId,
@@ -507,15 +501,14 @@ DEFINE_FUNCTION(UFlecsEntityHandleFunctionLibrary::execEntityView_GetScriptStruc
 	Stack.MostRecentPropertyContainer = nullptr;
 	Stack.StepCompiledIn<FStructProperty>(nullptr);
 
-	const FStructProperty* ValueProperty = CastField<FStructProperty>(Stack.MostRecentProperty);
-	void* ValueAddress = Stack.MostRecentPropertyAddress;
+	const TSolidNotNull<const FStructProperty*> ValueProperty = CastField<FStructProperty>(Stack.MostRecentProperty);
+	const TSolidNotNull<void*> ValueAddress = Stack.MostRecentPropertyAddress;
 
 	P_FINISH;
 	P_NATIVE_BEGIN;
 
 	solid_cassumef(ScriptStruct, TEXT("ScriptStruct is not valid"));
-	solid_checkf(ValueProperty, TEXT("Get value property is not a struct"));
-	solid_checkf(ValueAddress, TEXT("Get value address is not valid"));
+	
 	UE::Flecs::ComponentValue::CopyToStruct(
 		Entity,
 		FFlecsCommonHandle::GetInputId(Entity, ScriptStruct),
@@ -564,14 +557,12 @@ DEFINE_FUNCTION(UFlecsEntityHandleFunctionLibrary::execComponentRef_GetValue)
 	Stack.MostRecentPropertyContainer = nullptr;
 	Stack.StepCompiledIn<FStructProperty>(nullptr);
 
-	const FStructProperty* ValueProperty = CastField<FStructProperty>(Stack.MostRecentProperty);
-	void* ValueAddress = Stack.MostRecentPropertyAddress;
+	const TSolidNotNull<const FStructProperty*> ValueProperty = CastField<FStructProperty>(Stack.MostRecentProperty);
+	const TSolidNotNull<void*> ValueAddress = Stack.MostRecentPropertyAddress;
 
 	P_FINISH;
 	P_NATIVE_BEGIN;
 
-	solid_checkf(ValueProperty, TEXT("Component reference value property is not a struct"));
-	solid_checkf(ValueAddress, TEXT("Component reference value address is not valid"));
 	UE::Flecs::ComponentValue::CopyToStruct(
 		Reference.Entity,
 		Reference.ComponentId,
@@ -596,14 +587,12 @@ DEFINE_FUNCTION(UFlecsEntityHandleFunctionLibrary::execComponentRef_SetValue)
 	Stack.MostRecentPropertyContainer = nullptr;
 	Stack.StepCompiledIn<FStructProperty>(nullptr);
 
-	const FStructProperty* ValueProperty = CastField<FStructProperty>(Stack.MostRecentProperty);
-	const void* ValueAddress = Stack.MostRecentPropertyAddress;
+	const TSolidNotNull<const FStructProperty*> ValueProperty = CastField<FStructProperty>(Stack.MostRecentProperty);
+	const TSolidNotNull<const void*> ValueAddress = Stack.MostRecentPropertyAddress;
 
 	P_FINISH;
 	P_NATIVE_BEGIN;
 
-	solid_checkf(ValueProperty, TEXT("Component reference value property is not a struct"));
-	solid_checkf(ValueAddress, TEXT("Component reference value address is not valid"));
 	UE::Flecs::ComponentValue::CopyFromStruct(
 		Reference,
 		*ValueProperty,
