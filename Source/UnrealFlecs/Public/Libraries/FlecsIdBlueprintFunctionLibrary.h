@@ -57,10 +57,12 @@ public:
 		return Id.GetGeneration();
 	}
 	
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Id", meta = (NativeMakeFunc, BlueprintThreadSafe))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Id", DisplayName = "Make Pair Flecs Id",
+		meta = (NativeMakeFunc, BlueprintThreadSafe))
 	static FFlecsId MakePairId(const FFlecsId First, const FFlecsId Second);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Id", meta = (NativeBreakFunc, BlueprintThreadSafe))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Id", DisplayName = "Break Pair Flecs Id",
+		meta = (NativeBreakFunc, BlueprintThreadSafe))
 	static bool BreakPairId(const FFlecsId PairId, FFlecsId& OutFirst, FFlecsId& OutSecond);
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Flecs | Id", meta = (BlueprintThreadSafe))

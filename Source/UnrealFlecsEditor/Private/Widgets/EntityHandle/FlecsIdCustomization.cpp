@@ -5,6 +5,7 @@
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
 #include "IDetailChildrenBuilder.h"
+#include "ScopedTransaction.h"
 
 #include "Entities/FlecsDefaultEntityEngine.h"
 
@@ -13,6 +14,20 @@
 #include "Widgets/Layout/SBox.h"
 
 #define LOCTEXT_NAMESPACE "FlecsIdCustomization"
+
+namespace UE::Flecs::IdCustomization
+{
+	FString ExtractNumericValue(FString Value)
+	{
+		Value.TrimStartAndEndInline();
+		Value.RemoveFromStart(TEXT("("));
+		Value.RemoveFromEnd(TEXT(")"));
+		Value.RemoveFromStart(TEXT("FlecsId="));
+		Value.RemoveFromStart(TEXT("Id="));
+		return Value;
+	}
+	
+} // namespace UE::Flecs::IdCustomization
 
 TSharedRef<IPropertyTypeCustomization> FFlecsIdCustomization::MakeInstance()
 {
@@ -39,7 +54,8 @@ void FFlecsIdCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> Struct
 	FText InitialIdText = FText::GetEmpty();
 	if (StructPropertyHandle->GetValueAsFormattedString(CurrentRawVal) == FPropertyAccess::Success)
 	{
-		CurrentRawVal.RemoveFromStart(TEXT("FlecsId="));
+		CurrentRawVal = UE::Flecs::IdCustomization::ExtractNumericValue(
+			MoveTemp(CurrentRawVal));
 		InitialIdText = FText::FromString(CurrentRawVal);
 	}
 
@@ -69,7 +85,7 @@ void FFlecsIdCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> Struct
 			{
 				if (IdTextInput.IsValid())
 				{
-					IdTextInput->SetText(FText::FromString(FString::Printf(TEXT("%llu"), NewEntity.Id)));
+					IdTextInput->SetText(FText::FromString(FString::Printf(TEXT("%llu"), NewEntity.GetId())));
 				}
 
 				if (PropertyHandle.IsValid() && PropertyHandle->IsValidHandle())
@@ -136,7 +152,7 @@ void FFlecsIdCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> Struct
 						{
 							if (RawData)
 							{
-								static_cast<FFlecsId*>(RawData)->Id = Id;
+								*static_cast<FFlecsId*>(RawData) = FFlecsId(Id);
 							}
 
 							return true;

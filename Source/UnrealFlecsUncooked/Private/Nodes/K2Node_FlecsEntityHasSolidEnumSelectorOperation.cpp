@@ -25,7 +25,7 @@ void UK2Node_FlecsEntityHasSolidEnumSelectorOperation::AllocateDefaultPins()
 		TBaseStructure<FSolidEnumSelector>::Get(),
 		TEXT("EnumSelector"),
 		PinParams);
-	EnumSelectorPin->PinFriendlyName = FText::FromString(TEXT("Solid Enum Selector"));
+	EnumSelectorPin->PinFriendlyName = FText::FromString(TEXT("Enum Pair"));
 }
 
 void UK2Node_FlecsEntityHasSolidEnumSelectorOperation::ExpandNode(
@@ -61,7 +61,7 @@ void UK2Node_FlecsEntityHasSolidEnumSelectorOperation::ExpandNode(
 FText UK2Node_FlecsEntityHasSolidEnumSelectorOperation::GetNodeTitle(
 	ENodeTitleType::Type TitleType) const
 {
-	return FText::FromString(TEXT("Has Solid Enum Selector on Flecs Entity"));
+	return FText::FromString(TEXT("Has Enum Pair on Flecs Entity"));
 }
 
 UEdGraphPin* UK2Node_FlecsEntityHasSolidEnumSelectorOperation::GetEnumSelectorPin() const

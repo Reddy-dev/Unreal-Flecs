@@ -11,6 +11,19 @@
 
 #define LOCTEXT_NAMESPACE "SGraphPinFlecsId"
 
+namespace UE::Flecs::IdPin
+{
+	FString ExtractNumericValue(FString Value)
+	{
+		Value.TrimStartAndEndInline();
+		Value.RemoveFromStart(TEXT("("));
+		Value.RemoveFromEnd(TEXT(")"));
+		Value.RemoveFromStart(TEXT("FlecsId="));
+		Value.RemoveFromStart(TEXT("Id="));
+		return Value;
+	}
+} // namespace UE::Flecs::IdPin
+
 void SGraphPinFlecsId::Construct(const FArguments& InArgs, UEdGraphPin* InGraphPinObj)
 {
 	SGraphPin::Construct(SGraphPin::FArguments(), InGraphPinObj);
@@ -30,8 +43,8 @@ TSharedRef<SWidget> SGraphPinFlecsId::GetDefaultValueWidget()
 		Options.Add(MakeShared<FName>(FName(Entity.name().c_str())));
 	});
 
-	FString InitialRawVal = GraphPinObj->GetDefaultAsString();
-	InitialRawVal.RemoveFromStart(TEXT("FlecsId="));
+	const FString InitialRawVal =
+		UE::Flecs::IdPin::ExtractNumericValue(GraphPinObj->GetDefaultAsString());
 	const FText InitialIdText = FText::FromString(InitialRawVal);
 
 	return SNew(SHorizontalBox)
@@ -50,12 +63,12 @@ TSharedRef<SWidget> SGraphPinFlecsId::GetDefaultValueWidget()
 		{
 			if (IdTextInput.IsValid())
 			{
-				IdTextInput->SetText(FText::FromString(FString::Printf(TEXT("%llu"), NewEntity.Id)));
+				IdTextInput->SetText(FText::FromString(FString::Printf(TEXT("%llu"), NewEntity.GetId())));
 			}
 
 			if (GraphPinObj)
 			{
-				const FString NewDefaultValue = FString::Printf(TEXT("FlecsId=%llu"), NewEntity.Id);
+				const FString NewDefaultValue = FString::Printf(TEXT("FlecsId=%llu"), NewEntity.GetId());
 				GraphPinObj->GetSchema()->TrySetDefaultValue(*GraphPinObj, NewDefaultValue);
 			}
 		}))
@@ -109,13 +122,13 @@ TSharedRef<SWidget> SGraphPinFlecsId::GetDefaultValueWidget()
 
 TSharedPtr<FName> SGraphPinFlecsId::GetSelectedName() const
 {
-	FString CurrentValue = GraphPinObj->GetDefaultAsString();
-	CurrentValue.RemoveFromStart(TEXT("FlecsId="));
+	const FString CurrentValue =
+		UE::Flecs::IdPin::ExtractNumericValue(GraphPinObj->GetDefaultAsString());
 	const uint64 CurrentId = FCString::Strtoui64(*CurrentValue, nullptr, 10);
 
 	for (int32 Index = 1; Index < EntityOptions.Num(); ++Index)
 	{
-		if (EntityOptions[Index].Id == CurrentId)
+		if (EntityOptions[Index].GetId() == CurrentId)
 		{
 			return Options[Index];
 		}

@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 
+#include "IPropertyTypeCustomization.h"
+
 class SEditableTextBox;
 
 class UNREALFLECSEDITOR_API FFlecsIdCustomization : public IPropertyTypeCustomization

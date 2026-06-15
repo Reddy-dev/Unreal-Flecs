@@ -26,7 +26,7 @@ void UK2Node_FlecsEntitySetSolidEnumSelectorOperation::AllocateDefaultPins()
 		TBaseStructure<FSolidEnumSelector>::Get(),
 		TEXT("EnumSelector"),
 		PinParams);
-	EnumSelectorPin->PinFriendlyName = FText::FromString(TEXT("Solid Enum Selector"));
+	EnumSelectorPin->PinFriendlyName = FText::FromString(TEXT("Enum Pair"));
 
 	UEdGraphPin* ValuePin = CreatePin(
 		EGPD_Input,
@@ -45,7 +45,7 @@ void UK2Node_FlecsEntitySetSolidEnumSelectorOperation::ExpandNode(
 	if (!ValuePin || ValuePin->LinkedTo.Num() != 1 ||
 		ValuePin->PinType.PinCategory != UEdGraphSchema_K2::PC_Struct)
 	{
-		Message_Error(TEXT("Set Solid Enum Selector requires one connected struct Value input."));
+		Message_Error(TEXT("Set Enum Pair requires one connected struct Value input."));
 		BreakAllNodeLinks();
 		return;
 	}
@@ -78,7 +78,7 @@ void UK2Node_FlecsEntitySetSolidEnumSelectorOperation::ExpandNode(
 FText UK2Node_FlecsEntitySetSolidEnumSelectorOperation::GetNodeTitle(
 	ENodeTitleType::Type TitleType) const
 {
-	return FText::FromString(TEXT("Set Solid Enum Selector on Flecs Entity"));
+	return FText::FromString(TEXT("Set Enum Pair on Flecs Entity"));
 }
 
 bool UK2Node_FlecsEntitySetSolidEnumSelectorOperation::IsConnectionDisallowed(
