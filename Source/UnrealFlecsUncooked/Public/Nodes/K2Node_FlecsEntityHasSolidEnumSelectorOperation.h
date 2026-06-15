@@ -9,8 +9,7 @@
 #include "K2Node_FlecsEntityHasSolidEnumSelectorOperation.generated.h"
 
 UCLASS()
-class UNREALFLECSUNCOOKED_API UK2Node_FlecsEntityHasSolidEnumSelectorOperation
-	: public UK2Node_FlecsGenericEntityCheck
+class UNREALFLECSUNCOOKED_API UK2Node_FlecsEntityHasSolidEnumSelectorOperation : public UK2Node_FlecsGenericEntityCheck
 {
 	GENERATED_BODY()
 

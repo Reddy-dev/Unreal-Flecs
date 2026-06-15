@@ -9,8 +9,7 @@
 #include "K2Node_FlecsEntityRemoveSolidEnumSelectorOperation.generated.h"
 
 UCLASS()
-class UNREALFLECSUNCOOKED_API UK2Node_FlecsEntityRemoveSolidEnumSelectorOperation
-	: public UK2Node_FlecsGenericEntityOperation
+class UNREALFLECSUNCOOKED_API UK2Node_FlecsEntityRemoveSolidEnumSelectorOperation : public UK2Node_FlecsGenericEntityOperation
 {
 	GENERATED_BODY()
 

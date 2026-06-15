@@ -11,8 +11,7 @@
 struct FFlecsGenericInputPins;
 
 UCLASS()
-class UNREALFLECSUNCOOKED_API UK2Node_FlecsEntityRemoveOperation
-	: public UK2Node_FlecsGenericEntityOperation
+class UNREALFLECSUNCOOKED_API UK2Node_FlecsEntityRemoveOperation : public UK2Node_FlecsGenericEntityOperation
 {
 	GENERATED_BODY()
 
