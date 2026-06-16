@@ -45,7 +45,6 @@ private:
 
 	NO_DISCARD UEdGraphPin* GetEntityPin() const;
 	NO_DISCARD UEdGraphPin* GetValuePin() const;
-	NO_DISCARD UEdGraphPin* GetReferencePin() const;
 
 	void ToggleExecPins();
 	bool CanToggleExecPins() const;

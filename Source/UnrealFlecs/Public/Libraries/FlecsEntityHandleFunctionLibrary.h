@@ -8,7 +8,7 @@
 
 #include "Entities/FlecsEntityView.h"
 #include "Entities/FlecsEntityHandle.h"
-#include "Entities/FlecsComponentRef.h"
+#include "Entities/FlecsId.h"
 
 #include "FlecsEntityHandleFunctionLibrary.generated.h"
 
@@ -207,27 +207,6 @@ public:
         const UScriptStruct* ScriptStruct,
         int32& Value);
     DECLARE_FUNCTION(execEntityView_GetScriptStruct);
-
-    UFUNCTION(BlueprintPure, Category = "Flecs | Entity", meta = (BlueprintInternalUseOnly = "true"))
-    static FFlecsComponentRef EntityView_GetRefId(const FFlecsEntityView& Entity, const FFlecsId ComponentId);
-
-    UFUNCTION(BlueprintPure, Category = "Flecs | Entity", meta = (BlueprintInternalUseOnly = "true"))
-    static FFlecsComponentRef EntityView_GetRefScriptStruct(
-        const FFlecsEntityView& Entity,
-        const UScriptStruct* ScriptStruct);
-
-    UFUNCTION(BlueprintPure, Category = "Flecs | Component Reference")
-    static bool IsValid_FlecsComponentRef(const FFlecsComponentRef& Reference);
-
-    UFUNCTION(BlueprintCallable, CustomThunk, BlueprintPure, Category = "Flecs | Component Reference",
-        meta = (CustomStructureParam = "Value"))
-    static void ComponentRef_GetValue(const FFlecsComponentRef& Reference, int32& Value);
-    DECLARE_FUNCTION(execComponentRef_GetValue);
-
-    UFUNCTION(BlueprintCallable, CustomThunk, Category = "Flecs | Component Reference",
-        meta = (CustomStructureParam = "Value"))
-    static void ComponentRef_SetValue(const FFlecsComponentRef& Reference, const int32& Value);
-    DECLARE_FUNCTION(execComponentRef_SetValue);
 
     UFUNCTION(BlueprintCallable, Category = "Flecs | Entity", meta = (BlueprintInternalUseOnly = "true"))
     static void EntityHandle_RemoveId(const FFlecsEntityHandle& Entity, const FFlecsId ComponentId);

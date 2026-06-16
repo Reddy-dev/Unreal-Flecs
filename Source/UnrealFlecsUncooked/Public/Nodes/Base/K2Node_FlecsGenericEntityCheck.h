@@ -20,10 +20,12 @@ public:
 	// UK2Node interface
 	virtual void AllocateDefaultPins() override;
 	virtual void GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const override;
+	
 	virtual bool IsNodePure() const override
 	{
 		return PurityOverride != ENodePurityOverride::Impure;
 	}
+	
 	virtual void ReallocatePinsDuringReconstruction(TArray<UEdGraphPin*>& OldPins) override;
 	// End of UK2Node interface
 

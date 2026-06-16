@@ -42,19 +42,6 @@ namespace UE::Flecs::ComponentValue
 		ValueProperty.Struct->CopyScriptStruct(ValueAddress, ComponentValue);
 	}
 
-	void CopyFromStruct(
-		const FFlecsComponentRef& Reference,
-		const FStructProperty& ValueProperty,
-		const void* ValueAddress)
-	{
-		void* ComponentValue = Reference.TryGetMutable();
-		solid_checkf(ComponentValue, TEXT("Component reference is not valid"));
-		
-		ValidateLayout(Reference.Entity, Reference.ComponentId, ValueProperty);
-		ValueProperty.Struct->CopyScriptStruct(ComponentValue, ValueAddress);
-		Reference.Modified();
-	}
-	
 } // namespace UE::Flecs::ComponentValue
 
 /*bool UEntityFunctionLibrary::HasEntityFromObject(UObject* Object)
@@ -508,89 +495,6 @@ DEFINE_FUNCTION(UFlecsEntityHandleFunctionLibrary::execEntityView_GetScriptStruc
 	UE::Flecs::ComponentValue::CopyToStruct(
 		Entity,
 		FFlecsCommonHandle::GetInputId(Entity, ScriptStruct),
-		*ValueProperty,
-		ValueAddress);
-
-	P_NATIVE_END;
-}
-
-FFlecsComponentRef UFlecsEntityHandleFunctionLibrary::EntityView_GetRefId(
-	const FFlecsEntityView& Entity,
-	const FFlecsId ComponentId)
-{
-	solid_checkf(Entity.TryGet(ComponentId), TEXT("Entity does not have the requested component value"));
-	return FFlecsComponentRef(Entity, ComponentId);
-}
-
-FFlecsComponentRef UFlecsEntityHandleFunctionLibrary::EntityView_GetRefScriptStruct(
-	const FFlecsEntityView& Entity,
-	const UScriptStruct* ScriptStruct)
-{
-	solid_cassumef(ScriptStruct, TEXT("ScriptStruct is not valid"));
-	return EntityView_GetRefId(
-		Entity,
-		FFlecsCommonHandle::GetInputId(Entity, ScriptStruct));
-}
-
-bool UFlecsEntityHandleFunctionLibrary::IsValid_FlecsComponentRef(
-	const FFlecsComponentRef& Reference)
-{
-	return Reference.IsValid();
-}
-
-void UFlecsEntityHandleFunctionLibrary::ComponentRef_GetValue(
-	const FFlecsComponentRef&,
-	int32&)
-{
-	solid_check(false);
-}
-
-DEFINE_FUNCTION(UFlecsEntityHandleFunctionLibrary::execComponentRef_GetValue)
-{
-	P_GET_STRUCT_REF(FFlecsComponentRef, Reference);
-
-	Stack.MostRecentPropertyAddress = nullptr;
-	Stack.MostRecentPropertyContainer = nullptr;
-	Stack.StepCompiledIn<FStructProperty>(nullptr);
-
-	const TSolidNotNull<const FStructProperty*> ValueProperty = CastField<FStructProperty>(Stack.MostRecentProperty);
-	const TSolidNotNull<void*> ValueAddress = Stack.MostRecentPropertyAddress;
-
-	P_FINISH;
-	P_NATIVE_BEGIN;
-
-	UE::Flecs::ComponentValue::CopyToStruct(
-		Reference.Entity,
-		Reference.ComponentId,
-		*ValueProperty,
-		ValueAddress);
-
-	P_NATIVE_END;
-}
-
-void UFlecsEntityHandleFunctionLibrary::ComponentRef_SetValue(
-	const FFlecsComponentRef&,
-	const int32&)
-{
-	solid_check(false);
-}
-
-DEFINE_FUNCTION(UFlecsEntityHandleFunctionLibrary::execComponentRef_SetValue)
-{
-	P_GET_STRUCT_REF(FFlecsComponentRef, Reference);
-
-	Stack.MostRecentPropertyAddress = nullptr;
-	Stack.MostRecentPropertyContainer = nullptr;
-	Stack.StepCompiledIn<FStructProperty>(nullptr);
-
-	const TSolidNotNull<const FStructProperty*> ValueProperty = CastField<FStructProperty>(Stack.MostRecentProperty);
-	const TSolidNotNull<const void*> ValueAddress = Stack.MostRecentPropertyAddress;
-
-	P_FINISH;
-	P_NATIVE_BEGIN;
-
-	UE::Flecs::ComponentValue::CopyFromStruct(
-		Reference,
 		*ValueProperty,
 		ValueAddress);
 

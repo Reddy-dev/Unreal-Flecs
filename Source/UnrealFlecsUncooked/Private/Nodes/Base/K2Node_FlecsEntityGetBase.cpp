@@ -12,7 +12,6 @@
 #include "ToolMenu.h"
 #include "ToolMenuSection.h"
 
-#include "Entities/FlecsComponentRef.h"
 #include "Entities/FlecsEntityView.h"
 #include "Libraries/FlecsEntityHandleFunctionLibrary.h"
 #include "SolidMacros/Macros.h"
@@ -90,23 +89,14 @@ void UK2Node_FlecsEntityGetBase::AllocateDefaultPins()
 			LOCTEXT("TargetPin", "Target"));
 	}
 
-	if (IsReferenceNode())
-	{
-		UEdGraphPin* ReferencePin = CreatePin(
-			EGPD_Output,
-			UEdGraphSchema_K2::PC_Struct,
-			FFlecsComponentRef::StaticStruct(),
-			TEXT("Reference"));
-		ReferencePin->PinFriendlyName = LOCTEXT("ReferencePin", "Reference");
-	}
-	else
-	{
-		UEdGraphPin* ValuePin = CreatePin(
-			EGPD_Output,
-			UEdGraphSchema_K2::PC_Wildcard,
-			TEXT("Value"));
-		ValuePin->PinFriendlyName = LOCTEXT("ValuePin", "Value");
-	}
+	UEdGraphNode::FCreatePinParams ValuePinParams;
+	ValuePinParams.bIsReference = IsReferenceNode();
+	UEdGraphPin* ValuePin = CreatePin(
+		EGPD_Output,
+		UEdGraphSchema_K2::PC_Wildcard,
+		TEXT("Value"),
+		ValuePinParams);
+	ValuePin->PinFriendlyName = LOCTEXT("ValuePin", "Value");
 
 	RefreshPins();
 }
@@ -143,15 +133,14 @@ void UK2Node_FlecsEntityGetBase::ExpandNode(
 		return;
 	}
 
-	if (!IsReferenceNode() && !ValueScriptStruct)
+	if (!ValueScriptStruct)
 	{
 		Message_Error(TEXT("Get requires a concrete component struct or Value output struct type."));
 		BreakAllNodeLinks();
 		return;
 	}
 
-	if (!IsReferenceNode() &&
-		SelectedComponentScriptStruct &&
+	if (SelectedComponentScriptStruct &&
 		SelectedComponentScriptStruct != ValueScriptStruct)
 	{
 		Message_Error(TEXT("Get component struct must match the Value output struct type."));
@@ -181,21 +170,13 @@ void UK2Node_FlecsEntityGetBase::ExpandNode(
 	{
 		const bool bScriptStruct =
 			ComponentType.GetValue() == EFlecsBlueprintGenericPinTypes::ScriptStruct;
-		const FName GetFunctionName = IsReferenceNode()
-			? (bScriptStruct
-				? GET_FUNCTION_NAME_CHECKED(
-					UFlecsEntityHandleFunctionLibrary,
-					EntityView_GetRefScriptStruct)
-				: GET_FUNCTION_NAME_CHECKED(
-					UFlecsEntityHandleFunctionLibrary,
-					EntityView_GetRefId))
-			: (bScriptStruct
-				? GET_FUNCTION_NAME_CHECKED(
-					UFlecsEntityHandleFunctionLibrary,
-					EntityView_GetScriptStruct)
-				: GET_FUNCTION_NAME_CHECKED(
-					UFlecsEntityHandleFunctionLibrary,
-					EntityView_GetId));
+		const FName GetFunctionName = bScriptStruct
+			? GET_FUNCTION_NAME_CHECKED(
+				UFlecsEntityHandleFunctionLibrary,
+				EntityView_GetScriptStruct)
+			: GET_FUNCTION_NAME_CHECKED(
+				UFlecsEntityHandleFunctionLibrary,
+				EntityView_GetId);
 		const FName ComponentParameterName =
 			bScriptStruct ? TEXT("ScriptStruct") : TEXT("ComponentId");
 
@@ -224,7 +205,6 @@ void UK2Node_FlecsEntityGetBase::ExpandNode(
 		UEdGraphPin* FunctionComponentPin =
 			GetFunction->FindPinChecked(ComponentParameterName);
 		if (bScriptStruct &&
-			!IsReferenceNode() &&
 			ComponentValuePin->LinkedTo.IsEmpty() &&
 			!ComponentValuePin->DefaultObject)
 		{
@@ -237,18 +217,9 @@ void UK2Node_FlecsEntityGetBase::ExpandNode(
 				*FunctionComponentPin);
 		}
 
-		if (IsReferenceNode())
-		{
-			CompilerContext.MovePinLinksToIntermediate(
-				*GetReferencePin(),
-				*GetFunction->FindPinChecked(UEdGraphSchema_K2::PN_ReturnValue));
-		}
-		else
-		{
-			UEdGraphPin* FunctionValuePin = GetFunction->FindPinChecked(TEXT("Value"));
-			FunctionValuePin->PinType = ValuePin->PinType;
-			CompilerContext.MovePinLinksToIntermediate(*ValuePin, *FunctionValuePin);
-		}
+		UEdGraphPin* FunctionValuePin = GetFunction->FindPinChecked(TEXT("Value"));
+		FunctionValuePin->PinType = ValuePin->PinType;
+		CompilerContext.MovePinLinksToIntermediate(*ValuePin, *FunctionValuePin);
 
 		BreakAllNodeLinks();
 		return;
@@ -273,8 +244,7 @@ void UK2Node_FlecsEntityGetBase::ExpandNode(
 		*GetEntityPin(),
 		*ComponentResolver->FindPinChecked(TEXT("Entity")));
 
-	if (!IsReferenceNode() &&
-		ComponentType.GetValue() == EFlecsBlueprintGenericPinTypes::ScriptStruct &&
+	if (ComponentType.GetValue() == EFlecsBlueprintGenericPinTypes::ScriptStruct &&
 		ComponentValuePin->LinkedTo.IsEmpty() &&
 		!ComponentValuePin->DefaultObject)
 	{
@@ -350,13 +320,9 @@ void UK2Node_FlecsEntityGetBase::ExpandNode(
 			MakePairFunction->FindPinChecked(UEdGraphSchema_K2::PN_ReturnValue);
 	}
 
-	const FName GetFunctionName = IsReferenceNode()
-		? GET_FUNCTION_NAME_CHECKED(
-			UFlecsEntityHandleFunctionLibrary,
-			EntityView_GetRefId)
-		: GET_FUNCTION_NAME_CHECKED(
-			UFlecsEntityHandleFunctionLibrary,
-			EntityView_GetId);
+	const FName GetFunctionName = GET_FUNCTION_NAME_CHECKED(
+		UFlecsEntityHandleFunctionLibrary,
+		EntityView_GetId);
 	const TSolidNotNull<UK2Node_CallFunction*> GetFunction =
 		UE::Flecs::GetNode::SpawnFunction(
 			CompilerContext,
@@ -390,18 +356,9 @@ void UK2Node_FlecsEntityGetBase::ExpandNode(
 		return;
 	}
 
-	if (IsReferenceNode())
-	{
-		CompilerContext.MovePinLinksToIntermediate(
-			*GetReferencePin(),
-			*GetFunction->FindPinChecked(UEdGraphSchema_K2::PN_ReturnValue));
-	}
-	else
-	{
-		UEdGraphPin* FunctionValuePin = GetFunction->FindPinChecked(TEXT("Value"));
-		FunctionValuePin->PinType = ValuePin->PinType;
-		CompilerContext.MovePinLinksToIntermediate(*ValuePin, *FunctionValuePin);
-	}
+	UEdGraphPin* FunctionValuePin = GetFunction->FindPinChecked(TEXT("Value"));
+	FunctionValuePin->PinType = ValuePin->PinType;
+	CompilerContext.MovePinLinksToIntermediate(*ValuePin, *FunctionValuePin);
 
 	BreakAllNodeLinks();
 }
@@ -448,7 +405,8 @@ bool UK2Node_FlecsEntityGetBase::IsConnectionDisallowed(
 	FString& OutReason) const
 {
 	if (MyPin == GetValuePin() &&
-		OtherPin->PinType.PinCategory != UEdGraphSchema_K2::PC_Struct)
+		OtherPin->PinType.PinCategory != UEdGraphSchema_K2::PC_Struct &&
+		OtherPin->PinType.PinCategory != UEdGraphSchema_K2::PC_Wildcard)
 	{
 		OutReason = LOCTEXT("ValueMustBeStruct", "Get Value must be a struct.").ToString();
 		return true;
@@ -548,11 +506,6 @@ UEdGraphPin* UK2Node_FlecsEntityGetBase::GetEntityPin() const
 UEdGraphPin* UK2Node_FlecsEntityGetBase::GetValuePin() const
 {
 	return FindPin(TEXT("Value"), EGPD_Output);
-}
-
-UEdGraphPin* UK2Node_FlecsEntityGetBase::GetReferencePin() const
-{
-	return FindPin(TEXT("Reference"), EGPD_Output);
 }
 
 void UK2Node_FlecsEntityGetBase::ToggleExecPins()
@@ -675,11 +628,13 @@ void UK2Node_FlecsEntityGetBase::SynchronizeValuePinType()
 
 	FEdGraphPinType NewPinType;
 	NewPinType.PinCategory = UEdGraphSchema_K2::PC_Wildcard;
-	if (!ValuePin->LinkedTo.IsEmpty())
+	if (!ValuePin->LinkedTo.IsEmpty() &&
+		ValuePin->LinkedTo[0]->PinType.PinCategory != UEdGraphSchema_K2::PC_Wildcard)
 	{
 		NewPinType = ValuePin->LinkedTo[0]->PinType;
 	}
-	else
+
+	if (NewPinType.PinCategory == UEdGraphSchema_K2::PC_Wildcard)
 	{
 		const TOptional<EFlecsBlueprintGenericPinTypes> ComponentType =
 			GetComponentPins().GetSelectedType(this);
@@ -701,6 +656,7 @@ void UK2Node_FlecsEntityGetBase::SynchronizeValuePinType()
 		}
 	}
 
+	NewPinType.bIsReference = IsReferenceNode();
 	if (ValuePin->PinType != NewPinType)
 	{
 		ValuePin->PinType = NewPinType;
