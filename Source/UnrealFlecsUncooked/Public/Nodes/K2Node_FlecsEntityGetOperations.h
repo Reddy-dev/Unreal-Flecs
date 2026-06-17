@@ -59,3 +59,31 @@ protected:
 	virtual bool IsPairNode() const override { return true; }
 	virtual bool IsReferenceNode() const override { return true; }
 };
+
+UCLASS()
+class UNREALFLECSUNCOOKED_API UK2Node_FlecsEntityGetUntypedComponentRefOperation : public UK2Node_FlecsEntityGetBase
+{
+	GENERATED_BODY()
+
+public:
+	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
+
+protected:
+	virtual bool IsPairNode() const override { return false; }
+	virtual bool IsReferenceNode() const override { return false; }
+	virtual bool IsUntypedComponentRefNode() const override { return true; }
+};
+
+UCLASS()
+class UNREALFLECSUNCOOKED_API UK2Node_FlecsEntityGetPairUntypedComponentRefOperation : public UK2Node_FlecsEntityGetBase
+{
+	GENERATED_BODY()
+
+public:
+	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
+
+protected:
+	virtual bool IsPairNode() const override { return true; }
+	virtual bool IsReferenceNode() const override { return false; }
+	virtual bool IsUntypedComponentRefNode() const override { return true; }
+};

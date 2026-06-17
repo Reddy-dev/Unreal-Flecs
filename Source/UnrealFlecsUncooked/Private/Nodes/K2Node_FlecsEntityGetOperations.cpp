@@ -23,3 +23,15 @@ FText UK2Node_FlecsEntityGetPairRefOperation::GetNodeTitle(ENodeTitleType::Type 
 {
 	return FText::FromString(TEXT("Get Pair Ref from Flecs Entity"));
 }
+
+FText UK2Node_FlecsEntityGetUntypedComponentRefOperation::GetNodeTitle(
+	ENodeTitleType::Type TitleType) const
+{
+	return FText::FromString(TEXT("Get Flecs Untyped Component Ref from Flecs Entity"));
+}
+
+FText UK2Node_FlecsEntityGetPairUntypedComponentRefOperation::GetNodeTitle(
+	ENodeTitleType::Type TitleType) const
+{
+	return FText::FromString(TEXT("Get Flecs Untyped Pair Ref from Flecs Entity"));
+}

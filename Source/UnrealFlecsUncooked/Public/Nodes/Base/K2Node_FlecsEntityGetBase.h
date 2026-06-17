@@ -38,6 +38,7 @@ public:
 protected:
 	virtual bool IsPairNode() const PURE_VIRTUAL(UK2Node_FlecsEntityGetBase::IsPairNode, return false;);
 	virtual bool IsReferenceNode() const PURE_VIRTUAL(UK2Node_FlecsEntityGetBase::IsReferenceNode, return false;);
+	virtual bool IsUntypedComponentRefNode() const { return false; }
 
 private:
 	static NO_DISCARD const FFlecsGenericInputPins& GetComponentPins();
@@ -45,6 +46,7 @@ private:
 
 	NO_DISCARD UEdGraphPin* GetEntityPin() const;
 	NO_DISCARD UEdGraphPin* GetValuePin() const;
+	NO_DISCARD UEdGraphPin* GetReferencePin() const;
 
 	void ToggleExecPins();
 	bool CanToggleExecPins() const;

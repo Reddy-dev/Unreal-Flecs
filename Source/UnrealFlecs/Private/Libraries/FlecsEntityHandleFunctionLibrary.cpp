@@ -19,6 +19,7 @@ namespace UE::Flecs::ComponentValue
 		const FFlecsId ComponentId,
 		const FStructProperty& ValueProperty)
 	{
+#if DO_CHECK
 		const flecs::world World = Entity.GetNativeFlecsWorld();
 		const ecs_entity_t TypeId = ecs_get_typeid(World.c_ptr(), ComponentId);
 		const ecs_type_info_t* TypeInfo = ecs_get_type_info(World.c_ptr(), TypeId);
@@ -27,6 +28,7 @@ namespace UE::Flecs::ComponentValue
 		solid_checkf(
 			TypeInfo->size == ValueProperty.Struct->GetStructureSize(),
 			TEXT("Component value size does not match the Blueprint struct size"));
+#endif // DO_CHECK
 	}
 
 	void CopyToStruct(
