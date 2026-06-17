@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <bit>
+
 #include "flecs.h"
 
 #include "CoreMinimal.h"
@@ -17,14 +19,17 @@ class UFlecsWorldInterfaceObject;
 /**
  * @brief A Flecs Id equivalent to flecs::entity_t / flecs::id_t, has the same memory layout as uint64/flecs::id_t/flecs::entity_t
  */
-USTRUCT(BlueprintType)
+USTRUCT(BlueprintType, meta = (
+    DisableSplitPin,
+    HasNativeMake = "/Script/UnrealFlecs.FlecsIdBlueprintFunctionLibrary.MakeFlecsId",
+    HasNativeBreak = "/Script/UnrealFlecs.FlecsIdBlueprintFunctionLibrary.BreakFlecsId"))
 struct UNREALFLECS_API FFlecsId
 {
     GENERATED_BODY()
 
     NO_DISCARD FORCEINLINE friend uint32 GetTypeHash(const FFlecsId& InId)
     {
-        return GetTypeHash(InId.Id);
+        return GetTypeHash(InId.GetId());
     }
     
     NO_DISCARD FORCEINLINE constexpr static FFlecsId Make(const uint32 InIndex, const uint32 InGeneration = 0)
@@ -55,17 +60,17 @@ public:
     FORCEINLINE FFlecsId() = default;
 
     FORCEINLINE constexpr FFlecsId(const flecs::id_t InId)
-        : Id(InId)
+        : Id(std::bit_cast<int64>(InId))
     {
     }
 
     FORCEINLINE FFlecsId(const flecs::entity InEntity)
-        : Id(InEntity.id())
+        : FFlecsId(InEntity.id())
     {
     }
     
     FORCEINLINE explicit constexpr FFlecsId(const uint32 InIndex, const uint32 InGeneration = 0)
-        : Id(ecs_entity_t_comb(InIndex, InGeneration))
+        : FFlecsId(ecs_entity_t_comb(InIndex, InGeneration))
     {
     }
 
@@ -86,51 +91,51 @@ public:
     
     NO_DISCARD FORCEINLINE bool operator<(const FFlecsId& Other) const
     {
-        return Id < Other.Id;
+        return GetId() < Other.GetId();
     }
 
     NO_DISCARD FORCEINLINE bool operator>(const FFlecsId& Other) const
     {
-        return Id > Other.Id;
+        return GetId() > Other.GetId();
     }
 
     NO_DISCARD FORCEINLINE bool operator<=(const FFlecsId& Other) const
     {
-        return Id <= Other.Id;
+        return GetId() <= Other.GetId();
     }
 
     NO_DISCARD FORCEINLINE bool operator>=(const FFlecsId& Other) const
     {
-        return Id >= Other.Id;
+        return GetId() >= Other.GetId();
     }
 
     NO_DISCARD FORCEINLINE bool IsPair() const
     {
-        return ECS_IS_PAIR(Id);
+        return ECS_IS_PAIR(GetId());
     }
     
     NO_DISCARD FORCEINLINE bool HasRelation(const FFlecsId InRelation) const
     {
         solid_checkf(IsPair(), TEXT("Id is not a pair."));
-        return ECS_HAS_RELATION(Id, InRelation);
+        return ECS_HAS_RELATION(GetId(), InRelation);
     }
 
     NO_DISCARD FORCEINLINE bool HasTarget(const FFlecsId InTarget) const
     {
         solid_checkf(IsPair(), TEXT("Id is not a pair."));
-        return ECS_HAS_RELATION(Id, InTarget);
+        return ECS_HAS_RELATION(GetId(), InTarget);
     }
 
     NO_DISCARD FORCEINLINE FFlecsId GetFirst() const
     {
         solid_checkf(IsPair(), TEXT("Id is not a pair."));
-        return FFlecsId(ECS_PAIR_FIRST(Id));
+        return FFlecsId(ECS_PAIR_FIRST(GetId()));
     }
 
     NO_DISCARD FORCEINLINE FFlecsId GetSecond() const
     {
         solid_checkf(IsPair(), TEXT("Id is not a pair."));
-        return FFlecsId(ECS_PAIR_SECOND(Id));
+        return FFlecsId(ECS_PAIR_SECOND(GetId()));
     }
 
     NO_DISCARD FORCEINLINE FFlecsId GetRelation() const
@@ -143,9 +148,9 @@ public:
         return GetSecond();
     }
 
-    NO_DISCARD FORCEINLINE flecs::id_t GetId() const
+    NO_DISCARD FORCEINLINE constexpr flecs::id_t GetId() const
     {
-        return Id;
+        return std::bit_cast<flecs::id_t>(Id);
     }
 
     NO_DISCARD FORCEINLINE TTuple<FFlecsId, FFlecsId> GetPairElements() const
@@ -156,7 +161,7 @@ public:
     
     NO_DISCARD FORCEINLINE const ecs_type_info_t* GetTypeInfo(const flecs::world& World) const
     {
-        return ecs_get_type_info(World.c_ptr(), Id);
+        return ecs_get_type_info(World.c_ptr(), GetId());
     }
     
     NO_DISCARD FORCEINLINE const ecs_type_info_t* GetTypeInfo(const TSolidNotNull<const UFlecsWorldInterfaceObject*> World) const;
@@ -169,13 +174,13 @@ public:
     NO_DISCARD FORCEINLINE uint32 GetIndex() const
     {
         solid_checkf(!IsPair(), TEXT("Id must not be a pair."));
-        return Id & ECS_ENTITY_MASK;
+        return GetId() & ECS_ENTITY_MASK;
     }
 
     NO_DISCARD FORCEINLINE uint32 GetGeneration() const
     {
         solid_checkf(!IsPair(), TEXT("Id must not be a pair."));
-        return flecs::get_generation(Id);
+        return flecs::get_generation(GetId());
     }
 
     template <typename THandle>
@@ -193,7 +198,7 @@ public:
                         UObject* Parent, int32 PortFlags, UObject* ExportRootScope) const;
 
     UPROPERTY()
-    uint64 Id = 0;
+    int64 Id = 0;
     
 }; // struct FFlecsId
 

@@ -45,6 +45,7 @@ public class UnrealFlecsTests : ModuleRules
             PrivateDependencyModuleNames.AddRange(
                 new string[]
                 {
+                    "BlueprintGraph",
                     "EngineSettings",
                     "LevelEditor",
                     "UnrealEd",

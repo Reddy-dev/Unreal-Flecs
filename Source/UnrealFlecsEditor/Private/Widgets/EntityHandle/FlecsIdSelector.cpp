@@ -13,6 +13,19 @@
 
 #define LOCTEXT_NAMESPACE "Flecs"
 
+namespace UE::Flecs::IdSelector
+{
+	FString ExtractNumericValue(FString Value)
+	{
+		Value.TrimStartAndEndInline();
+		Value.RemoveFromStart(TEXT("("));
+		Value.RemoveFromEnd(TEXT(")"));
+		Value.RemoveFromStart(TEXT("FlecsId="));
+		Value.RemoveFromStart(TEXT("Id="));
+		return Value;
+	}
+} // namespace UE::Flecs::IdSelector
+
 void SFlecsIdSelector::Construct(const FArguments& InArgs)
 {
 	SelectedItem = InArgs._SelectedItem;
@@ -47,12 +60,13 @@ void SFlecsIdSelector::Construct(const FArguments& InArgs)
 		FString CurrentValue;
 		if (PropertyHandle->GetValueAsFormattedString(CurrentValue) == FPropertyAccess::Success)
 		{
-			CurrentValue.RemoveFromStart(TEXT("FlecsId="));
+			CurrentValue = UE::Flecs::IdSelector::ExtractNumericValue(
+				MoveTemp(CurrentValue));
 			const uint64 Id = FCString::Strtoui64(*CurrentValue, nullptr, 10);
 			const FFlecsId CurrentEntity(Id);
 			for (int32 Index = 0; Index < EntityOptions.Num(); Index++)
 			{
-				if (EntityOptions[Index].Id == CurrentEntity.Id)
+				if (EntityOptions[Index] == CurrentEntity)
 				{
 					CurrentSelectedItem = Options[Index];
 					break;
@@ -167,7 +181,7 @@ void SFlecsIdSelector::OnListSelectionChanged(TSharedPtr<FName> NewValue, ESelec
 
 		if (PropertyHandle.IsValid())
 		{
-			const FString NewValueStr = FString::Printf(TEXT("FlecsId=%llu"), Entity.Id);
+			const FString NewValueStr = FString::Printf(TEXT("FlecsId=%llu"), Entity.GetId());
 			PropertyHandle->SetValueFromFormattedString(NewValueStr);
 		}
 		

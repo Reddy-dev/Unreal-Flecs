@@ -9,7 +9,7 @@ public class UnrealFlecsUncooked : ModuleRules
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
-                "Core",
+                "Core", 
             }
         );
 
@@ -20,11 +20,14 @@ public class UnrealFlecsUncooked : ModuleRules
                 "Engine",
                 "Slate",
                 "SlateCore",
+                "GameplayTags",
+                "SolidMacros",
                 "FlecsLibrary",
                 "UnrealFlecs",
                 "KismetCompiler",
                 "UnrealEd",
-                "BlueprintGraph"
+                "BlueprintGraph",
+                "ToolMenus"
             }
         );
         

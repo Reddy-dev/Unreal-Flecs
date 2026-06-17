@@ -2,6 +2,8 @@
 
 #include "Widgets/EntityHandle/FlecsIdPinFactory.h"
 
+#include "EdGraphSchema_K2.h"
+
 #include "Entities/FlecsEntityHandle.h"
 
 #include "Widgets/EntityHandle/SGraphPinFlecsId.h"
