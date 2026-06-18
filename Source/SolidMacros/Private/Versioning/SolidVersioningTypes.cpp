@@ -24,7 +24,7 @@ bool Solid::PropertyMatchesCDO(const TSolidNotNull<const UObject*> Object, const
 	else
 	{
 		UE_LOGFMT(LogTemp, Error,
-			"PropertyMatchesCDO: Property '%s' not found on class '%s'",
+			"PropertyMatchesCDO: Property '{0}' not found on class '{1}'",
 			PropertyName.ToString(), Object->GetClass()->GetName());
 	}
 		
