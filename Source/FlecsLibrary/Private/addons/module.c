@@ -155,9 +155,12 @@ ecs_entity_t ecs_import_from_library(
         ecs_trace("library '%s' ('%s') loaded", 
             library_name, library_filename);
     }
-
+    // Fixed 4191 warning here - Elie
+#pragma warning(push)
+#pragma warning(disable:4191) /* unsafe conversion */
     ecs_module_action_t action = (ecs_module_action_t)
         ecs_os_dlproc(dl, import_func);
+#pragma warning(pop)
     if (!action) {
         ecs_err("failed to load import function %s from library %s",
             import_func, library_name);
