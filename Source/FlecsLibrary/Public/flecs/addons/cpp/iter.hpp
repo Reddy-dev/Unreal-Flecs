@@ -375,7 +375,7 @@ public:
     template <typename T, typename A = actual_type_t<T>, if_not_t< is_const_v<T> > = 0>
     A& field_at(int8_t index, size_t row) const {
         ecs_assert(!ecs_field_is_readonly(iter_, index),
-            ECS_ACCESS_VIOLATION, NULL);
+            ECS_ACCESS_VIOLATION, nullptr);
         if (iter_->row_fields & (1llu << index)) {
             return get_field_at<A>(index, row)[0];
         } else {
@@ -497,7 +497,7 @@ private:
         ecs_entity_t term_id = ecs_field_id(iter_, index);
         ecs_assert(ECS_HAS_ID_FLAG(term_id, PAIR) ||
             term_id == _::type<T>::id(iter_->world),
-            ECS_COLUMN_TYPE_MISMATCH, NULL);
+            ECS_COLUMN_TYPE_MISMATCH, nullptr);
 #endif
 
         size_t count;
@@ -527,7 +527,7 @@ private:
         ecs_entity_t term_id = ecs_field_id(iter_, index);
         ecs_assert(ECS_HAS_ID_FLAG(term_id, PAIR) ||
             term_id == _::type<T>::id(iter_->world),
-            ECS_COLUMN_TYPE_MISMATCH, NULL);
+            ECS_COLUMN_TYPE_MISMATCH, nullptr);
 #endif
 
         return flecs::field<A>(
