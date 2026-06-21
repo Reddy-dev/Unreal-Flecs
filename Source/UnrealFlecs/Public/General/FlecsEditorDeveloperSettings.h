@@ -14,7 +14,7 @@
 #include "FlecsEditorDeveloperSettings.generated.h"
 
 UCLASS(Config=Editor, DefaultConfig, DisplayName="Flecs General Editor Settings")
-class UNREALFLECS_API UFlecsEditorDeveloperSettings final : public UDeveloperSettings
+class UNREALFLECS_API UFlecsEditorDeveloperSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()
 
