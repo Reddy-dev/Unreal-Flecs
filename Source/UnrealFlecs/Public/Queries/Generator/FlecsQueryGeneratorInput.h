@@ -3,12 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FlecsGeneratorTermRef.h"
 
 #include "StructUtils/InstancedStruct.h"
 
 #include "SolidMacros/Macros.h"
 #include "Types/SolidNotNull.h"
+
+#include "FlecsGeneratorTermRef.h"
 
 #include "FlecsQueryGeneratorInput.generated.h"
 

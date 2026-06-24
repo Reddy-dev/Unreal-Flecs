@@ -25,8 +25,7 @@ public:
 		const FFlecsId ComponentId);
 
 	UFUNCTION(BlueprintPure, Category = "Flecs | Untyped Component Ref", meta = (BlueprintInternalUseOnly = "true"))
-	static FFlecsUntypedComponentRef EntityView_GetUntypedComponentRefScriptStruct(
-		const FFlecsEntityView& Entity,
+	static FFlecsUntypedComponentRef EntityView_GetUntypedComponentRefScriptStruct(const FFlecsEntityView& Entity,
 		const UScriptStruct* ScriptStruct);
 
 	UFUNCTION(BlueprintPure, Category = "Flecs | Untyped Component Ref",
