@@ -3,6 +3,8 @@
 #include "Misc/AutomationTest.h"
 #include "CQTest.h"
 
+#include "UnrealFlecsConfigMacros.h"
+
 #if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
 
 #include "Entities/FlecsId.h"
