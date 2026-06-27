@@ -32,6 +32,7 @@
 #include "Components/FlecsAddReferencedObjectsTrait.h"
 #include "Components/FlecsBeginPlayComponent.h"
 #include "Components/FlecsUObjectComponent.h"
+#include "Entities/FlecsEntityRange.h"
 #include "EntityRecords/FlecsEntityRecordComponent.h"
 
 #include "GameFramework/WorldSettings.h"
@@ -83,6 +84,14 @@ UFlecsWorld::UFlecsWorld(const FObjectInitializer& ObjectInitializer)
 
 UFlecsWorld::~UFlecsWorld()
 {
+	for (TTuple<FName, TObjectPtr<UFlecsEntityRange>>& Pair : EntityRanges)
+	{
+		if (UFlecsEntityRange* EntityRange = Pair.Get<1>())
+		{
+			EntityRange->InvalidateNativeEntityRange();
+		}
+	}
+	
 	if LIKELY_IF(World)
 	{
 		World.release();
@@ -583,6 +592,16 @@ void UFlecsWorld::InitializeSystems()
 
 void UFlecsWorld::Reset()
 {
+	for (TTuple<FName, TObjectPtr<UFlecsEntityRange>> EntityRange : EntityRanges)
+	{
+		if (UFlecsEntityRange* EntityRangePtr = EntityRange.Value)
+		{
+			EntityRangePtr->InvalidateNativeEntityRange();
+			EntityRangePtr->MarkAsGarbage();
+		}
+	}
+	
+	EntityRanges.Empty();
 	GetNativeFlecsWorld().reset();
 }
 
@@ -722,6 +741,17 @@ void UFlecsWorld::DestroyWorld()
 	}
 	
 	CallUnregisterOnRegisteredObjects();
+
+	for (TTuple<FName, TObjectPtr<UFlecsEntityRange>> EntityRange : EntityRanges)
+	{
+		if (UFlecsEntityRange* EntityRangePtr = EntityRange.Value)
+		{
+			EntityRangePtr->InvalidateNativeEntityRange();
+			EntityRangePtr->MarkAsGarbage();
+		}
+	}
+	
+	EntityRanges.Empty();
 		
 	World.release();
 	World.world_ = nullptr;
@@ -763,6 +793,62 @@ void UFlecsWorld::SetTaskThreads(const int32 InThreadCount)
 	GetNativeFlecsWorld().set_task_threads(InThreadCount);
 	
 	RegisterStages(InThreadCount);
+}
+
+UFlecsEntityRange* UFlecsWorld::CreateEntityRange(const FName& InRangeName, const int32 InMinimum, const int32 InMaximum)
+{
+	solid_cassumef(!InRangeName.IsNone(), TEXT("Entity range name must not be None"));
+	solid_cassumef(InMinimum > 0, TEXT("Entity range minimum must be greater than 0"));
+	solid_cassumef(InMaximum == 0 || InMaximum >= InMinimum,
+		TEXT("Entity range maximum must be greater than or equal to minimum, or 0 for unbounded"));
+	
+	const ecs_entity_range_t* NativeEntityRange = ecs_entity_range_new(GetNativeFlecsWorld(), InMinimum, InMaximum);
+	
+	if UNLIKELY_IF(!NativeEntityRange)
+	{
+		return nullptr;
+	}
+	
+	UFlecsEntityRange* EntityRange = TrackEntityRange(NativeEntityRange, InRangeName);
+	
+	/*const ecs_entity_range_t* ActiveNativeEntityRange = ecs_entity_range_get(GetNativeFlecsWorld());
+	if (ActiveNativeEntityRange)
+	{
+		TrackEntityRange(ActiveNativeEntityRange, FName(TEXT("ActiveEntityRange")));
+	}*/
+	
+	return EntityRange;
+}
+
+void UFlecsWorld::SetActiveEntityRange(UFlecsEntityRange* InEntityRange) const
+{
+	solid_check(IsValid(InEntityRange));
+	solid_checkf(InEntityRange->GetTypedOuter<UFlecsWorld>() == this,
+		TEXT("Entity range belongs to a different Flecs world"));
+	solid_check(InEntityRange->GetNativeEntityRange());
+	
+	ecs_entity_range_set(GetNativeFlecsWorld(), InEntityRange->GetNativeEntityRange());
+}
+
+UFlecsEntityRange* UFlecsWorld::GetActiveEntityRange() const
+{
+	return FindTrackedEntityRange(ecs_entity_range_get(GetNativeFlecsWorld()));
+}
+
+TArray<UFlecsEntityRange*> UFlecsWorld::GetEntityRanges() const
+{
+	TArray<UFlecsEntityRange*> Ranges;
+	Ranges.Reserve(EntityRanges.Num());
+	
+	for (const TTuple<FName, TObjectPtr<UFlecsEntityRange>>& EntityRangePair : EntityRanges)
+	{
+		if (UFlecsEntityRange* EntityRange = EntityRangePair.Value)
+		{
+			Ranges.Add(EntityRange);
+		}
+	}
+	
+	return Ranges;
 }
 
 void UFlecsWorld::RunPipeline(const FFlecsId InPipeline, const double DeltaTime) const
@@ -985,6 +1071,22 @@ UFlecsStage* UFlecsWorld::CreateAsyncStage()
 	return NewStage;
 }
 
+UFlecsEntityRange* UFlecsWorld::TrackEntityRange(const ecs_entity_range_t* InNativeEntityRange, const FName& InRangeName)
+{
+	solid_cassume(InNativeEntityRange);
+	
+	if (UFlecsEntityRange* ExistingEntityRange = FindTrackedEntityRange(InRangeName))
+	{
+		return ExistingEntityRange;
+	}
+	
+	const TSolidNotNull<UFlecsEntityRange*> NewEntityRange = NewObject<UFlecsEntityRange>(this);
+	NewEntityRange->SetNativeEntityRange(InNativeEntityRange, InRangeName);
+	EntityRanges.Add(InRangeName, NewEntityRange);
+	
+	return NewEntityRange;
+}
+
 void UFlecsWorld::ImportRestModule()
 {
 #ifdef FLECS_REST
@@ -1078,4 +1180,40 @@ void UFlecsWorld::CallUnregisterOnRegisteredObjects()
 			RegisteredObject->UnregisterObject(this);
 		}
 	}
+}
+
+UFlecsEntityRange* UFlecsWorld::FindTrackedEntityRange(const ecs_entity_range_t* InNativeEntityRange) const
+{
+	if UNLIKELY_IF(!InNativeEntityRange)
+	{
+		return nullptr;
+	}
+	
+	for (const TTuple<FName, TObjectPtr<UFlecsEntityRange>>& EntityRangePair : EntityRanges)
+	{
+		if (UFlecsEntityRange* EntityRange = EntityRangePair.Value)
+		{
+			if (EntityRange->GetNativeEntityRange() == InNativeEntityRange)
+			{
+				return EntityRange;
+			}
+		}
+	}
+	
+	return nullptr;
+}
+
+UFlecsEntityRange* UFlecsWorld::FindTrackedEntityRange(const FName& InRangeName) const
+{
+	if UNLIKELY_IF(InRangeName.IsNone())
+	{
+		return nullptr;
+	}
+	
+	if (const TObjectPtr<UFlecsEntityRange>* FoundEntityRange = EntityRanges.Find(InRangeName))
+	{
+		return *FoundEntityRange;
+	}
+	
+	return nullptr;
 }

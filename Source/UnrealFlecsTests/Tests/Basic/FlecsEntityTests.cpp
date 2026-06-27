@@ -1,6 +1,7 @@
 ﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
 
 #include "Misc/AutomationTest.h"
+#include "Entities/FlecsEntityRange.h"
 #include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 
 #if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
@@ -10,6 +11,7 @@
  * A. General Entity Operation Tests
  * B. Entity Handle/View API Tests
  * C. Entity Hierarchy Tests
+ * D. Entity Range Tests
  */
 TEST_CLASS_WITH_FLAGS_AND_TAGS(A10_UnrealFlecsEntityTests,
 							   "UnrealFlecs.A10_Entities",
@@ -309,6 +311,38 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A10_UnrealFlecsEntityTests,
 			ASSERT_THAT(AreEqual(ChildrenArray[1], ChildEntityA));
 			ASSERT_THAT(AreEqual(ChildrenArray[2], ChildEntityB));
 		}
+	}
+
+	TEST_METHOD(D1_CreateEntityRange_ReturnsTrackedUObject)
+	{
+		const int32 RangeMinimum = static_cast<int32>(FlecsWorld->GetMaxId().GetIndex()) + 1000;
+		const int32 RangeMaximum = RangeMinimum + 9;
+
+		UFlecsEntityRange* EntityRange = FlecsWorld->CreateEntityRange("Test", RangeMinimum, RangeMaximum);
+
+		ASSERT_THAT(IsTrue(IsValid(EntityRange)));
+		ASSERT_THAT(AreEqual(RangeMinimum, EntityRange->GetMinimum()));
+		ASSERT_THAT(AreEqual(RangeMaximum, EntityRange->GetMaximum()));
+		ASSERT_THAT(IsTrue(FlecsWorld == EntityRange->GetTypedOuter<UFlecsWorld>()));
+		ASSERT_THAT(IsTrue(FlecsWorld->GetEntityRanges().Contains(EntityRange)));
+	}
+
+	TEST_METHOD(D2_SetActiveEntityRange_AllocatesEntitiesInsideRange)
+	{
+		const int32 RangeMinimum = static_cast<int32>(FlecsWorld->GetMaxId().GetIndex()) + 1000;
+		const int32 RangeMaximum = RangeMinimum + 2;
+		
+		UFlecsEntityRange* EntityRange = FlecsWorld->CreateEntityRange("Test", RangeMinimum, RangeMaximum);
+		ASSERT_THAT(IsTrue(IsValid(EntityRange)));
+		
+		FlecsWorld->SetActiveEntityRange(EntityRange);
+
+		const FFlecsEntityHandle FirstEntity = FlecsWorld->CreateEntity("RangeEntityA");
+		const FFlecsEntityHandle SecondEntity = FlecsWorld->CreateEntity("RangeEntityB");
+		
+		ASSERT_THAT(IsTrue(EntityRange == FlecsWorld->GetActiveEntityRange()));
+		ASSERT_THAT(IsTrue(RangeMinimum == static_cast<int32>(FirstEntity.GetFlecsId().GetIndex())));
+		ASSERT_THAT(IsTrue(RangeMinimum + 1 == static_cast<int32>(SecondEntity.GetFlecsId().GetIndex())));
 	}
 	
 }; // End of A10_UnrealFlecsComponentRegistrationTests

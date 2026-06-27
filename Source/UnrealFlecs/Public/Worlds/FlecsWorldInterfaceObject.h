@@ -740,6 +740,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Flecs")
 	FFlecsEntityHandle GetFlecsModule(const FName& InModuleName) const;
 	
+	UFUNCTION(BlueprintCallable, Category = "Flecs")
+	FFlecsId GetMaxId() const;
+	
 protected:
 	virtual flecs::world* GetNativeFlecsWorld_Internal() const PURE_VIRTUAL(UFlecsWorldInterfaceObject::GetNativeFlecsWorld_Internal, return nullptr;);
 	

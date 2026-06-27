@@ -1156,3 +1156,8 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::GetFlecsModule(const FName& InMod
 	
 	return ModuleEntity;
 }
+
+FFlecsId UFlecsWorldInterfaceObject::GetMaxId() const
+{
+	return ecs_get_max_id(GetNativeFlecsWorld_Internal()->c_ptr());
+}

@@ -18,6 +18,7 @@
 #include "FlecsScopedDeferWindow.h"
 #include "FlecsWorldInterfaceObject.h"
 #include "Entities/FlecsComponentHandle.h"
+#include "Entities/FlecsEntityRange.h"
 #include "Entities/FlecsId.h"
 #include "Queries/FlecsQuery.h"
 #include "Worlds/FlecsWorldInterfaceObject.h"
@@ -179,6 +180,18 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
 	void SetTaskThreads(const int32 InThreadCount);
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
+	UFlecsEntityRange* CreateEntityRange(const FName& InRangeName, const int32 InMinimum, const int32 InMaximum);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
+	void SetActiveEntityRange(UFlecsEntityRange* InEntityRange) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
+	UFlecsEntityRange* GetActiveEntityRange() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
+	TArray<UFlecsEntityRange*> GetEntityRanges() const;
 
 	// @TODO: Re-implement bitmask registration
 	/*
@@ -354,6 +367,9 @@ public:
 	UPROPERTY()
 	TArray<TObjectPtr<UFlecsStage>> Stages;
 
+	UPROPERTY()
+	TMap<FName, TObjectPtr<UFlecsEntityRange>> EntityRanges;
+
 	robin_hood::unordered_flat_map<FGameplayTag, FFlecsId> TagEntityMap;
 	
 protected:
@@ -366,6 +382,10 @@ private:
 	flecs::world World;
 	
 	void CallUnregisterOnRegisteredObjects();
+
+	NO_DISCARD UFlecsEntityRange* FindTrackedEntityRange(const ecs_entity_range_t* InNativeEntityRange) const;
+	NO_DISCARD UFlecsEntityRange* FindTrackedEntityRange(const FName& InRangeName) const;
+	UFlecsEntityRange* TrackEntityRange(const ecs_entity_range_t* InNativeEntityRange, const FName& InRangeName);
 	
 	/**
 	 * @brief Get this world as a non-const pointer
