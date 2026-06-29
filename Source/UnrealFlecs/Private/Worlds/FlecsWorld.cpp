@@ -924,15 +924,16 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 	}
 		
 	const TSolidNotNull<UObject*> FlecsObject = NewObject<UObject>(this, InClass);
+	const TSolidNotNull<IFlecsObjectRegistrationInterface*> FlecsObjectInterface = CastChecked<IFlecsObjectRegistrationInterface>(FlecsObject);
 	
-	if (!CastChecked<IFlecsObjectRegistrationInterface>(FlecsObject)->ShouldAutoRegisterWithWorld(this))
+	if (!FlecsObjectInterface->ShouldAutoRegisterWithWorld(this))
 	{
 		FlecsObject->MarkAsGarbage();
 		return nullptr;
 	}
 	
 	if (!UE::Flecs::Net::ShouldRegisterInWorld(GetWorld(), 
-		CastChecked<IFlecsObjectRegistrationInterface>(FlecsObject)->GetObjectRegistrationNetworkFlags()))
+		FlecsObjectInterface->GetObjectRegistrationNetworkFlags()))
 	{
 		FlecsObject->MarkAsGarbage();
 		return nullptr;
@@ -941,11 +942,11 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 	RegisteredObjects.Add(FlecsObject);
 	RegisteredObjectTypes.Add(InClass, FlecsObject);
 	
-	const bool bRegisterWithFlecsModule = CastChecked<IFlecsObjectRegistrationInterface>(FlecsObject)->ShouldRegisterWithModule();
+	const bool bRegisterWithFlecsModule = FlecsObjectInterface->ShouldRegisterWithModule();
 	FName ModuleName = NAME_None;
 	if (bRegisterWithFlecsModule)
 	{
-		ModuleName = CastChecked<IFlecsObjectRegistrationInterface>(FlecsObject)->GetModuleName();
+		ModuleName = FlecsObjectInterface->GetModuleName();
 		
 		if (ModuleName.IsNone())
 		{
@@ -977,11 +978,11 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 		OldScope = SetScope(ModuleEntity);
 	}
 	
-	CastChecked<IFlecsObjectRegistrationInterface>(FlecsObject)->RegisterObject(this);
+	FlecsObjectInterface->RegisterObject(this);
 	
 	if (Has<FFlecsBeginPlayComponent>())
 	{
-		CastChecked<IFlecsObjectRegistrationInterface>(FlecsObject)->FlecsWorldBeginPlay(this);
+		FlecsObjectInterface->FlecsWorldBeginPlay(this);
 	}
 	else
 	{
