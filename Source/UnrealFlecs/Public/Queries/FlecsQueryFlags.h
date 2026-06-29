@@ -55,6 +55,27 @@ enum class EFlecsQueryFlags : uint32
 	 */
 	DetectChanges = EcsQueryDetectChanges, // (1u << 8u)
 	
+	/** Enable ordering for query groups.
+	 * When this flag is set, groups will be iterated in ascending order, with lower
+	 * group ids first and higher group ids afterwards.
+	 * 
+	 * This flag is enabled automatically when a query contains cascade terms.
+	 * 
+	 * \ingroup queries
+	 */
+	GroupByOrdered = EcsQueryGroupByOrdered, // (1u << 9u)
+	
+	/** Enable descending ordering for query groups.
+	 * When this flag is set in combination with EcsQueryGroupByOrdered, groups will 
+	 * be iterated in descending order, with higher group ids first and lower group 
+	 * ids afterwards.
+	 * 
+	 * This flag is enabled automatically when a query contains cascade|desc terms.
+	 * 
+	 * \ingroup queries
+	 */
+	GroupByOrderedDescending = EcsQueryGroupByDesc, // (1u << 10u)
+	
 }; // enum class EFlecsQueryFlags
 
 ENUM_CLASS_FLAGS(EFlecsQueryFlags)
