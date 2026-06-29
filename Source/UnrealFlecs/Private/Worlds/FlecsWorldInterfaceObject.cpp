@@ -9,6 +9,7 @@
 #include "Queries/FlecsQueryBuilderView.h"
 #include "Worlds/FlecsStage.h"
 #include "Worlds/FlecsWorld.h"
+#include "Worlds/FlecsWorldSubsystem.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsWorldInterfaceObject)
 
@@ -118,6 +119,30 @@ UFlecsWorldInterfaceObject::UFlecsWorldInterfaceObject(const FObjectInitializer&
 
 UFlecsWorldInterfaceObject::~UFlecsWorldInterfaceObject()
 {
+}
+
+UFlecsWorldInterfaceObject* UFlecsWorldInterfaceObject::GetWorldInterfaceFromFlecsWorld(const flecs::world& InWorld)
+{
+	solid_cassume(InWorld.world_ != nullptr);
+	
+	const TSolidNotNull<UFlecsWorldSubsystem*> FlecsWorldSubsystem = static_cast<UFlecsWorldSubsystem*>(InWorld.get_ctx());
+	
+	const TSolidNotNull<UFlecsWorld*> FlecsWorld = FlecsWorldSubsystem->GetDefaultWorldChecked();
+
+	if (InWorld.is_stage())
+	{
+		return FlecsWorld->GetStage(InWorld);
+	}
+
+	return FlecsWorld;
+}
+
+UFlecsWorldInterfaceObject* UFlecsWorldInterfaceObject::GetWorldInterfaceFromFlecsWorld(flecs::world_t* InWorld)
+{
+	solid_cassume(InWorld != nullptr);
+	
+	flecs::world World = flecs::world(InWorld);
+	return GetWorldInterfaceFromFlecsWorld(World);
 }
 
 UFlecsWorld* UFlecsWorldInterfaceObject::GetFlecsWorld() const

@@ -33,6 +33,7 @@
 #include "Components/FlecsBeginPlayComponent.h"
 #include "Components/FlecsUObjectComponent.h"
 #include "Entities/FlecsEntityRange.h"
+#include "Entities/FlecsTableHandle.h"
 #include "EntityRecords/FlecsEntityRecordComponent.h"
 
 #include "GameFramework/WorldSettings.h"
@@ -1024,6 +1025,11 @@ UFlecsStage* UFlecsWorld::GetStage(const flecs::iter& InIter) const
 	
 	const int32 StageId = InIter.world().get_stage_id();
 	return GetStage(StageId);
+}
+
+int32 UFlecsWorld::Search(const FFlecsTableHandle& InTableHandle, const FFlecsId& InId, FFlecsId& OutId) const
+{
+	return ecs_search(GetNativeFlecsWorld(), InTableHandle.GetTable(), InId, reinterpret_cast<ecs_id_t*>(&OutId));
 }
 
 void UFlecsWorld::RegisterStages(const int32 InStageCount)

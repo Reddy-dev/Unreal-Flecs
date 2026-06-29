@@ -25,6 +25,7 @@
 
 #include "FlecsWorld.generated.h"
 
+struct FFlecsTableHandle;
 struct FFlecsTickFunction;
 struct FFlecsEntityRecord;
 struct FFlecsUObjectComponent;
@@ -326,6 +327,8 @@ public:
 	
 	NO_DISCARD UFlecsStage* GetStage(const flecs::world& InStageWorld) const;
 	NO_DISCARD UFlecsStage* GetStage(const flecs::iter& InIter) const;
+	
+	int32 Search(const FFlecsTableHandle& InTableHandle, const FFlecsId& InId, OUT FFlecsId& OutId) const;
 	
 	void RegisterStages(const int32 InStageCount);
 	

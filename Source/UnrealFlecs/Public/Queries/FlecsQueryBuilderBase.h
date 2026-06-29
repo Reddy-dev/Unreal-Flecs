@@ -10,6 +10,7 @@
 #include "Expressions/FlecsQueryTermExpression.h"
 #include "Generator/FlecsQueryGeneratorInputType.h"
 #include "FlecsQueryDefinition.h"
+#include "Callbacks/FlecsGroupByCallbackDefinition.h"
 #include "Callbacks/FlecsOrderByCallbackDefinition.h"
 #include "Expressions/FlecsQueryCascadeExpression.h"
 #include "Expressions/FlecsQueryDescendingExpression.h"
@@ -94,6 +95,21 @@ protected:
 	FORCEINLINE_DEBUGGABLE const FInheritedType& GetSelf() const
 	{
 		return static_cast<const TInherited&>(*this);
+	}
+
+	FORCEINLINE_DEBUGGABLE FFlecsGroupByCallbackDefinition& GetMutableGroupByCallbackDefinition() const
+	{
+		TOptional<TInstancedStruct<FFlecsGroupByCallbackDefinition>>& GroupByCallbackDefinition =
+			this->GetQueryDefinition().GroupByExpression.GroupByCallbackDefinition;
+
+		if (!GroupByCallbackDefinition.IsSet())
+		{
+			TInstancedStruct<FFlecsGroupByCallbackDefinition> CallbackDefinition;
+			CallbackDefinition.InitializeAs<FFlecsGroupByCallbackDefinition>();
+			GroupByCallbackDefinition = CallbackDefinition;
+		}
+
+		return GroupByCallbackDefinition.GetValue().GetMutable<FFlecsGroupByCallbackDefinition>();
 	}
 	
 public:
@@ -864,6 +880,89 @@ public:
 	{
 		const std::string_view TypeName = nameof(T);
 		return GroupBy(FString(TypeName.data()));
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& GroupBy(const FFlecsId InId, UE::Flecs::Queries::FGroupByFunctionType InCallbackDefinition)
+	{
+		this->GroupBy(InId);
+		
+		GetMutableGroupByCallbackDefinition().GroupByFunctionPtr = InCallbackDefinition;
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& GroupBy(const UScriptStruct* InStruct, UE::Flecs::Queries::FGroupByFunctionType InCallbackDefinition)
+	{
+		this->GroupBy(InStruct);
+		
+		GetMutableGroupByCallbackDefinition().GroupByFunctionPtr = InCallbackDefinition;
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& GroupBy(const UEnum* InEnum, UE::Flecs::Queries::FGroupByFunctionType InCallbackDefinition)
+	{
+		this->GroupBy(InEnum);
+		
+		GetMutableGroupByCallbackDefinition().GroupByFunctionPtr = InCallbackDefinition;
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& GroupBy(const FString& InCppTypeName, UE::Flecs::Queries::FGroupByFunctionType InCallbackDefinition)
+	{
+		this->GroupBy(InCppTypeName);
+		
+		GetMutableGroupByCallbackDefinition().GroupByFunctionPtr = InCallbackDefinition;
+		return GetSelf();
+	}
+	
+	template <typename T>
+	FORCEINLINE_DEBUGGABLE FInheritedType& GroupBy(const UE::Flecs::Queries::FGroupByFunctionType InCallbackDefinition)
+	{
+		const std::string_view TypeName = nameof(T);
+		return GroupBy(FString(TypeName.data()), UE::Flecs::Queries::FGroupByFunctionType(InCallbackDefinition));
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& GroupByCallbackDefinition(const FFlecsId InId, const TInstancedStruct<FFlecsGroupByCallbackDefinition>& InCallbackDefinition)
+	{
+		this->GroupBy(InId);
+		
+		this->GetQueryDefinition().GroupByExpression.GroupByCallbackDefinition = InCallbackDefinition;
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& GroupByCallbackDefinition(const UScriptStruct* InStruct, const TInstancedStruct<FFlecsGroupByCallbackDefinition>& InCallbackDefinition)
+	{
+		this->GroupBy(InStruct);
+		
+		this->GetQueryDefinition().GroupByExpression.GroupByCallbackDefinition = InCallbackDefinition;
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& GroupByCallbackDefinition(const UEnum* InEnum, const TInstancedStruct<FFlecsGroupByCallbackDefinition>& InCallbackDefinition)
+	{
+		this->GroupBy(InEnum);
+		
+		this->GetQueryDefinition().GroupByExpression.GroupByCallbackDefinition = InCallbackDefinition;
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& GroupByCallbackDefinition(const FString& InCppTypeName, const TInstancedStruct<FFlecsGroupByCallbackDefinition>& InCallbackDefinition)
+	{
+		this->GroupBy(InCppTypeName);
+		
+		this->GetQueryDefinition().GroupByExpression.GroupByCallbackDefinition = InCallbackDefinition;
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& OnGroupCreated(const UE::Flecs::Queries::FGroupByCreateGroupFunctionType& InCallback)
+	{
+		GetMutableGroupByCallbackDefinition().CreateGroupFunctionPtr = InCallback;
+		return GetSelf();	
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& OnGroupDestroyed(const UE::Flecs::Queries::FGroupByDeleteGroupFunctionType& InCallback)
+	{
+		GetMutableGroupByCallbackDefinition().DeleteGroupFunctionPtr = InCallback;
+		return GetSelf();	
 	}
 
 #pragma endregion GroupByFunctions

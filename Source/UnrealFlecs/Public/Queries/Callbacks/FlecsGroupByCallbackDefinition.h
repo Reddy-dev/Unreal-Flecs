@@ -15,19 +15,24 @@
 
 #include "FlecsGroupByCallbackDefinition.generated.h"
 
+struct FFlecsGroupByCallbackDefinition;
+
 namespace UE::Flecs::Queries
 {
-	using FUnrealGroupByFunctionType = uint64(*)(const TSolidNotNull<UFlecsWorldInterfaceObject*>, FFlecsTableHandle, FFlecsId, FInstancedStruct);
+	using FGroupByFunctionType = uint64(*)(const TSolidNotNull<UFlecsWorldInterfaceObject*>, FFlecsTableHandle, FFlecsId, void* /*Context*/);
+	using FGroupByCreateGroupFunctionType = void*(*)(const TSolidNotNull<UFlecsWorldInterfaceObject*>, uint64 /*GroupId*/, void* /*GroupByContext*/);
+	using FGroupByDeleteGroupFunctionType = void(*)(const TSolidNotNull<UFlecsWorldInterfaceObject*>, uint64 /*GroupId*/, void* /*GroupContext*/, void* /*GroupByContext*/);
 	
 	struct FFlecsGroupByContextData
 	{
 	public:
+		TInstancedStruct<FFlecsGroupByCallbackDefinition> Definition;
+		void* UserContext = nullptr;
 		
 	}; // struct FFlecsGroupByContextData
 	
 } // namespace UE::Flecs::Queries
 
-// @TODO: Not Implemented
 USTRUCT(BlueprintInternalUseOnly)
 struct UNREALFLECS_API FFlecsGroupByCallbackDefinition
 {
@@ -35,10 +40,27 @@ struct UNREALFLECS_API FFlecsGroupByCallbackDefinition
 	
 public:
 	FORCEINLINE FFlecsGroupByCallbackDefinition() = default;
+	
 	virtual ~FFlecsGroupByCallbackDefinition() = default;
 	
-	virtual UE::Flecs::Queries::FUnrealGroupByFunctionType GetGroupByFunction() const PURE_VIRTUAL(FFlecsGroupByCallbackDefinition, return nullptr;);
-	virtual UScriptStruct* GetGroupByContextStruct() const { return nullptr; }
+	virtual UE::Flecs::Queries::FGroupByFunctionType GetGroupByFunction() const
+	{
+		return GroupByFunctionPtr;
+	}
+	
+	virtual UE::Flecs::Queries::FGroupByCreateGroupFunctionType GetCreateGroupFunction() const
+	{
+		return CreateGroupFunctionPtr;
+	}
+	
+	virtual UE::Flecs::Queries::FGroupByDeleteGroupFunctionType GetDeleteGroupFunction() const
+	{
+		return DeleteGroupFunctionPtr;
+	}
+	
+	UE::Flecs::Queries::FGroupByFunctionType GroupByFunctionPtr = nullptr;
+	UE::Flecs::Queries::FGroupByCreateGroupFunctionType CreateGroupFunctionPtr = nullptr;
+	UE::Flecs::Queries::FGroupByDeleteGroupFunctionType DeleteGroupFunctionPtr = nullptr;
 	
 }; // struct FFlecsGroupByCallbackDefinition
 
@@ -47,8 +69,7 @@ struct TStructOpsTypeTraits<FFlecsGroupByCallbackDefinition> : public TStructOps
 {
 	enum
 	{
-		WithPureVirtual = true
+		WithCopy = true
 	}; // enum
 	
 }; // struct TStructOpsTypeTraits<FFlecsGroupByCallbackDefinition>
-

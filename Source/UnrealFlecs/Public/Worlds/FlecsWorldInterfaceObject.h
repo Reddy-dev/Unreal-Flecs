@@ -38,6 +38,9 @@ public:
 	
 	virtual ~UFlecsWorldInterfaceObject() override;
 	
+	static NO_DISCARD UFlecsWorldInterfaceObject* GetWorldInterfaceFromFlecsWorld(const flecs::world& InWorld);
+	static NO_DISCARD UFlecsWorldInterfaceObject* GetWorldInterfaceFromFlecsWorld(flecs::world_t* InWorld);
+	
 	UFUNCTION(BlueprintCallable, Category = "Flecs|World")
 	UFlecsWorld* GetFlecsWorld() const;
 	
