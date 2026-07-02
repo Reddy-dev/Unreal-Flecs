@@ -18,6 +18,7 @@
 #include "Worlds/FlecsWorld.h"
 #include "Entities/FlecsComponentHandle.h"
 #include "Components/FlecsAddReferencedObjectsTrait.h"
+#include "Networking/FlecsReplicatedComponent.h"
 #include "Queries/Generator/FlecsQueryGeneratorInput.h"
 #include "Queries/Generator/FlecsQueryGeneratorInputType.h"
 
@@ -178,6 +179,8 @@ public:
 	static constexpr bool Inheritable = false;
 	static constexpr bool Final = false;
 	
+	static constexpr bool Replicate = false;
+	
 	static constexpr bool WithAddReferencedObjects = false;
 	static constexpr bool RegisterMemberProperties = true;
 	static constexpr bool RegisterWithUnrealModule = std::is_void<ChildOf>::value;
@@ -285,6 +288,9 @@ public:
 	uint32 bFinal : 1 = false;
 	
 	UPROPERTY()
+	uint32 bReplicate : 1 = false;
+	
+	UPROPERTY()
 	uint32 bWithAddReferencedObjects : 1 = false;
 	
 	// Only matters if the component is a UScriptStruct Type
@@ -344,6 +350,7 @@ public:
 			.bCanToggle = TFlecsComponentTraits<T>::CanToggle,
 			.bInheritable = TFlecsComponentTraits<T>::Inheritable,
 			.bFinal = TFlecsComponentTraits<T>::Final,
+			.bReplicate = TFlecsComponentTraits<T>::Replicate,
 			.bWithAddReferencedObjects = TFlecsComponentTraits<T>::WithAddReferencedObjects,
 			.bRegisterMemberProperties = TFlecsComponentTraits<T>::RegisterMemberProperties,
 			.bRegisterWithModule = TFlecsComponentTraits<T>::RegisterWithUnrealModule,
@@ -521,6 +528,11 @@ public:
 			if constexpr (TFlecsComponentTraits<T>::Final)
 			{
 				ComponentHandle.Add(flecs::Final);
+			}
+			
+			if constexpr (TFlecsComponentTraits<T>::Replicate)
+			{
+				ComponentHandle.Add<FFlecsReplicatedComponent>();
 			}
 			
 			if constexpr (TFlecsComponentTraits<T>::WithAddReferencedObjects)

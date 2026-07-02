@@ -297,6 +297,8 @@ void UFlecsWorld::InitializeDefaultComponents() const
 	{
 		RegisterComponentType<FFlecsAddReferencedObjectsTrait>()
 			.Add(flecs::Trait);
+		
+		RegisterComponentType<FFlecsReplicatedComponent>();
 	});
 	
 	const TSolidNotNull<UFlecsTypeRegistryEngineSubsystem*> FlecsTypeRegistry
