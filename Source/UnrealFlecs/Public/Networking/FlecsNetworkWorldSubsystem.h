@@ -20,12 +20,19 @@ class UNREALFLECS_API UFlecsNetworkWorldSubsystem : public UFlecsAbstractWorldSu
 public:
 	UFlecsNetworkWorldSubsystem();
 	
+	virtual void OnFlecsWorldInitialized(const TSolidNotNull<UFlecsWorld*> InWorld) override;
+	
 	FFlecsNetworkId BeginReplicatingEntity(const FFlecsEntityHandle& EntityHandle);
 	void StopReplicatingEntity(const FFlecsNetworkId& NetworkId);
 	
 private:
 	
+	UPROPERTY()
 	TMap<FFlecsNetworkId, FFlecsEntityHandle> NetworkIdToEntityHandleMap;
+	
+	UPROPERTY()
 	TMap<FFlecsEntityHandle, FFlecsNetworkId> EntityHandleToNetworkIdMap;
+	
+	
 	
 }; // class UFlecsNetworkWorldSubsystem

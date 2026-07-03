@@ -10,5 +10,10 @@ USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsReplicatedComponent
 {
 	GENERATED_BODY()
+	
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs")
+	bool bDeterministicId = false;
+	
 }; // struct FFlecsReplicatedComponent
 

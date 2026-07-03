@@ -4,5 +4,5 @@
 
 #include "CoreMinimal.h"
 
-#include "FlecsComponentReplicationDescriptor.generated.h"
+//#include "FlecsComponentReplicationDescriptor.generated.h"
 
