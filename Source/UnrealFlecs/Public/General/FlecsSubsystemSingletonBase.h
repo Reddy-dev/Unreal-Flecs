@@ -9,7 +9,6 @@
 
 #include "SolidMacros/Macros.h"
 #include "Types/SolidNotNull.h"
-#include "UnrealFlecsUncooked/Public/Nodes/Base/K2Node_FlecsGenericEntityCheck.h"
 
 #include "FlecsSubsystemSingletonBase.generated.h"
 
@@ -72,5 +71,4 @@ struct TFlecsComponentTraits<FFlecsSubsystemSingletonBase> : public TFlecsCompon
 {
 	static constexpr bool Singleton = true;
 }; // struct TFlecsComponentTraits<FFlecsSubsystemSingletonBase>
-
 
