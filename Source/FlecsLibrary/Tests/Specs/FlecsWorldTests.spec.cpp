@@ -1024,7 +1024,7 @@ void World_with_scope_no_lambda(void) {
     flecs::world ecs;
 
     auto parent = ecs.entity("Parent");
-    auto child = ecs.scope(parent).entity("Child");
+    auto child = ecs.entity(parent, "Child");
 
     test_assert(child.has(flecs::ChildOf, parent));
     test_assert(ecs.get_scope() == 0);
@@ -1034,7 +1034,7 @@ void World_with_scope_type_no_lambda(void) {
     flecs::world ecs;
     ecs.component<FlecsTestParentScope>();
 
-    auto child = ecs.scope<FlecsTestParentScope>().entity("Child");
+    auto child = ecs.entity(ecs.id<FlecsTestParentScope>(), "Child");
 
     test_assert(child.has(flecs::ChildOf, ecs.id<FlecsTestParentScope>()));
     test_assert(ecs.get_scope() == 0);
@@ -1665,7 +1665,7 @@ void World_set_lookup_path(void) {
     flecs::world ecs;
 
     auto parent = ecs.entity("Parent");
-    auto child = ecs.scope(parent).entity("Child");
+    auto child = ecs.entity(parent, "Child");
 
     test_assert(ecs.lookup("Parent") == parent);
     test_assert(ecs.lookup("Child") == 0);
@@ -1789,7 +1789,7 @@ void World_scope_w_name(void) {
     flecs::world ecs;
 
     flecs::entity parent = ecs.entity("parent");
-    flecs::entity child = ecs.scope("parent").entity();
+    flecs::entity child = ecs.entity(parent, nullptr);
 
     test_assert(child.has(flecs::ChildOf, parent));
 }
