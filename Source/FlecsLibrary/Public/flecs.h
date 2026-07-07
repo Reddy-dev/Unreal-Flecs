@@ -271,6 +271,7 @@
 #define FLECS_QUERY_DSL      /**< Flecs query DSL parser. */
 #define FLECS_SCRIPT         /**< Flecs entity notation language. */
 // #define FLECS_SCRIPT_MATH /**< Math functions for Flecs script (may require linking with libm). */
+// #define FLECS_SCRIPT_PLATFORM /**< Platform constants for Flecs script. */
 #define FLECS_SYSTEM         /**< System support. */
 #define FLECS_STATS          /**< Track runtime statistics. */
 #define FLECS_TIMER          /**< Timer support. */
@@ -720,6 +721,14 @@ typedef bool (*ecs_equals_t)(
     const void *b_ptr,
     const ecs_type_info_t *type_info);
 
+/** On validate hook. Invoked before on_set/OnSet hooks and observers. When the
+ * hook returns false, the on_set/OnSet hooks and observers are not invoked for
+ * the entity. */
+typedef bool (*ecs_on_validate_t)(
+    ecs_world_t *world,
+    ecs_entity_t entity,
+    void *ptr);
+
 /** Destructor function for poly objects. */
 typedef void (*flecs_poly_dtor_t)(
     ecs_poly_t *poly);
@@ -1032,9 +1041,14 @@ struct ecs_type_hooks_t {
 
     /** Callback that is invoked with the existing and new value before the
      * value is assigned. Invoked after on_add and before on_set. Registering
-     * an on_replace hook prevents using operations that return a mutable 
+     * an on_replace hook prevents using operations that return a mutable
      * pointer to the component, like get_mut(), ensure(), and emplace(). */
     ecs_iter_action_t on_replace;
+
+    /** Callback that is invoked before the on_set/OnSet hooks and observers are
+     * invoked. When the callback returns false, the on_set/OnSet hooks and
+     * observers are not invoked for the entity. */
+    ecs_on_validate_t on_validate;
 
     void *ctx;                         /**< User-defined context. */
     void *binding_ctx;                 /**< Language binding context. */
@@ -1499,6 +1513,12 @@ typedef struct ecs_event_desc_t {
      * When an event with a const parameter is enqueued, the value of the param
      * is copied to a temporary storage of the event type. */
     const void *const_param;
+
+    /** Optional pointer to the value of the component for which the event is
+     * emitted. May only be set for events that are emitted for a single
+     * component id and a single entity. If provided, observers will use this
+     * pointer instead of fetching the component from the table/storage. */
+    void *set_ptr;
 
     /** Observable (usually the world). */
     ecs_poly_t *observable;

@@ -571,8 +571,10 @@ void ecs_table_memory_get(
 
     result->bytes_column_map += 
         (type_count + column_count) * ECS_SIZEOF(int16_t);
-    if (table->component_map) {
-        result->bytes_component_map += 
+    if (table->component_map &&
+        (table->component_map != flecs_table_empty_component_map))
+    {
+        result->bytes_component_map +=
             FLECS_HI_COMPONENT_ID * ECS_SIZEOF(int16_t);
     }
 
@@ -733,6 +735,8 @@ ecs_size_t flecs_observer_index_memory_get(
     result += flecs_event_record_memory_get(&o->on_remove);
     result += flecs_event_record_memory_get(&o->on_set);
     result += flecs_event_record_memory_get(&o->on_wildcard);
+    result += flecs_event_record_memory_get(&o->on_table_create);
+    result += flecs_event_record_memory_get(&o->on_table_delete);
 
     const ecs_sparse_t *events = &o->events;
     result += flecs_sparse_memory_get(events,

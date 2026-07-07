@@ -635,7 +635,7 @@ void flecs_init_table(
     ecs_table_t *table,
     ecs_table_t *prev)
 {
-    table->flags = 0;
+    table->flags = EcsTableEmpty;
     table->dirty_state = NULL;
     table->_->lock = 0;
     table->_->generation = 0;
@@ -1207,7 +1207,9 @@ void flecs_init_edge_for_add(
 {
     flecs_table_init_edge(table, edge, id, to);
 
-    flecs_table_ensure_hi_edge(world, &table->node.add, id);
+    if (id < FLECS_HI_COMPONENT_ID) {
+        flecs_table_ensure_hi_edge(world, &table->node.add, id);
+    }
 
     if ((table != to) || (table->flags & EcsTableHasDontFragment)) {
         /* Add edges are appended to refs.next */
@@ -1236,7 +1238,9 @@ void flecs_init_edge_for_remove(
 {
     flecs_table_init_edge(table, edge, id, to);
 
-    flecs_table_ensure_hi_edge(world, &table->node.remove, id);
+    if (id < FLECS_HI_COMPONENT_ID) {
+        flecs_table_ensure_hi_edge(world, &table->node.remove, id);
+    }
 
     if ((table != to) || (table->flags & EcsTableHasDontFragment)) {
         /* Remove edges are appended to refs.prev */

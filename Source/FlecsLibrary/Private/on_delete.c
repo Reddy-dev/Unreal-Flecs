@@ -65,9 +65,11 @@ void flecs_target_mark_for_delete(
             flecs_component_mark_for_delete(world, cr,
                 ECS_ID_ON_DELETE_TARGET(cr->flags), true, force_delete);
         }
-        if ((cr = flecs_components_get(world, ecs_pair(EcsFlag, e)))) {
-            flecs_component_mark_for_delete(world, cr,
-                ECS_ID_ON_DELETE_TARGET(cr->flags), true, force_delete);
+        if (world->cr_flag_count) {
+            if ((cr = flecs_components_get(world, ecs_pair(EcsFlag, e)))) {
+                flecs_component_mark_for_delete(world, cr,
+                    ECS_ID_ON_DELETE_TARGET(cr->flags), true, force_delete);
+            }
         }
     }
 }
@@ -271,6 +273,10 @@ bool flecs_component_mark_non_fragmenting_childof(
     ecs_component_record_t *cr,
     bool force_delete)
 {
+    if (!world->non_fragmenting_child_count) {
+        return false;
+    }
+
     ecs_entity_t tgt = ECS_PAIR_SECOND(cr->id);
 
     ecs_component_record_t *childof_cr = flecs_components_get(
@@ -348,9 +354,10 @@ void flecs_component_mark_for_delete(
 
     /* Mark all tables with the id for delete */
     ecs_table_cache_iter_t it;
-    if (flecs_table_cache_iter(&cr->cache, &it)) {
-        const ecs_table_record_t *tr;
-        while ((tr = flecs_table_cache_next(&it, ecs_table_record_t))) {
+    if (flecs_table_cache_iter(&cr->cache, &it, EcsTableNotEmpty)) {
+        const ecs_table_cache_elem_t *elem;
+        while ((elem = flecs_table_cache_next(&it))) {
+            const ecs_table_record_t *tr = elem->tr;
             ecs_table_t *table = tr->hdr.table;
             if (table->flags & EcsTableMarkedForDelete) {
                 continue;
@@ -379,10 +386,10 @@ void flecs_component_mark_for_delete(
     }
 
     /* Same for empty tables */
-    if (flecs_table_cache_empty_iter(&cr->cache, &it)) {
-        const ecs_table_record_t *tr;
-        while ((tr = flecs_table_cache_next(&it, ecs_table_record_t))) {
-            tr->hdr.table->flags |= EcsTableMarkedForDelete;
+    if (flecs_table_cache_iter(&cr->cache, &it, EcsTableEmpty)) {
+        const ecs_table_cache_elem_t *elem;
+        while ((elem = flecs_table_cache_next(&it))) {
+            elem->table->flags |= EcsTableMarkedForDelete;
         }
     }
 
@@ -416,7 +423,7 @@ void flecs_component_mark_for_delete(
                      * component through the deleted entity. */
                     if (!(cur->flags & EcsIdOnDeleteTargetDelete)) {
                         /* Only bother if tables have the relationship. */
-                        if (ecs_map_count(&cur->cache.index)) {
+                        if (flecs_table_cache_count(&cur->cache)) {
                             flecs_update_component_monitors(world, NULL, 
                                 &(ecs_type_t){
                                     .array = (ecs_id_t[]){cur->id},
@@ -466,64 +473,90 @@ bool flecs_on_delete_mark(
 
 static
 void flecs_remove_from_table(
-    ecs_world_t *world, 
-    ecs_table_t *table) 
+    ecs_world_t *world,
+    ecs_table_t *table)
 {
-    ecs_table_diff_t temp_diff = { .added = {0} };
-    ecs_table_diff_builder_t diff = ECS_TABLE_DIFF_INIT;
-    flecs_table_diff_builder_init(world, &diff);
-    ecs_table_t *dst_table = table; 
+    ecs_type_t *type = &table->type;
+    int32_t i, t, type_count = type->count;
+    if (!type_count) {
+        return;
+    }
 
-    /* To find the dst table, remove all ids that are marked for deletion */
-    int32_t i, t, count = ecs_vec_count(&world->store.marked_ids);
+    bool *remove = flecs_wcalloc_n(world, bool, type_count);
+
+    int32_t count = ecs_vec_count(&world->store.marked_ids);
     ecs_marked_id_t *ids = ecs_vec_first(&world->store.marked_ids);
     const ecs_table_record_t *tr;
+    int32_t remove_count = 0;
     for (i = 0; i < count; i ++) {
-        const ecs_component_record_t *cr = ids[i].cr;
+        ecs_component_record_t *cr = ids[i].cr;
 
-        if (!(tr = flecs_component_get_table(cr, dst_table))) {
+        if (!(tr = flecs_component_get_table(cr, table))) {
             continue;
         }
 
         t = tr->index;
 
         do {
-            ecs_id_t id = dst_table->type.array[t];
-            ecs_table_t *tgt_table = flecs_table_traverse_remove(
-                world, dst_table, &id, &temp_diff);
-            ecs_assert(tgt_table != dst_table, ECS_INTERNAL_ERROR, NULL);
-            dst_table = tgt_table;
-            flecs_table_diff_build_append_table(world, &diff, &temp_diff);
-        } while (dst_table->type.count && (t = ecs_search_offset(
-            world, dst_table, t, cr->id, NULL)) != -1);
+            if (!remove[t]) {
+                remove[t] = true;
+                remove_count ++;
+            }
+        } while ((t = ecs_search_offset(world, table, t + 1, cr->id, NULL)) != -1);
     }
 
-    ecs_assert(dst_table != NULL, ECS_INTERNAL_ERROR, NULL);
+    if (remove_count) {
+        int32_t dst_count = type_count - remove_count;
+        ecs_id_t *dst_array = dst_count
+            ? flecs_walloc_n(world, ecs_id_t, dst_count) : NULL;
+        ecs_id_t *removed = flecs_walloc_n(world, ecs_id_t, remove_count);
+        ecs_flags32_t removed_flags = table->flags & EcsTableRemoveEdgeFlags;
+        int32_t d = 0, r = 0;
+        for (t = 0; t < type_count; t ++) {
+            ecs_id_t id = type->array[t];
+            if (remove[t]) {
+                removed[r ++] = id;
+                if (ECS_IS_PAIR(id) && (ECS_PAIR_FIRST(id) == EcsChildOf)) {
+                    removed_flags |= EcsTableEdgeReparent;
+                }
+            } else {
+                dst_array[d ++] = id;
+            }
+        }
 
-    if (dst_table != table) {
+        ecs_table_t *dst_table = flecs_table_find_or_create(world,
+            &(ecs_type_t){ .array = dst_array, .count = dst_count });
+        ecs_assert(dst_table != table, ECS_INTERNAL_ERROR, NULL);
+
         int32_t table_count = ecs_table_count(table);
-        if (diff.removed.count && table_count) {
+        if (table_count) {
             ecs_log_push_3();
-            ecs_table_diff_t td;
-            flecs_table_diff_build_noalloc(&diff, &td);
+
+            ecs_table_diff_t diff = {
+                .removed = { .array = removed, .count = remove_count },
+                .removed_flags = removed_flags
+            };
 
             if (table->flags & EcsTableHasTraversable) {
-                for (i = 0; i < diff.removed.count; i ++) {
+                for (i = 0; i < remove_count; i ++) {
                     flecs_update_component_monitors(world, NULL, &(ecs_type_t){
-                        .array = (ecs_id_t[]){td.removed.array[i]},
+                        .array = (ecs_id_t[]){removed[i]},
                         .count = 1
                     });
                 }
             }
 
-            flecs_actions_move_remove(world, table, dst_table, 0, table_count, &td);
+            flecs_actions_move_remove(world, table, dst_table, 0, table_count, &diff);
             ecs_log_pop_3();
         }
 
         flecs_table_merge(world, dst_table, table);
+
+        flecs_wfree_n(world, ecs_id_t, dst_count, dst_array);
+        flecs_wfree_n(world, ecs_id_t, remove_count, removed);
     }
 
-    flecs_table_diff_builder_fini(world, &diff);
+    flecs_wfree_n(world, bool, type_count, remove);
 }
 
 static
@@ -542,10 +575,10 @@ bool flecs_on_delete_clear_entities(
 
             /* Empty all tables for id */
             ecs_table_cache_iter_t it;
-            if (flecs_table_cache_iter(&cr->cache, &it)) {
-                const ecs_table_record_t *tr;
-                while ((tr = flecs_table_cache_next(&it, ecs_table_record_t))) {
-                    ecs_table_t *table = tr->hdr.table;
+            if (flecs_table_cache_iter(&cr->cache, &it, EcsTableNotEmpty)) {
+                const ecs_table_cache_elem_t *elem;
+                while ((elem = flecs_table_cache_next(&it))) {
+                    ecs_table_t *table = elem->table;
 
                     /* If table contains prefabs and we're not deleting the 
                      * prefab entity itself (!force_delete), don't delete table.

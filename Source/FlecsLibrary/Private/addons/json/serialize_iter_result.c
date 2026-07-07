@@ -69,11 +69,11 @@ int flecs_json_serialize_matches(
 
     if (cr) {
         ecs_table_cache_iter_t it;
-        if (cr && flecs_table_cache_iter((ecs_table_cache_t*)cr, &it)) {
-            const ecs_table_record_t *tr;
-            while ((tr = flecs_table_cache_next(&it, ecs_table_record_t))) {
-                ecs_table_t *table = tr->hdr.table;
-                EcsPoly *queries = ecs_table_get_column(table, tr->column, 0);
+        if (cr && flecs_table_cache_iter((ecs_table_cache_t*)cr, &it, EcsTableNotEmpty)) {
+            const ecs_table_cache_elem_t *elem;
+            while ((elem = flecs_table_cache_next(&it))) {
+                ecs_table_t *table = elem->table;
+                EcsPoly *queries = ecs_table_get_column(table, elem->column, 0);
 
                 const ecs_entity_t *entities = ecs_table_entities(table);
                 int32_t i, count = ecs_table_count(table);
@@ -125,10 +125,10 @@ int flecs_json_serialize_refs_cr(
     flecs_json_array_push(buf);
 
     ecs_table_cache_iter_t it;
-    if (cr && flecs_table_cache_all_iter((ecs_table_cache_t*)cr, &it)) {
-        const ecs_table_record_t *tr;
-        while ((tr = flecs_table_cache_next(&it, ecs_table_record_t))) {
-            ecs_table_t *table = tr->hdr.table;
+    if (cr && flecs_table_cache_iter((ecs_table_cache_t*)cr, &it, EcsTableEmpty|EcsTableNotEmpty)) {
+        const ecs_table_cache_elem_t *elem;
+        while ((elem = flecs_table_cache_next(&it))) {
+            ecs_table_t *table = elem->table;
             const ecs_entity_t *entities = ecs_table_entities(table);
             int32_t i, count = ecs_table_count(table);
             for (i = 0; i < count; i ++) {

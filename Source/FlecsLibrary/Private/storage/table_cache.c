@@ -1,77 +1,92 @@
 /**
  * @file storage/table_cache.c
  * @brief Data structure for fast table iteration/lookups.
- * 
+ *
  * A table cache is a data structure that provides constant time operations for
  * insertion and removal of tables, and for testing whether a table is registered
  * with the cache. A table cache also provides functions to iterate the tables
  * in a cache.
- * 
- * The world stores a table cache per (component) id inside the component record 
+ *
+ * The world stores a table cache per (component) id inside the component record
  * administration. Cached queries store a table cache with matched tables.
+ *
+ * Records are stored in a dense array of pointers for fast, cache-friendly
+ * iteration. A map tracks the index of each record in the array so that
+ * insertion and removal remain O(1) amortized.
  */
 
 #include "../private_api.h"
 
+#define FLECS_TABLE_CACHE_INDEX_THRESHOLD (4)
+
 static
-void flecs_table_cache_list_remove(
+void flecs_table_cache_move(
     ecs_table_cache_t *cache,
-    ecs_table_cache_hdr_t *elem)
+    ecs_table_cache_elem_t *records,
+    int32_t dst,
+    int32_t src)
 {
-    ecs_os_perf_trace_push("flecs.table.cache.list_remove");
-    
-    ecs_table_cache_hdr_t *next = elem->next;
-    ecs_table_cache_hdr_t *prev = elem->prev;
-
-    if (next) {
-        next->prev = prev;
-    }
-    if (prev) {
-        prev->next = next;
+    if (dst == src) {
+        return;
     }
 
-    cache->tables.count --;
+    records[dst] = records[src];
 
-    if (cache->tables.first == elem) {
-        cache->tables.first = next;
+    if (ecs_map_is_init(&cache->index)) {
+        ecs_map_val_t *idx = ecs_map_get(&cache->index, records[dst].table->id);
+        ecs_assert(idx != NULL, ECS_INTERNAL_ERROR, NULL);
+        *idx = flecs_ito(uint64_t, dst);
     }
-    if (cache->tables.last == elem) {
-        cache->tables.last = prev;
-    }
-
-    ecs_os_perf_trace_pop("flecs.table.cache.list_remove");
-
-    ecs_assert(cache->tables.first == NULL || cache->tables.count,
-        ECS_INTERNAL_ERROR, NULL);
-    ecs_assert(cache->tables.first == NULL || cache->tables.last != NULL,
-        ECS_INTERNAL_ERROR, NULL);
 }
 
 static
-void flecs_table_cache_list_insert(
+void flecs_table_cache_swap(
     ecs_table_cache_t *cache,
-    ecs_table_cache_hdr_t *elem)
+    ecs_table_cache_elem_t *records,
+    int32_t a,
+    int32_t b)
 {
-    ecs_os_perf_trace_push("flecs.table.cache.list_insert");
-    
-    ecs_table_cache_hdr_t *last = cache->tables.last;
-    cache->tables.last = elem;
-    if ((++ cache->tables.count) == 1) {
-        cache->tables.first = elem;
+    if (a == b) {
+        return;
     }
 
-    elem->next = NULL;
-    elem->prev = last;
+    ecs_table_cache_elem_t tmp = records[a];
+    records[a] = records[b];
+    records[b] = tmp;
 
-    if (last) {
-        last->next = elem;
+    if (ecs_map_is_init(&cache->index)) {
+        ecs_map_val_t *a_idx = ecs_map_get(&cache->index, records[a].table->id);
+        ecs_map_val_t *b_idx = ecs_map_get(&cache->index, records[b].table->id);
+        ecs_assert(a_idx != NULL, ECS_INTERNAL_ERROR, NULL);
+        ecs_assert(b_idx != NULL, ECS_INTERNAL_ERROR, NULL);
+        *a_idx = flecs_ito(uint64_t, a);
+        *b_idx = flecs_ito(uint64_t, b);
+    }
+}
+
+static
+int32_t flecs_table_cache_find(
+    const ecs_table_cache_t *cache,
+    const ecs_table_t *table)
+{
+    if (ecs_map_is_init(&cache->index)) {
+        ecs_map_val_t *r = ecs_map_get(&cache->index, table->id);
+        if (!r) {
+            return -1;
+        }
+        return flecs_uto(int32_t, *r);
     }
 
-    ecs_os_perf_trace_pop("flecs.table.cache.list_insert");
+    int32_t i, count = ecs_vec_count(&cache->records);
+    const ecs_table_cache_elem_t *records = ecs_vec_first_t(
+        ECS_CONST_CAST(ecs_vec_t*, &cache->records), ecs_table_cache_elem_t);
+    for (i = 0; i < count; i ++) {
+        if (records[i].table == table) {
+            return i;
+        }
+    }
 
-    ecs_assert(
-        cache->tables.count != 1 || cache->tables.first == cache->tables.last,
-        ECS_INTERNAL_ERROR, NULL);
+    return -1;
 }
 
 void ecs_table_cache_init(
@@ -79,13 +94,17 @@ void ecs_table_cache_init(
     ecs_table_cache_t *cache)
 {
     ecs_assert(cache != NULL, ECS_INTERNAL_ERROR, NULL);
-    ecs_map_init(&cache->index, &world->allocator);
+    ecs_os_zeromem(&cache->index);
+    cache->index.allocator = &world->allocator;
+    ecs_vec_init_t(&world->allocator, &cache->records, ecs_table_cache_elem_t, 0);
+    cache->queryable_count = 0;
 }
 
 void ecs_table_cache_fini(
     ecs_table_cache_t *cache)
 {
     ecs_assert(cache != NULL, ECS_INTERNAL_ERROR, NULL);
+    ecs_vec_fini_t(cache->index.allocator, &cache->records, ecs_table_cache_elem_t);
     ecs_map_fini(&cache->index);
 }
 
@@ -98,54 +117,52 @@ void ecs_table_cache_insert(
     ecs_assert(ecs_table_cache_get(cache, table) == NULL,
         ECS_INTERNAL_ERROR, NULL);
     ecs_assert(result != NULL, ECS_INTERNAL_ERROR, NULL);
+    ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
 
-    ecs_os_perf_trace_push("flecs.table.cache.insert_w_empty");
-    
     result->cr = (ecs_component_record_t*)cache;
     result->table = ECS_CONST_CAST(ecs_table_t*, table);
 
-    flecs_table_cache_list_insert(cache, result);
+    int32_t index = ecs_vec_count(&cache->records);
+    ecs_table_cache_elem_t *slot = ecs_vec_append_t(
+        cache->index.allocator, &cache->records, ecs_table_cache_elem_t);
+    slot->table = ECS_CONST_CAST(ecs_table_t*, table);
+    slot->tr = (ecs_table_record_t*)result;
+    slot->column = -1;
+    slot->index = ((ecs_table_record_t*)result)->index;
 
-    ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
-    ecs_map_insert_ptr(&cache->index, table->id, result);
+    if (ecs_map_is_init(&cache->index)) {
+        ecs_map_insert(&cache->index, table->id, flecs_ito(uint64_t, index));
+    } else if ((index + 1) > FLECS_TABLE_CACHE_INDEX_THRESHOLD) {
+        ecs_map_init(&cache->index, cache->index.allocator);
+        ecs_table_cache_elem_t *records = ecs_vec_first_t(
+            &cache->records, ecs_table_cache_elem_t);
+        int32_t i;
+        for (i = 0; i <= index; i ++) {
+            ecs_map_insert(&cache->index, records[i].table->id,
+                flecs_ito(uint64_t, i));
+        }
+    }
 
-    ecs_os_perf_trace_pop("flecs.table.cache.insert_w_empty");
-
-    ecs_assert(cache->tables.first != NULL, ECS_INTERNAL_ERROR, NULL);
+    if (!(table->flags & (EcsTableNotQueryable|EcsTableIsPrefab|EcsTableIsDisabled))) {
+        ecs_table_cache_elem_t *records = ecs_vec_first_t(
+            &cache->records, ecs_table_cache_elem_t);
+        flecs_table_cache_swap(cache, records, cache->queryable_count, index);
+        cache->queryable_count ++;
+    }
 }
 
-void ecs_table_cache_replace(
+void flecs_table_cache_set_column(
     ecs_table_cache_t *cache,
     const ecs_table_t *table,
-    ecs_table_cache_hdr_t *elem)
+    int16_t column)
 {
-    ecs_table_cache_hdr_t **r = ecs_map_get_ref(
-        &cache->index, ecs_table_cache_hdr_t, table->id);
-    ecs_assert(r != NULL, ECS_INTERNAL_ERROR, NULL);
+    int32_t index = flecs_table_cache_find(cache, table);
+    ecs_assert(index != -1, ECS_INTERNAL_ERROR, NULL);
 
-    ecs_table_cache_hdr_t *old = *r;
-    ecs_assert(old != NULL, ECS_INTERNAL_ERROR, NULL);
-
-    ecs_table_cache_hdr_t *prev = old->prev, *next = old->next;
-    if (prev) {
-        ecs_assert(prev->next == old, ECS_INTERNAL_ERROR, NULL);
-        prev->next = elem;
-    }
-    if (next) {
-        ecs_assert(next->prev == old, ECS_INTERNAL_ERROR, NULL);
-        next->prev = elem;
-    }
-
-    if (cache->tables.first == old) {
-        cache->tables.first = elem;
-    }
-    if (cache->tables.last == old) {
-        cache->tables.last = elem;
-    }
-
-    *r = elem;
-    elem->prev = prev;
-    elem->next = next;
+    ecs_table_cache_elem_t *slot = ecs_vec_get_t(
+        &cache->records, ecs_table_cache_elem_t, index);
+    ecs_assert(slot != NULL, ECS_INTERNAL_ERROR, NULL);
+    slot->column = column;
 }
 
 void* ecs_table_cache_get(
@@ -154,8 +171,33 @@ void* ecs_table_cache_get(
 {
     ecs_assert(cache != NULL, ECS_INTERNAL_ERROR, NULL);
     ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
-    ecs_assert(ecs_map_is_init(&cache->index), ECS_INTERNAL_ERROR, NULL);
-    return ecs_map_get_deref(&cache->index, void**, table->id);
+
+    int32_t index = flecs_table_cache_find(cache, table);
+    if (index == -1) {
+        return NULL;
+    }
+
+    ecs_table_cache_elem_t *slot = ecs_vec_get_t(
+        ECS_CONST_CAST(ecs_vec_t*, &cache->records),
+        ecs_table_cache_elem_t, index);
+    return slot ? slot->tr : NULL;
+}
+
+const ecs_table_cache_elem_t* flecs_table_cache_get_elem(
+    const ecs_table_cache_t *cache,
+    const ecs_table_t *table)
+{
+    ecs_assert(cache != NULL, ECS_INTERNAL_ERROR, NULL);
+    ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
+
+    int32_t index = flecs_table_cache_find(cache, table);
+    if (index == -1) {
+        return NULL;
+    }
+
+    return ecs_vec_get_t(
+        ECS_CONST_CAST(ecs_vec_t*, &cache->records),
+        ecs_table_cache_elem_t, index);
 }
 
 void* ecs_table_cache_remove(
@@ -165,77 +207,91 @@ void* ecs_table_cache_remove(
 {
     ecs_assert(cache != NULL, ECS_INTERNAL_ERROR, NULL);
     ecs_assert(elem != NULL, ECS_INTERNAL_ERROR, NULL);
-
-    ecs_assert(elem->cr == (ecs_component_record_t*)cache, 
+    ecs_assert(elem->cr == (ecs_component_record_t*)cache,
         ECS_INTERNAL_ERROR, NULL);
 
-    flecs_table_cache_list_remove(cache, elem);
-    ecs_map_remove(&cache->index, table_id);
+    int32_t last = ecs_vec_count(&cache->records) - 1;
+    ecs_table_cache_elem_t *records = ecs_vec_first_t(
+        &cache->records, ecs_table_cache_elem_t);
+
+    int32_t index;
+    if (ecs_map_is_init(&cache->index)) {
+        ecs_map_val_t v = ecs_map_remove(&cache->index, table_id);
+        index = flecs_uto(int32_t, v);
+    } else {
+        for (index = 0; index <= last; index ++) {
+            if (records[index].tr == (ecs_table_record_t*)elem) {
+                break;
+            }
+        }
+        ecs_assert(index <= last, ECS_INTERNAL_ERROR, NULL);
+    }
+
+    ecs_assert(records[index].tr == (ecs_table_record_t*)elem,
+        ECS_INTERNAL_ERROR, NULL);
+
+    if (index < cache->queryable_count) {
+        int32_t last_queryable = cache->queryable_count - 1;
+        flecs_table_cache_move(cache, records, index, last_queryable);
+        flecs_table_cache_move(cache, records, last_queryable, last);
+        cache->queryable_count --;
+    } else {
+        flecs_table_cache_move(cache, records, index, last);
+    }
+
+    ecs_vec_remove_last(&cache->records);
 
     return elem;
 }
 
 bool flecs_table_cache_iter(
     const ecs_table_cache_t *cache,
-    ecs_table_cache_iter_t *out)
+    ecs_table_cache_iter_t *out,
+    ecs_flags32_t empty_flags)
 {
     ecs_assert(cache != NULL, ECS_INTERNAL_ERROR, NULL);
     ecs_assert(out != NULL, ECS_INTERNAL_ERROR, NULL);
-    out->next = cache->tables.first;
+    out->elems = ecs_vec_first_t(
+        ECS_CONST_CAST(ecs_vec_t*, &cache->records),
+        ecs_table_cache_elem_t);
+    out->remaining = ecs_vec_count(&cache->records);
     out->cur = NULL;
-    out->iter_fill = true;
-    out->iter_empty = false;
-    return out->next != NULL;
+    out->flags = empty_flags;
+    return out->remaining != 0;
 }
 
-bool flecs_table_cache_empty_iter(
+bool flecs_table_cache_queryable_iter(
     const ecs_table_cache_t *cache,
-    ecs_table_cache_iter_t *out)
+    ecs_table_cache_iter_t *out,
+    ecs_flags32_t empty_flags)
 {
     ecs_assert(cache != NULL, ECS_INTERNAL_ERROR, NULL);
     ecs_assert(out != NULL, ECS_INTERNAL_ERROR, NULL);
-    out->next = cache->tables.first;
+    out->elems = ecs_vec_first_t(
+        ECS_CONST_CAST(ecs_vec_t*, &cache->records),
+        ecs_table_cache_elem_t);
+    out->remaining = cache->queryable_count;
     out->cur = NULL;
-    out->iter_fill = false;
-    out->iter_empty = true;
-    return out->next != NULL;
+    out->flags = empty_flags;
+    return out->remaining != 0;
 }
 
-bool flecs_table_cache_all_iter(
-    const ecs_table_cache_t *cache,
-    ecs_table_cache_iter_t *out)
-{
-    ecs_assert(cache != NULL, ECS_INTERNAL_ERROR, NULL);
-    ecs_assert(out != NULL, ECS_INTERNAL_ERROR, NULL);
-    out->next = cache->tables.first;
-    out->cur = NULL;
-    out->iter_fill = true;
-    out->iter_empty = true;
-    return out->next != NULL;
-}
-
-const ecs_table_cache_hdr_t* flecs_table_cache_next_(
+const ecs_table_cache_elem_t* flecs_table_cache_next(
     ecs_table_cache_iter_t *it)
 {
-    const ecs_table_cache_hdr_t *next;
+    ecs_flags32_t flags = it->flags;
 
-repeat:
-    next = it->next;
-    it->cur = next;
+    while (it->remaining > 0) {
+        const ecs_table_cache_elem_t *next = it->elems;
+        it->elems ++;
+        it->remaining --;
 
-    if (next) {
-        it->next = next->next;
-
-        if (ecs_table_count(next->table)) {
-            if (!it->iter_fill) {
-                goto repeat;
-            }
-        } else {
-            if (!it->iter_empty) {
-                goto repeat;
-            }
+        if (next->table->flags & flags) {
+            it->cur = next;
+            return next;
         }
     }
 
-    return next;
+    it->cur = NULL;
+    return NULL;
 }

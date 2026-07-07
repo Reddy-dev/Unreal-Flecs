@@ -144,13 +144,8 @@ ecs_entity_t flecs_component_sparse_remove_intern(
 
     ecs_iter_action_t on_remove = ti->hooks.on_remove;
     if (on_remove) {
-        const ecs_table_record_t *tr = NULL;
-        if (!(cr->flags & EcsIdDontFragment)) {
-            tr = flecs_component_get_table(cr, table);
-        }
-
-        flecs_invoke_hook(world, table, cr, tr, 1, row, 
-            &entity, cr->id, ti, EcsOnRemove, on_remove);
+        flecs_invoke_hook(world, table, cr, -1, 1, row,
+            &entity, cr->id, ti, EcsOnRemove, on_remove, ptr);
     }
 
     flecs_type_info_dtor(ptr, 1, ti);
@@ -285,9 +280,9 @@ void flecs_component_sparse_remove_all_id(
             for (i = 0; i < count; i ++) {
                 ecs_entity_t e = entities[i];
                 ecs_record_t *r = flecs_entities_get(world, e);
-                flecs_invoke_hook(world, r->table, cr, NULL, 1, 
-                    ECS_RECORD_TO_ROW(r->row), &entities[i], component_id, ti, 
-                    EcsOnRemove, on_remove);
+                flecs_invoke_hook(world, r->table, cr, -1, 1,
+                    ECS_RECORD_TO_ROW(r->row), &entities[i], component_id, ti,
+                    EcsOnRemove, on_remove, NULL);
             }
         }
 
@@ -496,13 +491,8 @@ void* flecs_component_sparse_insert(
         return ptr;
     }
 
-    const ecs_table_record_t *tr = NULL;
-    if (!(cr->flags & EcsIdDontFragment)) {
-        tr = flecs_component_get_table(cr, table);
-    }
-
-    flecs_invoke_hook(world, table, cr, tr, 1, row, 
-        &entity, component_id, ti, EcsOnAdd, on_add);
+    flecs_invoke_hook(world, table, cr, -1, 1, row,
+        &entity, component_id, ti, EcsOnAdd, on_add, ptr);
 
     return ptr;
 }
@@ -532,13 +522,8 @@ void* flecs_component_sparse_emplace(
         return ptr;
     }
 
-    const ecs_table_record_t *tr = NULL;
-    if (!(cr->flags & EcsIdDontFragment)) {
-        tr = flecs_component_get_table(cr, table);
-    }
-
-    flecs_invoke_hook(world, table, cr, tr, 1, row, 
-        &entity, cr->id, ti, EcsOnAdd, on_add);
+    flecs_invoke_hook(world, table, cr, -1, 1, row,
+        &entity, cr->id, ti, EcsOnAdd, on_add, ptr);
 
     return ptr;
 }
