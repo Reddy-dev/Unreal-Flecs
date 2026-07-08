@@ -160,21 +160,6 @@ ecs_entity_t flecs_get_builtin(
 }
 
 static
-bool flecs_is_sep(
-    const char **ptr,
-    const char *sep)
-{
-    ecs_size_t len = ecs_os_strlen(sep);
-
-    if (!ecs_os_strncmp(*ptr, sep, len)) {
-        *ptr += len;
-        return true;
-    } else {
-        return false;
-    }
-}
-
-static
 const char* flecs_path_elem(
     const char *path,
     const char *sep,
@@ -188,6 +173,8 @@ const char* flecs_path_elem(
 
     const char *ptr;
     char ch;
+    char sep0 = sep[0];
+    ecs_size_t sep_len = ecs_os_strlen(sep);
     int32_t template_nesting = 0;
     int32_t pos = 0;
     ecs_size_t size = size_out ? *size_out : 0;
@@ -209,8 +196,11 @@ const char* flecs_path_elem(
             escaped = true;
         }
 
-        if (!escaped && !template_nesting && flecs_is_sep(&ptr, sep)) {
-            break;
+        if (!escaped && !template_nesting && ch == sep0) {
+            if (sep_len == 1 || !ecs_os_strncmp(ptr, sep, sep_len)) {
+                ptr += sep_len;
+                break;
+            }
         }
 
         if (buffer) {
@@ -243,6 +233,78 @@ const char* flecs_path_elem(
     } else {
         return NULL;
     }
+}
+
+static
+const char* flecs_path_elem_n(
+    const char *path,
+    const char *sep,
+    ecs_size_t sep_len,
+    ecs_size_t *len_out)
+{
+    const char *ptr;
+    char ch, sep0 = sep[0];
+    int32_t template_nesting = 0;
+
+    for (ptr = path; (ch = *ptr); ptr ++) {
+        if (ch == '<') {
+            template_nesting ++;
+        } else if (ch == '>') {
+            if (template_nesting > 0) {
+                template_nesting --;
+            }
+        } else if (!template_nesting && ch == sep0) {
+            if (sep_len == 1 || !ecs_os_strncmp(ptr, sep, sep_len)) {
+                *len_out = flecs_ito(ecs_size_t, ptr - path);
+                return ptr + sep_len;
+            }
+        }
+    }
+
+    *len_out = flecs_ito(ecs_size_t, ptr - path);
+    return NULL;
+}
+
+static
+ecs_entity_t flecs_lookup_child_n(
+    const ecs_world_t *world,
+    ecs_entity_t parent,
+    const char *name,
+    ecs_size_t length,
+    uint64_t hash)
+{
+    if (name[0] == '#') {
+        uint64_t value = 0;
+        ecs_size_t i;
+        for (i = 1; i < length; i ++) {
+            char ch = name[i];
+            if (!isdigit(ch)) {
+                break;
+            }
+            if (value < UINT32_MAX) {
+                value = value * 10 + flecs_ito(uint64_t, ch - '0');
+            }
+        }
+
+        if (i == length && value && value < UINT32_MAX &&
+            ecs_is_alive(world, value))
+        {
+            if (parent && !ecs_has_pair(world, value, EcsChildOf, parent)) {
+                return 0;
+            }
+            return value;
+        }
+    }
+
+    ecs_component_record_t *cr = flecs_components_get(
+        world, ecs_childof(parent));
+    if (cr) {
+        ecs_hashmap_t *index = cr->pair->name_index;
+        if (index) {
+            return flecs_name_index_find(index, name, length, hash);
+        }
+    }
+    return 0;
 }
 
 static
@@ -624,27 +686,7 @@ ecs_entity_t ecs_lookup_child(
     ecs_check(world != NULL, ECS_INTERNAL_ERROR, NULL);
     world = ecs_get_world(world);
 
-    if (flecs_name_is_id(name)) {
-        ecs_entity_t result = flecs_name_to_id(name);
-        if (result && ecs_is_alive(world, result)) {
-            if (parent && !ecs_has_pair(world, result, EcsChildOf, parent)) {
-                return 0;
-            }
-            return result;
-        }
-    }
-
-    ecs_id_t pair = ecs_childof(parent);
-    ecs_component_record_t *cr = flecs_components_get(world, pair);
-    ecs_hashmap_t *index = NULL;
-    if (cr) {
-        index = flecs_component_name_index_get(world, cr);
-    }
-    if (index) {
-        return flecs_name_index_find(index, name, 0, 0);
-    } else {
-        return 0;
-    }
+    return flecs_lookup_child_n(world, parent, name, ecs_os_strlen(name), 0);
 error:
     return 0;
 }
@@ -717,11 +759,8 @@ ecs_entity_t ecs_lookup_path_w_sep(
     ecs_entity_t cur;
     bool lookup_path_search = false;
 
-    const ecs_entity_t *lookup_path = ecs_get_lookup_path(stage);
-    const ecs_entity_t *lookup_path_cur = lookup_path;
-    while (lookup_path_cur && *lookup_path_cur) {
-        lookup_path_cur ++;
-    }
+    const ecs_entity_t *lookup_path = NULL;
+    const ecs_entity_t *lookup_path_cur = NULL;
 
     if (!sep) {
         sep = ".";
@@ -746,14 +785,44 @@ ecs_entity_t ecs_lookup_path_w_sep(
         return ecs_lookup_child(world, parent, path);
     }
 
+    ecs_size_t sep_len = ecs_os_strlen(sep);
+    char sep0 = sep[0];
+    bool has_escape = strchr(path, '\\') != NULL;
+    ecs_size_t path_len = 0;
+    uint64_t path_hash = 0;
+    if (!has_escape && !strchr(path, sep0)) {
+        path_len = ecs_os_strlen(path);
+        path_hash = flecs_hash(path, path_len);
+    }
+
 retry:
     cur = parent;
     ptr = path;
 
-    while ((ptr = flecs_path_elem(ptr, sep, &elem, &size))) {
-        cur = ecs_lookup_child(world, cur, elem);
+    if (path_len) {
+        cur = flecs_lookup_child_n(world, cur, path, path_len, path_hash);
         if (!cur) {
             goto tail;
+        }
+    } else if (!has_escape) {
+        while (ptr) {
+            ecs_size_t len;
+            const char *next = flecs_path_elem_n(ptr, sep, sep_len, &len);
+            if (!len && !next) {
+                break;
+            }
+            cur = flecs_lookup_child_n(world, cur, ptr, len, 0);
+            if (!cur) {
+                goto tail;
+            }
+            ptr = next;
+        }
+    } else {
+        while ((ptr = flecs_path_elem(ptr, sep, &elem, &size))) {
+            cur = ecs_lookup_child(world, cur, elem);
+            if (!cur) {
+                goto tail;
+            }
         }
     }
 
@@ -765,6 +834,11 @@ tail:
                 goto retry;
             } else {
                 lookup_path_search = true;
+                lookup_path = ecs_get_lookup_path(stage);
+                lookup_path_cur = lookup_path;
+                while (lookup_path_cur && *lookup_path_cur) {
+                    lookup_path_cur ++;
+                }
             }
         }
 

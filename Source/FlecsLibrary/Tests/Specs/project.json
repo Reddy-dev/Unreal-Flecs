@@ -870,7 +870,31 @@
                 "optional_module",
                 "has_entity",
                 "has_table",
-                "has_range"
+                "has_range",
+                "dont_fragment_trait_registered",
+                "dont_fragment_trait_specialized_registered",
+                "each_dont_fragment_trait",
+                "each_dont_fragment_trait_mixed",
+                "each_dont_fragment_trait_shared",
+                "each_optional_sparse",
+                "sparse_query_type",
+                "sparse_query_each",
+                "sparse_query_empty",
+                "sparse_query_recycled_entity",
+                "sparse_query_skip_prefab_disabled",
+                "sparse_query_type_on_instantiate",
+                "sparse_query_type_no_on_instantiate",
+                "sparse_query_each_on_instantiate_override",
+                "sparse_query_each_on_instantiate_dont_inherit",
+                "sparse_query_each_on_instantiate_mixed_terms",
+                "sparse_query_dynamic_inherit_1_term",
+                "sparse_query_dynamic_inherit_3_terms",
+                "sparse_query_dynamic_inherit_assert",
+                "sparse_query_dynamic_dont_inherit",
+                "sparse_query_convert_to_query_1_term",
+                "sparse_query_convert_to_query_3_terms",
+                "world_each_sparse",
+                "world_each_sparse_w_entity"
             ]
         }, {
             "id": "QueryBuilder",
@@ -1099,7 +1123,9 @@
                 "deduce_singleton_and_component_terms_from_each_callback",
                 "with_terms_after_deduced_terms",
                 "write_annotation",
-                "name_from_root"
+                "name_from_root",
+                "reuse_system_builder",
+                "kind_on_shared_builder"
             ]
         }, {
             "id": "Observer",
@@ -1175,7 +1201,8 @@
                 "query_eval_w_pair_both_vars_that_triggered_observer",
                 "fixed_src_w_each",
                 "fixed_src_w_run",
-                "untyped_field"
+                "untyped_field",
+                "reuse_observer_builder"
             ]
         }, {
             "id": "ComponentLifecycle",
@@ -1284,7 +1311,10 @@
                 "compare_int16_Enum",
                 "compare_int32_Enum",
                 "compare_int64_Enum",
-                "move_ctor_no_default_ctor"
+                "move_ctor_no_default_ctor",
+                "on_validate_hook",
+                "on_validate_hook_blocks_on_set",
+                "on_validate_hook_blocks_observer"
             ]
         }, {
             "id": "Refs",
@@ -1703,6 +1733,49 @@
                 "unlock",
                 "has_flags",
                 "clear_entities"
+            ]
+        }, {
+            "id": "ComponentTraits",
+            "testcases": [
+                "dont_fragment_explicit",
+                "dont_fragment_implicit",
+                "on_instantiate_override_explicit",
+                "on_instantiate_override_implicit",
+                "on_instantiate_inherit_explicit",
+                "on_instantiate_inherit_implicit",
+                "on_instantiate_dont_inherit_explicit",
+                "on_instantiate_dont_inherit_implicit",
+                "on_instantiate_specialized_explicit",
+                "on_instantiate_specialized_implicit",
+                "dont_fragment_dont_inherit_explicit",
+                "dont_fragment_dont_inherit_implicit",
+                "no_traits_explicit",
+                "no_traits_implicit",
+                "sparse_explicit",
+                "sparse_implicit",
+                "sparse_specialized",
+                "sparse_get_get_mut",
+                "sparse_try_get_not_found",
+                "dont_fragment_get_get_mut",
+                "on_instantiate_override_get_get_mut",
+                "on_instantiate_dont_inherit_get_get_mut",
+                "on_instantiate_inherit_get_inherited",
+                "no_traits_get_inherited",
+                "get_dispatch",
+                "dynamic_inherit_dense_owned",
+                "dynamic_inherit_dense_inherited",
+                "dynamic_inherit_sparse_owned",
+                "dynamic_inherit_sparse_owned_get_mut",
+                "dynamic_inherit_sparse_inherited",
+                "dynamic_inherit_dont_fragment_owned",
+                "dynamic_inherit_dont_fragment_owned_get_mut",
+                "dynamic_inherit_dont_fragment_inherited",
+                "static_inherit_dense_owned",
+                "static_inherit_dense_inherited",
+                "static_inherit_sparse_owned",
+                "static_inherit_sparse_inherited",
+                "static_inherit_dont_fragment_owned",
+                "static_inherit_dont_fragment_inherited"
             ]
         }]
     }

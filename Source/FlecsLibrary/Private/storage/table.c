@@ -19,6 +19,8 @@
 
 #include "../private_api.h"
 
+const int16_t flecs_table_empty_component_map[FLECS_HI_COMPONENT_ID] = {0};
+
 /* Table sanity check to detect storage issues. Only enabled in SANITIZE mode as
  * this can severely slow down many ECS operations. */
 #ifdef FLECS_SANITIZE
@@ -161,6 +163,7 @@ void flecs_table_init_columns(
         t2s[i] = cur;
         s2t[cur] = i;
         tr->column = flecs_ito(int16_t, cur);
+        flecs_table_cache_set_column(&cr->cache, table, tr->column);
 
         columns[cur].ti = ECS_CONST_CAST(ecs_type_info_t*, ti);
         
@@ -181,6 +184,7 @@ void flecs_table_init_columns(
         if (ecs_id_is_wildcard(id)) {
             ecs_table_record_t *first_tr = &records[tr->index];
             tr->column = first_tr->column;
+            flecs_table_cache_set_column(&cr->cache, table, tr->column);
         }
     }
 
@@ -376,29 +380,31 @@ void flecs_table_init_flags(
 static
 void flecs_table_append_to_records(
     ecs_world_t *world,
-    ecs_table_t *table,
     ecs_vec_t *records,
     ecs_id_t id,
-    int32_t column)
+    int32_t column,
+    int32_t scan_start)
 {
-    /* To avoid a quadratic search, use the O(1) lookup that the index
-     * already provides. */
     ecs_component_record_t *cr = flecs_components_ensure(world, id);
 
-    /* Safe, record is owned by table. */
-    ecs_table_record_t *tr = ECS_CONST_CAST(ecs_table_record_t*, 
-        flecs_component_get_table(cr, table));
+    int32_t i, count = ecs_vec_count(records);
+    ecs_table_record_t *array = ecs_vec_first_t(records, ecs_table_record_t);
+    ecs_table_record_t *tr = NULL;
+    for (i = scan_start; i < count; i ++) {
+        if (array[i].hdr.cr == cr) {
+            tr = &array[i];
+            break;
+        }
+    }
+
     if (!tr) {
         tr = ecs_vec_append_t(&world->allocator, records, ecs_table_record_t);
+        tr->hdr.cr = cr;
         tr->index = flecs_ito(int16_t, column);
         tr->count = 1;
-
-        ecs_table_cache_insert(&cr->cache, table, &tr->hdr);
     } else {
         tr->count ++;
     }
-
-    ecs_assert(tr->hdr.cr != NULL, ECS_INTERNAL_ERROR, NULL);
 }
 
 static
@@ -585,6 +591,7 @@ void flecs_table_init(
     int32_t last_id = -1; /* Track last regular (non-pair) id */
     int32_t first_pair = -1; /* Track the first pair in the table */
     int32_t first_role = -1; /* Track first id with role */
+    bool has_low_id = false;
 
     /* Scan to find boundaries of regular ids, pairs and roles */
     for (dst_i = 0; dst_i < dst_count; dst_i ++) {
@@ -597,6 +604,8 @@ void flecs_table_init(
         } else if (first_role == -1 && !ECS_IS_PAIR(dst_id)) {
             first_role = dst_i;
         }
+
+        has_low_id |= dst_id < FLECS_HI_COMPONENT_ID;
 
         /* Build bloom filter for table */
         table->bloom_filter = 
@@ -638,10 +647,6 @@ void flecs_table_init(
         tr->count = 1;
     }
 
-    /* We're going to insert records from the vector into the index that
-     * will get patched up later. To ensure the record pointers don't get
-     * invalidated we need to grow the vector so that it won't realloc as
-     * we're adding the next set of records */
     if (first_role != -1 || first_pair != -1) {
         int32_t start = first_role;
         if (first_pair != -1 && (start == -1 || first_pair < start)) {
@@ -659,10 +664,6 @@ void flecs_table_init(
         ecs_vec_set_min_size_t(a, records, ecs_table_record_t, record_count);
     }
 
-    /* Get records size now so we can check that array did not resize */
-    int32_t records_size = ecs_vec_size(records);
-    (void)records_size;
-
     /* Add records for ids with roles (used by cleanup logic) */
     if (first_role != -1) {
         for (dst_i = first_role; dst_i < dst_count; dst_i ++) {
@@ -677,12 +678,12 @@ void flecs_table_init(
                     first = id & ECS_COMPONENT_MASK;
                 }
                 if (first) {
-                    flecs_table_append_to_records(world, table, records, 
-                        ecs_pair(EcsFlag, first), dst_i);
+                    flecs_table_append_to_records(world, records,
+                        ecs_pair(EcsFlag, first), dst_i, dst_count);
                 }
                 if (second) {
-                    flecs_table_append_to_records(world, table, records, 
-                        ecs_pair(EcsFlag, second), dst_i);
+                    flecs_table_append_to_records(world, records,
+                        ecs_pair(EcsFlag, second), dst_i, dst_count);
                 }
             }
         }
@@ -738,7 +739,7 @@ void flecs_table_init(
             ecs_id_t tgt_id = ecs_pair(EcsWildcard, ECS_PAIR_SECOND(dst_id));
 
             flecs_table_append_to_records(
-                world, table, records, tgt_id, dst_i);
+                world, records, tgt_id, dst_i, dst_count);
         }
     }
 
@@ -782,21 +783,7 @@ void flecs_table_init(
         cr = dst_tr[i].hdr.cr;
         ecs_assert(cr != NULL, ECS_INTERNAL_ERROR, NULL);
 
-        if (ecs_table_cache_get(&cr->cache, table)) {
-            /* If this is a target wildcard record it has already been 
-             * registered, but the record is now at a different location in
-             * memory. Patch up the linked list with the new address */
-
-            /* Ensure that record array hasn't been reallocated */
-            ecs_assert(records_size == ecs_vec_size(records), 
-                ECS_INTERNAL_ERROR, NULL);
-
-            ecs_table_cache_replace(&cr->cache, table, &tr->hdr);
-        } else {
-            /* Other records are not registered yet */
-            ecs_assert(cr != NULL, ECS_INTERNAL_ERROR, NULL);
-            ecs_table_cache_insert(&cr->cache, table, &tr->hdr);
-        }
+        ecs_table_cache_insert(&cr->cache, table, &tr->hdr);
 
         /* Claim component record so it stays alive as long as the table exists */
         flecs_component_claim(world, cr);
@@ -825,7 +812,12 @@ void flecs_table_init(
     /* Initialize event flags for any record */
     table->flags |= world->cr_any->flags & EcsIdEventMask;
 
-    table->component_map = ecs_os_calloc_n(int16_t, FLECS_HI_COMPONENT_ID);
+    if (has_low_id) {
+        table->component_map = ecs_os_calloc_n(int16_t, FLECS_HI_COMPONENT_ID);
+    } else {
+        table->component_map = ECS_CONST_CAST(int16_t*,
+            flecs_table_empty_component_map);
+    }
 
     if (column_count) {
         table->column_map = ecs_os_calloc_n(int16_t, dst_count + column_count);
@@ -952,8 +944,8 @@ void flecs_table_invoke_hook(
     ecs_assert(type_index < table->type.count, ECS_INTERNAL_ERROR, NULL);
     const ecs_table_record_t *tr = &table->_->records[type_index];
     ecs_component_record_t *cr = tr->hdr.cr;
-    flecs_invoke_hook(world, table, cr, tr, count, row, entities, 
-        table->type.array[type_index], column->ti, event, callback);
+    flecs_invoke_hook(world, table, cr, tr->column, count, row, entities,
+        table->type.array[type_index], column->ti, event, callback, NULL);
 }
 
 static
@@ -993,8 +985,9 @@ void flecs_table_invoke_ctor_for_array(
                     int32_t record_index = table->column_map[table->type.count + column_index];
                     const ecs_table_record_t *tr = &table->_->records[record_index];
                     const ecs_entity_t *entities = &ecs_table_entities(table)[row];
-                    flecs_invoke_hook(world, table, tr->hdr.cr, tr, 
-                        count, row, entities, ti->component, ti, EcsOnSet, on_set);
+                    flecs_invoke_hook(world, table, tr->hdr.cr, tr->column,
+                        count, row, entities, ti->component, ti, EcsOnSet,
+                        on_set, ECS_ELEM(array, ti->size, row));
                 }
 
                 return;
@@ -1238,6 +1231,8 @@ void flecs_table_fini_data(
     table->data.count = 0;
     table->_->traversable_count = 0;
     table->flags &= ~EcsTableHasTraversable;
+    table->flags |= EcsTableEmpty;
+    table->flags &= ~EcsTableNotEmpty;
 
     flecs_increment_table_version(world, table);
 }
@@ -1318,7 +1313,9 @@ void flecs_table_fini(
     flecs_table_fini_overrides(world, table);
     flecs_wfree_n(world, int32_t, table->column_count + 1, table->dirty_state);
     ecs_os_free(table->column_map);
-    ecs_os_free(table->component_map);
+    if (table->component_map != flecs_table_empty_component_map) {
+        ecs_os_free(table->component_map);
+    }
     flecs_table_records_unregister(world, table);
 
     /* Update counters */
@@ -1621,6 +1618,11 @@ int32_t flecs_table_grow_data(
     int32_t count = ecs_table_count(table);
     int32_t column_count = table->column_count;
 
+    if (!count && to_add) {
+        table->flags &= ~EcsTableEmpty;
+        table->flags |= EcsTableNotEmpty;
+    }
+
     /* Add entity to column with entity ids */
     ecs_vec_t v_entities = ecs_vec_from_entities(table);
     ecs_vec_set_size_t(NULL, &v_entities, ecs_entity_t, size);
@@ -1773,6 +1775,11 @@ void flecs_table_append(
     flecs_table_mark_table_dirty(world, table, 0);
     ecs_assert(count >= 0, ECS_INTERNAL_ERROR, NULL);
 
+    if (!count) {
+        table->flags &= ~EcsTableEmpty;
+        table->flags |= EcsTableNotEmpty;
+    }
+
     /* Fast path: no toggle columns, no lifecycle actions */
     if (!(table->flags & (EcsTableIsComplex|EcsTableHasIsA))) {
         flecs_table_fast_append(table);
@@ -1900,6 +1907,10 @@ void flecs_table_delete(
         }
 
         table->data.count --;
+        if (!count) {
+            table->flags |= EcsTableEmpty;
+            table->flags &= ~EcsTableNotEmpty;
+        }
 
         flecs_table_check_sanity(table);
         return;
@@ -1956,6 +1967,10 @@ void flecs_table_delete(
     }
 
     table->data.count --;
+    if (!count) {
+        table->flags |= EcsTableEmpty;
+        table->flags &= ~EcsTableNotEmpty;
+    }
 
     flecs_table_check_sanity(table);
 }
@@ -2491,6 +2506,11 @@ void flecs_table_merge(
         flecs_table_traversable_add(dst_table, src_table->_->traversable_count);
         flecs_table_traversable_add(src_table, -src_table->_->traversable_count);
         ecs_assert(src_table->_->traversable_count == 0, ECS_INTERNAL_ERROR, NULL);
+
+        dst_table->flags &= ~EcsTableEmpty;
+        dst_table->flags |= EcsTableNotEmpty;
+        src_table->flags |= EcsTableEmpty;
+        src_table->flags &= ~EcsTableNotEmpty;
     }
 
     flecs_table_check_sanity(src_table);
@@ -2604,7 +2624,13 @@ ecs_component_record_t* flecs_table_record_get_component(
 uint64_t flecs_table_id(
     ecs_table_t* table)
 {
-    return table->id;    
+    return table->id;
+}
+
+ecs_flags32_t flecs_table_flags(
+    const ecs_table_t* table)
+{
+    return table->flags;
 }
 
 const ecs_ref_t* flecs_table_get_override(

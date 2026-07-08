@@ -18,6 +18,8 @@ void flecs_observable_init(
     observable->on_add.event = EcsOnAdd;
     observable->on_remove.event = EcsOnRemove;
     observable->on_set.event = EcsOnSet;
+    observable->on_table_create.event = EcsOnTableCreate;
+    observable->on_table_delete.event = EcsOnTableDelete;
 }
 
 void flecs_observable_fini(
@@ -64,6 +66,8 @@ ecs_event_record_t* flecs_event_record_get(
     else if (event == EcsOnRemove) return ECS_CONST_CAST(ecs_event_record_t*, &o->on_remove);
     else if (event == EcsOnSet)    return ECS_CONST_CAST(ecs_event_record_t*, &o->on_set);
     else if (event == EcsWildcard) return ECS_CONST_CAST(ecs_event_record_t*, &o->on_wildcard);
+    else if (event == EcsOnTableCreate) return ECS_CONST_CAST(ecs_event_record_t*, &o->on_table_create);
+    else if (event == EcsOnTableDelete) return ECS_CONST_CAST(ecs_event_record_t*, &o->on_table_delete);
 
     /* User events */
     return flecs_sparse_get_t(&o->events, ecs_event_record_t, event);
@@ -125,7 +129,7 @@ ecs_event_id_record_t* flecs_event_id_record_get(
     else if (id == EcsWildcard)                        return er->wildcard;
     else if (id == ecs_pair(EcsWildcard, EcsWildcard)) return er->wildcard_pair;
     else {
-        if (ecs_map_is_init(&er->event_ids)) {
+        if (er->event_ids_filter & (1llu << (id % 64))) {
             return ecs_map_get_deref(&er->event_ids, ecs_event_id_record_t, id);
         }
         return NULL;
@@ -171,6 +175,7 @@ ecs_event_id_record_t* flecs_event_id_record_ensure(
 
     ecs_map_init_if(&er->event_ids, &world->allocator);
     ecs_map_insert_ptr(&er->event_ids, id, ider);
+    er->event_ids_filter |= 1llu << (id % 64);
     return ider;
 }
 
@@ -188,6 +193,14 @@ void flecs_event_id_record_remove(
         ecs_map_remove(&er->event_ids, id);
         if (!ecs_map_count(&er->event_ids)) {
             ecs_map_fini(&er->event_ids);
+            er->event_ids_filter = 0;
+        } else {
+            uint64_t filter = 0;
+            ecs_map_iter_t it = ecs_map_iter(&er->event_ids);
+            while (ecs_map_next(&it)) {
+                filter |= 1llu << (ecs_map_key(&it) % 64);
+            }
+            er->event_ids_filter = filter;
         }
     }
 }
@@ -302,7 +315,7 @@ void flecs_emit_propagate_id_for_range(
         }
     }
 
-    if (!table->_->traversable_count) {
+    if (!table->_->traversable_count || owned) {
         return;
     }
 
@@ -356,13 +369,14 @@ void flecs_emit_propagate_id(
         return;
     }
 
-    if (!flecs_table_cache_all_iter(&cur->cache, &idt)) {
+    if (!flecs_table_cache_iter(&cur->cache, &idt, EcsTableEmpty|EcsTableNotEmpty)) {
         return;
     }
 
-    const ecs_table_record_t *tr;
+    const ecs_table_cache_elem_t *elem;
     int32_t event_cur = it->event_cur;
-    while ((tr = flecs_table_cache_next(&idt, ecs_table_record_t))) {
+    while ((elem = flecs_table_cache_next(&idt))) {
+        const ecs_table_record_t *tr = elem->tr;
         ecs_table_t *table = tr->hdr.table;
         if (!ecs_table_count(table)) {
             continue;
@@ -457,12 +471,13 @@ void flecs_emit_propagate_invalidate_tables(
         }
 
         ecs_table_cache_iter_t idt;
-        if (!flecs_table_cache_all_iter(&cur->cache, &idt)) {
+        if (!flecs_table_cache_iter(&cur->cache, &idt, EcsTableEmpty|EcsTableNotEmpty)) {
             continue;
         }
 
-        const ecs_table_record_t *tr;
-        while ((tr = flecs_table_cache_next(&idt, ecs_table_record_t))) {
+        const ecs_table_cache_elem_t *elem;
+        while ((elem = flecs_table_cache_next(&idt))) {
+            const ecs_table_record_t *tr = elem->tr;
             ecs_table_t *table = tr->hdr.table;
             if (!table->_->traversable_count) {
                 continue;
@@ -1414,6 +1429,7 @@ repeat_event:
                     ecs_id_t pair = ecs_childof(parent);
                     ecs_type_t type = { .count = 1, .array = &pair };
                     pdesc.ids = &type;
+                    pdesc.set_ptr = NULL;
                     flecs_emit(world, stage, &pdesc);
                 }
             }
@@ -1518,6 +1534,10 @@ repeat_event:
             ECS_CONST_CAST(int32_t*, it.sizes)[0] = 0;
         }
 
+        if (desc->set_ptr && id_count == 1) {
+            it.ptrs = &desc->set_ptr;
+        }
+
         /* Actually invoke observers for this event/id */
         for (ider_i = 0; ider_i < ider_count; ider_i ++) {
             ecs_event_id_record_t *ider = iders[ider_i];
@@ -1526,6 +1546,8 @@ repeat_event:
             flecs_observers_invoke(world, &ider->self_up, &it, table, 0);
             ecs_assert(it.event_cur == evtx, ECS_INTERNAL_ERROR, NULL);
         }
+
+        it.ptrs = NULL;
 
         if (!ider_count || !count || !has_observed) {
             continue;

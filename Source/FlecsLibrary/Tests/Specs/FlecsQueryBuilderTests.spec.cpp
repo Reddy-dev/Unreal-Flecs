@@ -1,10 +1,16 @@
 ﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
 
+#include "Misc/AutomationTest.h"
+
 #include "Bake/FlecsTestUtils.h"
 
-#if WITH_AUTOMATION_TESTS
+// @TODO: add tests for query builder
 
-#include "Misc/AutomationTest.h"
+#if WITH_AUTOMATION_TESTS && defined(FLECS_TESTS)
+
+#include "flecs.h"
+
+#include "Bake/FlecsTestTypes.h"
 
 BEGIN_DEFINE_SPEC(FFlecsQueryBuilderTestsSpec,
                   "FlecsLibrary.FlecsQueryBuilderTests",

@@ -1843,6 +1843,32 @@ void Observer_untyped_field(void) {
 	test_int(count, 1);
 }
 
+void Observer_reuse_observer_builder(void) {
+	flecs::world ecs;
+	ecs.component<Position>();
+	ecs.component<Velocity>();
+
+	auto ob = ecs.observer<Position>().event(flecs::OnSet);
+
+	int count_1 = 0;
+	flecs::observer o1 = ob.each([&](Position& p) {
+		count_1 ++;
+	});
+
+	int count_2 = 0;
+	flecs::observer o2 = ob.with<Velocity>().each([&](Position& p) {
+		count_2 ++;
+	});
+
+	test_assert(o1 != o2);
+
+	ecs.entity().set(Position {10, 20});
+	ecs.entity().set(Position {10, 20}).set(Velocity{1, 2});
+
+	test_int(count_1, 2);
+	test_int(count_2, 1);
+}
+
 END_DEFINE_SPEC(FFlecsObserverTestsSpec);
 
 /*"id": "Observer",
@@ -1915,7 +1941,8 @@ END_DEFINE_SPEC(FFlecsObserverTestsSpec);
 				"query_eval_w_pair_both_vars_that_triggered_observer",
                 "fixed_src_w_each",
                 "fixed_src_w_run",
-                "untyped_field"
+                "untyped_field",
+                "reuse_observer_builder"
             ]*/
 
 void FFlecsObserverTestsSpec::Define()
@@ -1990,6 +2017,7 @@ void FFlecsObserverTestsSpec::Define()
 	It("fixed_src_w_each", [&]() { Observer_fixed_src_w_each(); });
 	It("fixed_src_w_run", [&]() { Observer_fixed_src_w_run(); });
 	It("untyped_field", [&]() { Observer_untyped_field(); });
+	It("reuse_observer_builder", [&]() { Observer_reuse_observer_builder(); });
 }
 
 #endif // WITH_AUTOMATION_TESTS

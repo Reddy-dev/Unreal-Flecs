@@ -36,6 +36,29 @@ enum class EFlecsOnInstantiate : uint8
 }; // enum class EFlecsOnInstantiate
 ENUM_RANGE_BY_COUNT(EFlecsOnInstantiate, EFlecsOnInstantiate::Count);
 
+template <flecs::on_instantiate InTrait>
+consteval EFlecsOnInstantiate ConvertToFlecsOnInstantiate()
+{
+	if constexpr (InTrait == flecs::on_instantiate::override)
+	{
+		return EFlecsOnInstantiate::Override;
+	}
+	else if constexpr (InTrait == flecs::on_instantiate::inherit)
+	{
+		return EFlecsOnInstantiate::Inherit;
+	}
+	else if constexpr (InTrait == flecs::on_instantiate::dont_inherit)
+	{
+		return EFlecsOnInstantiate::DontInherit;
+	}
+	else
+	{
+		static_assert(false, "Invalid flecs::on_instantiate trait value");
+	}
+	
+	return EFlecsOnInstantiate::Override;
+}
+
 UENUM(BlueprintType)
 enum class EFlecsOnDelete : uint8
 {
@@ -154,7 +177,7 @@ public:
 	using DependsOn = TTuple<>;
 	using InheritsFrom = void;
 	
-	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::Override;	
+	static constexpr EFlecsOnInstantiate OnInstantiate = ConvertToFlecsOnInstantiate<flecs::on_instantiate_trait<T>::value>();
 	static constexpr EFlecsOnDelete OnDelete = EFlecsOnDelete::Remove;
 	static constexpr EFlecsOnDelete OnDeleteTarget = EFlecsOnDelete::Remove;
 	
@@ -163,8 +186,8 @@ public:
 	
 	static constexpr bool Trait = false;
 	
-	static constexpr bool DontFragment = false;
-	static constexpr bool Sparse = DontFragment;
+	static constexpr bool DontFragment = flecs::dont_fragment<T>::value;
+	static constexpr bool Sparse = flecs::sparse<T>::value;
 	
 	static constexpr bool Relationship = false;
 	static constexpr bool Target = false;

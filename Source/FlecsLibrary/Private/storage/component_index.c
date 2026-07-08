@@ -294,10 +294,10 @@ void flecs_component_ordered_children_init(
     flecs_ordered_children_init(world, cr);
 
     ecs_table_cache_iter_t it;
-    if (flecs_table_cache_all_iter(&cr->cache, &it)) {
-        const ecs_table_record_t *tr;
-        while ((tr = flecs_table_cache_next(&it, ecs_table_record_t))) {
-            tr->hdr.table->flags |= EcsTableHasOrderedChildren;
+    if (flecs_table_cache_iter(&cr->cache, &it, EcsTableEmpty|EcsTableNotEmpty)) {
+        const ecs_table_cache_elem_t *elem;
+        while ((elem = flecs_table_cache_next(&it))) {
+            elem->table->flags |= EcsTableHasOrderedChildren;
         }
     }
 }
@@ -673,6 +673,7 @@ ecs_component_record_t* flecs_component_new(
     world->info.component_id_count += cr->type_info != NULL;
     world->info.tag_id_count += cr->type_info == NULL;
     world->info.pair_id_count += is_pair;
+    world->cr_flag_count += is_pair && (ECS_PAIR_FIRST(id) == EcsFlag);
 
     return cr;
 }
@@ -749,6 +750,7 @@ void flecs_component_free(
     world->info.pair_id_count -= ECS_IS_PAIR(id);
     world->info.component_id_count -= cr->type_info != NULL;
     world->info.tag_id_count -= cr->type_info == NULL;
+    world->cr_flag_count -= ECS_IS_PAIR(id) && (ECS_PAIR_FIRST(id) == EcsFlag);
 
     /* Unregister the component record from the world & free resources */
     ecs_table_cache_fini(&cr->cache);
@@ -799,12 +801,9 @@ ecs_component_record_t* flecs_components_get(
     ecs_id_t id)
 {
     flecs_poly_assert(world, ecs_world_t);
-    if (id == ecs_pair(EcsIsA, EcsWildcard)) {
-        return world->cr_isa_wildcard;
-    } else if (id == ecs_pair(EcsChildOf, EcsWildcard)) {
-        return world->cr_childof_wildcard;
-    } else if (id == ecs_pair_t(EcsIdentifier, EcsName)) {
-        return world->cr_identifier_name;
+
+    if (id < FLECS_HI_ID_RECORD_ID) {
+        return world->id_index_lo[id];
     }
 
     ecs_id_t hash = flecs_component_hash(id);
@@ -848,25 +847,20 @@ bool flecs_component_release_tables(
 {
     bool remaining = false;
 
-    ecs_table_cache_iter_t it;
-    if (flecs_table_cache_all_iter(&cr->cache, &it)) {
-        const ecs_table_record_t *tr;
-        while ((tr = flecs_table_cache_next(&it, ecs_table_record_t))) {
-            ecs_table_t *table = tr->hdr.table;
+    ecs_table_cache_t *cache = &cr->cache;
+    int32_t i = 0;
+    while (i < ecs_vec_count(&cache->records)) {
+        ecs_table_cache_elem_t *elem = ecs_vec_get_t(
+            &cache->records, ecs_table_cache_elem_t, i);
+        ecs_table_t *table = elem->table;
 
-            if (table->keep) {
-                remaining = true;
-                continue;
-            }
-
-            if (ecs_table_count(table)) {
-                remaining = true;
-                continue;
-            }
-
-            /* Release current table */
-            flecs_table_fini(world, tr->hdr.table);
+        if (table->keep || ecs_table_count(table)) {
+            remaining = true;
+            i ++;
+            continue;
         }
+
+        flecs_table_fini(world, table);
     }
 
     return remaining;
@@ -903,6 +897,13 @@ const ecs_type_info_t* flecs_component_get_type_info(
 {
     ecs_assert(cr != NULL, ECS_INTERNAL_ERROR, NULL);
     return cr->type_info;
+}
+
+ecs_sparse_t* flecs_component_get_sparse(
+    const ecs_component_record_t *cr)
+{
+    ecs_assert(cr != NULL, ECS_INTERNAL_ERROR, NULL);
+    return cr->sparse;
 }
 
 ecs_hashmap_t* flecs_component_name_index_ensure(
@@ -1104,13 +1105,14 @@ bool flecs_component_iter(
     const ecs_component_record_t *cr,
     ecs_table_cache_iter_t *iter_out)
 {
-    return flecs_table_cache_all_iter(&cr->cache, iter_out);
+    return flecs_table_cache_iter(&cr->cache, iter_out, EcsTableEmpty|EcsTableNotEmpty);
 }
 
 const ecs_table_record_t* flecs_component_next(
     ecs_table_cache_iter_t *iter)
 {
-    return flecs_table_cache_next(iter, ecs_table_record_t);
+    const ecs_table_cache_elem_t *elem = flecs_table_cache_next(iter);
+    return elem ? elem->tr : NULL;
 }
 
 ecs_id_t flecs_component_get_id(
