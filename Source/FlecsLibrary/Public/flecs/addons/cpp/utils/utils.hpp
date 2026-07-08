@@ -177,9 +177,12 @@ using if_not_t = enable_if_t<false == V, int>;
 template <typename T, typename = void>
 struct dont_fragment : std::false_type { };
     
+template <typename T>
+struct dont_fragment<T, enable_if_t<(T::dont_fragment)>> : std::true_type { };
+    
 // Modified to add DontFragment syntax style - Elie
 template <typename T>
-struct dont_fragment<T, enable_if_t<T::dont_fragment || T::DontFragment>> : std::true_type { };
+struct dont_fragment<T, enable_if_t<T::DontFragment>> : std::true_type { };
 
 /** OnInstantiate policies that can be assigned to a component at compile
  * time with the flecs::on_instantiate_trait trait. */

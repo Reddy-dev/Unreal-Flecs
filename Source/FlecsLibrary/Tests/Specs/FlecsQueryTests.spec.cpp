@@ -4119,6 +4119,7 @@ void Query_sparse_query_type(void) {
 	world.component<Position_Df_Or>();
 	world.component<Velocity_Df_Or>();
 	world.component<Position>();
+	world.component<Velocity>();
 
 	auto q1 = world.query<Position_Df_Or>();
 	test_assert((std::is_same<decltype(q1),
@@ -4242,6 +4243,7 @@ void Query_sparse_query_type_on_instantiate(void) {
 	flecs::world world;
 	world.component<Position_Df_Di>();
 	world.component<Position_Df_Ih>();
+	world.component<Position_Df_Or>();
 
 	auto q1 = world.query<Position_Df_Di>();
 	test_assert((std::is_same<decltype(q1),
@@ -4262,8 +4264,8 @@ void Query_sparse_query_type_on_instantiate(void) {
 
 void Query_sparse_query_type_no_on_instantiate(void) {
 	flecs::world world;
+	world.component<Position_Df>();
 	world.component<Position_Df_Or>();
-	world.component<Position_Df_Ih>();
 
 	auto e1 = world.entity().set<Position_Df>({10, 20});
 	auto e2 = world.entity().set<Position_Df>({30, 40});
@@ -4454,6 +4456,7 @@ void Query_sparse_query_dynamic_inherit_3_terms(void) {
 		.add(flecs::OnInstantiate, flecs::Inherit);
 	
 	world.component<Position_Df_Or>();
+	world.component<Velocity_Df_Or>();
 
 	auto owner = world.entity()
 		.set<Position_Df_Di>({10, 20})
