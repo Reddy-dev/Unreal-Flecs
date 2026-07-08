@@ -819,6 +819,50 @@ void Enum_query_singleton_enum_constant(void) {
     test_int(count, 1);
 }
 
+void Enum_query_singleton_enum_constant_or(void) {
+    flecs::world ecs;
+
+    ecs.component<StandardEnum>().add(flecs::Singleton);
+
+    auto q = ecs.query_builder()
+        .with(StandardEnum::Red).or_().with(StandardEnum::Blue)
+        .build();
+
+    int32_t count = 0;
+
+    q.each([&](flecs::iter& it, size_t index) {
+        count ++;
+    });
+
+    test_int(count, 0);
+
+    ecs.add(StandardEnum::Green);
+
+    q.each([&](flecs::iter& it, size_t index) {
+        count ++;
+    });
+
+    test_int(count, 0);
+
+    ecs.add(StandardEnum::Blue);
+
+    q.each([&](flecs::iter& it, size_t index) {
+        test_assert(it.src(0) == ecs.component<StandardEnum>());
+        count ++;
+    });
+
+    test_int(count, 1);
+
+    ecs.add(StandardEnum::Red);
+
+    q.each([&](flecs::iter& it, size_t index) {
+        test_assert(it.src(0) == ecs.component<StandardEnum>());
+        count ++;
+    });
+
+    test_int(count, 2);
+}
+
 void Enum_enum_type_from_stage(void) {
     flecs::world ecs;
     ecs.component<StandardEnum>();
@@ -1645,6 +1689,7 @@ END_DEFINE_SPEC(FFlecsEnumTestsSpec);
                 "query_enum_wildcard",
                 "query_enum_constant",
                 "query_singleton_enum_constant",
+                "query_singleton_enum_constant_or",
                 "enum_type_from_stage",
                 "add_enum_from_stage",
                 "enum_w_2_worlds",
@@ -1700,6 +1745,7 @@ void FFlecsEnumTestsSpec::Define()
     It("query_enum_wildcard", [&]() { Enum_query_enum_wildcard(); });
     It("query_enum_constant", [&]() { Enum_query_enum_constant(); });
     It("query_singleton_enum_constant", [&]() { Enum_query_singleton_enum_constant(); });
+    It("query_singleton_enum_constant_or", [&]() { Enum_query_singleton_enum_constant_or(); });
     It("enum_type_from_stage", [&]() { Enum_enum_type_from_stage(); });
     It("add_enum_from_stage", [&]() { Enum_add_enum_from_stage(); });
     It("enum_w_2_worlds", [&]() { Enum_enum_w_2_worlds(); });
