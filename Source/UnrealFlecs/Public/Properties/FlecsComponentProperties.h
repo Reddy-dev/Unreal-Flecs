@@ -186,7 +186,7 @@ public:
 	static constexpr bool Trait = false;
 	
 	static constexpr bool DontFragment = flecs::dont_fragment<T>::value;
-	static constexpr bool Sparse = DontFragment;
+	static constexpr bool Sparse = flecs::sparse<T>::value;
 	
 	static constexpr bool Relationship = false;
 	static constexpr bool Target = false;

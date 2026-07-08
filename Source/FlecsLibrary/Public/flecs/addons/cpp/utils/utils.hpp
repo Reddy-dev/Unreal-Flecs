@@ -192,6 +192,10 @@ struct sparse : std::false_type { };
 
 template <typename T>
 struct sparse<T, enable_if_t<T::sparse>> : std::true_type { };
+    
+// Modified to add Sparse syntax style - Elie
+template <typename T>
+struct sparse<T, enable_if_t<T::Sparse>> : std::true_type { };
 
 /** OnInstantiate policies that can be assigned to a component at compile
  * time with the flecs::on_instantiate_trait trait. */
