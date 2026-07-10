@@ -17,6 +17,8 @@ struct UNREALFLECS_API FFlecsTickFunctionComponent
 	GENERATED_BODY()
 
 public:
+	static constexpr bool Sparse = true;
+
 	//UPROPERTY() // @TODO: this is disabled due to a UHT bug
 	TSharedStruct<FFlecsTickFunction> TickFunction;
 	
