@@ -106,6 +106,8 @@ struct UNREALFLECS_API FFlecsCollectionReferenceComponent
 	GENERATED_BODY()
 
 public:
+	static constexpr bool Sparse = true;
+
 	FORCEINLINE FFlecsCollectionReferenceComponent() = default;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flecs")
@@ -154,6 +156,8 @@ USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsSubEntityIndex
 {
 	GENERATED_BODY()
+
+	static constexpr bool Sparse = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs")
 	int32 Index = INDEX_NONE;

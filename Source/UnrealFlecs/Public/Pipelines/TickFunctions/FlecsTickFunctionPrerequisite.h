@@ -12,6 +12,8 @@ USTRUCT()
 struct UNREALFLECS_API FFlecsTickFunctionPrerequisite
 {
 	GENERATED_BODY()
+
+	static constexpr bool DontFragment = true;
 }; // struct FFlecsTickFunctionPrerequisite
 
 template <>
@@ -21,4 +23,3 @@ struct TFlecsComponentTraits<FFlecsTickFunctionPrerequisite> : public TFlecsComp
 	static constexpr bool Acyclic = true;
 	static constexpr bool DontFragment = true;
 }; // struct TFlecsComponentTraits<FFlecsTickFunctionPrerequisite>
-
