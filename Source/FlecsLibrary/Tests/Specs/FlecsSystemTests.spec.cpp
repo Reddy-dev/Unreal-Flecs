@@ -2671,6 +2671,7 @@ END_DEFINE_SPEC(FFlecsSystemTestsSpec);
                 "test_auto_defer_iter",
                 "custom_pipeline",
                 "custom_pipeline_w_kind",
+                "custom_pipeline_w_name",
                 "instanced_query_w_singleton_each",
                 "instanced_query_w_base_each",
                 "instanced_query_w_singleton_iter",
@@ -2752,6 +2753,7 @@ void FFlecsSystemTestsSpec::Define()
     It("test_auto_defer_iter", [&] { System_test_auto_defer_iter(); });
     It("custom_pipeline", [&] { System_custom_pipeline(); });
     It("custom_pipeline_w_kind", [&] { System_custom_pipeline_w_kind(); });
+    It("custom_pipeline_w_name", [&] { System_custom_pipeline_w_name(); });
     It("instanced_query_w_singleton_each", [&] { System_instanced_query_w_singleton_each(); });
     It("instanced_query_w_base_each", [&] { System_instanced_query_w_base_each(); });
     It("instanced_query_w_singleton_iter", [&] { System_instanced_query_w_singleton_iter(); });
