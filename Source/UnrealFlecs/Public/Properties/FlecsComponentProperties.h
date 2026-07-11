@@ -373,7 +373,7 @@ public:
 			.OwningModule = TFlecsComponentTraits<T>::GetOwningModule()
 		};
 		
-		UE::Flecs::internal::ForEachInTuple<typename TFlecsComponentTraits<T>::WithTypes>([&Definition]<typename TWithType>(TWithType Type)
+		UE::Flecs::internal::ForEachInTuple<typename TFlecsComponentTraits<T>::WithTypes>([&Definition]<typename TWithType>()
 		{
 			using FTypeValue = TWithType;
 			
