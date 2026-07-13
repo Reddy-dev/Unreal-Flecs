@@ -39,7 +39,10 @@ bool FFlecsReplicationTransportRegistry::RegisterProvider(const FName ProviderNa
 		return false;
 	}
 	TMap<FName, TWeakObjectPtr<UClass>>& Providers = GetProviders();
-	if (Providers.Contains(ProviderName)) return false;
+	if (Providers.Contains(ProviderName))
+	{
+		return false;
+	}
 	Providers.Add(ProviderName, TransportClass);
 	return true;
 }

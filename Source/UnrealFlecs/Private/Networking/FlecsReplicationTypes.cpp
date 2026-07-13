@@ -13,9 +13,15 @@ namespace
 		const FFlecsComponentReplicationRegistry& Registry, const FFlecsId First, const FFlecsId Second)
 	{
 		const FFlecsComponentReplicationDescriptor* FirstDescriptor = Registry.Find(First);
-		if (FirstDescriptor && !FirstDescriptor->bIsTag) return FirstDescriptor;
+		if (FirstDescriptor && !FirstDescriptor->bIsTag)
+		{
+			return FirstDescriptor;
+		}
 		const FFlecsComponentReplicationDescriptor* SecondDescriptor = Registry.Find(Second);
-		if (SecondDescriptor && !SecondDescriptor->bIsTag) return SecondDescriptor;
+		if (SecondDescriptor && !SecondDescriptor->bIsTag)
+		{
+			return SecondDescriptor;
+		}
 		return FirstDescriptor ? FirstDescriptor : SecondDescriptor;
 	}
 }
@@ -35,7 +41,10 @@ FFlecsReplicationLayoutId FFlecsReplicationLayoutRegistry::ComputeLayoutId(
 	FMD5Hash Hash;
 	Hash.Set(Md5);
 	FGuid Guid = MD5HashToGuid(Hash);
-	if (!Guid.IsValid()) Guid.D = 1;
+	if (!Guid.IsValid())
+	{
+		Guid.D = 1;
+	}
 	return FFlecsReplicationLayoutId(Guid);
 }
 
@@ -71,7 +80,10 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 		if (!Id.IsPair())
 		{
 			const FFlecsComponentReplicationDescriptor* Descriptor = Registry.Find(Id);
-			if (!Descriptor) continue;
+			if (!Descriptor)
+			{
+				continue;
+			}
 			FFlecsReplicationKey& Key = Keys.AddDefaulted_GetRef();
 			Key.Kind = EFlecsReplicationKeyKind::Component;
 			Key.StorageSchema = Descriptor->SchemaId;
@@ -84,7 +96,10 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 		const FFlecsId Second = Id.GetSecond();
 		const FFlecsComponentReplicationDescriptor* Relationship = Registry.Find(First);
 		const FFlecsComponentReplicationDescriptor* Storage = GetPairStorageDescriptor(Registry, First, Second);
-		if (!Relationship || !Storage) continue;
+		if (!Relationship || !Storage)
+		{
+			continue;
+		}
 
 		FFlecsReplicationKey& Key = Keys.AddDefaulted_GetRef();
 		Key.Kind = EFlecsReplicationKeyKind::Pair;

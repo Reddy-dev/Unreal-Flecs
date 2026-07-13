@@ -98,11 +98,26 @@ bool FFlecsComponentReplicationDescriptor::IsValid(FString* OutError) const
 		if (OutError) { *OutError = Error; }
 		return false;
 	};
-	if (StableName.IsEmpty() || !SchemaId.IsValid()) return Fail(TEXT("Replication stable name/schema ID is missing"));
-	if (SchemaVersion == 0) return Fail(TEXT("Replication schema version must be nonzero"));
-	if (!LocalFlecsId.IsValid()) return Fail(TEXT("Local Flecs ID is invalid"));
-	if (!bIsTag && (Size == 0 || Alignment == 0)) return Fail(TEXT("Data component size/alignment is invalid"));
-	if (!bIsTag && (!Serialize || !Deserialize || !Construct || !Destroy)) return Fail(TEXT("Native replication operations are incomplete"));
+	if (StableName.IsEmpty() || !SchemaId.IsValid())
+	{
+		return Fail(TEXT("Replication stable name/schema ID is missing"));
+	}
+	if (SchemaVersion == 0)
+	{
+		return Fail(TEXT("Replication schema version must be nonzero"));
+	}
+	if (!LocalFlecsId.IsValid())
+	{
+		return Fail(TEXT("Local Flecs ID is invalid"));
+	}
+	if (!bIsTag && (Size == 0 || Alignment == 0))
+	{
+		return Fail(TEXT("Data component size/alignment is invalid"));
+	}
+	if (!bIsTag && (!Serialize || !Deserialize || !Construct || !Destroy))
+	{
+		return Fail(TEXT("Native replication operations are incomplete"));
+	}
 	return true;
 }
 
@@ -112,7 +127,10 @@ FFlecsComponentReplicationRegistry& FFlecsComponentReplicationRegistry::Get(cons
 	RemoveExpiredWorldRegistries();
 	const TWeakObjectPtr<const UFlecsWorld> Key(World);
 	TUniquePtr<FFlecsComponentReplicationRegistry>& Registry = GetWorldRegistries().FindOrAdd(Key);
-	if (!Registry) Registry = MakeUnique<FFlecsComponentReplicationRegistry>();
+	if (!Registry)
+	{
+		Registry = MakeUnique<FFlecsComponentReplicationRegistry>();
+	}
 	return *Registry;
 }
 
@@ -126,13 +144,22 @@ void FFlecsComponentReplicationRegistry::RemoveWorld(const UFlecsWorld* World)
 
 bool FFlecsComponentReplicationRegistry::Register(FFlecsComponentReplicationDescriptor Descriptor, FString& OutError)
 {
-	if (!Descriptor.IsValid(&OutError)) return false;
-	if (Descriptor.ScriptStruct && !ValidateReflectedType(Descriptor.ScriptStruct, OutError)) return false;
+	if (!Descriptor.IsValid(&OutError))
+	{
+		return false;
+	}
+	if (Descriptor.ScriptStruct && !ValidateReflectedType(Descriptor.ScriptStruct, OutError))
+	{
+		return false;
+	}
 	if (const FFlecsId* ExistingLocal = SchemaToLocalId.Find(Descriptor.SchemaId))
 	{
-		if (*ExistingLocal == Descriptor.LocalFlecsId) return true;
+		if (*ExistingLocal == Descriptor.LocalFlecsId)
+		{
+			return true;
+		}
 		OutError = FString::Printf(TEXT("Duplicate replication schema ID %s for '%s'"),
-			*Descriptor.SchemaId.ToString(), *Descriptor.StableName);
+		                           *Descriptor.SchemaId.ToString(), *Descriptor.StableName);
 		return false;
 	}
 	SchemaToLocalId.Add(Descriptor.SchemaId, Descriptor.LocalFlecsId);
@@ -164,7 +191,10 @@ bool FFlecsComponentReplicationRegistry::ValidateReflectedType(const UScriptStru
 	Visited.Add(ScriptStruct);
 	for (TFieldIterator<FProperty> It(ScriptStruct); It; ++It)
 	{
-		if (!ValidateProperty(*It, Visited, OutError)) return false;
+		if (!ValidateProperty(*It, Visited, OutError))
+		{
+			return false;
+		}
 	}
 	return true;
 }
