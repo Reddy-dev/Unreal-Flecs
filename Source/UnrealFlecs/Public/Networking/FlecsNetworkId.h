@@ -10,7 +10,11 @@
 
 #include "FlecsNetworkId.generated.h"
 
+struct FFlecsReplicatedEntityComponent;
 
+/**
+ * @brief 
+ */
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsNetworkId : public FSequentialIDBase
 {
@@ -25,10 +29,10 @@ public:
 	FORCEINLINE FFlecsNetworkId() = default;
 	FORCEINLINE explicit FFlecsNetworkId(const uint32 InId) : FSequentialIDBase(InId) {}
 	
-	
 }; // struct FFlecsNetworkId
 
 template <>
 struct TFlecsComponentTraits<FFlecsNetworkId> : public TFlecsComponentTraitsBase<FFlecsNetworkId>
 {
+	using WithTypes = TTuple<FFlecsReplicatedEntityComponent>;
 }; // struct TFlecsComponentTraits<FFlecsNetworkId>

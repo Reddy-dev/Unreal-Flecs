@@ -3,12 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Properties/FlecsComponentProperties.h"
 
 #include "UObject/ObjectPtr.h"
 
 #include "SolidMacros/Macros.h"
 #include "Types/SolidNotNull.h"
+
+#include "Properties/FlecsComponentProperties.h"
 
 #include "FlecsSubsystemSingletonBase.generated.h"
 
@@ -69,6 +70,6 @@ private:
 template <>
 struct TFlecsComponentTraits<FFlecsSubsystemSingletonBase> : public TFlecsComponentTraitsBase<FFlecsSubsystemSingletonBase>
 {
-	static constexpr bool Singleton = true;
+	//static constexpr bool Singleton = true;
 }; // struct TFlecsComponentTraits<FFlecsSubsystemSingletonBase>
 

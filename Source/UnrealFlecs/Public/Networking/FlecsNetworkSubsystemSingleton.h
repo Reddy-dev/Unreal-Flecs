@@ -16,6 +16,9 @@ USTRUCT()
 struct FFlecsNetworkSubsystemSingleton : public FFlecsSubsystemSingletonBase
 {
 	GENERATED_BODY()
+	
+	using Super::Super;
+	
 }; // struct FFlecsNetworkSubsystemSingleton
 
 template <>

@@ -608,7 +608,7 @@ public:
 	}; // struct FBuilder
 	
 	template <UE::Flecs::CNonStructUtilScriptStructType TFragmentType>
-	using FFragmentBuilderType = FBuilder::TFragmentBuilderBase<TFragmentType>;
+	using TFragmentBuilderType = FBuilder::TFragmentBuilderBase<TFragmentType>;
 	
 	FORCEINLINE FBuilder Builder()
 	{

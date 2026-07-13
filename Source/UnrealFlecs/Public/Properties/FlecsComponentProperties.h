@@ -18,7 +18,7 @@
 #include "Worlds/FlecsWorld.h"
 #include "Entities/FlecsComponentHandle.h"
 #include "Components/FlecsAddReferencedObjectsTrait.h"
-#include "Networking/FlecsReplicatedComponent.h"
+#include "Networking/FlecsReplicatedTrait.h"
 #include "Queries/Generator/FlecsQueryGeneratorInput.h"
 #include "Queries/Generator/FlecsQueryGeneratorInputType.h"
 
@@ -380,7 +380,7 @@ public:
 			.OwningModule = TFlecsComponentTraits<T>::GetOwningModule()
 		};
 		
-		UE::Flecs::internal::ForEachInTuple<typename TFlecsComponentTraits<T>::WithTypes>([&Definition]<typename TWithType>(TWithType Type)
+		UE::Flecs::internal::ForEachInTuple<typename TFlecsComponentTraits<T>::WithTypes>([&Definition]<typename TWithType>()
 		{
 			using FTypeValue = TWithType;
 			
@@ -555,7 +555,7 @@ public:
 			
 			if constexpr (TFlecsComponentTraits<T>::Replicate)
 			{
-				ComponentHandle.Add<FFlecsReplicatedComponent>();
+				ComponentHandle.Add<FFlecsReplicatedTrait>();
 			}
 			
 			if constexpr (TFlecsComponentTraits<T>::WithAddReferencedObjects)
@@ -573,9 +573,9 @@ public:
 					{
 						if UNLIKELY_IF(!InFlecsWorld->Has<T>())
 						{
-							UE_LOGFMT(LogFlecsCore, Warning, 
+							/*UE_LOGFMT(LogFlecsCore, Warning, 
 								"Singleton component {ComponentName} does not exist in the world, adding it now. This should have been added when flecs::Singleton was added to the component!", 
-								*ComponentProperties.Name);
+								*ComponentProperties.Name);*/
 						
 							InFlecsWorld->Add<T>();
 						}

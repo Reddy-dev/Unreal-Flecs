@@ -2,6 +2,9 @@
 
 #include "General/FlecsObjectRegistrationNetworkFlags.h"
 
+#include "Engine/EngineBaseTypes.h"
+#include "Engine/World.h"
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsObjectRegistrationNetworkFlags)
 
 namespace UE::Flecs::Net

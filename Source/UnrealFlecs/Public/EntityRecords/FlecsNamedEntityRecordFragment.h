@@ -37,9 +37,9 @@ public:
 	
 }; // struct FFlecsNamedEntityRecordFragment
 
-struct FFlecsNamedEntityRecordFragment::FBuilder : public FFlecsEntityRecord::FFragmentBuilderType<FFlecsNamedEntityRecordFragment>
+struct FFlecsNamedEntityRecordFragment::FBuilder : public FFlecsEntityRecord::TFragmentBuilderType<FFlecsNamedEntityRecordFragment>
 {
-	using Super = FFlecsEntityRecord::FFragmentBuilderType<FFlecsNamedEntityRecordFragment>;
+	using Super = FFlecsEntityRecord::TFragmentBuilderType<FFlecsNamedEntityRecordFragment>;
 	using Super::Super;
 	
 public:

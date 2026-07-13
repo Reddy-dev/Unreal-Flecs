@@ -6,8 +6,12 @@
 
 #include "FlecsReplicatedEntityComponent.generated.h"
 
+/**
+ * @brief A marker component that indicates that a Entity should be replicated across the network.
+ */
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsReplicatedEntityComponent
 {
 	GENERATED_BODY()
-}; // struct
+}; // struct FFlecsReplicatedComponent
+

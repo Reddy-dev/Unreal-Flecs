@@ -43,6 +43,9 @@
 #include "General/FlecsObjectRegistrationInterface.h"
 #include "General/FlecsObjectRegistrationProviderBase.h"
 
+#include "Networking/FlecsReplicatedEntityComponent.h"
+#include "Networking/FlecsReplicatedTrait.h"
+
 #include "Worlds/FlecsStage.h"
 
 #include "Properties/FlecsTypeRegistryEngineSubsystem.h"
@@ -298,7 +301,11 @@ void UFlecsWorld::InitializeDefaultComponents() const
 		RegisterComponentType<FFlecsAddReferencedObjectsTrait>()
 			.Add(flecs::Trait);
 		
-		RegisterComponentType<FFlecsReplicatedComponent>();
+		RegisterComponentType<FFlecsReplicatedEntityComponent>();
+		
+		RegisterComponentType<FFlecsReplicatedTrait>()
+			.Add(flecs::Trait)
+			.AddPairSecond<FFlecsReplicatedEntityComponent>(flecs::With);
 	});
 	
 	const TSolidNotNull<UFlecsTypeRegistryEngineSubsystem*> FlecsTypeRegistry
