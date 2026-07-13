@@ -3,6 +3,8 @@
 #include "Networking/FlecsReplicationTypes.h"
 
 #include "Misc/SecureHash.h"
+#include "Networking/FlecsStablePathTag.h"
+#include "Networking/FlecsStableSymbolTag.h"
 #include "Serialization/MemoryWriter.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsReplicationTypes)
@@ -17,19 +19,23 @@ namespace
 		{
 			return FirstDescriptor;
 		}
+		
 		const FFlecsComponentReplicationDescriptor* SecondDescriptor = Registry.Find(Second);
 		if (SecondDescriptor && !SecondDescriptor->bIsTag)
 		{
 			return SecondDescriptor;
 		}
+		
 		return FirstDescriptor ? FirstDescriptor : SecondDescriptor;
 	}
+	
 }
 
 FFlecsReplicationLayoutId FFlecsReplicationLayoutRegistry::ComputeLayoutId(
 	const TArray<FFlecsReplicationKey>& Keys)
 {
 	FMD5 Md5;
+	
 	for (const FFlecsReplicationKey& Key : Keys)
 	{
 		const FString Canonical = Key.CanonicalString();
@@ -38,13 +44,17 @@ FFlecsReplicationLayoutId FFlecsReplicationLayoutRegistry::ComputeLayoutId(
 		const uint8 Separator = 0;
 		Md5.Update(&Separator, 1);
 	}
+	
 	FMD5Hash Hash;
+	
 	Hash.Set(Md5);
 	FGuid Guid = MD5HashToGuid(Hash);
+	
 	if (!Guid.IsValid())
 	{
 		Guid.D = 1;
 	}
+	
 	return FFlecsReplicationLayoutId(Guid);
 }
 
@@ -68,6 +78,7 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 	}
 
 	const flecs::table_t* Table = Entity.GetEntity().table().get_table();
+	
 	if (const FFlecsReplicationLayoutId* CachedId = TableCache.Find(Table))
 	{
 		return Definitions.Find(*CachedId);
@@ -124,10 +135,23 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 				Key.TargetKind = EFlecsReplicationPairTargetKind::Entity;
 				Key.EntityTarget = Target.Get<FFlecsNetworkId>();
 			}
-			else
+			else if (Target.Has<FFlecsStableSymbolTag>())
 			{
-				Key.TargetKind = EFlecsReplicationPairTargetKind::StableValue;
-				Key.StableTargetName = Target.IsValid() ? Target.GetPath() : FString::Printf(TEXT("#%llu"), Second.GetId());
+				Key.TargetKind = EFlecsReplicationPairTargetKind::StableSymbolValue;
+				Key.StableTargetSymbol = Target.GetSymbol();
+			}
+			else if (Target.Has<FFlecsStablePathTag>())
+			{
+				Key.TargetKind = EFlecsReplicationPairTargetKind::StableNameValue;
+				Key.StableTargetName = Target.GetName();
+			}
+			else UNLIKELY_ATTRIBUTE
+			{
+				ensureAlwaysMsgf(false, 
+					TEXT("Cannot build a replication layout for a pair with an unknown target: %s"), *Id.ToString());
+				OutError = FString::Printf(TEXT("Cannot build a replication layout for a pair with an unknown target: %s"), 
+					*Id.ToString());
+				return nullptr;
 			}
 		}
 	}
@@ -140,6 +164,7 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 	FFlecsReplicationLayoutDefinition Definition;
 	Definition.Keys = MoveTemp(Keys);
 	Definition.LayoutId = ComputeLayoutId(Definition.Keys);
+	
 	if (FFlecsReplicationLayoutDefinition* Existing = Definitions.Find(Definition.LayoutId))
 	{
 		if (Existing->Keys != Definition.Keys)
@@ -154,7 +179,9 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 	const FFlecsReplicationLayoutId Id = Definition.LayoutId;
 	Definitions.Add(Id, MoveTemp(Definition));
 	TableCache.Add(Table, Id);
+	
 	bOutWasCreated = true;
+	
 	return Definitions.Find(Id);
 }
 

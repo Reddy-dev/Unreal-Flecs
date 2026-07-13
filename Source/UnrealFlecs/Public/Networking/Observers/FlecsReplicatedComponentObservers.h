@@ -9,7 +9,12 @@
 #include "FlecsReplicatedComponentObservers.generated.h"
 
 /**
- * 
+ * Server-only observer that translates per-entity replication opt-in into
+ * UFlecsNetworkWorldSubsystem lifecycle calls.
+ *
+ * It reacts to FFlecsReplicatedEntityComponent only when the entity does not
+ * already carry the internal FFlecsReplicatedTrait component-type marker.
+ * Adding the entity marker begins replication; removing it stops replication.
  */
 UCLASS()
 class UNREALFLECS_API UFlecsReplicatedComponentObservers : public UFlecsObserverObject

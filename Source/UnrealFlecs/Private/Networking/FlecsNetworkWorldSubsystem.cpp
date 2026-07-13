@@ -161,10 +161,11 @@ void UFlecsNetworkWorldSubsystem::StopReplicatingEntity(const FFlecsNetworkId Ne
 
 void UFlecsNetworkWorldSubsystem::MarkEntityDirty(const FFlecsEntityHandle& EntityHandle)
 {
-	if (!HasAuthority() || !EntityHandle.IsValid())
+	if UNLIKELY_IF(!HasAuthority() || !EntityHandle.IsValid())
 	{
 		return;
 	}
+	
 	if (const FFlecsNetworkId* NetworkId = EntityHandle.TryGet<FFlecsNetworkId>(); NetworkId && NetworkId->IsValid())
 	{
 		DirtyEntities.Add(*NetworkId);
@@ -294,16 +295,19 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 	for (const FFlecsNetworkId NetworkId : Pending)
 	{
 		const FFlecsEntityHandle* EntityPtr = NetworkIdToEntityHandleMap.Find(NetworkId);
-		if (!EntityPtr || !EntityPtr->IsValid())
+		
+		if UNLIKELY_IF(!EntityPtr || !EntityPtr->IsValid())
 		{
 			continue;
 		}
+		
 		const FFlecsEntityHandle Entity = *EntityPtr;
 		bool bLayoutCreated = false;
 		FString Error;
 		const FFlecsReplicationLayoutDefinition* Layout = LayoutRegistry.BuildForEntity(
 			World, Entity, bLayoutCreated, Error);
-		if (!Layout)
+		
+		if UNLIKELY_IF(!Layout)
 		{
 			UE_LOG(LogFlecsCore, Error, TEXT("Failed to gather entity %llu: %s"), NetworkId.GetValue(), *Error);
 			continue;
@@ -340,17 +344,20 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 			{
 				continue;
 			}
+			
 			FFlecsId LocalId;
 			if (!ResolveKeyToLocalId(Key, LocalId))
 			{
 				continue;
 			}
+			
 			const FFlecsComponentReplicationDescriptor* Descriptor = ComponentRegistry.Find(Key.StorageSchema);
 			const void* Value = Entity.TryGet(LocalId);
 			if (!Descriptor || !Value)
 			{
 				continue;
 			}
+			
 			FFlecsReplicatedValue& Serialized = Snapshot.Values.AddDefaulted_GetRef();
 			Serialized.KeyIndex = static_cast<uint16>(KeyIndex);
 			FMemoryWriter Writer(Serialized.Bytes, true);
@@ -415,11 +422,13 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 	const FFlecsReplicatedEntitySnapshot& Snapshot)
 {
 	const FFlecsReplicationLayoutDefinition* Layout = LayoutRegistry.Find(Snapshot.LayoutId);
+	
 	if (!Layout)
 	{
 		DeferredSnapshots.FindOrAdd(Snapshot.LayoutId).Emplace(SourceShard, Snapshot);
 		return;
 	}
+	
 	if (const uint32* Revision = LastAppliedStateRevisions.Find(Snapshot.NetworkId);
 		Revision && *Revision >= Snapshot.StateRevision)
 	{
@@ -437,6 +446,7 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 
 	UFlecsWorld* World = GetFlecsWorldChecked();
 	FFlecsEntityHandle Entity = FindEntity(Snapshot.NetworkId);
+	
 	if (!Entity.IsValid())
 	{
 		Entity = World->CreateEntity();
@@ -450,6 +460,7 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 	for (const FFlecsReplicationKey& Key : Layout->Keys)
 	{
 		FFlecsId LocalId;
+		
 		if (ResolveKeyToLocalId(Key, LocalId))
 		{
 			DesiredIds.Add(LocalId);
@@ -464,6 +475,7 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 	World->Defer([&]()
 	{
 		TArray<FFlecsId> ToRemove;
+		
 		for (const FFlecsId CurrentId : Entity.GetType())
 		{
 			const bool bReplicated = CurrentId.IsPair()
@@ -474,10 +486,12 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 				ToRemove.Add(CurrentId);
 			}
 		}
+		
 		for (const FFlecsId Id : ToRemove)
 		{
 			Entity.Remove(Id);
 		}
+		
 		for (const FFlecsId Id : DesiredIds)
 		{
 			Entity.Add(Id);
@@ -489,25 +503,31 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 			{
 				continue;
 			}
+			
 			const FFlecsReplicationKey& Key = Layout->Keys[Value.KeyIndex];
 			FFlecsId LocalId;
+			
 			if (!ResolveKeyToLocalId(Key, LocalId))
 			{
 				continue;
 			}
+			
 			const FFlecsComponentReplicationDescriptor* Descriptor = Registry.Find(Key.StorageSchema);
 			if (!Descriptor || Descriptor->bIsTag)
 			{
 				continue;
 			}
+			
 			void* Temp = FMemory::Malloc(Descriptor->Size, Descriptor->Alignment);
 			Descriptor->Construct(Temp);
+			
 			FMemoryReader Reader(Value.Bytes, true);
 			const bool bRead = Descriptor->Deserialize(Reader, Temp) && !Reader.IsError();
 			if (bRead)
 			{
 				Entity.Set(LocalId, Descriptor->Size, Temp);
 			}
+			
 			Descriptor->Destroy(Temp);
 			FMemory::Free(Temp);
 		}
@@ -604,7 +624,7 @@ bool UFlecsNetworkWorldSubsystem::ResolveKeyToLocalId(const FFlecsReplicationKey
 			Target = TargetDescriptor->LocalFlecsId;
 		}
 		break;
-	case EFlecsReplicationPairTargetKind::StableValue:
+	case EFlecsReplicationPairTargetKind::StableSymbolValue:
 	{
 		const FFlecsEntityHandle StableTarget = World->LookupEntityBySymbol_Internal(Key.StableTargetSymbol);
 			

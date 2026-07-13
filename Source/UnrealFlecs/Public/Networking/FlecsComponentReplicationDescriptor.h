@@ -11,6 +11,13 @@
 
 class FArchive;
 
+/**
+ * Portable identity of a replicated component schema.
+ *
+ * The value is derived from the component's stable name and is exchanged in
+ * layouts instead of a world-local Flecs ID. It identifies a schema, not a
+ * serializer version; use the descriptor's SchemaVersion for compatibility.
+ */
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsReplicationSchemaId
 {
@@ -19,6 +26,7 @@ struct UNREALFLECS_API FFlecsReplicationSchemaId
 	FFlecsReplicationSchemaId() = default;
 	explicit FFlecsReplicationSchemaId(const FGuid& InValue) : Value(InValue) {}
 
+	/** Creates a deterministic schema ID from a non-empty protocol stable name. */
 	static FFlecsReplicationSchemaId FromStableName(const FString& StableName);
 	NO_DISCARD bool IsValid() const { return Value.IsValid(); }
 	NO_DISCARD FString ToString() const { return Value.ToString(EGuidFormats::DigitsWithHyphensLower); }
@@ -64,6 +72,13 @@ using FFlecsReplicationSerializeFunction = bool(*)(FArchive&, void*);
 using FFlecsReplicationConstructFunction = void(*)(void*);
 using FFlecsReplicationDestroyFunction = void(*)(void*);
 
+/**
+ * Per-world description of one component that may appear in replication.
+ *
+ * LocalFlecsId and the lifetime/serialization callbacks are local runtime
+ * details. SchemaId, StableName, and SchemaVersion form the portable contract
+ * checked before a received layout can be applied.
+ */
 struct UNREALFLECS_API FFlecsComponentReplicationDescriptor
 {
 	FFlecsReplicationSchemaId SchemaId;
@@ -79,12 +94,17 @@ struct UNREALFLECS_API FFlecsComponentReplicationDescriptor
 	FFlecsReplicationConstructFunction Construct = nullptr;
 	FFlecsReplicationDestroyFunction Destroy = nullptr;
 
+	/** Validates the complete local descriptor before it enters the registry. */
 	NO_DISCARD bool IsValid(FString* OutError = nullptr) const;
 };
 
 /**
- * Replication customization point. Reflected USTRUCTs use their /Script path and
- * SerializeItem by default. Native types must specialize all three members.
+ * Replication customization point for a component type.
+ *
+ * Reflected USTRUCTs use their `/Script/...` path, schema version 1, and
+ * SerializeItem by default. Native types must provide a stable name, a
+ * nonzero schema version, and Serialize. Serialize is used in both archive
+ * directions and must return false when the archive cannot be processed.
  */
 template <typename T>
 struct TFlecsReplicationTraits
@@ -117,20 +137,34 @@ struct TFlecsReplicationTraits
 	}
 };
 
+/**
+ * Per-UFlecsWorld lookup table between portable schemas and local Flecs IDs.
+ *
+ * Component registration populates this registry when a type has
+ * TFlecsComponentTraits<T>::Replicate enabled. The network subsystem listens
+ * for new descriptors so components registered after world initialization are
+ * also observed for dirty state.
+ */
 class UNREALFLECS_API FFlecsComponentReplicationRegistry
 {
 public:
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnDescriptorRegistered, const FFlecsComponentReplicationDescriptor&);
 
+	/** Returns the registry owned by the supplied Flecs world. */
 	static FFlecsComponentReplicationRegistry& Get(const UFlecsWorld* World);
+	/** Removes the registry during Flecs world teardown. */
 	static void RemoveWorld(const UFlecsWorld* World);
 
+	/** Adds a valid descriptor, rejecting schema IDs already owned by another local ID. */
 	bool Register(FFlecsComponentReplicationDescriptor Descriptor, FString& OutError);
+	/** Finds a descriptor by a world-local Flecs ID. */
 	NO_DISCARD const FFlecsComponentReplicationDescriptor* Find(FFlecsId LocalId) const;
+	/** Finds a descriptor by its portable protocol schema ID. */
 	NO_DISCARD const FFlecsComponentReplicationDescriptor* Find(FFlecsReplicationSchemaId SchemaId) const;
 	NO_DISCARD const TMap<FFlecsId, FFlecsComponentReplicationDescriptor>& GetDescriptors() const { return ByLocalId; }
 	FOnDescriptorRegistered& OnDescriptorRegistered() { return DescriptorRegisteredDelegate; }
 
+	/** Rejects reflected types that contain unsupported raw object references. */
 	static bool ValidateReflectedType(const UScriptStruct* ScriptStruct, FString& OutError);
 
 private:
@@ -141,6 +175,13 @@ private:
 
 namespace UE::Flecs::Replication
 {
+	/**
+	 * Registers T as a replicated component in World.
+	 *
+	 * This is called by normal component registration for a type whose
+	 * component traits enable Replicate. Callers normally configure traits
+	 * instead of invoking it directly.
+	 */
 	template <typename T>
 	bool RegisterComponent(const TSolidNotNull<const UFlecsWorld*> World, const FFlecsComponentHandle& Component,
 		FString* OutError = nullptr)

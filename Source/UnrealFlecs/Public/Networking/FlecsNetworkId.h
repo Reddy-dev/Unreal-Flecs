@@ -9,7 +9,14 @@
 
 #include "FlecsNetworkId.generated.h"
 
-/** A session-scoped network identity. Zero is always invalid. */
+/**
+ * A session-scoped replicated-entity identity.
+ *
+ * The low 32 bits are a reusable slot, followed by a generation and a session
+ * epoch. The complete value, rather than the slot alone, identifies a remote
+ * entity and prevents a reused slot from being mistaken for an older entity.
+ * Zero, and every value with a zero epoch, is invalid.
+ */
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsNetworkId
 {
@@ -48,7 +55,7 @@ struct UNREALFLECS_API FFlecsNetworkId
 
 static_assert(sizeof(FFlecsNetworkId) == sizeof(uint64));
 
-/** Serializable value wrapper for references to other replicated Flecs entities. */
+/** Serializable value wrapper for references to another replicated Flecs entity. */
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsReplicatedEntityReference
 {
@@ -60,14 +67,22 @@ struct UNREALFLECS_API FFlecsReplicatedEntityReference
 	FFlecsNetworkId NetworkId;
 };
 
-/** Server-side allocator with generation-safe slot reuse. */
+/**
+ * Authority-side allocator for FFlecsNetworkId values.
+ *
+ * Released slots are reused with an incremented generation. Resetting begins a
+ * new session epoch and invalidates identities from the previous session.
+ */
 class UNREALFLECS_API FFlecsNetworkIdAllocator
 {
 public:
 	explicit FFlecsNetworkIdAllocator(uint16 InSessionEpoch = 1);
 
+	/** Allocates a new valid identity, or an invalid identity if the slot space is exhausted. */
 	FFlecsNetworkId Allocate();
+	/** Releases a currently allocated identity; stale generations are rejected. */
 	bool Release(FFlecsNetworkId InId);
+	/** Clears allocations and selects the epoch used by subsequent identities. */
 	void Reset(uint16 InSessionEpoch);
 
 	NO_DISCARD uint16 GetSessionEpoch() const { return SessionEpoch; }

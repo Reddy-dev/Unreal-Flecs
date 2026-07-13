@@ -45,6 +45,7 @@
 
 #include "Networking/FlecsReplicatedEntityComponent.h"
 #include "Networking/FlecsReplicatedTrait.h"
+#include "Networking/FlecsStableSymbolTag.h"
 
 #include "Worlds/FlecsStage.h"
 

@@ -8,12 +8,20 @@
 
 class UFlecsIrisReplicationShard;
 
+/**
+ * Iris implementation of the Flecs transport boundary.
+ *
+ * Each route is represented by one aggregate UFlecsIrisReplicationShard,
+ * rather than one replicated UObject per Flecs entity. The core still owns
+ * schema validation and all Flecs mutations.
+ */
 UCLASS(Transient)
 class UNREALFLECSIRIS_API UFlecsIrisReplicationTransport : public UFlecsReplicationTransportBase
 {
 	GENERATED_BODY()
 
 public:
+	/** Valid only for a non-standalone world with a usable NetDriver. */
 	virtual bool InitializeTransport(UFlecsNetworkWorldSubsystem* InSubsystem) override;
 	virtual void ShutdownTransport() override;
 	virtual void TickTransport() override;

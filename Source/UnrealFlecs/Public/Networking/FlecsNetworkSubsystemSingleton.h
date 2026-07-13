@@ -12,6 +12,10 @@
 
 class UFlecsAbstractWorldSubsystem;
 
+/**
+ * Flecs singleton that exposes the owning UFlecsNetworkWorldSubsystem to
+ * Flecs observers. It is installed when the Flecs world initializes.
+ */
 USTRUCT()
 struct FFlecsNetworkSubsystemSingleton : public FFlecsSubsystemSingletonBase
 {

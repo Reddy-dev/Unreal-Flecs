@@ -7,12 +7,17 @@
 
 #include "FlecsIrisShardObjectFactory.generated.h"
 
+/**
+ * Iris factory that binds received aggregate Flecs shards to the destination
+ * UWorld and notifies the core when a shard is detached.
+ */
 UCLASS(Transient)
 class UNREALFLECSIRIS_API UFlecsIrisShardObjectFactory : public UNetRootObjectFactory
 {
 	GENERATED_BODY()
 
 public:
+	/** Stable factory name referenced by authority-side root-object settings. */
 	static FName GetFactoryName();
 
 protected:

@@ -7,11 +7,15 @@
 #include "FlecsReplicatedEntityComponent.generated.h"
 
 /**
- * @brief A marker component that indicates that a Entity should be replicated across the network.
+ * Per-entity opt-in marker for authoritative Flecs replication.
+ *
+ * Adding it on a server/listen server assigns an FFlecsNetworkId and starts
+ * replication. Removing it, or destroying the entity, publishes a removal.
+ * Only component types registered with Replicate enabled are included in the
+ * entity's replicated layout and payload.
  */
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsReplicatedEntityComponent
 {
 	GENERATED_BODY()
-}; // struct FFlecsReplicatedComponent
-
+}; // struct FFlecsReplicatedEntityComponent

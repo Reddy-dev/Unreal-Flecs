@@ -9,6 +9,7 @@
 
 #include "FlecsReplicationTypes.generated.h"
 
+/** Deterministic identity of a complete replicated component/pair composition. */
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsReplicationLayoutId
 {
@@ -25,6 +26,7 @@ struct UNREALFLECS_API FFlecsReplicationLayoutId
 	FGuid Value;
 };
 
+/** Distinguishes a standalone component key from a Flecs pair key. */
 UENUM()
 enum class EFlecsReplicationKeyKind : uint8
 {
@@ -32,16 +34,25 @@ enum class EFlecsReplicationKeyKind : uint8
 	Pair
 };
 
+/** Portable encoding used for the second element of a replicated pair. */
 UENUM()
 enum class EFlecsReplicationPairTargetKind : uint8
 {
 	None,
 	Schema,
-	StableValue,
+	StableSymbolValue,
+	StableNameValue,
 	Entity
 };
 
-/** Stable, transport-safe representation of an ordinary ID or pair. */
+/**
+ * Stable, transport-safe representation of one replicated component or pair.
+ *
+ * A key describes structure only. When bHasPayload is true, a snapshot carries
+ * bytes for it through a FFlecsReplicatedValue indexed by this key's position
+ * in the layout. Local FFlecsId values are reconstructed after schema
+ * validation on the receiving world.
+ */
 USTRUCT()
 struct UNREALFLECS_API FFlecsReplicationKey
 {
@@ -50,33 +61,44 @@ struct UNREALFLECS_API FFlecsReplicationKey
 	UPROPERTY()
 	EFlecsReplicationKeyKind Kind = EFlecsReplicationKeyKind::Component;
 
+	/** Relationship schema; populated only when Kind is Pair. */
 	UPROPERTY()
 	FFlecsReplicationSchemaId RelationshipSchema;
 
 	UPROPERTY()
 	uint32 RelationshipVersion = 0;
 
+	/** Schema whose descriptor supplies the payload storage, if any. */
 	UPROPERTY()
 	FFlecsReplicationSchemaId StorageSchema;
 
 	UPROPERTY()
 	uint32 StorageVersion = 0;
 
+	/** Selects which of the target fields is meaningful for a pair key. */
 	UPROPERTY()
 	EFlecsReplicationPairTargetKind TargetKind = EFlecsReplicationPairTargetKind::None;
 
+	/** Target component schema when TargetKind is Schema. */
 	UPROPERTY()
 	FFlecsReplicationSchemaId TargetSchema;
 
 	UPROPERTY()
 	uint32 TargetVersion = 0;
 
+	/** Sender-side display/name data for a StableValue target. */
 	UPROPERTY()
 	FString StableTargetName;
+	
+	/** Peer-common symbol used to resolve a StableValue target on receipt. */
+	UPROPERTY()
+	FString StableTargetSymbol;
 
+	/** Target entity identity when TargetKind is Entity. */
 	UPROPERTY()
 	FFlecsNetworkId EntityTarget;
 
+	/** True when a snapshot contains serialized bytes for this structural key. */
 	UPROPERTY()
 	bool bHasPayload = false;
 
@@ -84,6 +106,7 @@ struct UNREALFLECS_API FFlecsReplicationKey
 	friend bool operator==(const FFlecsReplicationKey&, const FFlecsReplicationKey&) = default;
 };
 
+/** Immutable structural definition shared by all snapshots of one Flecs table. */
 USTRUCT()
 struct UNREALFLECS_API FFlecsReplicationLayoutDefinition
 {
@@ -96,6 +119,7 @@ struct UNREALFLECS_API FFlecsReplicationLayoutDefinition
 	TArray<FFlecsReplicationKey> Keys;
 };
 
+/** Transport-facing partition key used by IFlecsReplicationRouter. */
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsReplicationRouteKey
 {
@@ -111,6 +135,7 @@ struct UNREALFLECS_API FFlecsReplicationRouteKey
 	FName Name = TEXT("Default");
 };
 
+/** Serialized payload for one payload-bearing layout key. */
 USTRUCT()
 struct UNREALFLECS_API FFlecsReplicatedValue
 {
@@ -123,6 +148,13 @@ struct UNREALFLECS_API FFlecsReplicatedValue
 	TArray<uint8> Bytes;
 };
 
+/**
+ * Latest complete replicated state for one entity.
+ *
+ * CompositionRevision changes only when LayoutId changes. StateRevision is
+ * monotonically increased by the authority for every gathered snapshot and is
+ * used by clients to discard stale delivery.
+ */
 USTRUCT()
 struct UNREALFLECS_API FFlecsReplicatedEntitySnapshot
 {
@@ -147,6 +179,7 @@ struct UNREALFLECS_API FFlecsReplicatedEntitySnapshot
 	TArray<FFlecsReplicatedValue> Values;
 };
 
+/** Kinds of transport-to-core records accepted by the client inbox. */
 UENUM()
 enum class EFlecsReplicationInboxRecordType : uint8
 {
@@ -156,6 +189,7 @@ enum class EFlecsReplicationInboxRecordType : uint8
 	DetachShard
 };
 
+/** A queued remote protocol item, tagged with the independent source shard that supplied it. */
 struct UNREALFLECS_API FFlecsReplicationInboxRecord
 {
 	EFlecsReplicationInboxRecordType Type = EFlecsReplicationInboxRecordType::Layout;
@@ -165,6 +199,7 @@ struct UNREALFLECS_API FFlecsReplicationInboxRecord
 	FFlecsNetworkId NetworkId;
 };
 
+/** Thread-safe multi-producer inbox drained by UFlecsNetworkWorldSubsystem on the world tick. */
 class UNREALFLECS_API FFlecsReplicationInbox
 {
 public:
@@ -176,13 +211,24 @@ private:
 	TQueue<FFlecsReplicationInboxRecord, EQueueMode::Mpsc> Records;
 };
 
+/**
+ * Per-world cache of locally generated and remotely validated layouts.
+ *
+ * Local layouts are cached by Flecs table because all entities in a table have
+ * the same replicated structure. Remote definitions are checked against their
+ * deterministic ID before being retained.
+ */
 class UNREALFLECS_API FFlecsReplicationLayoutRegistry
 {
 public:
+	/** Computes the deterministic layout ID from a sorted key list. */
 	static FFlecsReplicationLayoutId ComputeLayoutId(const TArray<FFlecsReplicationKey>& Keys);
+	/** Builds or reuses a local layout for Entity's current Flecs table. */
 	const FFlecsReplicationLayoutDefinition* BuildForEntity(const UFlecsWorld* World,
 		const FFlecsEntityHandle& Entity, bool& bOutWasCreated, FString& OutError);
+	/** Finds a previously generated or accepted layout definition. */
 	NO_DISCARD const FFlecsReplicationLayoutDefinition* Find(FFlecsReplicationLayoutId Id) const;
+	/** Adds an already validated remote layout, rejecting identity collisions. */
 	bool AddRemoteDefinition(const FFlecsReplicationLayoutDefinition& Definition, FString& OutError);
 
 private:
