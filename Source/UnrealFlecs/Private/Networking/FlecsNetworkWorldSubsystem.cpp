@@ -435,10 +435,12 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 
 void UFlecsNetworkWorldSubsystem::RemoveRemoteEntity(const FFlecsNetworkId NetworkId)
 {
-	if (FFlecsEntityHandle* Entity = NetworkIdToEntityHandleMap.Find(NetworkId); Entity && Entity->IsValid())
+	FFlecsEntityHandle* Entity = NetworkIdToEntityHandleMap.Find(NetworkId); 
+	if (Entity && Entity->IsValid())
 	{
 		Entity->Destroy();
 	}
+	
 	NetworkIdToEntityHandleMap.Remove(NetworkId);
 	ClientSlotBindings.Remove(NetworkId.GetSlot());
 	LastAppliedStateRevisions.Remove(NetworkId);
@@ -449,11 +451,19 @@ void UFlecsNetworkWorldSubsystem::RemoveRemoteEntity(const FFlecsNetworkId Netwo
 void UFlecsNetworkWorldSubsystem::DetachRemoteShard(const FGuid& SourceShard)
 {
 	TArray<FFlecsNetworkId> ToRemove;
+	
 	for (const TPair<FFlecsNetworkId, FGuid>& Pair : EntitySourceShards)
 	{
-		if (Pair.Value == SourceShard) ToRemove.Add(Pair.Key);
+		if (Pair.Value == SourceShard)
+		{
+			ToRemove.Add(Pair.Key);
+		}
 	}
-	for (const FFlecsNetworkId Id : ToRemove) RemoveRemoteEntity(Id);
+	
+	for (const FFlecsNetworkId Id : ToRemove)
+	{
+		RemoveRemoteEntity(Id);
+	}
 }
 
 void UFlecsNetworkWorldSubsystem::RetryEntityPairFixups()
@@ -463,7 +473,12 @@ void UFlecsNetworkWorldSubsystem::RetryEntityPairFixups()
 		const FEntityPairFixup& Fixup = EntityPairFixups[Index];
 		FFlecsEntityHandle Source = FindEntity(Fixup.Source);
 		FFlecsId PairId;
-		if (!Source.IsValid() || !ResolveKeyToLocalId(Fixup.Key, PairId)) continue;
+		
+		if (!Source.IsValid() || !ResolveKeyToLocalId(Fixup.Key, PairId))
+		{
+			continue;
+		}
+		
 		Source.Add(PairId);
 		EntityPairFixups.RemoveAtSwap(Index, 1, EAllowShrinking::No);
 	}
@@ -474,14 +489,23 @@ bool UFlecsNetworkWorldSubsystem::ResolveKeyToLocalId(const FFlecsReplicationKey
 	const UFlecsWorld* World = GetFlecsWorldChecked();
 	const FFlecsComponentReplicationRegistry& Registry = FFlecsComponentReplicationRegistry::Get(World);
 	const FFlecsComponentReplicationDescriptor* Storage = Registry.Find(Key.StorageSchema);
-	if (!Storage || Storage->SchemaVersion != Key.StorageVersion) return false;
+	if (!Storage || Storage->SchemaVersion != Key.StorageVersion)
+	{
+		return false;
+	}
+	
 	if (Key.Kind == EFlecsReplicationKeyKind::Component)
 	{
 		OutId = Storage->LocalFlecsId;
 		return true;
 	}
+	
 	const FFlecsComponentReplicationDescriptor* Relationship = Registry.Find(Key.RelationshipSchema);
-	if (!Relationship || Relationship->SchemaVersion != Key.RelationshipVersion) return false;
+	
+	if (!Relationship || Relationship->SchemaVersion != Key.RelationshipVersion)
+	{
+		return false;
+	}
 
 	FFlecsId Target;
 	switch (Key.TargetKind)
@@ -489,26 +513,44 @@ bool UFlecsNetworkWorldSubsystem::ResolveKeyToLocalId(const FFlecsReplicationKey
 	case EFlecsReplicationPairTargetKind::Schema:
 		if (const FFlecsComponentReplicationDescriptor* TargetDescriptor = Registry.Find(Key.TargetSchema))
 		{
-			if (TargetDescriptor->SchemaVersion != Key.TargetVersion) return false;
+			if (TargetDescriptor->SchemaVersion != Key.TargetVersion)
+			{
+				return false;
+			}
 			Target = TargetDescriptor->LocalFlecsId;
 		}
 		break;
 	case EFlecsReplicationPairTargetKind::StableValue:
 	{
-		const FFlecsEntityHandle StableTarget = World->LookupEntity(Key.StableTargetName);
-		if (StableTarget.IsValid()) Target = StableTarget.GetFlecsId();
+		const FFlecsEntityHandle StableTarget = World->LookupEntityBySymbol_Internal(Key.StableTargetSymbol);
+			
+		if (StableTarget.IsValid())
+		{
+			Target = StableTarget.GetFlecsId();
+		}
+			
 		break;
 	}
 	case EFlecsReplicationPairTargetKind::Entity:
 	{
 		const FFlecsEntityHandle EntityTarget = FindEntity(Key.EntityTarget);
-		if (EntityTarget.IsValid()) Target = EntityTarget.GetFlecsId();
+			
+		if (EntityTarget.IsValid())
+		{
+			Target = EntityTarget.GetFlecsId();
+		}
+			
 		break;
 	}
 	default:
 		break;
 	}
-	if (!Target.IsValid()) return false;
+	
+	if (!Target.IsValid())
+	{
+		return false;
+	}
+	
 	OutId = FFlecsId::MakePair(Relationship->LocalFlecsId, Target);
 	return true;
 }
@@ -535,6 +577,12 @@ bool UFlecsNetworkWorldSubsystem::ValidateLayout(const FFlecsReplicationLayoutDe
 			&& !ValidateSchema(Key.RelationshipSchema, Key.RelationshipVersion, TEXT("Relationship"))) return false;
 		if (Key.TargetKind == EFlecsReplicationPairTargetKind::Schema
 			&& !ValidateSchema(Key.TargetSchema, Key.TargetVersion, TEXT("Target"))) return false;
+		if (Key.TargetKind == EFlecsReplicationPairTargetKind::StableValue
+			&& Key.StableTargetSymbol.IsEmpty())
+		{
+			OutError = TEXT("Stable pair target symbol is missing");
+			return false;
+		}
 	}
 	return true;
 }

@@ -40,6 +40,8 @@ struct UNREALFLECS_API FFlecsReplicationSchemaId
 		{
 			return A.Value.C < B.Value.C;
 		}
+		
+		
 		return A.Value.D < B.Value.D;
 	}
 
