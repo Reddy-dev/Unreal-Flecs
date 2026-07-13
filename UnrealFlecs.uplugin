@@ -36,6 +36,11 @@
 			"LoadingPhase": "Default"
 		},
 		{
+			"Name": "UnrealFlecsIris",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
 			"Name": "UnrealFlecsEditor",
 			"Type": "Editor",
 			"LoadingPhase": "Default"
@@ -58,6 +63,10 @@
 		},
 		{
 			"Name": "GameFeatures",
+			"Enabled": true
+		},
+		{
+			"Name": "Iris",
 			"Enabled": true
 		}
 	],

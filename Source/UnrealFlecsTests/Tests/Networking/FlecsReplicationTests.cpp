@@ -1,0 +1,428 @@
+// Elie Wiese-Namir © 2026. All Rights Reserved.
+
+#include "Misc/AutomationTest.h"
+#include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
+
+#if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
+
+#include "Serialization/MemoryReader.h"
+#include "Serialization/MemoryWriter.h"
+
+#include "Networking/FlecsComponentReplicationDescriptor.h"
+#include "Networking/FlecsNetworkId.h"
+#include "Networking/FlecsNetworkWorldSubsystem.h"
+#include "Networking/FlecsReplicatedEntityComponent.h"
+#include "Networking/FlecsReplicationTypes.h"
+
+namespace UE::Flecs::Tests
+{
+	struct FNativeReplicatedValue
+	{
+		int32 Value = 0;
+	};
+
+	struct FNativeReplicatedValueDuplicate
+	{
+		int32 Value = 0;
+	};
+
+	struct FUnsupportedNativeReplicatedValue
+	{
+		int32 Value = 0;
+	};
+
+	template<typename T>
+	FFlecsComponentHandle RegisterTestComponent(UFlecsWorld* World)
+	{
+		const FFlecsComponentHandle Component = World->RegisterComponentType<T>();
+		const FFlecsComponentPropertiesDefinition Properties = FFlecsComponentPropertiesDefinition::Make<T>();
+		Properties.PropertiesFunction(World, Component, Properties);
+		return Component;
+	}
+
+	void RegisterReplicationMatrixTypes(UFlecsWorld* World)
+	{
+		RegisterTestComponent<FFlecsReplicationTestRequiredTag>(World);
+		RegisterTestComponent<FFlecsReplicationTestValue>(World);
+		RegisterTestComponent<FFlecsReplicationTestNativeValue>(World);
+		RegisterTestComponent<FFlecsReplicationTestTag>(World);
+		RegisterTestComponent<FFlecsReplicationTestRelationship>(World);
+		RegisterTestComponent<FFlecsReplicationTestWithValue>(World);
+		RegisterTestComponent<FFlecsReplicationTestLocalOnly>(World);
+	}
+
+	struct FCapturedReplicationEntity
+	{
+		FFlecsReplicationLayoutDefinition Layout;
+		FFlecsReplicatedEntitySnapshot Snapshot;
+	};
+
+	FCapturedReplicationEntity CaptureEntity(UFlecsNetworkWorldSubsystem* Subsystem,
+		UFlecsReplicationCaptureTransport* Transport, const FFlecsEntityHandle& Entity)
+	{
+		Transport->Snapshots.Reset();
+		const FFlecsNetworkId NetworkId = Subsystem->BeginReplicatingEntity(Entity);
+		Subsystem->FlushServerReplicationForTesting();
+		const FFlecsReplicatedEntitySnapshot* FoundSnapshot = Transport->Snapshots.FindByPredicate(
+			[NetworkId](const FFlecsReplicatedEntitySnapshot& Candidate)
+			{
+				return Candidate.NetworkId == NetworkId;
+			});
+		check(FoundSnapshot);
+		const FFlecsReplicatedEntitySnapshot Snapshot = *FoundSnapshot;
+		const FFlecsReplicationLayoutDefinition* Layout = Transport->Layouts.FindByPredicate(
+			[&Snapshot](const FFlecsReplicationLayoutDefinition& Candidate)
+			{
+				return Candidate.LayoutId == Snapshot.LayoutId;
+			});
+		check(Layout);
+		return { *Layout, Snapshot };
+	}
+
+	void EnqueueLayout(UFlecsNetworkWorldSubsystem* Subsystem, const FGuid& Shard,
+		const FFlecsReplicationLayoutDefinition& Layout)
+	{
+		FFlecsReplicationInboxRecord Record;
+		Record.Type = EFlecsReplicationInboxRecordType::Layout;
+		Record.SourceShard = Shard;
+		Record.Layout = Layout;
+		Subsystem->EnqueueReceivedRecord(MoveTemp(Record));
+	}
+
+	void EnqueueSnapshot(UFlecsNetworkWorldSubsystem* Subsystem, const FGuid& Shard,
+		const FFlecsReplicatedEntitySnapshot& Snapshot)
+	{
+		FFlecsReplicationInboxRecord Record;
+		Record.Type = EFlecsReplicationInboxRecordType::UpsertEntity;
+		Record.SourceShard = Shard;
+		Record.Snapshot = Snapshot;
+		Subsystem->EnqueueReceivedRecord(MoveTemp(Record));
+	}
+
+	void SetSnapshotValue(UFlecsWorld* World, FFlecsReplicatedEntitySnapshot& Snapshot,
+		const FFlecsReplicationLayoutDefinition& Layout, const FFlecsReplicationTestValue& Value)
+	{
+		const FFlecsComponentReplicationDescriptor* Descriptor =
+			FFlecsComponentReplicationRegistry::Get(World).Find(World->GetIdIfRegistered<FFlecsReplicationTestValue>());
+		check(Descriptor);
+		for (FFlecsReplicatedValue& Serialized : Snapshot.Values)
+		{
+			if (Layout.Keys.IsValidIndex(Serialized.KeyIndex)
+				&& Layout.Keys[Serialized.KeyIndex].StorageSchema == Descriptor->SchemaId)
+			{
+				Serialized.Bytes.Reset();
+				FMemoryWriter Writer(Serialized.Bytes, true);
+				FFlecsReplicationTestValue Copy = Value;
+				Descriptor->Serialize(Writer, &Copy);
+				return;
+			}
+		}
+	}
+}
+
+template<>
+struct TFlecsReplicationTraits<UE::Flecs::Tests::FNativeReplicatedValue>
+{
+	static FString StableName() { return TEXT("Tests/FNativeReplicatedValue"); }
+	static constexpr uint32 SchemaVersion = 7;
+	static bool Serialize(FArchive& Archive, UE::Flecs::Tests::FNativeReplicatedValue& Value)
+	{
+		Archive << Value.Value;
+		return !Archive.IsError();
+	}
+};
+
+template<>
+struct TFlecsReplicationTraits<UE::Flecs::Tests::FNativeReplicatedValueDuplicate>
+{
+	static FString StableName() { return TEXT("Tests/FNativeReplicatedValue"); }
+	static constexpr uint32 SchemaVersion = 7;
+	static bool Serialize(FArchive& Archive, UE::Flecs::Tests::FNativeReplicatedValueDuplicate& Value)
+	{
+		Archive << Value.Value;
+		return !Archive.IsError();
+	}
+};
+
+TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
+	"UnrealFlecs.Networking.Replication.Core",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter,
+	"[Flecs][Networking][Replication]")
+{
+	inline static TUniquePtr<FFlecsTestFixtureRAII> Fixture;
+	inline static TObjectPtr<UFlecsWorld> FlecsWorld = nullptr;
+	inline static TObjectPtr<UFlecsNetworkWorldSubsystem> NetworkSubsystem = nullptr;
+	inline static TObjectPtr<UFlecsReplicationCaptureTransport> CaptureTransport = nullptr;
+
+	BEFORE_EACH()
+	{
+		Fixture = MakeUnique<FFlecsTestFixtureRAII>();
+		FlecsWorld = Fixture->Fixture.GetFlecsWorld();
+		NetworkSubsystem = FlecsWorld->GetWorld()->GetSubsystem<UFlecsNetworkWorldSubsystem>();
+		CaptureTransport = NewObject<UFlecsReplicationCaptureTransport>(NetworkSubsystem);
+		NetworkSubsystem->SetReplicationTransportForTesting(CaptureTransport);
+		UE::Flecs::Tests::RegisterReplicationMatrixTypes(FlecsWorld);
+	}
+
+	AFTER_EACH()
+	{
+		FlecsWorld = nullptr;
+		NetworkSubsystem = nullptr;
+		CaptureTransport = nullptr;
+		Fixture.Reset();
+	}
+
+	TEST_METHOD(NetworkIdAllocator_ReusesSlotWithNewGeneration_AndNeverReturnsZero)
+	{
+		FFlecsNetworkIdAllocator Allocator(42);
+		const FFlecsNetworkId First = Allocator.Allocate();
+		ASSERT_THAT(IsTrue(First.IsValid()));
+		ASSERT_THAT(AreEqual(static_cast<uint16>(42), First.GetSessionEpoch()));
+		ASSERT_THAT(IsTrue(Allocator.Release(First)));
+
+		const FFlecsNetworkId Reused = Allocator.Allocate();
+		ASSERT_THAT(AreEqual(First.GetSlot(), Reused.GetSlot()));
+		ASSERT_THAT(IsTrue(First.GetGeneration() != Reused.GetGeneration()));
+		ASSERT_THAT(IsFalse(FFlecsNetworkId().IsValid()));
+	}
+
+	TEST_METHOD(SchemaIdentity_UsesStableName_NotRegistrationOrder)
+	{
+		const FFlecsReplicationSchemaId First = FFlecsReplicationSchemaId::FromStableName(TEXT("/Script/Test.Type"));
+		const FFlecsReplicationSchemaId Again = FFlecsReplicationSchemaId::FromStableName(TEXT("/Script/Test.Type"));
+		const FFlecsReplicationSchemaId Other = FFlecsReplicationSchemaId::FromStableName(TEXT("/Script/Test.Other"));
+		ASSERT_THAT(IsTrue(First.IsValid()));
+		ASSERT_THAT(IsTrue(First == Again));
+		ASSERT_THAT(IsTrue(First != Other));
+	}
+
+	TEST_METHOD(ReflectedDescriptor_RoundTripsSerializedValue)
+	{
+		const FFlecsComponentHandle Component = FlecsWorld->RegisterComponentType<FFlecsTestStruct_Value>();
+		FString Error;
+		ASSERT_THAT(IsTrue(UE::Flecs::Replication::RegisterComponent<FFlecsTestStruct_Value>(
+			FlecsWorld, Component, &Error)));
+		const FFlecsComponentReplicationDescriptor* Descriptor =
+			FFlecsComponentReplicationRegistry::Get(FlecsWorld).Find(Component.GetFlecsId());
+		ASSERT_THAT(IsNotNull(Descriptor));
+
+		FFlecsTestStruct_Value Source;
+		Source.Value = 117;
+		TArray<uint8> Bytes;
+		FMemoryWriter Writer(Bytes, true);
+		ASSERT_THAT(IsTrue(Descriptor->Serialize(Writer, &Source)));
+		FFlecsTestStruct_Value Target;
+		Target.Value = 0;
+		FMemoryReader Reader(Bytes, true);
+		ASSERT_THAT(IsTrue(Descriptor->Deserialize(Reader, &Target)));
+		ASSERT_THAT(AreEqual(117, Target.Value));
+	}
+
+	TEST_METHOD(NativeDescriptor_RoundTripsSerializedValue)
+	{
+		using namespace UE::Flecs::Tests;
+		const FFlecsComponentHandle Component = FlecsWorld->RegisterComponentType<FNativeReplicatedValue>();
+		FString Error;
+		ASSERT_THAT(IsTrue(UE::Flecs::Replication::RegisterComponent<FNativeReplicatedValue>(
+			FlecsWorld, Component, &Error)));
+		const FFlecsComponentReplicationDescriptor* Descriptor =
+			FFlecsComponentReplicationRegistry::Get(FlecsWorld).Find(Component.GetFlecsId());
+		ASSERT_THAT(IsNotNull(Descriptor));
+		ASSERT_THAT(AreEqual(static_cast<uint32>(7), Descriptor->SchemaVersion));
+
+		FNativeReplicatedValue Source{ 901 };
+		TArray<uint8> Bytes;
+		FMemoryWriter Writer(Bytes, true);
+		ASSERT_THAT(IsTrue(Descriptor->Serialize(Writer, &Source)));
+		FNativeReplicatedValue Target;
+		FMemoryReader Reader(Bytes, true);
+		ASSERT_THAT(IsTrue(Descriptor->Deserialize(Reader, &Target)));
+		ASSERT_THAT(AreEqual(901, Target.Value));
+	}
+
+	TEST_METHOD(DescriptorRegistration_RejectsDuplicateSchemaAndUnsupportedNativeType)
+	{
+		using namespace UE::Flecs::Tests;
+		FString Error;
+		const FFlecsComponentHandle First = FlecsWorld->RegisterComponentType<FNativeReplicatedValue>();
+		const FFlecsComponentHandle Duplicate = FlecsWorld->RegisterComponentType<FNativeReplicatedValueDuplicate>();
+		const FFlecsComponentHandle Unsupported = FlecsWorld->RegisterComponentType<FUnsupportedNativeReplicatedValue>();
+		ASSERT_THAT(IsTrue(UE::Flecs::Replication::RegisterComponent<FNativeReplicatedValue>(FlecsWorld, First, &Error)));
+		ASSERT_THAT(IsFalse(UE::Flecs::Replication::RegisterComponent<FNativeReplicatedValueDuplicate>(
+			FlecsWorld, Duplicate, &Error)));
+		ASSERT_THAT(IsFalse(UE::Flecs::Replication::RegisterComponent<FUnsupportedNativeReplicatedValue>(
+			FlecsWorld, Unsupported, &Error)));
+	}
+
+	TEST_METHOD(ReflectedDescriptor_RejectsRawUObjectReferences_AndAllowsSoftPaths)
+	{
+		FString Error;
+		ASSERT_THAT(IsFalse(FFlecsComponentReplicationRegistry::ValidateReflectedType(
+			TBaseStructure<FFlecsTestStruct_WithUObjectProperty>::Get(), Error)));
+		ASSERT_THAT(IsTrue(FFlecsComponentReplicationRegistry::ValidateReflectedType(
+			TBaseStructure<FSoftObjectPath>::Get(), Error)));
+	}
+
+	TEST_METHOD(LayoutIdentity_IsStableAcrossEntityCompositionOrder_AndExcludesLocalTypes)
+	{
+		using namespace UE::Flecs::Tests;
+		const FFlecsComponentHandle Reflected = FlecsWorld->RegisterComponentType<FFlecsTestStruct_Value>();
+		const FFlecsComponentHandle Native = FlecsWorld->RegisterComponentType<FNativeReplicatedValue>();
+		FlecsWorld->RegisterComponentType<FFlecsTest_CPPStruct>();
+		FString Error;
+		ASSERT_THAT(IsTrue(UE::Flecs::Replication::RegisterComponent<FFlecsTestStruct_Value>(
+			FlecsWorld, Reflected, &Error)));
+		ASSERT_THAT(IsTrue(UE::Flecs::Replication::RegisterComponent<FNativeReplicatedValue>(
+			FlecsWorld, Native, &Error)));
+
+		const FFlecsEntityHandle First = FlecsWorld->CreateEntity()
+			.Set<FFlecsTestStruct_Value>({ 3 })
+			.Set<FNativeReplicatedValue>({ 4 })
+			.Add<FFlecsTest_CPPStruct>();
+		const FFlecsEntityHandle Second = FlecsWorld->CreateEntity()
+			.Add<FFlecsTest_CPPStruct>()
+			.Set<FNativeReplicatedValue>({ 8 })
+			.Set<FFlecsTestStruct_Value>({ 9 });
+
+		FFlecsReplicationLayoutRegistry Layouts;
+		bool bCreated = false;
+		const FFlecsReplicationLayoutDefinition* FirstLayout = Layouts.BuildForEntity(
+			FlecsWorld, First, bCreated, Error);
+		ASSERT_THAT(IsNotNull(FirstLayout));
+		ASSERT_THAT(AreEqual(2, FirstLayout->Keys.Num()));
+		const FFlecsReplicationLayoutDefinition* SecondLayout = Layouts.BuildForEntity(
+			FlecsWorld, Second, bCreated, Error);
+		ASSERT_THAT(IsNotNull(SecondLayout));
+		ASSERT_THAT(IsTrue(FirstLayout->LayoutId == SecondLayout->LayoutId));
+	}
+
+	TEST_METHOD(PairLayouts_RepresentSchemaStableAndEntityTargets)
+	{
+		const FFlecsEntityHandle StaticTarget = FlecsWorld->CreateEntity(TEXT("ReplicationStaticTarget"));
+		const FFlecsEntityHandle NetworkTarget = FlecsWorld->CreateEntity();
+		const FFlecsNetworkId TargetId = NetworkSubsystem->BeginReplicatingEntity(NetworkTarget);
+		const FFlecsEntityHandle Source = FlecsWorld->CreateEntity()
+			.AddPair<FFlecsReplicationTestRelationship>(StaticTarget)
+			.AddPair<FFlecsReplicationTestRelationship>(NetworkTarget);
+		const UE::Flecs::Tests::FCapturedReplicationEntity Captured =
+			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Source);
+
+		ASSERT_THAT(AreEqual(2, Captured.Layout.Keys.Num()));
+		ASSERT_THAT(IsTrue(Captured.Layout.Keys.ContainsByPredicate([](const FFlecsReplicationKey& Key)
+		{
+			return Key.TargetKind == EFlecsReplicationPairTargetKind::StableValue;
+		})));
+		ASSERT_THAT(IsTrue(Captured.Layout.Keys.ContainsByPredicate([TargetId](const FFlecsReplicationKey& Key)
+		{
+			return Key.TargetKind == EFlecsReplicationPairTargetKind::Entity && Key.EntityTarget == TargetId;
+		})));
+	}
+
+	TEST_METHOD(LayoutVersionMismatch_ReportsProtocolError)
+	{
+		const FFlecsEntityHandle Source = FlecsWorld->CreateEntity().Set<FFlecsReplicationTestValue>({ 1 });
+		UE::Flecs::Tests::FCapturedReplicationEntity Captured =
+			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Source);
+		ASSERT_THAT(IsFalse(Captured.Layout.Keys.IsEmpty()));
+		++Captured.Layout.Keys[0].StorageVersion;
+		Captured.Layout.LayoutId = FFlecsReplicationLayoutRegistry::ComputeLayoutId(Captured.Layout.Keys);
+		UE::Flecs::Tests::EnqueueLayout(NetworkSubsystem, FGuid::NewGuid(), Captured.Layout);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+		ASSERT_THAT(AreEqual(1, CaptureTransport->ProtocolErrors.Num()));
+		ASSERT_THAT(IsTrue(CaptureTransport->ProtocolErrors[0].Contains(TEXT("version"))));
+	}
+
+	TEST_METHOD(DirtyEvents_CoalesceToFinalComposition_AndIncludeWithTypes)
+	{
+		const FFlecsComponentPropertiesDefinition Properties =
+			FFlecsComponentPropertiesDefinition::Make<FFlecsReplicationTestWithValue>();
+		ASSERT_THAT(AreEqual(1, Properties.WithTypes.Num()));
+		const FFlecsEntityHandle WithComponent = FlecsWorld->GetAlive(
+			FlecsWorld->GetIdIfRegistered<FFlecsReplicationTestWithValue>());
+		ASSERT_THAT(IsTrue(WithComponent.HasPair(flecs::With,
+			FlecsWorld->GetIdIfRegistered<FFlecsReplicationTestRequiredTag>())));
+		const FFlecsEntityHandle Source = FlecsWorld->CreateEntity().Set<FFlecsReplicationTestWithValue>({ 11 });
+		ASSERT_THAT(IsTrue(Source.Has<FFlecsReplicationTestRequiredTag>()));
+		const UE::Flecs::Tests::FCapturedReplicationEntity Initial =
+			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Source);
+		ASSERT_THAT(AreEqual(2, Initial.Layout.Keys.Num()));
+
+		CaptureTransport->Snapshots.Reset();
+		Source.Add<FFlecsReplicationTestTag>();
+		Source.Remove<FFlecsReplicationTestTag>();
+		NetworkSubsystem->FlushServerReplicationForTesting();
+		ASSERT_THAT(AreEqual(1, CaptureTransport->Snapshots.Num()));
+		ASSERT_THAT(IsTrue(CaptureTransport->Snapshots[0].LayoutId == Initial.Snapshot.LayoutId));
+		ASSERT_THAT(AreEqual(Initial.Snapshot.CompositionRevision,
+			CaptureTransport->Snapshots[0].CompositionRevision));
+		ASSERT_THAT(IsTrue(CaptureTransport->Snapshots[0].StateRevision > Initial.Snapshot.StateRevision));
+	}
+
+	TEST_METHOD(Inbox_DefersUnknownLayout_RejectsStaleRevision_AndPreservesLocalComponent)
+	{
+		const FGuid Shard = FGuid::NewGuid();
+		const FFlecsEntityHandle Source = FlecsWorld->CreateEntity().Set<FFlecsReplicationTestValue>({ 10 });
+		UE::Flecs::Tests::FCapturedReplicationEntity Captured =
+			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Source);
+		NetworkSubsystem->StopReplicatingEntity(Source);
+		Source.Destroy();
+		NetworkSubsystem->ResetClientReplicationForTesting();
+		NetworkSubsystem->EnterClientReplicationModeForTesting();
+
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, Shard, Captured.Snapshot);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+		ASSERT_THAT(IsFalse(NetworkSubsystem->FindEntity(Captured.Snapshot.NetworkId).IsValid()));
+		UE::Flecs::Tests::EnqueueLayout(NetworkSubsystem, Shard, Captured.Layout);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+		FFlecsEntityHandle Remote = NetworkSubsystem->FindEntity(Captured.Snapshot.NetworkId);
+		ASSERT_THAT(IsTrue(Remote.IsValid()));
+		Remote.Set<FFlecsReplicationTestLocalOnly>({ 77 });
+
+		FFlecsReplicatedEntitySnapshot Newer = Captured.Snapshot;
+		Newer.StateRevision = 3;
+		UE::Flecs::Tests::SetSnapshotValue(FlecsWorld, Newer, Captured.Layout, { 300 });
+		FFlecsReplicatedEntitySnapshot Stale = Captured.Snapshot;
+		Stale.StateRevision = 2;
+		UE::Flecs::Tests::SetSnapshotValue(FlecsWorld, Stale, Captured.Layout, { 200 });
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, Shard, Newer);
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, Shard, Stale);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+		Remote = NetworkSubsystem->FindEntity(Captured.Snapshot.NetworkId);
+		ASSERT_THAT(AreEqual(300, Remote.Get<FFlecsReplicationTestValue>().Value));
+		ASSERT_THAT(AreEqual(77, Remote.Get<FFlecsReplicationTestLocalOnly>().Value));
+	}
+
+	TEST_METHOD(EntityTargetPair_ResolvesAfterTargetSnapshotArrives)
+	{
+		const FGuid Shard = FGuid::NewGuid();
+		const FFlecsEntityHandle Target = FlecsWorld->CreateEntity();
+		const UE::Flecs::Tests::FCapturedReplicationEntity TargetCapture =
+			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Target);
+		const FFlecsEntityHandle Source = FlecsWorld->CreateEntity()
+			.AddPair<FFlecsReplicationTestRelationship>(Target);
+		const UE::Flecs::Tests::FCapturedReplicationEntity SourceCapture =
+			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Source);
+		NetworkSubsystem->StopReplicatingEntity(Source);
+		NetworkSubsystem->StopReplicatingEntity(Target);
+		Source.Destroy();
+		Target.Destroy();
+		NetworkSubsystem->ResetClientReplicationForTesting();
+		NetworkSubsystem->EnterClientReplicationModeForTesting();
+
+		UE::Flecs::Tests::EnqueueLayout(NetworkSubsystem, Shard, SourceCapture.Layout);
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, Shard, SourceCapture.Snapshot);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+		FFlecsEntityHandle RemoteSource = NetworkSubsystem->FindEntity(SourceCapture.Snapshot.NetworkId);
+		ASSERT_THAT(IsTrue(RemoteSource.IsValid()));
+
+		UE::Flecs::Tests::EnqueueLayout(NetworkSubsystem, Shard, TargetCapture.Layout);
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, Shard, TargetCapture.Snapshot);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+		const FFlecsEntityHandle RemoteTarget = NetworkSubsystem->FindEntity(TargetCapture.Snapshot.NetworkId);
+		RemoteSource = NetworkSubsystem->FindEntity(SourceCapture.Snapshot.NetworkId);
+		ASSERT_THAT(IsTrue(RemoteTarget.IsValid()));
+		ASSERT_THAT(IsTrue(RemoteSource.HasPair<FFlecsReplicationTestRelationship>(RemoteTarget)));
+	}
+};
+
+#endif

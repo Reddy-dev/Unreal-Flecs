@@ -20,7 +20,7 @@ void UFlecsReplicatedComponentObservers::BuildObserver(const TSolidNotNull<UFlec
 		.Event(flecs::OnAdd)
 		.Event(flecs::OnRemove)
 		.With<FFlecsReplicatedEntityComponent>() // 0
-		.With<FFlecsNetworkSubsystemSingleton>() // 1
+		.With<const FFlecsNetworkSubsystemSingleton>() // 1
 		.Without<FFlecsReplicatedTrait>()
 		.YieldExisting();
 }
@@ -28,23 +28,18 @@ void UFlecsReplicatedComponentObservers::BuildObserver(const TSolidNotNull<UFlec
 void UFlecsReplicatedComponentObservers::EachIterator(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld,
 	flecs::iter& InIterator, const FFlecsId InIndex)
 {
-	//const auto ReplicatedComponentField = InIterator.field<FFlecsReplicatedComponent>(0);
-	const auto NetworkSubsystem = InIterator.field<FFlecsNetworkSubsystemSingleton>(1);
+	const auto NetworkSubsystem = InIterator.field<const FFlecsNetworkSubsystemSingleton>(1);
 	
 	const TSolidNotNull<UFlecsNetworkWorldSubsystem*> NetworkSubsystemPtr = NetworkSubsystem->GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
-	
-	for (const FFlecsId EntityIndex : InIterator)
+	const FFlecsEntityHandle EntityHandle = InIterator.entity(InIndex.GetId());
+
+	if (InIterator.event() == flecs::OnRemove)
 	{
-		const FFlecsEntityHandle EntityHandle = InIterator.entity(EntityIndex);
-		
-		if (InIterator.event() == flecs::OnRemove)
-		{
-			NetworkSubsystemPtr->StopReplicatingEntity(EntityHandle);
-			continue;
-		}
-		
-		NetworkSubsystemPtr->BeginReplicatingEntity(EntityHandle);
+		NetworkSubsystemPtr->StopReplicatingEntity(EntityHandle);
+		return;
 	}
+
+	NetworkSubsystemPtr->BeginReplicatingEntity(EntityHandle);
 }
 
 EFlecsObjectRegistrationNetworkFlags UFlecsReplicatedComponentObservers::GetObjectRegistrationNetworkFlags() const

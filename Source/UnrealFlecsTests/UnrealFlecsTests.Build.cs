@@ -1,20 +1,22 @@
-﻿using UnrealBuildTool;
+using UnrealBuildTool;
 
 public class UnrealFlecsTests : ModuleRules
 {
     public UnrealFlecsTests(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-        
+
         CppStandard = CppStandardVersion.Cpp20;
-        
+
+        SetupIrisSupport(Target, true);
+
         PrivateIncludePaths.AddRange(
             new string[]
             {
                // ModuleDirectory,
             }
         );
-            
+
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
@@ -36,7 +38,8 @@ public class UnrealFlecsTests : ModuleRules
                 "CQTest",
                 "SolidMacros",
                 "FlecsLibrary",
-                "UnrealFlecs",
+				"UnrealFlecs",
+				"UnrealFlecsIris",
             }
         );
 
@@ -52,7 +55,7 @@ public class UnrealFlecsTests : ModuleRules
                 }
             );
         }
-        
+
         CppCompileWarningSettings.NonInlinedGenCppWarningLevel = WarningLevel.Error;
     }
 }

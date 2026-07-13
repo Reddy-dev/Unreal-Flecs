@@ -46,7 +46,6 @@ public:
 		EWorldType::Type InWorldType = EWorldType::GameRPC)
 	{
 		TestEnvironment = FScopedTestEnvironment::Get();
-		TestEnvironment->SetConsoleVariableValue("r.RayTracing.Enable", "0");
 		
 		TestWorldWrapper = MakeUnique<FTestWorldWrapper>();
 		TestWorldWrapper->CreateTestWorld(InWorldType);

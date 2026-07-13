@@ -279,6 +279,17 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	DefaultWorld->bIsInitialized = true;
 	OnWorldCreatedDelegate.Broadcast(DefaultWorld);
 	UE::Flecs::GOnFlecsWorldInitialized.Broadcast(DefaultWorld);
+
+	// A Flecs world can be created after its owning UWorld has already begun
+	// play (for example, from a PIE network-test step). In that case the
+	// subsystem's OnWorldBeginPlay callback has already passed, so initialize
+	// begin-play components and registered systems/observers here.
+	if (GetWorld()->HasBegunPlay())
+	{
+		DefaultWorld->WorldBeginPlay();
+		OnWorldBeginPlayDelegate.Broadcast(GetWorld());
+		DefaultWorld->CallBeginPlayForRegisteredObjects();
+	}
 		
 	return DefaultWorld;
 }
