@@ -15,7 +15,10 @@
 
 void FFlecsIrisLayoutManifestItem::PostReplicatedAdd(const FFlecsIrisLayoutManifest& Serializer)
 {
-	if (UFlecsIrisReplicationShard* Owner = Serializer.GetOwner()) Owner->EnqueueReceivedLayout(Definition);
+	if (UFlecsIrisReplicationShard* Owner = Serializer.GetOwner())
+	{
+		Owner->EnqueueReceivedLayout(Definition);
+	}
 }
 
 void FFlecsIrisLayoutManifestItem::PostReplicatedChange(const FFlecsIrisLayoutManifest& Serializer)
@@ -25,7 +28,10 @@ void FFlecsIrisLayoutManifestItem::PostReplicatedChange(const FFlecsIrisLayoutMa
 
 void FFlecsIrisEntitySnapshotItem::PostReplicatedAdd(const FFlecsIrisEntitySnapshots& Serializer)
 {
-	if (UFlecsIrisReplicationShard* Owner = Serializer.GetOwner()) Owner->EnqueueReceivedEntity(Snapshot);
+	if (UFlecsIrisReplicationShard* Owner = Serializer.GetOwner())
+	{
+		Owner->EnqueueReceivedEntity(Snapshot);
+	}
 }
 
 void FFlecsIrisEntitySnapshotItem::PostReplicatedChange(const FFlecsIrisEntitySnapshots& Serializer)
@@ -35,7 +41,10 @@ void FFlecsIrisEntitySnapshotItem::PostReplicatedChange(const FFlecsIrisEntitySn
 
 void FFlecsIrisEntitySnapshotItem::PreReplicatedRemove(const FFlecsIrisEntitySnapshots& Serializer)
 {
-	if (UFlecsIrisReplicationShard* Owner = Serializer.GetOwner()) Owner->EnqueueRemovedEntity(Snapshot.NetworkId);
+	if (UFlecsIrisReplicationShard* Owner = Serializer.GetOwner())
+	{
+		Owner->EnqueueRemovedEntity(Snapshot.NetworkId);
+	}
 }
 
 UWorld* UFlecsIrisReplicationShard::GetWorld() const
@@ -67,7 +76,11 @@ void UFlecsIrisReplicationShard::FillRootObjectReplicationParams(
 	const UE::Net::FRootObjectReplicationParamsContext& Context,
 	UE::Net::FRootObjectReplicationParams& OutParams) const
 {
-	if (RootObjectAdapter) RootObjectAdapter->FillRootObjectReplicationParams(Context, OutParams);
+	if (RootObjectAdapter)
+	{
+		RootObjectAdapter->FillRootObjectReplicationParams(Context, OutParams);
+	}
+	
 	OutParams.PollFrequency = PollFrequency;
 	OutParams.StaticPriority = StaticPriority;
 	OutParams.bUseClassConfigDynamicFilter = false;
@@ -101,10 +114,20 @@ void UFlecsIrisReplicationShard::BindClient(UWorld* InWorld)
 
 bool UFlecsIrisReplicationShard::TryStartReplication()
 {
-	if (!RootObjectAdapter || RootObjectAdapter->IsReplicating()) return RootObjectAdapter != nullptr;
+	if (!RootObjectAdapter || RootObjectAdapter->IsReplicating())
+	{
+		return RootObjectAdapter != nullptr;
+	}
+	
 	UWorld* World = GetWorld();
+	
 	UNetDriver* NetDriver = World ? World->GetNetDriver() : nullptr;
-	if (!NetDriver || !NetDriver->GetReplicationSystem() || !World->PersistentLevel) return false;
+	
+	if (!NetDriver || !NetDriver->GetReplicationSystem() || !World->PersistentLevel)
+	{
+		return false;
+	}
+	
 	RootObjectAdapter->StartReplication(World->PersistentLevel);
 	return RootObjectAdapter->IsReplicating();
 }
@@ -135,7 +158,10 @@ void UFlecsIrisReplicationShard::DetachedFromReplication()
 
 void UFlecsIrisReplicationShard::UpsertLayout(const FFlecsReplicationLayoutDefinition& Layout)
 {
-	if (LayoutIndices.Contains(Layout.LayoutId)) return;
+	if (LayoutIndices.Contains(Layout.LayoutId))
+	{
+		return;
+	}
 	FFlecsIrisLayoutManifestItem& Item = LayoutManifest.Items.AddDefaulted_GetRef();
 	Item.Definition = Layout;
 	LayoutIndices.Add(Layout.LayoutId, LayoutManifest.Items.Num() - 1);
@@ -160,7 +186,10 @@ void UFlecsIrisReplicationShard::UpsertEntity(const FFlecsReplicatedEntitySnapsh
 void UFlecsIrisReplicationShard::RemoveEntity(const FFlecsNetworkId NetworkId)
 {
 	const int32* Index = EntityIndices.Find(NetworkId);
-	if (!Index) return;
+	if (!Index)
+	{
+		return;
+	}
 	EntitySnapshots.Items.RemoveAt(*Index);
 	EntityIndices.Remove(NetworkId);
 	for (int32 ItemIndex = *Index; ItemIndex < EntitySnapshots.Items.Num(); ++ItemIndex)
@@ -172,8 +201,14 @@ void UFlecsIrisReplicationShard::RemoveEntity(const FFlecsNetworkId NetworkId)
 
 void UFlecsIrisReplicationShard::EnqueueAllReceived()
 {
-	for (const FFlecsIrisLayoutManifestItem& Item : LayoutManifest.Items) EnqueueReceivedLayout(Item.Definition);
-	for (const FFlecsIrisEntitySnapshotItem& Item : EntitySnapshots.Items) EnqueueReceivedEntity(Item.Snapshot);
+	for (const FFlecsIrisLayoutManifestItem& Item : LayoutManifest.Items)
+	{
+		EnqueueReceivedLayout(Item.Definition);
+	}
+	for (const FFlecsIrisEntitySnapshotItem& Item : EntitySnapshots.Items)
+	{
+		EnqueueReceivedEntity(Item.Snapshot);
+	}
 }
 
 void UFlecsIrisReplicationShard::EnqueueReceivedLayout(const FFlecsReplicationLayoutDefinition& Layout) const

@@ -22,7 +22,10 @@ void UFlecsIrisReplicationTransport::ShutdownTransport()
 {
 	for (const TPair<FName, TObjectPtr<UFlecsIrisReplicationShard>>& Pair : Shards)
 	{
-		if (Pair.Value) Pair.Value->StopReplication();
+		if (Pair.Value)
+		{
+			Pair.Value->StopReplication();
+		}
 	}
 	Shards.Reset();
 	Super::ShutdownTransport();
@@ -33,7 +36,10 @@ void UFlecsIrisReplicationTransport::TickTransport()
 	bool bAllStarted = true;
 	for (const TPair<FName, TObjectPtr<UFlecsIrisReplicationShard>>& Pair : Shards)
 	{
-		if (Pair.Value) bAllStarted &= Pair.Value->TryStartReplication();
+		if (Pair.Value)
+		{
+			bAllStarted &= Pair.Value->TryStartReplication();
+		}
 	}
 	if (!Shards.IsEmpty() && !bAllStarted && ++StartAttempts > 120 && !bWarnedReplicationSystemUnavailable)
 	{
@@ -46,13 +52,19 @@ void UFlecsIrisReplicationTransport::TickTransport()
 void UFlecsIrisReplicationTransport::PublishLayout(const FFlecsReplicationRouteKey& Route,
 	const FFlecsReplicationLayoutDefinition& Layout)
 {
-	if (UFlecsIrisReplicationShard* Shard = FindOrCreateShard(Route)) Shard->UpsertLayout(Layout);
+	if (UFlecsIrisReplicationShard* Shard = FindOrCreateShard(Route))
+	{
+		Shard->UpsertLayout(Layout);
+	}
 }
 
 void UFlecsIrisReplicationTransport::PublishEntity(const FFlecsReplicationRouteKey& Route,
 	const FFlecsReplicatedEntitySnapshot& Snapshot)
 {
-	if (UFlecsIrisReplicationShard* Shard = FindOrCreateShard(Route)) Shard->UpsertEntity(Snapshot);
+	if (UFlecsIrisReplicationShard* Shard = FindOrCreateShard(Route))
+	{
+		Shard->UpsertEntity(Snapshot);
+	}
 }
 
 void UFlecsIrisReplicationTransport::RemoveEntity(const FFlecsReplicationRouteKey& Route,
@@ -79,9 +91,15 @@ void UFlecsIrisReplicationTransport::HandleProtocolError(const FString& Diagnost
 UFlecsIrisReplicationShard* UFlecsIrisReplicationTransport::FindOrCreateShard(
 	const FFlecsReplicationRouteKey& Route)
 {
-	if (TObjectPtr<UFlecsIrisReplicationShard>* Found = Shards.Find(Route.Name)) return *Found;
+	if (TObjectPtr<UFlecsIrisReplicationShard>* Found = Shards.Find(Route.Name))
+	{
+		return *Found;
+	}
 	UFlecsNetworkWorldSubsystem* Subsystem = GetNetworkSubsystem();
-	if (!Subsystem || !Subsystem->HasAuthority()) return nullptr;
+	if (!Subsystem || !Subsystem->HasAuthority())
+	{
+		return nullptr;
+	}
 	UFlecsIrisReplicationShard* Shard = NewObject<UFlecsIrisReplicationShard>(Subsystem);
 	const UFlecsNetworkingModuleSettings* Settings = GetDefault<UFlecsNetworkingModuleSettings>();
 	Shard->InitializeServer(Subsystem->GetWorld(), Route, Settings->DefaultShardPollFrequency,

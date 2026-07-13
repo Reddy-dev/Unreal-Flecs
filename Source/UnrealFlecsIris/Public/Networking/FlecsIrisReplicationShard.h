@@ -145,4 +145,4 @@ private:
 	TMap<FFlecsNetworkId, int32> EntityIndices;
 	float PollFrequency = 20.0f;
 	float StaticPriority = 1.0f;
-};
+}; // class UFlecsIrisReplicationShard
