@@ -8,7 +8,7 @@
 
 /**
  * @brief Indicates that the Replicated entity contains data when replicated over the network.
- * implies having a FFlecsReplicatedComponent as well.
+ * implies having a FFlecsReplicatedEntityComponent as well.
  */
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsReplicatedTrait
