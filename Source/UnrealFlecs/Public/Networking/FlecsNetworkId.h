@@ -21,33 +21,72 @@ USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsNetworkId
 {
 	GENERATED_BODY()
+	
+	static constexpr uint64 InvalidValue = 0ull;
+	
+	static constexpr uint64 SlotBitCount = 32ull;
+	static constexpr uint64 GenerationBitCount = 24ull;
+	static constexpr uint64 EpochBitCount = 8ull;
 
-	static constexpr uint64 SlotMask = 0x00000000FFFFFFFFull;
-	static constexpr uint64 GenerationMask = 0x0000FFFF00000000ull;
-	static constexpr uint64 EpochMask = 0xFFFF000000000000ull;
+	static constexpr uint64 SlotMask = (1ull << SlotBitCount) - 1ull;
+	static_assert(SlotMask == 0x00000000FFFFFFFFull);
+	
+	static constexpr uint64 GenerationValueMask = (1ull << GenerationBitCount) - 1ull;
+	static constexpr uint64 GenerationMask = GenerationValueMask << SlotBitCount;
+	static_assert(GenerationMask == 0x00FFFFFF00000000ull);
+	
+	static constexpr uint64 EpochValueMask = (1ull << EpochBitCount) - 1ull;
+	static constexpr uint64 EpochMask = EpochValueMask << (SlotBitCount + GenerationBitCount);
+	static_assert(EpochMask == 0xFF00000000000000ull);
 
 	FFlecsNetworkId() = default;
 	explicit constexpr FFlecsNetworkId(const uint64 InValue) : Value(InValue) {}
-	constexpr FFlecsNetworkId(const uint32 InSlot, const uint16 InGeneration, const uint16 InSessionEpoch)
-		: Value(static_cast<uint64>(InSlot)
-			| (static_cast<uint64>(InGeneration) << 32u)
-			| (static_cast<uint64>(InSessionEpoch) << 48u))
+	constexpr FFlecsNetworkId(const uint32 InSlot, const uint32 InGeneration, const uint8 InSessionEpoch)
+		: Value((static_cast<uint64>(InSlot) & SlotMask)
+			| ((static_cast<uint64>(InGeneration) & GenerationValueMask) << SlotBitCount)
+			| ((static_cast<uint64>(InSessionEpoch) & EpochValueMask) << (SlotBitCount + GenerationBitCount)))
 	{
 	}
 
-	NO_DISCARD constexpr bool IsValid() const { return Value != 0 && GetSessionEpoch() != 0; }
-	NO_DISCARD constexpr uint64 GetValue() const { return Value; }
-	NO_DISCARD constexpr uint32 GetSlot() const { return static_cast<uint32>(Value & SlotMask); }
-	NO_DISCARD constexpr uint16 GetGeneration() const { return static_cast<uint16>((Value & GenerationMask) >> 32u); }
-	NO_DISCARD constexpr uint16 GetSessionEpoch() const { return static_cast<uint16>((Value & EpochMask) >> 48u); }
+	NO_DISCARD constexpr bool IsValid() const
+	{
+		return Value != 0 && GetSessionEpoch() != 0;
+	}
+	
+	NO_DISCARD constexpr uint64 GetValue() const
+	{
+		return Value;
+	}
+	
+	NO_DISCARD constexpr uint32 GetSlot() const
+	{
+		return static_cast<uint32>(Value & SlotMask);
+	}
+	
+	NO_DISCARD constexpr uint32 GetGeneration() const
+	{
+		return static_cast<uint32>((Value & GenerationMask) >> SlotBitCount);
+	}
+	
+	NO_DISCARD constexpr uint8 GetSessionEpoch() const
+	{
+		return static_cast<uint8>((Value & EpochMask) >> (SlotBitCount + GenerationBitCount));
+	}
 
 	NO_DISCARD constexpr bool operator==(const FFlecsNetworkId& Other) const
 	{
 		return Value == Other.Value;
 	}
 	
-	NO_DISCARD friend constexpr bool operator<(const FFlecsNetworkId& A, const FFlecsNetworkId& B) { return A.Value < B.Value; }
-	NO_DISCARD friend uint32 GetTypeHash(const FFlecsNetworkId& InId) { return GetTypeHash(InId.Value); }
+	NO_DISCARD friend constexpr bool operator<(const FFlecsNetworkId& A, const FFlecsNetworkId& B)
+	{
+		return A.Value < B.Value;
+	}
+	
+	NO_DISCARD friend uint32 GetTypeHash(const FFlecsNetworkId& InId)
+	{
+		return GetTypeHash(InId.Value);
+	}
 
 	UPROPERTY()
 	uint64 Value = 0;
@@ -76,22 +115,22 @@ struct UNREALFLECS_API FFlecsReplicatedEntityReference
 class UNREALFLECS_API FFlecsNetworkIdAllocator
 {
 public:
-	explicit FFlecsNetworkIdAllocator(uint16 InSessionEpoch = 1);
+	explicit FFlecsNetworkIdAllocator(uint8 InSessionEpoch = 1);
 
 	/** Allocates a new valid identity, or an invalid identity if the slot space is exhausted. */
 	FFlecsNetworkId Allocate();
 	/** Releases a currently allocated identity; stale generations are rejected. */
 	bool Release(FFlecsNetworkId InId);
 	/** Clears allocations and selects the epoch used by subsequent identities. */
-	void Reset(uint16 InSessionEpoch);
+	void Reset(uint8 InSessionEpoch);
 
-	NO_DISCARD uint16 GetSessionEpoch() const { return SessionEpoch; }
+	NO_DISCARD uint8 GetSessionEpoch() const { return SessionEpoch; }
 
 private:
-	uint16 SessionEpoch = 1;
+	uint8 SessionEpoch = 1;
 	uint32 NextSlot = 1;
 	TArray<uint32> FreeSlots;
-	TMap<uint32, uint16> SlotGenerations;
+	TMap<uint32, uint32> SlotGenerations;
 	TSet<uint32> AllocatedSlots;
 };
 

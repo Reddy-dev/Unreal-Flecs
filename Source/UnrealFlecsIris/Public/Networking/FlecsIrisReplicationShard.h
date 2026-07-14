@@ -40,8 +40,15 @@ struct UNREALFLECSIRIS_API FFlecsIrisLayoutManifest : public FIrisFastArraySeria
 			FFlecsIrisLayoutManifest>(Items, DeltaParams, *this);
 	}
 
-	void SetOwner(UFlecsIrisReplicationShard* InOwner) { Owner = InOwner; }
-	NO_DISCARD UFlecsIrisReplicationShard* GetOwner() const { return Owner.Get(); }
+	void SetOwner(UFlecsIrisReplicationShard* InOwner)
+	{
+		Owner = InOwner;
+	}
+	
+	NO_DISCARD UFlecsIrisReplicationShard* GetOwner() const
+	{
+		return Owner.Get();
+	}
 
 private:
 	TWeakObjectPtr<UFlecsIrisReplicationShard> Owner;

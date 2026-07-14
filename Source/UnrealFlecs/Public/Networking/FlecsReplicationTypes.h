@@ -41,7 +41,7 @@ enum class EFlecsReplicationPairTargetKind : uint8
 	None,
 	Schema,
 	StableSymbolValue,
-	StableNameValue,
+	StablePathValue,
 	Entity
 };
 
@@ -85,14 +85,10 @@ struct UNREALFLECS_API FFlecsReplicationKey
 
 	UPROPERTY()
 	uint32 TargetVersion = 0;
-
-	/** Sender-side display/name data for a StableValue target. */
-	UPROPERTY()
-	FString StableTargetName;
 	
 	/** Peer-common symbol used to resolve a StableValue target on receipt. */
 	UPROPERTY()
-	FString StableTargetSymbol;
+	FString StableTargetIdentifier;
 
 	/** Target entity identity when TargetKind is Entity. */
 	UPROPERTY()
@@ -104,7 +100,7 @@ struct UNREALFLECS_API FFlecsReplicationKey
 
 	NO_DISCARD FString CanonicalString() const;
 	friend bool operator==(const FFlecsReplicationKey&, const FFlecsReplicationKey&) = default;
-};
+}; // struct FFlecsReplicationKey
 
 /** Immutable structural definition shared by all snapshots of one Flecs table. */
 USTRUCT()
@@ -117,23 +113,32 @@ struct UNREALFLECS_API FFlecsReplicationLayoutDefinition
 
 	UPROPERTY()
 	TArray<FFlecsReplicationKey> Keys;
-};
+}; // struct FFlecsReplicationLayoutDefinition
 
 /** Transport-facing partition key used by IFlecsReplicationRouter. */
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsReplicationRouteKey
 {
 	GENERATED_BODY()
+	
+	FORCEINLINE friend uint32 GetTypeHash(const FFlecsReplicationRouteKey& Key)
+	{
+		return GetTypeHash(Key.Name);
+	}
+	
+	static NO_DISCARD FFlecsReplicationRouteKey Default()
+	{
+		return FFlecsReplicationRouteKey(TEXT("Default"));
+	}
 
 	FFlecsReplicationRouteKey() = default;
 	explicit FFlecsReplicationRouteKey(const FName InName) : Name(InName) {}
-	static FFlecsReplicationRouteKey Default() { return FFlecsReplicationRouteKey(TEXT("Default")); }
+	
 	friend bool operator==(const FFlecsReplicationRouteKey&, const FFlecsReplicationRouteKey&) = default;
-	friend uint32 GetTypeHash(const FFlecsReplicationRouteKey& Key) { return GetTypeHash(Key.Name); }
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
 	FName Name = TEXT("Default");
-};
+}; // struct FFlecsReplicationRouteKey
 
 /** Serialized payload for one payload-bearing layout key. */
 USTRUCT()
@@ -146,7 +151,7 @@ struct UNREALFLECS_API FFlecsReplicatedValue
 
 	UPROPERTY()
 	TArray<uint8> Bytes;
-};
+}; // struct FFlecsReplicatedValue
 
 /**
  * Latest complete replicated state for one entity.
@@ -203,13 +208,25 @@ struct UNREALFLECS_API FFlecsReplicationInboxRecord
 class UNREALFLECS_API FFlecsReplicationInbox
 {
 public:
-	void Enqueue(FFlecsReplicationInboxRecord Record) { Records.Enqueue(MoveTemp(Record)); }
-	bool Dequeue(FFlecsReplicationInboxRecord& OutRecord) { return Records.Dequeue(OutRecord); }
-	NO_DISCARD bool IsEmpty() const { return Records.IsEmpty(); }
+	FORCEINLINE void Enqueue(FFlecsReplicationInboxRecord Record)
+	{
+		Records.Enqueue(MoveTemp(Record));
+	}
+	
+	FORCEINLINE bool Dequeue(FFlecsReplicationInboxRecord& OutRecord)
+	{
+		return Records.Dequeue(OutRecord);
+	}
+	
+	NO_DISCARD FORCEINLINE bool IsEmpty() const
+	{
+		return Records.IsEmpty();
+	}
 
 private:
 	TQueue<FFlecsReplicationInboxRecord, EQueueMode::Mpsc> Records;
-};
+	
+}; // class FFlecsReplicationInbox
 
 /**
  * Per-world cache of locally generated and remotely validated layouts.
@@ -222,10 +239,12 @@ class UNREALFLECS_API FFlecsReplicationLayoutRegistry
 {
 public:
 	/** Computes the deterministic layout ID from a sorted key list. */
-	static FFlecsReplicationLayoutId ComputeLayoutId(const TArray<FFlecsReplicationKey>& Keys);
+	static NO_DISCARD FFlecsReplicationLayoutId ComputeLayoutId(const TArray<FFlecsReplicationKey>& Keys);
+	
 	/** Builds or reuses a local layout for Entity's current Flecs table. */
-	const FFlecsReplicationLayoutDefinition* BuildForEntity(const UFlecsWorld* World,
+	const FFlecsReplicationLayoutDefinition* BuildForEntity(const TSolidNotNull<const UFlecsWorld*> World,
 		const FFlecsEntityHandle& Entity, bool& bOutWasCreated, FString& OutError);
+	
 	/** Finds a previously generated or accepted layout definition. */
 	NO_DISCARD const FFlecsReplicationLayoutDefinition* Find(FFlecsReplicationLayoutId Id) const;
 	/** Adds an already validated remote layout, rejecting identity collisions. */
@@ -234,4 +253,4 @@ public:
 private:
 	TMap<const flecs::table_t*, FFlecsReplicationLayoutId> TableCache;
 	TMap<FFlecsReplicationLayoutId, FFlecsReplicationLayoutDefinition> Definitions;
-};
+}; // class FFlecsReplicationLayoutRegistry

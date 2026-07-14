@@ -6,7 +6,7 @@
 
 REGISTER_FLECS_COMPONENT(FFlecsNetworkId);
 
-FFlecsNetworkIdAllocator::FFlecsNetworkIdAllocator(const uint16 InSessionEpoch)
+FFlecsNetworkIdAllocator::FFlecsNetworkIdAllocator(const uint8 InSessionEpoch)
 {
 	Reset(InSessionEpoch);
 }
@@ -27,11 +27,12 @@ FFlecsNetworkId FFlecsNetworkIdAllocator::Allocate()
 		}
 	}
 
-	uint16& Generation = SlotGenerations.FindOrAdd(Slot, 1);
+	uint32& Generation = SlotGenerations.FindOrAdd(Slot, 1);
 	if (Generation == 0)
 	{
 		Generation = 1;
 	}
+	
 	AllocatedSlots.Add(Slot);
 	return FFlecsNetworkId(Slot, Generation, SessionEpoch);
 }
@@ -43,9 +44,9 @@ bool FFlecsNetworkIdAllocator::Release(const FFlecsNetworkId InId)
 		return false;
 	}
 
-	uint16& Generation = SlotGenerations.FindChecked(InId.GetSlot());
+	uint32& Generation = SlotGenerations.FindChecked(InId.GetSlot());
 	++Generation;
-	if (Generation == 0)
+	if (Generation > FFlecsNetworkId::GenerationValueMask)
 	{
 		Generation = 1;
 	}
@@ -53,7 +54,7 @@ bool FFlecsNetworkIdAllocator::Release(const FFlecsNetworkId InId)
 	return true;
 }
 
-void FFlecsNetworkIdAllocator::Reset(uint16 InSessionEpoch)
+void FFlecsNetworkIdAllocator::Reset(const uint8 InSessionEpoch)
 {
 	SessionEpoch = InSessionEpoch == 0 ? 1 : InSessionEpoch;
 	NextSlot = 1;

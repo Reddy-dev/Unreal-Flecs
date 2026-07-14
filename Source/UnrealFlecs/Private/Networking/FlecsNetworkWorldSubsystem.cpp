@@ -30,7 +30,7 @@ void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UF
 	Super::OnFlecsWorldInitialized(InWorld);
 	InWorld->Set<FFlecsNetworkSubsystemSingleton>(FFlecsNetworkSubsystemSingleton{ this });
 
-	const uint16 Epoch = static_cast<uint16>((FPlatformTime::Cycles64() ^ PointerHash(this)) & 0xFFFFu);
+	const uint8 Epoch = static_cast<uint8>((FPlatformTime::Cycles64() ^ PointerHash(this)) & 0xFFu);
 	NetworkIdAllocator.Reset(Epoch == 0 ? 1 : Epoch);
 	InstallDirtyObservers();
 	CreateReplicationTransport();
@@ -43,22 +43,27 @@ void UFlecsNetworkWorldSubsystem::Deinitialize()
 		FWorldDelegates::OnWorldPreActorTick.Remove(PreActorTickHandle);
 		PreActorTickHandle.Reset();
 	}
+	
 	if (ReplicationTransport)
 	{
 		ReplicationTransport->ShutdownTransport();
 		ReplicationTransport = nullptr;
 	}
+	
 	// Observer handles are non-owning. The Flecs world owns and destroys the
 	// observer entities with the world. At UWorld subsystem teardown the Flecs
 	// world may already be finalizing, so querying or destructing these handles
 	// would call back into an inaccessible ecs_world_t.
 	DirtyObservers.Reset();
+	
 	if (GetFlecsWorld() && DescriptorRegisteredHandle.IsValid())
 	{
 		FFlecsComponentReplicationRegistry::Get(GetFlecsWorld()).OnDescriptorRegistered().Remove(DescriptorRegisteredHandle);
 		DescriptorRegisteredHandle.Reset();
 	}
+	
 	FFlecsComponentReplicationRegistry::RemoveWorld(GetFlecsWorld());
+	
 	Super::Deinitialize();
 }
 
@@ -80,8 +85,10 @@ FFlecsNetworkId UFlecsNetworkWorldSubsystem::BeginReplicatingEntity(const FFlecs
 		UE_LOG(LogFlecsCore, Error, TEXT("BeginReplicatingEntity called with an invalid entity"));
 		return {};
 	}
+	
+	const FFlecsNetworkId* Existing = EntityHandle.TryGet<FFlecsNetworkId>(); 
 
-	if (const FFlecsNetworkId* Existing = EntityHandle.TryGet<FFlecsNetworkId>(); Existing && Existing->IsValid())
+	if (Existing && Existing->IsValid())
 	{
 		NetworkIdToEntityHandleMap.FindOrAdd(*Existing) = EntityHandle;
 		EntityStates.FindOrAdd(*Existing);
@@ -90,11 +97,13 @@ FFlecsNetworkId UFlecsNetworkWorldSubsystem::BeginReplicatingEntity(const FFlecs
 	}
 
 	const FFlecsNetworkId NetworkId = NetworkIdAllocator.Allocate();
+	
 	if (!NetworkId.IsValid())
 	{
 		UE_LOG(LogFlecsCore, Error, TEXT("Flecs network ID allocator exhausted its slot space"));
 		return {};
 	}
+	
 	EntityHandle.Set<FFlecsNetworkId>(NetworkId);
 	NetworkIdToEntityHandleMap.Add(NetworkId, EntityHandle);
 	EntityStates.Add(NetworkId);
@@ -108,6 +117,7 @@ void UFlecsNetworkWorldSubsystem::StopReplicatingEntity(const FFlecsEntityHandle
 	{
 		return;
 	}
+	
 	if (EntityHandle.IsValid())
 	{
 		if (const FFlecsNetworkId* NetworkId = EntityHandle.TryGet<FFlecsNetworkId>();
@@ -122,6 +132,7 @@ void UFlecsNetworkWorldSubsystem::StopReplicatingEntity(const FFlecsEntityHandle
 	// as invalid. The stable local ID is still present in the reverse index.
 	const FFlecsId LocalEntityId = EntityHandle.GetFlecsId();
 	FFlecsNetworkId FoundNetworkId;
+	
 	for (const TPair<FFlecsNetworkId, FFlecsEntityHandle>& Pair : NetworkIdToEntityHandleMap)
 	{
 		if (Pair.Value.GetFlecsId() == LocalEntityId)
@@ -130,6 +141,7 @@ void UFlecsNetworkWorldSubsystem::StopReplicatingEntity(const FFlecsEntityHandle
 			break;
 		}
 	}
+	
 	if (FoundNetworkId.IsValid())
 	{
 		StopReplicatingEntity(FoundNetworkId);
@@ -138,21 +150,24 @@ void UFlecsNetworkWorldSubsystem::StopReplicatingEntity(const FFlecsEntityHandle
 
 void UFlecsNetworkWorldSubsystem::StopReplicatingEntity(const FFlecsNetworkId NetworkId)
 {
-	if (!NetworkId.IsValid() || !HasAuthority())
+	if UNLIKELY_IF(!NetworkId.IsValid() || !HasAuthority())
 	{
 		return;
 	}
+	
 	if (ReplicationTransport)
 	{
 		const FReplicatedEntityState* State = EntityStates.Find(NetworkId);
 		ReplicationTransport->RemoveEntity(
 			State ? State->RouteKey : FFlecsReplicationRouteKey::Default(), NetworkId);
 	}
+	
 	if (const FFlecsEntityHandle* Entity = NetworkIdToEntityHandleMap.Find(NetworkId);
 		Entity && Entity->IsValid() && Entity->Has<FFlecsNetworkId>())
 	{
 		Entity->Remove<FFlecsNetworkId>();
 	}
+	
 	DirtyEntities.Remove(NetworkId);
 	EntityStates.Remove(NetworkId);
 	NetworkIdToEntityHandleMap.Remove(NetworkId);
@@ -178,6 +193,7 @@ FFlecsEntityHandle UFlecsNetworkWorldSubsystem::FindEntity(const FFlecsNetworkId
 	{
 		return *Found;
 	}
+	
 	return FFlecsEntityHandle::Invalid();
 }
 
@@ -189,6 +205,7 @@ bool UFlecsNetworkWorldSubsystem::HasAuthority() const
 		return false;
 	}
 #endif
+	
 	return GetWorld() && GetWorld()->GetNetMode() != NM_Client;
 }
 
@@ -274,6 +291,7 @@ void UFlecsNetworkWorldSubsystem::InstallDirtyObserversForDescriptor(
 				Subsystem->MarkEntityDirty(FFlecsEntityHandle(Entity));
 			}
 		});
+		
 		return Observer;
 	};
 	
@@ -289,7 +307,9 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 	}
 	TArray<FFlecsNetworkId> Pending = DirtyEntities.Array();
 	DirtyEntities.Reset();
+	
 	UFlecsWorld* World = GetFlecsWorldChecked();
+	
 	FFlecsComponentReplicationRegistry& ComponentRegistry = FFlecsComponentReplicationRegistry::Get(World);
 
 	for (const FFlecsNetworkId NetworkId : Pending)
@@ -315,11 +335,13 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 
 		FReplicatedEntityState& State = EntityStates.FindOrAdd(NetworkId);
 		const FFlecsReplicationRouteKey Route = Router->Route(Entity);
+		
 		if (State.LayoutId != Layout->LayoutId)
 		{
 			State.LayoutId = Layout->LayoutId;
 			++State.CompositionRevision;
 		}
+		
 		State.RouteKey = Route;
 		++State.StateRevision;
 
@@ -359,8 +381,10 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 			}
 			
 			FFlecsReplicatedValue& Serialized = Snapshot.Values.AddDefaulted_GetRef();
+			
 			Serialized.KeyIndex = static_cast<uint16>(KeyIndex);
 			FMemoryWriter Writer(Serialized.Bytes, true);
+			
 			if (!Descriptor->Serialize(Writer, const_cast<void*>(Value)) || Writer.IsError())
 			{
 				UE_LOG(LogFlecsCore, Error, TEXT("Failed to serialize schema '%s' for entity %llu"),
@@ -626,7 +650,7 @@ bool UFlecsNetworkWorldSubsystem::ResolveKeyToLocalId(const FFlecsReplicationKey
 		break;
 	case EFlecsReplicationPairTargetKind::StableSymbolValue:
 	{
-		const FFlecsEntityHandle StableTarget = World->LookupEntityBySymbol_Internal(Key.StableTargetSymbol);
+		const FFlecsEntityHandle StableTarget = World->LookupEntityBySymbol_Internal(Key.StableTargetIdentifier);
 			
 		if (StableTarget.IsValid())
 		{
@@ -635,6 +659,17 @@ bool UFlecsNetworkWorldSubsystem::ResolveKeyToLocalId(const FFlecsReplicationKey
 			
 		break;
 	}
+		case EFlecsReplicationPairTargetKind::StablePathValue:
+		{
+			const FFlecsEntityHandle StableTarget = World->LookupEntity(Key.StableTargetIdentifier);
+			
+			if (StableTarget.IsValid())
+			{
+				Target = StableTarget.GetFlecsId();
+			}
+			
+			break;
+		}
 	case EFlecsReplicationPairTargetKind::Entity:
 	{
 		const FFlecsEntityHandle EntityTarget = FindEntity(Key.EntityTarget);
@@ -674,29 +709,41 @@ bool UFlecsNetworkWorldSubsystem::ValidateLayout(const FFlecsReplicationLayoutDe
 					Role, *Schema.ToString(), Version);
 				return false;
 			}
+			
 			return true;
 		};
+		
 		if (!ValidateSchema(Key.StorageSchema, Key.StorageVersion, TEXT("Storage")))
 		{
 			return false;
 		}
+		
 		if (Key.Kind == EFlecsReplicationKeyKind::Pair
 			&& !ValidateSchema(Key.RelationshipSchema, Key.RelationshipVersion, TEXT("Relationship")))
 		{
 			return false;
 		}
+		
 		if (Key.TargetKind == EFlecsReplicationPairTargetKind::Schema
 			&& !ValidateSchema(Key.TargetSchema, Key.TargetVersion, TEXT("Target")))
 		{
 			return false;
 		}
-		if (Key.TargetKind == EFlecsReplicationPairTargetKind::StableValue
-			&& Key.StableTargetSymbol.IsEmpty())
+		
+		if (Key.TargetKind == EFlecsReplicationPairTargetKind::StableSymbolValue
+			&& Key.StableTargetIdentifier.IsEmpty())
 		{
-			OutError = TEXT("Stable pair target symbol is missing");
+			return false;
+		}
+		
+		if (Key.TargetKind == EFlecsReplicationPairTargetKind::StablePathValue
+			&& Key.StableTargetIdentifier.IsEmpty())
+		{
+			OutError = TEXT("Stable pair target path is missing");
 			return false;
 		}
 	}
+	
 	return true;
 }
 

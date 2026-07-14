@@ -109,15 +109,16 @@ struct UNREALFLECS_API FFlecsComponentReplicationDescriptor
 template <typename T>
 struct TFlecsReplicationTraits
 {
-	static FString StableName()
+	
+	static NO_DISCARD FString StableSymbolName()
 	{
 		if constexpr (Solid::IsScriptStruct<T>())
 		{
-			return TBaseStructure<T>::Get()->GetPathName();
+			return TBaseStructure<T>::Get()->GetStructCPPName();
 		}
 		else
 		{
-			return {};
+			return FString(nameof(T).data());
 		}
 	}
 
@@ -135,6 +136,7 @@ struct TFlecsReplicationTraits
 			return false;
 		}
 	}
+	
 };
 
 /**
@@ -151,21 +153,24 @@ public:
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnDescriptorRegistered, const FFlecsComponentReplicationDescriptor&);
 
 	/** Returns the registry owned by the supplied Flecs world. */
-	static FFlecsComponentReplicationRegistry& Get(const UFlecsWorld* World);
+	static FFlecsComponentReplicationRegistry& Get(const TSolidNotNull<const UFlecsWorld*> World);
+	
 	/** Removes the registry during Flecs world teardown. */
 	static void RemoveWorld(const UFlecsWorld* World);
 
 	/** Adds a valid descriptor, rejecting schema IDs already owned by another local ID. */
 	bool Register(FFlecsComponentReplicationDescriptor Descriptor, FString& OutError);
+	
 	/** Finds a descriptor by a world-local Flecs ID. */
 	NO_DISCARD const FFlecsComponentReplicationDescriptor* Find(FFlecsId LocalId) const;
+	
 	/** Finds a descriptor by its portable protocol schema ID. */
 	NO_DISCARD const FFlecsComponentReplicationDescriptor* Find(FFlecsReplicationSchemaId SchemaId) const;
 	NO_DISCARD const TMap<FFlecsId, FFlecsComponentReplicationDescriptor>& GetDescriptors() const { return ByLocalId; }
 	FOnDescriptorRegistered& OnDescriptorRegistered() { return DescriptorRegisteredDelegate; }
 
 	/** Rejects reflected types that contain unsupported raw object references. */
-	static bool ValidateReflectedType(const UScriptStruct* ScriptStruct, FString& OutError);
+	static bool ValidateReflectedType(const TSolidNotNull<const UScriptStruct*> ScriptStruct, FString& OutError);
 
 private:
 	TMap<FFlecsId, FFlecsComponentReplicationDescriptor> ByLocalId;
@@ -187,10 +192,15 @@ namespace UE::Flecs::Replication
 		FString* OutError = nullptr)
 	{
 		FFlecsComponentReplicationDescriptor Descriptor;
-		if constexpr (requires { TFlecsReplicationTraits<T>::StableName(); })
+		if constexpr (requires { TFlecsReplicationTraits<T>::StableSymbolName(); })
+		{
+			Descriptor.StableName = TFlecsReplicationTraits<T>::StableSymbolName();
+		}
+		else if constexpr (requires { TFlecsReplicationTraits<T>::StableName(); })
 		{
 			Descriptor.StableName = TFlecsReplicationTraits<T>::StableName();
 		}
+		
 		Descriptor.SchemaId = FFlecsReplicationSchemaId::FromStableName(Descriptor.StableName);
 
 		if constexpr (requires { TFlecsReplicationTraits<T>::SchemaVersion; })

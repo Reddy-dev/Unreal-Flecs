@@ -4,7 +4,6 @@
 
 #include "Misc/SecureHash.h"
 #include "Networking/FlecsStablePathTag.h"
-#include "Networking/FlecsStableSymbolTag.h"
 #include "Serialization/MemoryWriter.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsReplicationTypes)
@@ -63,15 +62,15 @@ FString FFlecsReplicationKey::CanonicalString() const
 	return FString::Printf(TEXT("%u|%s|%u|%s|%u|%u|%s|%u|%s|%llu|%u"),
 		static_cast<uint8>(Kind), *RelationshipSchema.ToString(), RelationshipVersion,
 		*StorageSchema.ToString(), StorageVersion, static_cast<uint8>(TargetKind),
-		*TargetSchema.ToString(), TargetVersion, *StableTargetName,
+		*TargetSchema.ToString(), TargetVersion, *StableTargetIdentifier,
 		EntityTarget.GetValue(), bHasPayload ? 1u : 0u);
 }
 
-const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildForEntity(const UFlecsWorld* World,
+const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildForEntity(const TSolidNotNull<const UFlecsWorld*> World,
 	const FFlecsEntityHandle& Entity, bool& bOutWasCreated, FString& OutError)
 {
 	bOutWasCreated = false;
-	if (!World || !Entity.IsValid())
+	if (!Entity.IsValid())
 	{
 		OutError = TEXT("Cannot build a replication layout for an invalid world/entity");
 		return nullptr;
@@ -91,10 +90,12 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 		if (!Id.IsPair())
 		{
 			const FFlecsComponentReplicationDescriptor* Descriptor = Registry.Find(Id);
+			
 			if (!Descriptor)
 			{
 				continue;
 			}
+			
 			FFlecsReplicationKey& Key = Keys.AddDefaulted_GetRef();
 			Key.Kind = EFlecsReplicationKeyKind::Component;
 			Key.StorageSchema = Descriptor->SchemaId;
@@ -105,8 +106,10 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 
 		const FFlecsId First = Id.GetFirst();
 		const FFlecsId Second = Id.GetSecond();
+		
 		const FFlecsComponentReplicationDescriptor* Relationship = Registry.Find(First);
 		const FFlecsComponentReplicationDescriptor* Storage = GetPairStorageDescriptor(Registry, First, Second);
+		
 		if (!Relationship || !Storage)
 		{
 			continue;
@@ -129,26 +132,41 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 		}
 		else
 		{
-			const FFlecsEntityHandle Target = World->IsAlive(Second) ? World->GetAlive(Second) : FFlecsEntityHandle::Invalid();
-			if (Target.IsValid() && Target.Has<FFlecsNetworkId>())
+			FFlecsEntityHandle Target;
+			
+			if (World->IsAlive(Second))
+			{
+				Target = World->GetAlive(Second);
+			}
+			else
+			{
+				Target = FFlecsEntityHandle::Invalid();
+			}
+
+			if UNLIKELY_IF (!Target.IsValid())
+			{
+				OutError = FString::Printf(TEXT("Cannot build a replication layout for a pair with an unknown target: %s"), 
+					*Id.ToString());
+				return nullptr;
+			}
+			
+			if (Target.Has<FFlecsNetworkId>())
 			{
 				Key.TargetKind = EFlecsReplicationPairTargetKind::Entity;
 				Key.EntityTarget = Target.Get<FFlecsNetworkId>();
 			}
-			else if (Target.Has<FFlecsStableSymbolTag>())
+			else if (Target.HasSymbol())
 			{
 				Key.TargetKind = EFlecsReplicationPairTargetKind::StableSymbolValue;
-				Key.StableTargetSymbol = Target.GetSymbol();
+				Key.StableTargetIdentifier = Target.GetSymbol();
 			}
-			else if (Target.Has<FFlecsStablePathTag>())
+			else if (Target.Has<FFlecsStablePathTag>() && Target.HasName())
 			{
-				Key.TargetKind = EFlecsReplicationPairTargetKind::StableNameValue;
-				Key.StableTargetName = Target.GetName();
+				Key.TargetKind = EFlecsReplicationPairTargetKind::StablePathValue;
+				Key.StableTargetIdentifier = Target.GetPath();
 			}
 			else UNLIKELY_ATTRIBUTE
 			{
-				ensureAlwaysMsgf(false, 
-					TEXT("Cannot build a replication layout for a pair with an unknown target: %s"), *Id.ToString());
 				OutError = FString::Printf(TEXT("Cannot build a replication layout for a pair with an unknown target: %s"), 
 					*Id.ToString());
 				return nullptr;

@@ -35,31 +35,38 @@ namespace
 		{
 			return true;
 		}
+		
 		if (Property->IsA<FObjectPropertyBase>() || Property->IsA<FInterfaceProperty>())
 		{
 			OutError = FString::Printf(TEXT("Raw UObject reference property '%s' is not supported"), *Property->GetPathName());
 			return false;
 		}
+		
 		if (const FArrayProperty* ArrayProperty = CastField<FArrayProperty>(Property))
 		{
 			return ValidateProperty(ArrayProperty->Inner, Visited, OutError);
 		}
+		
 		if (const FSetProperty* SetProperty = CastField<FSetProperty>(Property))
 		{
 			return ValidateProperty(SetProperty->ElementProp, Visited, OutError);
 		}
+		
 		if (const FMapProperty* MapProperty = CastField<FMapProperty>(Property))
 		{
 			return ValidateProperty(MapProperty->KeyProp, Visited, OutError)
 				&& ValidateProperty(MapProperty->ValueProp, Visited, OutError);
 		}
+		
 		if (const FStructProperty* StructProperty = CastField<FStructProperty>(Property))
 		{
 			if (Visited.Contains(StructProperty->Struct))
 			{
 				return true;
 			}
+			
 			Visited.Add(StructProperty->Struct);
+			
 			for (TFieldIterator<FProperty> It(StructProperty->Struct); It; ++It)
 			{
 				if (!ValidateProperty(*It, Visited, OutError))
@@ -68,6 +75,7 @@ namespace
 				}
 			}
 		}
+		
 		return true;
 	}
 }
@@ -78,16 +86,19 @@ FFlecsReplicationSchemaId FFlecsReplicationSchemaId::FromStableName(const FStrin
 	{
 		return {};
 	}
+	
 	FTCHARToUTF8 Utf8(*StableName);
 	FMD5 Md5;
 	Md5.Update(reinterpret_cast<const uint8*>(Utf8.Get()), Utf8.Length());
 	FMD5Hash Hash;
 	Hash.Set(Md5);
 	FGuid Guid = MD5HashToGuid(Hash);
+	
 	if (!Guid.IsValid())
 	{
 		Guid.D = 1;
 	}
+	
 	return FFlecsReplicationSchemaId(Guid);
 }
 
@@ -95,42 +106,54 @@ bool FFlecsComponentReplicationDescriptor::IsValid(FString* OutError) const
 {
 	auto Fail = [OutError](const TCHAR* Error)
 	{
-		if (OutError) { *OutError = Error; }
+		if (OutError)
+		{
+			*OutError = Error;
+		}
+		
 		return false;
 	};
+	
 	if (StableName.IsEmpty() || !SchemaId.IsValid())
 	{
 		return Fail(TEXT("Replication stable name/schema ID is missing"));
 	}
+	
 	if (SchemaVersion == 0)
 	{
 		return Fail(TEXT("Replication schema version must be nonzero"));
 	}
+	
 	if (!LocalFlecsId.IsValid())
 	{
 		return Fail(TEXT("Local Flecs ID is invalid"));
 	}
+	
 	if (!bIsTag && (Size == 0 || Alignment == 0))
 	{
 		return Fail(TEXT("Data component size/alignment is invalid"));
 	}
+	
 	if (!bIsTag && (!Serialize || !Deserialize || !Construct || !Destroy))
 	{
 		return Fail(TEXT("Native replication operations are incomplete"));
 	}
+	
 	return true;
 }
 
-FFlecsComponentReplicationRegistry& FFlecsComponentReplicationRegistry::Get(const UFlecsWorld* World)
+FFlecsComponentReplicationRegistry& FFlecsComponentReplicationRegistry::Get(const TSolidNotNull<const UFlecsWorld*> World)
 {
-	check(World);
 	RemoveExpiredWorldRegistries();
 	const TWeakObjectPtr<const UFlecsWorld> Key(World);
+	
 	TUniquePtr<FFlecsComponentReplicationRegistry>& Registry = GetWorldRegistries().FindOrAdd(Key);
+	
 	if (!Registry)
 	{
 		Registry = MakeUnique<FFlecsComponentReplicationRegistry>();
 	}
+	
 	return *Registry;
 }
 
@@ -148,24 +171,31 @@ bool FFlecsComponentReplicationRegistry::Register(FFlecsComponentReplicationDesc
 	{
 		return false;
 	}
+	
 	if (Descriptor.ScriptStruct && !ValidateReflectedType(Descriptor.ScriptStruct, OutError))
 	{
 		return false;
 	}
+	
 	if (const FFlecsId* ExistingLocal = SchemaToLocalId.Find(Descriptor.SchemaId))
 	{
 		if (*ExistingLocal == Descriptor.LocalFlecsId)
 		{
 			return true;
 		}
+		
 		OutError = FString::Printf(TEXT("Duplicate replication schema ID %s for '%s'"),
 		                           *Descriptor.SchemaId.ToString(), *Descriptor.StableName);
 		return false;
 	}
-	SchemaToLocalId.Add(Descriptor.SchemaId, Descriptor.LocalFlecsId);
+	
 	const FFlecsId LocalId = Descriptor.LocalFlecsId;
+	
+	SchemaToLocalId.Add(Descriptor.SchemaId, LocalId);
+	
 	ByLocalId.Add(LocalId, MoveTemp(Descriptor));
 	DescriptorRegisteredDelegate.Broadcast(ByLocalId.FindChecked(LocalId));
+	
 	return true;
 }
 
@@ -180,15 +210,11 @@ const FFlecsComponentReplicationDescriptor* FFlecsComponentReplicationRegistry::
 	return LocalId ? ByLocalId.Find(*LocalId) : nullptr;
 }
 
-bool FFlecsComponentReplicationRegistry::ValidateReflectedType(const UScriptStruct* ScriptStruct, FString& OutError)
+bool FFlecsComponentReplicationRegistry::ValidateReflectedType(const TSolidNotNull<const UScriptStruct*> ScriptStruct, FString& OutError)
 {
-	if (!ScriptStruct)
-	{
-		OutError = TEXT("Reflected replication type is null");
-		return false;
-	}
 	TSet<const UStruct*> Visited;
 	Visited.Add(ScriptStruct);
+	
 	for (TFieldIterator<FProperty> It(ScriptStruct); It; ++It)
 	{
 		if (!ValidateProperty(*It, Visited, OutError))
@@ -196,5 +222,6 @@ bool FFlecsComponentReplicationRegistry::ValidateReflectedType(const UScriptStru
 			return false;
 		}
 	}
+	
 	return true;
 }

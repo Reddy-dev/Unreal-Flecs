@@ -20,7 +20,7 @@ class UNREALFLECS_API IFlecsReplicationRouter
 public:
 	virtual ~IFlecsReplicationRouter() = default;
 	virtual FFlecsReplicationRouteKey Route(const FFlecsEntityHandle& Entity) const = 0;
-};
+}; // class IFlecsReplicationRouter
 
 /** Default router: every entity uses the single `Default` route. */
 class UNREALFLECS_API FFlecsDefaultReplicationRouter final : public IFlecsReplicationRouter
@@ -30,7 +30,8 @@ public:
 	{
 		return FFlecsReplicationRouteKey::Default();
 	}
-};
+	
+}; // class FFlecsDefaultReplicationRouter final
 
 /**
  * Transport boundary for the Flecs-owned replication protocol.
@@ -69,7 +70,8 @@ public:
 private:
 	UPROPERTY(Transient)
 	TWeakObjectPtr<UFlecsNetworkWorldSubsystem> NetworkSubsystem;
-};
+	
+}; // class UFlecsReplicationTransportBase
 
 /** Module-lifetime registry from configured provider names to transport classes. */
 class UNREALFLECS_API FFlecsReplicationTransportRegistry
@@ -81,4 +83,4 @@ public:
 	static void UnregisterProvider(FName ProviderName);
 	/** Resolves the transport class selected by UFlecsNetworkingModuleSettings. */
 	static UClass* FindProvider(FName ProviderName);
-};
+}; // class FFlecsReplicationTransportRegistry

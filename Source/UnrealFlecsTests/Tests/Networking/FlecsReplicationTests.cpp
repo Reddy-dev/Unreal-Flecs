@@ -13,6 +13,7 @@
 #include "Networking/FlecsNetworkWorldSubsystem.h"
 #include "Networking/FlecsReplicatedEntityComponent.h"
 #include "Networking/FlecsReplicationTypes.h"
+#include "Networking/FlecsStablePathTag.h"
 
 namespace UE::Flecs::Tests
 {
@@ -123,7 +124,7 @@ namespace UE::Flecs::Tests
 template<>
 struct TFlecsReplicationTraits<UE::Flecs::Tests::FNativeReplicatedValue>
 {
-	static FString StableName() { return TEXT("Tests/FNativeReplicatedValue"); }
+	static FString StableName() { return TEXT("FNativeReplicatedValue"); }
 	static constexpr uint32 SchemaVersion = 7;
 	static bool Serialize(FArchive& Archive, UE::Flecs::Tests::FNativeReplicatedValue& Value)
 	{
@@ -135,7 +136,7 @@ struct TFlecsReplicationTraits<UE::Flecs::Tests::FNativeReplicatedValue>
 template<>
 struct TFlecsReplicationTraits<UE::Flecs::Tests::FNativeReplicatedValueDuplicate>
 {
-	static FString StableName() { return TEXT("Tests/FNativeReplicatedValue"); }
+	static FString StableName() { return TEXT("FNativeReplicatedValue"); }
 	static constexpr uint32 SchemaVersion = 7;
 	static bool Serialize(FArchive& Archive, UE::Flecs::Tests::FNativeReplicatedValueDuplicate& Value)
 	{
@@ -177,7 +178,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 		FFlecsNetworkIdAllocator Allocator(42);
 		const FFlecsNetworkId First = Allocator.Allocate();
 		ASSERT_THAT(IsTrue(First.IsValid()));
-		ASSERT_THAT(AreEqual(static_cast<uint16>(42), First.GetSessionEpoch()));
+		ASSERT_THAT(AreEqual(static_cast<uint8>(42), First.GetSessionEpoch()));
 		ASSERT_THAT(IsTrue(Allocator.Release(First)));
 
 		const FFlecsNetworkId Reused = Allocator.Allocate();
@@ -188,9 +189,9 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 
 	TEST_METHOD(SchemaIdentity_UsesStableName_NotRegistrationOrder)
 	{
-		const FFlecsReplicationSchemaId First = FFlecsReplicationSchemaId::FromStableName(TEXT("/Script/Test.Type"));
-		const FFlecsReplicationSchemaId Again = FFlecsReplicationSchemaId::FromStableName(TEXT("/Script/Test.Type"));
-		const FFlecsReplicationSchemaId Other = FFlecsReplicationSchemaId::FromStableName(TEXT("/Script/Test.Other"));
+		const FFlecsReplicationSchemaId First = FFlecsReplicationSchemaId::FromStableName(TEXT("Type"));
+		const FFlecsReplicationSchemaId Again = FFlecsReplicationSchemaId::FromStableName(TEXT("Type"));
+		const FFlecsReplicationSchemaId Other = FFlecsReplicationSchemaId::FromStableName(TEXT("Other"));
 		ASSERT_THAT(IsTrue(First.IsValid()));
 		ASSERT_THAT(IsTrue(First == Again));
 		ASSERT_THAT(IsTrue(First != Other));
@@ -298,7 +299,8 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 
 	TEST_METHOD(PairLayouts_RepresentSchemaStableAndEntityTargets)
 	{
-		const FFlecsEntityHandle StaticTarget = FlecsWorld->CreateEntity(TEXT("ReplicationStaticTarget"));
+		const FFlecsEntityHandle StaticTarget = FlecsWorld->CreateEntity(TEXT("ReplicationStaticTarget"))
+			.Add<FFlecsStablePathTag>();
 		const FFlecsEntityHandle NetworkTarget = FlecsWorld->CreateEntity();
 		const FFlecsNetworkId TargetId = NetworkSubsystem->BeginReplicatingEntity(NetworkTarget);
 		const FFlecsEntityHandle Source = FlecsWorld->CreateEntity()
@@ -310,8 +312,9 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 		ASSERT_THAT(AreEqual(2, Captured.Layout.Keys.Num()));
 		ASSERT_THAT(IsTrue(Captured.Layout.Keys.ContainsByPredicate([](const FFlecsReplicationKey& Key)
 		{
-			return Key.TargetKind == EFlecsReplicationPairTargetKind::StableValue;
+			return Key.TargetKind == EFlecsReplicationPairTargetKind::StablePathValue;
 		})));
+		
 		ASSERT_THAT(IsTrue(Captured.Layout.Keys.ContainsByPredicate([TargetId](const FFlecsReplicationKey& Key)
 		{
 			return Key.TargetKind == EFlecsReplicationPairTargetKind::Entity && Key.EntityTarget == TargetId;

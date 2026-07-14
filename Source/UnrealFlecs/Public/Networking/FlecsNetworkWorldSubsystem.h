@@ -59,14 +59,32 @@ public:
 	NO_DISCARD bool HasAuthority() const;
 
 #if WITH_AUTOMATION_TESTS
+	
 	void SetReplicationTransportForTesting(UFlecsReplicationTransportBase* InTransport)
 	{
 		ReplicationTransport = InTransport;
-		if (ReplicationTransport) ReplicationTransport->InitializeTransport(this);
+		
+		if (ReplicationTransport)
+		{
+			ReplicationTransport->InitializeTransport(this);
+		}
 	}
-	void FlushServerReplicationForTesting() { GatherDirtyEntities(); }
-	void FlushClientReplicationForTesting() { DrainInbox(); }
-	void EnterClientReplicationModeForTesting() { bForceClientModeForTesting = true; }
+	
+	void FlushServerReplicationForTesting()
+	{
+		GatherDirtyEntities();
+	}
+	
+	void FlushClientReplicationForTesting()
+	{
+		DrainInbox();
+	}
+	
+	void EnterClientReplicationModeForTesting()
+	{
+		bForceClientModeForTesting = true;
+	}
+	
 	void ResetClientReplicationForTesting()
 	{
 		LayoutRegistry = {};
@@ -76,6 +94,7 @@ public:
 		EntitySourceShards.Reset();
 		EntityPairFixups.Reset();
 	}
+	
 #endif
 
 private:

@@ -868,8 +868,13 @@ struct TFlecsComponentTraits<FFlecsReplicationTestNativeValue> : TFlecsComponent
 template<>
 struct TFlecsReplicationTraits<FFlecsReplicationTestNativeValue>
 {
-	static FString StableName() { return TEXT("Tests/FFlecsReplicationTestNativeValue"); }
+	static FString StableSymbolName()
+	{
+		return TEXT("FFlecsReplicationTestNativeValue");
+	}
+	
 	static constexpr uint32 SchemaVersion = 1;
+	
 	static bool Serialize(FArchive& Archive, FFlecsReplicationTestNativeValue& Value)
 	{
 		Archive << Value.Value;
@@ -959,14 +964,17 @@ public:
 	{
 		Layouts.Add(Layout);
 	}
+	
 	virtual void PublishEntity(const FFlecsReplicationRouteKey&, const FFlecsReplicatedEntitySnapshot& Snapshot) override
 	{
 		Snapshots.Add(Snapshot);
 	}
+	
 	virtual void RemoveEntity(const FFlecsReplicationRouteKey&, FFlecsNetworkId NetworkId) override
 	{
 		RemovedEntities.Add(NetworkId);
 	}
+	
 	virtual void HandleProtocolError(const FString& Diagnostic) override
 	{
 		ProtocolErrors.Add(Diagnostic);
