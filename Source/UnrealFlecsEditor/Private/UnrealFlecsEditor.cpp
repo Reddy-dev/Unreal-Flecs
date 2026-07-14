@@ -2,6 +2,10 @@
 
 #include "UnrealFlecsEditor.h"
 
+#include "Editor.h"
+#include "PlayInEditorDataTypes.h"
+#include "PropertyEditorModule.h"
+#include "ToolMenus.h"
 #include "Engine/AssetManagerSettings.h"
 #include "Engine/AssetManagerTypes.h"
 #include "Framework/Notifications/NotificationManager.h"
@@ -109,7 +113,9 @@ void FUnrealFlecsEditorModule::RegisterExplorerMenuExtension()
 					return;
 				}
 
-				for (int32 Index = 0; Index < PIEInfo->PIEInstanceCount; ++Index)
+				const int32 InstanceCount = PIEInfo->PIEInstanceCount;
+
+				for (int32 Index = 0; Index < InstanceCount; ++Index)
 				{
 					FString TargetUrl = FlecsEditorDeveloperSettings->GetFlecsExplorerURL().ToURLString(Index);
 
