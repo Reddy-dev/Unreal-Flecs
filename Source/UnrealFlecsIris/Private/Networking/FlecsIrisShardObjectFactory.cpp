@@ -17,10 +17,12 @@ FName UFlecsIrisShardObjectFactory::GetFactoryName()
 void UFlecsIrisShardObjectFactory::PostInit(const FPostInitContext& Context)
 {
 	Super::PostInit(Context);
+	
 	if (UFlecsIrisReplicationShard* Shard = Cast<UFlecsIrisReplicationShard>(Context.Instance))
 	{
 		const UEngineReplicationBridge* EngineBridge = Cast<UEngineReplicationBridge>(Bridge);
-		UNetDriver* NetDriver = EngineBridge ? EngineBridge->GetNetDriver() : nullptr;
+		const UNetDriver* NetDriver = EngineBridge ? EngineBridge->GetNetDriver() : nullptr;
+		
 		Shard->BindClient(NetDriver ? NetDriver->GetWorld() : nullptr);
 		Shard->EnqueueAllReceived();
 	}
@@ -33,5 +35,6 @@ void UFlecsIrisShardObjectFactory::DetachedFromReplication(const FDetachContext&
 	{
 		Shard->DetachedFromReplication();
 	}
+	
 	Super::DetachedFromReplication(Context, SubObjectContext);
 }
