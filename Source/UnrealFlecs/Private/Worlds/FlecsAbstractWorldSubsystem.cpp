@@ -27,6 +27,11 @@ void UFlecsAbstractWorldSubsystem::Initialize(FSubsystemCollectionBase& Collecti
 	{
 		UE::Flecs::GOnFlecsWorldInitialized.AddWeakLambda(this, [this](const TSolidNotNull<UFlecsWorld*> InWorld)
 		{
+			if (InWorld->GetOuter() != FlecsWorldSubsystemRef.Get())
+			{
+				return;
+			}
+
 			FlecsWorldRef = InWorld;
 			OnFlecsWorldInitialized(FlecsWorldRef.Get());
 		});

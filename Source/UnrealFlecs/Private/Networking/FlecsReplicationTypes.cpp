@@ -104,8 +104,16 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 			continue;
 		}
 
-		const FFlecsId First = Id.GetFirst();
-		const FFlecsId Second = Id.GetSecond();
+		// Pair storage omits entity generations from both elements. Restore the
+		// current alive IDs before using them as local registry keys.
+		const FFlecsEntityHandle RelationshipEntity = World->GetAlive(Id.GetFirst());
+		const FFlecsEntityHandle Target = World->GetAlive(Id.GetSecond());
+		const FFlecsId First = RelationshipEntity.IsValid()
+			? RelationshipEntity.GetFlecsId()
+			: Id.GetFirst();
+		const FFlecsId Second = Target.IsValid()
+			? Target.GetFlecsId()
+			: Id.GetSecond();
 		
 		const FFlecsComponentReplicationDescriptor* Relationship = Registry.Find(First);
 		const FFlecsComponentReplicationDescriptor* Storage = GetPairStorageDescriptor(Registry, First, Second);
@@ -132,17 +140,6 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 		}
 		else
 		{
-			FFlecsEntityHandle Target;
-			
-			if (World->IsAlive(Second))
-			{
-				Target = World->GetAlive(Second);
-			}
-			else
-			{
-				Target = FFlecsEntityHandle::Invalid();
-			}
-
 			if UNLIKELY_IF (!Target.IsValid())
 			{
 				OutError = FString::Printf(TEXT("Cannot build a replication layout for a pair with an unknown target: %s"), 
