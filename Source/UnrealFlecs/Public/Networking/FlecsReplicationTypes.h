@@ -264,6 +264,7 @@ public:
 	
 	/** Finds a previously generated or accepted layout definition. */
 	NO_DISCARD const FFlecsReplicationLayoutDefinition* Find(FFlecsReplicationLayoutId Id) const;
+	
 	/** Adds an already validated remote layout, rejecting identity collisions. */
 	bool AddRemoteDefinition(const FFlecsReplicationLayoutDefinition& Definition, FString& OutError);
 
