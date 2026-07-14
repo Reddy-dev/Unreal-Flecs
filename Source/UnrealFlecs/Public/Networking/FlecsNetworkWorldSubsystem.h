@@ -58,7 +58,7 @@ public:
 	/** True for standalone/server/listen-server worlds and false for client worlds. */
 	NO_DISCARD bool HasAuthority() const;
 
-#if WITH_AUTOMATION_TESTS
+#if WITH_AUTOMATION_TESTS || WITH_EDITOR
 	
 	void SetReplicationTransportForTesting(UFlecsReplicationTransportBase* InTransport)
 	{
@@ -147,7 +147,7 @@ private:
 	FDelegateHandle PreActorTickHandle;
 	FDelegateHandle DescriptorRegisteredHandle;
 
-#if WITH_AUTOMATION_TESTS
+#if WITH_AUTOMATION_TESTS || WITH_EDITOR
 	bool bForceClientModeForTesting = false;
 #endif
 

@@ -288,6 +288,7 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	{
 		DefaultWorld->WorldBeginPlay();
 		OnWorldBeginPlayDelegate.Broadcast(GetWorld());
+		
 		DefaultWorld->CallBeginPlayForRegisteredObjects();
 	}
 		

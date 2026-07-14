@@ -269,9 +269,10 @@ void register_script_struct_component(
     ecs_world_t *world,
     ecs_entity_t component)
 {
+    flecs::world P_world(world);
+        
     if constexpr (Solid::IsScriptStruct<T>() && !std::is_same_v<T, FFlecsScriptStructComponent>)
     {
-        flecs::world P_world(world);
         UScriptStruct* scriptStruct = TBaseStructure<T>::Get();
         ecs_assert(scriptStruct != nullptr, ECS_INTERNAL_ERROR, 
                    "script struct is null");
@@ -284,21 +285,25 @@ void register_script_struct_component(
         entity_id.set<FFlecsScriptStructComponent>({ scriptStruct });
     }
     
-    UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(component);
+    UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(P_world, component);
 }
     
     static UScriptStruct* StaticGetBaseStructureInternal(FName InTypeName)
     {
         static UPackage* CoreUObjectPkg = FindObjectChecked<UPackage>(nullptr, TEXT("/Script/CoreUObject"));
 
-        UScriptStruct* Result = (UScriptStruct*)StaticFindObjectFastInternal(UScriptStruct::StaticClass(), CoreUObjectPkg, InTypeName, EFindObjectFlags::None, RF_NoFlags, EInternalObjectFlags::None);
+        UScriptStruct* Result = (UScriptStruct*)StaticFindObjectFastInternal(UScriptStruct::StaticClass(), 
+            CoreUObjectPkg, InTypeName, EFindObjectFlags::None, RF_NoFlags, 
+            EInternalObjectFlags::None);
 
 #if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
         if (!Result)
         {
-            UE_LOG(LogClass, Fatal, TEXT("Failed to find native struct '%s.%s'"), *CoreUObjectPkg->GetName(), *InTypeName.ToString());
+            UE_LOG(LogClass, Fatal, TEXT("Failed to find native struct '%s.%s'"),
+                *CoreUObjectPkg->GetName(), *InTypeName.ToString());
         }
 #endif
+        
         return Result;
     }
     
@@ -319,7 +324,7 @@ inline void register_script_struct_component<FBox>(
     
     entity_id.set<FFlecsScriptStructComponent>({ scriptStruct });
     
-    UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(component);
+    UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(world, component);
 }
     
     template <>
@@ -339,7 +344,7 @@ inline void register_script_struct_component<FBox>(
     
         entity_id.set<FFlecsScriptStructComponent>({ scriptStruct });
     
-        UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(component);
+        UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(P_world, component);
     }
     
     template <>
@@ -359,7 +364,7 @@ inline void register_script_struct_component<FBox>(
     
         entity_id.set<FFlecsScriptStructComponent>({ scriptStruct });
     
-        UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(component);
+        UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(P_world, component);
     }
     
     template <>
@@ -379,7 +384,7 @@ inline void register_script_struct_component<FBox>(
     
         entity_id.set<FFlecsScriptStructComponent>({ scriptStruct });
     
-        UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(component);
+        UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(P_world, component);
     }
     
 template <typename T>
@@ -387,9 +392,10 @@ void register_script_class_component(
     ecs_world_t *world,
     ecs_entity_t component)
 {
+    flecs::world P_world(world);
+        
     if constexpr (Solid::IsStaticClass<T>() && !std::is_same_v<T, FFlecsScriptClassComponent>)
     {
-        flecs::world P_world(world);
         UClass* scriptClass = StaticClass<T>();
         ecs_assert(scriptClass != nullptr, ECS_INTERNAL_ERROR, 
                    "script class is null");
@@ -402,7 +408,7 @@ void register_script_class_component(
         entity_id.set<FFlecsScriptClassComponent>({ scriptClass });
     }
     
-    UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(component);
+    UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(P_world, component);
 }
     
 template <Solid::TStaticEnumConcept T>
@@ -432,8 +438,8 @@ void register_enum_component(
         #endif // !WITH_EDITOR
             
         td->s_enum_registered = true;
-    
-    UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(component);
+        
+    UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(P_world, component);
 }
     
     template <typename T>
@@ -441,6 +447,8 @@ void register_enum_component(
         ecs_world_t *world,
         ecs_entity_t component)
     {
+        flecs::world P_world(world);
+        
 #if FLECS_CPP_ENUM_REFLECTION_SUPPORT
         if constexpr (std::is_enum<T>::value) {
             auto* td = get_type_data_if_any<T>();
@@ -456,7 +464,7 @@ void register_enum_component(
         
 #endif // FLECS_CPP_ENUM_REFLECTION_SUPPORT
         
-        UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(component);
+        UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(P_world, component);
     }
     
     template <typename T>

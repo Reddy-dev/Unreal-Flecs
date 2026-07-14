@@ -54,10 +54,13 @@ private:
 	TWeakObjectPtr<UFlecsIrisReplicationShard> Owner;
 };
 
-template<> struct TStructOpsTypeTraits<FFlecsIrisLayoutManifest>
-	: TStructOpsTypeTraitsBase2<FFlecsIrisLayoutManifest>
+template<> 
+struct TStructOpsTypeTraits<FFlecsIrisLayoutManifest> : TStructOpsTypeTraitsBase2<FFlecsIrisLayoutManifest>
 {
-	enum { WithNetDeltaSerializer = true };
+	enum
+	{
+		WithNetDeltaSerializer = true
+	};
 };
 
 /** Fast-array item holding the latest complete snapshot for one Flecs network ID. */
@@ -96,10 +99,13 @@ private:
 	TWeakObjectPtr<UFlecsIrisReplicationShard> Owner;
 };
 
-template<> struct TStructOpsTypeTraits<FFlecsIrisEntitySnapshots>
-	: TStructOpsTypeTraitsBase2<FFlecsIrisEntitySnapshots>
+template<>
+struct TStructOpsTypeTraits<FFlecsIrisEntitySnapshots> : TStructOpsTypeTraitsBase2<FFlecsIrisEntitySnapshots>
 {
-	enum { WithNetDeltaSerializer = true };
+	enum
+	{
+		WithNetDeltaSerializer = true
+	};
 };
 
 /**
@@ -116,7 +122,12 @@ class UNREALFLECSIRIS_API UFlecsIrisReplicationShard : public UObject, public IN
 
 public:
 	virtual UWorld* GetWorld() const override;
-	virtual bool IsSupportedForNetworking() const override { return true; }
+	
+	virtual bool IsSupportedForNetworking() const override
+	{
+		return true;
+	}
+	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void RegisterReplicationFragments(UE::Net::FFragmentRegistrationContext& Context,
 		UE::Net::EFragmentRegistrationFlags RegistrationFlags) override;
@@ -126,18 +137,23 @@ public:
 	/** Configures this instance as the authority-side root object for InShardKey. */
 	void InitializeServer(UWorld* InWorld, const FFlecsReplicationRouteKey& InShardKey,
 		float InPollFrequency, float InStaticPriority);
+	
 	/** Binds a factory-created client instance to its destination world subsystem. */
 	void BindClient(UWorld* InWorld);
+	
 	/** Attempts to attach the authority-side root object to the active Iris replication system. */
 	bool TryStartReplication();
+	
 	/** Stops and destroys the Iris root-object adapter while preserving no transport state. */
 	void StopReplication();
+	
 	/** Enqueues a detach record so the client removes entities sourced by this shard. */
 	void DetachedFromReplication();
 
 	void UpsertLayout(const FFlecsReplicationLayoutDefinition& Layout);
 	void UpsertEntity(const FFlecsReplicatedEntitySnapshot& Snapshot);
 	void RemoveEntity(FFlecsNetworkId NetworkId);
+	
 	/** Re-enqueues full current state after a late client binds to the shard. */
 	void EnqueueAllReceived();
 	void EnqueueReceivedLayout(const FFlecsReplicationLayoutDefinition& Layout) const;
@@ -145,8 +161,16 @@ public:
 	void EnqueueRemovedEntity(FFlecsNetworkId NetworkId) const;
 
 	NO_DISCARD FGuid GetSourceShardId() const;
-	NO_DISCARD int32 GetLayoutCount() const { return LayoutManifest.Items.Num(); }
-	NO_DISCARD int32 GetEntityCount() const { return EntitySnapshots.Items.Num(); }
+	
+	NO_DISCARD FORCEINLINE int32 GetLayoutCount() const
+	{
+		return LayoutManifest.Items.Num();
+	}
+	
+	NO_DISCARD FORCEINLINE int32 GetEntityCount() const
+	{
+		return EntitySnapshots.Items.Num();
+	}
 
 private:
 	UPROPERTY(Replicated)
@@ -167,6 +191,8 @@ private:
 	TUniquePtr<UE::Net::FNetRootObjectAdapter> RootObjectAdapter;
 	TMap<FFlecsReplicationLayoutId, int32> LayoutIndices;
 	TMap<FFlecsNetworkId, int32> EntityIndices;
+	
 	float PollFrequency = 20.0f;
 	float StaticPriority = 1.0f;
+	
 }; // class UFlecsIrisReplicationShard

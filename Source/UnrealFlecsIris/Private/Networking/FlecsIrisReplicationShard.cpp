@@ -151,6 +151,7 @@ void UFlecsIrisReplicationShard::DetachedFromReplication()
 		Record.SourceShard = GetSourceShardId();
 		Subsystem->EnqueueReceivedRecord(MoveTemp(Record));
 	}
+	
 	NetworkSubsystem.Reset();
 	LayoutManifest.SetOwner(nullptr);
 	EntitySnapshots.SetOwner(nullptr);
@@ -162,8 +163,10 @@ void UFlecsIrisReplicationShard::UpsertLayout(const FFlecsReplicationLayoutDefin
 	{
 		return;
 	}
+	
 	FFlecsIrisLayoutManifestItem& Item = LayoutManifest.Items.AddDefaulted_GetRef();
 	Item.Definition = Layout;
+	
 	LayoutIndices.Add(Layout.LayoutId, LayoutManifest.Items.Num() - 1);
 	LayoutManifest.MarkItemDirty(Item);
 }
@@ -177,8 +180,10 @@ void UFlecsIrisReplicationShard::UpsertEntity(const FFlecsReplicatedEntitySnapsh
 		EntitySnapshots.MarkItemDirty(Item);
 		return;
 	}
+	
 	FFlecsIrisEntitySnapshotItem& Item = EntitySnapshots.Items.AddDefaulted_GetRef();
 	Item.Snapshot = Snapshot;
+	
 	EntityIndices.Add(Snapshot.NetworkId, EntitySnapshots.Items.Num() - 1);
 	EntitySnapshots.MarkItemDirty(Item);
 }
@@ -186,16 +191,20 @@ void UFlecsIrisReplicationShard::UpsertEntity(const FFlecsReplicatedEntitySnapsh
 void UFlecsIrisReplicationShard::RemoveEntity(const FFlecsNetworkId NetworkId)
 {
 	const int32* Index = EntityIndices.Find(NetworkId);
+	
 	if (!Index)
 	{
 		return;
 	}
+	
 	EntitySnapshots.Items.RemoveAt(*Index);
 	EntityIndices.Remove(NetworkId);
+	
 	for (int32 ItemIndex = *Index; ItemIndex < EntitySnapshots.Items.Num(); ++ItemIndex)
 	{
 		EntityIndices.FindChecked(EntitySnapshots.Items[ItemIndex].Snapshot.NetworkId) = ItemIndex;
 	}
+	
 	EntitySnapshots.MarkArrayDirty();
 }
 
@@ -205,6 +214,7 @@ void UFlecsIrisReplicationShard::EnqueueAllReceived()
 	{
 		EnqueueReceivedLayout(Item.Definition);
 	}
+	
 	for (const FFlecsIrisEntitySnapshotItem& Item : EntitySnapshots.Items)
 	{
 		EnqueueReceivedEntity(Item.Snapshot);

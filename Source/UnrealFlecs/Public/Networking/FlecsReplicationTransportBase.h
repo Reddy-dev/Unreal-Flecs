@@ -49,19 +49,25 @@ class UNREALFLECS_API UFlecsReplicationTransportBase : public UObject
 public:
 	/** Stores the owning subsystem. Return false when the active NetDriver is unsupported. */
 	virtual bool InitializeTransport(UFlecsNetworkWorldSubsystem* InSubsystem);
+	
 	/** Releases transport-owned network objects before the subsystem tears down. */
 	virtual void ShutdownTransport();
+	
 	/** Optional per-world-tick transport maintenance. */
 	virtual void TickTransport() {}
+	
 	/** Publishes an immutable structural definition for a route. */
 	virtual void PublishLayout(const FFlecsReplicationRouteKey& Route,
 		const FFlecsReplicationLayoutDefinition& Layout) PURE_VIRTUAL(UFlecsReplicationTransportBase::PublishLayout, );
+	
 	/** Publishes the newest complete state snapshot for one network entity. */
 	virtual void PublishEntity(const FFlecsReplicationRouteKey& Route,
 		const FFlecsReplicatedEntitySnapshot& Snapshot) PURE_VIRTUAL(UFlecsReplicationTransportBase::PublishEntity, );
+	
 	/** Publishes authoritative removal of an entity from a route. */
 	virtual void RemoveEntity(const FFlecsReplicationRouteKey& Route,
 		FFlecsNetworkId NetworkId) PURE_VIRTUAL(UFlecsReplicationTransportBase::RemoveEntity, );
+	
 	/** Handles a rejected remote layout or incompatible serialized protocol input. */
 	virtual void HandleProtocolError(const FString& Diagnostic);
 
@@ -79,8 +85,10 @@ class UNREALFLECS_API FFlecsReplicationTransportRegistry
 public:
 	/** Registers a UFlecsReplicationTransportBase subclass under a unique provider name. */
 	static bool RegisterProvider(FName ProviderName, UClass* TransportClass);
+	
 	/** Removes a provider during its module shutdown. */
 	static void UnregisterProvider(FName ProviderName);
+	
 	/** Resolves the transport class selected by UFlecsNetworkingModuleSettings. */
 	static UClass* FindProvider(FName ProviderName);
 }; // class FFlecsReplicationTransportRegistry

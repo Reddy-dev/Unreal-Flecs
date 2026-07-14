@@ -4,7 +4,9 @@
 
 #include "CoreMinimal.h"
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FFlecsTypeRegisteredDelegate, size_t /*entity_id*/);
+struct ecs_world_t;
+
+DECLARE_MULTICAST_DELEGATE_TwoParams(FFlecsTypeRegisteredDelegate, ecs_world_t* /*registered_world*/, size_t /*entity_id*/);
 
 namespace UE::FlecsLibrary
 {

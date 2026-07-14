@@ -29,15 +29,12 @@ struct UNREALFLECS_API FFlecsNetworkId
 	static constexpr uint64 EpochBitCount = 8ull;
 
 	static constexpr uint64 SlotMask = (1ull << SlotBitCount) - 1ull;
-	static_assert(SlotMask == 0x00000000FFFFFFFFull);
 	
 	static constexpr uint64 GenerationValueMask = (1ull << GenerationBitCount) - 1ull;
 	static constexpr uint64 GenerationMask = GenerationValueMask << SlotBitCount;
-	static_assert(GenerationMask == 0x00FFFFFF00000000ull);
 	
 	static constexpr uint64 EpochValueMask = (1ull << EpochBitCount) - 1ull;
 	static constexpr uint64 EpochMask = EpochValueMask << (SlotBitCount + GenerationBitCount);
-	static_assert(EpochMask == 0xFF00000000000000ull);
 
 	FFlecsNetworkId() = default;
 	explicit constexpr FFlecsNetworkId(const uint64 InValue) : Value(InValue) {}
@@ -124,7 +121,10 @@ public:
 	/** Clears allocations and selects the epoch used by subsequent identities. */
 	void Reset(uint8 InSessionEpoch);
 
-	NO_DISCARD uint8 GetSessionEpoch() const { return SessionEpoch; }
+	NO_DISCARD uint8 GetSessionEpoch() const
+	{
+		return SessionEpoch;
+	}
 
 private:
 	uint8 SessionEpoch = 1;

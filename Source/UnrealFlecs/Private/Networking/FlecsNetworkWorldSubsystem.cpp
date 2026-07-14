@@ -71,7 +71,7 @@ FFlecsNetworkId UFlecsNetworkWorldSubsystem::BeginReplicatingEntity(const FFlecs
 {
 	if (!HasAuthority())
 	{
-#if WITH_AUTOMATION_TESTS
+#if WITH_AUTOMATION_TESTS || WITH_EDITOR
 		if (bForceClientModeForTesting)
 		{
 			return {};
@@ -199,7 +199,7 @@ FFlecsEntityHandle UFlecsNetworkWorldSubsystem::FindEntity(const FFlecsNetworkId
 
 bool UFlecsNetworkWorldSubsystem::HasAuthority() const
 {
-#if WITH_AUTOMATION_TESTS
+#if WITH_AUTOMATION_TESTS || WITH_EDITOR
 	if (bForceClientModeForTesting)
 	{
 		return false;
@@ -334,6 +334,7 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 		}
 
 		FReplicatedEntityState& State = EntityStates.FindOrAdd(NetworkId);
+		
 		const FFlecsReplicationRouteKey Route = Router->Route(Entity);
 		
 		if (State.LayoutId != Layout->LayoutId)
@@ -362,12 +363,14 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 		for (int32 KeyIndex = 0; KeyIndex < Layout->Keys.Num(); ++KeyIndex)
 		{
 			const FFlecsReplicationKey& Key = Layout->Keys[KeyIndex];
+			
 			if (!Key.bHasPayload)
 			{
 				continue;
 			}
 			
 			FFlecsId LocalId;
+			
 			if (!ResolveKeyToLocalId(Key, LocalId))
 			{
 				continue;

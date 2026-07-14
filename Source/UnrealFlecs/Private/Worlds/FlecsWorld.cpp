@@ -491,8 +491,23 @@ void UFlecsWorld::RegisterUnrealTypes() const
 void UFlecsWorld::InitializeComponentPropertyObserver()
 {
 	ComponentRegisteredDelegateHandle = UE::FlecsLibrary::GetTypeRegisteredDelegate().AddWeakLambda(this,
-		[this](const flecs::id_t InEntityId)
+		[this](flecs::world_t* InWorld, const flecs::id_t InEntityId)
 	{
+		if UNLIKELY_IF(!IsValid(this))
+		{
+			return;
+		}
+			
+#if WITH_AUTOMATION_TESTS || WITH_EDITOR
+			
+		// because in PIE and automation tests we may have multiple worlds, and this is a global delegate
+		if (InWorld != GetNativeFlecsWorld())
+		{
+			return;
+		}
+			
+#endif // WITH_AUTOMATION_TESTS || WITH_EDITOR
+			
 		static const FString USTRUCTAliasPrefix = TEXT("UScriptStruct_");
 		static const FString UENUMAliasPrefix = TEXT("UEnum_");
 			

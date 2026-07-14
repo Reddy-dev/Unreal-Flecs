@@ -630,7 +630,7 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterScriptStruct(const UScrip
 				RegisterMemberProperties(ScriptStruct, ScriptStructComponent);
 			}
 			
-			UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(ScriptStructComponent);
+			UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(GetNativeFlecsWorld(), ScriptStructComponent);
 		});
 
 		SetScope(OldScope);
@@ -748,7 +748,7 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterComponentEnumType(TSolidN
 			
 			ScriptEnumComponent.Set<FFlecsScriptEnumComponent>(FFlecsScriptEnumComponent(ScriptEnum));
 			
-			UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(ScriptEnumComponent);
+			UE::FlecsLibrary::GetTypeRegisteredDelegate().Broadcast(GetNativeFlecsWorld(), ScriptEnumComponent);
 		});
 
 		SetScope(OldScope);
