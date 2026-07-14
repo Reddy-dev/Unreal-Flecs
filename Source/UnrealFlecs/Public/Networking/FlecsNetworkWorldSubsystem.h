@@ -39,10 +39,12 @@ public:
 	 * server observer; client calls return an invalid ID.
 	 */
 	FFlecsNetworkId BeginReplicatingEntity(const FFlecsEntityHandle& EntityHandle);
+	
 	/** Stops authority-side replication and publishes a removal when a transport is active. */
 	void StopReplicatingEntity(const FFlecsEntityHandle& EntityHandle);
 	/** Stops authority-side replication by identity, releasing the allocator slot. */
 	void StopReplicatingEntity(FFlecsNetworkId NetworkId);
+	
 	/** Marks a replicated entity for its next authoritative full snapshot. */
 	void MarkEntityDirty(const FFlecsEntityHandle& EntityHandle);
 
@@ -131,20 +133,38 @@ private:
 	NO_DISCARD TSolidNotNull<const UFlecsNetworkingModuleSettings*> GetNetworkingModuleSettings() const;
 
 	FFlecsNetworkIdAllocator NetworkIdAllocator;
+	
+	UPROPERTY(Transient)
 	TMap<FFlecsNetworkId, FFlecsEntityHandle> NetworkIdToEntityHandleMap;
+	
+	UPROPERTY(Transient)
 	TMap<FFlecsNetworkId, FReplicatedEntityState> EntityStates;
+	
+	UPROPERTY(Transient)
 	TSet<FFlecsNetworkId> DirtyEntities;
+	
+	UPROPERTY()
 	TSet<FString> PublishedLayoutRoutes;
+	
 	TArray<flecs::observer> DirtyObservers;
+	
 	FFlecsReplicationLayoutRegistry LayoutRegistry;
 	FFlecsReplicationInbox Inbox;
+	
 	TMap<FFlecsReplicationLayoutId, TArray<TPair<FGuid, FFlecsReplicatedEntitySnapshot>>> DeferredSnapshots;
+	
 	TMap<uint32, FFlecsNetworkId> ClientSlotBindings;
+	
 	TMap<FFlecsNetworkId, uint32> LastAppliedStateRevisions;
+	
 	TMap<FFlecsNetworkId, FGuid> EntitySourceShards;
+	
 	TArray<FEntityPairFixup> EntityPairFixups;
+	
 	TUniquePtr<IFlecsReplicationRouter> Router;
+	
 	FDelegateHandle PreActorTickHandle;
+	
 	FDelegateHandle DescriptorRegisteredHandle;
 
 #if WITH_AUTOMATION_TESTS || WITH_EDITOR

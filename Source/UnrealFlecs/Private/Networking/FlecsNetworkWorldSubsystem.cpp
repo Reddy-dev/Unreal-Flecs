@@ -572,6 +572,7 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 void UFlecsNetworkWorldSubsystem::RemoveRemoteEntity(const FFlecsNetworkId NetworkId)
 {
 	FFlecsEntityHandle* Entity = NetworkIdToEntityHandleMap.Find(NetworkId); 
+	
 	if (Entity && Entity->IsValid())
 	{
 		Entity->Destroy();
@@ -607,6 +608,7 @@ void UFlecsNetworkWorldSubsystem::RetryEntityPairFixups()
 	for (int32 Index = EntityPairFixups.Num() - 1; Index >= 0; --Index)
 	{
 		const FEntityPairFixup& Fixup = EntityPairFixups[Index];
+		
 		FFlecsEntityHandle Source = FindEntity(Fixup.Source);
 		FFlecsId PairId;
 		
@@ -622,9 +624,10 @@ void UFlecsNetworkWorldSubsystem::RetryEntityPairFixups()
 
 bool UFlecsNetworkWorldSubsystem::ResolveKeyToLocalId(const FFlecsReplicationKey& Key, FFlecsId& OutId) const
 {
-	const UFlecsWorld* World = GetFlecsWorldChecked();
+	const TSolidNotNull<const UFlecsWorld*> World = GetFlecsWorldChecked();
 	const FFlecsComponentReplicationRegistry& Registry = FFlecsComponentReplicationRegistry::Get(World);
 	const FFlecsComponentReplicationDescriptor* Storage = Registry.Find(Key.StorageSchema);
+	
 	if (!Storage || Storage->SchemaVersion != Key.StorageVersion)
 	{
 		return false;
@@ -653,6 +656,7 @@ bool UFlecsNetworkWorldSubsystem::ResolveKeyToLocalId(const FFlecsReplicationKey
 			{
 				return false;
 			}
+			
 			Target = TargetDescriptor->LocalFlecsId;
 		}
 		break;
@@ -705,6 +709,7 @@ bool UFlecsNetworkWorldSubsystem::ResolveKeyToLocalId(const FFlecsReplicationKey
 bool UFlecsNetworkWorldSubsystem::ValidateLayout(const FFlecsReplicationLayoutDefinition& Layout, FString& OutError) const
 {
 	const FFlecsComponentReplicationRegistry& Registry = FFlecsComponentReplicationRegistry::Get(GetFlecsWorldChecked());
+	
 	for (const FFlecsReplicationKey& Key : Layout.Keys)
 	{
 		auto ValidateSchema = [&Registry, &OutError](const FFlecsReplicationSchemaId Schema, const uint32 Version,
