@@ -215,17 +215,21 @@ void UFlecsNetworkWorldSubsystem::CreateReplicationTransport()
 	{
 		return;
 	}
+	
 	const FName ProviderName = GetNetworkingModuleSettings()->ReplicationProviderName;
-	UClass* ProviderClass = FFlecsReplicationTransportRegistry::FindProvider(ProviderName);
-	if (!ProviderClass)
+	const UClass* ProviderClass = FFlecsReplicationTransportRegistry::FindProvider(ProviderName);
+	
+	if UNLIKELY_IF(!ProviderClass)
 	{
 		UE_LOG(LogFlecsCore, Warning,
 			TEXT("Flecs replication provider '%s' is unavailable. Enable Iris and the UnrealFlecsIris runtime module; standalone Flecs remains active."),
 			*ProviderName.ToString());
 		return;
 	}
+	
 	ReplicationTransport = NewObject<UFlecsReplicationTransportBase>(this, ProviderClass);
-	if (!ReplicationTransport || !ReplicationTransport->InitializeTransport(this))
+	
+	if UNLIKELY_IF(!ReplicationTransport || !ReplicationTransport->InitializeTransport(this))
 	{
 		UE_LOG(LogFlecsCore, Warning,
 			TEXT("Flecs replication provider '%s' could not initialize for this NetDriver. Replication is inactive."),
@@ -503,16 +507,17 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 	{
 		TArray<FFlecsId> ToRemove;
 		
-		for (const FFlecsId CurrentId : Entity.GetType())
+		Entity.Iterate([this, &Registry, &DesiredIds, &ToRemove](FFlecsId CurrentId)
 		{
 			const bool bReplicated = CurrentId.IsPair()
 				? Registry.Find(CurrentId.GetFirst()) != nullptr
 				: Registry.Find(CurrentId) != nullptr;
+			
 			if (bReplicated && !DesiredIds.Contains(CurrentId))
 			{
 				ToRemove.Add(CurrentId);
 			}
-		}
+		});
 		
 		for (const FFlecsId Id : ToRemove)
 		{
