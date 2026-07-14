@@ -108,6 +108,7 @@ void UFlecsIrisReplicationShard::BindClient(UWorld* InWorld)
 {
 	BoundWorld = InWorld;
 	NetworkSubsystem = InWorld ? InWorld->GetSubsystem<UFlecsNetworkWorldSubsystem>() : nullptr;
+	
 	LayoutManifest.SetOwner(this);
 	EntitySnapshots.SetOwner(this);
 }
@@ -121,7 +122,7 @@ bool UFlecsIrisReplicationShard::TryStartReplication()
 	
 	UWorld* World = GetWorld();
 	
-	UNetDriver* NetDriver = World ? World->GetNetDriver() : nullptr;
+	const UNetDriver* NetDriver = World ? World->GetNetDriver() : nullptr;
 	
 	if (!NetDriver || !NetDriver->GetReplicationSystem() || !World->PersistentLevel)
 	{
@@ -173,7 +174,7 @@ void UFlecsIrisReplicationShard::UpsertLayout(const FFlecsReplicationLayoutDefin
 
 void UFlecsIrisReplicationShard::UpsertEntity(const FFlecsReplicatedEntitySnapshot& Snapshot)
 {
-	if (int32* Index = EntityIndices.Find(Snapshot.NetworkId))
+	if (const int32* Index = EntityIndices.Find(Snapshot.NetworkId))
 	{
 		FFlecsIrisEntitySnapshotItem& Item = EntitySnapshots.Items[*Index];
 		Item.Snapshot = Snapshot;
