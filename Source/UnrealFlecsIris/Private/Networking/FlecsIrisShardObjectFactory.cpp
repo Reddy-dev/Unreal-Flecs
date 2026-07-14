@@ -23,7 +23,7 @@ void UFlecsIrisShardObjectFactory::PostInit(const FPostInitContext& Context)
 		const UEngineReplicationBridge* EngineBridge = Cast<UEngineReplicationBridge>(Bridge);
 		const UNetDriver* NetDriver = EngineBridge ? EngineBridge->GetNetDriver() : nullptr;
 		
-		Shard->BindClient(NetDriver ? NetDriver->GetWorld() : nullptr);
+		Shard->BindClient(NetDriver->GetWorld());
 		Shard->EnqueueAllReceived();
 	}
 }

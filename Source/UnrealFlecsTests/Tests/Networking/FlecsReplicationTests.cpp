@@ -301,6 +301,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 	{
 		const FFlecsEntityHandle StaticTarget = FlecsWorld->CreateEntity(TEXT("ReplicationStaticTarget"))
 			.Add<FFlecsStablePathTag>();
+		
 		const FFlecsEntityHandle NetworkTarget = FlecsWorld->CreateEntity();
 		const FFlecsNetworkId TargetId = NetworkSubsystem->BeginReplicatingEntity(NetworkTarget);
 		const FFlecsEntityHandle Source = FlecsWorld->CreateEntity()

@@ -16,11 +16,27 @@ struct UNREALFLECS_API FFlecsReplicationLayoutId
 	GENERATED_BODY()
 
 	FFlecsReplicationLayoutId() = default;
-	explicit FFlecsReplicationLayoutId(const FGuid& InValue) : Value(InValue) {}
-	NO_DISCARD bool IsValid() const { return Value.IsValid(); }
-	NO_DISCARD FString ToString() const { return Value.ToString(EGuidFormats::DigitsWithHyphensLower); }
+	explicit FFlecsReplicationLayoutId(const FGuid& InValue) 
+		: Value(InValue)
+	{
+	}
+	
+	NO_DISCARD bool IsValid() const
+	{
+		return Value.IsValid();
+	}
+	
+	NO_DISCARD FString ToString() const
+	{
+		return Value.ToString(EGuidFormats::DigitsWithHyphensLower);
+	}
+	
 	friend bool operator==(const FFlecsReplicationLayoutId&, const FFlecsReplicationLayoutId&) = default;
-	friend uint32 GetTypeHash(const FFlecsReplicationLayoutId& Id) { return GetTypeHash(Id.Value); }
+	
+	friend uint32 GetTypeHash(const FFlecsReplicationLayoutId& Id)
+	{
+		return GetTypeHash(Id.Value);
+	}
 
 	UPROPERTY()
 	FGuid Value;
@@ -138,6 +154,7 @@ struct UNREALFLECS_API FFlecsReplicationRouteKey
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
 	FName Name = TEXT("Default");
+	
 }; // struct FFlecsReplicationRouteKey
 
 /** Serialized payload for one payload-bearing layout key. */
@@ -253,4 +270,5 @@ public:
 private:
 	TMap<const flecs::table_t*, FFlecsReplicationLayoutId> TableCache;
 	TMap<FFlecsReplicationLayoutId, FFlecsReplicationLayoutDefinition> Definitions;
+	
 }; // class FFlecsReplicationLayoutRegistry

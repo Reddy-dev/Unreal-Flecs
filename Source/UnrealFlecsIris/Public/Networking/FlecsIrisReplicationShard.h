@@ -139,7 +139,7 @@ public:
 		float InPollFrequency, float InStaticPriority);
 	
 	/** Binds a factory-created client instance to its destination world subsystem. */
-	void BindClient(UWorld* InWorld);
+	void BindClient(const TSolidNotNull<UWorld*> InWorld);
 	
 	/** Attempts to attach the authority-side root object to the active Iris replication system. */
 	bool TryStartReplication();
@@ -189,7 +189,11 @@ private:
 	TWeakObjectPtr<class UFlecsNetworkWorldSubsystem> NetworkSubsystem;
 
 	TUniquePtr<UE::Net::FNetRootObjectAdapter> RootObjectAdapter;
+	
+	UPROPERTY()
 	TMap<FFlecsReplicationLayoutId, int32> LayoutIndices;
+	
+	UPROPERTY()
 	TMap<FFlecsNetworkId, int32> EntityIndices;
 	
 	float PollFrequency = 20.0f;

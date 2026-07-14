@@ -45,15 +45,21 @@ namespace UE::Flecs::Tests
 	static FFlecsEntityHandle FindReplicatedValueEntity(UFlecsWorld* World)
 	{
 		FFlecsEntityHandle Result;
+		
 		TTypedFlecsQuery<FFlecsReplicationTestValue> Query =
 			World->CreateQueryBuilder<const FFlecsReplicationTestValue>()
 			.With<FFlecsNetworkId>()
 			.With<FFlecsReplicatedEntityComponent>()
 			.Build();
+		
 		Query.each([&Result](flecs::iter& Iter, size_t Index, const FFlecsReplicationTestValue&)
 		{
-			if (!Result.IsValid()) Result = Iter.entity(Index);
+			if (!Result.IsValid())
+			{
+				Result = Iter.entity(Index);
+			}
 		});
+		
 		return Result;
 	}
 
@@ -92,8 +98,14 @@ NETWORK_TEST_CLASS(FlecsReplicationDedicatedServerTests,
 	TEST_METHOD(InitialSnapshot_RuntimeCompositionAndValues_StopReplication_PreserveClientLocal)
 	{
 		Network
-			.ThenServer([](FState& State) { State.FlecsWorld = UE::Flecs::Tests::CreateReplicationPIEWorld(State.World); })
-			.ThenClients([](FState& State) { State.FlecsWorld = UE::Flecs::Tests::CreateReplicationPIEWorld(State.World); })
+			.ThenServer([](FState& State)
+			{
+				State.FlecsWorld = UE::Flecs::Tests::CreateReplicationPIEWorld(State.World);
+			})
+			.ThenClients([](FState& State)
+			{
+				State.FlecsWorld = UE::Flecs::Tests::CreateReplicationPIEWorld(State.World);
+			})
 			.ThenServer([](FState& State)
 			{
 				State.Entity = State.FlecsWorld->CreateEntity()
@@ -105,6 +117,7 @@ NETWORK_TEST_CLASS(FlecsReplicationDedicatedServerTests,
 			.UntilClients(TEXT("Client receives initial replicated composition and values"), [](FState& State)
 			{
 				const FFlecsEntityHandle Entity = UE::Flecs::Tests::FindReplicatedValueEntity(State.FlecsWorld);
+				
 				return Entity.IsValid()
 					&& Entity.Get<FFlecsReplicationTestValue>().Value == 10
 					&& Entity.Get<FFlecsReplicationTestNativeValue>().Value == 20
@@ -134,7 +147,10 @@ NETWORK_TEST_CLASS(FlecsReplicationDedicatedServerTests,
 					&& !Entity.Has<FFlecsReplicationTestTag>()
 					&& Entity.Get<FFlecsReplicationTestLocalOnly>().Value == 77;
 			})
-			.ThenServer([](FState& State) { State.Entity.Remove<FFlecsReplicatedEntityComponent>(); })
+			.ThenServer([](FState& State)
+			{
+				State.Entity.Remove<FFlecsReplicatedEntityComponent>();
+			})
 			.UntilClients(TEXT("Client removes entity after replication opt-out"), [](FState& State)
 			{
 				return UE::Flecs::Tests::CountReplicatedEntities(State.FlecsWorld) == 0;
@@ -158,15 +174,26 @@ NETWORK_TEST_CLASS(FlecsReplicationDedicatedServerTests,
 			.UntilClients([](FState& State)
 			{
 				const FFlecsEntityHandle Source = UE::Flecs::Tests::FindReplicatedValueEntity(State.FlecsWorld);
-				if (!Source.IsValid() || UE::Flecs::Tests::CountReplicatedEntities(State.FlecsWorld) != 2) return false;
+				
+				if (!Source.IsValid() || UE::Flecs::Tests::CountReplicatedEntities(State.FlecsWorld) != 2)
+				{
+					return false;
+				}
+				
 				bool bFoundEntityTarget = false;
 				const FFlecsId Relationship = State.FlecsWorld->GetIdIfRegistered<FFlecsReplicationTestRelationship>();
 				for (int32 Index = 0; ; ++Index)
 				{
 					const FFlecsEntityHandle Target = Source.GetPairTarget<FFlecsEntityHandle>(Relationship, Index);
-					if (!Target.IsValid()) break;
+					
+					if (!Target.IsValid())
+					{
+						break;
+					}
+					
 					bFoundEntityTarget |= Target.Has<FFlecsNetworkId>();
 				}
+				
 				return bFoundEntityTarget && Source.HasPair<FFlecsReplicationTestRelationship, FFlecsReplicationTestTag>();
 			});
 	}
@@ -174,8 +201,14 @@ NETWORK_TEST_CLASS(FlecsReplicationDedicatedServerTests,
 	TEST_METHOD(AuthoritativeDestruction_RemovesRemoteEntity)
 	{
 		Network
-			.ThenServer([](FState& State) { State.FlecsWorld = UE::Flecs::Tests::CreateReplicationPIEWorld(State.World); })
-			.ThenClients([](FState& State) { State.FlecsWorld = UE::Flecs::Tests::CreateReplicationPIEWorld(State.World); })
+			.ThenServer([](FState& State)
+			{
+				State.FlecsWorld = UE::Flecs::Tests::CreateReplicationPIEWorld(State.World);
+			})
+			.ThenClients([](FState& State)
+			{
+				State.FlecsWorld = UE::Flecs::Tests::CreateReplicationPIEWorld(State.World);
+			})
 			.ThenServer([](FState& State)
 			{
 				State.Entity = State.FlecsWorld->CreateEntity()
@@ -183,10 +216,19 @@ NETWORK_TEST_CLASS(FlecsReplicationDedicatedServerTests,
 					.Add<FFlecsReplicatedEntityComponent>();
 			})
 			.UntilClients(TEXT("Client receives entity before authoritative destruction"),
-				[](FState& State) { return UE::Flecs::Tests::CountReplicatedEntities(State.FlecsWorld) == 1; })
-			.ThenServer([](FState& State) { State.Entity.Destroy(); })
+				[](FState& State)
+				{
+					return UE::Flecs::Tests::CountReplicatedEntities(State.FlecsWorld) == 1;
+				})
+			.ThenServer([](FState& State)
+			{
+				State.Entity.Destroy();
+			})
 			.UntilClients(TEXT("Client removes authoritatively destroyed entity"),
-				[](FState& State) { return UE::Flecs::Tests::CountReplicatedEntities(State.FlecsWorld) == 0; });
+				[](FState& State)
+				{
+					return UE::Flecs::Tests::CountReplicatedEntities(State.FlecsWorld) == 0;
+				});
 	}
 
 	TEST_METHOD(LateJoiningClient_ReceivesCurrentCompositionAndValues)
@@ -201,7 +243,10 @@ NETWORK_TEST_CLASS(FlecsReplicationDedicatedServerTests,
 					.Add<FFlecsReplicationTestTag>()
 					.Add<FFlecsReplicatedEntityComponent>();
 			})
-			.UntilClient(0, [](FState& State) { return UE::Flecs::Tests::FindReplicatedValueEntity(State.FlecsWorld).IsValid(); })
+			.UntilClient(0, [](FState& State)
+			{
+				return UE::Flecs::Tests::FindReplicatedValueEntity(State.FlecsWorld).IsValid();
+			})
 			.ThenClientJoins()
 			.ThenClient(1, [](FState& State) { State.FlecsWorld = UE::Flecs::Tests::CreateReplicationPIEWorld(State.World); })
 			.UntilClient(1, [](FState& State)

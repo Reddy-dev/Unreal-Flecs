@@ -28,7 +28,7 @@ void FFlecsIrisLayoutManifestItem::PostReplicatedChange(const FFlecsIrisLayoutMa
 
 void FFlecsIrisEntitySnapshotItem::PostReplicatedAdd(const FFlecsIrisEntitySnapshots& Serializer)
 {
-	if (UFlecsIrisReplicationShard* Owner = Serializer.GetOwner())
+	if (const UFlecsIrisReplicationShard* Owner = Serializer.GetOwner())
 	{
 		Owner->EnqueueReceivedEntity(Snapshot);
 	}
@@ -41,7 +41,7 @@ void FFlecsIrisEntitySnapshotItem::PostReplicatedChange(const FFlecsIrisEntitySn
 
 void FFlecsIrisEntitySnapshotItem::PreReplicatedRemove(const FFlecsIrisEntitySnapshots& Serializer)
 {
-	if (UFlecsIrisReplicationShard* Owner = Serializer.GetOwner())
+	if (const UFlecsIrisReplicationShard* Owner = Serializer.GetOwner())
 	{
 		Owner->EnqueueRemovedEntity(Snapshot.NetworkId);
 	}
@@ -104,10 +104,10 @@ void UFlecsIrisReplicationShard::InitializeServer(UWorld* InWorld,
 	RootObjectAdapter->SetNetFactoryName(UFlecsIrisShardObjectFactory::GetFactoryName());
 }
 
-void UFlecsIrisReplicationShard::BindClient(UWorld* InWorld)
+void UFlecsIrisReplicationShard::BindClient(const TSolidNotNull<UWorld*> InWorld)
 {
 	BoundWorld = InWorld;
-	NetworkSubsystem = InWorld ? InWorld->GetSubsystem<UFlecsNetworkWorldSubsystem>() : nullptr;
+	NetworkSubsystem = InWorld->GetSubsystem<UFlecsNetworkWorldSubsystem>();
 	
 	LayoutManifest.SetOwner(this);
 	EntitySnapshots.SetOwner(this);
@@ -119,8 +119,8 @@ bool UFlecsIrisReplicationShard::TryStartReplication()
 	{
 		return RootObjectAdapter != nullptr;
 	}
-	
-	UWorld* World = GetWorld();
+
+	const UWorld* World = GetWorld();
 	
 	const UNetDriver* NetDriver = World ? World->GetNetDriver() : nullptr;
 	
@@ -193,7 +193,7 @@ void UFlecsIrisReplicationShard::RemoveEntity(const FFlecsNetworkId NetworkId)
 {
 	const int32* Index = EntityIndices.Find(NetworkId);
 	
-	if (!Index)
+	if UNLIKELY_IF(!Index)
 	{
 		return;
 	}
@@ -224,7 +224,7 @@ void UFlecsIrisReplicationShard::EnqueueAllReceived()
 
 void UFlecsIrisReplicationShard::EnqueueReceivedLayout(const FFlecsReplicationLayoutDefinition& Layout) const
 {
-	if (UFlecsNetworkWorldSubsystem* Subsystem = NetworkSubsystem.Get())
+	if LIKELY_IF(UFlecsNetworkWorldSubsystem* Subsystem = NetworkSubsystem.Get())
 	{
 		FFlecsReplicationInboxRecord Record;
 		Record.Type = EFlecsReplicationInboxRecordType::Layout;
@@ -236,7 +236,7 @@ void UFlecsIrisReplicationShard::EnqueueReceivedLayout(const FFlecsReplicationLa
 
 void UFlecsIrisReplicationShard::EnqueueReceivedEntity(const FFlecsReplicatedEntitySnapshot& Snapshot) const
 {
-	if (UFlecsNetworkWorldSubsystem* Subsystem = NetworkSubsystem.Get())
+	if LIKELY_IF(UFlecsNetworkWorldSubsystem* Subsystem = NetworkSubsystem.Get())
 	{
 		FFlecsReplicationInboxRecord Record;
 		Record.Type = EFlecsReplicationInboxRecordType::UpsertEntity;
