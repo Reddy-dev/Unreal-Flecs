@@ -18,5 +18,13 @@ enum class EFlecsNetRoleType : uint8
 	ROLE_MAX UMETA(Hidden),
 }; // enum class EFlecsNetRoleType
 
+template <>
+struct TFlecsComponentTraits<EFlecsNetRoleType> : public TFlecsComponentTraitsBase<EFlecsNetRoleType>
+{
+	static constexpr bool DontFragment = true;
+	static constexpr bool Exclusive = true;
+	
+}; // struct TFlecsComponentTraits<EFlecsNetRoleType>
+
 
 
