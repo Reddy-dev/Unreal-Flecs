@@ -3,6 +3,7 @@
 #include "Networking/FlecsNetworkWorldSubsystem.h"
 
 #include "Engine/World.h"
+#include "Networking/FlecsNetRoleType.h"
 #include "Serialization/MemoryReader.h"
 #include "Serialization/MemoryWriter.h"
 
@@ -80,10 +81,12 @@ FFlecsNetworkId UFlecsNetworkWorldSubsystem::BeginReplicatingEntity(const FFlecs
 			return {};
 		}
 #endif
+		
 		UE_LOG(LogFlecsCore, Error, TEXT("BeginReplicatingEntity called without authority"));
 		return {};
 	}
-	if (!EntityHandle.IsValid())
+	
+	if UNLIKELY_IF(!EntityHandle.IsValid())
 	{
 		UE_LOG(LogFlecsCore, Error, TEXT("BeginReplicatingEntity called with an invalid entity"));
 		return {};
@@ -101,13 +104,14 @@ FFlecsNetworkId UFlecsNetworkWorldSubsystem::BeginReplicatingEntity(const FFlecs
 
 	const FFlecsNetworkId NetworkId = NetworkIdAllocator.Allocate();
 	
-	if (!NetworkId.IsValid())
+	if UNLIKELY_IF(!NetworkId.IsValid())
 	{
 		UE_LOG(LogFlecsCore, Error, TEXT("Flecs network ID allocator exhausted its slot space"));
 		return {};
 	}
 	
 	EntityHandle.Set<FFlecsNetworkId>(NetworkId);
+	EntityHandle.Add<EFlecsNetRoleType>(EFlecsNetRoleType::Authority);
 	
 	NetworkIdToEntityHandleMap.Add(NetworkId, EntityHandle);
 	EntityStates.Add(NetworkId);
@@ -118,12 +122,12 @@ FFlecsNetworkId UFlecsNetworkWorldSubsystem::BeginReplicatingEntity(const FFlecs
 
 void UFlecsNetworkWorldSubsystem::StopReplicatingEntity(const FFlecsEntityHandle& EntityHandle)
 {
-	if (!HasAuthority())
+	if UNLIKELY_IF(!HasAuthority())
 	{
 		return;
 	}
 	
-	if (EntityHandle.IsValid())
+	if LIKELY_IF(EntityHandle.IsValid())
 	{
 		if (const FFlecsNetworkId* NetworkId = EntityHandle.TryGet<FFlecsNetworkId>();
 			NetworkId && NetworkId->IsValid())
@@ -171,6 +175,7 @@ void UFlecsNetworkWorldSubsystem::StopReplicatingEntity(const FFlecsNetworkId Ne
 		Entity && Entity->IsValid() && Entity->Has<FFlecsNetworkId>())
 	{
 		Entity->Remove<FFlecsNetworkId>();
+		Entity->Remove<EFlecsNetRoleType>();
 	}
 	
 	DirtyEntities.Remove(NetworkId);
@@ -276,7 +281,7 @@ void UFlecsNetworkWorldSubsystem::InstallDirtyObserversForDescriptor(
 	const TSolidNotNull<UFlecsWorld*> World = GetFlecsWorldChecked();
 	const FFlecsId MarkerId = World->GetIdIfRegistered<FFlecsReplicatedEntityComponent>();
 	
-	if (!World->IsValidId(Descriptor.LocalFlecsId))
+	if UNLIKELY_IF(!World->IsValidId(Descriptor.LocalFlecsId))
 	{
 		UE_LOG(LogFlecsCore, Error,
 			TEXT("Cannot install replication observers for schema '%s': Flecs ID %llu does not belong to this world"),
@@ -284,7 +289,7 @@ void UFlecsNetworkWorldSubsystem::InstallDirtyObserversForDescriptor(
 		return;
 	}
 	
-	if (!MarkerId.IsValid() || !World->IsValidId(MarkerId))
+	if UNLIKELY_IF(!MarkerId.IsValid() || !World->IsValidId(MarkerId))
 	{
 		UE_LOG(LogFlecsCore, Error,
 			TEXT("Cannot install replication observers for schema '%s': replicated-entity marker is not registered in this world"),
@@ -296,7 +301,7 @@ void UFlecsNetworkWorldSubsystem::InstallDirtyObserversForDescriptor(
 	
 	auto Install = [World, WeakThis, MarkerId](const flecs::id_t ObservedId)
 	{
-		flecs::observer Observer = World->GetNativeFlecsWorld().observer()
+		const flecs::observer Observer = World->GetNativeFlecsWorld().observer()
 			.with(ObservedId)
 			.with(MarkerId.GetId())
 			.event(flecs::OnAdd)
@@ -304,6 +309,7 @@ void UFlecsNetworkWorldSubsystem::InstallDirtyObserversForDescriptor(
 			.event(flecs::OnRemove)
 			.each([WeakThis](flecs::entity Entity)
 		{
+				// @TODO: maybe utilize the singleton?
 			if (UFlecsNetworkWorldSubsystem* Subsystem = WeakThis.Get())
 			{
 				Subsystem->MarkEntityDirty(FFlecsEntityHandle(Entity));
@@ -314,7 +320,10 @@ void UFlecsNetworkWorldSubsystem::InstallDirtyObserversForDescriptor(
 	};
 	
 	DirtyObservers.Add(Install(Descriptor.LocalFlecsId.GetId()));
-	DirtyObservers.Add(Install(FFlecsId::MakePair(Descriptor.LocalFlecsId.GetId(), EcsWildcard)));
+	DirtyObservers.Add(Install(FFlecsId::MakePair(Descriptor.LocalFlecsId.GetId(), flecs::Wildcard)));
+	
+	// @TODO: is this needed?
+	//DirtyObservers.Add(Install(FFlecsId::MakePair(flecs::Wildcard, Descriptor.LocalFlecsId.GetId())));
 }
 
 void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
@@ -426,6 +435,7 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 void UFlecsNetworkWorldSubsystem::DrainInbox()
 {
 	FFlecsReplicationInboxRecord Record;
+	
 	while (Inbox.Dequeue(Record))
 	{
 		switch (Record.Type)
@@ -466,6 +476,7 @@ void UFlecsNetworkWorldSubsystem::DrainInbox()
 			break;
 		}
 	}
+	
 	RetryEntityPairFixups();
 }
 
@@ -485,8 +496,10 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 	{
 		return;
 	}
+	
+	const FFlecsNetworkId* Bound = ClientSlotBindings.Find(Snapshot.NetworkId.GetSlot()); 
 
-	if (const FFlecsNetworkId* Bound = ClientSlotBindings.Find(Snapshot.NetworkId.GetSlot()); Bound && *Bound != Snapshot.NetworkId)
+	if (Bound && *Bound != Snapshot.NetworkId)
 	{
 		if (Bound->GetValue() > Snapshot.NetworkId.GetValue())
 		{
@@ -504,6 +517,7 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 		Entity = World->CreateEntity();
 		Entity.Set<FFlecsNetworkId>(Snapshot.NetworkId);
 		Entity.Add<FFlecsReplicatedEntityComponent>();
+		Entity.Add<EFlecsNetRoleType>(EFlecsNetRoleType::SimulatedProxy);
 		
 		NetworkIdToEntityHandleMap.Add(Snapshot.NetworkId, Entity);
 		ClientSlotBindings.Add(Snapshot.NetworkId.GetSlot(), Snapshot.NetworkId);

@@ -91,8 +91,9 @@ struct UNREALFLECS_API FFlecsNetworkId
 
 static_assert(sizeof(FFlecsNetworkId) == sizeof(uint64));
 
+// @TODO: Implement
 /** Serializable value wrapper for references to another replicated Flecs entity. */
-USTRUCT(BlueprintType)
+USTRUCT()
 struct UNREALFLECS_API FFlecsReplicatedEntityReference
 {
 	GENERATED_BODY()
@@ -102,8 +103,9 @@ struct UNREALFLECS_API FFlecsReplicatedEntityReference
 		return NetworkId.IsValid();
 	}
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
+	UPROPERTY()
 	FFlecsNetworkId NetworkId;
+	
 }; // struct FFlecsReplicatedEntityReference
 
 /**
@@ -134,16 +136,18 @@ public:
 private:
 	uint8 SessionEpoch = 1;
 	uint32 NextSlot = 1;
+	
 	TArray<uint32> FreeSlots;
 	TMap<uint32, uint32> SlotGenerations;
 	TSet<uint32> AllocatedSlots;
-};
+	
+}; // class FFlecsNetworkIdAllocator
 
 template <>
 struct TFlecsComponentTraits<FFlecsNetworkId> : public TFlecsComponentTraitsBase<FFlecsNetworkId>
 {
 	using WithTypes = TTuple<FFlecsReplicatedEntityComponent>;
-};
+}; // struct TFlecsComponentTraits<FFlecsNetworkId>
 
 template<>
 struct TStructOpsTypeTraits<FFlecsNetworkId> : public TStructOpsTypeTraitsBase2<FFlecsNetworkId>

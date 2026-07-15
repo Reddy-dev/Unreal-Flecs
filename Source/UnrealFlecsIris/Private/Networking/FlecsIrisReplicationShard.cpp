@@ -99,6 +99,7 @@ void UFlecsIrisReplicationShard::InitializeServer(UWorld* InWorld,
 	UE::Net::FRootObjectSettings Settings;
 	Settings.bIsAlwaysRelevant = true;
 	Settings.FactoryName = UFlecsIrisShardObjectFactory::GetFactoryName();
+	
 	RootObjectAdapter = MakeUnique<UE::Net::FNetRootObjectAdapter>(Settings);
 	RootObjectAdapter->InitAdapter(this);
 	RootObjectAdapter->SetNetFactoryName(UFlecsIrisShardObjectFactory::GetFactoryName());

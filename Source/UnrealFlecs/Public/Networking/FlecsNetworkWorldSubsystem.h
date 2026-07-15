@@ -47,6 +47,7 @@ public:
 	
 	/** Marks a replicated entity for its next authoritative full snapshot. */
 	void MarkEntityDirty(const FFlecsEntityHandle& EntityHandle);
+	void MarkEntityDirty_Internal(const FFlecsEntityHandle& EntityHandle);
 
 	/** Enqueues a transport-delivered record for client-side processing on the world tick. */
 	void EnqueueReceivedRecord(FFlecsReplicationInboxRecord Record)
@@ -131,8 +132,10 @@ private:
 	}; // struct FEntityPairFixup
 
 	void CreateReplicationTransport();
+	
 	void InstallDirtyObservers();
 	void InstallDirtyObserversForDescriptor(const FFlecsComponentReplicationDescriptor& Descriptor);
+	
 	void GatherDirtyEntities();
 	void DrainInbox();
 	void ApplySnapshot(const FGuid& SourceShard, const FFlecsReplicatedEntitySnapshot& Snapshot);
@@ -166,8 +169,10 @@ private:
 	
 	TMap<FFlecsReplicationLayoutId, TArray<TPair<FGuid, FFlecsReplicatedEntitySnapshot>>> DeferredSnapshots;
 	
+	UPROPERTY()
 	TMap<uint32, FFlecsNetworkId> ClientSlotBindings;
 	
+	UPROPERTY()
 	TMap<FFlecsNetworkId, uint32> LastAppliedStateRevisions;
 	
 	TMap<FFlecsNetworkId, FGuid> EntitySourceShards;

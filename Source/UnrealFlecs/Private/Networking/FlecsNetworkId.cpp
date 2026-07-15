@@ -40,17 +40,19 @@ FFlecsNetworkId FFlecsNetworkIdAllocator::Allocate()
 
 bool FFlecsNetworkIdAllocator::Release(const FFlecsNetworkId InId)
 {
-	if (!InId.IsValid() || InId.GetSessionEpoch() != SessionEpoch || !AllocatedSlots.Remove(InId.GetSlot()))
+	if UNLIKELY_IF(!InId.IsValid() || InId.GetSessionEpoch() != SessionEpoch || !AllocatedSlots.Remove(InId.GetSlot()))
 	{
 		return false;
 	}
 
 	uint32& Generation = SlotGenerations.FindChecked(InId.GetSlot());
 	++Generation;
+	
 	if (Generation > FFlecsNetworkId::GenerationValueMask)
 	{
 		Generation = 1;
 	}
+	
 	FreeSlots.Add(InId.GetSlot());
 	return true;
 }
