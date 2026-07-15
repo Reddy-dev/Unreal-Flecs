@@ -171,8 +171,9 @@ void UFlecsNetworkWorldSubsystem::StopReplicatingEntity(const FFlecsNetworkId Ne
 			State ? State->RouteKey : FFlecsReplicationRouteKey::Default(), NetworkId);
 	}
 	
-	if (const FFlecsEntityHandle* Entity = NetworkIdToEntityHandleMap.Find(NetworkId);
-		Entity && Entity->IsValid() && Entity->Has<FFlecsNetworkId>())
+	const FFlecsEntityHandle* Entity = NetworkIdToEntityHandleMap.Find(NetworkId);
+	
+	if (IsValid(Entity) && Entity->Has<FFlecsNetworkId>())
 	{
 		Entity->Remove<FFlecsNetworkId>();
 		Entity->Remove<EFlecsNetRoleType>();
@@ -608,9 +609,9 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 
 void UFlecsNetworkWorldSubsystem::RemoveRemoteEntity(const FFlecsNetworkId NetworkId)
 {
-	FFlecsEntityHandle* Entity = NetworkIdToEntityHandleMap.Find(NetworkId); 
+	const FFlecsEntityHandle* Entity = NetworkIdToEntityHandleMap.Find(NetworkId); 
 	
-	if (Entity && Entity->IsValid())
+	if (IsValid(Entity))
 	{
 		Entity->Destroy();
 	}
@@ -619,7 +620,11 @@ void UFlecsNetworkWorldSubsystem::RemoveRemoteEntity(const FFlecsNetworkId Netwo
 	ClientSlotBindings.Remove(NetworkId.GetSlot());
 	LastAppliedStateRevisions.Remove(NetworkId);
 	EntitySourceShards.Remove(NetworkId);
-	EntityPairFixups.RemoveAll([NetworkId](const FEntityPairFixup& Fixup) { return Fixup.Source == NetworkId; });
+	
+	EntityPairFixups.RemoveAll([NetworkId](const FEntityPairFixup& Fixup)
+	{
+		return Fixup.Source == NetworkId;
+	});
 }
 
 void UFlecsNetworkWorldSubsystem::DetachRemoteShard(const FGuid& SourceShard)

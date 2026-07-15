@@ -266,6 +266,7 @@ NETWORK_TEST_CLASS(FlecsReplicationListenServerTests,
 		UFlecsWorld* FlecsWorld = nullptr;
 		FFlecsEntityHandle Entity;
 	};
+	
 	FPIENetworkComponent<FState> Network{ TestRunner, TestCommandBuilder, bInitializing };
 
 	BEFORE_EACH()

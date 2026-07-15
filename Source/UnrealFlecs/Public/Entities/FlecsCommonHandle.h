@@ -98,6 +98,11 @@ struct UNREALFLECS_API FFlecsCommonHandle
 	{
 		return Test.IsValid();
 	}
+	
+	NO_DISCARD FORCEINLINE friend bool IsValid(const FFlecsCommonHandle* Test)
+	{
+		return Test && Test->IsValid();
+	}
 
 public:
 	FFlecsCommonHandle() = default;
