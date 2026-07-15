@@ -47,7 +47,6 @@ public:
 	
 	/** Marks a replicated entity for its next authoritative full snapshot. */
 	void MarkEntityDirty(const FFlecsEntityHandle& EntityHandle);
-	void MarkEntityDirty_Internal(const FFlecsEntityHandle& EntityHandle);
 
 	/** Enqueues a transport-delivered record for client-side processing on the world tick. */
 	void EnqueueReceivedRecord(FFlecsReplicationInboxRecord Record)
