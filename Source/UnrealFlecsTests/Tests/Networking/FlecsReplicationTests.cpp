@@ -107,6 +107,7 @@ namespace UE::Flecs::Tests
 		const FFlecsComponentReplicationDescriptor* Descriptor =
 			FFlecsComponentReplicationRegistry::Get(World).Find(World->GetIdIfRegistered<FFlecsReplicationTestValue>());
 		check(Descriptor);
+		
 		for (FFlecsReplicatedValue& Serialized : Snapshot.Values)
 		{
 			if (Layout.Keys.IsValidIndex(Serialized.KeyIndex)
