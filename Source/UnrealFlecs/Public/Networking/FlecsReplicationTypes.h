@@ -40,7 +40,8 @@ struct UNREALFLECS_API FFlecsReplicationLayoutId
 
 	UPROPERTY()
 	FGuid Value;
-};
+	
+}; // struct FFlecsReplicationLayoutId
 
 /** Distinguishes a standalone component key from a Flecs pair key. */
 UENUM()
@@ -48,7 +49,7 @@ enum class EFlecsReplicationKeyKind : uint8
 {
 	Component,
 	Pair
-};
+}; // enum class EFlecsReplicationKeyKind
 
 /** Portable encoding used for the second element of a replicated pair. */
 UENUM()
@@ -59,7 +60,7 @@ enum class EFlecsReplicationPairTargetKind : uint8
 	StableSymbolValue,
 	StablePathValue,
 	Entity
-};
+}; // enum class EFlecsReplicationPairTargetKind
 
 /**
  * Stable, transport-safe representation of one replicated component or pair.
@@ -115,7 +116,9 @@ struct UNREALFLECS_API FFlecsReplicationKey
 	bool bHasPayload = false;
 
 	NO_DISCARD FString CanonicalString() const;
+	
 	friend bool operator==(const FFlecsReplicationKey&, const FFlecsReplicationKey&) = default;
+	
 }; // struct FFlecsReplicationKey
 
 /** Immutable structural definition shared by all snapshots of one Flecs table. */
@@ -168,6 +171,7 @@ struct UNREALFLECS_API FFlecsReplicatedValue
 
 	UPROPERTY()
 	TArray<uint8> Bytes;
+	
 }; // struct FFlecsReplicatedValue
 
 /**
@@ -270,6 +274,7 @@ public:
 	bool AddRemoteDefinition(const FFlecsReplicationLayoutDefinition& Definition, FString& OutError);
 
 private:
+	// @TODO: Handle Table destruction and remove from cache.
 	TMap<const flecs::table_t*, FFlecsReplicationLayoutId> TableCache;
 	TMap<FFlecsReplicationLayoutId, FFlecsReplicationLayoutDefinition> Definitions;
 	
