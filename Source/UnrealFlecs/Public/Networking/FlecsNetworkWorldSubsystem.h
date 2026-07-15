@@ -141,7 +141,6 @@ private:
 	UPROPERTY(Transient)
 	TMap<FFlecsNetworkId, FFlecsEntityHandle> NetworkIdToEntityHandleMap;
 	
-	UPROPERTY(Transient)
 	TMap<FFlecsNetworkId, FReplicatedEntityState> EntityStates;
 	
 	UPROPERTY(Transient)
