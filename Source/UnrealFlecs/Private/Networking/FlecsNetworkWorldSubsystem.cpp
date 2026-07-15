@@ -224,7 +224,7 @@ void UFlecsNetworkWorldSubsystem::CreateReplicationTransport()
 	
 	if UNLIKELY_IF(!ProviderClass)
 	{
-		UE_LOG(LogFlecsCore, Warning,
+		UE_LOG(LogFlecsCore, Error,
 			TEXT("Flecs replication provider '%s' is unavailable. Enable Iris and the UnrealFlecsIris runtime module; standalone Flecs remains active."),
 			*ProviderName.ToString());
 		return;
@@ -234,7 +234,7 @@ void UFlecsNetworkWorldSubsystem::CreateReplicationTransport()
 	
 	if UNLIKELY_IF(!ReplicationTransport || !ReplicationTransport->InitializeTransport(this))
 	{
-		UE_LOG(LogFlecsCore, Warning,
+		UE_LOG(LogFlecsCore, Error,
 			TEXT("Flecs replication provider '%s' could not initialize for this NetDriver. Replication is inactive."),
 			*ProviderName.ToString());
 		
@@ -248,8 +248,10 @@ void UFlecsNetworkWorldSubsystem::InstallDirtyObservers()
 	{
 		return;
 	}
-	UFlecsWorld* World = GetFlecsWorldChecked();
+	
+	const TSolidNotNull<UFlecsWorld*> World = GetFlecsWorldChecked();
 	FFlecsComponentReplicationRegistry& Registry = FFlecsComponentReplicationRegistry::Get(World);
+	
 	DescriptorRegisteredHandle = Registry.OnDescriptorRegistered().AddUObject(
 		this, &UFlecsNetworkWorldSubsystem::InstallDirtyObserversForDescriptor);
 	
@@ -267,8 +269,9 @@ void UFlecsNetworkWorldSubsystem::InstallDirtyObserversForDescriptor(
 		return;
 	}
 
-	UFlecsWorld* World = GetFlecsWorldChecked();
+	const TSolidNotNull<UFlecsWorld*> World = GetFlecsWorldChecked();
 	const FFlecsId MarkerId = World->GetIdIfRegistered<FFlecsReplicatedEntityComponent>();
+	
 	if (!World->IsValidId(Descriptor.LocalFlecsId))
 	{
 		UE_LOG(LogFlecsCore, Error,
@@ -276,6 +279,7 @@ void UFlecsNetworkWorldSubsystem::InstallDirtyObserversForDescriptor(
 			*Descriptor.StableName, Descriptor.LocalFlecsId.GetId());
 		return;
 	}
+	
 	if (!MarkerId.IsValid() || !World->IsValidId(MarkerId))
 	{
 		UE_LOG(LogFlecsCore, Error,
@@ -283,6 +287,7 @@ void UFlecsNetworkWorldSubsystem::InstallDirtyObserversForDescriptor(
 			*Descriptor.StableName);
 		return;
 	}
+	
 	const TWeakObjectPtr<UFlecsNetworkWorldSubsystem> WeakThis(this);
 	
 	auto Install = [World, WeakThis, MarkerId](const flecs::id_t ObservedId)
@@ -314,10 +319,11 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 	{
 		return;
 	}
+	
 	TArray<FFlecsNetworkId> Pending = DirtyEntities.Array();
 	DirtyEntities.Reset();
 	
-	UFlecsWorld* World = GetFlecsWorldChecked();
+	const TSolidNotNull<UFlecsWorld*> World = GetFlecsWorldChecked();
 	
 	FFlecsComponentReplicationRegistry& ComponentRegistry = FFlecsComponentReplicationRegistry::Get(World);
 
@@ -387,6 +393,7 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 			
 			const FFlecsComponentReplicationDescriptor* Descriptor = ComponentRegistry.Find(Key.StorageSchema);
 			const void* Value = Entity.TryGet(LocalId);
+			
 			if (!Descriptor || !Value)
 			{
 				continue;
@@ -404,6 +411,7 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 				Snapshot.Values.Pop();
 			}
 		}
+		
 		if (ReplicationTransport)
 		{
 			ReplicationTransport->PublishEntity(Route, Snapshot);
@@ -429,15 +437,18 @@ void UFlecsNetworkWorldSubsystem::DrainInbox()
 				}
 				break;
 			}
+				
 			if (TArray<TPair<FGuid, FFlecsReplicatedEntitySnapshot>>* Deferred = DeferredSnapshots.Find(Record.Layout.LayoutId))
 			{
 				TArray<TPair<FGuid, FFlecsReplicatedEntitySnapshot>> Pending = MoveTemp(*Deferred);
 				DeferredSnapshots.Remove(Record.Layout.LayoutId);
+				
 				for (const auto& Item : Pending)
 				{
 					ApplySnapshot(Item.Key, Item.Value);
 				}
 			}
+				
 			break;
 		}
 		case EFlecsReplicationInboxRecordType::UpsertEntity:
@@ -477,6 +488,7 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 		{
 			return;
 		}
+		
 		RemoveRemoteEntity(*Bound);
 	}
 
@@ -488,6 +500,7 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 		Entity = World->CreateEntity();
 		Entity.Set<FFlecsNetworkId>(Snapshot.NetworkId);
 		Entity.Add<FFlecsReplicatedEntityComponent>();
+		
 		NetworkIdToEntityHandleMap.Add(Snapshot.NetworkId, Entity);
 		ClientSlotBindings.Add(Snapshot.NetworkId.GetSlot(), Snapshot.NetworkId);
 	}
@@ -512,7 +525,7 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 	{
 		TArray<FFlecsId> ToRemove;
 		
-		Entity.Iterate([this, &Registry, &DesiredIds, &ToRemove](FFlecsId CurrentId)
+		for (const FFlecsId CurrentId : Entity.GetType())
 		{
 			const bool bReplicated = CurrentId.IsPair()
 				? Registry.Find(CurrentId.GetFirst()) != nullptr
@@ -522,7 +535,7 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 			{
 				ToRemove.Add(CurrentId);
 			}
-		});
+		}
 		
 		for (const FFlecsId Id : ToRemove)
 		{
@@ -560,6 +573,7 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 			
 			FMemoryReader Reader(Value.Bytes, true);
 			const bool bRead = Descriptor->Deserialize(Reader, Temp) && !Reader.IsError();
+			
 			if (bRead)
 			{
 				Entity.Set(LocalId, Descriptor->Size, Temp);

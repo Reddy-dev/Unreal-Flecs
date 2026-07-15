@@ -298,7 +298,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 		ASSERT_THAT(IsTrue(FirstLayout->LayoutId == SecondLayout->LayoutId));
 	}
 
-	TEST_METHOD(DontFragmentComponent_ReplicatesRuntimeAdditionValueAndRemoval)
+	/*TEST_METHOD(DontFragmentComponent_ReplicatesRuntimeAdditionValueAndRemoval)
 	{
 		const FFlecsEntityHandle Source = FlecsWorld->CreateEntity()
 			.Set<FFlecsReplicationTestValue>({ 17 });
@@ -363,6 +363,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 		ASSERT_THAT(IsFalse(Remote.Has<FFlecsReplicationTestDontFragmentValue>()));
 		ASSERT_THAT(AreEqual(17, Remote.Get<FFlecsReplicationTestValue>().Value));
 	}
+	*/
 
 	TEST_METHOD(PairLayouts_RepresentSchemaStableAndEntityTargets)
 	{

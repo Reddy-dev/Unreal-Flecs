@@ -28,10 +28,19 @@ struct UNREALFLECS_API FFlecsReplicationSchemaId
 
 	/** Creates a deterministic schema ID from a non-empty protocol stable name. */
 	static FFlecsReplicationSchemaId FromStableName(const FString& StableName);
-	NO_DISCARD bool IsValid() const { return Value.IsValid(); }
-	NO_DISCARD FString ToString() const { return Value.ToString(EGuidFormats::DigitsWithHyphensLower); }
+	
+	NO_DISCARD FORCEINLINE bool IsValid() const
+	{
+		return Value.IsValid();
+	}
+	
+	NO_DISCARD FORCEINLINE FString ToString() const
+	{
+		return Value.ToString(EGuidFormats::DigitsWithHyphensLower);
+	}
 
 	friend bool operator==(const FFlecsReplicationSchemaId&, const FFlecsReplicationSchemaId&) = default;
+	
 	friend bool operator<(const FFlecsReplicationSchemaId& A, const FFlecsReplicationSchemaId& B)
 	{
 		if (A.Value.A != B.Value.A)
@@ -156,7 +165,7 @@ public:
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnDescriptorRegistered, const FFlecsComponentReplicationDescriptor&);
 
 	/** Returns the registry owned by the supplied Flecs world. */
-	static FFlecsComponentReplicationRegistry& Get(const TSolidNotNull<const UFlecsWorld*> World);
+	static NO_DISCARD FFlecsComponentReplicationRegistry& Get(const TSolidNotNull<const UFlecsWorld*> World);
 	
 	/** Removes the registry during Flecs world teardown. */
 	static void RemoveWorld(const UFlecsWorld* World);
@@ -169,11 +178,19 @@ public:
 	
 	/** Finds a descriptor by its portable protocol schema ID. */
 	NO_DISCARD const FFlecsComponentReplicationDescriptor* Find(FFlecsReplicationSchemaId SchemaId) const;
-	NO_DISCARD const TMap<FFlecsId, FFlecsComponentReplicationDescriptor>& GetDescriptors() const { return ByLocalId; }
-	FOnDescriptorRegistered& OnDescriptorRegistered() { return DescriptorRegisteredDelegate; }
+	
+	NO_DISCARD const TMap<FFlecsId, FFlecsComponentReplicationDescriptor>& GetDescriptors() const
+	{
+		return ByLocalId;
+	}
+	
+	NO_DISCARD FOnDescriptorRegistered& OnDescriptorRegistered()
+	{
+		return DescriptorRegisteredDelegate;
+	}
 
 	/** Rejects reflected types that contain unsupported raw object references. */
-	static bool ValidateReflectedType(const TSolidNotNull<const UScriptStruct*> ScriptStruct, FString& OutError);
+	static NO_DISCARD bool ValidateReflectedType(const TSolidNotNull<const UScriptStruct*> ScriptStruct, FString& OutError);
 
 private:
 	TMap<FFlecsId, FFlecsComponentReplicationDescriptor> ByLocalId;

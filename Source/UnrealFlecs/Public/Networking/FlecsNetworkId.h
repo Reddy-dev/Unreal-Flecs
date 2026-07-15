@@ -97,11 +97,15 @@ struct UNREALFLECS_API FFlecsReplicatedEntityReference
 {
 	GENERATED_BODY()
 
-	NO_DISCARD bool IsSet() const { return NetworkId.IsValid(); }
+	NO_DISCARD FORCEINLINE bool IsSet() const
+	{
+		return NetworkId.IsValid();
+	}
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
 	FFlecsNetworkId NetworkId;
-};
+}; // struct FFlecsReplicatedEntityReference
+
 /**
  * Authority-side allocator for FFlecsNetworkId values.
  *
