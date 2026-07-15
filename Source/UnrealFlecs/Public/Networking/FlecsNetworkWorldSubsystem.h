@@ -59,7 +59,16 @@ public:
 
 	/** Returns the active provider transport cast to T, or null when no matching transport is active. */
 	template <class T = UFlecsReplicationTransportBase>
-	NO_DISCARD T* GetReplicationTransport() const { return Cast<T>(ReplicationTransport); }
+	NO_DISCARD FORCEINLINE T* GetReplicationTransport() const
+	{
+		return Cast<T>(ReplicationTransport);
+	}
+	
+	template <class T = UFlecsReplicationTransportBase>
+	NO_DISCARD FORCEINLINE TSolidNotNull<T*> GetReplicationTransportChecked() const
+	{
+		return CastChecked<T>(ReplicationTransport);
+	}
 
 	/** True for standalone/server/listen-server worlds and false for client worlds. */
 	NO_DISCARD bool HasAuthority() const;
@@ -177,4 +186,4 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UFlecsReplicationTransportBase> ReplicationTransport;
-};
+}; // class UFlecsNetworkWorldSubsystem

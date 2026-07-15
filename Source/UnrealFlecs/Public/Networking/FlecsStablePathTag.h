@@ -17,4 +17,5 @@ struct FFlecsStablePathTag
 template <>
 struct TFlecsComponentTraits<FFlecsStablePathTag> : public TFlecsComponentTraitsBase<FFlecsStablePathTag>
 {
+	static constexpr bool DontFragment = true;
 }; // struct TFlecsComponentTraits<FFlecsStablePathTag>

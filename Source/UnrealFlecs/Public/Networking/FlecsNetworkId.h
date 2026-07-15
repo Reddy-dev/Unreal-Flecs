@@ -148,5 +148,9 @@ struct TFlecsComponentTraits<FFlecsNetworkId> : public TFlecsComponentTraitsBase
 template<>
 struct TStructOpsTypeTraits<FFlecsNetworkId> : public TStructOpsTypeTraitsBase2<FFlecsNetworkId>
 {
-	enum { WithIdenticalViaEquality = true };
-};
+	enum
+	{
+		WithIdenticalViaEquality = true
+	};
+	
+}; // struct TStructOpsTypeTraits<FFlecsNetworkId>

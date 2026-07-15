@@ -27,7 +27,7 @@ public:
 class UNREALFLECS_API FFlecsDefaultReplicationRouter final : public IFlecsReplicationRouter
 {
 public:
-	virtual FFlecsReplicationRouteKey Route(const FFlecsEntityHandle&) const override
+	virtual FFlecsReplicationRouteKey Route(const FFlecsEntityHandle& InEntityHandle) const override
 	{
 		return FFlecsReplicationRouteKey::Default();
 	}
@@ -94,6 +94,6 @@ public:
 	static void UnregisterProvider(FName ProviderName);
 	
 	/** Resolves the transport class selected by UFlecsNetworkingModuleSettings. */
-	static UClass* FindProvider(FName ProviderName);
+	static NO_DISCARD UClass* FindProvider(FName ProviderName);
 	
 }; // class FFlecsReplicationTransportRegistry

@@ -27,13 +27,16 @@ void UFlecsIrisReplicationTransport::ShutdownTransport()
 			Pair.Value->StopReplication();
 		}
 	}
+	
 	Shards.Reset();
+	
 	Super::ShutdownTransport();
 }
 
 void UFlecsIrisReplicationTransport::TickTransport()
 {
 	bool bAllStarted = true;
+	
 	for (const TPair<FName, TObjectPtr<UFlecsIrisReplicationShard>>& Pair : Shards)
 	{
 		if (Pair.Value)
@@ -41,6 +44,7 @@ void UFlecsIrisReplicationTransport::TickTransport()
 			bAllStarted &= Pair.Value->TryStartReplication();
 		}
 	}
+	
 	if (!Shards.IsEmpty() && !bAllStarted && ++StartAttempts > 120 && !bWarnedReplicationSystemUnavailable)
 	{
 		bWarnedReplicationSystemUnavailable = true;
@@ -80,6 +84,7 @@ void UFlecsIrisReplicationTransport::RemoveEntity(const FFlecsReplicationRouteKe
 void UFlecsIrisReplicationTransport::HandleProtocolError(const FString& Diagnostic)
 {
 	Super::HandleProtocolError(Diagnostic);
+	
 	if (UFlecsNetworkWorldSubsystem* Subsystem = GetNetworkSubsystem())
 	{
 		if (UNetDriver* Driver = Subsystem->GetWorld()->GetNetDriver(); Driver && Driver->ServerConnection)

@@ -72,7 +72,7 @@ void UFlecsNetworkWorldSubsystem::Deinitialize()
 
 FFlecsNetworkId UFlecsNetworkWorldSubsystem::BeginReplicatingEntity(const FFlecsEntityHandle& EntityHandle)
 {
-	if (!HasAuthority())
+	if UNLIKELY_IF(!HasAuthority())
 	{
 #if WITH_AUTOMATION_TESTS || WITH_EDITOR
 		if (bForceClientModeForTesting)
@@ -786,7 +786,7 @@ bool UFlecsNetworkWorldSubsystem::ValidateLayout(const FFlecsReplicationLayoutDe
 
 void UFlecsNetworkWorldSubsystem::HandleWorldPreActorTick(UWorld* World, ELevelTick, float)
 {
-	if (World != GetWorld() || !IsFlecsWorldValid())
+	if UNLIKELY_IF(World != GetWorld() || !IsFlecsWorldValid())
 	{
 		return;
 	}
