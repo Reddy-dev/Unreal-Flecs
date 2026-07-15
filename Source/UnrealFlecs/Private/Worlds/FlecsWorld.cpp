@@ -304,8 +304,10 @@ void UFlecsWorld::InitializeDefaultComponents() const
 		RegisterComponentType<FFlecsReplicatedEntityComponent>();
 		
 		RegisterComponentType<FFlecsReplicatedTrait>()
-			.Add(flecs::Trait)
-			.AddPairSecond<FFlecsReplicatedEntityComponent>(flecs::With);
+			.Add(flecs::Trait);
+		
+		//@TODO: Maybe it should be With or maybe it shouldnt?
+			//.AddPairSecond<FFlecsReplicatedEntityComponent>(flecs::With);
 	});
 	
 	const TSolidNotNull<UFlecsTypeRegistryEngineSubsystem*> FlecsTypeRegistry

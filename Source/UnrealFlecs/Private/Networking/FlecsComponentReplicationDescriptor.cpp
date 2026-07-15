@@ -86,10 +86,12 @@ FFlecsReplicationSchemaId FFlecsReplicationSchemaId::FromStableName(const FStrin
 	{
 		return {};
 	}
+
+	const FTCHARToUTF8 Utf8(*StableName);
 	
-	FTCHARToUTF8 Utf8(*StableName);
 	FMD5 Md5;
 	Md5.Update(reinterpret_cast<const uint8*>(Utf8.Get()), Utf8.Length());
+	
 	FMD5Hash Hash;
 	Hash.Set(Md5);
 	FGuid Guid = MD5HashToGuid(Hash);

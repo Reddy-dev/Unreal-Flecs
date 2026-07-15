@@ -21,7 +21,6 @@ void UFlecsReplicatedComponentObservers::BuildObserver(const TSolidNotNull<UFlec
 		.Event(flecs::OnRemove)
 		.With<FFlecsReplicatedEntityComponent>() // 0
 		.With<const FFlecsNetworkSubsystemSingleton>() // 1
-		.Without<FFlecsReplicatedTrait>()
 		.YieldExisting();
 }
 

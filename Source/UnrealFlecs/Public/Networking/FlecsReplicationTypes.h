@@ -151,7 +151,10 @@ struct UNREALFLECS_API FFlecsReplicationRouteKey
 	}
 
 	FFlecsReplicationRouteKey() = default;
-	explicit FFlecsReplicationRouteKey(const FName InName) : Name(InName) {}
+	explicit FFlecsReplicationRouteKey(const FName InName) 
+		: Name(InName)
+	{
+	}
 	
 	friend bool operator==(const FFlecsReplicationRouteKey&, const FFlecsReplicationRouteKey&) = default;
 

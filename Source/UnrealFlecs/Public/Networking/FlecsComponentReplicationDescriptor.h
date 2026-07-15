@@ -149,7 +149,7 @@ struct TFlecsReplicationTraits
 		}
 	}
 	
-};
+}; // struct TFlecsReplicationTraits<T>
 
 /**
  * Per-UFlecsWorld lookup table between portable schemas and local Flecs IDs.

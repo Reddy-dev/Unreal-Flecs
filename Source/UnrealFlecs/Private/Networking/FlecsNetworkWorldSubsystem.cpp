@@ -492,7 +492,7 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 		RemoveRemoteEntity(*Bound);
 	}
 
-	UFlecsWorld* World = GetFlecsWorldChecked();
+	const TSolidNotNull<UFlecsWorld*> World = GetFlecsWorldChecked();
 	FFlecsEntityHandle Entity = FindEntity(Snapshot.NetworkId);
 	
 	if (!Entity.IsValid())
@@ -520,7 +520,7 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 		}
 	}
 
-	FFlecsComponentReplicationRegistry& Registry = FFlecsComponentReplicationRegistry::Get(World);
+	const FFlecsComponentReplicationRegistry& Registry = FFlecsComponentReplicationRegistry::Get(World);
 	World->Defer([&]()
 	{
 		TArray<FFlecsId> ToRemove;
