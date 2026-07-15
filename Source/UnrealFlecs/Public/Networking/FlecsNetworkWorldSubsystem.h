@@ -149,7 +149,8 @@ private:
 	UPROPERTY()
 	TSet<FString> PublishedLayoutRoutes;
 	
-	TArray<flecs::observer> DirtyObservers;
+	UPROPERTY()
+	TArray<FFlecsObserverHandle> DirtyObservers;
 	
 	FFlecsReplicationLayoutRegistry LayoutRegistry;
 	FFlecsReplicationInbox Inbox;

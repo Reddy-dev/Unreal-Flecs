@@ -29,10 +29,12 @@ void UFlecsNetworkWorldSubsystem::Initialize(FSubsystemCollectionBase& Collectio
 void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UFlecsWorld*> InWorld)
 {
 	Super::OnFlecsWorldInitialized(InWorld);
+	
 	InWorld->Set<FFlecsNetworkSubsystemSingleton>(FFlecsNetworkSubsystemSingleton{ this });
 
 	const uint8 Epoch = static_cast<uint8>((FPlatformTime::Cycles64() ^ PointerHash(this)) & 0xFFu);
 	NetworkIdAllocator.Reset(Epoch == 0 ? 1 : Epoch);
+	
 	InstallDirtyObservers();
 	CreateReplicationTransport();
 }
@@ -106,9 +108,11 @@ FFlecsNetworkId UFlecsNetworkWorldSubsystem::BeginReplicatingEntity(const FFlecs
 	}
 	
 	EntityHandle.Set<FFlecsNetworkId>(NetworkId);
+	
 	NetworkIdToEntityHandleMap.Add(NetworkId, EntityHandle);
 	EntityStates.Add(NetworkId);
 	DirtyEntities.Add(NetworkId);
+	
 	return NetworkId;
 }
 
@@ -310,7 +314,7 @@ void UFlecsNetworkWorldSubsystem::InstallDirtyObserversForDescriptor(
 	};
 	
 	DirtyObservers.Add(Install(Descriptor.LocalFlecsId.GetId()));
-	DirtyObservers.Add(Install(ecs_pair(Descriptor.LocalFlecsId.GetId(), EcsWildcard)));
+	DirtyObservers.Add(Install(FFlecsId::MakePair(Descriptor.LocalFlecsId.GetId(), EcsWildcard)));
 }
 
 void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
