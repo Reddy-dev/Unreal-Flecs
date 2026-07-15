@@ -24,10 +24,13 @@ struct UNREALFLECS_API FFlecsReplicationSchemaId
 	GENERATED_BODY()
 
 	FFlecsReplicationSchemaId() = default;
-	explicit FFlecsReplicationSchemaId(const FGuid& InValue) : Value(InValue) {}
+	explicit FFlecsReplicationSchemaId(const FGuid& InValue) 
+		: Value(InValue)
+	{
+	}
 
 	/** Creates a deterministic schema ID from a non-empty protocol stable name. */
-	static FFlecsReplicationSchemaId FromStableName(const FString& StableName);
+	static NO_DISCARD FFlecsReplicationSchemaId FromStableName(const FString& StableName);
 	
 	NO_DISCARD FORCEINLINE bool IsValid() const
 	{
@@ -69,7 +72,7 @@ struct UNREALFLECS_API FFlecsReplicationSchemaId
 
 	UPROPERTY()
 	FGuid Value;
-};
+}; // struct FFlecsReplicationSchemaId
 
 template<>
 struct TStructOpsTypeTraits<FFlecsReplicationSchemaId> : TStructOpsTypeTraitsBase2<FFlecsReplicationSchemaId>
@@ -121,7 +124,6 @@ struct UNREALFLECS_API FFlecsComponentReplicationDescriptor
 template <typename T>
 struct TFlecsReplicationTraits
 {
-	
 	static NO_DISCARD FString StableSymbolName()
 	{
 		if constexpr (Solid::IsScriptStruct<T>())
