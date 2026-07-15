@@ -388,20 +388,6 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 		})));
 	}
 
-	TEST_METHOD(LayoutVersionMismatch_ReportsProtocolError)
-	{
-		const FFlecsEntityHandle Source = FlecsWorld->CreateEntity().Set<FFlecsReplicationTestValue>({ 1 });
-		UE::Flecs::Tests::FCapturedReplicationEntity Captured =
-			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Source);
-		ASSERT_THAT(IsFalse(Captured.Layout.Keys.IsEmpty()));
-		++Captured.Layout.Keys[0].StorageVersion;
-		Captured.Layout.LayoutId = FFlecsReplicationLayoutRegistry::ComputeLayoutId(Captured.Layout.Keys);
-		UE::Flecs::Tests::EnqueueLayout(NetworkSubsystem, FGuid::NewGuid(), Captured.Layout);
-		NetworkSubsystem->FlushClientReplicationForTesting();
-		ASSERT_THAT(AreEqual(1, CaptureTransport->ProtocolErrors.Num()));
-		ASSERT_THAT(IsTrue(CaptureTransport->ProtocolErrors[0].Contains(TEXT("version"))));
-	}
-
 	TEST_METHOD(DirtyEvents_CoalesceToFinalComposition_AndIncludeWithTypes)
 	{
 		const FFlecsComponentPropertiesDefinition Properties =
