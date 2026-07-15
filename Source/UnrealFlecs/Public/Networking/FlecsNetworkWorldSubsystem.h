@@ -49,7 +49,11 @@ public:
 	void MarkEntityDirty(const FFlecsEntityHandle& EntityHandle);
 
 	/** Enqueues a transport-delivered record for client-side processing on the world tick. */
-	void EnqueueReceivedRecord(FFlecsReplicationInboxRecord Record) { Inbox.Enqueue(MoveTemp(Record)); }
+	void EnqueueReceivedRecord(FFlecsReplicationInboxRecord Record)
+	{
+		Inbox.Enqueue(MoveTemp(Record));
+	}
+	
 	/** Finds the local authoritative entity or client replica currently bound to NetworkId. */
 	NO_DISCARD FFlecsEntityHandle FindEntity(FFlecsNetworkId NetworkId) const;
 
@@ -115,7 +119,7 @@ private:
 		FFlecsNetworkId Source;
 		FFlecsNetworkId Target;
 		FFlecsReplicationKey Key;
-	};
+	}; // struct FEntityPairFixup
 
 	void CreateReplicationTransport();
 	void InstallDirtyObservers();

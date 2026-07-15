@@ -28,6 +28,7 @@ FFlecsNetworkId FFlecsNetworkIdAllocator::Allocate()
 	}
 
 	uint32& Generation = SlotGenerations.FindOrAdd(Slot, 1);
+	
 	if (Generation == 0)
 	{
 		Generation = 1;

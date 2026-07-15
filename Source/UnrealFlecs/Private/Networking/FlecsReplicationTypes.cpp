@@ -85,6 +85,10 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 
 	const FFlecsComponentReplicationRegistry& Registry = FFlecsComponentReplicationRegistry::Get(World);
 	TArray<FFlecsReplicationKey> Keys;
+	
+	World->CreateQueryBuilder()
+		.With(flecs::DontFragment).Src("$Component")
+		.With("$Compoent")
 	for (const FFlecsId Id : Entity.GetType())
 	{
 		if (!Id.IsPair())

@@ -45,6 +45,7 @@ namespace UE::Flecs::Tests
 	{
 		RegisterTestComponent<FFlecsReplicationTestRequiredTag>(World);
 		RegisterTestComponent<FFlecsReplicationTestValue>(World);
+		RegisterTestComponent<FFlecsReplicationTestDontFragmentValue>(World);
 		RegisterTestComponent<FFlecsReplicationTestNativeValue>(World);
 		RegisterTestComponent<FFlecsReplicationTestTag>(World);
 		RegisterTestComponent<FFlecsReplicationTestRelationship>(World);
@@ -295,6 +296,72 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 			FlecsWorld, Second, bCreated, Error);
 		ASSERT_THAT(IsNotNull(SecondLayout));
 		ASSERT_THAT(IsTrue(FirstLayout->LayoutId == SecondLayout->LayoutId));
+	}
+
+	TEST_METHOD(DontFragmentComponent_ReplicatesRuntimeAdditionValueAndRemoval)
+	{
+		const FFlecsEntityHandle Source = FlecsWorld->CreateEntity()
+			.Set<FFlecsReplicationTestValue>({ 17 });
+		const UE::Flecs::Tests::FCapturedReplicationEntity Initial =
+			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Source);
+		const FFlecsNetworkId NetworkId = Initial.Snapshot.NetworkId;
+
+		const flecs::table_t* TableBeforeAddition = Source.GetEntity().table().get_table();
+		CaptureTransport->Snapshots.Reset();
+		Source.Set<FFlecsReplicationTestDontFragmentValue>({ 73 });
+		ASSERT_THAT(IsTrue(TableBeforeAddition == Source.GetEntity().table().get_table()));
+		NetworkSubsystem->FlushServerReplicationForTesting();
+		ASSERT_THAT(AreEqual(1, CaptureTransport->Snapshots.Num()));
+		const FFlecsReplicatedEntitySnapshot AddedSnapshot = CaptureTransport->Snapshots[0];
+		ASSERT_THAT(IsTrue(AddedSnapshot.NetworkId == NetworkId));
+		const FFlecsReplicationLayoutDefinition* AddedLayout = CaptureTransport->Layouts.FindByPredicate(
+			[&AddedSnapshot](const FFlecsReplicationLayoutDefinition& Candidate)
+			{
+				return Candidate.LayoutId == AddedSnapshot.LayoutId;
+			});
+		ASSERT_THAT(IsNotNull(AddedLayout));
+		const FFlecsComponentReplicationDescriptor* DontFragmentDescriptor =
+			FFlecsComponentReplicationRegistry::Get(FlecsWorld).Find(
+				FlecsWorld->GetIdIfRegistered<FFlecsReplicationTestDontFragmentValue>());
+		ASSERT_THAT(IsNotNull(DontFragmentDescriptor));
+		ASSERT_THAT(IsTrue(AddedLayout->Keys.ContainsByPredicate(
+			[DontFragmentDescriptor](const FFlecsReplicationKey& Key)
+			{
+				return Key.StorageSchema == DontFragmentDescriptor->SchemaId;
+			})));
+
+		const flecs::table_t* TableBeforeRemoval = Source.GetEntity().table().get_table();
+		CaptureTransport->Snapshots.Reset();
+		Source.Remove<FFlecsReplicationTestDontFragmentValue>();
+		ASSERT_THAT(IsTrue(TableBeforeRemoval == Source.GetEntity().table().get_table()));
+		NetworkSubsystem->FlushServerReplicationForTesting();
+		ASSERT_THAT(AreEqual(1, CaptureTransport->Snapshots.Num()));
+		const FFlecsReplicatedEntitySnapshot RemovedSnapshot = CaptureTransport->Snapshots[0];
+		ASSERT_THAT(IsTrue(RemovedSnapshot.LayoutId == Initial.Layout.LayoutId));
+
+		NetworkSubsystem->StopReplicatingEntity(Source);
+		Source.Destroy();
+		NetworkSubsystem->ResetClientReplicationForTesting();
+		NetworkSubsystem->EnterClientReplicationModeForTesting();
+		const FGuid Shard = FGuid::NewGuid();
+
+		UE::Flecs::Tests::EnqueueLayout(NetworkSubsystem, Shard, Initial.Layout);
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, Shard, Initial.Snapshot);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+		UE::Flecs::Tests::EnqueueLayout(NetworkSubsystem, Shard, *AddedLayout);
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, Shard, AddedSnapshot);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+
+		FFlecsEntityHandle Remote = NetworkSubsystem->FindEntity(NetworkId);
+		ASSERT_THAT(IsTrue(Remote.IsValid()));
+		ASSERT_THAT(IsTrue(Remote.Has<FFlecsReplicationTestDontFragmentValue>()));
+		ASSERT_THAT(AreEqual(73, Remote.Get<FFlecsReplicationTestDontFragmentValue>().Value));
+
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, Shard, RemovedSnapshot);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+		Remote = NetworkSubsystem->FindEntity(NetworkId);
+		ASSERT_THAT(IsFalse(Remote.Has<FFlecsReplicationTestDontFragmentValue>()));
+		ASSERT_THAT(AreEqual(17, Remote.Get<FFlecsReplicationTestValue>().Value));
 	}
 
 	TEST_METHOD(PairLayouts_RepresentSchemaStableAndEntityTargets)

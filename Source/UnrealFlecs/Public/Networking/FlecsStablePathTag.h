@@ -12,10 +12,9 @@ USTRUCT(BlueprintType)
 struct FFlecsStablePathTag
 {
 	GENERATED_BODY()
-}; // struct FFlecsStableNameTag
+}; // struct FFlecsStablePathTag
 
 template <>
 struct TFlecsComponentTraits<FFlecsStablePathTag> : public TFlecsComponentTraitsBase<FFlecsStablePathTag>
 {
-	
 }; // struct TFlecsComponentTraits<FFlecsStablePathTag>

@@ -102,7 +102,6 @@ struct UNREALFLECS_API FFlecsReplicatedEntityReference
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
 	FFlecsNetworkId NetworkId;
 };
-
 /**
  * Authority-side allocator for FFlecsNetworkId values.
  *
@@ -116,12 +115,14 @@ public:
 
 	/** Allocates a new valid identity, or an invalid identity if the slot space is exhausted. */
 	FFlecsNetworkId Allocate();
+	
 	/** Releases a currently allocated identity; stale generations are rejected. */
 	bool Release(FFlecsNetworkId InId);
+	
 	/** Clears allocations and selects the epoch used by subsequent identities. */
 	void Reset(uint8 InSessionEpoch);
 
-	NO_DISCARD uint8 GetSessionEpoch() const
+	NO_DISCARD FORCEINLINE uint8 GetSessionEpoch() const
 	{
 		return SessionEpoch;
 	}

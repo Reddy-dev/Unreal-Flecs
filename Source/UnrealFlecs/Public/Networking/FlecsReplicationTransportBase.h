@@ -19,6 +19,7 @@ class UNREALFLECS_API IFlecsReplicationRouter
 {
 public:
 	virtual ~IFlecsReplicationRouter() = default;
+
 	virtual FFlecsReplicationRouteKey Route(const FFlecsEntityHandle& Entity) const = 0;
 }; // class IFlecsReplicationRouter
 
@@ -71,7 +72,10 @@ public:
 	/** Handles a rejected remote layout or incompatible serialized protocol input. */
 	virtual void HandleProtocolError(const FString& Diagnostic);
 
-	NO_DISCARD UFlecsNetworkWorldSubsystem* GetNetworkSubsystem() const { return NetworkSubsystem.Get(); }
+	NO_DISCARD FORCEINLINE UFlecsNetworkWorldSubsystem* GetNetworkSubsystem() const
+	{
+		return NetworkSubsystem.Get();
+	}
 
 private:
 	UPROPERTY(Transient)
@@ -91,4 +95,5 @@ public:
 	
 	/** Resolves the transport class selected by UFlecsNetworkingModuleSettings. */
 	static UClass* FindProvider(FName ProviderName);
+	
 }; // class FFlecsReplicationTransportRegistry

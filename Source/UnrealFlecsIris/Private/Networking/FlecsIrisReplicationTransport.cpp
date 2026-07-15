@@ -70,7 +70,8 @@ void UFlecsIrisReplicationTransport::PublishEntity(const FFlecsReplicationRouteK
 void UFlecsIrisReplicationTransport::RemoveEntity(const FFlecsReplicationRouteKey& Route,
 	const FFlecsNetworkId NetworkId)
 {
-	if (TObjectPtr<UFlecsIrisReplicationShard>* Shard = Shards.Find(Route.Name); Shard && *Shard)
+	TObjectPtr<UFlecsIrisReplicationShard>* Shard = Shards.Find(Route.Name);
+	if (Shard && *Shard)
 	{
 		(*Shard)->RemoveEntity(NetworkId);
 	}
@@ -95,15 +96,19 @@ UFlecsIrisReplicationShard* UFlecsIrisReplicationTransport::FindOrCreateShard(
 	{
 		return *Found;
 	}
+	
 	UFlecsNetworkWorldSubsystem* Subsystem = GetNetworkSubsystem();
 	if (!Subsystem || !Subsystem->HasAuthority())
 	{
 		return nullptr;
 	}
+	
 	UFlecsIrisReplicationShard* Shard = NewObject<UFlecsIrisReplicationShard>(Subsystem);
 	const UFlecsNetworkingModuleSettings* Settings = GetDefault<UFlecsNetworkingModuleSettings>();
+	
 	Shard->InitializeServer(Subsystem->GetWorld(), Route, Settings->DefaultShardPollFrequency,
 		Settings->DefaultShardStaticPriority);
 	Shards.Add(Route.Name, Shard);
+	
 	return Shard;
 }

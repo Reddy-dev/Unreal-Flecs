@@ -144,7 +144,7 @@ struct UNREALFLECS_API FFlecsReplicationRouteKey
 	
 	static NO_DISCARD FFlecsReplicationRouteKey Default()
 	{
-		return FFlecsReplicationRouteKey(TEXT("Default"));
+		return FFlecsReplicationRouteKey(FName("Default"));
 	}
 
 	FFlecsReplicationRouteKey() = default;
@@ -153,7 +153,7 @@ struct UNREALFLECS_API FFlecsReplicationRouteKey
 	friend bool operator==(const FFlecsReplicationRouteKey&, const FFlecsReplicationRouteKey&) = default;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
-	FName Name = TEXT("Default");
+	FName Name = FName("Default");
 	
 }; // struct FFlecsReplicationRouteKey
 
@@ -199,7 +199,8 @@ struct UNREALFLECS_API FFlecsReplicatedEntitySnapshot
 
 	UPROPERTY()
 	TArray<FFlecsReplicatedValue> Values;
-};
+	
+}; // struct FFlecsReplicatedEntitySnapshot
 
 /** Kinds of transport-to-core records accepted by the client inbox. */
 UENUM()
@@ -209,7 +210,7 @@ enum class EFlecsReplicationInboxRecordType : uint8
 	UpsertEntity,
 	RemoveEntity,
 	DetachShard
-};
+}; // enum class EFlecsReplicationInboxRecordType
 
 /** A queued remote protocol item, tagged with the independent source shard that supplied it. */
 struct UNREALFLECS_API FFlecsReplicationInboxRecord
@@ -219,7 +220,7 @@ struct UNREALFLECS_API FFlecsReplicationInboxRecord
 	FFlecsReplicationLayoutDefinition Layout;
 	FFlecsReplicatedEntitySnapshot Snapshot;
 	FFlecsNetworkId NetworkId;
-};
+}; // struct FFlecsReplicationInboxRecord
 
 /** Thread-safe multi-producer inbox drained by UFlecsNetworkWorldSubsystem on the world tick. */
 class UNREALFLECS_API FFlecsReplicationInbox

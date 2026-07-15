@@ -65,7 +65,10 @@ struct UNREALFLECS_API FFlecsReplicationSchemaId
 template<>
 struct TStructOpsTypeTraits<FFlecsReplicationSchemaId> : TStructOpsTypeTraitsBase2<FFlecsReplicationSchemaId>
 {
-	enum { WithIdenticalViaEquality = true };
+	enum
+	{
+		WithIdenticalViaEquality = true
+	};
 };
 
 using FFlecsReplicationSerializeFunction = bool(*)(FArchive&, void*);

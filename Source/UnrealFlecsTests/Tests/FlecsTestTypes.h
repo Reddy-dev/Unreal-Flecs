@@ -853,6 +853,24 @@ struct TFlecsComponentTraits<FFlecsReplicationTestValue> : TFlecsComponentTraits
 	static constexpr bool Replicate = true;
 };
 
+USTRUCT()
+struct FFlecsReplicationTestDontFragmentValue
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	int32 Value = 0;
+};
+
+template <>
+struct TFlecsComponentTraits<FFlecsReplicationTestDontFragmentValue>
+	: TFlecsComponentTraitsBase<FFlecsReplicationTestDontFragmentValue>
+{
+	static constexpr bool AutoRegister = false;
+	static constexpr bool DontFragment = true;
+	static constexpr bool Replicate = true;
+}; // struct TFlecsComponentTraits<FFlecsReplicationTestDontFragmentValue>
+
 struct FFlecsReplicationTestNativeValue
 {
 	int32 Value = 0;
@@ -985,5 +1003,4 @@ public:
 	TArray<FFlecsNetworkId> RemovedEntities;
 	TArray<FString> ProtocolErrors;
 };
-
 

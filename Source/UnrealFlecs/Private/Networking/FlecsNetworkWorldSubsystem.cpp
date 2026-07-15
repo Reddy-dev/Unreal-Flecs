@@ -21,6 +21,7 @@ UFlecsNetworkWorldSubsystem::UFlecsNetworkWorldSubsystem()
 void UFlecsNetworkWorldSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
+	
 	PreActorTickHandle = FWorldDelegates::OnWorldPreActorTick.AddUObject(
 		this, &UFlecsNetworkWorldSubsystem::HandleWorldPreActorTick);
 }
@@ -181,7 +182,9 @@ void UFlecsNetworkWorldSubsystem::MarkEntityDirty(const FFlecsEntityHandle& Enti
 		return;
 	}
 	
-	if (const FFlecsNetworkId* NetworkId = EntityHandle.TryGet<FFlecsNetworkId>(); NetworkId && NetworkId->IsValid())
+	const FFlecsNetworkId* NetworkId = EntityHandle.TryGet<FFlecsNetworkId>(); 
+	
+	if (NetworkId && NetworkId->IsValid())
 	{
 		DirtyEntities.Add(*NetworkId);
 	}
@@ -234,6 +237,7 @@ void UFlecsNetworkWorldSubsystem::CreateReplicationTransport()
 		UE_LOG(LogFlecsCore, Warning,
 			TEXT("Flecs replication provider '%s' could not initialize for this NetDriver. Replication is inactive."),
 			*ProviderName.ToString());
+		
 		ReplicationTransport = nullptr;
 	}
 }
@@ -248,6 +252,7 @@ void UFlecsNetworkWorldSubsystem::InstallDirtyObservers()
 	FFlecsComponentReplicationRegistry& Registry = FFlecsComponentReplicationRegistry::Get(World);
 	DescriptorRegisteredHandle = Registry.OnDescriptorRegistered().AddUObject(
 		this, &UFlecsNetworkWorldSubsystem::InstallDirtyObserversForDescriptor);
+	
 	for (const TPair<FFlecsId, FFlecsComponentReplicationDescriptor>& Pair : Registry.GetDescriptors())
 	{
 		InstallDirtyObserversForDescriptor(Pair.Value);
@@ -716,6 +721,7 @@ bool UFlecsNetworkWorldSubsystem::ValidateLayout(const FFlecsReplicationLayoutDe
 			const TCHAR* Role)
 		{
 			const FFlecsComponentReplicationDescriptor* Descriptor = Registry.Find(Schema);
+			
 			if (!Descriptor || Descriptor->SchemaVersion != Version)
 			{
 				OutError = FString::Printf(TEXT("%s schema %s version %u is incompatible with the local schema set"),
@@ -766,6 +772,7 @@ void UFlecsNetworkWorldSubsystem::HandleWorldPreActorTick(UWorld* World, ELevelT
 	{
 		return;
 	}
+	
 	if (HasAuthority())
 	{
 		GatherDirtyEntities();
@@ -774,6 +781,7 @@ void UFlecsNetworkWorldSubsystem::HandleWorldPreActorTick(UWorld* World, ELevelT
 	{
 		DrainInbox();
 	}
+	
 	if (ReplicationTransport)
 	{
 		ReplicationTransport->TickTransport();
