@@ -126,7 +126,6 @@ template<>
 struct TFlecsReplicationTraits<UE::Flecs::Tests::FNativeReplicatedValue>
 {
 	static FString StableName() { return TEXT("FNativeReplicatedValue"); }
-	static constexpr uint32 SchemaVersion = 7;
 	static bool Serialize(FArchive& Archive, UE::Flecs::Tests::FNativeReplicatedValue& Value)
 	{
 		Archive << Value.Value;
@@ -138,7 +137,7 @@ template<>
 struct TFlecsReplicationTraits<UE::Flecs::Tests::FNativeReplicatedValueDuplicate>
 {
 	static FString StableName() { return TEXT("FNativeReplicatedValue"); }
-	static constexpr uint32 SchemaVersion = 7;
+	
 	static bool Serialize(FArchive& Archive, UE::Flecs::Tests::FNativeReplicatedValueDuplicate& Value)
 	{
 		Archive << Value.Value;
@@ -230,7 +229,6 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 		const FFlecsComponentReplicationDescriptor* Descriptor =
 			FFlecsComponentReplicationRegistry::Get(FlecsWorld).Find(Component.GetFlecsId());
 		ASSERT_THAT(IsNotNull(Descriptor));
-		ASSERT_THAT(AreEqual(static_cast<uint32>(7), Descriptor->SchemaVersion));
 
 		FNativeReplicatedValue Source{ 901 };
 		TArray<uint8> Bytes;

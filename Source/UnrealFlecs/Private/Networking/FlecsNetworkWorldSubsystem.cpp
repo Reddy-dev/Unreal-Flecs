@@ -670,7 +670,7 @@ bool UFlecsNetworkWorldSubsystem::ResolveKeyToLocalId(const FFlecsReplicationKey
 	const FFlecsComponentReplicationRegistry& Registry = FFlecsComponentReplicationRegistry::Get(World);
 	const FFlecsComponentReplicationDescriptor* Storage = Registry.Find(Key.StorageSchema);
 	
-	if (!Storage || Storage->SchemaVersion != Key.StorageVersion)
+	if (!Storage)
 	{
 		return false;
 	}
@@ -683,7 +683,7 @@ bool UFlecsNetworkWorldSubsystem::ResolveKeyToLocalId(const FFlecsReplicationKey
 	
 	const FFlecsComponentReplicationDescriptor* Relationship = Registry.Find(Key.RelationshipSchema);
 	
-	if (!Relationship || Relationship->SchemaVersion != Key.RelationshipVersion)
+	if (!Relationship)
 	{
 		return false;
 	}
@@ -694,11 +694,6 @@ bool UFlecsNetworkWorldSubsystem::ResolveKeyToLocalId(const FFlecsReplicationKey
 	case EFlecsReplicationPairTargetKind::Schema:
 		if (const FFlecsComponentReplicationDescriptor* TargetDescriptor = Registry.Find(Key.TargetSchema))
 		{
-			if (TargetDescriptor->SchemaVersion != Key.TargetVersion)
-			{
-				return false;
-			}
-			
 			Target = TargetDescriptor->LocalFlecsId;
 		}
 		break;
@@ -754,34 +749,33 @@ bool UFlecsNetworkWorldSubsystem::ValidateLayout(const FFlecsReplicationLayoutDe
 	
 	for (const FFlecsReplicationKey& Key : Layout.Keys)
 	{
-		auto ValidateSchema = [&Registry, &OutError](const FFlecsReplicationSchemaId Schema, const uint32 Version,
-			const TCHAR* Role)
+		auto ValidateSchema = [&Registry, &OutError](const FFlecsReplicationSchemaId Schema, const TCHAR* Role)
 		{
 			const FFlecsComponentReplicationDescriptor* Descriptor = Registry.Find(Schema);
 			
-			if (!Descriptor || Descriptor->SchemaVersion != Version)
+			if (!Descriptor)
 			{
-				OutError = FString::Printf(TEXT("%s schema %s version %u is incompatible with the local schema set"),
-					Role, *Schema.ToString(), Version);
+				OutError = FString::Printf(TEXT("%s schema %s is not found in the local schema set"),
+					Role, *Schema.ToString());
 				return false;
 			}
 			
 			return true;
 		};
 		
-		if (!ValidateSchema(Key.StorageSchema, Key.StorageVersion, TEXT("Storage")))
+		if (!ValidateSchema(Key.StorageSchema, TEXT("Storage")))
 		{
 			return false;
 		}
 		
 		if (Key.Kind == EFlecsReplicationKeyKind::Pair
-			&& !ValidateSchema(Key.RelationshipSchema, Key.RelationshipVersion, TEXT("Relationship")))
+			&& !ValidateSchema(Key.RelationshipSchema, TEXT("Relationship")))
 		{
 			return false;
 		}
 		
 		if (Key.TargetKind == EFlecsReplicationPairTargetKind::Schema
-			&& !ValidateSchema(Key.TargetSchema, Key.TargetVersion, TEXT("Target")))
+			&& !ValidateSchema(Key.TargetSchema, TEXT("Target")))
 		{
 			return false;
 		}

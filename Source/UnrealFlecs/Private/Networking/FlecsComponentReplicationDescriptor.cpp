@@ -121,11 +121,6 @@ bool FFlecsComponentReplicationDescriptor::IsValid(FString* OutError) const
 		return Fail(TEXT("Replication stable name/schema ID is missing"));
 	}
 	
-	if (SchemaVersion == 0)
-	{
-		return Fail(TEXT("Replication schema version must be nonzero"));
-	}
-	
 	if (!LocalFlecsId.IsValid())
 	{
 		return Fail(TEXT("Local Flecs ID is invalid"));

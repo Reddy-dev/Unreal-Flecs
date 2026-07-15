@@ -98,7 +98,6 @@ struct UNREALFLECS_API FFlecsComponentReplicationDescriptor
 {
 	FFlecsReplicationSchemaId SchemaId;
 	FString StableName;
-	uint32 SchemaVersion = 0;
 	FFlecsId LocalFlecsId;
 	uint32 Size = 0;
 	uint16 Alignment = 0;
@@ -135,8 +134,6 @@ struct TFlecsReplicationTraits
 			return FString(nameof(T).data());
 		}
 	}
-
-	static constexpr uint32 SchemaVersion = Solid::IsScriptStruct<T>() ? 1u : 0u;
 
 	static bool Serialize(FArchive& Archive, T& Value)
 	{
@@ -224,12 +221,7 @@ namespace UE::Flecs::Replication
 		}
 		
 		Descriptor.SchemaId = FFlecsReplicationSchemaId::FromStableName(Descriptor.StableName);
-
-		if constexpr (requires { TFlecsReplicationTraits<T>::SchemaVersion; })
-		{
-			Descriptor.SchemaVersion = TFlecsReplicationTraits<T>::SchemaVersion;
-		}
-
+		
 		Descriptor.LocalFlecsId = Component.GetFlecsId();
 		Descriptor.Size = sizeof(T);
 		Descriptor.Alignment = alignof(T);

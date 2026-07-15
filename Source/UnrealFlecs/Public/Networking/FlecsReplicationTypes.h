@@ -82,15 +82,9 @@ struct UNREALFLECS_API FFlecsReplicationKey
 	UPROPERTY()
 	FFlecsReplicationSchemaId RelationshipSchema;
 
-	UPROPERTY()
-	uint32 RelationshipVersion = 0;
-
 	/** Schema whose descriptor supplies the payload storage, if any. */
 	UPROPERTY()
 	FFlecsReplicationSchemaId StorageSchema;
-
-	UPROPERTY()
-	uint32 StorageVersion = 0;
 
 	/** Selects which of the target fields is meaningful for a pair key. */
 	UPROPERTY()
@@ -99,9 +93,6 @@ struct UNREALFLECS_API FFlecsReplicationKey
 	/** Target component schema when TargetKind is Schema. */
 	UPROPERTY()
 	FFlecsReplicationSchemaId TargetSchema;
-
-	UPROPERTY()
-	uint32 TargetVersion = 0;
 	
 	/** Peer-common symbol used to resolve a StableValue target on receipt. */
 	UPROPERTY()

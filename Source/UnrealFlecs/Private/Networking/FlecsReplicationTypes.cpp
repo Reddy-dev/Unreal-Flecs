@@ -59,11 +59,15 @@ FFlecsReplicationLayoutId FFlecsReplicationLayoutRegistry::ComputeLayoutId(
 
 FString FFlecsReplicationKey::CanonicalString() const
 {
-	return FString::Printf(TEXT("%u|%s|%u|%s|%u|%u|%s|%u|%s|%llu|%u"),
+	/*return FString::Printf(TEXT("%u|%s|%u|%s|%u|%u|%s|%u|%s|%llu|%u"),
 		static_cast<uint8>(Kind), *RelationshipSchema.ToString(), RelationshipVersion,
 		*StorageSchema.ToString(), StorageVersion, static_cast<uint8>(TargetKind),
 		*TargetSchema.ToString(), TargetVersion, *StableTargetIdentifier,
-		EntityTarget.GetValue(), bHasPayload ? 1u : 0u);
+		EntityTarget.GetValue(), bHasPayload ? 1u : 0u);*/
+	return FString::Printf(TEXT("%u|%s|%s|%s|%s|%llu|%u"),
+		static_cast<uint8>(Kind), *RelationshipSchema.ToString(),
+		*StorageSchema.ToString(), *TargetSchema.ToString(),
+		*StableTargetIdentifier, EntityTarget.GetValue(), bHasPayload ? 1u : 0u);
 }
 
 const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildForEntity(const TSolidNotNull<const UFlecsWorld*> World,
@@ -103,7 +107,6 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 			FFlecsReplicationKey& Key = Keys.AddDefaulted_GetRef();
 			Key.Kind = EFlecsReplicationKeyKind::Component;
 			Key.StorageSchema = Descriptor->SchemaId;
-			Key.StorageVersion = Descriptor->SchemaVersion;
 			Key.bHasPayload = !Descriptor->bIsTag;
 			continue;
 		}
@@ -130,9 +133,7 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 		FFlecsReplicationKey& Key = Keys.AddDefaulted_GetRef();
 		Key.Kind = EFlecsReplicationKeyKind::Pair;
 		Key.RelationshipSchema = Relationship->SchemaId;
-		Key.RelationshipVersion = Relationship->SchemaVersion;
 		Key.StorageSchema = Storage->SchemaId;
-		Key.StorageVersion = Storage->SchemaVersion;
 		Key.bHasPayload = !Storage->bIsTag;
 
 		const FFlecsComponentReplicationDescriptor* TargetDescriptor = Registry.Find(Second);
@@ -140,7 +141,6 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 		{
 			Key.TargetKind = EFlecsReplicationPairTargetKind::Schema;
 			Key.TargetSchema = TargetDescriptor->SchemaId;
-			Key.TargetVersion = TargetDescriptor->SchemaVersion;
 		}
 		else
 		{

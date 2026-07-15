@@ -891,7 +891,6 @@ struct TFlecsReplicationTraits<FFlecsReplicationTestNativeValue>
 		return TEXT("FFlecsReplicationTestNativeValue");
 	}
 	
-	static constexpr uint32 SchemaVersion = 1;
 	
 	static bool Serialize(FArchive& Archive, FFlecsReplicationTestNativeValue& Value)
 	{
