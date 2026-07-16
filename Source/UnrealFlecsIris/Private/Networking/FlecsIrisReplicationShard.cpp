@@ -15,7 +15,7 @@
 
 void FFlecsIrisLayoutManifestItem::PostReplicatedAdd(const FFlecsIrisLayoutManifest& Serializer)
 {
-	if (UFlecsIrisReplicationShard* Owner = Serializer.GetOwner())
+	if (const UFlecsIrisReplicationShard* Owner = Serializer.GetOwner())
 	{
 		Owner->EnqueueReceivedLayout(Definition);
 	}
@@ -55,6 +55,7 @@ UWorld* UFlecsIrisReplicationShard::GetWorld() const
 void UFlecsIrisReplicationShard::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
 	FDoRepLifetimeParams InitialParams;
 	InitialParams.bIsPushBased = true;
 	InitialParams.Condition = COND_InitialOnly;
