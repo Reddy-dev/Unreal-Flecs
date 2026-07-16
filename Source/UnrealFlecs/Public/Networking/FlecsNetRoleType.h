@@ -23,7 +23,6 @@ struct TFlecsComponentTraits<EFlecsNetRoleType> : public TFlecsComponentTraitsBa
 {
 	static constexpr bool DontFragment = true;
 	static constexpr bool Exclusive = true;
-	
 }; // struct TFlecsComponentTraits<EFlecsNetRoleType>
 
 
