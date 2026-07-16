@@ -351,6 +351,7 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 		}
 		
 		const FFlecsEntityHandle Entity = *EntityPtr;
+		
 		bool bLayoutCreated = false;
 		FString Error;
 		const FFlecsReplicationLayoutDefinition* Layout = LayoutRegistry.BuildForEntity(
@@ -418,7 +419,7 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 			Serialized.KeyIndex = static_cast<uint16>(KeyIndex);
 			FMemoryWriter Writer(Serialized.Bytes, true);
 			
-			if (!Descriptor->Serialize(Writer, const_cast<void*>(Value)) || Writer.IsError())
+			if UNLIKELY_IF(!Descriptor->Serialize(Writer, const_cast<void*>(Value)) || Writer.IsError())
 			{
 				UE_LOG(LogFlecsCore, Error, TEXT("Failed to serialize schema '%s' for entity %llu"),
 					*Descriptor->StableName, NetworkId.GetValue());
@@ -799,6 +800,8 @@ bool UFlecsNetworkWorldSubsystem::ValidateLayout(const FFlecsReplicationLayoutDe
 
 void UFlecsNetworkWorldSubsystem::HandleWorldPreActorTick(UWorld* World, ELevelTick, float)
 {
+	QUICK_SCOPE_CYCLE_COUNTER(STAT_FlecsNetworkWorldSubsystem_HandleWorldPreActorTick);
+	
 	if UNLIKELY_IF(World != GetWorld() || !IsFlecsWorldValid())
 	{
 		return;
