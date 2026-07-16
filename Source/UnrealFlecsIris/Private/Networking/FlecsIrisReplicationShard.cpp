@@ -94,6 +94,7 @@ void UFlecsIrisReplicationShard::InitializeServer(UWorld* InWorld,
 	ShardKey = InShardKey;
 	PollFrequency = InPollFrequency;
 	StaticPriority = InStaticPriority;
+	
 	LayoutManifest.SetOwner(this);
 	EntitySnapshots.SetOwner(this);
 
@@ -117,7 +118,7 @@ void UFlecsIrisReplicationShard::BindClient(const TSolidNotNull<UWorld*> InWorld
 
 bool UFlecsIrisReplicationShard::TryStartReplication()
 {
-	if (!RootObjectAdapter || RootObjectAdapter->IsReplicating())
+	if UNLIKELY_IF(!RootObjectAdapter || RootObjectAdapter->IsReplicating())
 	{
 		return RootObjectAdapter != nullptr;
 	}
@@ -126,7 +127,7 @@ bool UFlecsIrisReplicationShard::TryStartReplication()
 	
 	const UNetDriver* NetDriver = World ? World->GetNetDriver() : nullptr;
 	
-	if (!NetDriver || !NetDriver->GetReplicationSystem() || !World->PersistentLevel)
+	if UNLIKELY_IF(!NetDriver || !NetDriver->GetReplicationSystem() || !World->PersistentLevel)
 	{
 		return false;
 	}

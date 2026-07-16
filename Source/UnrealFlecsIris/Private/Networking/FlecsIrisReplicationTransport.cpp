@@ -85,9 +85,11 @@ void UFlecsIrisReplicationTransport::HandleProtocolError(const FString& Diagnost
 {
 	Super::HandleProtocolError(Diagnostic);
 	
-	if (UFlecsNetworkWorldSubsystem* Subsystem = GetNetworkSubsystem())
+	if (const UFlecsNetworkWorldSubsystem* Subsystem = GetNetworkSubsystem())
 	{
-		if (UNetDriver* Driver = Subsystem->GetWorld()->GetNetDriver(); Driver && Driver->ServerConnection)
+		const UNetDriver* Driver = Subsystem->GetWorld()->GetNetDriver(); 
+		
+		if (Driver && Driver->ServerConnection)
 		{
 			Driver->ServerConnection->Close();
 		}
@@ -108,8 +110,8 @@ UFlecsIrisReplicationShard* UFlecsIrisReplicationTransport::FindOrCreateShard(
 		return nullptr;
 	}
 	
-	UFlecsIrisReplicationShard* Shard = NewObject<UFlecsIrisReplicationShard>(Subsystem);
-	const UFlecsNetworkingModuleSettings* Settings = GetDefault<UFlecsNetworkingModuleSettings>();
+	const TSolidNotNull<UFlecsIrisReplicationShard*> Shard = NewObject<UFlecsIrisReplicationShard>(Subsystem);
+	const TSolidNotNull<const UFlecsNetworkingModuleSettings*> Settings = GetDefault<UFlecsNetworkingModuleSettings>();
 	
 	Shard->InitializeServer(Subsystem->GetWorld(), Route, Settings->DefaultShardPollFrequency,
 		Settings->DefaultShardStaticPriority);
