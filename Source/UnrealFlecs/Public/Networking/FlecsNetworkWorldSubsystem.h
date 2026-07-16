@@ -122,12 +122,14 @@ private:
 		FFlecsReplicationRouteKey RouteKey = FFlecsReplicationRouteKey::Default();
 	};
 
-	/** Pair waiting for its entity-target replica to become available locally. */
+	/** Complete pair state from one source snapshot, waiting for its entity-target replica. */
 	struct FEntityPairFixup
 	{
 		FFlecsNetworkId Source;
 		FFlecsNetworkId Target;
 		FFlecsReplicationKey Key;
+		uint32 StateRevision = 0;
+		TOptional<TArray<uint8>> Payload;
 	}; // struct FEntityPairFixup
 
 	void CreateReplicationTransport();
@@ -141,6 +143,8 @@ private:
 	void RemoveRemoteEntity(FFlecsNetworkId NetworkId);
 	void DetachRemoteShard(const FGuid& SourceShard);
 	void RetryEntityPairFixups();
+	void ApplyResolvedValue(const FFlecsEntityHandle& Entity, FFlecsId LocalId,
+		const FFlecsReplicationKey& Key, const TArray<uint8>* Payload) const;
 	bool ResolveKeyToLocalId(const FFlecsReplicationKey& Key, FFlecsId& OutId) const;
 	bool ValidateLayout(const FFlecsReplicationLayoutDefinition& Layout, FString& OutError) const;
 	void HandleWorldPreActorTick(UWorld* World, ELevelTick TickType, float DeltaSeconds);

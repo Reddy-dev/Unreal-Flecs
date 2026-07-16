@@ -957,6 +957,23 @@ struct TFlecsComponentTraits<FFlecsReplicationTestRelationship> : TFlecsComponen
 };
 
 USTRUCT()
+struct FFlecsReplicationTestValueRelationship
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	int32 Value = 0;
+};
+
+template <>
+struct TFlecsComponentTraits<FFlecsReplicationTestValueRelationship> : TFlecsComponentTraitsBase<FFlecsReplicationTestValueRelationship>
+{
+	static constexpr bool AutoRegister = false;
+	static constexpr bool Replicate = true;
+	static constexpr bool Relationship = true;
+};
+
+USTRUCT()
 struct FFlecsReplicationTestLocalOnly
 {
 	GENERATED_BODY()
@@ -1002,4 +1019,3 @@ public:
 	TArray<FFlecsNetworkId> RemovedEntities;
 	TArray<FString> ProtocolErrors;
 };
-

@@ -49,6 +49,7 @@ namespace UE::Flecs::Tests
 		RegisterTestComponent<FFlecsReplicationTestNativeValue>(World);
 		RegisterTestComponent<FFlecsReplicationTestTag>(World);
 		RegisterTestComponent<FFlecsReplicationTestRelationship>(World);
+		RegisterTestComponent<FFlecsReplicationTestValueRelationship>(World);
 		RegisterTestComponent<FFlecsReplicationTestWithValue>(World);
 		RegisterTestComponent<FFlecsReplicationTestLocalOnly>(World);
 	}
@@ -120,6 +121,39 @@ namespace UE::Flecs::Tests
 				return;
 			}
 		}
+	}
+
+	void SetSnapshotPairValue(UFlecsWorld* World, FFlecsReplicatedEntitySnapshot& Snapshot,
+		const FFlecsReplicationLayoutDefinition& Layout, const FFlecsReplicationTestValueRelationship& Value)
+	{
+		const FFlecsComponentReplicationDescriptor* Descriptor =
+			FFlecsComponentReplicationRegistry::Get(World).Find(
+				World->GetIdIfRegistered<FFlecsReplicationTestValueRelationship>());
+		check(Descriptor);
+
+		for (FFlecsReplicatedValue& Serialized : Snapshot.Values)
+		{
+			if (Layout.Keys.IsValidIndex(Serialized.KeyIndex)
+				&& Layout.Keys[Serialized.KeyIndex].Kind == EFlecsReplicationKeyKind::Pair
+				&& Layout.Keys[Serialized.KeyIndex].StorageSchema == Descriptor->SchemaId)
+			{
+				Serialized.Bytes.Reset();
+				FMemoryWriter Writer(Serialized.Bytes, true);
+				FFlecsReplicationTestValueRelationship Copy = Value;
+				Descriptor->Serialize(Writer, &Copy);
+				return;
+			}
+		}
+	}
+
+	void EnqueueRemoval(UFlecsNetworkWorldSubsystem* Subsystem, const FGuid& Shard,
+		const FFlecsNetworkId NetworkId)
+	{
+		FFlecsReplicationInboxRecord Record;
+		Record.Type = EFlecsReplicationInboxRecordType::RemoveEntity;
+		Record.SourceShard = Shard;
+		Record.NetworkId = NetworkId;
+		Subsystem->EnqueueReceivedRecord(MoveTemp(Record));
 	}
 }
 
@@ -481,6 +515,177 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 		RemoteSource = NetworkSubsystem->FindEntity(SourceCapture.Snapshot.NetworkId);
 		ASSERT_THAT(IsTrue(RemoteTarget.IsValid()));
 		ASSERT_THAT(IsTrue(RemoteSource.HasPair<FFlecsReplicationTestRelationship>(RemoteTarget)));
+	}
+
+	TEST_METHOD(EntityTargetPair_RestoresPayloadAfterTargetSnapshotArrives)
+	{
+		const FGuid Shard = FGuid::NewGuid();
+		const FFlecsEntityHandle Target = FlecsWorld->CreateEntity();
+		const UE::Flecs::Tests::FCapturedReplicationEntity TargetCapture =
+			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Target);
+		const FFlecsEntityHandle Source = FlecsWorld->CreateEntity()
+			.SetPair<FFlecsReplicationTestValueRelationship>(Target,
+				FFlecsReplicationTestValueRelationship{ 17 });
+		const UE::Flecs::Tests::FCapturedReplicationEntity SourceCapture =
+			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Source);
+		NetworkSubsystem->StopReplicatingEntity(Source);
+		NetworkSubsystem->StopReplicatingEntity(Target);
+		Source.Destroy();
+		Target.Destroy();
+		NetworkSubsystem->ResetClientReplicationForTesting();
+		NetworkSubsystem->EnterClientReplicationModeForTesting();
+
+		UE::Flecs::Tests::EnqueueLayout(NetworkSubsystem, Shard, SourceCapture.Layout);
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, Shard, SourceCapture.Snapshot);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+
+		UE::Flecs::Tests::EnqueueLayout(NetworkSubsystem, Shard, TargetCapture.Layout);
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, Shard, TargetCapture.Snapshot);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+		const FFlecsEntityHandle RemoteTarget = NetworkSubsystem->FindEntity(TargetCapture.Snapshot.NetworkId);
+		const FFlecsEntityHandle RemoteSource = NetworkSubsystem->FindEntity(SourceCapture.Snapshot.NetworkId);
+		ASSERT_THAT(IsTrue(RemoteTarget.IsValid()));
+		ASSERT_THAT(IsTrue(RemoteSource.HasPair<FFlecsReplicationTestValueRelationship>(RemoteTarget)));
+		ASSERT_THAT(AreEqual(17,
+			RemoteSource.GetPairFirst<FFlecsReplicationTestValueRelationship>(RemoteTarget).Value));
+	}
+
+	TEST_METHOD(EntityTargetPair_NewerSnapshotSupersedesPendingPayload)
+	{
+		const FGuid Shard = FGuid::NewGuid();
+		const FFlecsEntityHandle Target = FlecsWorld->CreateEntity();
+		const UE::Flecs::Tests::FCapturedReplicationEntity TargetCapture =
+			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Target);
+		const FFlecsEntityHandle Source = FlecsWorld->CreateEntity()
+			.SetPair<FFlecsReplicationTestValueRelationship>(Target,
+				FFlecsReplicationTestValueRelationship{ 17 });
+		const UE::Flecs::Tests::FCapturedReplicationEntity SourceCapture =
+			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Source);
+		FFlecsReplicatedEntitySnapshot NewerSnapshot = SourceCapture.Snapshot;
+		++NewerSnapshot.StateRevision;
+		UE::Flecs::Tests::SetSnapshotPairValue(FlecsWorld, NewerSnapshot,
+			SourceCapture.Layout, FFlecsReplicationTestValueRelationship{ 29 });
+		NetworkSubsystem->StopReplicatingEntity(Source);
+		NetworkSubsystem->StopReplicatingEntity(Target);
+		Source.Destroy();
+		Target.Destroy();
+		NetworkSubsystem->ResetClientReplicationForTesting();
+		NetworkSubsystem->EnterClientReplicationModeForTesting();
+
+		UE::Flecs::Tests::EnqueueLayout(NetworkSubsystem, Shard, SourceCapture.Layout);
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, Shard, SourceCapture.Snapshot);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, Shard, NewerSnapshot);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+
+		UE::Flecs::Tests::EnqueueLayout(NetworkSubsystem, Shard, TargetCapture.Layout);
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, Shard, TargetCapture.Snapshot);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+		const FFlecsEntityHandle RemoteTarget = NetworkSubsystem->FindEntity(TargetCapture.Snapshot.NetworkId);
+		const FFlecsEntityHandle RemoteSource = NetworkSubsystem->FindEntity(SourceCapture.Snapshot.NetworkId);
+		ASSERT_THAT(IsTrue(RemoteSource.HasPair<FFlecsReplicationTestValueRelationship>(RemoteTarget)));
+		ASSERT_THAT(AreEqual(29,
+			RemoteSource.GetPairFirst<FFlecsReplicationTestValueRelationship>(RemoteTarget).Value));
+	}
+
+	TEST_METHOD(EntityTargetPair_NewerLayoutCancelsFixupAndStaleSnapshotCannotRestoreIt)
+	{
+		const FGuid Shard = FGuid::NewGuid();
+		const FFlecsEntityHandle Target = FlecsWorld->CreateEntity();
+		const UE::Flecs::Tests::FCapturedReplicationEntity TargetCapture =
+			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Target);
+		const FFlecsEntityHandle Source = FlecsWorld->CreateEntity()
+			.SetPair<FFlecsReplicationTestValueRelationship>(Target,
+				FFlecsReplicationTestValueRelationship{ 17 });
+		const UE::Flecs::Tests::FCapturedReplicationEntity SourceCapture =
+			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Source);
+		Source.RemovePair<FFlecsReplicationTestValueRelationship>(Target);
+		const UE::Flecs::Tests::FCapturedReplicationEntity WithoutPairCapture =
+			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Source);
+		NetworkSubsystem->StopReplicatingEntity(Source);
+		NetworkSubsystem->StopReplicatingEntity(Target);
+		Source.Destroy();
+		Target.Destroy();
+		NetworkSubsystem->ResetClientReplicationForTesting();
+		NetworkSubsystem->EnterClientReplicationModeForTesting();
+
+		UE::Flecs::Tests::EnqueueLayout(NetworkSubsystem, Shard, SourceCapture.Layout);
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, Shard, SourceCapture.Snapshot);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+		UE::Flecs::Tests::EnqueueLayout(NetworkSubsystem, Shard, WithoutPairCapture.Layout);
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, Shard, WithoutPairCapture.Snapshot);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, Shard, SourceCapture.Snapshot);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+
+		UE::Flecs::Tests::EnqueueLayout(NetworkSubsystem, Shard, TargetCapture.Layout);
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, Shard, TargetCapture.Snapshot);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+		const FFlecsEntityHandle RemoteTarget = NetworkSubsystem->FindEntity(TargetCapture.Snapshot.NetworkId);
+		const FFlecsEntityHandle RemoteSource = NetworkSubsystem->FindEntity(SourceCapture.Snapshot.NetworkId);
+		ASSERT_THAT(IsFalse(RemoteSource.HasPair<FFlecsReplicationTestValueRelationship>(RemoteTarget)));
+	}
+
+	TEST_METHOD(EntityTargetPair_TargetRemovalCancelsPendingFixup)
+	{
+		const FGuid Shard = FGuid::NewGuid();
+		const FFlecsEntityHandle Target = FlecsWorld->CreateEntity();
+		const UE::Flecs::Tests::FCapturedReplicationEntity TargetCapture =
+			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Target);
+		const FFlecsEntityHandle Source = FlecsWorld->CreateEntity()
+			.SetPair<FFlecsReplicationTestValueRelationship>(Target,
+				FFlecsReplicationTestValueRelationship{ 17 });
+		const UE::Flecs::Tests::FCapturedReplicationEntity SourceCapture =
+			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Source);
+		NetworkSubsystem->StopReplicatingEntity(Source);
+		NetworkSubsystem->StopReplicatingEntity(Target);
+		Source.Destroy();
+		Target.Destroy();
+		NetworkSubsystem->ResetClientReplicationForTesting();
+		NetworkSubsystem->EnterClientReplicationModeForTesting();
+
+		UE::Flecs::Tests::EnqueueLayout(NetworkSubsystem, Shard, SourceCapture.Layout);
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, Shard, SourceCapture.Snapshot);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+		UE::Flecs::Tests::EnqueueRemoval(NetworkSubsystem, Shard, TargetCapture.Snapshot.NetworkId);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+
+		UE::Flecs::Tests::EnqueueLayout(NetworkSubsystem, Shard, TargetCapture.Layout);
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, Shard, TargetCapture.Snapshot);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+		const FFlecsEntityHandle RemoteTarget = NetworkSubsystem->FindEntity(TargetCapture.Snapshot.NetworkId);
+		const FFlecsEntityHandle RemoteSource = NetworkSubsystem->FindEntity(SourceCapture.Snapshot.NetworkId);
+		ASSERT_THAT(IsFalse(RemoteSource.HasPair<FFlecsReplicationTestValueRelationship>(RemoteTarget)));
+	}
+
+	TEST_METHOD(EntityTargetPair_SourceRemovalCancelsPendingFixup)
+	{
+		const FGuid Shard = FGuid::NewGuid();
+		const FFlecsEntityHandle Target = FlecsWorld->CreateEntity();
+		const UE::Flecs::Tests::FCapturedReplicationEntity TargetCapture =
+			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Target);
+		const FFlecsEntityHandle Source = FlecsWorld->CreateEntity()
+			.SetPair<FFlecsReplicationTestValueRelationship>(Target,
+				FFlecsReplicationTestValueRelationship{ 17 });
+		const UE::Flecs::Tests::FCapturedReplicationEntity SourceCapture =
+			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Source);
+		NetworkSubsystem->StopReplicatingEntity(Source);
+		NetworkSubsystem->StopReplicatingEntity(Target);
+		Source.Destroy();
+		Target.Destroy();
+		NetworkSubsystem->ResetClientReplicationForTesting();
+		NetworkSubsystem->EnterClientReplicationModeForTesting();
+
+		UE::Flecs::Tests::EnqueueLayout(NetworkSubsystem, Shard, SourceCapture.Layout);
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, Shard, SourceCapture.Snapshot);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+		UE::Flecs::Tests::EnqueueRemoval(NetworkSubsystem, Shard, SourceCapture.Snapshot.NetworkId);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+
+		UE::Flecs::Tests::EnqueueLayout(NetworkSubsystem, Shard, TargetCapture.Layout);
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, Shard, TargetCapture.Snapshot);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+		ASSERT_THAT(IsFalse(NetworkSubsystem->FindEntity(SourceCapture.Snapshot.NetworkId).IsValid()));
 	}
 };
 

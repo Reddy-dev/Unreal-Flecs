@@ -511,6 +511,13 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 		RemoveRemoteEntity(*Bound);
 	}
 
+	// Accepted snapshots are complete replacements. Any unresolved pairs from
+	// an older state revision no longer describe this source's current state.
+	EntityPairFixups.RemoveAll([&Snapshot](const FEntityPairFixup& Fixup)
+	{
+		return Fixup.Source == Snapshot.NetworkId;
+	});
+
 	const TSolidNotNull<UFlecsWorld*> World = GetFlecsWorldChecked();
 	FFlecsEntityHandle Entity = FindEntity(Snapshot.NetworkId);
 	
@@ -526,8 +533,9 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 	}
 
 	TSet<FFlecsId> DesiredIds;
-	for (const FFlecsReplicationKey& Key : Layout->Keys)
+	for (int32 KeyIndex = 0; KeyIndex < Layout->Keys.Num(); ++KeyIndex)
 	{
+		const FFlecsReplicationKey& Key = Layout->Keys[KeyIndex];
 		FFlecsId LocalId;
 		
 		if (ResolveKeyToLocalId(Key, LocalId))
@@ -536,7 +544,20 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 		}
 		else if (Key.TargetKind == EFlecsReplicationPairTargetKind::Entity)
 		{
-			EntityPairFixups.Add({ Snapshot.NetworkId, Key.EntityTarget, Key });
+			TOptional<TArray<uint8>> Payload;
+			const FFlecsReplicatedValue* Value = Snapshot.Values.FindByPredicate(
+				[KeyIndex](const FFlecsReplicatedValue& Candidate)
+				{
+					return Candidate.KeyIndex == KeyIndex;
+				});
+
+			if (Value)
+			{
+				Payload = Value->Bytes;
+			}
+
+			EntityPairFixups.Add({ Snapshot.NetworkId, Key.EntityTarget, Key,
+				Snapshot.StateRevision, MoveTemp(Payload) });
 		}
 	}
 
@@ -582,25 +603,7 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 				continue;
 			}
 			
-			const FFlecsComponentReplicationDescriptor* Descriptor = Registry.Find(Key.StorageSchema);
-			if (!Descriptor || Descriptor->bIsTag)
-			{
-				continue;
-			}
-			
-			void* Temp = FMemory::Malloc(Descriptor->Size, Descriptor->Alignment);
-			Descriptor->Construct(Temp);
-			
-			FMemoryReader Reader(Value.Bytes, true);
-			const bool bRead = Descriptor->Deserialize(Reader, Temp) && !Reader.IsError();
-			
-			if (bRead)
-			{
-				Entity.Set(LocalId, Descriptor->Size, Temp);
-			}
-			
-			Descriptor->Destroy(Temp);
-			FMemory::Free(Temp);
+			ApplyResolvedValue(Entity, LocalId, Key, &Value.Bytes);
 		}
 	});
 
@@ -624,7 +627,7 @@ void UFlecsNetworkWorldSubsystem::RemoveRemoteEntity(const FFlecsNetworkId Netwo
 	
 	EntityPairFixups.RemoveAll([NetworkId](const FEntityPairFixup& Fixup)
 	{
-		return Fixup.Source == NetworkId;
+		return Fixup.Source == NetworkId || Fixup.Target == NetworkId;
 	});
 }
 
@@ -648,21 +651,67 @@ void UFlecsNetworkWorldSubsystem::DetachRemoteShard(const FGuid& SourceShard)
 
 void UFlecsNetworkWorldSubsystem::RetryEntityPairFixups()
 {
-	for (int32 Index = EntityPairFixups.Num() - 1; Index >= 0; --Index)
+	const TSolidNotNull<UFlecsWorld*> World = GetFlecsWorldChecked();
+	World->Defer([&]()
 	{
-		const FEntityPairFixup& Fixup = EntityPairFixups[Index];
-		
-		FFlecsEntityHandle Source = FindEntity(Fixup.Source);
-		FFlecsId PairId;
-		
-		if (!Source.IsValid() || !ResolveKeyToLocalId(Fixup.Key, PairId))
+		for (int32 Index = EntityPairFixups.Num() - 1; Index >= 0; --Index)
 		{
-			continue;
+			const FEntityPairFixup& Fixup = EntityPairFixups[Index];
+			const FFlecsEntityHandle Source = FindEntity(Fixup.Source);
+			const uint32* AcceptedRevision = LastAppliedStateRevisions.Find(Fixup.Source);
+
+			if (!Source.IsValid() || !AcceptedRevision || *AcceptedRevision != Fixup.StateRevision)
+			{
+				EntityPairFixups.RemoveAtSwap(Index, 1, EAllowShrinking::No);
+				continue;
+			}
+
+			FFlecsId PairId;
+
+			if (!ResolveKeyToLocalId(Fixup.Key, PairId))
+			{
+				continue;
+			}
+
+			ApplyResolvedValue(Source, PairId, Fixup.Key,
+				Fixup.Payload.IsSet() ? &Fixup.Payload.GetValue() : nullptr);
+			EntityPairFixups.RemoveAtSwap(Index, 1, EAllowShrinking::No);
 		}
-		
-		Source.Add(PairId);
-		EntityPairFixups.RemoveAtSwap(Index, 1, EAllowShrinking::No);
+	});
+}
+
+void UFlecsNetworkWorldSubsystem::ApplyResolvedValue(const FFlecsEntityHandle& Entity,
+	const FFlecsId LocalId, const FFlecsReplicationKey& Key, const TArray<uint8>* Payload) const
+{
+	Entity.Add(LocalId);
+
+	if (!Payload)
+	{
+		return;
 	}
+
+	const FFlecsComponentReplicationRegistry& Registry =
+		FFlecsComponentReplicationRegistry::Get(GetFlecsWorldChecked());
+	const FFlecsComponentReplicationDescriptor* Descriptor = Registry.Find(Key.StorageSchema);
+
+	if (!Descriptor || Descriptor->bIsTag)
+	{
+		return;
+	}
+
+	void* Temp = FMemory::Malloc(Descriptor->Size, Descriptor->Alignment);
+	Descriptor->Construct(Temp);
+
+	FMemoryReader Reader(*Payload, true);
+	const bool bRead = Descriptor->Deserialize(Reader, Temp) && !Reader.IsError();
+
+	if (bRead)
+	{
+		Entity.Set(LocalId, Descriptor->Size, Temp);
+	}
+
+	Descriptor->Destroy(Temp);
+	FMemory::Free(Temp);
 }
 
 bool UFlecsNetworkWorldSubsystem::ResolveKeyToLocalId(const FFlecsReplicationKey& Key, FFlecsId& OutId) const
