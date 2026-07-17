@@ -838,6 +838,41 @@ struct TFlecsComponentTraits<FFlecsTestStruct_WithUObjectProperty> : public TFle
 }; // struct TFlecsComponentTraits<FFlecsTestStruct_WithUObjectProperty>
 
 USTRUCT()
+struct FFlecsReplicationTestSpatialInterestDescriptor
+	: public FFlecsReplicationInterestDescriptorBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FVector Center = FVector::ZeroVector;
+
+	UPROPERTY()
+	double Radius = 0.0;
+}; // struct FFlecsReplicationTestSpatialInterestDescriptor
+
+USTRUCT()
+struct FFlecsReplicationTestSpatialInterestFragment
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	bool bEnabled = true;
+
+	UPROPERTY()
+	int32 Marker = 0;
+}; // struct FFlecsReplicationTestSpatialInterestFragment
+
+USTRUCT()
+struct FFlecsReplicationTestObjectInterestDescriptor
+	: public FFlecsReplicationInterestDescriptorBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TObjectPtr<UObject> Object;
+}; // struct FFlecsReplicationTestObjectInterestDescriptor
+
+USTRUCT()
 struct FFlecsReplicationTestValue
 {
 	GENERATED_BODY()

@@ -39,25 +39,149 @@ public:
 	
 }; // class FFlecsDefaultReplicationRouter final
 
-/** Game-provided relevance hook used for Custom audiences and spatial policies. */
+/** Immutable inputs supplied to one interest-policy evaluation. */
+struct UNREALFLECS_API FFlecsReplicationInterestEvaluationQuery
+{
+	uint32 ConnectionId = 0;
+	const FFlecsReplicationConnectionInterestContext& Context;
+	const FFlecsReplicationConnectionView& View;
+}; // struct FFlecsReplicationInterestEvaluationQuery
+
+/** Type-erased registration surface for one named, descriptor-owned policy. */
 class UNREALFLECS_API IFlecsReplicationInterestPolicy
 {
 public:
 	virtual ~IFlecsReplicationInterestPolicy() = default;
 
-	virtual bool IsInterested(const FFlecsReplicationRouteDescriptor& Route,
-		const FFlecsReplicationConnectionInterestContext& Connection,
-		const FFlecsReplicationConnectionView& View) const = 0;
+	virtual FName GetPolicyName() const = 0;
+	virtual const UScriptStruct* GetDescriptorStruct() const = 0;
+	virtual bool ValidateDescriptor(
+		const TInstancedStruct<FFlecsReplicationInterestDescriptorBase>& Descriptor,
+		FString& OutError) const = 0;
+	virtual bool IsInterested(const TInstancedStruct<FFlecsReplicationInterestDescriptorBase>& Descriptor,
+		const FFlecsReplicationInterestEvaluationQuery& Query) const = 0;
 }; // class IFlecsReplicationInterestPolicy
 
-/** Everyone/owner/team/zone implementation used unless a game supplies a policy. */
-class UNREALFLECS_API FFlecsDefaultReplicationInterestPolicy final : public IFlecsReplicationInterestPolicy
+/** Checked type erasure for game and prebuilt policies with concrete descriptors. */
+template <typename TDescriptor>
+class TFlecsReplicationInterestPolicy : public IFlecsReplicationInterestPolicy
 {
 public:
-	virtual bool IsInterested(const FFlecsReplicationRouteDescriptor& Route,
-		const FFlecsReplicationConnectionInterestContext& Connection,
-		const FFlecsReplicationConnectionView& View) const override;
-}; // class FFlecsDefaultReplicationInterestPolicy final
+	static_assert(TIsDerivedFrom<TDescriptor, FFlecsReplicationInterestDescriptorBase>::IsDerived,
+		"Interest descriptors must derive from FFlecsReplicationInterestDescriptorBase");
+
+	explicit TFlecsReplicationInterestPolicy(const FName InPolicyName)
+		: PolicyName(InPolicyName)
+	{
+	}
+
+	virtual FName GetPolicyName() const final
+	{
+		return PolicyName;
+	}
+
+	virtual const UScriptStruct* GetDescriptorStruct() const final
+	{
+		return TDescriptor::StaticStruct();
+	}
+
+	virtual bool ValidateDescriptor(
+		const TInstancedStruct<FFlecsReplicationInterestDescriptorBase>& Descriptor,
+		FString& OutError) const final
+	{
+		if (Descriptor.GetScriptStruct() != TDescriptor::StaticStruct())
+		{
+			OutError = FString::Printf(TEXT("Policy '%s' expects descriptor '%s', received '%s'"),
+				*PolicyName.ToString(), *TDescriptor::StaticStruct()->GetPathName(),
+				Descriptor.GetScriptStruct() ? *Descriptor.GetScriptStruct()->GetPathName() : TEXT("None"));
+			return false;
+		}
+
+		const TDescriptor* TypedDescriptor = Descriptor.template GetPtr<TDescriptor>();
+		return TypedDescriptor && ValidateDescriptor(*TypedDescriptor, OutError);
+	}
+
+	virtual bool IsInterested(
+		const TInstancedStruct<FFlecsReplicationInterestDescriptorBase>& Descriptor,
+		const FFlecsReplicationInterestEvaluationQuery& Query) const final
+	{
+		const TDescriptor* TypedDescriptor = Descriptor.template GetPtr<TDescriptor>();
+		return Descriptor.GetScriptStruct() == TDescriptor::StaticStruct() && TypedDescriptor
+			&& IsInterested(*TypedDescriptor, Query);
+	}
+
+protected:
+	virtual bool ValidateDescriptor(const TDescriptor&, FString&) const
+	{
+		return true;
+	}
+
+	virtual bool IsInterested(const TDescriptor& Descriptor,
+		const FFlecsReplicationInterestEvaluationQuery& Query) const = 0;
+
+private:
+	FName PolicyName;
+}; // class TFlecsReplicationInterestPolicy
+
+class UNREALFLECS_API FFlecsEveryoneReplicationInterestPolicy final
+	: public TFlecsReplicationInterestPolicy<FFlecsReplicationEveryoneInterestDescriptor>
+{
+public:
+	FFlecsEveryoneReplicationInterestPolicy();
+
+protected:
+	virtual bool IsInterested(const FFlecsReplicationEveryoneInterestDescriptor& Descriptor,
+		const FFlecsReplicationInterestEvaluationQuery& Query) const override;
+}; // class FFlecsEveryoneReplicationInterestPolicy
+
+class UNREALFLECS_API FFlecsOwnerReplicationInterestPolicy final
+	: public TFlecsReplicationInterestPolicy<FFlecsReplicationOwnerInterestDescriptor>
+{
+public:
+	FFlecsOwnerReplicationInterestPolicy();
+
+protected:
+	virtual bool ValidateDescriptor(const FFlecsReplicationOwnerInterestDescriptor& Descriptor,
+		FString& OutError) const override;
+	virtual bool IsInterested(const FFlecsReplicationOwnerInterestDescriptor& Descriptor,
+		const FFlecsReplicationInterestEvaluationQuery& Query) const override;
+}; // class FFlecsOwnerReplicationInterestPolicy
+
+class UNREALFLECS_API FFlecsTeamReplicationInterestPolicy final
+	: public TFlecsReplicationInterestPolicy<FFlecsReplicationTeamInterestDescriptor>
+{
+public:
+	FFlecsTeamReplicationInterestPolicy();
+
+protected:
+	virtual bool ValidateDescriptor(const FFlecsReplicationTeamInterestDescriptor& Descriptor,
+		FString& OutError) const override;
+	virtual bool IsInterested(const FFlecsReplicationTeamInterestDescriptor& Descriptor,
+		const FFlecsReplicationInterestEvaluationQuery& Query) const override;
+}; // class FFlecsTeamReplicationInterestPolicy
+
+class UNREALFLECS_API FFlecsZoneReplicationInterestPolicy final
+	: public TFlecsReplicationInterestPolicy<FFlecsReplicationZoneInterestDescriptor>
+{
+public:
+	FFlecsZoneReplicationInterestPolicy();
+
+protected:
+	virtual bool ValidateDescriptor(const FFlecsReplicationZoneInterestDescriptor& Descriptor,
+		FString& OutError) const override;
+	virtual bool IsInterested(const FFlecsReplicationZoneInterestDescriptor& Descriptor,
+		const FFlecsReplicationInterestEvaluationQuery& Query) const override;
+}; // class FFlecsZoneReplicationInterestPolicy
+
+/** Module-lifetime policy registry shared by worlds and transport adapters. */
+class UNREALFLECS_API FFlecsReplicationInterestPolicyRegistry
+{
+public:
+	static bool RegisterPolicy(TUniquePtr<IFlecsReplicationInterestPolicy> Policy);
+	static bool UnregisterPolicy(FName PolicyName);
+	static NO_DISCARD const IFlecsReplicationInterestPolicy* FindPolicy(FName PolicyName);
+	static bool ValidateBinding(const FFlecsReplicationInterestBinding& Binding, FString& OutError);
+}; // class FFlecsReplicationInterestPolicyRegistry
 
 UENUM(BlueprintType)
 enum class EFlecsReplicationDormancyMode : uint8

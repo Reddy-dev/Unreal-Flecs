@@ -6,6 +6,7 @@
 #include "Containers/Queue.h"
 #include "Networking/FlecsComponentReplicationDescriptor.h"
 #include "Networking/FlecsNetworkId.h"
+#include "StructUtils/InstancedStruct.h"
 
 #include "FlecsReplicationTypes.generated.h"
 
@@ -129,16 +130,122 @@ struct UNREALFLECS_API FFlecsReplicationLayoutDefinition
 	TArray<FFlecsReplicationKey> Keys;
 }; // struct FFlecsReplicationLayoutDefinition
 
-/** Built-in audience rules understood by the default interest policy. */
-UENUM(BlueprintType)
-enum class EFlecsReplicationAudience : uint8
+/** Common reflected base for policy-owned, transport-safe route configuration. */
+USTRUCT(BlueprintType)
+struct UNREALFLECS_API FFlecsReplicationInterestDescriptorBase
 {
-	Everyone,
-	OwnerOnly,
-	Team,
-	Zone,
-	Custom
-}; // enum class EFlecsReplicationAudience
+	GENERATED_BODY()
+}; // struct FFlecsReplicationInterestDescriptorBase
+
+/** Empty descriptor consumed by the prebuilt Everyone policy. */
+USTRUCT(BlueprintType)
+struct UNREALFLECS_API FFlecsReplicationEveryoneInterestDescriptor
+	: public FFlecsReplicationInterestDescriptorBase
+{
+	GENERATED_BODY()
+}; // struct FFlecsReplicationEveryoneInterestDescriptor
+
+/** Authority identity selected by the prebuilt Owner policy. */
+USTRUCT(BlueprintType)
+struct UNREALFLECS_API FFlecsReplicationOwnerInterestDescriptor
+	: public FFlecsReplicationInterestDescriptorBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
+	FFlecsNetworkId Owner;
+}; // struct FFlecsReplicationOwnerInterestDescriptor
+
+/** Team selected by the prebuilt Team policy. */
+USTRUCT(BlueprintType)
+struct UNREALFLECS_API FFlecsReplicationTeamInterestDescriptor
+	: public FFlecsReplicationInterestDescriptorBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
+	int32 Team = INDEX_NONE;
+}; // struct FFlecsReplicationTeamInterestDescriptor
+
+/** Zone selected by the prebuilt Zone policy. */
+USTRUCT(BlueprintType)
+struct UNREALFLECS_API FFlecsReplicationZoneInterestDescriptor
+	: public FFlecsReplicationInterestDescriptorBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
+	FName Zone;
+}; // struct FFlecsReplicationZoneInterestDescriptor
+
+/** Connection-owned identity consumed by the prebuilt Owner policy. */
+USTRUCT(BlueprintType)
+struct UNREALFLECS_API FFlecsReplicationOwnerInterestFragment
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
+	FFlecsNetworkId Owner;
+}; // struct FFlecsReplicationOwnerInterestFragment
+
+/** Connection-owned team consumed by the prebuilt Team policy. */
+USTRUCT(BlueprintType)
+struct UNREALFLECS_API FFlecsReplicationTeamInterestFragment
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
+	int32 Team = INDEX_NONE;
+}; // struct FFlecsReplicationTeamInterestFragment
+
+/** Connection-owned zone membership consumed by the prebuilt Zone policy. */
+USTRUCT(BlueprintType)
+struct UNREALFLECS_API FFlecsReplicationZoneInterestFragment
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
+	TSet<FName> Zones;
+}; // struct FFlecsReplicationZoneInterestFragment
+
+/** Stable protocol names used by the ordinary prebuilt policy registrations. */
+struct UNREALFLECS_API FFlecsReplicationInterestPolicyNames
+{
+	static FName Everyone();
+	static FName Owner();
+	static FName Team();
+	static FName Zone();
+}; // struct FFlecsReplicationInterestPolicyNames
+
+/** One named policy and the concrete descriptor type owned by that policy. */
+USTRUCT(BlueprintType)
+struct UNREALFLECS_API FFlecsReplicationInterestBinding
+{
+	GENERATED_BODY()
+
+	FFlecsReplicationInterestBinding();
+
+	template <typename TDescriptor>
+	static FFlecsReplicationInterestBinding Make(const FName InPolicyName, const TDescriptor& InDescriptor = {})
+	{
+		static_assert(TIsDerivedFrom<TDescriptor, FFlecsReplicationInterestDescriptorBase>::IsDerived,
+			"Interest descriptors must derive from FFlecsReplicationInterestDescriptorBase");
+
+		FFlecsReplicationInterestBinding Result;
+		Result.PolicyName = InPolicyName;
+		Result.Descriptor = TInstancedStruct<FFlecsReplicationInterestDescriptorBase>::Make<TDescriptor>(
+			InDescriptor);
+		return Result;
+	}
+
+	NO_DISCARD bool operator==(const FFlecsReplicationInterestBinding& Other) const;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
+	FName PolicyName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking", meta = (ExcludeBaseStruct))
+	TInstancedStruct<FFlecsReplicationInterestDescriptorBase> Descriptor;
+}; // struct FFlecsReplicationInterestBinding
 
 /** Transport-facing partition key used by IFlecsReplicationRouter. */
 USTRUCT(BlueprintType)
@@ -172,8 +279,8 @@ struct UNREALFLECS_API FFlecsReplicationRouteKey
 /**
  * Flecs-owned scheduling and interest metadata for one logical route.
  *
- * Entity and byte limits of zero select the transport defaults. CustomPolicy
- * is evaluated only for the Custom audience.
+ * Entity and byte limits of zero select the transport defaults. Interest is
+ * selected by a stable policy name plus that policy's concrete descriptor.
  */
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsReplicationRouteDescriptor
@@ -189,19 +296,7 @@ struct UNREALFLECS_API FFlecsReplicationRouteDescriptor
 	FFlecsReplicationRouteKey LogicalKey = FFlecsReplicationRouteKey::Default();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
-	EFlecsReplicationAudience Audience = EFlecsReplicationAudience::Everyone;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
-	FFlecsNetworkId Owner;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
-	int32 Team = INDEX_NONE;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
-	FName Zone;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
-	FName CustomPolicy;
+	FFlecsReplicationInterestBinding Interest;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking", meta = (ClampMin = "0.0"))
 	float PollFrequency = 20.0f;
@@ -212,29 +307,44 @@ struct UNREALFLECS_API FFlecsReplicationRouteDescriptor
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking", meta = (ClampMin = "0.0"))
 	float SchedulerWeight = 1.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking", meta = (ClampMin = "0"))
-	uint16 PageEntityLimit = 0;
+	UPROPERTY(EditAnywhere, Category = "Flecs | Networking", meta = (ClampMin = "0", ClampMax = "65535"))
+	uint32 PageEntityLimit = 0;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking", meta = (ClampMin = "0"))
+	UPROPERTY(EditAnywhere, Category = "Flecs | Networking", meta = (ClampMin = "0"))
 	uint32 PageByteLimit = 0;
 
-	friend bool operator==(const FFlecsReplicationRouteDescriptor&, const FFlecsReplicationRouteDescriptor&) = default;
+	NO_DISCARD bool operator==(const FFlecsReplicationRouteDescriptor& Other) const;
 }; // struct FFlecsReplicationRouteDescriptor
 
-/** Connection-owned values consumed by the default owner/team/zone interest rules. */
-USTRUCT(BlueprintType)
+/** Heterogeneous, connection-local fragments queried by registered policies. */
 struct UNREALFLECS_API FFlecsReplicationConnectionInterestContext
 {
-	GENERATED_BODY()
+	template <typename TFragment>
+	void Set(const TFragment& InFragment)
+	{
+		Fragments.Add(TFragment::StaticStruct(), FInstancedStruct::Make<TFragment>(InFragment));
+	}
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
-	FFlecsNetworkId Owner;
+	template <typename TFragment>
+	bool Remove()
+	{
+		return Fragments.Remove(TFragment::StaticStruct()) > 0;
+	}
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
-	int32 Team = INDEX_NONE;
+	template <typename TFragment>
+	NO_DISCARD const TFragment* Find() const
+	{
+		const FInstancedStruct* Fragment = Fragments.Find(TFragment::StaticStruct());
+		return Fragment ? Fragment->GetPtr<TFragment>() : nullptr;
+	}
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
-	TSet<FName> Zones;
+	NO_DISCARD bool IsEmpty() const
+	{
+		return Fragments.IsEmpty();
+	}
+
+private:
+	TMap<const UScriptStruct*, FInstancedStruct> Fragments;
 }; // struct FFlecsReplicationConnectionInterestContext
 
 /** Transport-neutral copy of the connection's current replication viewpoints. */

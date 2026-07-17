@@ -146,6 +146,18 @@ void UFlecsIrisReplicationShard::BindClient(const TSolidNotNull<UWorld*> InWorld
 {
 	BoundWorld = InWorld;
 	NetworkSubsystem = InWorld->GetSubsystem<UFlecsNetworkWorldSubsystem>();
+	if (UFlecsNetworkWorldSubsystem* Subsystem = NetworkSubsystem.Get())
+	{
+		FString Error;
+		if (!Subsystem->ValidateInterestBinding(PageDescriptor.Route.Interest, Error))
+		{
+			if (UFlecsReplicationTransportBase* Transport = Subsystem->GetReplicationTransport())
+			{
+				Transport->HandleProtocolError(FString::Printf(
+					TEXT("Received invalid Flecs replication page interest binding: %s"), *Error));
+			}
+		}
+	}
 	LayoutManifest.SetOwner(this);
 	EntityBaselines.SetOwner(this);
 	EntityUpdateStream.SetOwner(this);

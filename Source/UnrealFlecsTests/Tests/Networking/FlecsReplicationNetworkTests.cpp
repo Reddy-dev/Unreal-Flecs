@@ -303,15 +303,16 @@ NETWORK_TEST_CLASS(FlecsReplicationInterestTests,
 				UFlecsNetworkWorldSubsystem* Subsystem = State.World->GetSubsystem<UFlecsNetworkWorldSubsystem>();
 				for (int32 Index = 0; Index < State.World->GetNetDriver()->ClientConnections.Num(); ++Index)
 				{
-					FFlecsReplicationConnectionInterestContext Context;
-					Context.Team = Index + 1;
-					Subsystem->SetConnectionInterestContext(
-						State.World->GetNetDriver()->ClientConnections[Index]->GetConnectionId(), Context);
+					Subsystem->SetConnectionInterestFragment(
+						State.World->GetNetDriver()->ClientConnections[Index]->GetConnectionId(),
+						FFlecsReplicationTeamInterestFragment{ Index + 1 });
 				}
 				FFlecsReplicationRouting Routing;
 				Routing.Route.LogicalKey = FFlecsReplicationRouteKey(FName(TEXT("TeamOne")));
-				Routing.Route.Audience = EFlecsReplicationAudience::Team;
-				Routing.Route.Team = 1;
+				FFlecsReplicationTeamInterestDescriptor TeamDescriptor;
+				TeamDescriptor.Team = 1;
+				Routing.Route.Interest = FFlecsReplicationInterestBinding::Make(
+					FFlecsReplicationInterestPolicyNames::Team(), TeamDescriptor);
 				State.Entity = State.FlecsWorld->CreateEntity()
 					.Set<FFlecsReplicationTestValue>({ 41 })
 					.Set<FFlecsReplicationRouting>(Routing)
@@ -329,7 +330,10 @@ NETWORK_TEST_CLASS(FlecsReplicationInterestTests,
 			{
 				FFlecsReplicationRouting Routing = State.Entity.Get<FFlecsReplicationRouting>();
 				Routing.Route.LogicalKey = FFlecsReplicationRouteKey(FName(TEXT("TeamTwo")));
-				Routing.Route.Team = 2;
+				FFlecsReplicationTeamInterestDescriptor TeamDescriptor;
+				TeamDescriptor.Team = 2;
+				Routing.Route.Interest = FFlecsReplicationInterestBinding::Make(
+					FFlecsReplicationInterestPolicyNames::Team(), TeamDescriptor);
 				State.Entity.Set<FFlecsReplicationRouting>(Routing);
 			})
 			.UntilClient(0, [](FState& State)
@@ -340,6 +344,58 @@ NETWORK_TEST_CLASS(FlecsReplicationInterestTests,
 			{
 				const FFlecsEntityHandle Entity = UE::Flecs::Tests::FindReplicatedValueEntity(State.FlecsWorld);
 				return Entity.IsValid() && Entity.Get<FFlecsReplicationTestValue>().Value == 41;
+			});
+	}
+
+	TEST_METHOD(TeamConnectionFragmentChange_HidesAndReentersWithCurrentBaseline)
+	{
+		Network
+			.ThenServer([](FState& State) { State.FlecsWorld = UE::Flecs::Tests::CreateReplicationPIEWorld(State.World); })
+			.ThenClients([](FState& State) { State.FlecsWorld = UE::Flecs::Tests::CreateReplicationPIEWorld(State.World); })
+			.ThenServer([](FState& State)
+			{
+				UFlecsNetworkWorldSubsystem* Subsystem = State.World->GetSubsystem<UFlecsNetworkWorldSubsystem>();
+				const uint32 ConnectionId = State.World->GetNetDriver()->ClientConnections[0]->GetConnectionId();
+				Subsystem->SetConnectionInterestFragment(ConnectionId,
+					FFlecsReplicationTeamInterestFragment{ 1 });
+				FFlecsReplicationTeamInterestDescriptor TeamDescriptor;
+				TeamDescriptor.Team = 1;
+				FFlecsReplicationRouting Routing;
+				Routing.Route.LogicalKey = FFlecsReplicationRouteKey(FName(TEXT("DynamicTeam")));
+				Routing.Route.Interest = FFlecsReplicationInterestBinding::Make(
+					FFlecsReplicationInterestPolicyNames::Team(), TeamDescriptor);
+				State.Entity = State.FlecsWorld->CreateEntity()
+					.Set<FFlecsReplicationTestValue>({ 41 })
+					.Set<FFlecsReplicationRouting>(Routing)
+					.Add<FFlecsReplicatedEntityComponent>();
+			})
+			.UntilClient(0, [](FState& State)
+			{
+				return UE::Flecs::Tests::CountReplicatedEntities(State.FlecsWorld) == 1;
+			})
+			.ThenServer([](FState& State)
+			{
+				UFlecsNetworkWorldSubsystem* Subsystem = State.World->GetSubsystem<UFlecsNetworkWorldSubsystem>();
+				const uint32 ConnectionId = State.World->GetNetDriver()->ClientConnections[0]->GetConnectionId();
+				Subsystem->SetConnectionInterestFragment(ConnectionId,
+					FFlecsReplicationTeamInterestFragment{ 2 });
+				State.Entity.Set<FFlecsReplicationTestValue>({ 99 });
+			})
+			.UntilClient(0, [](FState& State)
+			{
+				return UE::Flecs::Tests::CountReplicatedEntities(State.FlecsWorld) == 0;
+			})
+			.ThenServer([](FState& State)
+			{
+				UFlecsNetworkWorldSubsystem* Subsystem = State.World->GetSubsystem<UFlecsNetworkWorldSubsystem>();
+				const uint32 ConnectionId = State.World->GetNetDriver()->ClientConnections[0]->GetConnectionId();
+				Subsystem->SetConnectionInterestFragment(ConnectionId,
+					FFlecsReplicationTeamInterestFragment{ 1 });
+			})
+			.UntilClient(0, [](FState& State)
+			{
+				const FFlecsEntityHandle Entity = UE::Flecs::Tests::FindReplicatedValueEntity(State.FlecsWorld);
+				return Entity.IsValid() && Entity.Get<FFlecsReplicationTestValue>().Value == 99;
 			});
 	}
 };

@@ -99,8 +99,15 @@ struct UNREALFLECSIRIS_API FFlecsIrisEntityBaselines : public FIrisFastArraySeri
 			FFlecsIrisEntityBaselines>(Items, DeltaParams, *this);
 	}
 
-	void SetOwner(UFlecsIrisReplicationShard* InOwner) { Owner = InOwner; }
-	NO_DISCARD UFlecsIrisReplicationShard* GetOwner() const { return Owner.Get(); }
+	void SetOwner(UFlecsIrisReplicationShard* InOwner)
+	{
+		Owner = InOwner;
+	}
+	
+	NO_DISCARD UFlecsIrisReplicationShard* GetOwner() const
+	{
+		return Owner.Get();
+	}
 
 private:
 	TWeakObjectPtr<UFlecsIrisReplicationShard> Owner;
@@ -109,7 +116,10 @@ private:
 template <>
 struct TStructOpsTypeTraits<FFlecsIrisEntityBaselines> : TStructOpsTypeTraitsBase2<FFlecsIrisEntityBaselines>
 {
-	enum { WithNetDeltaSerializer = true };
+	enum
+	{
+		WithNetDeltaSerializer = true
+	};
 };
 
 /** A committed full/delta update for already-relevant connections. */
@@ -140,8 +150,15 @@ struct UNREALFLECSIRIS_API FFlecsIrisEntityUpdateStream : public FIrisFastArrayS
 			FFlecsIrisEntityUpdateStream>(Items, DeltaParams, *this);
 	}
 
-	void SetOwner(UFlecsIrisReplicationShard* InOwner) { Owner = InOwner; }
-	NO_DISCARD UFlecsIrisReplicationShard* GetOwner() const { return Owner.Get(); }
+	void SetOwner(UFlecsIrisReplicationShard* InOwner)
+	{
+		Owner = InOwner;
+	}
+	
+	NO_DISCARD UFlecsIrisReplicationShard* GetOwner() const
+	{
+		return Owner.Get();
+	}
 
 private:
 	TWeakObjectPtr<UFlecsIrisReplicationShard> Owner;
@@ -150,7 +167,10 @@ private:
 template <>
 struct TStructOpsTypeTraits<FFlecsIrisEntityUpdateStream> : TStructOpsTypeTraitsBase2<FFlecsIrisEntityUpdateStream>
 {
-	enum { WithNetDeltaSerializer = true };
+	enum
+	{
+		WithNetDeltaSerializer = true
+	};
 };
 
 /** Aggregate Iris root object for one bounded page of a logical Flecs route. */
@@ -192,11 +212,31 @@ public:
 		return PageDescriptor.SourceShardId;
 	}
 	NO_DISCARD const FFlecsReplicationRouteDescriptor& GetRouteDescriptor() const { return PageDescriptor.Route; }
-	NO_DISCARD uint32 GetPageIndex() const { return PageDescriptor.PageIndex; }
-	NO_DISCARD int32 GetLayoutCount() const { return LayoutManifest.Items.Num(); }
-	NO_DISCARD int32 GetEntityCount() const { return EntityBaselines.Items.Num(); }
-	NO_DISCARD uint32 GetMaterializedPayloadBytes() const { return MaterializedPayloadBytes; }
-	NO_DISCARD bool ContainsEntity(FFlecsNetworkId NetworkId) const { return EntityIndices.Contains(NetworkId); }
+	NO_DISCARD uint32 GetPageIndex() const
+	{
+		return PageDescriptor.PageIndex;
+	}
+	
+	NO_DISCARD int32 GetLayoutCount() const
+	{
+		return LayoutManifest.Items.Num();
+	}
+	
+	NO_DISCARD int32 GetEntityCount() const
+	{
+		return EntityBaselines.Items.Num();
+	}
+	
+	NO_DISCARD uint32 GetMaterializedPayloadBytes() const
+	{
+		return MaterializedPayloadBytes;
+	}
+	
+	NO_DISCARD bool ContainsEntity(FFlecsNetworkId NetworkId) const
+	{
+		return EntityIndices.Contains(NetworkId);
+	}
+	
 	NO_DISCARD const FFlecsReplicatedEntityUpdate* FindMaterializedEntity(FFlecsNetworkId NetworkId) const;
 
 private:
@@ -229,4 +269,5 @@ private:
 	TSet<FFlecsNetworkId> DormantEntities;
 	uint32 MaterializedPayloadBytes = 0;
 	bool bRootDormant = false;
+	
 }; // class UFlecsIrisReplicationShard

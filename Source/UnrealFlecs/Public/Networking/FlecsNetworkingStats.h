@@ -33,5 +33,7 @@ DECLARE_DWORD_ACCUMULATOR_STAT_EXTERN(TEXT("Filter allowed"), STAT_FlecsReplicat
 	STATGROUP_FlecsNetworking, UNREALFLECS_API);
 DECLARE_DWORD_ACCUMULATOR_STAT_EXTERN(TEXT("Filter denied"), STAT_FlecsReplicationFilterDenied,
 	STATGROUP_FlecsNetworking, UNREALFLECS_API);
+DECLARE_DWORD_ACCUMULATOR_STAT_EXTERN(TEXT("Invalid policy rejections"),
+	STAT_FlecsReplicationInvalidPolicyRejections, STATGROUP_FlecsNetworking, UNREALFLECS_API);
 DECLARE_DWORD_ACCUMULATOR_STAT_EXTERN(TEXT("Reclaimed layouts"), STAT_FlecsReplicationReclaimedLayouts,
 	STATGROUP_FlecsNetworking, UNREALFLECS_API);

@@ -13,6 +13,7 @@ struct FFlecsNoReplicationQuantizer
 	static void Quantize(T&)
 	{
 	}
+	
 }; // struct FFlecsNoReplicationQuantizer
 
 /** Opt-in decimal scalar quantizer. The maximum error is half of one step. */
@@ -34,6 +35,7 @@ struct TFlecsScalarReplicationQuantizer
 	{
 		return FString::Printf(TEXT("%s:%d"), Fingerprint, DecimalPlaces);
 	}
+	
 }; // struct TFlecsScalarReplicationQuantizer
 
 /** Opt-in decimal FVector quantizer. Each axis has half-step maximum error. */
@@ -46,6 +48,7 @@ struct TFlecsVectorReplicationQuantizer
 	static void Quantize(FVector& InOutValue)
 	{
 		const double Scale = FMath::Pow(10.0, DecimalPlaces);
+		
 		InOutValue.X = FMath::RoundToDouble(InOutValue.X * Scale) / Scale;
 		InOutValue.Y = FMath::RoundToDouble(InOutValue.Y * Scale) / Scale;
 		InOutValue.Z = FMath::RoundToDouble(InOutValue.Z * Scale) / Scale;
@@ -55,6 +58,7 @@ struct TFlecsVectorReplicationQuantizer
 	{
 		return FString::Printf(TEXT("%s:%d"), Fingerprint, DecimalPlaces);
 	}
+	
 }; // struct TFlecsVectorReplicationQuantizer
 
 /** Opt-in decimal FRotator quantizer. Angles are normalized before rounding. */
@@ -77,4 +81,5 @@ struct TFlecsRotatorReplicationQuantizer
 	{
 		return FString::Printf(TEXT("%s:%d"), Fingerprint, DecimalPlaces);
 	}
+	
 }; // struct TFlecsRotatorReplicationQuantizer

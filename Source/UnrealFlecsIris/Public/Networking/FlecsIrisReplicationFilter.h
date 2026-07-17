@@ -23,6 +23,8 @@ public:
 protected:
 	virtual void OnInit(const FNetObjectFilterInitParams& Params) override;
 	virtual void OnDeinit() override;
+	virtual void AddConnection(uint32 ConnectionId) override;
+	virtual void RemoveConnection(uint32 ConnectionId) override;
 	virtual void OnMaxInternalNetRefIndexIncreased(UE::Net::FInternalNetRefIndex NewMaxInternalIndex) override;
 	virtual bool AddObject(UE::Net::FInternalNetRefIndex ObjectIndex,
 		FNetObjectFilterAddObjectParams& Params) override;
@@ -32,5 +34,7 @@ protected:
 
 private:
 	TWeakObjectPtr<UReplicationSystem> ReplicationSystem;
+	TWeakObjectPtr<class UFlecsNetworkWorldSubsystem> NetworkSubsystem;
 	TMap<UE::Net::FInternalNetRefIndex, TWeakObjectPtr<UFlecsIrisReplicationShard>> Pages;
+	TSet<uint32> Connections;
 }; // class UFlecsIrisReplicationFilter

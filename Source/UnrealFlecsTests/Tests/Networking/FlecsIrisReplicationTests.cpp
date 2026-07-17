@@ -12,6 +12,36 @@
 #include "Networking/FlecsNetworkWorldSubsystem.h"
 #include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 
+namespace
+{
+	FName TeamAliasPolicyName()
+	{
+		static const FName Name(TEXT("Test.TeamAlias"));
+		return Name;
+	}
+
+	class FTeamAliasInterestPolicy final
+		: public TFlecsReplicationInterestPolicy<FFlecsReplicationTeamInterestDescriptor>
+	{
+	public:
+		FTeamAliasInterestPolicy()
+			: TFlecsReplicationInterestPolicy<FFlecsReplicationTeamInterestDescriptor>(
+				TeamAliasPolicyName())
+		{
+		}
+
+	protected:
+		virtual bool IsInterested(const FFlecsReplicationTeamInterestDescriptor& Descriptor,
+			const FFlecsReplicationInterestEvaluationQuery& Query) const override
+		{
+			const FFlecsReplicationTeamInterestFragment* Fragment =
+				Query.Context.Find<FFlecsReplicationTeamInterestFragment>();
+			return Fragment && Fragment->Team == Descriptor.Team;
+		}
+	}; // class FTeamAliasInterestPolicy
+
+} // namespace
+
 TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsIrisReplicationTransportTests,
 	"UnrealFlecs.Networking.Replication.Iris",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter,
@@ -69,6 +99,8 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsIrisReplicationPagingTests,
 
 	BEFORE_EACH()
 	{
+		FFlecsReplicationInterestPolicyRegistry::RegisterPolicy(
+			MakeUnique<FTeamAliasInterestPolicy>());
 		Fixture = MakeUnique<FFlecsTestFixtureRAII>();
 		NetworkSubsystem = Fixture->Fixture.GetFlecsWorld()->GetWorld()
 			->GetSubsystem<UFlecsNetworkWorldSubsystem>();
@@ -78,6 +110,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsIrisReplicationPagingTests,
 
 	AFTER_EACH()
 	{
+		FFlecsReplicationInterestPolicyRegistry::UnregisterPolicy(TeamAliasPolicyName());
 		if (Transport)
 		{
 			Transport->ShutdownTransport();
@@ -172,6 +205,62 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsIrisReplicationPagingTests,
 		ASSERT_THAT(AreEqual(2, Transport->GetPageCount(Route.LogicalKey.Name)));
 		ASSERT_THAT(IsNotNull(FirstPage));
 		ASSERT_THAT(IsTrue(FirstPage == Transport->FindEntityPage(FFlecsNetworkId(1, 1, 1))));
+	}
+
+	TEST_METHOD(InterestBindingEquality_GroupsPagesAndChangesMigrateFullBaselines)
+	{
+		FFlecsReplicationRouteDescriptor Route;
+		Route.LogicalKey = FFlecsReplicationRouteKey(FName(TEXT("BindingPages")));
+		Route.PageEntityLimit = 10;
+		FFlecsReplicationTeamInterestDescriptor TeamOne;
+		TeamOne.Team = 1;
+		Route.Interest = FFlecsReplicationInterestBinding::Make(
+			FFlecsReplicationInterestPolicyNames::Team(), TeamOne);
+
+		FFlecsReplicationLayoutDefinition Layout;
+		Layout.LayoutId = FFlecsReplicationLayoutId(FGuid::NewGuid());
+		Transport->PublishLayout(Route, Layout);
+		FFlecsReplicatedEntityUpdate First;
+		First.NetworkId = FFlecsNetworkId(1, 1, 1);
+		First.StateRevision = 1;
+		First.CompositionRevision = 1;
+		First.LayoutId = Layout.LayoutId;
+		First.Route = Route;
+		FFlecsReplicatedEntityUpdate Second = First;
+		Second.NetworkId = FFlecsNetworkId(2, 1, 1);
+		Transport->PublishEntity(Route, First);
+		Transport->PublishEntity(Route, Second);
+		UFlecsIrisReplicationShard* SharedPage = Transport->FindEntityPage(First.NetworkId);
+		ASSERT_THAT(IsNotNull(SharedPage));
+		ASSERT_THAT(IsTrue(SharedPage == Transport->FindEntityPage(Second.NetworkId)));
+
+		FFlecsReplicationRouteDescriptor DescriptorChanged = Route;
+		FFlecsReplicationTeamInterestDescriptor TeamTwo;
+		TeamTwo.Team = 2;
+		DescriptorChanged.Interest = FFlecsReplicationInterestBinding::Make(
+			FFlecsReplicationInterestPolicyNames::Team(), TeamTwo);
+		First.StateRevision = 2;
+		First.Route = DescriptorChanged;
+		Transport->PublishEntity(DescriptorChanged, First);
+		UFlecsIrisReplicationShard* DescriptorPage = Transport->FindEntityPage(First.NetworkId);
+		ASSERT_THAT(IsNotNull(DescriptorPage));
+		ASSERT_THAT(IsTrue(DescriptorPage != SharedPage));
+		ASSERT_THAT(IsTrue(DescriptorPage->GetRouteDescriptor().Interest
+			== DescriptorChanged.Interest));
+		ASSERT_THAT(IsTrue(DescriptorPage->FindMaterializedEntity(First.NetworkId)->Kind
+			== EFlecsReplicatedEntityUpdateKind::Full));
+
+		FFlecsReplicationRouteDescriptor PolicyChanged = DescriptorChanged;
+		PolicyChanged.Interest.PolicyName = TeamAliasPolicyName();
+		First.StateRevision = 3;
+		First.Route = PolicyChanged;
+		Transport->PublishEntity(PolicyChanged, First);
+		UFlecsIrisReplicationShard* PolicyPage = Transport->FindEntityPage(First.NetworkId);
+		ASSERT_THAT(IsNotNull(PolicyPage));
+		ASSERT_THAT(IsTrue(PolicyPage != DescriptorPage));
+		ASSERT_THAT(IsTrue(PolicyPage->GetRouteDescriptor().Interest == PolicyChanged.Interest));
+		ASSERT_THAT(IsTrue(PolicyPage->FindMaterializedEntity(First.NetworkId)->Kind
+			== EFlecsReplicatedEntityUpdateKind::Full));
 	}
 
 	TEST_METHOD(ExplicitRouteMigration_PublishesNewSourceBeforeOldPageRemoval)

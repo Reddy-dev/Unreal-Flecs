@@ -54,17 +54,101 @@ namespace UE::Flecs::Tests
 		float Value = 0.0f;
 	};
 
-	class FCustomTestInterestPolicy final : public IFlecsReplicationInterestPolicy
+	FName SpatialTestPolicyName()
+	{
+		static const FName Name(TEXT("TestSpatial"));
+		return Name;
+	}
+
+	FName ObjectTestPolicyName()
+	{
+		static const FName Name(TEXT("TestObjectReference"));
+		return Name;
+	}
+
+	class FCustomTestInterestPolicy final
+		: public TFlecsReplicationInterestPolicy<FFlecsReplicationTestSpatialInterestDescriptor>
 	{
 	public:
-		virtual bool IsInterested(const FFlecsReplicationRouteDescriptor& Route,
-			const FFlecsReplicationConnectionInterestContext&,
-			const FFlecsReplicationConnectionView& View) const override
+		FCustomTestInterestPolicy()
+			: TFlecsReplicationInterestPolicy<FFlecsReplicationTestSpatialInterestDescriptor>(
+				SpatialTestPolicyName())
 		{
-			return Route.CustomPolicy == TEXT("NearOrigin") && !View.Positions.IsEmpty()
-				&& View.Positions[0].SizeSquared() <= FMath::Square(100.0);
 		}
-	};
+
+		mutable FFlecsReplicationTestSpatialInterestDescriptor LastDescriptor;
+		mutable FFlecsReplicationConnectionView LastView;
+		mutable uint32 LastConnectionId = 0;
+		mutable int32 LastFragmentMarker = INDEX_NONE;
+
+	protected:
+		virtual bool ValidateDescriptor(const FFlecsReplicationTestSpatialInterestDescriptor& Descriptor,
+			FString& OutError) const override
+		{
+			if (Descriptor.Radius < 0.0)
+			{
+				OutError = TEXT("Spatial radius cannot be negative");
+				return false;
+			}
+			return true;
+		}
+
+		virtual bool IsInterested(const FFlecsReplicationTestSpatialInterestDescriptor& Descriptor,
+			const FFlecsReplicationInterestEvaluationQuery& Query) const override
+		{
+			LastDescriptor = Descriptor;
+			LastView = Query.View;
+			LastConnectionId = Query.ConnectionId;
+			const FFlecsReplicationTestSpatialInterestFragment* Fragment =
+				Query.Context.Find<FFlecsReplicationTestSpatialInterestFragment>();
+			LastFragmentMarker = Fragment ? Fragment->Marker : INDEX_NONE;
+			return Fragment && Fragment->bEnabled && Query.View.Positions.ContainsByPredicate(
+				[&Descriptor](const FVector& Position)
+				{
+					return FVector::DistSquared(Position, Descriptor.Center)
+						<= FMath::Square(Descriptor.Radius);
+				});
+		}
+	}; // class FCustomTestInterestPolicy
+
+	class FObjectTestInterestPolicy final
+		: public TFlecsReplicationInterestPolicy<FFlecsReplicationTestObjectInterestDescriptor>
+	{
+	public:
+		FObjectTestInterestPolicy()
+			: TFlecsReplicationInterestPolicy<FFlecsReplicationTestObjectInterestDescriptor>(
+				ObjectTestPolicyName())
+		{
+		}
+
+	protected:
+		virtual bool IsInterested(const FFlecsReplicationTestObjectInterestDescriptor&,
+			const FFlecsReplicationInterestEvaluationQuery&) const override
+		{
+			return true;
+		}
+	}; // class FObjectTestInterestPolicy
+
+	class FInvalidDescriptorPolicy final : public IFlecsReplicationInterestPolicy
+	{
+	public:
+		virtual FName GetPolicyName() const override { return FName(TEXT("InvalidDescriptorType")); }
+		virtual const UScriptStruct* GetDescriptorStruct() const override
+		{
+			return FFlecsReplicationTeamInterestFragment::StaticStruct();
+		}
+		virtual bool ValidateDescriptor(
+			const TInstancedStruct<FFlecsReplicationInterestDescriptorBase>&, FString&) const override
+		{
+			return true;
+		}
+		virtual bool IsInterested(
+			const TInstancedStruct<FFlecsReplicationInterestDescriptorBase>&,
+			const FFlecsReplicationInterestEvaluationQuery&) const override
+		{
+			return true;
+		}
+	}; // class FInvalidDescriptorPolicy
 
 	template<typename T>
 	FFlecsComponentHandle RegisterTestComponent(UFlecsWorld* World)
@@ -295,6 +379,11 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 
 	AFTER_EACH()
 	{
+		FFlecsReplicationInterestPolicyRegistry::UnregisterPolicy(
+			UE::Flecs::Tests::SpatialTestPolicyName());
+		FFlecsReplicationInterestPolicyRegistry::UnregisterPolicy(
+			UE::Flecs::Tests::ObjectTestPolicyName());
+		FFlecsReplicationInterestPolicyRegistry::UnregisterPolicy(TEXT("InvalidDescriptorType"));
 		FlecsWorld = nullptr;
 		NetworkSubsystem = nullptr;
 		CaptureTransport = nullptr;
@@ -668,32 +757,176 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 		ASSERT_THAT(IsFalse(Complete.IsSet()));
 	}
 
-	TEST_METHOD(DefaultAndCustomInterestPolicies_EvaluateOwnerTeamZoneAndView)
+	TEST_METHOD(InterestPolicyRegistry_ValidatesRegistrationDescriptorsAndMissingPolicies)
 	{
-		FFlecsReplicationConnectionInterestContext Context;
-		Context.Owner = FFlecsNetworkId(4, 1, 1);
-		Context.Team = 7;
-		Context.Zones.Add(TEXT("Arena"));
-		NetworkSubsystem->SetConnectionInterestContext(11, Context);
+		ASSERT_THAT(IsFalse(FFlecsReplicationInterestPolicyRegistry::RegisterPolicy(
+			MakeUnique<UE::Flecs::Tests::FInvalidDescriptorPolicy>())));
+		ASSERT_THAT(IsTrue(FFlecsReplicationInterestPolicyRegistry::RegisterPolicy(
+			MakeUnique<UE::Flecs::Tests::FCustomTestInterestPolicy>())));
+		ASSERT_THAT(IsFalse(FFlecsReplicationInterestPolicyRegistry::RegisterPolicy(
+			MakeUnique<UE::Flecs::Tests::FCustomTestInterestPolicy>())));
+
+		const IFlecsReplicationInterestPolicy* Policy = FFlecsReplicationInterestPolicyRegistry::FindPolicy(
+			UE::Flecs::Tests::SpatialTestPolicyName());
+		ASSERT_THAT(IsNotNull(Policy));
+		ASSERT_THAT(IsTrue(Policy->GetDescriptorStruct()
+			== FFlecsReplicationTestSpatialInterestDescriptor::StaticStruct()));
+
+		FFlecsReplicationTestSpatialInterestDescriptor SpatialDescriptor;
+		SpatialDescriptor.Radius = 100.0;
+		const FFlecsReplicationInterestBinding ValidBinding = FFlecsReplicationInterestBinding::Make(
+			UE::Flecs::Tests::SpatialTestPolicyName(), SpatialDescriptor);
+		FString Error;
+		ASSERT_THAT(IsTrue(NetworkSubsystem->ValidateInterestBinding(ValidBinding, Error)));
+
+		FFlecsReplicationTeamInterestDescriptor TeamDescriptor;
+		TeamDescriptor.Team = 7;
+		const FFlecsReplicationInterestBinding WrongType = FFlecsReplicationInterestBinding::Make(
+			UE::Flecs::Tests::SpatialTestPolicyName(), TeamDescriptor);
+		ASSERT_THAT(IsFalse(NetworkSubsystem->ValidateInterestBinding(WrongType, Error)));
+
+		SpatialDescriptor.Radius = -1.0;
+		const FFlecsReplicationInterestBinding InvalidSpatial = FFlecsReplicationInterestBinding::Make(
+			UE::Flecs::Tests::SpatialTestPolicyName(), SpatialDescriptor);
+		ASSERT_THAT(IsFalse(NetworkSubsystem->ValidateInterestBinding(InvalidSpatial, Error)));
+
+		ASSERT_THAT(IsTrue(FFlecsReplicationInterestPolicyRegistry::RegisterPolicy(
+			MakeUnique<UE::Flecs::Tests::FObjectTestInterestPolicy>())));
+		const FFlecsReplicationInterestBinding ObjectBinding = FFlecsReplicationInterestBinding::Make(
+			UE::Flecs::Tests::ObjectTestPolicyName(), FFlecsReplicationTestObjectInterestDescriptor());
+		ASSERT_THAT(IsFalse(NetworkSubsystem->ValidateInterestBinding(ObjectBinding, Error)));
+
+		ASSERT_THAT(IsTrue(FFlecsReplicationInterestPolicyRegistry::UnregisterPolicy(
+			UE::Flecs::Tests::SpatialTestPolicyName())));
+		ASSERT_THAT(IsNull(FFlecsReplicationInterestPolicyRegistry::FindPolicy(
+			UE::Flecs::Tests::SpatialTestPolicyName())));
+		FFlecsReplicationRouteDescriptor MissingRoute;
+		MissingRoute.Interest = ValidBinding;
+		ASSERT_THAT(IsFalse(NetworkSubsystem->IsRouteRelevant(
+			MissingRoute, 11, FFlecsReplicationConnectionView())));
+
+		FFlecsReplicationRouting Routing;
+		Routing.Route = MissingRoute;
+		const FFlecsEntityHandle Source = FlecsWorld->CreateEntity()
+			.Set<FFlecsReplicationTestValue>({ 13 })
+			.Set<FFlecsReplicationRouting>(Routing);
+		NetworkSubsystem->BeginReplicatingEntity(Source);
+		NetworkSubsystem->FlushServerReplicationForTesting();
+		ASSERT_THAT(AreEqual(0, CaptureTransport->Updates.Num()));
+		ASSERT_THAT(IsTrue(FFlecsReplicationInterestPolicyRegistry::RegisterPolicy(
+			MakeUnique<UE::Flecs::Tests::FCustomTestInterestPolicy>())));
+		NetworkSubsystem->FlushServerReplicationForTesting();
+		ASSERT_THAT(AreEqual(1, CaptureTransport->Updates.Num()));
+		ASSERT_THAT(IsTrue(CaptureTransport->Updates[0].Kind
+			== EFlecsReplicatedEntityUpdateKind::Full));
+	}
+
+	TEST_METHOD(PrebuiltInterestPolicies_UseRegistryAndTypedConnectionFragments)
+	{
+		const FFlecsNetworkId Owner(4, 1, 1);
+		NetworkSubsystem->SetConnectionInterestFragment(11,
+			FFlecsReplicationOwnerInterestFragment{ Owner });
+		NetworkSubsystem->SetConnectionInterestFragment(11,
+			FFlecsReplicationTeamInterestFragment{ 7 });
+		FFlecsReplicationZoneInterestFragment ZoneFragment;
+		ZoneFragment.Zones.Add(TEXT("Arena"));
+		NetworkSubsystem->SetConnectionInterestFragment(11, ZoneFragment);
+
 		FFlecsReplicationConnectionView View;
 		View.Positions.Add(FVector(10.0, 0.0, 0.0));
 		FFlecsReplicationRouteDescriptor Route;
 		ASSERT_THAT(IsTrue(NetworkSubsystem->IsRouteRelevant(Route, 11, View)));
-		Route.Audience = EFlecsReplicationAudience::OwnerOnly;
-		Route.Owner = Context.Owner;
+
+		FFlecsReplicationOwnerInterestDescriptor OwnerDescriptor;
+		OwnerDescriptor.Owner = Owner;
+		Route.Interest = FFlecsReplicationInterestBinding::Make(
+			FFlecsReplicationInterestPolicyNames::Owner(), OwnerDescriptor);
 		ASSERT_THAT(IsTrue(NetworkSubsystem->IsRouteRelevant(Route, 11, View)));
-		Route.Audience = EFlecsReplicationAudience::Team;
-		Route.Team = 7;
+
+		FFlecsReplicationTeamInterestDescriptor TeamDescriptor;
+		TeamDescriptor.Team = 7;
+		Route.Interest = FFlecsReplicationInterestBinding::Make(
+			FFlecsReplicationInterestPolicyNames::Team(), TeamDescriptor);
 		ASSERT_THAT(IsTrue(NetworkSubsystem->IsRouteRelevant(Route, 11, View)));
-		Route.Audience = EFlecsReplicationAudience::Zone;
-		Route.Zone = TEXT("Arena");
+
+		FFlecsReplicationZoneInterestDescriptor ZoneDescriptor;
+		ZoneDescriptor.Zone = TEXT("Arena");
+		Route.Interest = FFlecsReplicationInterestBinding::Make(
+			FFlecsReplicationInterestPolicyNames::Zone(), ZoneDescriptor);
 		ASSERT_THAT(IsTrue(NetworkSubsystem->IsRouteRelevant(Route, 11, View)));
-		Route.Audience = EFlecsReplicationAudience::Custom;
-		Route.CustomPolicy = TEXT("NearOrigin");
-		NetworkSubsystem->SetInterestPolicy(MakeUnique<UE::Flecs::Tests::FCustomTestInterestPolicy>());
+	}
+
+	TEST_METHOD(CustomSpatialInterestPolicy_ReceivesDescriptorContextAndViewUnchanged)
+	{
+		ASSERT_THAT(IsTrue(FFlecsReplicationInterestPolicyRegistry::RegisterPolicy(
+			MakeUnique<UE::Flecs::Tests::FCustomTestInterestPolicy>())));
+		NetworkSubsystem->SetConnectionInterestFragment(11,
+			FFlecsReplicationTestSpatialInterestFragment{ true, 37 });
+
+		FFlecsReplicationTestSpatialInterestDescriptor Descriptor;
+		Descriptor.Center = FVector(5.0, 0.0, 0.0);
+		Descriptor.Radius = 20.0;
+		FFlecsReplicationRouteDescriptor Route;
+		Route.Interest = FFlecsReplicationInterestBinding::Make(
+			UE::Flecs::Tests::SpatialTestPolicyName(), Descriptor);
+		FFlecsReplicationConnectionView View;
+		View.Positions.Add(FVector(10.0, 0.0, 0.0));
+		View.Directions.Add(FVector::ForwardVector);
+		ASSERT_THAT(IsTrue(NetworkSubsystem->IsRouteRelevant(Route, 11, View)));
+
+		const auto* Policy = static_cast<const UE::Flecs::Tests::FCustomTestInterestPolicy*>(
+			FFlecsReplicationInterestPolicyRegistry::FindPolicy(
+				UE::Flecs::Tests::SpatialTestPolicyName()));
+		ASSERT_THAT(IsNotNull(Policy));
+		ASSERT_THAT(AreEqual(11u, Policy->LastConnectionId));
+		ASSERT_THAT(AreEqual(37, Policy->LastFragmentMarker));
+		ASSERT_THAT(IsTrue(Policy->LastDescriptor.Center == Descriptor.Center));
+		ASSERT_THAT(IsTrue(Descriptor.Radius == Policy->LastDescriptor.Radius));
+		ASSERT_THAT(IsTrue(Policy->LastView.Positions == View.Positions));
+		ASSERT_THAT(IsTrue(Policy->LastView.Directions == View.Directions));
+
+		Route.SchedulerWeight = 100.0f;
+		Route.PollFrequency = 1.0f;
 		ASSERT_THAT(IsTrue(NetworkSubsystem->IsRouteRelevant(Route, 11, View)));
 		View.Positions[0] = FVector(1000.0, 0.0, 0.0);
 		ASSERT_THAT(IsFalse(NetworkSubsystem->IsRouteRelevant(Route, 11, View)));
+	}
+
+	TEST_METHOD(ConnectionInterestFragments_ReplaceRemoveIsolateAndClear)
+	{
+		FFlecsReplicationTeamInterestDescriptor Descriptor;
+		Descriptor.Team = 7;
+		FFlecsReplicationRouteDescriptor Route;
+		Route.Interest = FFlecsReplicationInterestBinding::Make(
+			FFlecsReplicationInterestPolicyNames::Team(), Descriptor);
+
+		NetworkSubsystem->SetConnectionInterestFragment(11,
+			FFlecsReplicationTeamInterestFragment{ 7 });
+		NetworkSubsystem->SetConnectionInterestFragment(12,
+			FFlecsReplicationTeamInterestFragment{ 7 });
+		ASSERT_THAT(IsTrue(NetworkSubsystem->IsRouteRelevant(
+			Route, 11, FFlecsReplicationConnectionView())));
+		ASSERT_THAT(IsTrue(NetworkSubsystem->IsRouteRelevant(
+			Route, 12, FFlecsReplicationConnectionView())));
+
+		NetworkSubsystem->SetConnectionInterestFragment(11,
+			FFlecsReplicationTeamInterestFragment{ 8 });
+		ASSERT_THAT(IsFalse(NetworkSubsystem->IsRouteRelevant(
+			Route, 11, FFlecsReplicationConnectionView())));
+		ASSERT_THAT(IsTrue(NetworkSubsystem->IsRouteRelevant(
+			Route, 12, FFlecsReplicationConnectionView())));
+		ASSERT_THAT(IsTrue(NetworkSubsystem->RemoveConnectionInterestFragment<
+			FFlecsReplicationTeamInterestFragment>(12)));
+		ASSERT_THAT(IsFalse(NetworkSubsystem->RemoveConnectionInterestFragment<
+			FFlecsReplicationTeamInterestFragment>(12)));
+		ASSERT_THAT(IsFalse(NetworkSubsystem->IsRouteRelevant(
+			Route, 12, FFlecsReplicationConnectionView())));
+		NetworkSubsystem->ClearConnectionInterestContext(11);
+		Descriptor.Team = 8;
+		Route.Interest = FFlecsReplicationInterestBinding::Make(
+			FFlecsReplicationInterestPolicyNames::Team(), Descriptor);
+		ASSERT_THAT(IsFalse(NetworkSubsystem->IsRouteRelevant(
+			Route, 11, FFlecsReplicationConnectionView())));
 	}
 
 	TEST_METHOD(RoutingComponentChange_PublishesFullMigrationBaseline)
@@ -704,8 +937,10 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 		CaptureTransport->Updates.Reset();
 		FFlecsReplicationRouting Routing;
 		Routing.Route.LogicalKey = FFlecsReplicationRouteKey(FName(TEXT("TeamRoute")));
-		Routing.Route.Audience = EFlecsReplicationAudience::Team;
-		Routing.Route.Team = 2;
+		FFlecsReplicationTeamInterestDescriptor TeamDescriptor;
+		TeamDescriptor.Team = 2;
+		Routing.Route.Interest = FFlecsReplicationInterestBinding::Make(
+			FFlecsReplicationInterestPolicyNames::Team(), TeamDescriptor);
 		Source.Set<FFlecsReplicationRouting>(Routing);
 		NetworkSubsystem->FlushServerReplicationForTesting();
 		ASSERT_THAT(AreEqual(1, CaptureTransport->MigrationNewRoutes.Num()));

@@ -17,7 +17,6 @@
 UFlecsNetworkWorldSubsystem::UFlecsNetworkWorldSubsystem()
 	: NetworkIdAllocator(1)
 	, Router(MakeUnique<FFlecsDefaultReplicationRouter>())
-	, InterestPolicy(MakeUnique<FFlecsDefaultReplicationInterestPolicy>())
 {
 }
 
@@ -69,6 +68,8 @@ void UFlecsNetworkWorldSubsystem::Deinitialize()
 	}
 	
 	FFlecsComponentReplicationRegistry::RemoveWorld(GetFlecsWorld());
+	ConnectionInterestContexts.Reset();
+	LoggedInvalidInterestBindings.Reset();
 	
 	Super::Deinitialize();
 }
@@ -171,8 +172,11 @@ void UFlecsNetworkWorldSubsystem::StopReplicatingEntity(const FFlecsNetworkId Ne
 	if (ReplicationTransport)
 	{
 		const FReplicatedEntityState* State = EntityStates.Find(NetworkId);
-		ReplicationTransport->RemoveEntity(
-			State ? State->Route : FFlecsReplicationRouteDescriptor::Default(), NetworkId);
+		if (!State || State->bRouteInterestValid)
+		{
+			ReplicationTransport->RemoveEntity(
+				State ? State->Route : FFlecsReplicationRouteDescriptor::Default(), NetworkId);
+		}
 	}
 	
 	const FFlecsEntityHandle* Entity = NetworkIdToEntityHandleMap.Find(NetworkId);
@@ -252,24 +256,68 @@ void UFlecsNetworkWorldSubsystem::SetReplicationRouter(TUniquePtr<IFlecsReplicat
 	}
 }
 
-void UFlecsNetworkWorldSubsystem::SetInterestPolicy(TUniquePtr<IFlecsReplicationInterestPolicy> InInterestPolicy)
+void UFlecsNetworkWorldSubsystem::ClearConnectionInterestContext(const uint32 ConnectionId)
 {
-	InterestPolicy = InInterestPolicy ? MoveTemp(InInterestPolicy)
-		: MakeUnique<FFlecsDefaultReplicationInterestPolicy>();
+	ConnectionInterestContexts.Remove(ConnectionId);
 }
 
-void UFlecsNetworkWorldSubsystem::SetConnectionInterestContext(const uint32 ConnectionId,
-	const FFlecsReplicationConnectionInterestContext& Context)
+bool UFlecsNetworkWorldSubsystem::ValidateInterestBinding(
+	const FFlecsReplicationInterestBinding& Binding, FString& OutError) const
 {
-	ConnectionInterestContexts.Add(ConnectionId, Context);
+	return FFlecsReplicationInterestPolicyRegistry::ValidateBinding(Binding, OutError);
 }
 
 bool UFlecsNetworkWorldSubsystem::IsRouteRelevant(const FFlecsReplicationRouteDescriptor& Route,
 	const uint32 ConnectionId, const FFlecsReplicationConnectionView& View) const
 {
+	return IsInterestBindingRelevant(Route.Interest, Route.LogicalKey.Name, ConnectionId, View);
+}
+
+bool UFlecsNetworkWorldSubsystem::IsInterestBindingRelevant(
+	const FFlecsReplicationInterestBinding& Binding, const FName RouteName,
+	const uint32 ConnectionId, const FFlecsReplicationConnectionView& View) const
+{
+	FString Error;
+	if (!ValidateInterestBinding(Binding, Error))
+	{
+		FFlecsReplicationRouteDescriptor DiagnosticRoute;
+		DiagnosticRoute.LogicalKey = FFlecsReplicationRouteKey(RouteName);
+		DiagnosticRoute.Interest = Binding;
+		ReportInvalidInterestBinding(DiagnosticRoute, Error, TEXT("filter"));
+		INC_DWORD_STAT(STAT_FlecsReplicationInvalidPolicyRejections);
+		return false;
+	}
+
 	static const FFlecsReplicationConnectionInterestContext EmptyContext;
 	const FFlecsReplicationConnectionInterestContext* Context = ConnectionInterestContexts.Find(ConnectionId);
-	return InterestPolicy && InterestPolicy->IsInterested(Route, Context ? *Context : EmptyContext, View);
+	const IFlecsReplicationInterestPolicy* Policy =
+		FFlecsReplicationInterestPolicyRegistry::FindPolicy(Binding.PolicyName);
+	const FFlecsReplicationInterestEvaluationQuery Query{
+		ConnectionId,
+		Context ? *Context : EmptyContext,
+		View
+	};
+	return Policy && Policy->IsInterested(Binding.Descriptor, Query);
+}
+
+void UFlecsNetworkWorldSubsystem::ReportInvalidInterestBinding(
+	const FFlecsReplicationRouteDescriptor& Route, const FString& Error, const TCHAR* Source) const
+{
+	const FString DescriptorName = Route.Interest.Descriptor.GetScriptStruct()
+		? Route.Interest.Descriptor.GetScriptStruct()->GetPathName() : TEXT("None");
+	const FString LogKey = FString::Printf(TEXT("%s|%s|%s|%s"), *Route.LogicalKey.Name.ToString(),
+		*Route.Interest.PolicyName.ToString(), *DescriptorName, *Error);
+	if (LoggedInvalidInterestBindings.Contains(LogKey))
+	{
+		return;
+	}
+
+	LoggedInvalidInterestBindings.Add(LogKey);
+	INC_DWORD_STAT(STAT_FlecsReplicationInvalidPolicyRejections);
+	UE_LOG(LogFlecsCore, Warning,
+		TEXT("Rejected %s interest binding for route '%s' (policy '%s', descriptor '%s'): %s"),
+		Source, *Route.LogicalKey.Name.ToString(), *Route.Interest.PolicyName.ToString(),
+		*DescriptorName, *Error);
 }
 
 void UFlecsNetworkWorldSubsystem::SetReplicationDormancy(const FFlecsEntityHandle& EntityHandle,
@@ -428,7 +476,7 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 	const double Now = GetReplicationTimeSeconds();
 	const TSolidNotNull<const UFlecsNetworkingModuleSettings*> Settings = GetNetworkingModuleSettings();
 	
-	auto ResolveRoute = [this, Settings](const FFlecsEntityHandle& Entity)
+	auto ResolveRoute = [this, Settings](const FFlecsEntityHandle& Entity, bool& bOutInterestValid)
 	{
 		FFlecsReplicationRouteDescriptor Route = Router->Route(Entity);
 		
@@ -436,6 +484,13 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 		{
 			Route.PollFrequency = Settings->DefaultShardPollFrequency;
 			Route.StaticPriority = Settings->DefaultShardStaticPriority;
+		}
+
+		FString InterestError;
+		bOutInterestValid = ValidateInterestBinding(Route.Interest, InterestError);
+		if (!bOutInterestValid)
+		{
+			ReportInvalidInterestBinding(Route, InterestError, TEXT("authority"));
 		}
 		
 		return Route;
@@ -446,7 +501,12 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 	for (TPair<FFlecsNetworkId, FReplicatedEntityState>& Pair : EntityStates)
 	{
 		const FFlecsEntityHandle* Entity = NetworkIdToEntityHandleMap.Find(Pair.Key);
-		if (Entity && Entity->IsValid() && ResolveRoute(*Entity) != Pair.Value.Route)
+		bool bInterestValid = false;
+		const FFlecsReplicationRouteDescriptor Route = Entity && Entity->IsValid()
+			? ResolveRoute(*Entity, bInterestValid) : Pair.Value.Route;
+		if (Entity && Entity->IsValid()
+			&& ((bInterestValid && Route != Pair.Value.Route)
+				|| bInterestValid != Pair.Value.bRouteInterestValid))
 		{
 			if (Pair.Value.bDormant)
 			{
@@ -477,7 +537,30 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 		}
 		
 		const FFlecsEntityHandle Entity = *EntityPtr;
-		
+		FReplicatedEntityState& State = EntityStates.FindOrAdd(NetworkId);
+		const FFlecsReplicationRouteDescriptor PreviousRoute = State.Route;
+		const bool bPreviousInterestValid = State.bRouteInterestValid;
+		bool bInterestValid = false;
+		const FFlecsReplicationRouteDescriptor Route = ResolveRoute(Entity, bInterestValid);
+		const bool bRouteChanged = State.Route != Route;
+
+		if (!bInterestValid)
+		{
+			if (State.bRouteInterestValid && State.StateRevision > 0 && ReplicationTransport)
+			{
+				ReplicationTransport->RemoveEntity(PreviousRoute, NetworkId);
+				PublishedLayoutRoutes.RemoveAll(
+					[&PreviousRoute](const FPublishedLayoutKey& Key)
+					{
+						return Key.Route == PreviousRoute;
+					});
+			}
+			State.bRouteInterestValid = false;
+			State.bNeedsFullUpdate = true;
+			State.bAllPayloadDirty = true;
+			continue;
+		}
+
 		bool bLayoutCreated = false;
 		FString Error;
 		const FFlecsReplicationLayoutDefinition* Layout = LayoutRegistry.BuildForEntity(
@@ -489,10 +572,6 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 			continue;
 		}
 
-		FReplicatedEntityState& State = EntityStates.FindOrAdd(NetworkId);
-		const FFlecsReplicationRouteDescriptor PreviousRoute = State.Route;
-		const FFlecsReplicationRouteDescriptor Route = ResolveRoute(Entity);
-		const bool bRouteChanged = State.Route != Route;
 		const bool bLayoutChanged = State.LayoutId != Layout->LayoutId;
 
 		if (bLayoutChanged)
@@ -512,6 +591,7 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 			State.bNeedsFullUpdate = true;
 		}
 		State.Route = Route;
+		State.bRouteInterestValid = true;
 
 		const FPublishedLayoutKey PublishedKey{ Route, Layout->LayoutId };
 		
@@ -641,7 +721,8 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 				Update.SetKeyChanged(EncodedKeyIndex);
 			}
 
-			if (bRouteChanged && PreviousRoute != Route && State.StateRevision > 0)
+			if (bPreviousInterestValid && bRouteChanged && PreviousRoute != Route
+				&& State.StateRevision > 0)
 			{
 				ReplicationTransport->MigrateEntity(PreviousRoute, Route, *Layout, Update);
 				INC_DWORD_STAT(STAT_FlecsReplicationMigrations);
@@ -963,6 +1044,18 @@ void UFlecsNetworkWorldSubsystem::ApplyUpdate(const FGuid& SourceShard,
 		if (ReplicationTransport)
 		{
 			ReplicationTransport->HandleProtocolError(TEXT("Received invalid Flecs replication update metadata"));
+		}
+		return;
+	}
+
+	FString InterestError;
+	if (!ValidateInterestBinding(Update.Route.Interest, InterestError))
+	{
+		ReportInvalidInterestBinding(Update.Route, InterestError, TEXT("received"));
+		if (ReplicationTransport)
+		{
+			ReplicationTransport->HandleProtocolError(FString::Printf(
+				TEXT("Received invalid Flecs replication interest binding: %s"), *InterestError));
 		}
 		return;
 	}

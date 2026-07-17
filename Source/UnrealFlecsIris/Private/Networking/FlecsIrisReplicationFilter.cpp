@@ -2,6 +2,10 @@
 
 #include "Networking/FlecsIrisReplicationFilter.h"
 
+#include "Engine/NetDriver.h"
+#include "Engine/World.h"
+#include "Iris/ReplicationSystem/ReplicationSystem.h"
+#include "Net/Iris/ReplicationSystem/EngineReplicationBridge.h"
 #include "Networking/FlecsIrisReplicationShard.h"
 #include "Networking/FlecsNetworkWorldSubsystem.h"
 #include "Networking/FlecsNetworkingStats.h"
@@ -25,18 +29,50 @@ void UFlecsIrisReplicationFilter::RegisterPage(const UE::Net::FNetRefHandle Hand
 	if (UE::Net::IsValidInternalNetRefIndex(ObjectIndex))
 	{
 		Pages.Add(ObjectIndex, Page);
+		NetworkSubsystem = Page->GetWorld()
+			? Page->GetWorld()->GetSubsystem<UFlecsNetworkWorldSubsystem>() : nullptr;
 	}
 }
 
 void UFlecsIrisReplicationFilter::OnInit(const FNetObjectFilterInitParams& Params)
 {
 	ReplicationSystem = Params.ReplicationSystem;
+	const UEngineReplicationBridge* EngineBridge = Params.ReplicationSystem
+		? Cast<UEngineReplicationBridge>(Params.ReplicationSystem->GetReplicationBridge()) : nullptr;
+	const UNetDriver* NetDriver = EngineBridge ? EngineBridge->GetNetDriver() : nullptr;
+	NetworkSubsystem = NetDriver && NetDriver->GetWorld()
+		? NetDriver->GetWorld()->GetSubsystem<UFlecsNetworkWorldSubsystem>() : nullptr;
 }
 
 void UFlecsIrisReplicationFilter::OnDeinit()
 {
+	if (UFlecsNetworkWorldSubsystem* Subsystem = NetworkSubsystem.Get())
+	{
+		for (const uint32 ConnectionId : Connections)
+		{
+			Subsystem->ClearConnectionInterestContext(ConnectionId);
+		}
+	}
+	Connections.Reset();
 	Pages.Reset();
+	NetworkSubsystem.Reset();
 	ReplicationSystem.Reset();
+}
+
+void UFlecsIrisReplicationFilter::AddConnection(const uint32 ConnectionId)
+{
+	Super::AddConnection(ConnectionId);
+	Connections.Add(ConnectionId);
+}
+
+void UFlecsIrisReplicationFilter::RemoveConnection(const uint32 ConnectionId)
+{
+	if (UFlecsNetworkWorldSubsystem* Subsystem = NetworkSubsystem.Get())
+	{
+		Subsystem->ClearConnectionInterestContext(ConnectionId);
+	}
+	Connections.Remove(ConnectionId);
+	Super::RemoveConnection(ConnectionId);
 }
 
 void UFlecsIrisReplicationFilter::OnMaxInternalNetRefIndexIncreased(
@@ -82,7 +118,9 @@ void UFlecsIrisReplicationFilter::Filter(FNetObjectFilteringParams& Params)
 			View.Positions.Add(IrisView.Pos);
 			View.Directions.Add(IrisView.Dir);
 		}
-		const bool bAllowed = Subsystem->IsRouteRelevant(Page->GetRouteDescriptor(), Params.ConnectionId, View);
+		const FFlecsReplicationRouteDescriptor& Route = Page->GetRouteDescriptor();
+		const bool bAllowed = Subsystem->IsInterestBindingRelevant(
+			Route.Interest, Route.LogicalKey.Name, Params.ConnectionId, View);
 		Params.OutAllowedObjects.SetBitValue(ObjectIndex, bAllowed);
 		if (bAllowed)
 		{

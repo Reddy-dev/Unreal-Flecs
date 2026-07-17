@@ -62,11 +62,38 @@ public:
 
 	/** Replaces the route-selection policy. Passing null restores the default router. */
 	void SetReplicationRouter(TUniquePtr<IFlecsReplicationRouter> InRouter);
-	/** Replaces custom and built-in connection relevance evaluation. */
-	void SetInterestPolicy(TUniquePtr<IFlecsReplicationInterestPolicy> InInterestPolicy);
-	/** Updates the owner/team/zone values associated with one Iris connection. */
-	void SetConnectionInterestContext(uint32 ConnectionId,
-		const FFlecsReplicationConnectionInterestContext& Context);
+
+	/** Inserts or replaces one policy-owned fragment for a connection. */
+	template <typename TFragment>
+	void SetConnectionInterestFragment(const uint32 ConnectionId, const TFragment& InFragment)
+	{
+		ConnectionInterestContexts.FindOrAdd(ConnectionId).Set<TFragment>(InFragment);
+	}
+
+	/** Removes one fragment type and reclaims an empty connection context. */
+	template <typename TFragment>
+	bool RemoveConnectionInterestFragment(const uint32 ConnectionId)
+	{
+		FFlecsReplicationConnectionInterestContext* Context = ConnectionInterestContexts.Find(ConnectionId);
+		if (!Context || !Context->Remove<TFragment>())
+		{
+			return false;
+		}
+		if (Context->IsEmpty())
+		{
+			ConnectionInterestContexts.Remove(ConnectionId);
+		}
+		return true;
+	}
+
+	/** Removes all policy-owned state for a disconnected or reset connection. */
+	void ClearConnectionInterestContext(uint32 ConnectionId);
+	/** Validates registration, exact descriptor type, stability, and policy-specific constraints. */
+	NO_DISCARD bool ValidateInterestBinding(const FFlecsReplicationInterestBinding& Binding,
+		FString& OutError) const;
+	/** Dispatches one policy binding with the current typed context and transport-neutral view. */
+	NO_DISCARD bool IsInterestBindingRelevant(const FFlecsReplicationInterestBinding& Binding,
+		FName RouteName, uint32 ConnectionId, const FFlecsReplicationConnectionView& View) const;
 	/** Evaluates a page descriptor against connection context and its current view. */
 	NO_DISCARD bool IsRouteRelevant(const FFlecsReplicationRouteDescriptor& Route, uint32 ConnectionId,
 		const FFlecsReplicationConnectionView& View) const;
@@ -169,6 +196,7 @@ private:
 		double LastDirtyTime = 0.0;
 		bool bAllPayloadDirty = true;
 		bool bNeedsFullUpdate = true;
+		bool bRouteInterestValid = false;
 		bool bDormant = false;
 	};
 
@@ -178,20 +206,6 @@ private:
 		FFlecsReplicationLayoutId LayoutId;
 
 		friend bool operator==(const FPublishedLayoutKey&, const FPublishedLayoutKey&) = default;
-		friend uint32 GetTypeHash(const FPublishedLayoutKey& Key)
-		{
-			uint32 Hash = HashCombine(GetTypeHash(Key.Route.LogicalKey.Name), GetTypeHash(Key.Route.Audience));
-			Hash = HashCombine(Hash, GetTypeHash(Key.Route.Owner));
-			Hash = HashCombine(Hash, GetTypeHash(Key.Route.Team));
-			Hash = HashCombine(Hash, GetTypeHash(Key.Route.Zone));
-			Hash = HashCombine(Hash, GetTypeHash(Key.Route.CustomPolicy));
-			Hash = HashCombine(Hash, GetTypeHash(Key.Route.PollFrequency));
-			Hash = HashCombine(Hash, GetTypeHash(Key.Route.StaticPriority));
-			Hash = HashCombine(Hash, GetTypeHash(Key.Route.SchedulerWeight));
-			Hash = HashCombine(Hash, GetTypeHash(Key.Route.PageEntityLimit));
-			Hash = HashCombine(Hash, GetTypeHash(Key.Route.PageByteLimit));
-			return HashCombine(Hash, GetTypeHash(Key.LayoutId));
-		}
 	}; // struct FPublishedLayoutKey
 
 	/** Complete pair state from one accepted update, waiting for its entity-target replica. */
@@ -221,6 +235,8 @@ private:
 		const FFlecsReplicationKey& Key, const TArray<uint8>* Payload) const;
 	bool ResolveKeyToLocalId(const FFlecsReplicationKey& Key, FFlecsId& OutId) const;
 	bool ValidateLayout(const FFlecsReplicationLayoutDefinition& Layout, FString& OutError) const;
+	void ReportInvalidInterestBinding(const FFlecsReplicationRouteDescriptor& Route,
+		const FString& Error, const TCHAR* Source) const;
 	void HandleWorldPreActorTick(UWorld* World, ELevelTick TickType, float DeltaSeconds);
 	NO_DISCARD double GetReplicationTimeSeconds() const;
 
@@ -236,7 +252,7 @@ private:
 	UPROPERTY(Transient)
 	TSet<FFlecsNetworkId> DirtyEntities;
 	
-	TSet<FPublishedLayoutKey> PublishedLayoutRoutes;
+	TArray<FPublishedLayoutKey> PublishedLayoutRoutes;
 	
 	UPROPERTY()
 	TArray<FFlecsObserverHandle> DirtyObservers;
@@ -261,8 +277,8 @@ private:
 	TArray<FEntityPairFixup> EntityPairFixups;
 	
 	TUniquePtr<IFlecsReplicationRouter> Router;
-	TUniquePtr<IFlecsReplicationInterestPolicy> InterestPolicy;
 	TMap<uint32, FFlecsReplicationConnectionInterestContext> ConnectionInterestContexts;
+	mutable TSet<FString> LoggedInvalidInterestBindings;
 	
 	FDelegateHandle PreActorTickHandle;
 	

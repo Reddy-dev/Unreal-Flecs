@@ -36,9 +36,9 @@ public:
 	/** Clean time before an Automatic entity becomes dormant. */
 	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Networking", meta = (ClampMin = "0.0"))
 	float AutomaticDormancyDelaySeconds = 1.0f;
-
-	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Networking", meta = (ClampMin = "1"))
-	uint16 DefaultPageEntityLimit = 256;
+	
+	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Networking", meta = (ClampMin = "1", ClampMax = "65535"))
+	uint32 DefaultPageEntityLimit = 256;
 
 	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Networking", meta = (ClampMin = "1024"))
 	uint32 DefaultPageByteLimit = 256u * 1024u;

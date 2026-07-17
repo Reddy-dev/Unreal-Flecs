@@ -9,6 +9,54 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsReplicationTypes)
 
+FName FFlecsReplicationInterestPolicyNames::Everyone()
+{
+	static const FName Name(TEXT("Everyone"));
+	return Name;
+}
+
+FName FFlecsReplicationInterestPolicyNames::Owner()
+{
+	static const FName Name(TEXT("Owner"));
+	return Name;
+}
+
+FName FFlecsReplicationInterestPolicyNames::Team()
+{
+	static const FName Name(TEXT("Team"));
+	return Name;
+}
+
+FName FFlecsReplicationInterestPolicyNames::Zone()
+{
+	static const FName Name(TEXT("Zone"));
+	return Name;
+}
+
+FFlecsReplicationInterestBinding::FFlecsReplicationInterestBinding()
+	: PolicyName(FFlecsReplicationInterestPolicyNames::Everyone())
+{
+	Descriptor.InitializeAs<FFlecsReplicationEveryoneInterestDescriptor>();
+}
+
+bool FFlecsReplicationInterestBinding::operator==(
+	const FFlecsReplicationInterestBinding& Other) const
+{
+	return PolicyName == Other.PolicyName && Descriptor == Other.Descriptor;
+}
+
+bool FFlecsReplicationRouteDescriptor::operator==(
+	const FFlecsReplicationRouteDescriptor& Other) const
+{
+	return LogicalKey == Other.LogicalKey
+		&& Interest == Other.Interest
+		&& PollFrequency == Other.PollFrequency
+		&& StaticPriority == Other.StaticPriority
+		&& SchedulerWeight == Other.SchedulerWeight
+		&& PageEntityLimit == Other.PageEntityLimit
+		&& PageByteLimit == Other.PageByteLimit;
+}
+
 namespace
 {
 	const FFlecsComponentReplicationDescriptor* GetPairStorageDescriptor(

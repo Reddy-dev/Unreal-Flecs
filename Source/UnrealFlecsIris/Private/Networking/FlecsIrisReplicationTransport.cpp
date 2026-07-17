@@ -148,27 +148,38 @@ void UFlecsIrisReplicationTransport::PublishEntity(const FFlecsReplicationRouteD
 	const FFlecsReplicatedEntityUpdate& Update)
 {
 	FFlecsReplicatedEntityUpdate Materialized = MaterializeUpdate(Update);
+	
 	const uint32 PayloadBytes = Materialized.GetPayloadByteCount();
-	FName CurrentPageName = EntityPageNames.FindRef(Update.NetworkId);
+
+	const FName CurrentPageName = EntityPageNames.FindRef(Update.NetworkId);
+	
 	UFlecsIrisReplicationShard* CurrentPage = CurrentPageName.IsNone() ? nullptr
 		: Pages.FindRef(CurrentPageName).Get();
+	
 	UFlecsIrisReplicationShard* Destination = CurrentPage;
+	
 	const UFlecsNetworkingModuleSettings* Settings = GetDefault<UFlecsNetworkingModuleSettings>();
-	const uint16 EntityLimit = Route.PageEntityLimit != 0 ? Route.PageEntityLimit : Settings->DefaultPageEntityLimit;
+	
+	const uint32 EntityLimit = Route.PageEntityLimit != 0 ? Route.PageEntityLimit : Settings->DefaultPageEntityLimit;
 	const uint32 ByteLimit = Route.PageByteLimit != 0 ? Route.PageByteLimit : Settings->DefaultPageByteLimit;
+	
 	const uint32 CurrentEntityBytes = CurrentPage && CurrentPage->FindMaterializedEntity(Update.NetworkId)
 		? CurrentPage->FindMaterializedEntity(Update.NetworkId)->GetPayloadByteCount() : 0;
+	
 	const bool bFitsCurrent = CurrentPage && CurrentPage->GetRouteDescriptor() == Route
-		&& CurrentPage->GetEntityCount() <= EntityLimit
+		&& (uint32)CurrentPage->GetEntityCount() <= EntityLimit
 		&& CurrentPage->GetMaterializedPayloadBytes() - CurrentEntityBytes + PayloadBytes <= ByteLimit;
+	
 	if (!bFitsCurrent)
 	{
 		Destination = FindPageWithCapacity(Route, Update.NetworkId, PayloadBytes, CurrentPageName);
 	}
+	
 	if (!Destination)
 	{
 		return;
 	}
+	
 	const TMap<FFlecsReplicationLayoutId, FFlecsReplicationLayoutDefinition>* Layouts =
 		RouteLayouts.Find(Route.LogicalKey.Name);
 	const FFlecsReplicationLayoutDefinition* Layout = Layouts ? Layouts->Find(Update.LayoutId) : nullptr;
@@ -176,7 +187,9 @@ void UFlecsIrisReplicationTransport::PublishEntity(const FFlecsReplicationRouteD
 	{
 		return;
 	}
+	
 	Destination->UpsertLayout(*Layout);
+	
 	if (Destination != CurrentPage)
 	{
 		Destination->UpsertEntity(Materialized);
@@ -192,6 +205,7 @@ void UFlecsIrisReplicationTransport::PublishEntity(const FFlecsReplicationRouteD
 		}
 		return;
 	}
+	
 	Destination->UpsertEntity(Update);
 	MaterializedEntities.Add(Update.NetworkId, MoveTemp(Materialized));
 }

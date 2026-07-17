@@ -16,4 +16,5 @@ DEFINE_STAT(STAT_FlecsReplicationPages);
 DEFINE_STAT(STAT_FlecsReplicationMigrations);
 DEFINE_STAT(STAT_FlecsReplicationFilterAllowed);
 DEFINE_STAT(STAT_FlecsReplicationFilterDenied);
+DEFINE_STAT(STAT_FlecsReplicationInvalidPolicyRejections);
 DEFINE_STAT(STAT_FlecsReplicationReclaimedLayouts);
