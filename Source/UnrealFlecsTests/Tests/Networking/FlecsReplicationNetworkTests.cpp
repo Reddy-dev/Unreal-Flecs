@@ -6,9 +6,13 @@
 #if ENABLE_PIE_NETWORK_TEST && ENABLE_UNREAL_FLECS_TESTS
 
 #include "GameFramework/GameModeBase.h"
+#include "Engine/NetConnection.h"
+#include "Engine/NetDriver.h"
 
 #include "Networking/FlecsNetworkId.h"
+#include "Networking/FlecsNetworkWorldSubsystem.h"
 #include "Networking/FlecsReplicatedEntityComponent.h"
+#include "Networking/FlecsReplicationRouting.h"
 #include "Pipelines/FlecsDefaultGameLoop.h"
 #include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 #include "Worlds/FlecsWorld.h"
@@ -247,13 +251,95 @@ NETWORK_TEST_CLASS(FlecsReplicationDedicatedServerTests,
 			{
 				return UE::Flecs::Tests::FindReplicatedValueEntity(State.FlecsWorld).IsValid();
 			})
+			.ThenServer([](FState& State)
+			{
+				State.Entity.Set<FFlecsReplicationTestValue>({ 66 });
+				State.Entity.Set<FFlecsReplicationTestValue>({ 77 });
+			})
+			.UntilClient(0, [](FState& State)
+			{
+				return UE::Flecs::Tests::FindReplicatedValueEntity(State.FlecsWorld)
+					.Get<FFlecsReplicationTestValue>().Value == 77;
+			})
 			.ThenClientJoins()
 			.ThenClient(1, [](FState& State) { State.FlecsWorld = UE::Flecs::Tests::CreateReplicationPIEWorld(State.World); })
 			.UntilClient(1, [](FState& State)
 			{
 				const FFlecsEntityHandle Entity = UE::Flecs::Tests::FindReplicatedValueEntity(State.FlecsWorld);
-				return Entity.IsValid() && Entity.Get<FFlecsReplicationTestValue>().Value == 55
+				return Entity.IsValid() && Entity.Get<FFlecsReplicationTestValue>().Value == 77
 					&& Entity.Has<FFlecsReplicationTestTag>();
+			});
+	}
+};
+
+NETWORK_TEST_CLASS(FlecsReplicationInterestTests,
+	"UnrealFlecs.Networking.Replication.PIE.Interest")
+{
+	struct FState : FBasePIENetworkComponentState
+	{
+		UFlecsWorld* FlecsWorld = nullptr;
+		FFlecsEntityHandle Entity;
+	};
+
+	FPIENetworkComponent<FState> Network{ TestRunner, TestCommandBuilder, bInitializing };
+
+	BEFORE_EACH()
+	{
+		FNetworkComponentBuilder<FState>()
+			.WithClients(2)
+			.AsDedicatedServer()
+			.WithGameInstanceClass(UGameInstance::StaticClass())
+			.WithGameMode(AGameModeBase::StaticClass())
+			.Build(Network);
+	}
+
+	TEST_METHOD(TeamRouteMigration_TransfersVisibilityBetweenClients)
+	{
+		Network
+			.ThenServer([](FState& State) { State.FlecsWorld = UE::Flecs::Tests::CreateReplicationPIEWorld(State.World); })
+			.ThenClients([](FState& State) { State.FlecsWorld = UE::Flecs::Tests::CreateReplicationPIEWorld(State.World); })
+			.ThenServer([](FState& State)
+			{
+				UFlecsNetworkWorldSubsystem* Subsystem = State.World->GetSubsystem<UFlecsNetworkWorldSubsystem>();
+				for (int32 Index = 0; Index < State.World->GetNetDriver()->ClientConnections.Num(); ++Index)
+				{
+					FFlecsReplicationConnectionInterestContext Context;
+					Context.Team = Index + 1;
+					Subsystem->SetConnectionInterestContext(
+						State.World->GetNetDriver()->ClientConnections[Index]->GetConnectionId(), Context);
+				}
+				FFlecsReplicationRouting Routing;
+				Routing.Route.LogicalKey = FFlecsReplicationRouteKey(FName(TEXT("TeamOne")));
+				Routing.Route.Audience = EFlecsReplicationAudience::Team;
+				Routing.Route.Team = 1;
+				State.Entity = State.FlecsWorld->CreateEntity()
+					.Set<FFlecsReplicationTestValue>({ 41 })
+					.Set<FFlecsReplicationRouting>(Routing)
+					.Add<FFlecsReplicatedEntityComponent>();
+			})
+			.UntilClient(0, [](FState& State)
+			{
+				return UE::Flecs::Tests::CountReplicatedEntities(State.FlecsWorld) == 1;
+			})
+			.UntilClient(1, [](FState& State)
+			{
+				return UE::Flecs::Tests::CountReplicatedEntities(State.FlecsWorld) == 0;
+			})
+			.ThenServer([](FState& State)
+			{
+				FFlecsReplicationRouting Routing = State.Entity.Get<FFlecsReplicationRouting>();
+				Routing.Route.LogicalKey = FFlecsReplicationRouteKey(FName(TEXT("TeamTwo")));
+				Routing.Route.Team = 2;
+				State.Entity.Set<FFlecsReplicationRouting>(Routing);
+			})
+			.UntilClient(0, [](FState& State)
+			{
+				return UE::Flecs::Tests::CountReplicatedEntities(State.FlecsWorld) == 0;
+			})
+			.UntilClient(1, [](FState& State)
+			{
+				const FFlecsEntityHandle Entity = UE::Flecs::Tests::FindReplicatedValueEntity(State.FlecsWorld);
+				return Entity.IsValid() && Entity.Get<FFlecsReplicationTestValue>().Value == 41;
 			});
 	}
 };

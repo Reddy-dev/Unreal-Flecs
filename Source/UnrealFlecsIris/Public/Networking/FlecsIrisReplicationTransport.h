@@ -8,36 +8,51 @@
 
 class UFlecsIrisReplicationShard;
 
-/**
- * Iris implementation of the Flecs transport boundary.
- *
- * Each route is represented by one aggregate UFlecsIrisReplicationShard,
- * rather than one replicated UObject per Flecs entity. The core still owns
- * schema validation and all Flecs mutations.
- */
+/** Bounded, filtered, page-based Iris adapter for Flecs replication updates. */
 UCLASS(Transient)
 class UNREALFLECSIRIS_API UFlecsIrisReplicationTransport : public UFlecsReplicationTransportBase
 {
 	GENERATED_BODY()
 
 public:
-	/** Valid only for a non-standalone world with a usable NetDriver. */
 	virtual bool InitializeTransport(UFlecsNetworkWorldSubsystem* InSubsystem) override;
 	virtual void ShutdownTransport() override;
 	virtual void TickTransport() override;
-	virtual void PublishLayout(const FFlecsReplicationRouteKey& Route,
+	virtual void PublishLayout(const FFlecsReplicationRouteDescriptor& Route,
 		const FFlecsReplicationLayoutDefinition& Layout) override;
-	virtual void PublishEntity(const FFlecsReplicationRouteKey& Route,
-		const FFlecsReplicatedEntitySnapshot& Snapshot) override;
-	virtual void RemoveEntity(const FFlecsReplicationRouteKey& Route, FFlecsNetworkId NetworkId) override;
+	virtual void PublishEntity(const FFlecsReplicationRouteDescriptor& Route,
+		const FFlecsReplicatedEntityUpdate& Update) override;
+	virtual void MigrateEntity(const FFlecsReplicationRouteDescriptor& OldRoute,
+		const FFlecsReplicationRouteDescriptor& NewRoute, const FFlecsReplicationLayoutDefinition& Layout,
+		const FFlecsReplicatedEntityUpdate& FullUpdate) override;
+	virtual void RemoveEntity(const FFlecsReplicationRouteDescriptor& Route, FFlecsNetworkId NetworkId) override;
+	virtual void SetEntityDormancy(const FFlecsReplicationRouteDescriptor& Route,
+		FFlecsNetworkId NetworkId, bool bDormant) override;
 	virtual void HandleProtocolError(const FString& Diagnostic) override;
 
+	NO_DISCARD int32 GetPageCount(FName LogicalRoute = NAME_None) const;
+	NO_DISCARD UFlecsIrisReplicationShard* FindEntityPage(FFlecsNetworkId NetworkId) const;
+
 private:
-	UFlecsIrisReplicationShard* FindOrCreateShard(const FFlecsReplicationRouteKey& Route);
+	void EnsureReplicationFilter();
+	FFlecsReplicatedEntityUpdate MaterializeUpdate(const FFlecsReplicatedEntityUpdate& Update) const;
+	UFlecsIrisReplicationShard* FindPageWithCapacity(const FFlecsReplicationRouteDescriptor& Route,
+		FFlecsNetworkId NetworkId, uint32 PayloadBytes, FName ExcludedPage = NAME_None);
+	UFlecsIrisReplicationShard* CreatePage(const FFlecsReplicationRouteDescriptor& Route);
+	void QueueRetirementIfEmpty(FName PageName);
+	void RetirePage(FName PageName);
+	NO_DISCARD FName FindPageName(const UFlecsIrisReplicationShard* Page) const;
 
 	UPROPERTY(Transient)
-	TMap<FName, TObjectPtr<UFlecsIrisReplicationShard>> Shards;
+	TMap<FName, TObjectPtr<UFlecsIrisReplicationShard>> Pages;
 
+	TMap<FName, TArray<FName>> RoutePageNames;
+	TMap<FName, uint32> NextPageIndices;
+	TMap<FFlecsNetworkId, FName> EntityPageNames;
+	TMap<FFlecsNetworkId, FFlecsReplicatedEntityUpdate> MaterializedEntities;
+	TMap<FName, TMap<FFlecsReplicationLayoutId, FFlecsReplicationLayoutDefinition>> RouteLayouts;
+	TMap<FName, uint8> PendingRetirements;
 	uint32 StartAttempts = 0;
 	bool bWarnedReplicationSystemUnavailable = false;
-};
+	bool bCreatedRuntimeFilter = false;
+}; // class UFlecsIrisReplicationTransport

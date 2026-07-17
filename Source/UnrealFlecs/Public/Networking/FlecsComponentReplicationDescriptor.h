@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Concepts/SolidConcepts.h"
 #include "Entities/FlecsComponentHandle.h"
+#include "Networking/FlecsReplicationQuantizers.h"
 #include "Worlds/FlecsWorld.h"
 
 #include "FlecsComponentReplicationDescriptor.generated.h"
@@ -15,8 +16,8 @@ class FArchive;
  * Portable identity of a replicated component schema.
  *
  * The value is derived from the component's stable name and is exchanged in
- * layouts instead of a world-local Flecs ID. It identifies a schema, not a
- * serializer version; use the descriptor's SchemaVersion for compatibility.
+ * layouts instead of a world-local Flecs ID. The layout's codec fingerprint
+ * provides the serialization/quantization compatibility boundary.
  */
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsReplicationSchemaId
@@ -91,8 +92,8 @@ using FFlecsReplicationDestroyFunction = void(*)(void*);
  * Per-world description of one component that may appear in replication.
  *
  * LocalFlecsId and the lifetime/serialization callbacks are local runtime
- * details. SchemaId, StableName, and SchemaVersion form the portable contract
- * checked before a received layout can be applied.
+ * details. SchemaId, StableName, and CodecFingerprint form the portable
+ * contract checked before a received layout can be applied.
  */
 struct UNREALFLECS_API FFlecsComponentReplicationDescriptor
 {
@@ -104,9 +105,13 @@ struct UNREALFLECS_API FFlecsComponentReplicationDescriptor
 	bool bIsTag = false;
 	TObjectPtr<UScriptStruct> ScriptStruct = nullptr;
 	FFlecsReplicationSerializeFunction Serialize = nullptr;
+	FFlecsReplicationSerializeFunction QuantizeAndSerialize = nullptr;
 	FFlecsReplicationSerializeFunction Deserialize = nullptr;
 	FFlecsReplicationConstructFunction Construct = nullptr;
 	FFlecsReplicationDestroyFunction Destroy = nullptr;
+	FString CodecFingerprint = TEXT("None");
+	float UpdateFrequencyHz = 0.0f;
+	float ReplicationPriority = 1.0f;
 
 	/** Validates the complete local descriptor before it enters the registry. */
 	NO_DISCARD bool IsValid(FString* OutError = nullptr) const;
@@ -123,6 +128,11 @@ struct UNREALFLECS_API FFlecsComponentReplicationDescriptor
 template <typename T>
 struct TFlecsReplicationTraits
 {
+	using Quantizer = FFlecsNoReplicationQuantizer;
+
+	static constexpr float UpdateFrequencyHz = 0.0f;
+	static constexpr float ReplicationPriority = 1.0f;
+
 	static NO_DISCARD FString StableSymbolName()
 	{
 		if constexpr (Solid::IsScriptStruct<T>())
@@ -242,6 +252,45 @@ namespace UE::Flecs::Replication
 		}
 
 		Descriptor.Deserialize = Descriptor.Serialize;
+
+		if constexpr (requires { typename TFlecsReplicationTraits<T>::Quantizer; })
+		{
+			using FQuantizer = typename TFlecsReplicationTraits<T>::Quantizer;
+			if constexpr (requires { FQuantizer::GetFingerprint(); })
+			{
+				Descriptor.CodecFingerprint = FQuantizer::GetFingerprint();
+			}
+			else if constexpr (requires { FQuantizer::Fingerprint; })
+			{
+				Descriptor.CodecFingerprint = FQuantizer::Fingerprint;
+			}
+
+			if constexpr (std::is_copy_constructible_v<T>
+				&& requires(T& Value) { FQuantizer::Quantize(Value); })
+			{
+				Descriptor.QuantizeAndSerialize = [](FArchive& Archive, void* Value)
+				{
+					T Copy = *static_cast<T*>(Value);
+					FQuantizer::Quantize(Copy);
+					return static_cast<bool>(TFlecsReplicationTraits<T>::Serialize(Archive, Copy));
+				};
+			}
+		}
+
+		if (!Descriptor.QuantizeAndSerialize)
+		{
+			Descriptor.QuantizeAndSerialize = Descriptor.Serialize;
+		}
+
+		if constexpr (requires { TFlecsReplicationTraits<T>::UpdateFrequencyHz; })
+		{
+			Descriptor.UpdateFrequencyHz = FMath::Max(0.0f, TFlecsReplicationTraits<T>::UpdateFrequencyHz);
+		}
+
+		if constexpr (requires { TFlecsReplicationTraits<T>::ReplicationPriority; })
+		{
+			Descriptor.ReplicationPriority = FMath::Max(0.0f, TFlecsReplicationTraits<T>::ReplicationPriority);
+		}
 
 		if constexpr (std::is_default_constructible_v<T>)
 		{

@@ -14,10 +14,10 @@ class UFlecsNetworkingModuleSettings;
  * Per-UWorld coordinator for Flecs replication.
  *
  * On authority it assigns network identities, observes replicated component
- * mutations, builds layouts/snapshots, and publishes them through the selected
+ * mutations, builds layouts/updates, and publishes them through the selected
  * transport. On clients it validates queued protocol records and reconciles
  * remote Flecs entities. The subsystem owns protocol semantics; transports
- * only move layouts, snapshots, and removals.
+ * only move layouts, updates, and removals.
  */
 UCLASS()
 class UNREALFLECS_API UFlecsNetworkWorldSubsystem : public UFlecsAbstractWorldSubsystem
@@ -45,8 +45,33 @@ public:
 	/** Stops authority-side replication by identity, releasing the allocator slot. */
 	void StopReplicatingEntity(FFlecsNetworkId NetworkId);
 	
-	/** Marks a replicated entity for its next authoritative full snapshot. */
+	/** Marks all payload keys dirty; structural changes still force a full update. */
 	void MarkEntityDirty(const FFlecsEntityHandle& EntityHandle);
+
+	/** Marks one component or concrete pair dirty after an in-place mutation. */
+	void MarkComponentDirty(const FFlecsEntityHandle& EntityHandle, FFlecsId ComponentOrPairId);
+
+	template <typename T>
+	void MarkComponentDirty(const FFlecsEntityHandle& EntityHandle)
+	{
+		if (IsFlecsWorldValid())
+		{
+			MarkComponentDirty(EntityHandle, GetFlecsWorldChecked()->GetIdIfRegistered<T>());
+		}
+	}
+
+	/** Replaces the route-selection policy. Passing null restores the default router. */
+	void SetReplicationRouter(TUniquePtr<IFlecsReplicationRouter> InRouter);
+	/** Replaces custom and built-in connection relevance evaluation. */
+	void SetInterestPolicy(TUniquePtr<IFlecsReplicationInterestPolicy> InInterestPolicy);
+	/** Updates the owner/team/zone values associated with one Iris connection. */
+	void SetConnectionInterestContext(uint32 ConnectionId,
+		const FFlecsReplicationConnectionInterestContext& Context);
+	/** Evaluates a page descriptor against connection context and its current view. */
+	NO_DISCARD bool IsRouteRelevant(const FFlecsReplicationRouteDescriptor& Route, uint32 ConnectionId,
+		const FFlecsReplicationConnectionView& View) const;
+	/** Selects the entity's dormancy behavior. Dirty structure or state always wakes it for a flush. */
+	void SetReplicationDormancy(const FFlecsEntityHandle& EntityHandle, EFlecsReplicationDormancyMode Mode);
 
 	/** Enqueues a transport-delivered record for client-side processing on the world tick. */
 	void EnqueueReceivedRecord(FFlecsReplicationInboxRecord Record)
@@ -103,11 +128,25 @@ public:
 	void ResetClientReplicationForTesting()
 	{
 		LayoutRegistry = {};
-		DeferredSnapshots.Reset();
+		DeferredUpdates.Reset();
 		ClientSlotBindings.Reset();
 		LastAppliedStateRevisions.Reset();
+		LastAppliedLayoutIds.Reset();
 		EntitySourceShards.Reset();
 		EntityPairFixups.Reset();
+		MaterializedRemoteUpdates.Reset();
+		RemoteLayoutSources.Reset();
+		UpdateReassembler.Reset();
+	}
+
+	void SetReplicationTimeForTesting(double InSeconds)
+	{
+		TestingTimeSeconds = InSeconds;
+	}
+
+	void SetPayloadBudgetForTesting(uint32 InBytes)
+	{
+		TestingPayloadBudget = InBytes;
 	}
 	
 #endif
@@ -119,10 +158,43 @@ private:
 		uint32 StateRevision = 0;
 		uint32 CompositionRevision = 0;
 		FFlecsReplicationLayoutId LayoutId;
-		FFlecsReplicationRouteKey RouteKey = FFlecsReplicationRouteKey::Default();
+		FFlecsReplicationRouteDescriptor Route = FFlecsReplicationRouteDescriptor::Default();
+		TMap<uint16, TArray<uint8>> CanonicalValues;
+		TMap<uint16, TArray<uint8>> LastSentCanonicalValues;
+		TMap<uint16, TArray<uint8>> LastSentEncodedValues;
+		TMap<uint16, TArray<uint8>> PendingEncodedPayloads;
+		TMap<FFlecsReplicationSchemaId, double> LastSendTimes;
+		TSet<FFlecsId> DirtyComponentIds;
+		EFlecsReplicationDormancyMode DormancyMode = EFlecsReplicationDormancyMode::Automatic;
+		double LastDirtyTime = 0.0;
+		bool bAllPayloadDirty = true;
+		bool bNeedsFullUpdate = true;
+		bool bDormant = false;
 	};
 
-	/** Complete pair state from one source snapshot, waiting for its entity-target replica. */
+	struct FPublishedLayoutKey
+	{
+		FFlecsReplicationRouteDescriptor Route;
+		FFlecsReplicationLayoutId LayoutId;
+
+		friend bool operator==(const FPublishedLayoutKey&, const FPublishedLayoutKey&) = default;
+		friend uint32 GetTypeHash(const FPublishedLayoutKey& Key)
+		{
+			uint32 Hash = HashCombine(GetTypeHash(Key.Route.LogicalKey.Name), GetTypeHash(Key.Route.Audience));
+			Hash = HashCombine(Hash, GetTypeHash(Key.Route.Owner));
+			Hash = HashCombine(Hash, GetTypeHash(Key.Route.Team));
+			Hash = HashCombine(Hash, GetTypeHash(Key.Route.Zone));
+			Hash = HashCombine(Hash, GetTypeHash(Key.Route.CustomPolicy));
+			Hash = HashCombine(Hash, GetTypeHash(Key.Route.PollFrequency));
+			Hash = HashCombine(Hash, GetTypeHash(Key.Route.StaticPriority));
+			Hash = HashCombine(Hash, GetTypeHash(Key.Route.SchedulerWeight));
+			Hash = HashCombine(Hash, GetTypeHash(Key.Route.PageEntityLimit));
+			Hash = HashCombine(Hash, GetTypeHash(Key.Route.PageByteLimit));
+			return HashCombine(Hash, GetTypeHash(Key.LayoutId));
+		}
+	}; // struct FPublishedLayoutKey
+
+	/** Complete pair state from one accepted update, waiting for its entity-target replica. */
 	struct FEntityPairFixup
 	{
 		FFlecsNetworkId Source;
@@ -139,15 +211,18 @@ private:
 	
 	void GatherDirtyEntities();
 	void DrainInbox();
-	void ApplySnapshot(const FGuid& SourceShard, const FFlecsReplicatedEntitySnapshot& Snapshot);
-	void RemoveRemoteEntity(FFlecsNetworkId NetworkId);
+	void ApplyUpdate(const FGuid& SourceShard, const FFlecsReplicatedEntityUpdate& Update);
+	void ApplyMaterializedUpdate(const FGuid& SourceShard, const FFlecsReplicatedEntityUpdate& Update);
+	void RemoveRemoteEntity(FFlecsNetworkId NetworkId, const FGuid* ExpectedSource = nullptr);
 	void DetachRemoteShard(const FGuid& SourceShard);
+	void TryReclaimRemoteLayout(FFlecsReplicationLayoutId LayoutId);
 	void RetryEntityPairFixups();
 	void ApplyResolvedValue(const FFlecsEntityHandle& Entity, FFlecsId LocalId,
 		const FFlecsReplicationKey& Key, const TArray<uint8>* Payload) const;
 	bool ResolveKeyToLocalId(const FFlecsReplicationKey& Key, FFlecsId& OutId) const;
 	bool ValidateLayout(const FFlecsReplicationLayoutDefinition& Layout, FString& OutError) const;
 	void HandleWorldPreActorTick(UWorld* World, ELevelTick TickType, float DeltaSeconds);
+	NO_DISCARD double GetReplicationTimeSeconds() const;
 
 	NO_DISCARD TSolidNotNull<const UFlecsNetworkingModuleSettings*> GetNetworkingModuleSettings() const;
 
@@ -161,8 +236,7 @@ private:
 	UPROPERTY(Transient)
 	TSet<FFlecsNetworkId> DirtyEntities;
 	
-	UPROPERTY()
-	TSet<FString> PublishedLayoutRoutes;
+	TSet<FPublishedLayoutKey> PublishedLayoutRoutes;
 	
 	UPROPERTY()
 	TArray<FFlecsObserverHandle> DirtyObservers;
@@ -170,19 +244,25 @@ private:
 	FFlecsReplicationLayoutRegistry LayoutRegistry;
 	FFlecsReplicationInbox Inbox;
 	
-	TMap<FFlecsReplicationLayoutId, TArray<TPair<FGuid, FFlecsReplicatedEntitySnapshot>>> DeferredSnapshots;
+	TMap<FFlecsReplicationLayoutId, TArray<TPair<FGuid, FFlecsReplicatedEntityUpdate>>> DeferredUpdates;
+	TMap<FFlecsNetworkId, FFlecsReplicatedEntityUpdate> MaterializedRemoteUpdates;
+	FFlecsReplicationUpdateReassembler UpdateReassembler;
 	
 	UPROPERTY()
 	TMap<uint32, FFlecsNetworkId> ClientSlotBindings;
 	
 	UPROPERTY()
 	TMap<FFlecsNetworkId, uint32> LastAppliedStateRevisions;
+	TMap<FFlecsNetworkId, FFlecsReplicationLayoutId> LastAppliedLayoutIds;
 	
 	TMap<FFlecsNetworkId, FGuid> EntitySourceShards;
+	TMap<FFlecsReplicationLayoutId, TSet<FGuid>> RemoteLayoutSources;
 	
 	TArray<FEntityPairFixup> EntityPairFixups;
 	
 	TUniquePtr<IFlecsReplicationRouter> Router;
+	TUniquePtr<IFlecsReplicationInterestPolicy> InterestPolicy;
+	TMap<uint32, FFlecsReplicationConnectionInterestContext> ConnectionInterestContexts;
 	
 	FDelegateHandle PreActorTickHandle;
 	
@@ -190,6 +270,8 @@ private:
 
 #if WITH_AUTOMATION_TESTS || WITH_EDITOR
 	bool bForceClientModeForTesting = false;
+	TOptional<double> TestingTimeSeconds;
+	TOptional<uint32> TestingPayloadBudget;
 #endif
 
 	UPROPERTY(Transient)

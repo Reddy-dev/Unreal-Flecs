@@ -6,6 +6,34 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsReplicationTransportBase)
 
+bool FFlecsDefaultReplicationInterestPolicy::IsInterested(const FFlecsReplicationRouteDescriptor& Route,
+	const FFlecsReplicationConnectionInterestContext& Connection, const FFlecsReplicationConnectionView&) const
+{
+	switch (Route.Audience)
+	{
+	case EFlecsReplicationAudience::Everyone:
+		return true;
+	case EFlecsReplicationAudience::OwnerOnly:
+		return Route.Owner.IsValid() && Route.Owner == Connection.Owner;
+	case EFlecsReplicationAudience::Team:
+		return Route.Team != INDEX_NONE && Route.Team == Connection.Team;
+	case EFlecsReplicationAudience::Zone:
+		return !Route.Zone.IsNone() && Connection.Zones.Contains(Route.Zone);
+	case EFlecsReplicationAudience::Custom:
+	default:
+		return false;
+	}
+}
+
+void UFlecsReplicationTransportBase::MigrateEntity(const FFlecsReplicationRouteDescriptor& OldRoute,
+	const FFlecsReplicationRouteDescriptor& NewRoute, const FFlecsReplicationLayoutDefinition& Layout,
+	const FFlecsReplicatedEntityUpdate& FullUpdate)
+{
+	PublishLayout(NewRoute, Layout);
+	PublishEntity(NewRoute, FullUpdate);
+	RemoveEntity(OldRoute, FullUpdate.NetworkId);
+}
+
 namespace
 {
 	TMap<FName, TWeakObjectPtr<UClass>>& GetProviders()

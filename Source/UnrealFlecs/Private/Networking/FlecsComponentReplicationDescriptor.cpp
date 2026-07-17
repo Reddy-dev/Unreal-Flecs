@@ -131,9 +131,14 @@ bool FFlecsComponentReplicationDescriptor::IsValid(FString* OutError) const
 		return Fail(TEXT("Data component size/alignment is invalid"));
 	}
 	
-	if (!bIsTag && (!Serialize || !Deserialize || !Construct || !Destroy))
+	if (!bIsTag && (!Serialize || !QuantizeAndSerialize || !Deserialize || !Construct || !Destroy))
 	{
 		return Fail(TEXT("Native replication operations are incomplete"));
+	}
+
+	if (CodecFingerprint.IsEmpty() || UpdateFrequencyHz < 0.0f || ReplicationPriority < 0.0f)
+	{
+		return Fail(TEXT("Replication codec or scheduling metadata is invalid"));
 	}
 	
 	return true;

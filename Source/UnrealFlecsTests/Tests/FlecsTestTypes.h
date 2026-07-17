@@ -994,19 +994,39 @@ class UNREALFLECSTESTS_API UFlecsReplicationCaptureTransport : public UFlecsRepl
 	GENERATED_BODY()
 
 public:
-	virtual void PublishLayout(const FFlecsReplicationRouteKey&, const FFlecsReplicationLayoutDefinition& Layout) override
+	virtual void PublishLayout(const FFlecsReplicationRouteDescriptor& Route,
+		const FFlecsReplicationLayoutDefinition& Layout) override
 	{
 		Layouts.Add(Layout);
+		LayoutRoutes.Add(Route);
 	}
 	
-	virtual void PublishEntity(const FFlecsReplicationRouteKey&, const FFlecsReplicatedEntitySnapshot& Snapshot) override
+	virtual void PublishEntity(const FFlecsReplicationRouteDescriptor& Route,
+		const FFlecsReplicatedEntityUpdate& Update) override
 	{
-		Snapshots.Add(Snapshot);
+		Updates.Add(Update);
+		UpdateRoutes.Add(Route);
+	}
+
+	virtual void MigrateEntity(const FFlecsReplicationRouteDescriptor& OldRoute,
+		const FFlecsReplicationRouteDescriptor& NewRoute, const FFlecsReplicationLayoutDefinition& Layout,
+		const FFlecsReplicatedEntityUpdate& FullUpdate) override
+	{
+		MigrationOldRoutes.Add(OldRoute);
+		MigrationNewRoutes.Add(NewRoute);
+		PublishLayout(NewRoute, Layout);
+		PublishEntity(NewRoute, FullUpdate);
 	}
 	
-	virtual void RemoveEntity(const FFlecsReplicationRouteKey&, FFlecsNetworkId NetworkId) override
+	virtual void RemoveEntity(const FFlecsReplicationRouteDescriptor&, FFlecsNetworkId NetworkId) override
 	{
 		RemovedEntities.Add(NetworkId);
+	}
+
+	virtual void SetEntityDormancy(const FFlecsReplicationRouteDescriptor&, FFlecsNetworkId NetworkId,
+		bool bDormant) override
+	{
+		DormancyChanges.Emplace(NetworkId, bDormant);
 	}
 	
 	virtual void HandleProtocolError(const FString& Diagnostic) override
@@ -1015,7 +1035,12 @@ public:
 	}
 
 	TArray<FFlecsReplicationLayoutDefinition> Layouts;
-	TArray<FFlecsReplicatedEntitySnapshot> Snapshots;
+	TArray<FFlecsReplicationRouteDescriptor> LayoutRoutes;
+	TArray<FFlecsReplicatedEntityUpdate> Updates;
+	TArray<FFlecsReplicationRouteDescriptor> UpdateRoutes;
+	TArray<FFlecsReplicationRouteDescriptor> MigrationOldRoutes;
+	TArray<FFlecsReplicationRouteDescriptor> MigrationNewRoutes;
 	TArray<FFlecsNetworkId> RemovedEntities;
+	TArray<TPair<FFlecsNetworkId, bool>> DormancyChanges;
 	TArray<FString> ProtocolErrors;
 };

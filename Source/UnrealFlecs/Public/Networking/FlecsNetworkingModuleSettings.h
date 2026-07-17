@@ -21,12 +21,26 @@ public:
 	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Networking")
 	FName ReplicationProviderName = TEXT("Iris");
 
-	/** Poll frequency assigned to each Iris aggregate shard created by the default adapter. */
+	/** Poll frequency assigned to each Iris route page created by the default adapter. */
 	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Networking", meta = (ClampMin = "0.0"))
 	float DefaultShardPollFrequency = 20.0f;
 
-	/** Static priority assigned to each Iris aggregate shard created by the default adapter. */
+	/** Static priority assigned to each Iris route page created by the default adapter. */
 	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Networking", meta = (ClampMin = "0.0"))
 	float DefaultShardStaticPriority = 1.0f;
+
+	/** Encoded component payload budget per world tick. Zero is unlimited. */
+	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Networking", meta = (ClampMin = "0"))
+	uint32 MaxPayloadBytesPerTick = 0;
+
+	/** Clean time before an Automatic entity becomes dormant. */
+	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Networking", meta = (ClampMin = "0.0"))
+	float AutomaticDormancyDelaySeconds = 1.0f;
+
+	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Networking", meta = (ClampMin = "1"))
+	uint16 DefaultPageEntityLimit = 256;
+
+	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Networking", meta = (ClampMin = "1024"))
+	uint32 DefaultPageByteLimit = 256u * 1024u;
 	
 }; // class UFlecsNetworkingModuleSettings

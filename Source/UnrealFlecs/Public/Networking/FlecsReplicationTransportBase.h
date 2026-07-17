@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Networking/FlecsReplicationRouting.h"
 #include "Networking/FlecsReplicationTypes.h"
 
 #include "FlecsReplicationTransportBase.generated.h"
@@ -20,19 +21,51 @@ class UNREALFLECS_API IFlecsReplicationRouter
 public:
 	virtual ~IFlecsReplicationRouter() = default;
 
-	virtual FFlecsReplicationRouteKey Route(const FFlecsEntityHandle& Entity) const = 0;
+	virtual FFlecsReplicationRouteDescriptor Route(const FFlecsEntityHandle& Entity) const = 0;
 }; // class IFlecsReplicationRouter
 
 /** Default router: every entity uses the single `Default` route. */
 class UNREALFLECS_API FFlecsDefaultReplicationRouter final : public IFlecsReplicationRouter
 {
 public:
-	virtual FFlecsReplicationRouteKey Route(const FFlecsEntityHandle& InEntityHandle) const override
+	virtual FFlecsReplicationRouteDescriptor Route(const FFlecsEntityHandle& InEntityHandle) const override
 	{
-		return FFlecsReplicationRouteKey::Default();
+		if (const FFlecsReplicationRouting* Routing = InEntityHandle.TryGet<FFlecsReplicationRouting>())
+		{
+			return Routing->Route;
+		}
+		return FFlecsReplicationRouteDescriptor::Default();
 	}
 	
 }; // class FFlecsDefaultReplicationRouter final
+
+/** Game-provided relevance hook used for Custom audiences and spatial policies. */
+class UNREALFLECS_API IFlecsReplicationInterestPolicy
+{
+public:
+	virtual ~IFlecsReplicationInterestPolicy() = default;
+
+	virtual bool IsInterested(const FFlecsReplicationRouteDescriptor& Route,
+		const FFlecsReplicationConnectionInterestContext& Connection,
+		const FFlecsReplicationConnectionView& View) const = 0;
+}; // class IFlecsReplicationInterestPolicy
+
+/** Everyone/owner/team/zone implementation used unless a game supplies a policy. */
+class UNREALFLECS_API FFlecsDefaultReplicationInterestPolicy final : public IFlecsReplicationInterestPolicy
+{
+public:
+	virtual bool IsInterested(const FFlecsReplicationRouteDescriptor& Route,
+		const FFlecsReplicationConnectionInterestContext& Connection,
+		const FFlecsReplicationConnectionView& View) const override;
+}; // class FFlecsDefaultReplicationInterestPolicy final
+
+UENUM(BlueprintType)
+enum class EFlecsReplicationDormancyMode : uint8
+{
+	Automatic,
+	ForceAwake,
+	DormantUntilDirty
+}; // enum class EFlecsReplicationDormancyMode
 
 /**
  * Transport boundary for the Flecs-owned replication protocol.
@@ -40,7 +73,7 @@ public:
  * The core calls the publish methods only on authority. A transport receives
  * remote data by enqueueing FFlecsReplicationInboxRecord values on the network
  * subsystem; it must not deserialize component payloads or mutate Flecs
- * entities itself. Publish a layout before a snapshot that references it.
+ * entities itself. Publish a layout before an update that references it.
  */
 UCLASS(Abstract, Transient)
 class UNREALFLECS_API UFlecsReplicationTransportBase : public UObject
@@ -58,16 +91,25 @@ public:
 	virtual void TickTransport() {}
 	
 	/** Publishes an immutable structural definition for a route. */
-	virtual void PublishLayout(const FFlecsReplicationRouteKey& Route,
+	virtual void PublishLayout(const FFlecsReplicationRouteDescriptor& Route,
 		const FFlecsReplicationLayoutDefinition& Layout) PURE_VIRTUAL(UFlecsReplicationTransportBase::PublishLayout, );
 	
-	/** Publishes the newest complete state snapshot for one network entity. */
-	virtual void PublishEntity(const FFlecsReplicationRouteKey& Route,
-		const FFlecsReplicatedEntitySnapshot& Snapshot) PURE_VIRTUAL(UFlecsReplicationTransportBase::PublishEntity, );
+	/** Publishes one full baseline or same-layout component delta. */
+	virtual void PublishEntity(const FFlecsReplicationRouteDescriptor& Route,
+		const FFlecsReplicatedEntityUpdate& Update) PURE_VIRTUAL(UFlecsReplicationTransportBase::PublishEntity, );
+
+	/** Commits a full baseline to the new route before removing the old source. */
+	virtual void MigrateEntity(const FFlecsReplicationRouteDescriptor& OldRoute,
+		const FFlecsReplicationRouteDescriptor& NewRoute, const FFlecsReplicationLayoutDefinition& Layout,
+		const FFlecsReplicatedEntityUpdate& FullUpdate);
 	
 	/** Publishes authoritative removal of an entity from a route. */
-	virtual void RemoveEntity(const FFlecsReplicationRouteKey& Route,
+	virtual void RemoveEntity(const FFlecsReplicationRouteDescriptor& Route,
 		FFlecsNetworkId NetworkId) PURE_VIRTUAL(UFlecsReplicationTransportBase::RemoveEntity, );
+
+	/** Updates page-level dormancy bookkeeping for an entity. */
+	virtual void SetEntityDormancy(const FFlecsReplicationRouteDescriptor& Route,
+		FFlecsNetworkId NetworkId, bool bDormant) {}
 	
 	/** Handles a rejected remote layout or incompatible serialized protocol input. */
 	virtual void HandleProtocolError(const FString& Diagnostic);
