@@ -459,7 +459,7 @@ void UFlecsNetworkWorldSubsystem::DrainInbox()
 				TArray<TPair<FGuid, FFlecsReplicatedEntitySnapshot>> Pending = MoveTemp(*Deferred);
 				DeferredSnapshots.Remove(Record.Layout.LayoutId);
 				
-				for (const auto& Item : Pending)
+				for (const TPair<FGuid, FFlecsReplicatedEntitySnapshot>& Item : Pending)
 				{
 					ApplySnapshot(Item.Key, Item.Value);
 				}
