@@ -202,7 +202,7 @@ void UFlecsNetworkWorldSubsystem::MarkEntityDirty(const FFlecsEntityHandle& Enti
 	
 	const FFlecsNetworkId* NetworkId = EntityHandle.TryGet<FFlecsNetworkId>(); 
 	
-	if (NetworkId && NetworkId->IsValid())
+	if LIKELY_IF(NetworkId && NetworkId->IsValid())
 	{
 		DirtyEntities.Add(*NetworkId);
 		FReplicatedEntityState& State = EntityStates.FindOrAdd(*NetworkId);
@@ -228,7 +228,7 @@ void UFlecsNetworkWorldSubsystem::MarkComponentDirty(const FFlecsEntityHandle& E
 	}
 
 	const FFlecsNetworkId* NetworkId = EntityHandle.TryGet<FFlecsNetworkId>();
-	if (!NetworkId || !NetworkId->IsValid())
+	if UNLIKELY_IF(!NetworkId || !NetworkId->IsValid())
 	{
 		return;
 	}
@@ -237,6 +237,7 @@ void UFlecsNetworkWorldSubsystem::MarkComponentDirty(const FFlecsEntityHandle& E
 	FReplicatedEntityState& State = EntityStates.FindOrAdd(*NetworkId);
 	State.DirtyComponentIds.Add(ComponentOrPairId);
 	State.LastDirtyTime = GetReplicationTimeSeconds();
+	
 	if (State.bDormant)
 	{
 		State.bDormant = false;

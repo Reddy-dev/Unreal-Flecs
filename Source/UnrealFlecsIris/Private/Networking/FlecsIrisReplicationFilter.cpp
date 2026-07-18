@@ -21,14 +21,17 @@ FName UFlecsIrisReplicationFilter::GetFilterName()
 void UFlecsIrisReplicationFilter::RegisterPage(const UE::Net::FNetRefHandle Handle,
 	UFlecsIrisReplicationShard* Page)
 {
-	if (!Handle.IsValid() || !Page)
+	if UNLIKELY_IF(!Handle.IsValid() || !Page)
 	{
 		return;
 	}
+	
 	const UE::Net::FInternalNetRefIndex ObjectIndex = GetObjectIndex(Handle);
+	
 	if (UE::Net::IsValidInternalNetRefIndex(ObjectIndex))
 	{
 		Pages.Add(ObjectIndex, Page);
+		
 		NetworkSubsystem = Page->GetWorld()
 			? Page->GetWorld()->GetSubsystem<UFlecsNetworkWorldSubsystem>() : nullptr;
 	}
@@ -37,11 +40,13 @@ void UFlecsIrisReplicationFilter::RegisterPage(const UE::Net::FNetRefHandle Hand
 void UFlecsIrisReplicationFilter::OnInit(const FNetObjectFilterInitParams& Params)
 {
 	ReplicationSystem = Params.ReplicationSystem;
-	const UEngineReplicationBridge* EngineBridge = Params.ReplicationSystem
-		? Cast<UEngineReplicationBridge>(Params.ReplicationSystem->GetReplicationBridge()) : nullptr;
-	const UNetDriver* NetDriver = EngineBridge ? EngineBridge->GetNetDriver() : nullptr;
-	NetworkSubsystem = NetDriver && NetDriver->GetWorld()
-		? NetDriver->GetWorld()->GetSubsystem<UFlecsNetworkWorldSubsystem>() : nullptr;
+	
+	const TSolidNotNull<const UEngineReplicationBridge*> EngineBridge 
+		= CastChecked<UEngineReplicationBridge>(Params.ReplicationSystem->GetReplicationBridge());
+	
+	const TSolidNotNull<const UNetDriver*> NetDriver = EngineBridge->GetNetDriver();
+	
+	NetworkSubsystem = NetDriver->GetWorld()->GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
 }
 
 void UFlecsIrisReplicationFilter::OnDeinit()
@@ -53,6 +58,7 @@ void UFlecsIrisReplicationFilter::OnDeinit()
 			Subsystem->ClearConnectionInterestContext(ConnectionId);
 		}
 	}
+	
 	Connections.Reset();
 	Pages.Reset();
 	NetworkSubsystem.Reset();
@@ -62,6 +68,7 @@ void UFlecsIrisReplicationFilter::OnDeinit()
 void UFlecsIrisReplicationFilter::AddConnection(const uint32 ConnectionId)
 {
 	Super::AddConnection(ConnectionId);
+	
 	Connections.Add(ConnectionId);
 }
 
@@ -71,7 +78,9 @@ void UFlecsIrisReplicationFilter::RemoveConnection(const uint32 ConnectionId)
 	{
 		Subsystem->ClearConnectionInterestContext(ConnectionId);
 	}
+	
 	Connections.Remove(ConnectionId);
+	
 	Super::RemoveConnection(ConnectionId);
 }
 
@@ -99,6 +108,7 @@ void UFlecsIrisReplicationFilter::Filter(FNetObjectFilteringParams& Params)
 	{
 		const TWeakObjectPtr<UFlecsIrisReplicationShard>* PagePtr = Pages.Find(ObjectIndex);
 		UFlecsIrisReplicationShard* Page = PagePtr ? PagePtr->Get() : nullptr;
+		
 		if (!Page)
 		{
 			// Registration follows StartReplication in the same server tick. Do not
@@ -106,22 +116,29 @@ void UFlecsIrisReplicationFilter::Filter(FNetObjectFilteringParams& Params)
 			Params.OutAllowedObjects.SetBit(ObjectIndex);
 			return;
 		}
+		
 		UFlecsNetworkWorldSubsystem* Subsystem = Page->GetWorld()
 			? Page->GetWorld()->GetSubsystem<UFlecsNetworkWorldSubsystem>() : nullptr;
-		if (!Subsystem)
+		
+		if UNLIKELY_IF(!Subsystem)
 		{
 			return;
 		}
+		
 		FFlecsReplicationConnectionView View;
+		
 		for (const UE::Net::FReplicationView::FView& IrisView : Params.View.Views)
 		{
 			View.Positions.Add(IrisView.Pos);
 			View.Directions.Add(IrisView.Dir);
 		}
+		
 		const FFlecsReplicationRouteDescriptor& Route = Page->GetRouteDescriptor();
 		const bool bAllowed = Subsystem->IsInterestBindingRelevant(
 			Route.Interest, Route.LogicalKey.Name, Params.ConnectionId, View);
+		
 		Params.OutAllowedObjects.SetBitValue(ObjectIndex, bAllowed);
+		
 		if (bAllowed)
 		{
 			INC_DWORD_STAT(STAT_FlecsReplicationFilterAllowed);

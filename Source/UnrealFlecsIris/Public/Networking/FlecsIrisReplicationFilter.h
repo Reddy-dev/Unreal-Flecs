@@ -7,6 +7,7 @@
 
 #include "FlecsIrisReplicationFilter.generated.h"
 
+class UFlecsNetworkWorldSubsystem;
 class UFlecsIrisReplicationShard;
 class UReplicationSystem;
 
@@ -33,8 +34,15 @@ protected:
 	virtual void Filter(FNetObjectFilteringParams& Params) override;
 
 private:
+	UPROPERTY()
 	TWeakObjectPtr<UReplicationSystem> ReplicationSystem;
-	TWeakObjectPtr<class UFlecsNetworkWorldSubsystem> NetworkSubsystem;
+	
+	UPROPERTY()
+	TWeakObjectPtr<UFlecsNetworkWorldSubsystem> NetworkSubsystem;
+	
 	TMap<UE::Net::FInternalNetRefIndex, TWeakObjectPtr<UFlecsIrisReplicationShard>> Pages;
+	
+	UPROPERTY()
 	TSet<uint32> Connections;
+	
 }; // class UFlecsIrisReplicationFilter

@@ -3,6 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
+#include "Properties/FlecsComponentProperties.h"
+
 #include "Networking/FlecsReplicationTypes.h"
 
 #include "FlecsReplicationRouting.generated.h"
@@ -16,3 +19,9 @@ struct UNREALFLECS_API FFlecsReplicationRouting
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
 	FFlecsReplicationRouteDescriptor Route;
 }; // struct FFlecsReplicationRouting
+
+template <>
+struct TFlecsComponentTraits<FFlecsReplicationRouting> : public TFlecsComponentTraitsBase<FFlecsReplicationRouting>
+{
+	//static constexpr bool DontFragment = true;
+}; // struct TFlecsComponentTraits<FFlecsReplicationRouting>
