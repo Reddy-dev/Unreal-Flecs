@@ -26,8 +26,6 @@ void FUnrealFlecsModule::StartupModule()
 	FFlecsReplicationInterestPolicyRegistry::RegisterPolicy(
 		MakeUnique<FFlecsOwnerReplicationInterestPolicy>());
 	FFlecsReplicationInterestPolicyRegistry::RegisterPolicy(
-		MakeUnique<FFlecsTeamReplicationInterestPolicy>());
-	FFlecsReplicationInterestPolicyRegistry::RegisterPolicy(
 		MakeUnique<FFlecsZoneReplicationInterestPolicy>());
 	
 	FCoreDelegates::GetOnPostEngineInit().AddLambda([]()
@@ -44,8 +42,6 @@ void FUnrealFlecsModule::ShutdownModule()
 		FFlecsReplicationInterestPolicyNames::Everyone());
 	FFlecsReplicationInterestPolicyRegistry::UnregisterPolicy(
 		FFlecsReplicationInterestPolicyNames::Owner());
-	FFlecsReplicationInterestPolicyRegistry::UnregisterPolicy(
-		FFlecsReplicationInterestPolicyNames::Team());
 	FFlecsReplicationInterestPolicyRegistry::UnregisterPolicy(
 		FFlecsReplicationInterestPolicyNames::Zone());
 }

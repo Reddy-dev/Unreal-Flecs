@@ -136,6 +136,7 @@ void UFlecsIrisReplicationShard::InitializeServer(UWorld* InWorld,
 	EntityUpdateStream.SetOwner(this);
 
 	UE::Net::FRootObjectSettings Settings;
+	Settings.bIsNotRouted = true;
 	Settings.FactoryName = UFlecsIrisShardObjectFactory::GetFactoryName();
 	RootObjectAdapter = MakeUnique<UE::Net::FNetRootObjectAdapter>(Settings);
 	RootObjectAdapter->InitAdapter(this);
@@ -285,9 +286,8 @@ void UFlecsIrisReplicationShard::UpsertEntity(const FFlecsReplicatedEntityUpdate
 	BuildFlecsReplicationUpdateChunks(Materialized, BaselineChunks);
 	if (const int32* Index = EntityIndices.Find(Update.NetworkId))
 	{
-		// Keep the retained source baseline current without marking the item.
-		// Existing connections consume the selected-key update stream instead.
 		EntityBaselines.Items[*Index].Chunks = MoveTemp(BaselineChunks);
+		EntityBaselines.MarkItemDirty(EntityBaselines.Items[*Index]);
 	}
 	else
 	{

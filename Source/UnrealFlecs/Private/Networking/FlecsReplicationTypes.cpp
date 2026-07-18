@@ -21,12 +21,6 @@ FName FFlecsReplicationInterestPolicyNames::Owner()
 	return Name;
 }
 
-FName FFlecsReplicationInterestPolicyNames::Team()
-{
-	static const FName Name(TEXT("Team"));
-	return Name;
-}
-
 FName FFlecsReplicationInterestPolicyNames::Zone()
 {
 	static const FName Name(TEXT("Zone"));

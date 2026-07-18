@@ -1325,8 +1325,16 @@ void UFlecsNetworkWorldSubsystem::RemoveRemoteEntity(const FFlecsNetworkId Netwo
 		}
 
 		const FGuid* CurrentSource = EntitySourceShards.Find(NetworkId);
-		if (!CurrentSource || *CurrentSource != *ExpectedSource)
+		if (CurrentSource && *CurrentSource != *ExpectedSource)
 		{
+			return;
+		}
+		if (!CurrentSource)
+		{
+			EntityPairFixups.RemoveAll([NetworkId](const FEntityPairFixup& Fixup)
+			{
+				return Fixup.Source == NetworkId || Fixup.Target == NetworkId;
+			});
 			return;
 		}
 	}

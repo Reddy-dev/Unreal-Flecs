@@ -156,17 +156,6 @@ struct UNREALFLECS_API FFlecsReplicationOwnerInterestDescriptor
 	FFlecsNetworkId Owner;
 }; // struct FFlecsReplicationOwnerInterestDescriptor
 
-/** Team selected by the prebuilt Team policy. */
-USTRUCT(BlueprintType)
-struct UNREALFLECS_API FFlecsReplicationTeamInterestDescriptor
-	: public FFlecsReplicationInterestDescriptorBase
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
-	int32 Team = INDEX_NONE;
-}; // struct FFlecsReplicationTeamInterestDescriptor
-
 /** Zone selected by the prebuilt Zone policy. */
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsReplicationZoneInterestDescriptor
@@ -188,16 +177,6 @@ struct UNREALFLECS_API FFlecsReplicationOwnerInterestFragment
 	FFlecsNetworkId Owner;
 }; // struct FFlecsReplicationOwnerInterestFragment
 
-/** Connection-owned team consumed by the prebuilt Team policy. */
-USTRUCT(BlueprintType)
-struct UNREALFLECS_API FFlecsReplicationTeamInterestFragment
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
-	int32 Team = INDEX_NONE;
-}; // struct FFlecsReplicationTeamInterestFragment
-
 /** Connection-owned zone membership consumed by the prebuilt Zone policy. */
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsReplicationZoneInterestFragment
@@ -213,7 +192,6 @@ struct UNREALFLECS_API FFlecsReplicationInterestPolicyNames
 {
 	static FName Everyone();
 	static FName Owner();
-	static FName Team();
 	static FName Zone();
 }; // struct FFlecsReplicationInterestPolicyNames
 

@@ -24,9 +24,9 @@ struct TFlecsScalarReplicationQuantizer
 	static constexpr const TCHAR* Fingerprint = TEXT("ScalarDecimal");
 
 	template <typename T>
+	requires std::is_arithmetic_v<T>
 	static void Quantize(T& InOutValue)
 	{
-		static_assert(std::is_arithmetic_v<T>, "The scalar quantizer requires an arithmetic value");
 		const double Scale = FMath::Pow(10.0, DecimalPlaces);
 		InOutValue = static_cast<T>(FMath::RoundToDouble(static_cast<double>(InOutValue) * Scale) / Scale);
 	}
