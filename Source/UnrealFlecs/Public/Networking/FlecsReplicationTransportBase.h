@@ -147,19 +147,6 @@ protected:
 		const FFlecsReplicationInterestEvaluationQuery& Query) const override;
 }; // class FFlecsOwnerReplicationInterestPolicy
 
-class UNREALFLECS_API FFlecsTeamReplicationInterestPolicy final
-	: public TFlecsReplicationInterestPolicy<FFlecsReplicationTeamInterestDescriptor>
-{
-public:
-	FFlecsTeamReplicationInterestPolicy();
-
-protected:
-	virtual bool ValidateDescriptor(const FFlecsReplicationTeamInterestDescriptor& Descriptor,
-		FString& OutError) const override;
-	virtual bool IsInterested(const FFlecsReplicationTeamInterestDescriptor& Descriptor,
-		const FFlecsReplicationInterestEvaluationQuery& Query) const override;
-}; // class FFlecsTeamReplicationInterestPolicy
-
 class UNREALFLECS_API FFlecsZoneReplicationInterestPolicy final
 	: public TFlecsReplicationInterestPolicy<FFlecsReplicationZoneInterestDescriptor>
 {

@@ -26,6 +26,7 @@ namespace
 		}
 
 		VisitedStructs.Add(Struct);
+		
 		for (TFieldIterator<FProperty> Iterator(Struct); Iterator; ++Iterator)
 		{
 			if (ContainsUnstableObjectReference(*Iterator, VisitedStructs))
@@ -33,6 +34,7 @@ namespace
 				return true;
 			}
 		}
+		
 		return false;
 	}
 
@@ -45,27 +47,33 @@ namespace
 		{
 			return true;
 		}
+		
 		if (const FArrayProperty* ArrayProperty = CastField<FArrayProperty>(Property))
 		{
 			return ContainsUnstableObjectReference(ArrayProperty->Inner, VisitedStructs);
 		}
+		
 		if (const FSetProperty* SetProperty = CastField<FSetProperty>(Property))
 		{
 			return ContainsUnstableObjectReference(SetProperty->ElementProp, VisitedStructs);
 		}
+		
 		if (const FMapProperty* MapProperty = CastField<FMapProperty>(Property))
 		{
 			return ContainsUnstableObjectReference(MapProperty->KeyProp, VisitedStructs)
 				|| ContainsUnstableObjectReference(MapProperty->ValueProp, VisitedStructs);
 		}
+		
 		if (const FOptionalProperty* OptionalProperty = CastField<FOptionalProperty>(Property))
 		{
 			return ContainsUnstableObjectReference(OptionalProperty->GetValueProperty(), VisitedStructs);
 		}
+		
 		if (const FStructProperty* StructProperty = CastField<FStructProperty>(Property))
 		{
 			return StructContainsUnstableObjectReference(StructProperty->Struct, VisitedStructs);
 		}
+		
 		return false;
 	}
 
@@ -98,6 +106,7 @@ bool FFlecsOwnerReplicationInterestPolicy::ValidateDescriptor(
 		OutError = TEXT("Owner interest requires a valid owner network ID");
 		return false;
 	}
+	
 	return true;
 }
 
@@ -105,35 +114,8 @@ bool FFlecsOwnerReplicationInterestPolicy::IsInterested(
 	const FFlecsReplicationOwnerInterestDescriptor& Descriptor,
 	const FFlecsReplicationInterestEvaluationQuery& Query) const
 {
-	const FFlecsReplicationOwnerInterestFragment* Fragment =
-		Query.Context.Find<FFlecsReplicationOwnerInterestFragment>();
+	const FFlecsReplicationOwnerInterestFragment* Fragment = Query.Context.Find<FFlecsReplicationOwnerInterestFragment>();
 	return Fragment && Fragment->Owner == Descriptor.Owner;
-}
-
-FFlecsTeamReplicationInterestPolicy::FFlecsTeamReplicationInterestPolicy()
-	: TFlecsReplicationInterestPolicy<FFlecsReplicationTeamInterestDescriptor>(
-		FFlecsReplicationInterestPolicyNames::Team())
-{
-}
-
-bool FFlecsTeamReplicationInterestPolicy::ValidateDescriptor(
-	const FFlecsReplicationTeamInterestDescriptor& Descriptor, FString& OutError) const
-{
-	if (Descriptor.Team == INDEX_NONE)
-	{
-		OutError = TEXT("Team interest requires a valid team value");
-		return false;
-	}
-	return true;
-}
-
-bool FFlecsTeamReplicationInterestPolicy::IsInterested(
-	const FFlecsReplicationTeamInterestDescriptor& Descriptor,
-	const FFlecsReplicationInterestEvaluationQuery& Query) const
-{
-	const FFlecsReplicationTeamInterestFragment* Fragment =
-		Query.Context.Find<FFlecsReplicationTeamInterestFragment>();
-	return Fragment && Fragment->Team == Descriptor.Team;
 }
 
 FFlecsZoneReplicationInterestPolicy::FFlecsZoneReplicationInterestPolicy()
@@ -150,6 +132,7 @@ bool FFlecsZoneReplicationInterestPolicy::ValidateDescriptor(
 		OutError = TEXT("Zone interest requires a non-empty zone name");
 		return false;
 	}
+	
 	return true;
 }
 
@@ -157,8 +140,7 @@ bool FFlecsZoneReplicationInterestPolicy::IsInterested(
 	const FFlecsReplicationZoneInterestDescriptor& Descriptor,
 	const FFlecsReplicationInterestEvaluationQuery& Query) const
 {
-	const FFlecsReplicationZoneInterestFragment* Fragment =
-		Query.Context.Find<FFlecsReplicationZoneInterestFragment>();
+	const FFlecsReplicationZoneInterestFragment* Fragment = Query.Context.Find<FFlecsReplicationZoneInterestFragment>();
 	return Fragment && Fragment->Zones.Contains(Descriptor.Zone);
 }
 
@@ -221,6 +203,7 @@ bool FFlecsReplicationInterestPolicyRegistry::ValidateBinding(
 			*Binding.PolicyName.ToString());
 		return false;
 	}
+	
 	if (DescriptorStruct != Policy->GetDescriptorStruct())
 	{
 		OutError = FString::Printf(TEXT("Interest policy '%s' expects descriptor '%s', received '%s'"),
@@ -244,8 +227,10 @@ bool FFlecsReplicationInterestPolicyRegistry::ValidateBinding(
 			OutError = FString::Printf(TEXT("Interest policy '%s' rejected its descriptor"),
 				*Binding.PolicyName.ToString());
 		}
+		
 		return false;
 	}
+	
 	return true;
 }
 
