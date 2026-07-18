@@ -230,6 +230,44 @@ struct TFlecsComponentTraits<FFlecsTestStructValue_WithPropertyTraits> : public 
 }; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
 
 USTRUCT()
+struct FFlecsTestStruct_WithTypeRequirementA
+{
+	GENERATED_BODY()
+}; // struct FFlecsTestStruct_WithTypeRequirementA
+
+template <>
+struct TFlecsComponentTraits<FFlecsTestStruct_WithTypeRequirementA> : public TFlecsComponentTraitsBase<FFlecsTestStruct_WithTypeRequirementA>
+{
+	static constexpr bool AutoRegister = false;
+}; // struct TFlecsComponentTraits<FFlecsTestStruct_WithTypeRequirementA>
+
+USTRUCT()
+struct FFlecsTestStruct_WithTypeRequirementB
+{
+	GENERATED_BODY()
+}; // struct FFlecsTestStruct_WithTypeRequirementB
+
+template <>
+struct TFlecsComponentTraits<FFlecsTestStruct_WithTypeRequirementB> : public TFlecsComponentTraitsBase<FFlecsTestStruct_WithTypeRequirementB>
+{
+	static constexpr bool AutoRegister = false;
+}; // struct TFlecsComponentTraits<FFlecsTestStruct_WithTypeRequirementB>
+
+USTRUCT()
+struct FFlecsTestStruct_WithTypes
+{
+	GENERATED_BODY()
+}; // struct FFlecsTestStruct_WithTypes
+
+template <>
+struct TFlecsComponentTraits<FFlecsTestStruct_WithTypes> : public TFlecsComponentTraitsBase<FFlecsTestStruct_WithTypes>
+{
+	static constexpr bool AutoRegister = false;
+
+	using WithTypes = TTuple<FFlecsTestStruct_WithTypeRequirementA, FFlecsTestStruct_WithTypeRequirementB>;
+}; // struct TFlecsComponentTraits<FFlecsTestStruct_WithTypes>
+
+USTRUCT()
 struct FFlecsTestStruct_Toggleable
 {
 	GENERATED_BODY()

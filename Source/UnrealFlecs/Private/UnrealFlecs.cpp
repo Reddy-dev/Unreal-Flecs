@@ -25,7 +25,6 @@ void FUnrealFlecsModule::StartupModule()
 		FFlecsDefaultEntityEngine::Get().Initialize();
 	});
 	
-	
 }
 
 void FUnrealFlecsModule::ShutdownModule()

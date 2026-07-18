@@ -266,6 +266,29 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A2_UnrealFlecsComponentRegistrationTests,
 		ASSERT_THAT(IsTrue(StructEntity.Has(flecs::PairIsTag)));
 	}
 
+	TEST_METHOD(B11_WithTypes_CPPAPI)
+	{
+		const FFlecsComponentPropertiesDefinition ComponentProperties = FFlecsComponentPropertiesDefinition::Make<FFlecsTestStruct_WithTypes>();
+		ASSERT_THAT(IsTrue(ComponentProperties.WithTypes.Num() == 2));
+
+		const FFlecsComponentHandle RequirementA = FlecsWorld->RegisterComponentType<FFlecsTestStruct_WithTypeRequirementA>();
+		const FFlecsComponentHandle RequirementB = FlecsWorld->RegisterComponentType<FFlecsTestStruct_WithTypeRequirementB>();
+		const FFlecsComponentHandle Component = FlecsWorld->RegisterComponentType<FFlecsTestStruct_WithTypes>();
+
+		ASSERT_THAT(IsTrue(Component.HasPair(flecs::With, RequirementA.GetFlecsId())));
+		ASSERT_THAT(IsTrue(Component.HasPair(flecs::With, RequirementB.GetFlecsId())));
+	}
+
+	TEST_METHOD(B12_WithTypes_StaticStructAPI)
+	{
+		const FFlecsEntityHandle RequirementA = FlecsWorld->RegisterComponentType(FFlecsTestStruct_WithTypeRequirementA::StaticStruct());
+		const FFlecsEntityHandle RequirementB = FlecsWorld->RegisterComponentType(FFlecsTestStruct_WithTypeRequirementB::StaticStruct());
+		const FFlecsEntityHandle Component = FlecsWorld->RegisterComponentType(FFlecsTestStruct_WithTypes::StaticStruct());
+
+		ASSERT_THAT(IsTrue(Component.HasPair(flecs::With, RequirementA.GetFlecsId())));
+		ASSERT_THAT(IsTrue(Component.HasPair(flecs::With, RequirementB.GetFlecsId())));
+	}
+	
 	TEST_METHOD(C1_EnumComponentRegistration_CPPAPI)
 	{
 		const FFlecsEntityHandle EnumEntity = FlecsWorld->RegisterComponentType<EFlecsTestEnum_UENUM>();
