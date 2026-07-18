@@ -418,7 +418,7 @@ void Module_reparent_module_in_ctor(void) {
     test_assert(other != m);
 }
 
-void Module_implicitly_add_module_to_scopes_component(void) {
+void Module_component_scopes_do_not_become_modules(void) {
     flecs::world ecs;
 
     using StructLvl2_1 = NamespaceLvl1::NamespaceLvl2::StructLvl1::StructLvl2_1;
@@ -431,24 +431,24 @@ void Module_implicitly_add_module_to_scopes_component(void) {
 
     current = current.parent();
     test_assert(current.id() != 0);
-    test_assert(current.has(flecs::Module));
+    test_assert(!current.has(flecs::Module));
     test_assert(current.path() == "::NamespaceLvl1::NamespaceLvl2::StructLvl1");
 
     current = current.parent();
     test_assert(current.id() != 0);
-    test_assert(current.has(flecs::Module));
+    test_assert(!current.has(flecs::Module));
     test_assert(current.path() == "::NamespaceLvl1::NamespaceLvl2");
 
     current = current.parent();
     test_assert(current.id() != 0);
-    test_assert(current.has(flecs::Module));
+    test_assert(!current.has(flecs::Module));
     test_assert(current.path() == "::NamespaceLvl1");
 
     current = current.parent();
     test_assert(current.id() == 0);
 }
 
-void Module_implicitly_add_module_to_scopes_entity(void) {
+void Module_entity_scopes_do_not_become_modules(void) {
     flecs::world ecs;
 
     using StructLvl2_2 = NamespaceLvl1::NamespaceLvl2::StructLvl1::StructLvl2_2;
@@ -461,17 +461,17 @@ void Module_implicitly_add_module_to_scopes_entity(void) {
 
     current = current.parent();
     test_assert(current.id() != 0);
-    test_assert(current.has(flecs::Module));
+    test_assert(!current.has(flecs::Module));
     test_assert(current.path() == "::NamespaceLvl1::NamespaceLvl2::StructLvl1");
 
     current = current.parent();
     test_assert(current.id() != 0);
-    test_assert(current.has(flecs::Module));
+    test_assert(!current.has(flecs::Module));
     test_assert(current.path() == "::NamespaceLvl1::NamespaceLvl2");
 
     current = current.parent();
     test_assert(current.id() != 0);
-    test_assert(current.has(flecs::Module));
+    test_assert(!current.has(flecs::Module));
     test_assert(current.path() == "::NamespaceLvl1");
 
     current = current.parent();
@@ -638,8 +638,8 @@ END_DEFINE_SPEC(FFlecsModuleTestsSpec);
     "import_addons_two_worlds",
     "lookup_module_after_reparent",
     "reparent_module_in_ctor",
-    "implicitly_add_module_to_scopes_component",
-    "implicitly_add_module_to_scopes_entity",
+    "component_scopes_do_not_become_modules",
+    "entity_scopes_do_not_become_modules",
     "rename_namespace_shorter",
     "rename_namespace_longer",
     "rename_namespace_nested",
@@ -668,8 +668,8 @@ void FFlecsModuleTestsSpec::Define()
     It("Module_import_addons_two_worlds", [this]() { Module_import_addons_two_worlds(); });
     It("Module_lookup_module_after_reparent", [this]() { Module_lookup_module_after_reparent(); });
     It("Module_reparent_module_in_ctor", [this]() { Module_reparent_module_in_ctor(); });
-    It("Module_implicitly_add_module_to_scopes_component", [this]() { Module_implicitly_add_module_to_scopes_component(); });
-    It("Module_implicitly_add_module_to_scopes_entity", [this]() { Module_implicitly_add_module_to_scopes_entity(); });
+    It("Module_component_scopes_do_not_become_modules", [this]() { Module_component_scopes_do_not_become_modules(); });
+    It("Module_entity_scopes_do_not_become_modules", [this]() { Module_entity_scopes_do_not_become_modules(); });
     It("Module_rename_namespace_shorter", [this]() { Module_rename_namespace_shorter(); });
     It("Module_rename_namespace_longer", [this]() { Module_rename_namespace_longer(); });
     It("Module_rename_namespace_nested", [this]() { Module_rename_namespace_nested(); });
