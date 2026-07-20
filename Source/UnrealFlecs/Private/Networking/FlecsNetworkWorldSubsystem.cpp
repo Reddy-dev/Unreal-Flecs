@@ -803,7 +803,7 @@ bool UFlecsNetworkWorldSubsystem::ValidateLayout(const FFlecsReplicationLayoutDe
 		{
 			const FFlecsComponentReplicationDescriptor* Descriptor = Registry.Find(Schema);
 			
-			if (!Descriptor)
+			if UNLIKELY_IF(!Descriptor)
 			{
 				OutError = FString::Printf(TEXT("%s schema %s is not found in the local schema set"),
 					Role, *Schema.ToString());

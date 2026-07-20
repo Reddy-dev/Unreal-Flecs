@@ -57,6 +57,30 @@ FFlecsReplicationLayoutId FFlecsReplicationLayoutRegistry::ComputeLayoutId(
 	return FFlecsReplicationLayoutId(Guid);
 }
 
+
+FString FFlecsReplicationIndividualKey::CanonicalString() const
+{
+	FString Result;
+	
+	switch (Kind)
+	{
+		case EFlecsReplicationPairTargetKind::None:
+			break;
+		case EFlecsReplicationPairTargetKind::Schema:
+			Result = Schema.ToString();
+			break;
+		case EFlecsReplicationPairTargetKind::StableSymbolValue:
+		case EFlecsReplicationPairTargetKind::StablePathValue:
+			Result = StableIdentifier;
+			break;
+		case EFlecsReplicationPairTargetKind::Entity:
+			Result = Entity.GetValue() != 0 ? FString::Printf(TEXT("%llu"), Entity.GetValue()) : FString();
+			break;
+	}
+	
+	return Result;
+}
+
 FString FFlecsReplicationKey::CanonicalString() const
 {
 	/*return FString::Printf(TEXT("%u|%s|%u|%s|%u|%u|%s|%u|%s|%llu|%u"),
@@ -64,10 +88,24 @@ FString FFlecsReplicationKey::CanonicalString() const
 		*StorageSchema.ToString(), StorageVersion, static_cast<uint8>(TargetKind),
 		*TargetSchema.ToString(), TargetVersion, *StableTargetIdentifier,
 		EntityTarget.GetValue(), bHasPayload ? 1u : 0u);*/
-	return FString::Printf(TEXT("%u|%s|%s|%s|%s|%llu|%u"),
-		static_cast<uint8>(Kind), *RelationshipSchema.ToString(),
-		*StorageSchema.ToString(), *TargetSchema.ToString(),
-		*StableTargetIdentifier, EntityTarget.GetValue(), bHasPayload ? 1u : 0u);
+	
+	FString Result;
+	
+	if (Kind == EFlecsReplicationKeyKind::Component)
+	{
+		Result = Primary.CanonicalString();
+	}
+	else
+	{
+		Result = FString::Printf(TEXT("%s|%s"), *Primary.CanonicalString(), *Secondary.CanonicalString());
+	}
+	
+	if (bHasPayload)
+	{
+		Result += TEXT("|payload");
+	}
+	
+	return Result;
 }
 
 const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildForEntity(const TSolidNotNull<const UFlecsWorld*> World,
@@ -93,6 +131,7 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 	/*World->CreateQueryBuilder()
 		.With(flecs::DontFragment).Src("$Component")
 		.With("$Compoent")*/
+	
 	for (const FFlecsId Id : Entity.GetType())
 	{
 		if (!Id.IsPair())
@@ -115,12 +154,8 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 		// current alive IDs before using them as local registry keys.
 		const FFlecsEntityHandle RelationshipEntity = World->GetAlive(Id.GetFirst());
 		const FFlecsEntityHandle Target = World->GetAlive(Id.GetSecond());
-		const FFlecsId First = RelationshipEntity.IsValid()
-			? RelationshipEntity.GetFlecsId()
-			: Id.GetFirst();
-		const FFlecsId Second = Target.IsValid()
-			? Target.GetFlecsId()
-			: Id.GetSecond();
+		const FFlecsId First = RelationshipEntity.IsValid() ? RelationshipEntity.GetFlecsId() : Id.GetFirst();
+		const FFlecsId Second = Target.IsValid() ? Target.GetFlecsId() : Id.GetSecond();
 		
 		const FFlecsComponentReplicationDescriptor* Relationship = Registry.Find(First);
 		const FFlecsComponentReplicationDescriptor* Storage = GetPairStorageDescriptor(Registry, First, Second);

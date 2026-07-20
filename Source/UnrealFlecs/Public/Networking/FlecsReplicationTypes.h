@@ -62,6 +62,53 @@ enum class EFlecsReplicationPairTargetKind : uint8
 	Entity
 }; // enum class EFlecsReplicationPairTargetKind
 
+USTRUCT()
+struct UNREALFLECS_API FFlecsReplicationIndividualKey
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	EFlecsReplicationPairTargetKind Kind = EFlecsReplicationPairTargetKind::None;
+	
+	UPROPERTY()
+	FFlecsReplicationSchemaId Schema;
+	
+	UPROPERTY()
+	FString StableIdentifier;
+	
+	UPROPERTY()
+	FFlecsNetworkId Entity;
+	
+	FORCEINLINE friend bool operator==(const FFlecsReplicationIndividualKey&, const FFlecsReplicationIndividualKey&) = default;
+	
+	FORCEINLINE friend uint32 GetTypeHash(const FFlecsReplicationIndividualKey& Key)
+	{
+		uint32 Hash = GetTypeHash(Key.Kind);
+		
+		switch (Key.Kind)
+		{
+			case EFlecsReplicationPairTargetKind::None:
+				break;
+			case EFlecsReplicationPairTargetKind::Schema:
+				Hash = HashCombine(Hash, GetTypeHash(Key.Schema));
+				break;
+			case EFlecsReplicationPairTargetKind::StableSymbolValue:
+			case EFlecsReplicationPairTargetKind::StablePathValue:
+				Hash = HashCombine(Hash, GetTypeHash(Key.StableIdentifier));
+				break;
+			case EFlecsReplicationPairTargetKind::Entity:
+				Hash = HashCombine(Hash, GetTypeHash(Key.Entity));
+				break;
+		}
+		
+		return Hash;
+	}
+	
+	NO_DISCARD FString CanonicalString() const;
+	
+	
+}; // struct FFlecsReplicationIndividualKey
+
 /**
  * Stable, transport-safe representation of one replicated component or pair.
  *
@@ -80,27 +127,11 @@ struct UNREALFLECS_API FFlecsReplicationKey
 
 	/** Relationship schema; populated only when Kind is Pair. */
 	UPROPERTY()
-	FFlecsReplicationSchemaId RelationshipSchema;
-
-	/** Schema whose descriptor supplies the payload storage, if any. */
-	UPROPERTY()
-	FFlecsReplicationSchemaId StorageSchema;
+	FFlecsReplicationIndividualKey Primary;
 
 	/** Selects which of the target fields is meaningful for a pair key. */
 	UPROPERTY()
-	EFlecsReplicationPairTargetKind TargetKind = EFlecsReplicationPairTargetKind::None;
-
-	/** Target component schema when TargetKind is Schema. */
-	UPROPERTY()
-	FFlecsReplicationSchemaId TargetSchema;
-	
-	/** Peer-common symbol used to resolve a StableValue target on receipt. */
-	UPROPERTY()
-	FString StableTargetIdentifier;
-
-	/** Target entity identity when TargetKind is Entity. */
-	UPROPERTY()
-	FFlecsNetworkId EntityTarget;
+	FFlecsReplicationIndividualKey Secondary;
 
 	/** True when a snapshot contains serialized bytes for this structural key. */
 	UPROPERTY()
