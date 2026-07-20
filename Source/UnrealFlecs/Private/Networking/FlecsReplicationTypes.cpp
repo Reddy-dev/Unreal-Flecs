@@ -3,6 +3,7 @@
 #include "Networking/FlecsReplicationTypes.h"
 
 #include "Misc/SecureHash.h"
+#include "Networking/FlecsReplicatedTrait.h"
 #include "Networking/FlecsStablePathTag.h"
 #include "Serialization/MemoryWriter.h"
 
@@ -26,6 +27,63 @@ namespace
 		}
 		
 		return EFlecsReplicationKeyStorageKind::None;
+	}
+
+	NO_DISCARD bool IsReplicationStructureEligible(const TSolidNotNull<const UFlecsWorld*> World,
+		const FFlecsComponentReplicationRegistry& Registry, const FFlecsId Id)
+	{
+		if (Registry.Find(Id))
+		{
+			return true;
+		}
+
+		const FFlecsEntityHandle IdEntity = World->GetAlive(Id);
+		return IdEntity.IsValid()
+			&& (IdEntity.Has<FFlecsNetworkId>() || IdEntity.Has<FFlecsReplicatedTrait>() 
+				|| (IdEntity.HasSymbol() || (IdEntity.Has<FFlecsStablePathTag>() && IdEntity.HasName())));
+	}
+
+	NO_DISCARD bool TryBuildIndividualKey(const TSolidNotNull<const UFlecsWorld*> World,
+		const FFlecsComponentReplicationRegistry& Registry, const FFlecsId Id,
+		FFlecsReplicationIndividualKey& OutKey)
+	{
+		OutKey = {};
+
+		if (const FFlecsComponentReplicationDescriptor* Descriptor = Registry.Find(Id))
+		{
+			OutKey.Kind = EFlecsReplicationPairTargetKind::Schema;
+			OutKey.Schema = Descriptor->SchemaId;
+			return true;
+		}
+
+		const FFlecsEntityHandle IdEntity = World->GetAlive(Id);
+		if (!IdEntity.IsValid())
+		{
+			return false;
+		}
+
+		if (IdEntity.Has<FFlecsNetworkId>())
+		{
+			OutKey.Kind = EFlecsReplicationPairTargetKind::Entity;
+			OutKey.Entity = IdEntity.Get<FFlecsNetworkId>();
+			return true;
+		}
+
+		if (IdEntity.HasSymbol())
+		{
+			OutKey.Kind = EFlecsReplicationPairTargetKind::StableSymbolValue;
+			OutKey.StableIdentifier = IdEntity.GetSymbol();
+			return true;
+		}
+
+		if (IdEntity.Has<FFlecsStablePathTag>() && IdEntity.HasName())
+		{
+			OutKey.Kind = EFlecsReplicationPairTargetKind::StablePathValue;
+			OutKey.StableIdentifier = IdEntity.GetPath();
+			return true;
+		}
+
+		return false;
 	}
 	
 } // namespace
@@ -160,153 +218,57 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 	
 	for (const FFlecsId Id : Entity.GetType())
 	{
-			
-		// @TODO: Add Other Primary Support
-		FFlecsReplicationKey& Key = Keys.AddDefaulted_GetRef();
-		
+		FFlecsReplicationKey Key;
+
 		if (!Id.IsPair())
 		{
+			if (!IsReplicationStructureEligible(World, Registry, Id))
+			{
+				continue;
+			}
+
+			if UNLIKELY_IF(!TryBuildIndividualKey(World, Registry, Id, Key.Primary))
+			{
+				OutError = FString::Printf(TEXT("Cannot encode replicated component ID: %s"), *Id.ToString());
+				return nullptr;
+			}
+
 			const FFlecsComponentReplicationDescriptor* Descriptor = Registry.Find(Id);
 			
-			if (Descriptor)
-			{
-				Key.Primary.Kind = EFlecsReplicationPairTargetKind::Schema;
-				Key.Primary.Schema = Descriptor->SchemaId;
-			}
-			else
-			{
-				if UNLIKELY_IF (!Entity.IsValid())
-				{
-					OutError = FString::Printf(TEXT("Cannot build a replication layout for an unknown component: %s"), *Id.ToString());
-					return nullptr;
-				}
-				
-				if (Entity.Has<FFlecsNetworkId>())
-				{
-					Key.Primary.Kind = EFlecsReplicationPairTargetKind::Entity;
-					Key.Primary.Entity = Entity.Get<FFlecsNetworkId>();
-				}
-				else if (Entity.HasSymbol())
-				{
-					Key.Primary.Kind = EFlecsReplicationPairTargetKind::StableSymbolValue;
-					Key.Primary.StableIdentifier = Entity.GetSymbol();
-				}
-				else if (Entity.Has<FFlecsStablePathTag>() && Entity.HasName())
-				{
-					Key.Primary.Kind = EFlecsReplicationPairTargetKind::StablePathValue;
-					Key.Primary.StableIdentifier = Entity.GetPath();
-				}
-				else UNLIKELY_ATTRIBUTE
-				{
-					OutError = FString::Printf(TEXT("Cannot build a replication layout for an unknown component: %s"), *Id.ToString());
-					return nullptr;
-				}
-			}
-			
-			
 			Key.Kind = EFlecsReplicationKeyKind::Component;
-			Key.StorageKind = Descriptor && !Descriptor->bIsTag ? EFlecsReplicationKeyStorageKind::Primary : EFlecsReplicationKeyStorageKind::None;
+			Key.StorageKind = Descriptor && !Descriptor->bIsTag ? EFlecsReplicationKeyStorageKind::Primary 
+				: EFlecsReplicationKeyStorageKind::None;
 			
+			Keys.Add(MoveTemp(Key));
 			continue;
 		}
-		
-		Key.Kind = EFlecsReplicationKeyKind::Pair;
-		
-		
-		
+
 		// Pair storage omits entity generations from both elements. Restore the
 		// current alive IDs before using them as local registry keys.
 		const FFlecsEntityHandle RelationshipEntity = World->GetAlive(Id.GetFirst());
-		const FFlecsEntityHandle Target = World->GetAlive(Id.GetSecond());
-		
-		// how the fuck did you do this bro
-		solid_checkf(RelationshipEntity.IsValid(), 
-			TEXT("Cannot build a replication layout for a pair with an unknown relationship: %s"), *Id.ToString());
-		solid_checkf(Target.IsValid(),
-			TEXT("Cannot build a replication layout for a pair with an unknown target: %s"), *Id.ToString());
+		const FFlecsEntityHandle TargetEntity = World->GetAlive(Id.GetSecond());
 		
 		const FFlecsId First = RelationshipEntity.IsValid() ? RelationshipEntity.GetFlecsId() : Id.GetFirst();
-		const FFlecsId Second = Target.IsValid() ? Target.GetFlecsId() : Id.GetSecond();
-		
-		const FFlecsComponentReplicationDescriptor* RelationshipDescriptor = Registry.Find(First);
-		if (RelationshipDescriptor)
-		{
-			Key.Primary.Kind = EFlecsReplicationPairTargetKind::Schema;
-			Key.Primary.Schema = RelationshipDescriptor->SchemaId;
-		}
-		else
-		{
-			if UNLIKELY_IF (!RelationshipEntity.IsValid())
-			{
-				OutError = FString::Printf(TEXT("Cannot build a replication layout for a pair with an unknown relationship: %s"), 
-					*Id.ToString());
-				return nullptr;
-			}
-			
-			if (RelationshipEntity.Has<FFlecsNetworkId>())
-			{
-				Key.Primary.Kind = EFlecsReplicationPairTargetKind::Entity;
-				Key.Primary.Entity = RelationshipEntity.Get<FFlecsNetworkId>();
-			}
-			else if (RelationshipEntity.HasSymbol())
-			{
-				Key.Primary.Kind = EFlecsReplicationPairTargetKind::StableSymbolValue;
-				Key.Primary.StableIdentifier = RelationshipEntity.GetSymbol();
-			}
-			else if (RelationshipEntity.Has<FFlecsStablePathTag>() && RelationshipEntity.HasName())
-			{
-				Key.Primary.Kind = EFlecsReplicationPairTargetKind::StablePathValue;
-				Key.Primary.StableIdentifier = RelationshipEntity.GetPath();
-			}
-			else UNLIKELY_ATTRIBUTE
-			{
-				OutError = FString::Printf(TEXT("Cannot build a replication layout for a pair with an unknown relationship: %s"), 
-					*Id.ToString());
-				return nullptr;
-			}
-		}
+		const FFlecsId Second = TargetEntity.IsValid() ? TargetEntity.GetFlecsId() : Id.GetSecond();
 		
 		const EFlecsReplicationKeyStorageKind StorageKind = GetStorageKindForPair(Registry, First, Second);
-		
-		Key.StorageKind = StorageKind;
 
-		const FFlecsComponentReplicationDescriptor* TargetDescriptor = Registry.Find(Second);
-		if (TargetDescriptor)
+		if (StorageKind == EFlecsReplicationKeyStorageKind::None
+			&& !IsReplicationStructureEligible(World, Registry, First))
 		{
-			Key.Secondary.Kind = EFlecsReplicationPairTargetKind::Schema;
-			Key.Secondary.Schema = TargetDescriptor->SchemaId;
+			continue;
 		}
-		else
+
+		if UNLIKELY_IF(!TryBuildIndividualKey(World, Registry, First, Key.Primary)
+			|| !TryBuildIndividualKey(World, Registry, Second, Key.Secondary))
 		{
-			if UNLIKELY_IF (!Target.IsValid())
-			{
-				OutError = FString::Printf(TEXT("Cannot build a replication layout for a pair with an unknown target: %s"), 
-					*Id.ToString());
-				return nullptr;
-			}
-			
-			if (Target.Has<FFlecsNetworkId>())
-			{
-				Key.Secondary.Kind = EFlecsReplicationPairTargetKind::Entity;
-				Key.Secondary.Entity = Target.Get<FFlecsNetworkId>();
-			}
-			else if (Target.HasSymbol())
-			{
-				Key.Secondary.Kind = EFlecsReplicationPairTargetKind::StableSymbolValue;
-				Key.Secondary.StableIdentifier = Target.GetSymbol();
-			}
-			else if (Target.Has<FFlecsStablePathTag>() && Target.HasName())
-			{
-				Key.Secondary.Kind = EFlecsReplicationPairTargetKind::StablePathValue;
-				Key.Secondary.StableIdentifier = Target.GetPath();
-			}
-			else UNLIKELY_ATTRIBUTE
-			{
-				OutError = FString::Printf(TEXT("Cannot build a replication layout for a pair with an unknown target: %s"), 
-					*Id.ToString());
-				return nullptr;
-			}
+			OutError = FString::Printf(TEXT("Cannot encode replicated pair ID: %s"), *Id.ToString());
+			return nullptr;
 		}
+
+		Key.Kind = EFlecsReplicationKeyKind::Pair;
+		Key.StorageKind = StorageKind;
+		Keys.Add(MoveTemp(Key));
 	}
 
 	Keys.Sort([](const FFlecsReplicationKey& A, const FFlecsReplicationKey& B)

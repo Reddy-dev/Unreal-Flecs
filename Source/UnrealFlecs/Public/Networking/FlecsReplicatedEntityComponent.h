@@ -11,8 +11,9 @@
  *
  * Adding it on a server/listen server assigns an FFlecsNetworkId and starts
  * replication. Removing it, or destroying the entity, publishes a removal.
- * Only component types registered with Replicate enabled are included in the
- * entity's replicated layout and payload.
+ * Descriptor-backed components and explicitly eligible descriptor-free
+ * structural IDs are included in the entity's replicated layout. Only keys
+ * with a component replication descriptor can carry payload bytes.
  */
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsReplicatedEntityComponent

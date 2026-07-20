@@ -7,11 +7,14 @@
 #include "FlecsReplicatedTrait.generated.h"
 
 /**
- * Internal marker placed on component types registered with Replicate enabled.
+ * Marker for Flecs IDs whose structure participates in replication.
  *
- * This identifies a replicated component definition to Flecs observers; it is
- * not the per-entity replication opt-in. Use FFlecsReplicatedEntityComponent
- * to mark an entity for replication.
+ * Component types registered with Replicate enabled receive this automatically.
+ * It may also be added explicitly to a stable-symbol or stable-path ID entity
+ * that should replicate structurally without a payload descriptor. Networked ID
+ * entities are structurally eligible through FFlecsNetworkId instead. This is
+ * not the per-entity replication opt-in; use FFlecsReplicatedEntityComponent to
+ * mark an entity whose state should be gathered and published.
  */
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsReplicatedTrait

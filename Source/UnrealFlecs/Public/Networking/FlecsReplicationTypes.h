@@ -51,7 +51,7 @@ enum class EFlecsReplicationKeyKind : uint8
 	Pair
 }; // enum class EFlecsReplicationKeyKind
 
-/** Portable encoding used for the second element of a replicated pair. */
+/** Portable encoding used for either individual element of a replicated ID. */
 UENUM()
 enum class EFlecsReplicationPairTargetKind : uint8
 {
@@ -122,10 +122,10 @@ enum class EFlecsReplicationKeyStorageKind : uint8
 /**
  * Stable, transport-safe representation of one replicated component or pair.
  *
- * A key describes structure only. When bHasPayload is true, a snapshot carries
- * bytes for it through a FFlecsReplicatedValue indexed by this key's position
- * in the layout. Local FFlecsId values are reconstructed after schema
- * validation on the receiving world.
+ * A key always describes structure. When StorageKind selects an individual, a
+ * snapshot may carry bytes through a FFlecsReplicatedValue indexed by this
+ * key's position in the layout. Local FFlecsId values are reconstructed after
+ * identity validation on the receiving world.
  */
 USTRUCT()
 struct UNREALFLECS_API FFlecsReplicationKey
@@ -138,11 +138,11 @@ struct UNREALFLECS_API FFlecsReplicationKey
 	UPROPERTY()
 	EFlecsReplicationKeyStorageKind StorageKind = EFlecsReplicationKeyStorageKind::None;
 
-	/** Relationship schema; populated only when Kind is Pair. */
+	/** Standalone ID, or the first element when Kind is Pair. */
 	UPROPERTY()
 	FFlecsReplicationIndividualKey Primary;
 
-	/** Selects which of the target fields is meaningful for a pair key. */
+	/** Second element when Kind is Pair. */
 	UPROPERTY()
 	FFlecsReplicationIndividualKey Secondary;
 
