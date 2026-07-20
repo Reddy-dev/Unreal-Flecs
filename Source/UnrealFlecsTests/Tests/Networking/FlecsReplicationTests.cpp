@@ -112,7 +112,7 @@ namespace UE::Flecs::Tests
 		for (FFlecsReplicatedValue& Serialized : Snapshot.Values)
 		{
 			if (Layout.Keys.IsValidIndex(Serialized.KeyIndex)
-				&& Layout.Keys[Serialized.KeyIndex].StorageSchema == Descriptor->SchemaId)
+				&& Layout.Keys[Serialized.KeyIndex].TryGetStorageDescriptor(World) == Descriptor)
 			{
 				Serialized.Bytes.Reset();
 				FMemoryWriter Writer(Serialized.Bytes, true);
@@ -135,7 +135,7 @@ namespace UE::Flecs::Tests
 		{
 			if (Layout.Keys.IsValidIndex(Serialized.KeyIndex)
 				&& Layout.Keys[Serialized.KeyIndex].Kind == EFlecsReplicationKeyKind::Pair
-				&& Layout.Keys[Serialized.KeyIndex].StorageSchema == Descriptor->SchemaId)
+				&& Layout.Keys[Serialized.KeyIndex].TryGetStorageDescriptor(World) == Descriptor)
 			{
 				Serialized.Bytes.Reset();
 				FMemoryWriter Writer(Serialized.Bytes, true);
@@ -360,9 +360,9 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 				FlecsWorld->GetIdIfRegistered<FFlecsReplicationTestDontFragmentValue>());
 		ASSERT_THAT(IsNotNull(DontFragmentDescriptor));
 		ASSERT_THAT(IsTrue(AddedLayout->Keys.ContainsByPredicate(
-			[DontFragmentDescriptor](const FFlecsReplicationKey& Key)
+			[FlecsWorld = FlecsWorld, DontFragmentDescriptor](const FFlecsReplicationKey& Key)
 			{
-				return Key.StorageSchema == DontFragmentDescriptor->SchemaId;
+				return Key.TryGetStorageDescriptor(FlecsWorld) == DontFragmentDescriptor;
 			})));
 
 		const flecs::table_t* TableBeforeRemoval = Source.GetEntity().table().get_table();
@@ -407,22 +407,148 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 		
 		const FFlecsEntityHandle NetworkTarget = FlecsWorld->CreateEntity();
 		const FFlecsNetworkId TargetId = NetworkSubsystem->BeginReplicatingEntity(NetworkTarget);
+		
 		const FFlecsEntityHandle Source = FlecsWorld->CreateEntity()
 			.AddPair<FFlecsReplicationTestRelationship>(StaticTarget)
 			.AddPair<FFlecsReplicationTestRelationship>(NetworkTarget);
+		
 		const UE::Flecs::Tests::FCapturedReplicationEntity Captured =
 			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Source);
 
 		ASSERT_THAT(AreEqual(2, Captured.Layout.Keys.Num()));
 		ASSERT_THAT(IsTrue(Captured.Layout.Keys.ContainsByPredicate([](const FFlecsReplicationKey& Key)
 		{
-			return Key.TargetKind == EFlecsReplicationPairTargetKind::StablePathValue;
+			return Key.Secondary.Kind == EFlecsReplicationPairTargetKind::StablePathValue;
 		})));
 		
 		ASSERT_THAT(IsTrue(Captured.Layout.Keys.ContainsByPredicate([TargetId](const FFlecsReplicationKey& Key)
 		{
-			return Key.TargetKind == EFlecsReplicationPairTargetKind::Entity && Key.EntityTarget == TargetId;
+			return Key.Secondary.Kind == EFlecsReplicationPairTargetKind::Entity
+				&& Key.Secondary.Entity == TargetId;
 		})));
+	}
+
+	TEST_METHOD(DescriptorFreeIndividuals_ResolveStandaloneAndPairStructure)
+	{
+		const FFlecsEntityHandle SymbolPrimary = FlecsWorld->CreateEntity();
+		SymbolPrimary.GetEntity().set_symbol("ReplicationSymbolPrimary");
+		const FFlecsEntityHandle SymbolSecondary = FlecsWorld->CreateEntity();
+		SymbolSecondary.GetEntity().set_symbol("ReplicationSymbolSecondary");
+		const FFlecsEntityHandle PathPrimary = FlecsWorld->CreateEntity(TEXT("ReplicationPathPrimary"))
+			.Add<FFlecsStablePathTag>();
+		const FFlecsEntityHandle PathSecondary = FlecsWorld->CreateEntity(TEXT("ReplicationPathSecondary"))
+			.Add<FFlecsStablePathTag>();
+
+		const FFlecsNetworkId NetworkPrimaryId(1001, 1, 91);
+		const FFlecsNetworkId NetworkSecondaryId(1002, 1, 91);
+		const FFlecsNetworkId SourceId(1003, 1, 91);
+		const FGuid Shard = FGuid::NewGuid();
+
+		auto MakeEntityKey = [](const FFlecsNetworkId NetworkId)
+		{
+			FFlecsReplicationIndividualKey Key;
+			Key.Kind = EFlecsReplicationPairTargetKind::Entity;
+			Key.Entity = NetworkId;
+			return Key;
+		};
+		auto MakeStableKey = [](const EFlecsReplicationPairTargetKind Kind, const FString& Identifier)
+		{
+			FFlecsReplicationIndividualKey Key;
+			Key.Kind = Kind;
+			Key.StableIdentifier = Identifier;
+			return Key;
+		};
+		auto MakeComponentKey = [](const FFlecsReplicationIndividualKey& Primary)
+		{
+			FFlecsReplicationKey Key;
+			Key.Kind = EFlecsReplicationKeyKind::Component;
+			Key.StorageKind = EFlecsReplicationKeyStorageKind::None;
+			Key.Primary = Primary;
+			return Key;
+		};
+		auto MakePairKey = [](const FFlecsReplicationIndividualKey& Primary,
+			const FFlecsReplicationIndividualKey& Secondary)
+		{
+			FFlecsReplicationKey Key;
+			Key.Kind = EFlecsReplicationKeyKind::Pair;
+			Key.StorageKind = EFlecsReplicationKeyStorageKind::None;
+			Key.Primary = Primary;
+			Key.Secondary = Secondary;
+			return Key;
+		};
+
+		const FFlecsReplicationIndividualKey NetworkPrimaryKey = MakeEntityKey(NetworkPrimaryId);
+		const FFlecsReplicationIndividualKey NetworkSecondaryKey = MakeEntityKey(NetworkSecondaryId);
+		const FFlecsReplicationIndividualKey SymbolPrimaryKey = MakeStableKey(
+			EFlecsReplicationPairTargetKind::StableSymbolValue, SymbolPrimary.GetSymbol());
+		const FFlecsReplicationIndividualKey SymbolSecondaryKey = MakeStableKey(
+			EFlecsReplicationPairTargetKind::StableSymbolValue, SymbolSecondary.GetSymbol());
+		const FFlecsReplicationIndividualKey PathPrimaryKey = MakeStableKey(
+			EFlecsReplicationPairTargetKind::StablePathValue, PathPrimary.GetPath());
+		const FFlecsReplicationIndividualKey PathSecondaryKey = MakeStableKey(
+			EFlecsReplicationPairTargetKind::StablePathValue, PathSecondary.GetPath());
+
+		FFlecsReplicationLayoutDefinition EmptyLayout;
+		EmptyLayout.LayoutId = FFlecsReplicationLayoutRegistry::ComputeLayoutId(EmptyLayout.Keys);
+
+		FFlecsReplicationLayoutDefinition StructureLayout;
+		StructureLayout.Keys = {
+			MakeComponentKey(NetworkPrimaryKey),
+			MakeComponentKey(SymbolPrimaryKey),
+			MakeComponentKey(PathPrimaryKey),
+			MakePairKey(NetworkPrimaryKey, NetworkSecondaryKey),
+			MakePairKey(SymbolPrimaryKey, SymbolSecondaryKey),
+			MakePairKey(PathPrimaryKey, PathSecondaryKey)
+		};
+		StructureLayout.Keys.Sort([](const FFlecsReplicationKey& A, const FFlecsReplicationKey& B)
+		{
+			return A.CanonicalString() < B.CanonicalString();
+		});
+		StructureLayout.LayoutId = FFlecsReplicationLayoutRegistry::ComputeLayoutId(StructureLayout.Keys);
+
+		for (const FFlecsReplicationKey& Key : StructureLayout.Keys)
+		{
+			ASSERT_THAT(IsTrue(Key.StorageKind == EFlecsReplicationKeyStorageKind::None));
+			ASSERT_THAT(IsNull(Key.TryGetStorageDescriptor(FlecsWorld)));
+		}
+
+		NetworkSubsystem->ResetClientReplicationForTesting();
+		NetworkSubsystem->EnterClientReplicationModeForTesting();
+		UE::Flecs::Tests::EnqueueLayout(NetworkSubsystem, Shard, EmptyLayout);
+
+		for (const FFlecsNetworkId NetworkId : { NetworkPrimaryId, NetworkSecondaryId })
+		{
+			FFlecsReplicatedEntitySnapshot Snapshot;
+			Snapshot.NetworkId = NetworkId;
+			Snapshot.StateRevision = 1;
+			Snapshot.CompositionRevision = 1;
+			Snapshot.LayoutId = EmptyLayout.LayoutId;
+			UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, Shard, Snapshot);
+		}
+		NetworkSubsystem->FlushClientReplicationForTesting();
+
+		const FFlecsEntityHandle NetworkPrimary = NetworkSubsystem->FindEntity(NetworkPrimaryId);
+		const FFlecsEntityHandle NetworkSecondary = NetworkSubsystem->FindEntity(NetworkSecondaryId);
+		ASSERT_THAT(IsTrue(NetworkPrimary.IsValid()));
+		ASSERT_THAT(IsTrue(NetworkSecondary.IsValid()));
+
+		FFlecsReplicatedEntitySnapshot SourceSnapshot;
+		SourceSnapshot.NetworkId = SourceId;
+		SourceSnapshot.StateRevision = 1;
+		SourceSnapshot.CompositionRevision = 1;
+		SourceSnapshot.LayoutId = StructureLayout.LayoutId;
+		UE::Flecs::Tests::EnqueueLayout(NetworkSubsystem, Shard, StructureLayout);
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, Shard, SourceSnapshot);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+
+		const FFlecsEntityHandle RemoteSource = NetworkSubsystem->FindEntity(SourceId);
+		ASSERT_THAT(IsTrue(RemoteSource.IsValid()));
+		ASSERT_THAT(IsTrue(RemoteSource.Has(NetworkPrimary)));
+		ASSERT_THAT(IsTrue(RemoteSource.Has(SymbolPrimary)));
+		ASSERT_THAT(IsTrue(RemoteSource.Has(PathPrimary)));
+		ASSERT_THAT(IsTrue(RemoteSource.HasPair(NetworkPrimary, NetworkSecondary)));
+		ASSERT_THAT(IsTrue(RemoteSource.HasPair(SymbolPrimary, SymbolSecondary)));
+		ASSERT_THAT(IsTrue(RemoteSource.HasPair(PathPrimary, PathSecondary)));
 	}
 
 	TEST_METHOD(DirtyEvents_CoalesceToFinalComposition_AndIncludeWithTypes)

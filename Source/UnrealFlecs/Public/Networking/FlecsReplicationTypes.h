@@ -301,13 +301,13 @@ public:
 	
 	/** Builds or reuses a local layout for Entity's current Flecs table. */
 	const FFlecsReplicationLayoutDefinition* BuildForEntity(const TSolidNotNull<const UFlecsWorld*> World,
-		const FFlecsEntityHandle& Entity, bool& bOutWasCreated, FString& OutError);
+		const FFlecsEntityHandle& Entity, bool& bOutWasCreated, OUT FString& OutError);
 	
 	/** Finds a previously generated or accepted layout definition. */
 	NO_DISCARD const FFlecsReplicationLayoutDefinition* Find(FFlecsReplicationLayoutId Id) const;
 	
 	/** Adds an already validated remote layout, rejecting identity collisions. */
-	bool AddRemoteDefinition(const FFlecsReplicationLayoutDefinition& Definition, FString& OutError);
+	bool AddRemoteDefinition(const FFlecsReplicationLayoutDefinition& Definition, OUT FString& OutError);
 
 private:
 	// @TODO: Handle Table destruction and remove from cache.
