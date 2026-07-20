@@ -990,6 +990,7 @@ template<>
 struct TFlecsComponentTraits<FFlecsReplicationTestRelationship> : TFlecsComponentTraitsBase<FFlecsReplicationTestRelationship>
 {
 	static constexpr bool AutoRegister = false;
+	
 	static constexpr bool Replicate = true;
 	static constexpr bool Relationship = true;
 };
@@ -1007,6 +1008,7 @@ template <>
 struct TFlecsComponentTraits<FFlecsReplicationTestValueRelationship> : TFlecsComponentTraitsBase<FFlecsReplicationTestValueRelationship>
 {
 	static constexpr bool AutoRegister = false;
+	
 	static constexpr bool Replicate = true;
 	static constexpr bool Relationship = true;
 };
@@ -1056,4 +1058,4 @@ public:
 	TArray<FFlecsReplicatedEntitySnapshot> Snapshots;
 	TArray<FFlecsNetworkId> RemovedEntities;
 	TArray<FString> ProtocolErrors;
-};
+}; // class UFlecsReplicationCaptureTransport

@@ -139,14 +139,22 @@ private:
 	
 	void GatherDirtyEntities();
 	void DrainInbox();
+	
 	void ApplySnapshot(const FGuid& SourceShard, const FFlecsReplicatedEntitySnapshot& Snapshot);
 	void RemoveRemoteEntity(FFlecsNetworkId NetworkId);
 	void DetachRemoteShard(const FGuid& SourceShard);
+	
 	void RetryEntityPairFixups();
 	void ApplyResolvedValue(const FFlecsEntityHandle& Entity, FFlecsId LocalId,
 		const FFlecsReplicationKey& Key, const TArray<uint8>* Payload) const;
-	bool ResolveKeyToLocalId(const FFlecsReplicationKey& Key, FFlecsId& OutId) const;
-	bool ValidateLayout(const FFlecsReplicationLayoutDefinition& Layout, FString& OutError) const;
+	
+	bool ResolveIndividualKeyToLocalId(const FFlecsReplicationIndividualKey& Key, OUT FFlecsId& OutId) const;
+	bool ResolveKeyToLocalId(const FFlecsReplicationKey& Key, OUT FFlecsId& OutId) const;
+	
+	NO_DISCARD bool ValidateReplicationIndividualKey(const FFlecsReplicationIndividualKey& Key, OUT FString& OutError) const;
+	NO_DISCARD bool ValidateReplicationKey(const FFlecsReplicationKey& Key, OUT FString& OutError) const;
+	NO_DISCARD bool ValidateLayout(const FFlecsReplicationLayoutDefinition& Layout, OUT FString& OutError) const;
+	
 	void HandleWorldPreActorTick(UWorld* World, ELevelTick TickType, float DeltaSeconds);
 
 	NO_DISCARD TSolidNotNull<const UFlecsNetworkingModuleSettings*> GetNetworkingModuleSettings() const;

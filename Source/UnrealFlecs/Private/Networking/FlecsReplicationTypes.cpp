@@ -10,25 +10,25 @@
 
 namespace
 {
-	const FFlecsComponentReplicationDescriptor* GetPairStorageDescriptor(
-		const FFlecsComponentReplicationRegistry& Registry, const FFlecsId First, const FFlecsId Second)
+	NO_DISCARD EFlecsReplicationKeyStorageKind GetStorageKindForPair(const FFlecsComponentReplicationRegistry& Registry,
+		const FFlecsId First, const FFlecsId Second)
 	{
 		const FFlecsComponentReplicationDescriptor* FirstDescriptor = Registry.Find(First);
 		if (FirstDescriptor && !FirstDescriptor->bIsTag)
 		{
-			return FirstDescriptor;
+			return EFlecsReplicationKeyStorageKind::Primary;
 		}
 		
 		const FFlecsComponentReplicationDescriptor* SecondDescriptor = Registry.Find(Second);
 		if (SecondDescriptor && !SecondDescriptor->bIsTag)
 		{
-			return SecondDescriptor;
+			return EFlecsReplicationKeyStorageKind::Secondary;
 		}
 		
-		return FirstDescriptor ? FirstDescriptor : SecondDescriptor;
+		return EFlecsReplicationKeyStorageKind::None;
 	}
 	
-}
+} // namespace
 
 FFlecsReplicationLayoutId FFlecsReplicationLayoutRegistry::ComputeLayoutId(
 	const TArray<FFlecsReplicationKey>& Keys)
@@ -81,6 +81,17 @@ FString FFlecsReplicationIndividualKey::CanonicalString() const
 	return Result;
 }
 
+const FFlecsComponentReplicationDescriptor* FFlecsReplicationIndividualKey::TryGetDescriptor(
+	const TSolidNotNull<const UFlecsWorld*> InWorld) const
+{
+	if (Kind == EFlecsReplicationPairTargetKind::Schema)
+	{
+		return FFlecsComponentReplicationRegistry::Get(InWorld).Find(Schema);
+	}
+	
+	return nullptr;
+}
+
 FString FFlecsReplicationKey::CanonicalString() const
 {
 	/*return FString::Printf(TEXT("%u|%s|%u|%s|%u|%u|%s|%u|%s|%llu|%u"),
@@ -100,16 +111,29 @@ FString FFlecsReplicationKey::CanonicalString() const
 		Result = FString::Printf(TEXT("%s|%s"), *Primary.CanonicalString(), *Secondary.CanonicalString());
 	}
 	
-	if (bHasPayload)
-	{
-		Result += TEXT("|payload");
-	}
+	Result += FString::Printf(TEXT("|%u"), static_cast<uint8>(StorageKind));
 	
 	return Result;
 }
 
+const FFlecsComponentReplicationDescriptor* FFlecsReplicationKey::TryGetStorageDescriptor(
+	const TSolidNotNull<const UFlecsWorld*> InWorld) const
+{
+	// @TODO: Convert to switch
+	if (StorageKind == EFlecsReplicationKeyStorageKind::Primary)
+	{
+		return Primary.TryGetDescriptor(InWorld);
+	}
+	else if (StorageKind == EFlecsReplicationKeyStorageKind::Secondary)
+	{
+		return Secondary.TryGetDescriptor(InWorld);
+	}
+	
+	return nullptr;
+}
+
 const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildForEntity(const TSolidNotNull<const UFlecsWorld*> World,
-	const FFlecsEntityHandle& Entity, bool& bOutWasCreated, FString& OutError)
+                                                                                         const FFlecsEntityHandle& Entity, bool& bOutWasCreated, FString& OutError)
 {
 	bOutWasCreated = false;
 	if (!Entity.IsValid())
@@ -128,54 +152,60 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 	const FFlecsComponentReplicationRegistry& Registry = FFlecsComponentReplicationRegistry::Get(World);
 	TArray<FFlecsReplicationKey> Keys;
 	
+	// @TODO: add DontFragment support.
 	/*World->CreateQueryBuilder()
 		.With(flecs::DontFragment).Src("$Component")
 		.With("$Compoent")*/
 	
 	for (const FFlecsId Id : Entity.GetType())
 	{
-		if (!Id.IsPair())
+		const FFlecsComponentReplicationDescriptor* Descriptor = Registry.Find(Id);
+			
+		if (!Descriptor)
 		{
-			const FFlecsComponentReplicationDescriptor* Descriptor = Registry.Find(Id);
-			
-			if (!Descriptor)
-			{
-				continue;
-			}
-			
-			FFlecsReplicationKey& Key = Keys.AddDefaulted_GetRef();
-			Key.Kind = EFlecsReplicationKeyKind::Component;
-			Key.StorageSchema = Descriptor->SchemaId;
-			Key.bHasPayload = !Descriptor->bIsTag;
 			continue;
 		}
-
+			
+		// @TODO: Add Other Primary Support
+		FFlecsReplicationKey& Key = Keys.AddDefaulted_GetRef();
+			
+		Key.Primary.Kind = EFlecsReplicationPairTargetKind::Schema;
+		Key.Primary.Schema = Descriptor->SchemaId;
+		
+		
+		if (!Id.IsPair())
+		{
+			Key.Kind = EFlecsReplicationKeyKind::Component;
+			Key.StorageKind = !Descriptor->bIsTag ? EFlecsReplicationKeyStorageKind::Primary : EFlecsReplicationKeyStorageKind::None;
+			
+			continue;
+		}
+		
+		Key.Kind = EFlecsReplicationKeyKind::Pair;
+		
 		// Pair storage omits entity generations from both elements. Restore the
 		// current alive IDs before using them as local registry keys.
 		const FFlecsEntityHandle RelationshipEntity = World->GetAlive(Id.GetFirst());
 		const FFlecsEntityHandle Target = World->GetAlive(Id.GetSecond());
+		
+		// how the fuck did you do this bro
+		solid_checkf(RelationshipEntity.IsValid(), 
+			TEXT("Cannot build a replication layout for a pair with an unknown relationship: %s"), *Id.ToString());
+		solid_checkf(Target.IsValid(),
+			TEXT("Cannot build a replication layout for a pair with an unknown target: %s"), *Id.ToString());
+		
 		const FFlecsId First = RelationshipEntity.IsValid() ? RelationshipEntity.GetFlecsId() : Id.GetFirst();
 		const FFlecsId Second = Target.IsValid() ? Target.GetFlecsId() : Id.GetSecond();
 		
-		const FFlecsComponentReplicationDescriptor* Relationship = Registry.Find(First);
-		const FFlecsComponentReplicationDescriptor* Storage = GetPairStorageDescriptor(Registry, First, Second);
+		const EFlecsReplicationKeyStorageKind StorageKind = GetStorageKindForPair(Registry, First, Second);
 		
-		if (!Relationship || !Storage)
-		{
-			continue;
-		}
-
-		FFlecsReplicationKey& Key = Keys.AddDefaulted_GetRef();
-		Key.Kind = EFlecsReplicationKeyKind::Pair;
-		Key.RelationshipSchema = Relationship->SchemaId;
-		Key.StorageSchema = Storage->SchemaId;
-		Key.bHasPayload = !Storage->bIsTag;
+		Key.StorageKind = StorageKind;
 
 		const FFlecsComponentReplicationDescriptor* TargetDescriptor = Registry.Find(Second);
 		if (TargetDescriptor)
 		{
-			Key.TargetKind = EFlecsReplicationPairTargetKind::Schema;
-			Key.TargetSchema = TargetDescriptor->SchemaId;
+			Key.Secondary.Kind = EFlecsReplicationPairTargetKind::Schema;
+			Key.Secondary.Schema = TargetDescriptor->SchemaId;
 		}
 		else
 		{
@@ -188,18 +218,18 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 			
 			if (Target.Has<FFlecsNetworkId>())
 			{
-				Key.TargetKind = EFlecsReplicationPairTargetKind::Entity;
-				Key.EntityTarget = Target.Get<FFlecsNetworkId>();
+				Key.Secondary.Kind = EFlecsReplicationPairTargetKind::Entity;
+				Key.Secondary.Entity = Target.Get<FFlecsNetworkId>();
 			}
 			else if (Target.HasSymbol())
 			{
-				Key.TargetKind = EFlecsReplicationPairTargetKind::StableSymbolValue;
-				Key.StableTargetIdentifier = Target.GetSymbol();
+				Key.Secondary.Kind = EFlecsReplicationPairTargetKind::StableSymbolValue;
+				Key.Secondary.StableIdentifier = Target.GetSymbol();
 			}
 			else if (Target.Has<FFlecsStablePathTag>() && Target.HasName())
 			{
-				Key.TargetKind = EFlecsReplicationPairTargetKind::StablePathValue;
-				Key.StableTargetIdentifier = Target.GetPath();
+				Key.Secondary.Kind = EFlecsReplicationPairTargetKind::StablePathValue;
+				Key.Secondary.StableIdentifier = Target.GetPath();
 			}
 			else UNLIKELY_ATTRIBUTE
 			{
@@ -226,6 +256,7 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 			OutError = FString::Printf(TEXT("Replication layout hash collision for %s"), *Definition.LayoutId.ToString());
 			return nullptr;
 		}
+		
 		TableCache.Add(Table, Definition.LayoutId);
 		return Existing;
 	}
@@ -252,6 +283,7 @@ bool FFlecsReplicationLayoutRegistry::AddRemoteDefinition(const FFlecsReplicatio
 		OutError = TEXT("Received replication layout has an invalid identity");
 		return false;
 	}
+	
 	if (const FFlecsReplicationLayoutDefinition* Existing = Definitions.Find(Definition.LayoutId))
 	{
 		if (Existing->Keys != Definition.Keys)
@@ -261,6 +293,7 @@ bool FFlecsReplicationLayoutRegistry::AddRemoteDefinition(const FFlecsReplicatio
 		}
 		return true;
 	}
+	
 	Definitions.Add(Definition.LayoutId, Definition);
 	return true;
 }

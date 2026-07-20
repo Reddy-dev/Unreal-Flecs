@@ -201,7 +201,7 @@ const FFlecsComponentReplicationDescriptor* FFlecsComponentReplicationRegistry::
 	return ByLocalId.Find(LocalId);
 }
 
-const FFlecsComponentReplicationDescriptor* FFlecsComponentReplicationRegistry::Find(const FFlecsReplicationSchemaId SchemaId) const
+const FFlecsComponentReplicationDescriptor* FFlecsComponentReplicationRegistry::Find(const FFlecsReplicationSchemaId& SchemaId) const
 {
 	const FFlecsId* LocalId = SchemaToLocalId.Find(SchemaId);
 	return LocalId ? ByLocalId.Find(*LocalId) : nullptr;

@@ -101,7 +101,10 @@ struct UNREALFLECS_API FFlecsComponentReplicationDescriptor
 	FFlecsId LocalFlecsId;
 	uint32 Size = 0;
 	uint16 Alignment = 0;
+	
+	// @TODO: Deprecated Maybe?
 	bool bIsTag = false;
+	
 	TObjectPtr<UScriptStruct> ScriptStruct = nullptr;
 	FFlecsReplicationSerializeFunction Serialize = nullptr;
 	FFlecsReplicationSerializeFunction Deserialize = nullptr;
@@ -109,7 +112,7 @@ struct UNREALFLECS_API FFlecsComponentReplicationDescriptor
 	FFlecsReplicationDestroyFunction Destroy = nullptr;
 
 	/** Validates the complete local descriptor before it enters the registry. */
-	NO_DISCARD bool IsValid(FString* OutError = nullptr) const;
+	NO_DISCARD bool IsValid(OUT FString* OutError = nullptr) const;
 };
 
 /**
@@ -173,10 +176,10 @@ public:
 	bool Register(FFlecsComponentReplicationDescriptor Descriptor, FString& OutError);
 	
 	/** Finds a descriptor by a world-local Flecs ID. */
-	NO_DISCARD const FFlecsComponentReplicationDescriptor* Find(FFlecsId LocalId) const;
+	NO_DISCARD const FFlecsComponentReplicationDescriptor* Find(const FFlecsId LocalId) const;
 	
 	/** Finds a descriptor by its portable protocol schema ID. */
-	NO_DISCARD const FFlecsComponentReplicationDescriptor* Find(FFlecsReplicationSchemaId SchemaId) const;
+	NO_DISCARD const FFlecsComponentReplicationDescriptor* Find(const FFlecsReplicationSchemaId& SchemaId) const;
 	
 	NO_DISCARD const TMap<FFlecsId, FFlecsComponentReplicationDescriptor>& GetDescriptors() const
 	{

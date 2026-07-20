@@ -55,6 +55,7 @@ enum class EFlecsReplicationKeyKind : uint8
 UENUM()
 enum class EFlecsReplicationPairTargetKind : uint8
 {
+	// @TODO: Remove None
 	None,
 	Schema,
 	StableSymbolValue,
@@ -106,8 +107,17 @@ struct UNREALFLECS_API FFlecsReplicationIndividualKey
 	
 	NO_DISCARD FString CanonicalString() const;
 	
+	NO_DISCARD const FFlecsComponentReplicationDescriptor* TryGetDescriptor(const TSolidNotNull<const UFlecsWorld*> InWorld) const;
 	
 }; // struct FFlecsReplicationIndividualKey
+
+UENUM()
+enum class EFlecsReplicationKeyStorageKind : uint8
+{
+	None,
+	Primary,
+	Secondary
+}; // enum class EFlecsReplicationKeyStorageKind
 
 /**
  * Stable, transport-safe representation of one replicated component or pair.
@@ -124,6 +134,9 @@ struct UNREALFLECS_API FFlecsReplicationKey
 
 	UPROPERTY()
 	EFlecsReplicationKeyKind Kind = EFlecsReplicationKeyKind::Component;
+	
+	UPROPERTY()
+	EFlecsReplicationKeyStorageKind StorageKind = EFlecsReplicationKeyStorageKind::None;
 
 	/** Relationship schema; populated only when Kind is Pair. */
 	UPROPERTY()
@@ -133,13 +146,11 @@ struct UNREALFLECS_API FFlecsReplicationKey
 	UPROPERTY()
 	FFlecsReplicationIndividualKey Secondary;
 
-	/** True when a snapshot contains serialized bytes for this structural key. */
-	UPROPERTY()
-	bool bHasPayload = false;
-
 	NO_DISCARD FString CanonicalString() const;
 	
 	friend bool operator==(const FFlecsReplicationKey&, const FFlecsReplicationKey&) = default;
+	
+	NO_DISCARD const FFlecsComponentReplicationDescriptor* TryGetStorageDescriptor(const TSolidNotNull<const UFlecsWorld*> InWorld) const;
 	
 }; // struct FFlecsReplicationKey
 

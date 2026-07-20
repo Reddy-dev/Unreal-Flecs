@@ -3,10 +3,11 @@
 #include "Networking/FlecsNetworkWorldSubsystem.h"
 
 #include "Engine/World.h"
-#include "Networking/FlecsNetRoleType.h"
+
 #include "Serialization/MemoryReader.h"
 #include "Serialization/MemoryWriter.h"
 
+#include "Networking/FlecsNetRoleType.h"
 #include "Networking/FlecsNetworkingModuleSettings.h"
 #include "Networking/FlecsNetworkSubsystemSingleton.h"
 #include "Networking/FlecsReplicatedEntityComponent.h"
@@ -339,8 +340,6 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 	
 	const TSolidNotNull<UFlecsWorld*> World = GetFlecsWorldChecked();
 	
-	FFlecsComponentReplicationRegistry& ComponentRegistry = FFlecsComponentReplicationRegistry::Get(World);
-
 	for (const FFlecsNetworkId NetworkId : Pending)
 	{
 		const FFlecsEntityHandle* EntityPtr = NetworkIdToEntityHandleMap.Find(NetworkId);
@@ -394,7 +393,7 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 		{
 			const FFlecsReplicationKey& Key = Layout->Keys[KeyIndex];
 			
-			if (!Key.bHasPayload)
+			if (Key.StorageKind == EFlecsReplicationKeyStorageKind::None)
 			{
 				continue;
 			}
@@ -406,10 +405,10 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 				continue;
 			}
 			
-			const FFlecsComponentReplicationDescriptor* Descriptor = ComponentRegistry.Find(Key.StorageSchema);
+			const FFlecsComponentReplicationDescriptor* Descriptor = Key.TryGetStorageDescriptor(World);
 			const void* Value = Entity.TryGet(LocalId);
 			
-			if (!Descriptor || !Value)
+			if UNLIKELY_IF(!Descriptor || !Value)
 			{
 				continue;
 			}
@@ -538,11 +537,12 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 		const FFlecsReplicationKey& Key = Layout->Keys[KeyIndex];
 		FFlecsId LocalId;
 		
+		// @TODO
 		if (ResolveKeyToLocalId(Key, LocalId))
 		{
 			DesiredIds.Add(LocalId);
 		}
-		else if (Key.TargetKind == EFlecsReplicationPairTargetKind::Entity)
+		else if (Key.Secondary.Kind == EFlecsReplicationPairTargetKind::Entity)
 		{
 			TOptional<TArray<uint8>> Payload;
 			const FFlecsReplicatedValue* Value = Snapshot.Values.FindByPredicate(
@@ -556,7 +556,7 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 				Payload = Value->Bytes;
 			}
 
-			EntityPairFixups.Add({ Snapshot.NetworkId, Key.EntityTarget, Key,
+			EntityPairFixups.Add({ Snapshot.NetworkId, Key.Secondary.Entity, Key,
 				Snapshot.StateRevision, MoveTemp(Payload) });
 		}
 	}
@@ -690,12 +690,25 @@ void UFlecsNetworkWorldSubsystem::ApplyResolvedValue(const FFlecsEntityHandle& E
 		return;
 	}
 
-	const FFlecsComponentReplicationRegistry& Registry =
-		FFlecsComponentReplicationRegistry::Get(GetFlecsWorldChecked());
-	const FFlecsComponentReplicationDescriptor* Descriptor = Registry.Find(Key.StorageSchema);
-
-	if (!Descriptor || Descriptor->bIsTag)
+	const FFlecsComponentReplicationRegistry& Registry = FFlecsComponentReplicationRegistry::Get(GetFlecsWorldChecked());
+	
+	const EFlecsReplicationKeyStorageKind StorageKind = Key.StorageKind;
+	
+	if UNLIKELY_IF(!ensureAlwaysMsgf(StorageKind != EFlecsReplicationKeyStorageKind::None,
+		TEXT("Cannot apply resolved value for schema {'%s'}: storage kind is None"), *Key.CanonicalString()))
 	{
+		return;
+	}
+	
+	const FFlecsComponentReplicationDescriptor* Descriptor = Key.TryGetStorageDescriptor(GetFlecsWorldChecked());
+
+	// @TODO: maybe a check?
+	// how tf
+	if UNLIKELY_IF(!Descriptor || Descriptor->bIsTag)
+	{
+		UE_LOGFMT(LogFlecsCore, Error, 
+			"Cannot apply resolved value for schema {String}: storage descriptor is missing or is a tag",
+			*Key.CanonicalString());
 		return;
 	}
 
@@ -714,132 +727,159 @@ void UFlecsNetworkWorldSubsystem::ApplyResolvedValue(const FFlecsEntityHandle& E
 	FMemory::Free(Temp);
 }
 
+bool UFlecsNetworkWorldSubsystem::ResolveIndividualKeyToLocalId(const FFlecsReplicationIndividualKey& Key,
+	FFlecsId& OutId) const
+{
+	const TSolidNotNull<const UFlecsWorld*> World = GetFlecsWorldChecked();
+	const FFlecsComponentReplicationRegistry& Registry = FFlecsComponentReplicationRegistry::Get(World);
+	
+	switch (Key.Kind)
+	{
+		case EFlecsReplicationPairTargetKind::None:
+			//Error
+			break;
+		case EFlecsReplicationPairTargetKind::Schema:
+			{
+				if LIKELY_IF(const FFlecsComponentReplicationDescriptor* Descriptor = Registry.Find(Key.Schema))
+				{
+					OutId = Descriptor->LocalFlecsId;
+					return true;
+				}
+				break;
+			}
+		case EFlecsReplicationPairTargetKind::StableSymbolValue:
+			{
+				const FFlecsEntityHandle StableTarget = World->LookupEntityBySymbol_Internal(Key.StableIdentifier);
+				if LIKELY_IF(StableTarget.IsValid())
+				{
+					OutId = StableTarget.GetFlecsId();
+					return true;
+				}
+				
+				break;
+			}
+		case EFlecsReplicationPairTargetKind::StablePathValue:
+			{
+				const FFlecsEntityHandle StableTarget = World->LookupEntity(Key.StableIdentifier);
+				if LIKELY_IF(StableTarget.IsValid())
+				{
+					OutId = StableTarget.GetFlecsId();
+					return true;
+				}
+				
+				break;
+			}
+			break;
+		case EFlecsReplicationPairTargetKind::Entity:
+			{
+				const FFlecsEntityHandle EntityTarget = FindEntity(Key.Entity);
+				if LIKELY_IF(EntityTarget.IsValid())
+				{
+					OutId = EntityTarget.GetFlecsId();
+					return true;
+				}
+				
+				break;
+			}
+	}
+	
+	OutId = FFlecsId::Null();
+	return false;
+}
+
 bool UFlecsNetworkWorldSubsystem::ResolveKeyToLocalId(const FFlecsReplicationKey& Key, FFlecsId& OutId) const
 {
 	const TSolidNotNull<const UFlecsWorld*> World = GetFlecsWorldChecked();
 	const FFlecsComponentReplicationRegistry& Registry = FFlecsComponentReplicationRegistry::Get(World);
-	const FFlecsComponentReplicationDescriptor* Storage = Registry.Find(Key.StorageSchema);
-	
-	if (!Storage)
-	{
-		return false;
-	}
 	
 	if (Key.Kind == EFlecsReplicationKeyKind::Component)
 	{
-		OutId = Storage->LocalFlecsId;
-		return true;
+		return ResolveIndividualKeyToLocalId(Key.Primary, OutId);
 	}
 	
-	const FFlecsComponentReplicationDescriptor* Relationship = Registry.Find(Key.RelationshipSchema);
-	
-	if (!Relationship)
-	{
-		return false;
-	}
-
+	FFlecsId Relationship;
 	FFlecsId Target;
-	switch (Key.TargetKind)
-	{
-	case EFlecsReplicationPairTargetKind::Schema:
-		if (const FFlecsComponentReplicationDescriptor* TargetDescriptor = Registry.Find(Key.TargetSchema))
-		{
-			Target = TargetDescriptor->LocalFlecsId;
-		}
-		break;
-	case EFlecsReplicationPairTargetKind::StableSymbolValue:
-	{
-		const FFlecsEntityHandle StableTarget = World->LookupEntityBySymbol_Internal(Key.StableTargetIdentifier);
-			
-		if (StableTarget.IsValid())
-		{
-			Target = StableTarget.GetFlecsId();
-		}
-			
-		break;
-	}
-		case EFlecsReplicationPairTargetKind::StablePathValue:
-		{
-			const FFlecsEntityHandle StableTarget = World->LookupEntity(Key.StableTargetIdentifier);
-			
-			if (StableTarget.IsValid())
-			{
-				Target = StableTarget.GetFlecsId();
-			}
-			
-			break;
-		}
-	case EFlecsReplicationPairTargetKind::Entity:
-	{
-		const FFlecsEntityHandle EntityTarget = FindEntity(Key.EntityTarget);
-			
-		if (EntityTarget.IsValid())
-		{
-			Target = EntityTarget.GetFlecsId();
-		}
-			
-		break;
-	}
-	default:
-		break;
-	}
 	
-	if (!Target.IsValid())
+	const bool bResolvedRelationship = ResolveIndividualKeyToLocalId(Key.Primary, Relationship);
+	
+	if UNLIKELY_IF(!bResolvedRelationship)
 	{
 		return false;
 	}
 	
-	OutId = FFlecsId::MakePair(Relationship->LocalFlecsId, Target);
+	const bool bResolvedTarget = ResolveIndividualKeyToLocalId(Key.Secondary, Target);
+	if UNLIKELY_IF(!bResolvedTarget)
+	{
+		return false;
+	}
+	
+	OutId = FFlecsId::MakePair(Relationship.GetId(), Target.GetId());
+	return true;
+}
+
+bool UFlecsNetworkWorldSubsystem::ValidateReplicationIndividualKey(const FFlecsReplicationIndividualKey& Key,
+	FString& OutError) const
+{
+	switch (Key.Kind)
+	{
+		case EFlecsReplicationPairTargetKind::None:
+			OutError = TEXT("Replication individual key has no target kind");
+			return false;
+		case EFlecsReplicationPairTargetKind::Schema:
+			if (!Key.Schema.IsValid())
+			{
+				OutError = TEXT("Replication individual key has invalid schema");
+				return false;
+			}
+			break;
+		case EFlecsReplicationPairTargetKind::StableSymbolValue:
+		case EFlecsReplicationPairTargetKind::StablePathValue:
+			if (Key.StableIdentifier.IsEmpty())
+			{
+				OutError = TEXT("Replication individual key has empty stable identifier");
+				return false;
+			}
+			break;
+		case EFlecsReplicationPairTargetKind::Entity:
+			if (!Key.Entity.IsValid())
+			{
+				OutError = TEXT("Replication individual key has invalid entity target");
+				return false;
+			}
+			break;
+	}
+	
+	return true;
+}
+
+bool UFlecsNetworkWorldSubsystem::ValidateReplicationKey(const FFlecsReplicationKey& Key, FString& OutError) const
+{
+	if (Key.Kind == EFlecsReplicationKeyKind::Component)
+	{
+		return ValidateReplicationIndividualKey(Key.Primary, OutError);
+	}
+	else if (Key.Kind == EFlecsReplicationKeyKind::Pair)
+	{
+		if (!ValidateReplicationIndividualKey(Key.Primary, OutError))
+		{
+			return false;
+		}
+		
+		if (!ValidateReplicationIndividualKey(Key.Secondary, OutError))
+		{
+			return false;
+		}
+	}
+	
 	return true;
 }
 
 bool UFlecsNetworkWorldSubsystem::ValidateLayout(const FFlecsReplicationLayoutDefinition& Layout, FString& OutError) const
 {
-	const FFlecsComponentReplicationRegistry& Registry = FFlecsComponentReplicationRegistry::Get(GetFlecsWorldChecked());
-	
 	for (const FFlecsReplicationKey& Key : Layout.Keys)
 	{
-		auto ValidateSchema = [&Registry, &OutError](const FFlecsReplicationSchemaId Schema, const TCHAR* Role)
+		if (!ValidateReplicationKey(Key, OutError))
 		{
-			const FFlecsComponentReplicationDescriptor* Descriptor = Registry.Find(Schema);
-			
-			if UNLIKELY_IF(!Descriptor)
-			{
-				OutError = FString::Printf(TEXT("%s schema %s is not found in the local schema set"),
-					Role, *Schema.ToString());
-				return false;
-			}
-			
-			return true;
-		};
-		
-		if (!ValidateSchema(Key.StorageSchema, TEXT("Storage")))
-		{
-			return false;
-		}
-		
-		if (Key.Kind == EFlecsReplicationKeyKind::Pair
-			&& !ValidateSchema(Key.RelationshipSchema, TEXT("Relationship")))
-		{
-			return false;
-		}
-		
-		if (Key.TargetKind == EFlecsReplicationPairTargetKind::Schema
-			&& !ValidateSchema(Key.TargetSchema, TEXT("Target")))
-		{
-			return false;
-		}
-		
-		if (Key.TargetKind == EFlecsReplicationPairTargetKind::StableSymbolValue
-			&& Key.StableTargetIdentifier.IsEmpty())
-		{
-			return false;
-		}
-		
-		if (Key.TargetKind == EFlecsReplicationPairTargetKind::StablePathValue
-			&& Key.StableTargetIdentifier.IsEmpty())
-		{
-			OutError = TEXT("Stable pair target path is missing");
 			return false;
 		}
 	}
