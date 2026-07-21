@@ -28,10 +28,13 @@ namespace UE::Flecs::Tests
 	static UFlecsWorld* CreateReplicationPIEWorld(const UWorld* InWorld)
 	{
 		const TSolidNotNull<UFlecsWorldSubsystem*> WorldSubsystem = InWorld->GetSubsystem<UFlecsWorldSubsystem>();
+		
 		FFlecsWorldSettingsInfo Settings;
 		Settings.WorldName = TEXT("FlecsReplicationPIE");
 		Settings.GameLoops.AddUnique(NewObject<UFlecsDefaultGameLoop>(WorldSubsystem));
+		
 		UFlecsWorld* World = WorldSubsystem->CreateWorld(TEXT("FlecsReplicationPIE"), Settings);
+		
 		RegisterPIEComponent<FFlecsReplicationTestRequiredTag>(World);
 		RegisterPIEComponent<FFlecsReplicationTestValue>(World);
 		RegisterPIEComponent<FFlecsReplicationTestNativeValue>(World);
@@ -39,6 +42,7 @@ namespace UE::Flecs::Tests
 		RegisterPIEComponent<FFlecsReplicationTestRelationship>(World);
 		RegisterPIEComponent<FFlecsReplicationTestWithValue>(World);
 		RegisterPIEComponent<FFlecsReplicationTestLocalOnly>(World);
+		
 		return World;
 	}
 
@@ -160,8 +164,14 @@ NETWORK_TEST_CLASS(FlecsReplicationDedicatedServerTests,
 	TEST_METHOD(StaticAndEntityTargetPairs_ReplicateAndResolve)
 	{
 		Network
-			.ThenServer([](FState& State) { State.FlecsWorld = UE::Flecs::Tests::CreateReplicationPIEWorld(State.World); })
-			.ThenClients([](FState& State) { State.FlecsWorld = UE::Flecs::Tests::CreateReplicationPIEWorld(State.World); })
+			.ThenServer([](FState& State)
+			{
+				State.FlecsWorld = UE::Flecs::Tests::CreateReplicationPIEWorld(State.World);
+			})
+			.ThenClients([](FState& State)
+			{
+				State.FlecsWorld = UE::Flecs::Tests::CreateReplicationPIEWorld(State.World);
+			})
 			.ThenServer([](FState& State)
 			{
 				State.Target = State.FlecsWorld->CreateEntity().Add<FFlecsReplicatedEntityComponent>();
