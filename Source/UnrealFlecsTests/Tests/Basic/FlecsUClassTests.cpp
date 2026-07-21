@@ -11,57 +11,34 @@
 #include "UnrealFlecsTests/Tests/Types/FlecsClassTestTypes.h"
 #include "Worlds/FlecsWorld.h"
 
-/*
- * Layout of the tests:
- * A. Class Registration as types
- */
-TEST_CLASS_WITH_FLAGS_AND_TAGS(A7_FlecsUClassTests, "UnrealFlecs.A7_UClass",
+FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsUClassTests, "UnrealFlecs.Types.UClass",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter
 	| EAutomationTestFlags::CriticalPriority, "[Flecs]")
 {
-	inline static TUniquePtr<FFlecsTestFixtureRAII> Fixture;
-	inline static TObjectPtr<UFlecsWorld> FlecsWorld = nullptr;
-
-	BEFORE_EACH()
+	TEST_METHOD(ShouldRegisterUClassAsType_CPPAPI)
 	{
-		Fixture = MakeUnique<FFlecsTestFixtureRAII>();
-		FlecsWorld = Fixture->Fixture.GetFlecsWorld();
-	}
-
-	AFTER_EACH()
-	{
-		FlecsWorld = nullptr;
-	}
-
-	AFTER_ALL()
-	{
-		Fixture.Reset();
-	}
-
-	TEST_METHOD(A1_ShouldRegisterUClassAsType_CPPAPI)
-	{
-		const FFlecsEntityHandle CPPTypedEntity = FlecsWorld->ObtainTypedEntity<UFlecsUObjectComponentTestObject>();
+		const FFlecsEntityHandle CPPTypedEntity = World()->ObtainTypedEntity<UFlecsUObjectComponentTestObject>();
 		ASSERT_THAT(IsTrue(CPPTypedEntity.IsValid()));
 
-		const FFlecsEntityHandle ScriptClassTypedEntity = FlecsWorld->ObtainTypedEntity(UFlecsUObjectComponentTestObject::StaticClass());
+		const FFlecsEntityHandle ScriptClassTypedEntity = World()->ObtainTypedEntity(UFlecsUObjectComponentTestObject::StaticClass());
 		ASSERT_THAT(IsTrue(ScriptClassTypedEntity.IsValid()));
 
 		ASSERT_THAT(IsTrue(CPPTypedEntity == ScriptClassTypedEntity,
 			TEXT("TypedEntity should be equal to ScriptClassTypedEntity after creation")));
 	}
 
-	TEST_METHOD(A2_ShouldRegisterUClassAsType_ScriptClassAPI)
+	TEST_METHOD(ShouldRegisterUClassAsType_ScriptClassAPI)
 	{
-		const FFlecsEntityHandle ScriptClassTypedEntity = FlecsWorld->ObtainTypedEntity(UFlecsUObjectComponentTestObject::StaticClass());
+		const FFlecsEntityHandle ScriptClassTypedEntity = World()->ObtainTypedEntity(UFlecsUObjectComponentTestObject::StaticClass());
 		ASSERT_THAT(IsTrue(ScriptClassTypedEntity.IsValid()));
 
-		const FFlecsEntityHandle CPPTypedEntity = FlecsWorld->ObtainTypedEntity<UFlecsUObjectComponentTestObject>();
+		const FFlecsEntityHandle CPPTypedEntity = World()->ObtainTypedEntity<UFlecsUObjectComponentTestObject>();
 		ASSERT_THAT(IsTrue(CPPTypedEntity.IsValid()));
 
 		ASSERT_THAT(IsTrue(ScriptClassTypedEntity == CPPTypedEntity,
 			TEXT("ScriptClassTypedEntity should be equal to CPPTypedEntity after creation")));
 	}
 	
-}; // End of A7_FlecsUClassTests
+}; // FlecsUClassTests
 
 #endif // WITH_AUTOMATION_TESTS

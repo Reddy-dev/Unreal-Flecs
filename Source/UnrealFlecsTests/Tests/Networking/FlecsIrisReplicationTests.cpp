@@ -35,7 +35,7 @@ namespace UE::Flecs::Tests
 	}
 }
 
-TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsIrisReplicationTransportTests,
+FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsIrisReplicationTransportTests,
 	"UnrealFlecs.Networking.Replication.Iris",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter,
 	"[Flecs][Networking][Replication][Iris]")
@@ -106,19 +106,18 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsIrisReplicationTransportTests,
 
 	TEST_METHOD(Transport_UsesStableFirstFitMigratesGrowthAndRetiresEmptyPages)
 	{
-		FFlecsTestFixtureRAII Fixture;
-		UFlecsWorld* World = Fixture.Fixture.GetFlecsWorld();
-		UE::Flecs::Tests::RegisterIrisTestComponent<FFlecsReplicationTestNativeValue>(World);
-		UE::Flecs::Tests::RegisterIrisTestComponent<FFlecsReplicationTestRequiredTag>(World);
-		UE::Flecs::Tests::RegisterIrisTestComponent<FFlecsReplicationTestWithValue>(World);
+		UFlecsWorld* TestWorld = World();
+		UE::Flecs::Tests::RegisterIrisTestComponent<FFlecsReplicationTestNativeValue>(TestWorld);
+		UE::Flecs::Tests::RegisterIrisTestComponent<FFlecsReplicationTestRequiredTag>(TestWorld);
+		UE::Flecs::Tests::RegisterIrisTestComponent<FFlecsReplicationTestWithValue>(TestWorld);
 		UFlecsNetworkWorldSubsystem* Subsystem =
-			World->GetWorld()->GetSubsystem<UFlecsNetworkWorldSubsystem>();
+			TestWorld->GetWorld()->GetSubsystem<UFlecsNetworkWorldSubsystem>();
 		UFlecsIrisReplicationTransport* Transport = NewObject<UFlecsIrisReplicationTransport>(Subsystem);
 		Subsystem->SetReplicationTransportForTesting(Transport);
 		Subsystem->SetReplicationRouter(MakeUnique<UE::Flecs::Tests::FBoundedTestRouter>());
 
-		const FFlecsEntityHandle First = World->CreateEntity().Set<FFlecsReplicationTestNativeValue>({ 1 });
-		const FFlecsEntityHandle Second = World->CreateEntity().Set<FFlecsReplicationTestNativeValue>({ 2 });
+		const FFlecsEntityHandle First = TestWorld->CreateEntity().Set<FFlecsReplicationTestNativeValue>({ 1 });
+		const FFlecsEntityHandle Second = TestWorld->CreateEntity().Set<FFlecsReplicationTestNativeValue>({ 2 });
 		const FFlecsNetworkId FirstId = Subsystem->BeginReplicatingEntity(First);
 		const FFlecsNetworkId SecondId = Subsystem->BeginReplicatingEntity(Second);
 		Subsystem->FlushServerReplicationForTesting();

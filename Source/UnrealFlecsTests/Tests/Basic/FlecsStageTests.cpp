@@ -1,6 +1,4 @@
-// Elie Wiese-Namir © 2025. All Rights Reserved.
-
-#pragma once
+﻿// Elie Wiese-Namir Â© 2025. All Rights Reserved.
 
 #include "Misc/AutomationTest.h"
 #include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
@@ -10,34 +8,23 @@
 #include "Worlds/FlecsStage.h"
 #include "Worlds/FlecsWorld.h"
 
-/**
- * Layout of the tests:
- * A. Stage Object Tests Through System
- */
-TEST_CLASS_WITH_FLAGS_AND_TAGS(A12_UnrealFlecsStageTests,
-                               "UnrealFlecs.A12_FlecsStageTests",
+FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(UnrealFlecsStageTests,
+								   "UnrealFlecs.World.Stages",
                                EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter
                                | EAutomationTestFlags::CriticalPriority,
                                "[Flecs][Stage]")
 {
-	inline static TUniquePtr<FFlecsTestFixtureRAII> Fixture;
-	inline static TObjectPtr<UFlecsWorld> FlecsWorld = nullptr;
-
-	BEFORE_EACH()
+protected:
+	virtual EWorldType::Type WorldType() const override
 	{
-		Fixture = TUniquePtr<FFlecsTestFixtureRAII>(new FFlecsTestFixtureRAII({}, {}, EWorldType::Game));
-		FlecsWorld = Fixture->Fixture.GetFlecsWorld();
+		return EWorldType::Game;
 	}
 
-	AFTER_EACH()
-	{
-		FlecsWorld = nullptr;
-		Fixture.Reset();
-	}
+public:
 
-	TEST_METHOD(A1_MultiThreadedSystemGetStage_IterAPI_ReturnsValidStageObject)
+	TEST_METHOD(MultiThreadedSystemGetStage_IterAPI_ReturnsValidStageObject)
 	{
-		if (FlecsWorld->GetStageCount() < 2)
+		if (World()->GetStageCount() < 2)
 		{
 			return;
 		}
@@ -45,23 +32,23 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A12_UnrealFlecsStageTests,
 		bool bSystemFired = false;
 		UFlecsStage* CapturedStage = nullptr;
 
-		flecs::system TestSystem = FlecsWorld->GetNativeFlecsWorld()
+		flecs::system TestSystem = World()->GetNativeFlecsWorld()
 			.system<>()
 			.kind(flecs::OnUpdate)
 			.multi_threaded()
-			.run([&bSystemFired, &CapturedStage](flecs::iter& Iter)
+			.run([&bSystemFired, &CapturedStage, this](flecs::iter& Iter)
 			{
 				while (Iter.next())
 				{
 					bSystemFired = true;
 					// idk how legal this is
-					CapturedStage = FlecsWorld->GetStage(Iter);
+					CapturedStage = World()->GetStage(Iter);
 				}
 			});
 
 		ASSERT_THAT(IsTrue(TestSystem.is_valid()));
 
-		Fixture->Fixture.TickWorld();
+		TickWorld();
 
 		ASSERT_THAT(IsTrue(bSystemFired));
 		ASSERT_THAT(IsTrue(CapturedStage != nullptr));
@@ -69,6 +56,6 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A12_UnrealFlecsStageTests,
 		ASSERT_THAT(IsTrue(CapturedStage->GetStageId() > 0));
 	}
 
-}; // End of A12_UnrealFlecsStageTests
+}; // UnrealFlecsStageTests
 
 #endif // WITH_AUTOMATION_TESTS

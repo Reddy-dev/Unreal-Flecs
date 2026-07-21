@@ -1,7 +1,5 @@
 ﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
 
-#pragma once
-
 #include "Misc/AutomationTest.h"
 #include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 
@@ -9,61 +7,30 @@
 
 #include "Worlds/FlecsWorld.h"
 
-/** Layout of the tests:
- * A. Enum Register Add/Remove/Replace API Tests
- * B. Sparse Enum Register Add/Remove/Replace API Tests
- */
-TEST_CLASS_WITH_FLAGS_AND_TAGS(A5_UnrealFlecsEnumRegistrationTests,
-                               "UnrealFlecs.A5_Enums.Registration",
+FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(UnrealFlecsEnumRegistrationTests,
+								 "UnrealFlecs.Components.Enums.Registration",
                                EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter
                                | EAutomationTestFlags::CriticalPriority,
                                "[Flecs][Component][Pair][Enum][CPP-API][StaticEnum-API]")
 {
-	inline static TUniquePtr<FFlecsTestFixtureRAII> Fixture;
-	inline static TObjectPtr<UFlecsWorld> FlecsWorld = nullptr;
-
-	BEFORE_EACH()
-	{
-		Fixture = MakeUnique<FFlecsTestFixtureRAII>();
-		FlecsWorld = Fixture->Fixture.GetFlecsWorld();
-	}
-
-	AFTER_EACH()
-	{
-		FlecsWorld = nullptr;
-	}
-
-	AFTER_ALL()
-	{
-		Fixture.Reset();
-	}
-
-	TEST_METHOD_WITH_TAGS(A1_RegisterStaticEnumAPI_AddRemoveReplaceStaticEnumAPI,
+	TEST_METHOD_WITH_TAGS(RegisterStaticEnumAPI_AddRemoveReplaceStaticEnumAPI,
 								   "[Flecs][Component][Enum][StaticEnum-API]")
 	{
-		const FFlecsComponentHandle TestEnumEntity = FlecsWorld->RegisterComponentType(StaticEnum<EFlecsTestEnum_UENUM>());
+		const FFlecsComponentHandle TestEnumEntity = World()->RegisterComponentType(StaticEnum<EFlecsTestEnum_UENUM>());
 		ASSERT_THAT(IsTrue(TestEnumEntity.IsValid()));
 		ASSERT_THAT(IsTrue(TestEnumEntity.IsComponent()));
 		ASSERT_THAT(IsTrue(TestEnumEntity.IsEnum()));
 		
-		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity();
+		const FFlecsEntityHandle TestEntity = World()->CreateEntity();
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
 		
-		const FFlecsEntityHandle SymbolLookupEntity = FlecsWorld->LookupEntityBySymbol_Internal("EFlecsTestEnum_UENUM");
+		const FFlecsEntityHandle SymbolLookupEntity = World()->LookupEntityBySymbol_Internal("EFlecsTestEnum_UENUM");
 		ASSERT_THAT(IsTrue(SymbolLookupEntity.IsValid()));
 		ASSERT_THAT(AreEqual(SymbolLookupEntity, TestEnumEntity));
 		
-		const FFlecsEntityHandle AliasLookupEntity = FlecsWorld->LookupEntity("UEnum_EFlecsTestEnum_UENUM");
+		const FFlecsEntityHandle AliasLookupEntity = World()->LookupEntity("UEnum_EFlecsTestEnum_UENUM");
 		ASSERT_THAT(IsTrue(AliasLookupEntity.IsValid()));
 		ASSERT_THAT(AreEqual(AliasLookupEntity, TestEnumEntity));
-		
-		/*const FFlecsEntityHandle ConstantLookupEntity = FlecsWorld->LookupEntity("UEnum_EFlecsTestEnum_UENUM.One", ".");
-		ASSERT_THAT(IsTrue(ConstantLookupEntity.IsValid()));
-		
-		const FFlecsEntityHandle TestEnumConstant = AliasLookupEntity.Lookup<FFlecsEntityHandle>("One");
-		ASSERT_THAT(IsTrue(TestEnumConstant.IsValid()));
-		
-		ASSERT_THAT(AreEqual(ConstantLookupEntity, TestEnumConstant));*/
 
 		// Add the enum value using StaticEnum API
 		TestEntity.Add(StaticEnum<EFlecsTestEnum_UENUM>(), static_cast<uint64>(EFlecsTestEnum_UENUM::One));
@@ -97,32 +64,24 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A5_UnrealFlecsEnumRegistrationTests,
 		ASSERT_THAT(IsFalse(TestEntity.Has(StaticEnum<EFlecsTestEnum_UENUM>(), static_cast<int64>(EFlecsTestEnum_UENUM::One))));
 	}
 
-	TEST_METHOD_WITH_TAGS(A2_RegisterCPPAPI_AddRemoveReplaceCPPAPI,
+	TEST_METHOD_WITH_TAGS(RegisterCPPAPI_AddRemoveReplaceCPPAPI,
 								   "[Flecs][Component][Enum][CPP-API]")
 	{
-		const FFlecsComponentHandle TestEnumEntity = FlecsWorld->RegisterComponentType<EFlecsTestEnum_UENUM>();
+		const FFlecsComponentHandle TestEnumEntity = World()->RegisterComponentType<EFlecsTestEnum_UENUM>();
 		ASSERT_THAT(IsTrue(TestEnumEntity.IsValid()));
 		ASSERT_THAT(IsTrue(TestEnumEntity.IsComponent()));
 		ASSERT_THAT(IsTrue(TestEnumEntity.IsEnum()));
 
-		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity();
+		const FFlecsEntityHandle TestEntity = World()->CreateEntity();
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
 		
-		const FFlecsEntityHandle SymbolLookupEntity = FlecsWorld->LookupEntityBySymbol_Internal("EFlecsTestEnum_UENUM");
+		const FFlecsEntityHandle SymbolLookupEntity = World()->LookupEntityBySymbol_Internal("EFlecsTestEnum_UENUM");
 		ASSERT_THAT(IsTrue(SymbolLookupEntity.IsValid()));
 		ASSERT_THAT(AreEqual(SymbolLookupEntity, TestEnumEntity));
 		
-		const FFlecsEntityHandle AliasLookupEntity = FlecsWorld->LookupEntity("UEnum_EFlecsTestEnum_UENUM");
+		const FFlecsEntityHandle AliasLookupEntity = World()->LookupEntity("UEnum_EFlecsTestEnum_UENUM");
 		ASSERT_THAT(IsTrue(AliasLookupEntity.IsValid()));
 		ASSERT_THAT(AreEqual(AliasLookupEntity, TestEnumEntity));
-		
-		/*const FFlecsEntityHandle ConstantLookupEntity = FlecsWorld->LookupEntity("UEnum_EFlecsTestEnum_UENUM.One", ".");
-		ASSERT_THAT(IsTrue(ConstantLookupEntity.IsValid()));*/
-		
-		/*const FFlecsEntityHandle TestEnumConstant = AliasLookupEntity.Lookup<FFlecsEntityHandle>("One");
-		ASSERT_THAT(IsTrue(TestEnumConstant.IsValid()));
-		
-		ASSERT_THAT(AreEqual(ConstantLookupEntity, TestEnumConstant));*/
 
 		TestEntity.Add<EFlecsTestEnum_UENUM>(EFlecsTestEnum_UENUM::One);
 		ASSERT_THAT(IsTrue(TestEntity.Has(StaticEnum<EFlecsTestEnum_UENUM>())));
@@ -152,18 +111,18 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A5_UnrealFlecsEnumRegistrationTests,
 		ASSERT_THAT(IsFalse(TestEntity.Has(StaticEnum<EFlecsTestEnum_UENUM>(), static_cast<int64>(EFlecsTestEnum_UENUM::One))));
 	}
 
-	TEST_METHOD_WITH_TAGS(A3_RegisterStaticEnumAPI_Add_CPPAPI_Remove_StaticEnumAPI_Replace_StaticEnumAPI,
+	TEST_METHOD_WITH_TAGS(RegisterStaticEnumAPI_Add_CPPAPI_Remove_StaticEnumAPI_Replace_StaticEnumAPI,
 			"[Flecs][Component][Enum][StaticEnum-API]")
 	{ 
-		const FFlecsComponentHandle TestEnumEntity = FlecsWorld->RegisterComponentType(StaticEnum<EFlecsTestEnum_UENUM>());
+		const FFlecsComponentHandle TestEnumEntity = World()->RegisterComponentType(StaticEnum<EFlecsTestEnum_UENUM>());
 		ASSERT_THAT(IsTrue(TestEnumEntity.IsValid()));
 		ASSERT_THAT(IsTrue(TestEnumEntity.IsComponent()));
 		ASSERT_THAT(IsTrue(TestEnumEntity.IsEnum()));
 
-		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity();
+		const FFlecsEntityHandle TestEntity = World()->CreateEntity();
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
 		
-		const FFlecsEntityHandle SymbolLookupEntity = FlecsWorld->LookupEntityBySymbol_Internal("EFlecsTestEnum_UENUM");
+		const FFlecsEntityHandle SymbolLookupEntity = World()->LookupEntityBySymbol_Internal("EFlecsTestEnum_UENUM");
 		ASSERT_THAT(IsTrue(SymbolLookupEntity.IsValid()));
 		ASSERT_THAT(AreEqual(SymbolLookupEntity, TestEnumEntity));
 
@@ -195,18 +154,18 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A5_UnrealFlecsEnumRegistrationTests,
 		ASSERT_THAT(IsFalse(TestEntity.Has(StaticEnum<EFlecsTestEnum_UENUM>(), static_cast<int64>(EFlecsTestEnum_UENUM::One))));
 	}
 
-	TEST_METHOD_WITH_TAGS(A4_RegisterCPPAPI_AddRemoveStaticEnumAPI_Replace_StaticCPPAPI,
+	TEST_METHOD_WITH_TAGS(RegisterCPPAPI_AddRemoveStaticEnumAPI_Replace_StaticCPPAPI,
 			"[Flecs][Component][Enum][CPP-API]")
 	{
-		const FFlecsComponentHandle TestEnumEntity = FlecsWorld->RegisterComponentType<EFlecsTestEnum_UENUM>();
+		const FFlecsComponentHandle TestEnumEntity = World()->RegisterComponentType<EFlecsTestEnum_UENUM>();
 		ASSERT_THAT(IsTrue(TestEnumEntity.IsValid()));
 		ASSERT_THAT(IsTrue(TestEnumEntity.IsComponent()));
 		ASSERT_THAT(IsTrue(TestEnumEntity.IsEnum()));
 
-		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity();
+		const FFlecsEntityHandle TestEntity = World()->CreateEntity();
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
 		
-		const FFlecsEntityHandle SymbolLookupEntity = FlecsWorld->LookupEntityBySymbol_Internal("EFlecsTestEnum_UENUM");
+		const FFlecsEntityHandle SymbolLookupEntity = World()->LookupEntityBySymbol_Internal("EFlecsTestEnum_UENUM");
 		ASSERT_THAT(IsTrue(SymbolLookupEntity.IsValid()));
 		ASSERT_THAT(AreEqual(SymbolLookupEntity, TestEnumEntity));
 
@@ -238,37 +197,6 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A5_UnrealFlecsEnumRegistrationTests,
 		ASSERT_THAT(IsFalse(TestEntity.Has(StaticEnum<EFlecsTestEnum_UENUM>(), static_cast<int64>(EFlecsTestEnum_UENUM::One))));
 	}
 
-}; // End of A5_UnrealFlecsEnumRegistrationTests
-
-TEST_CLASS_WITH_FLAGS_AND_TAGS(A6_UnrealFlecsEnumTests,
-							   "UnrealFlecs.A5.Enums",
-							   EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter
-							   | EAutomationTestFlags::CriticalPriority,
-							   "[Flecs][Component][Pair][Enum][CPP-API][StaticEnum-API][Entity-API]")
-{
-	inline static TUniquePtr<FFlecsTestFixtureRAII> Fixture;
-	inline static TObjectPtr<UFlecsWorld> FlecsWorld = nullptr;
-
-	inline static FFlecsComponentHandle EnumComponentEntity;
-	inline static FFlecsEntityHandle SparseEnumEntity;
-
-	BEFORE_EACH()
-	{
-		Fixture = MakeUnique<FFlecsTestFixtureRAII>();
-		FlecsWorld = Fixture->Fixture.GetFlecsWorld();
-
-		EnumComponentEntity = FlecsWorld->RegisterComponentType<EFlecsTestEnum_UENUM>();
-		SparseEnumEntity = FlecsWorld->RegisterComponentType<EFlecsTestEnum_SparseUENUM>();
-	}
-
-	AFTER_EACH()
-	{
-		Fixture.Reset();
-		FlecsWorld = nullptr;
-	}
-
-	
-
-}; // End of A6_UnrealFlecsBasicEnumCPPTests
+}; // UnrealFlecsEnumRegistrationTests
 
 #endif // #if WITH_AUTOMATION_TESTS

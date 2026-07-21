@@ -750,23 +750,6 @@ struct TFlecsComponentTraits<FFlecsTestStruct_FlecsHookTracker> : public TFlecsC
 	
 }; // struct TFlecsComponentTraits<FUStructTestComponent_LifecycleTracker>
 
-/*
-REGISTER_FLECS_COMPONENT(FFlecsTestStruct_FlecsHookTracker,
-	[](flecs::world InWorld, const TFlecsComponentHandle<FFlecsTestStruct_FlecsHookTracker>& InComponentHandle)
-	{
-		InComponentHandle
-			.OnAdd([](FFlecsTestStruct_FlecsHookTracker& HookTracker)
-			{
-				++HookTracker.OnAddCalled;
-			})
-			.OnReplace([](FFlecsTestStruct_FlecsHookTracker& Previous, FFlecsTestStruct_FlecsHookTracker& Next)
-			{
-				++Previous.OnReplaceCalled;
-				++Next.OnReplaceCalled;
-			});
-	});
-	*/
-
 struct FFlecsTestNativeGameplayTags : public FGameplayTagNativeAdder
 {
 	static FFlecsTestNativeGameplayTags StaticInstance;

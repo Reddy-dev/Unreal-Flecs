@@ -429,6 +429,7 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 
 		FReplicatedEntityState& State = EntityStates.FindOrAdd(NetworkId);
 		const FFlecsReplicationRouteDescriptor Route = Router->Route(Entity);
+		
 		FString InterestError;
 		if (!ValidateInterestBinding(Route.Interest, InterestError))
 		{
@@ -599,11 +600,10 @@ void UFlecsNetworkWorldSubsystem::DrainInbox()
 	RetryEntityPairFixups();
 }
 
-void UFlecsNetworkWorldSubsystem::ApplyUpdate(const FGuid& SourceShard,
-	const FFlecsReplicatedEntityUpdate& Update)
+void UFlecsNetworkWorldSubsystem::ApplyUpdate(const FGuid& SourceShard, const FFlecsReplicatedEntityUpdate& Update)
 {
-	if (const uint32* Revision = LastAppliedStateRevisions.Find(Update.NetworkId);
-		Revision && *Revision >= Update.StateRevision)
+	const uint32* Revision = LastAppliedStateRevisions.Find(Update.NetworkId);
+	if (Revision && *Revision >= Update.StateRevision)
 	{
 		return;
 	}
@@ -617,13 +617,17 @@ void UFlecsNetworkWorldSubsystem::ApplyUpdate(const FGuid& SourceShard,
 	if (Update.Kind == EFlecsReplicatedEntityUpdateKind::Full)
 	{
 		TOptional<TPair<FGuid, FFlecsReplicatedEntityUpdate>> DeferredDelta;
-		if (TPair<FGuid, FFlecsReplicatedEntityUpdate>* Found = DeferredDeltaUpdates.Find(Update.NetworkId))
+		
+		if (const TPair<FGuid, FFlecsReplicatedEntityUpdate>* Found = DeferredDeltaUpdates.Find(Update.NetworkId))
 		{
 			DeferredDelta = *Found;
 		}
+		
 		MaterializedRemoteUpdates.Add(Update.NetworkId, Update);
 		DeferredDeltaUpdates.Remove(Update.NetworkId);
+		
 		ApplyMaterializedUpdate(SourceShard, Update);
+		
 		if (DeferredDelta.IsSet() && DeferredDelta->Value.LayoutId == Update.LayoutId
 			&& DeferredDelta->Value.StateRevision > Update.StateRevision)
 		{
@@ -677,8 +681,8 @@ void UFlecsNetworkWorldSubsystem::ApplyMaterializedUpdate(const FGuid& SourceSha
 		return;
 	}
 	
-	if (const uint32* Revision = LastAppliedStateRevisions.Find(Update.NetworkId);
-		Revision && *Revision >= Update.StateRevision)
+	const uint32* Revision = LastAppliedStateRevisions.Find(Update.NetworkId);
+	if (Revision && *Revision >= Update.StateRevision)
 	{
 		return;
 	}
@@ -797,8 +801,7 @@ void UFlecsNetworkWorldSubsystem::ApplyMaterializedUpdate(const FGuid& SourceSha
 	EntitySourceShards.Add(Update.NetworkId, SourceShard);
 }
 
-void UFlecsNetworkWorldSubsystem::RemoveRemoteEntity(const FFlecsNetworkId NetworkId,
-	const FGuid* ExpectedSource)
+void UFlecsNetworkWorldSubsystem::RemoveRemoteEntity(const FFlecsNetworkId NetworkId, const FGuid* ExpectedSource)
 {
 	if (ExpectedSource)
 	{
@@ -841,14 +844,14 @@ void UFlecsNetworkWorldSubsystem::RemoveRemoteEntity(const FFlecsNetworkId Netwo
 
 void UFlecsNetworkWorldSubsystem::DetachRemoteShard(const FGuid& SourceShard)
 {
-	for (TPair<FFlecsReplicationLayoutId, TArray<TPair<FGuid, FFlecsReplicatedEntityUpdate>>>& Pair
-		: DeferredUpdates)
+	for (TPair<FFlecsReplicationLayoutId, TArray<TPair<FGuid, FFlecsReplicatedEntityUpdate>>>& Pair : DeferredUpdates)
 	{
 		Pair.Value.RemoveAll([&SourceShard](const TPair<FGuid, FFlecsReplicatedEntityUpdate>& Deferred)
 		{
 			return Deferred.Key == SourceShard;
 		});
 	}
+	
 	for (auto It = DeferredDeltaUpdates.CreateIterator(); It; ++It)
 	{
 		if (It.Value().Key == SourceShard)
@@ -876,7 +879,8 @@ void UFlecsNetworkWorldSubsystem::DetachRemoteShard(const FGuid& SourceShard)
 void UFlecsNetworkWorldSubsystem::RetryEntityPairFixups()
 {
 	const TSolidNotNull<UFlecsWorld*> World = GetFlecsWorldChecked();
-	World->Defer([&]()
+	
+	World->Defer([this]()
 	{
 		for (int32 Index = EntityPairFixups.Num() - 1; Index >= 0; --Index)
 		{
@@ -913,8 +917,6 @@ void UFlecsNetworkWorldSubsystem::ApplyResolvedValue(const FFlecsEntityHandle& E
 	{
 		return;
 	}
-
-	const FFlecsComponentReplicationRegistry& Registry = FFlecsComponentReplicationRegistry::Get(GetFlecsWorldChecked());
 	
 	const EFlecsReplicationKeyStorageKind StorageKind = Key.StorageKind;
 	

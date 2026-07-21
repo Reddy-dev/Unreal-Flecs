@@ -11,34 +11,12 @@
 #include "Worlds/FlecsWorldConverter.h"
 #include "Worlds/UnrealFlecsWorldTag.h"
 
-/**
- * Layout of the tests:
- * A. OS API Tests
- * B. World Tests
- * C. Entity Tests
- * D. World Tick Tests
- */
-TEST_CLASS_WITH_FLAGS_AND_TAGS(A1_FlecsWorldTests, "UnrealFlecs.A1_World",
+FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsWorldTests, "UnrealFlecs.World.Lifecycle",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter
 	| EAutomationTestFlags::CriticalPriority,
 	"[Flecs][OS-API][World][Entity]")
 {
-	inline static TUniquePtr<FFlecsTestFixtureRAII> Fixture;
-	inline static TObjectPtr<UFlecsWorld> FlecsWorld = nullptr;
-
-	BEFORE_EACH()
-	{
-		Fixture = MakeUnique<FFlecsTestFixtureRAII>();
-		FlecsWorld = Fixture->Fixture.GetFlecsWorld();
-	}
-
-	AFTER_EACH()
-	{
-		Fixture = nullptr;
-		FlecsWorld = nullptr;
-	}
-
-	TEST_METHOD(A1_AllocateMemoryOSAPI)
+	TEST_METHOD(AllocateMemoryOSAPI)
 	{
 		static constexpr uint32 MemorySize = 16;
 		
@@ -49,7 +27,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A1_FlecsWorldTests, "UnrealFlecs.A1_World",
 		Memory = nullptr;
 	}
 
-	TEST_METHOD(A2_ReAllocateMemoryOSAPI)
+	TEST_METHOD(ReAllocateMemoryOSAPI)
 	{
 		static constexpr uint32 MemorySize = 16;
 		
@@ -62,7 +40,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A1_FlecsWorldTests, "UnrealFlecs.A1_World",
 		ecs_os_free(ReallocatedMemory);
 	}
 
-	TEST_METHOD(A3_CallocOSAPI)
+	TEST_METHOD(CallocOSAPI)
 	{
 		static constexpr uint32 MemorySize = 16;
 		
@@ -79,13 +57,13 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A1_FlecsWorldTests, "UnrealFlecs.A1_World",
 		ecs_os_free(Memory);
 	}
 
-	TEST_METHOD(A4_GetTimeNowOSAPI)
+	TEST_METHOD(GetTimeNowOSAPI)
 	{
 		const uint32_t Time = ecs_os_now();
 		ASSERT_THAT(IsTrue(Time > 0));
 	}
 
-	TEST_METHOD(A5_SleepNanoSecondsOSAPI)
+	TEST_METHOD(SleepNanoSecondsOSAPI)
 	{
 		static FTimespan SleepTime = FTimespan::FromMilliseconds(10);
 		
@@ -96,61 +74,61 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A1_FlecsWorldTests, "UnrealFlecs.A1_World",
 		ASSERT_THAT(IsTrue(EndTime > StartTime));
 	}
 	
-	TEST_METHOD(B1_CanCreateWorld)
+	TEST_METHOD(CanCreateWorld)
 	{
-		ASSERT_THAT(IsTrue(IsValid(FlecsWorld)));
+		ASSERT_THAT(IsTrue(IsValid(World())));
 	}
 
-	TEST_METHOD(B2_CanGetWorldEntity)
+	TEST_METHOD(CanGetWorldEntity)
 	{
-		const FFlecsEntityHandle WorldEntity = FlecsWorld->GetWorldEntity();
+		const FFlecsEntityHandle WorldEntity = World()->GetWorldEntity();
 		ASSERT_THAT(IsTrue(WorldEntity.IsValid()));
 		
 		ASSERT_THAT(AreEqual(FString("World"), WorldEntity.GetName()));
 	}
 
-	TEST_METHOD(B3_CanConvertFlecsWorldToUFlecsWorld)
+	TEST_METHOD(CanConvertFlecsWorldToUFlecsWorld)
 	{
-		const TSolidNotNull<UFlecsWorld*> ConvertedWorld = UE::Flecs::ToUnrealFlecsWorld(FlecsWorld->GetNativeFlecsWorld());
+		const TSolidNotNull<UFlecsWorld*> ConvertedWorld = UE::Flecs::ToUnrealFlecsWorld(World()->GetNativeFlecsWorld());
 		ASSERT_THAT(IsTrue(IsValid(ConvertedWorld)));
 		
-		ASSERT_THAT(IsTrue(FlecsWorld == ConvertedWorld));
+		ASSERT_THAT(IsTrue(World() == ConvertedWorld));
 	}
 
-	TEST_METHOD(B4_IsUnrealFlecsWorld)
+	TEST_METHOD(IsUnrealFlecsWorld)
 	{
-		ASSERT_THAT(IsTrue(FlecsWorld->Has<FUnrealFlecsWorldTag>()));
+		ASSERT_THAT(IsTrue(World()->Has<FUnrealFlecsWorldTag>()));
 
 		flecs::world non_unreal_world;
 		non_unreal_world.component<FUnrealFlecsWorldTag>();
 		ASSERT_THAT(IsFalse(non_unreal_world.has<FUnrealFlecsWorldTag>()));
 	}
 
-	TEST_METHOD(C1_CanCreateEntity)
+	TEST_METHOD(CanCreateEntity)
 	{
-		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity();
+		const FFlecsEntityHandle TestEntity = World()->CreateEntity();
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
 	}
 
-	TEST_METHOD(C2_CanCreateEntityWithID)
+	TEST_METHOD(CanCreateEntityWithID)
 	{
 		static constexpr FFlecsId TestId = FLECS_HI_COMPONENT_ID + 10012;
 		
-		const FFlecsEntityHandle EntityWithId = FlecsWorld->CreateEntityWithId(TestId);
+		const FFlecsEntityHandle EntityWithId = World()->CreateEntityWithId(TestId);
 		ASSERT_THAT(IsTrue(EntityWithId.IsValid()));
 		ASSERT_THAT(AreEqual(TestId, EntityWithId.GetFlecsId()));
 		
-		ASSERT_THAT(IsTrue(FlecsWorld->IsAlive(EntityWithId)));
+		ASSERT_THAT(IsTrue(World()->IsAlive(EntityWithId)));
 		
-		ASSERT_THAT(AreEqual(EntityWithId, FlecsWorld->GetAlive(TestId)));
+		ASSERT_THAT(AreEqual(EntityWithId, World()->GetAlive(TestId)));
 	}
 
-	TEST_METHOD(C3_CanAddRemoveTag)
+	TEST_METHOD(CanAddRemoveTag)
 	{
-		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity();
+		const FFlecsEntityHandle TestEntity = World()->CreateEntity();
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
 		
-		const FFlecsEntityHandle Tag = FlecsWorld->CreateEntity();
+		const FFlecsEntityHandle Tag = World()->CreateEntity();
 		ASSERT_THAT(IsTrue(Tag.IsValid()));
 		
 		TestEntity.Add(Tag);
@@ -160,44 +138,44 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A1_FlecsWorldTests, "UnrealFlecs.A1_World",
 		ASSERT_THAT(IsFalse(TestEntity.Has(Tag)));
 	}
 
-	TEST_METHOD(C4_CanCreateNamedEntity)
+	TEST_METHOD(CanCreateNamedEntity)
 	{
 		static FString EntityName = TEXT("MyTestEntity");
 		
-		const FFlecsEntityHandle NamedEntity = FlecsWorld->CreateEntity(EntityName);
+		const FFlecsEntityHandle NamedEntity = World()->CreateEntity(EntityName);
 		ASSERT_THAT(IsTrue(NamedEntity.IsValid()));
 		ASSERT_THAT(IsTrue(NamedEntity.HasName()));
 		ASSERT_THAT(AreEqual(EntityName, NamedEntity.GetName()));
 
 		ASSERT_THAT(AreEqual(
 			NamedEntity,
-			FlecsWorld->LookupEntity(EntityName)
+			World()->LookupEntity(EntityName)
 		));
 	}
 
-	TEST_METHOD(C5_CanSetThenClearEntityName)
+	TEST_METHOD(CanSetThenClearEntityName)
 	{
 		static FString NewEntityName = TEXT("MyRenamedTestEntity");
 
-		const FFlecsEntityHandle TestEntity = FlecsWorld->CreateEntity();
+		const FFlecsEntityHandle TestEntity = World()->CreateEntity();
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
 		ASSERT_THAT(IsFalse(TestEntity.HasName()));
-		ASSERT_THAT(IsFalse(FlecsWorld->LookupEntity(NewEntityName).IsValid()));
+		ASSERT_THAT(IsFalse(World()->LookupEntity(NewEntityName).IsValid()));
 		
 		TestEntity.SetName(NewEntityName);
 		ASSERT_THAT(AreEqual(NewEntityName, TestEntity.GetName()));
 		
 		ASSERT_THAT(AreEqual(
 			TestEntity,
-			FlecsWorld->LookupEntity(NewEntityName)
+			World()->LookupEntity(NewEntityName)
 		));
 		
 		TestEntity.ClearName();
 		ASSERT_THAT(IsFalse(TestEntity.HasName()));
 
-		ASSERT_THAT(IsFalse(FlecsWorld->LookupEntity(NewEntityName).IsValid()));
+		ASSERT_THAT(IsFalse(World()->LookupEntity(NewEntityName).IsValid()));
 	}
 	
-}; // End of A1_UnrealFlecsBasicTests
+}; // UnrealFlecsBasicTests
 
 #endif // #if WITH_AUTOMATION_TESTS
