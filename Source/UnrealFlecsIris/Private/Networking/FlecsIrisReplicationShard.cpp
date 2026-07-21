@@ -10,6 +10,7 @@
 #include "Iris/ReplicationSystem/ReplicationSystem.h"
 #include "Net/Iris/ReplicationSystem/NetRootObjectAdapter.h"
 #include "Net/UnrealNetwork.h"
+#include "Templates/Greater.h"
 
 #include "Networking/FlecsIrisReplicationFilter.h"
 #include "Networking/FlecsIrisShardObjectFactory.h"
@@ -385,9 +386,11 @@ bool UFlecsIrisReplicationShard::CanFitUpdate(const FFlecsReplicatedEntityUpdate
 	else
 	{
 		NewEntityBytes = EntityPayloadBytes.FindRef(Update.NetworkId);
+		const TMap<uint16, int32>* ValueIndices = EntityValueIndices.Find(Update.NetworkId);
+		
 		for (const FFlecsReplicatedValue& Value : Update.Values)
 		{
-			const int32* Index = EntityValueIndices.FindRef(Update.NetworkId).Find(Value.KeyIndex);
+			const int32* Index = ValueIndices ? ValueIndices->Find(Value.KeyIndex) : nullptr;
 			NewEntityBytes -= Index ? EntityValues.Items[*Index].Value.Bytes.Num() : 0;
 			NewEntityBytes += Value.Bytes.Num();
 		}
@@ -395,8 +398,7 @@ bool UFlecsIrisReplicationShard::CanFitUpdate(const FFlecsReplicatedEntityUpdate
 
 	const uint32 ExistingBytes = EntityPayloadBytes.FindRef(Update.NetworkId);
 	const uint64 NewPageBytes = static_cast<uint64>(RetainedPayloadBytes) - ExistingBytes + NewEntityBytes;
-	const bool bDedicatedOversizePage = EntityHeaders.Items.IsEmpty()
-		|| (bExisting && EntityHeaders.Items.Num() == 1);
+	const bool bDedicatedOversizePage = EntityHeaders.Items.IsEmpty() || (bExisting && EntityHeaders.Items.Num() == 1);
 	return NewPageBytes <= ByteLimit || bDedicatedOversizePage;
 }
 
@@ -439,6 +441,7 @@ void UFlecsIrisReplicationShard::TryEnqueueReceivedEntity(const FFlecsNetworkId 
 
 	FFlecsReplicatedEntityUpdate Update = HeaderItem->Header;
 	const bool bFirstObservation = !ReceivedBaselines.Contains(NetworkId);
+	
 	if (bFirstObservation)
 	{
 		Update.Kind = EFlecsReplicatedEntityUpdateKind::Full;
