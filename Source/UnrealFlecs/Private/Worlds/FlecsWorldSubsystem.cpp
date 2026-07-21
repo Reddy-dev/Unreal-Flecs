@@ -18,11 +18,14 @@
 #include "Components/FlecsWorldPtrComponent.h"
 #include "Components/UWorldPtrComponent.h"
 #include "Components/FlecsBeginPlayComponent.h"
-#include "General/FlecsDeveloperSettings.h"
 
+#include "Networking/FlecsStablePathTag.h"
+
+#include "General/FlecsDeveloperSettings.h"
 #include "General/FlecsGameplayTagManagerEntity.h"
 #include "General/FlecsModuleRegistry.h"
 #include "General/FlecsThreadAllocationPolicyBaseAsset.h"
+
 
 #include "Pipelines/FlecsGameLoopInterface.h"
 #include "Pipelines/TickFunctions/FlecsTickFunction.h"
@@ -386,6 +389,7 @@ void UFlecsWorldSubsystem::RegisterAllGameplayTags(const TSolidNotNull<UFlecsWor
 			const FFlecsEntityHandle TagEntity = InFlecsWorld->CreateEntity(Tag.ToString(), ".", ".");
 				
 			TagEntity.Set<FGameplayTag>(Tag);
+			TagEntity.Add<FFlecsStablePathTag>();
 
 			InFlecsWorld->TagEntityMap.emplace(Tag, TagEntity.GetFlecsId());
 		}
