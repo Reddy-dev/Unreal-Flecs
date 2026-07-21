@@ -126,7 +126,7 @@ struct UNREALFLECS_API FFlecsComponentReplicationDescriptor
 template <typename T>
 struct TFlecsReplicationTraits
 {
-	static NO_DISCARD FString StableSymbolName()
+	static FString StableSymbolName()
 	{
 		if constexpr (Solid::IsScriptStruct<T>())
 		{
