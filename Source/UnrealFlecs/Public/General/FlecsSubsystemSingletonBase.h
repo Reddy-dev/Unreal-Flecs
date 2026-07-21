@@ -70,6 +70,7 @@ private:
 template <>
 struct TFlecsComponentTraits<FFlecsSubsystemSingletonBase> : public TFlecsComponentTraitsBase<FFlecsSubsystemSingletonBase>
 {
+	// @TODO: Should we allow inheritance in flecs for this?
 	//static constexpr bool Singleton = true;
 }; // struct TFlecsComponentTraits<FFlecsSubsystemSingletonBase>
 
