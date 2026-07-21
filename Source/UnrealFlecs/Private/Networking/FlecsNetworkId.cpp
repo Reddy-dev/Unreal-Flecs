@@ -21,6 +21,7 @@ FFlecsNetworkId FFlecsNetworkIdAllocator::Allocate()
 	else
 	{
 		Slot = NextSlot++;
+		
 		if (Slot == 0)
 		{
 			return {};
@@ -61,6 +62,7 @@ void FFlecsNetworkIdAllocator::Reset(const uint8 InSessionEpoch)
 {
 	SessionEpoch = InSessionEpoch == 0 ? 1 : InSessionEpoch;
 	NextSlot = 1;
+	
 	FreeSlots.Reset();
 	SlotGenerations.Reset();
 	AllocatedSlots.Reset();
