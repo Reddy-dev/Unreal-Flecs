@@ -54,7 +54,7 @@ private:
 	TWeakObjectPtr<UFlecsIrisReplicationShard> Owner;
 };
 
-template<> 
+template <> 
 struct TStructOpsTypeTraits<FFlecsIrisLayoutManifest> : TStructOpsTypeTraitsBase2<FFlecsIrisLayoutManifest>
 {
 	enum
@@ -63,44 +63,109 @@ struct TStructOpsTypeTraits<FFlecsIrisLayoutManifest> : TStructOpsTypeTraitsBase
 	};
 };
 
-/** Fast-array item holding the latest complete snapshot for one Flecs network ID. */
+/** Small materialized entity header. Payload bytes live in FFlecsIrisEntityValues. */
 USTRUCT()
-struct UNREALFLECSIRIS_API FFlecsIrisEntitySnapshotItem : public FFastArraySerializerItem
+struct UNREALFLECSIRIS_API FFlecsIrisEntityHeaderItem : public FFastArraySerializerItem
 {
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FFlecsReplicatedEntitySnapshot Snapshot;
+	FFlecsReplicatedEntityUpdate Header;
 
-	void PostReplicatedAdd(const struct FFlecsIrisEntitySnapshots& Serializer);
-	void PostReplicatedChange(const struct FFlecsIrisEntitySnapshots& Serializer);
-	void PreReplicatedRemove(const struct FFlecsIrisEntitySnapshots& Serializer);
+	void PostReplicatedAdd(const struct FFlecsIrisEntityHeaders& Serializer);
+	void PostReplicatedChange(const struct FFlecsIrisEntityHeaders& Serializer);
+	void PreReplicatedRemove(const struct FFlecsIrisEntityHeaders& Serializer);
 };
 
-/** Push-based fast array of latest entity snapshots within an aggregate shard. */
+/** Push-based latest header per entity. */
 USTRUCT()
-struct UNREALFLECSIRIS_API FFlecsIrisEntitySnapshots : public FIrisFastArraySerializer
+struct UNREALFLECSIRIS_API FFlecsIrisEntityHeaders : public FIrisFastArraySerializer
 {
 	GENERATED_BODY()
 
 	UPROPERTY()
-	TArray<FFlecsIrisEntitySnapshotItem> Items;
+	TArray<FFlecsIrisEntityHeaderItem> Items;
 
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParams)
 	{
-		return FFastArraySerializer::FastArrayDeltaSerialize<FFlecsIrisEntitySnapshotItem,
-			FFlecsIrisEntitySnapshots>(Items, DeltaParams, *this);
+		return FFastArraySerializer::FastArrayDeltaSerialize<FFlecsIrisEntityHeaderItem,
+			FFlecsIrisEntityHeaders>(Items, DeltaParams, *this);
 	}
 
-	void SetOwner(UFlecsIrisReplicationShard* InOwner) { Owner = InOwner; }
-	NO_DISCARD UFlecsIrisReplicationShard* GetOwner() const { return Owner.Get(); }
+	void SetOwner(UFlecsIrisReplicationShard* InOwner)
+	{
+		Owner = InOwner;
+	}
+
+	NO_DISCARD UFlecsIrisReplicationShard* GetOwner() const
+	{
+		return Owner.Get();
+	}
 
 private:
 	TWeakObjectPtr<UFlecsIrisReplicationShard> Owner;
 };
 
-template<>
-struct TStructOpsTypeTraits<FFlecsIrisEntitySnapshots> : TStructOpsTypeTraitsBase2<FFlecsIrisEntitySnapshots>
+template <>
+struct TStructOpsTypeTraits<FFlecsIrisEntityHeaders> : TStructOpsTypeTraitsBase2<FFlecsIrisEntityHeaders>
+{
+	enum
+	{
+		WithNetDeltaSerializer = true
+	};
+};
+
+USTRUCT()
+struct UNREALFLECSIRIS_API FFlecsIrisEntityValueItem : public FFastArraySerializerItem
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FFlecsNetworkId NetworkId;
+
+	UPROPERTY()
+	FFlecsReplicationLayoutId LayoutId;
+
+	UPROPERTY()
+	uint32 StateRevision = 0;
+
+	UPROPERTY()
+	FFlecsReplicatedValue Value;
+
+	void PostReplicatedAdd(const struct FFlecsIrisEntityValues& Serializer);
+	void PostReplicatedChange(const struct FFlecsIrisEntityValues& Serializer);
+}; // struct FFlecsIrisEntityValueItem
+
+USTRUCT()
+struct UNREALFLECSIRIS_API FFlecsIrisEntityValues : public FIrisFastArraySerializer
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TArray<FFlecsIrisEntityValueItem> Items;
+
+	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParams)
+	{
+		return FFastArraySerializer::FastArrayDeltaSerialize<FFlecsIrisEntityValueItem,
+			FFlecsIrisEntityValues>(Items, DeltaParams, *this);
+	}
+
+	void SetOwner(UFlecsIrisReplicationShard* InOwner)
+	{
+		Owner = InOwner;
+	}
+
+	NO_DISCARD UFlecsIrisReplicationShard* GetOwner() const
+	{
+		return Owner.Get();
+	}
+
+private:
+	TWeakObjectPtr<UFlecsIrisReplicationShard> Owner;
+}; // struct FFlecsIrisEntityValues
+
+template <>
+struct TStructOpsTypeTraits<FFlecsIrisEntityValues> : TStructOpsTypeTraitsBase2<FFlecsIrisEntityValues>
 {
 	enum
 	{
@@ -111,7 +176,7 @@ struct TStructOpsTypeTraits<FFlecsIrisEntitySnapshots> : TStructOpsTypeTraitsBas
 /**
  * Aggregate Iris root object for a single Flecs replication route.
  *
- * The authority keeps a layout manifest and the latest snapshot for each
+ * The authority keeps a layout manifest plus materialized headers and values.
  * entity. On clients, the root-object factory binds the shard to the world
  * subsystem and forwards fast-array events into its protocol inbox.
  */
@@ -134,9 +199,9 @@ public:
 	virtual void FillRootObjectReplicationParams(const UE::Net::FRootObjectReplicationParamsContext& Context,
 		UE::Net::FRootObjectReplicationParams& OutParams) const override;
 
-	/** Configures this instance as the authority-side root object for InShardKey. */
-	void InitializeServer(UWorld* InWorld, const FFlecsReplicationRouteKey& InShardKey,
-		float InPollFrequency, float InStaticPriority);
+	/** Configures this instance as one bounded authority-side page. */
+	void InitializeServer(UWorld* InWorld, const FFlecsReplicationRouteDescriptor& InRoute,
+		float InPollFrequency, float InStaticPriority, uint16 InEntityLimit, uint32 InByteLimit);
 	
 	/** Binds a factory-created client instance to its destination world subsystem. */
 	void BindClient(const TSolidNotNull<UWorld*> InWorld);
@@ -151,13 +216,23 @@ public:
 	void DetachedFromReplication();
 
 	void UpsertLayout(const FFlecsReplicationLayoutDefinition& Layout);
-	void UpsertEntity(const FFlecsReplicatedEntitySnapshot& Snapshot);
+	void UpsertEntity(const FFlecsReplicatedEntityUpdate& Update);
 	void RemoveEntity(FFlecsNetworkId NetworkId);
+	NO_DISCARD bool CanFitUpdate(const FFlecsReplicatedEntityUpdate& Update) const;
+	NO_DISCARD bool IsEmpty() const
+	{
+		return EntityHeaders.Items.IsEmpty();
+	}
+
+	NO_DISCARD const FFlecsReplicationRouteDescriptor& GetRouteDescriptor() const
+	{
+		return RouteDescriptor;
+	}
 	
 	/** Re-enqueues full current state after a late client binds to the shard. */
 	void EnqueueAllReceived();
 	void EnqueueReceivedLayout(const FFlecsReplicationLayoutDefinition& Layout) const;
-	void EnqueueReceivedEntity(const FFlecsReplicatedEntitySnapshot& Snapshot) const;
+	void TryEnqueueReceivedEntity(FFlecsNetworkId NetworkId);
 	void EnqueueRemovedEntity(FFlecsNetworkId NetworkId) const;
 
 	NO_DISCARD FGuid GetSourceShardId() const;
@@ -169,18 +244,34 @@ public:
 	
 	NO_DISCARD FORCEINLINE int32 GetEntityCount() const
 	{
-		return EntitySnapshots.Items.Num();
+		return EntityHeaders.Items.Num();
 	}
 
+#if WITH_AUTOMATION_TESTS || WITH_EDITOR
+	NO_DISCARD const FFlecsReplicatedEntityUpdate* FindHeaderForTesting(FFlecsNetworkId NetworkId) const
+	{
+		const int32* Index = EntityIndices.Find(NetworkId);
+		return Index ? &EntityHeaders.Items[*Index].Header : nullptr;
+	}
+#endif
+
 private:
+	bool TryAttachInterestFilter();
+
 	UPROPERTY(Replicated)
-	FFlecsReplicationRouteKey ShardKey;
+	FFlecsReplicationRouteDescriptor RouteDescriptor;
+
+	UPROPERTY(Replicated)
+	FGuid SourceShardId;
 
 	UPROPERTY(Replicated)
 	FFlecsIrisLayoutManifest LayoutManifest;
 
 	UPROPERTY(Replicated)
-	FFlecsIrisEntitySnapshots EntitySnapshots;
+	FFlecsIrisEntityHeaders EntityHeaders;
+
+	UPROPERTY(Replicated)
+	FFlecsIrisEntityValues EntityValues;
 
 	UPROPERTY(Transient)
 	TWeakObjectPtr<UWorld> BoundWorld;
@@ -195,6 +286,15 @@ private:
 	
 	UPROPERTY()
 	TMap<FFlecsNetworkId, int32> EntityIndices;
+	TMap<FFlecsNetworkId, TMap<uint16, int32>> EntityValueIndices;
+	TMap<FFlecsNetworkId, uint32> EntityPayloadBytes;
+	TSet<FFlecsNetworkId> ReceivedBaselines;
+	uint32 RetainedPayloadBytes = 0;
+	uint16 EntityLimit = 256;
+	uint32 ByteLimit = 256 * 1024;
+	bool bWarnedOversizeEntity = false;
+	bool bWarnedInvalidInterest = false;
+	bool bInterestFilterAttached = false;
 	
 	float PollFrequency = 20.0f;
 	float StaticPriority = 1.0f;

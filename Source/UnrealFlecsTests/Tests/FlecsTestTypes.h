@@ -884,7 +884,7 @@ struct FFlecsReplicationTestValue
 	int32 Value = 0;
 };
 
-template<>
+template <>
 struct TFlecsComponentTraits<FFlecsReplicationTestValue> : TFlecsComponentTraitsBase<FFlecsReplicationTestValue>
 {
 	static constexpr bool AutoRegister = false;
@@ -1022,7 +1022,17 @@ struct FFlecsReplicationTestLocalOnly
 	int32 Value = 0;
 };
 
-template<>
+USTRUCT()
+struct FFlecsReplicationTestInvalidInterestDescriptor
+	: public FFlecsReplicationInterestDescriptorBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TObjectPtr<UObject> Object;
+}; // struct FFlecsReplicationTestInvalidInterestDescriptor
+
+template <>
 struct TFlecsComponentTraits<FFlecsReplicationTestLocalOnly> : TFlecsComponentTraitsBase<FFlecsReplicationTestLocalOnly>
 {
 	static constexpr bool AutoRegister = false;
@@ -1034,17 +1044,17 @@ class UNREALFLECSTESTS_API UFlecsReplicationCaptureTransport : public UFlecsRepl
 	GENERATED_BODY()
 
 public:
-	virtual void PublishLayout(const FFlecsReplicationRouteKey&, const FFlecsReplicationLayoutDefinition& Layout) override
+	virtual void PublishLayout(const FFlecsReplicationRouteDescriptor&, const FFlecsReplicationLayoutDefinition& Layout) override
 	{
 		Layouts.Add(Layout);
 	}
 	
-	virtual void PublishEntity(const FFlecsReplicationRouteKey&, const FFlecsReplicatedEntitySnapshot& Snapshot) override
+	virtual void PublishEntity(const FFlecsReplicationRouteDescriptor&, const FFlecsReplicatedEntityUpdate& Snapshot) override
 	{
 		Snapshots.Add(Snapshot);
 	}
 	
-	virtual void RemoveEntity(const FFlecsReplicationRouteKey&, FFlecsNetworkId NetworkId) override
+	virtual void RemoveEntity(const FFlecsReplicationRouteDescriptor&, FFlecsNetworkId NetworkId) override
 	{
 		RemovedEntities.Add(NetworkId);
 	}
@@ -1055,7 +1065,7 @@ public:
 	}
 
 	TArray<FFlecsReplicationLayoutDefinition> Layouts;
-	TArray<FFlecsReplicatedEntitySnapshot> Snapshots;
+	TArray<FFlecsReplicatedEntityUpdate> Snapshots;
 	TArray<FFlecsNetworkId> RemovedEntities;
 	TArray<FString> ProtocolErrors;
 }; // class UFlecsReplicationCaptureTransport

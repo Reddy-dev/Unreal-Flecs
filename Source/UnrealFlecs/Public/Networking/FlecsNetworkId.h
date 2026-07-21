@@ -37,7 +37,9 @@ struct UNREALFLECS_API FFlecsNetworkId
 	static constexpr uint64 EpochMask = EpochValueMask << (SlotBitCount + GenerationBitCount);
 
 	FFlecsNetworkId() = default;
+	
 	explicit constexpr FFlecsNetworkId(const uint64 InValue) : Value(InValue) {}
+	
 	constexpr FFlecsNetworkId(const uint32 InSlot, const uint32 InGeneration, const uint8 InSessionEpoch)
 		: Value((static_cast<uint64>(InSlot) & SlotMask)
 			| ((static_cast<uint64>(InGeneration) & GenerationValueMask) << SlotBitCount)
@@ -91,6 +93,23 @@ struct UNREALFLECS_API FFlecsNetworkId
 
 static_assert(sizeof(FFlecsNetworkId) == sizeof(uint64));
 
+template <>
+struct TFlecsComponentTraits<FFlecsNetworkId> : public TFlecsComponentTraitsBase<FFlecsNetworkId>
+{
+	using WithTypes = TTuple<FFlecsReplicatedEntityComponent>;
+}; // struct TFlecsComponentTraits<FFlecsNetworkId>
+
+
+template<>
+struct TStructOpsTypeTraits<FFlecsNetworkId> : public TStructOpsTypeTraitsBase2<FFlecsNetworkId>
+{
+	enum
+	{
+		WithIdenticalViaEquality = true
+	};
+	
+}; // struct TStructOpsTypeTraits<FFlecsNetworkId>
+
 // @TODO: Implement
 /** Serializable value wrapper for references to another replicated Flecs entity. */
 USTRUCT()
@@ -142,19 +161,3 @@ private:
 	TSet<uint32> AllocatedSlots;
 	
 }; // class FFlecsNetworkIdAllocator
-
-template <>
-struct TFlecsComponentTraits<FFlecsNetworkId> : public TFlecsComponentTraitsBase<FFlecsNetworkId>
-{
-	using WithTypes = TTuple<FFlecsReplicatedEntityComponent>;
-}; // struct TFlecsComponentTraits<FFlecsNetworkId>
-
-template<>
-struct TStructOpsTypeTraits<FFlecsNetworkId> : public TStructOpsTypeTraitsBase2<FFlecsNetworkId>
-{
-	enum
-	{
-		WithIdenticalViaEquality = true
-	};
-	
-}; // struct TStructOpsTypeTraits<FFlecsNetworkId>

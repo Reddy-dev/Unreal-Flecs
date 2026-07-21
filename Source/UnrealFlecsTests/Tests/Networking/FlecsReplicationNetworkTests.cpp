@@ -6,9 +6,13 @@
 #if ENABLE_PIE_NETWORK_TEST && ENABLE_UNREAL_FLECS_TESTS
 
 #include "GameFramework/GameModeBase.h"
+#include "Engine/NetDriver.h"
 
+#include "Networking/FlecsIrisReplicationFilter.h"
 #include "Networking/FlecsNetworkId.h"
+#include "Networking/FlecsNetworkWorldSubsystem.h"
 #include "Networking/FlecsReplicatedEntityComponent.h"
+#include "Networking/FlecsReplicationTransportBase.h"
 #include "Pipelines/FlecsDefaultGameLoop.h"
 #include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 #include "Worlds/FlecsWorld.h"
@@ -75,6 +79,40 @@ namespace UE::Flecs::Tests
 			.Build()
 			.count();
 	}
+
+	class FPIESpatialValueRouter final : public IFlecsReplicationRouter
+	{
+	public:
+		virtual FFlecsReplicationRouteDescriptor Route(const FFlecsEntityHandle& Entity) const override
+		{
+			const FFlecsReplicationTestValue* Value = Entity.TryGet<FFlecsReplicationTestValue>();
+			return MakeFlecsSpatialCellRoute(FVector(Value ? Value->Value : 0, 0.0, 0.0),
+				100.0f, 0, 50.0f);
+		}
+	}; // class FPIESpatialValueRouter
+
+	class FPIEOwnerRouter final : public IFlecsReplicationRouter
+	{
+	public:
+		explicit FPIEOwnerRouter(const uint32 InOwnerConnectionId)
+			: OwnerConnectionId(InOwnerConnectionId)
+		{
+		}
+
+		virtual FFlecsReplicationRouteDescriptor Route(const FFlecsEntityHandle&) const override
+		{
+			FFlecsReplicationOwnerInterestDescriptor Owner;
+			Owner.OwnerConnection = FFlecsReplicationConnectionId(OwnerConnectionId);
+			FFlecsReplicationRouteDescriptor Result = FFlecsReplicationRouteDescriptor::Default();
+			Result.LogicalKey = FFlecsReplicationRouteKey(TEXT("OwnerOnly"));
+			Result.Interest = FFlecsReplicationInterestBinding::Make(
+				FFlecsReplicationInterestPolicyNames::Owner, Owner);
+			return Result;
+		}
+
+	private:
+		uint32 OwnerConnectionId;
+	}; // class FPIEOwnerRouter
 }
 
 NETWORK_TEST_CLASS(FlecsReplicationDedicatedServerTests,
@@ -266,6 +304,100 @@ NETWORK_TEST_CLASS(FlecsReplicationDedicatedServerTests,
 					&& Entity.Has<FFlecsReplicationTestTag>();
 			});
 	}
+
+	TEST_METHOD(SpatialBubbleExitAndReentry_RestoresCurrentFullBaseline)
+	{
+		Network
+			.ThenServer([](FState& State)
+			{
+				State.FlecsWorld = UE::Flecs::Tests::CreateReplicationPIEWorld(State.World);
+				State.World->GetSubsystem<UFlecsNetworkWorldSubsystem>()->SetReplicationRouter(
+					MakeUnique<UE::Flecs::Tests::FPIESpatialValueRouter>());
+			})
+			.ThenClients([](FState& State)
+			{
+				State.FlecsWorld = UE::Flecs::Tests::CreateReplicationPIEWorld(State.World);
+			})
+			.ThenServer([](FState& State)
+			{
+				State.Entity = State.FlecsWorld->CreateEntity()
+					.Set<FFlecsReplicationTestValue>({ 0 })
+					.Add<FFlecsReplicatedEntityComponent>();
+			})
+			.UntilClients([](FState& State)
+			{
+				return UE::Flecs::Tests::CountReplicatedEntities(State.FlecsWorld) == 1;
+			})
+			.ThenServer([](FState& State)
+			{
+				State.Entity.Set<FFlecsReplicationTestValue>({ 10000 });
+			})
+			.UntilClients([](FState& State)
+			{
+				return UE::Flecs::Tests::CountReplicatedEntities(State.FlecsWorld) == 0;
+			})
+			.ThenServer([](FState& State)
+			{
+				State.Entity.Set<FFlecsReplicationTestValue>({ 25 });
+			})
+			.UntilClients([](FState& State)
+			{
+				const FFlecsEntityHandle Entity = UE::Flecs::Tests::FindReplicatedValueEntity(State.FlecsWorld);
+				return Entity.IsValid() && Entity.Get<FFlecsReplicationTestValue>().Value == 25;
+			});
+	}
+};
+
+NETWORK_TEST_CLASS(FlecsReplicationOwnerInterestTests,
+	"UnrealFlecs.Networking.Replication.PIE.OwnerInterest")
+{
+	struct FState : FBasePIENetworkComponentState
+	{
+		UFlecsWorld* FlecsWorld = nullptr;
+	};
+
+	FPIENetworkComponent<FState> Network{ TestRunner, TestCommandBuilder, bInitializing };
+
+	BEFORE_EACH()
+	{
+		FNetworkComponentBuilder<FState>()
+			.WithClients(2)
+			.AsDedicatedServer()
+			.WithGameInstanceClass(UGameInstance::StaticClass())
+			.WithGameMode(AGameModeBase::StaticClass())
+			.Build(Network);
+	}
+
+	TEST_METHOD(OwnerOnlyRoute_IsVisibleOnlyToMatchingParentConnection)
+	{
+		Network
+			.ThenServer([](FState& State)
+			{
+				State.FlecsWorld = UE::Flecs::Tests::CreateReplicationPIEWorld(State.World);
+				const UNetDriver* Driver = State.World->GetNetDriver();
+				check(Driver && !Driver->ClientConnections.IsEmpty());
+				const FFlecsReplicationConnectionId OwnerConnection =
+					GetFlecsReplicationConnectionId(Driver->ClientConnections[0]);
+				State.World->GetSubsystem<UFlecsNetworkWorldSubsystem>()->SetReplicationRouter(
+					MakeUnique<UE::Flecs::Tests::FPIEOwnerRouter>(OwnerConnection.Value));
+				State.FlecsWorld->CreateEntity()
+					.Set<FFlecsReplicationTestValue>({ 91 })
+					.Add<FFlecsReplicatedEntityComponent>();
+			})
+			.ThenClients([](FState& State)
+			{
+				State.FlecsWorld = UE::Flecs::Tests::CreateReplicationPIEWorld(State.World);
+			})
+			.UntilClient(0, [](FState& State)
+			{
+				return UE::Flecs::Tests::CountReplicatedEntities(State.FlecsWorld) == 1;
+			})
+			.ThenClient(1, [this](FState& State)
+			{
+				ASSERT_THAT(AreEqual(0,
+					UE::Flecs::Tests::CountReplicatedEntities(State.FlecsWorld)));
+			});
+	}
 };
 
 NETWORK_TEST_CLASS(FlecsReplicationListenServerTests,
@@ -315,6 +447,7 @@ NETWORK_TEST_CLASS(FlecsReplicationIrisDisabledTests,
 	{
 		UFlecsWorld* FlecsWorld = nullptr;
 	};
+	
 	FPIENetworkComponent<FState> Network{ TestRunner, TestCommandBuilder, bInitializing };
 	inline static TSharedPtr<FScopedTestEnvironment> TestEnvironment;
 

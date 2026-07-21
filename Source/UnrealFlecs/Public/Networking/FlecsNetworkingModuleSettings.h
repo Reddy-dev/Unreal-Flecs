@@ -21,12 +21,20 @@ public:
 	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Networking")
 	FName ReplicationProviderName = TEXT("Iris");
 
-	/** Poll frequency assigned to each Iris aggregate shard created by the default adapter. */
+	/** Poll frequency inherited by Iris pages whose route does not provide one. */
 	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Networking", meta = (ClampMin = "0.0"))
 	float DefaultShardPollFrequency = 20.0f;
 
-	/** Static priority assigned to each Iris aggregate shard created by the default adapter. */
+	/** Static priority inherited by Iris pages whose route does not provide one. */
 	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Networking", meta = (ClampMin = "0.0"))
 	float DefaultShardStaticPriority = 1.0f;
+
+	/** Entity capacity inherited by routes whose PageEntityLimit is zero. */
+	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Networking", meta = (ClampMin = "1"))
+	uint16 DefaultPageEntityLimit = 256;
+
+	/** Retained serialized entity payload capacity inherited by routes whose byte limit is zero. */
+	UPROPERTY(EditAnywhere, Config, Category = "Flecs | Networking", meta = (ClampMin = "1"))
+	uint32 DefaultPageRetainedPayloadByteLimit = 256 * 1024;
 	
 }; // class UFlecsNetworkingModuleSettings

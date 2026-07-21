@@ -169,7 +169,7 @@ void UFlecsNetworkWorldSubsystem::StopReplicatingEntity(const FFlecsNetworkId Ne
 	{
 		const FReplicatedEntityState* State = EntityStates.Find(NetworkId);
 		ReplicationTransport->RemoveEntity(
-			State ? State->RouteKey : FFlecsReplicationRouteKey::Default(), NetworkId);
+			State ? State->Route : FFlecsReplicationRouteDescriptor::Default(), NetworkId);
 	}
 	
 	const FFlecsEntityHandle* Entity = NetworkIdToEntityHandleMap.Find(NetworkId);
@@ -199,6 +199,71 @@ void UFlecsNetworkWorldSubsystem::MarkEntityDirty(const FFlecsEntityHandle& Enti
 	{
 		DirtyEntities.Add(*NetworkId);
 	}
+}
+
+void UFlecsNetworkWorldSubsystem::SetReplicationRouter(TUniquePtr<IFlecsReplicationRouter> InRouter)
+{
+	Router = InRouter ? MoveTemp(InRouter) : MakeUnique<FFlecsDefaultReplicationRouter>();
+	for (TPair<FFlecsNetworkId, FReplicatedEntityState>& Pair : EntityStates)
+	{
+		Pair.Value.bRoutingDirty = true;
+		DirtyEntities.Add(Pair.Key);
+	}
+}
+
+void UFlecsNetworkWorldSubsystem::ResetReplicationRouter()
+{
+	SetReplicationRouter(MakeUnique<FFlecsDefaultReplicationRouter>());
+}
+
+void UFlecsNetworkWorldSubsystem::MarkEntityRoutingDirty(const FFlecsEntityHandle& EntityHandle)
+{
+	if (!HasAuthority() || !EntityHandle.IsValid())
+	{
+		return;
+	}
+	if (const FFlecsNetworkId* NetworkId = EntityHandle.TryGet<FFlecsNetworkId>();
+		NetworkId && NetworkId->IsValid())
+	{
+		EntityStates.FindOrAdd(*NetworkId).bRoutingDirty = true;
+		DirtyEntities.Add(*NetworkId);
+	}
+}
+
+void UFlecsNetworkWorldSubsystem::ClearConnectionInterestContext(
+	const FFlecsReplicationConnectionId ConnectionId)
+{
+	ConnectionInterestContexts.Remove(ConnectionId.Value);
+}
+
+bool UFlecsNetworkWorldSubsystem::ValidateInterestBinding(
+	const FFlecsReplicationInterestBinding& Binding, FString& OutError) const
+{
+	return FFlecsReplicationInterestPolicyRegistry::ValidateBinding(Binding, OutError);
+}
+
+bool UFlecsNetworkWorldSubsystem::IsRouteRelevant(const FFlecsReplicationRouteDescriptor& Route,
+	const FFlecsReplicationConnectionId ConnectionId, const FFlecsReplicationConnectionView& View) const
+{
+	FString Error;
+	if (!ValidateInterestBinding(Route.Interest, Error))
+	{
+		const FString LogKey = Route.LogicalKey.Name.ToString() + TEXT("|") + Error;
+		if (!LoggedInvalidInterestBindings.Contains(LogKey))
+		{
+			LoggedInvalidInterestBindings.Add(LogKey);
+			UE_LOG(LogFlecsCore, Error, TEXT("Rejected replication route '%s': %s"),
+				*Route.LogicalKey.Name.ToString(), *Error);
+		}
+		return false;
+	}
+
+	static const FFlecsReplicationConnectionInterestContext EmptyContext;
+	const FFlecsReplicationConnectionInterestContext* Context = ConnectionInterestContexts.Find(ConnectionId.Value);
+	const IFlecsReplicationInterestPolicy* Policy =
+		FFlecsReplicationInterestPolicyRegistry::FindPolicy(Route.Interest.PolicyName);
+	return Policy && Policy->IsInterested(Route.Interest.Descriptor,
+		{ ConnectionId, Context ? *Context : EmptyContext, View });
 }
 
 FFlecsEntityHandle UFlecsNetworkWorldSubsystem::FindEntity(const FFlecsNetworkId NetworkId) const
@@ -363,31 +428,37 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 		}
 
 		FReplicatedEntityState& State = EntityStates.FindOrAdd(NetworkId);
-		
-		const FFlecsReplicationRouteKey Route = Router->Route(Entity);
-		
-		if (State.LayoutId != Layout->LayoutId)
+		const FFlecsReplicationRouteDescriptor Route = Router->Route(Entity);
+		FString InterestError;
+		if (!ValidateInterestBinding(Route.Interest, InterestError))
 		{
-			State.LayoutId = Layout->LayoutId;
-			++State.CompositionRevision;
+			if (State.bPublished && ReplicationTransport)
+			{
+				ReplicationTransport->RemoveEntity(State.Route, NetworkId);
+				State.bPublished = false;
+			}
+			const FString LogKey = Route.LogicalKey.Name.ToString() + TEXT("|") + InterestError;
+			if (!LoggedInvalidInterestBindings.Contains(LogKey))
+			{
+				LoggedInvalidInterestBindings.Add(LogKey);
+				UE_LOG(LogFlecsCore, Error, TEXT("Rejected authoritative route '%s': %s"),
+					*Route.LogicalKey.Name.ToString(), *InterestError);
+			}
+			continue;
 		}
-		
-		State.RouteKey = Route;
-		++State.StateRevision;
 
-		const FString PublishedKey = Route.Name.ToString() + TEXT("|") + Layout->LayoutId.ToString();
-		if (!PublishedLayoutRoutes.Contains(PublishedKey) && ReplicationTransport)
-		{
-			ReplicationTransport->PublishLayout(Route, *Layout);
-			PublishedLayoutRoutes.Add(PublishedKey);
-		}
-
-		FFlecsReplicatedEntitySnapshot Snapshot;
-		Snapshot.NetworkId = NetworkId;
-		Snapshot.StateRevision = State.StateRevision;
-		Snapshot.CompositionRevision = State.CompositionRevision;
-		Snapshot.LayoutId = Layout->LayoutId;
-		Snapshot.RouteKey = Route;
+		const bool bInitial = !State.bPublished;
+		const bool bLayoutChanged = State.LayoutId != Layout->LayoutId;
+		const bool bRouteChanged = State.bPublished && State.Route != Route;
+		TMap<uint16, TArray<uint8>> GatheredValues;
+		FFlecsReplicatedEntityUpdate Update;
+		Update.NetworkId = NetworkId;
+		Update.CompositionRevision = State.CompositionRevision + (bLayoutChanged ? 1u : 0u);
+		Update.LayoutId = Layout->LayoutId;
+		Update.Route = Route;
+		Update.Kind = (bInitial || bLayoutChanged || bRouteChanged)
+			? EFlecsReplicatedEntityUpdateKind::Full : EFlecsReplicatedEntityUpdateKind::Delta;
+		bool bGatherFailed = false;
 
 		for (int32 KeyIndex = 0; KeyIndex < Layout->Keys.Num(); ++KeyIndex)
 		{
@@ -402,6 +473,7 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 			
 			if (!ResolveKeyToLocalId(Key, LocalId))
 			{
+				bGatherFailed = true;
 				continue;
 			}
 			
@@ -410,26 +482,72 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 			
 			if UNLIKELY_IF(!Descriptor || !Value)
 			{
+				bGatherFailed = true;
 				continue;
 			}
 			
-			FFlecsReplicatedValue& Serialized = Snapshot.Values.AddDefaulted_GetRef();
-			
-			Serialized.KeyIndex = static_cast<uint16>(KeyIndex);
-			FMemoryWriter Writer(Serialized.Bytes, true);
+			TArray<uint8> Bytes;
+			FMemoryWriter Writer(Bytes, true);
 			
 			if UNLIKELY_IF(!Descriptor->Serialize(Writer, const_cast<void*>(Value)) || Writer.IsError())
 			{
 				UE_LOG(LogFlecsCore, Error, TEXT("Failed to serialize schema '%s' for entity %llu"),
 					*Descriptor->StableName, NetworkId.GetValue());
-				Snapshot.Values.Pop();
+				bGatherFailed = true;
+				continue;
+			}
+
+			const uint16 SerializedKeyIndex = static_cast<uint16>(KeyIndex);
+			GatheredValues.Add(SerializedKeyIndex, Bytes);
+			const TArray<uint8>* Previous = State.RetainedValues.Find(SerializedKeyIndex);
+			if (Update.Kind == EFlecsReplicatedEntityUpdateKind::Full || !Previous || *Previous != Bytes)
+			{
+				Update.ChangedKeys.Add(SerializedKeyIndex);
+				FFlecsReplicatedValue& Serialized = Update.Values.AddDefaulted_GetRef();
+				Serialized.KeyIndex = SerializedKeyIndex;
+				Serialized.Bytes = MoveTemp(Bytes);
 			}
 		}
-		
+
+		if (bGatherFailed)
+		{
+			DirtyEntities.Add(NetworkId);
+			continue;
+		}
+
+		if (Update.Kind == EFlecsReplicatedEntityUpdateKind::Delta && Update.ChangedKeys.IsEmpty())
+		{
+			State.bRoutingDirty = false;
+			continue;
+		}
+
+		Update.StateRevision = State.StateRevision + 1;
+		const FPublishedLayoutKey PublishedKey{ Route, Layout->LayoutId };
+		if (!PublishedLayoutRoutes.Contains(PublishedKey) && ReplicationTransport)
+		{
+			ReplicationTransport->PublishLayout(Route, *Layout);
+			PublishedLayoutRoutes.Add(PublishedKey);
+		}
+
 		if (ReplicationTransport)
 		{
-			ReplicationTransport->PublishEntity(Route, Snapshot);
+			if (bRouteChanged)
+			{
+				ReplicationTransport->MigrateEntity(State.Route, Route, *Layout, Update);
+			}
+			else
+			{
+				ReplicationTransport->PublishEntity(Route, Update);
+			}
 		}
+
+		State.StateRevision = Update.StateRevision;
+		State.CompositionRevision = Update.CompositionRevision;
+		State.LayoutId = Layout->LayoutId;
+		State.Route = Route;
+		State.RetainedValues = MoveTemp(GatheredValues);
+		State.bPublished = true;
+		State.bRoutingDirty = false;
 	}
 }
 
@@ -453,24 +571,24 @@ void UFlecsNetworkWorldSubsystem::DrainInbox()
 				break;
 			}
 				
-			if (TArray<TPair<FGuid, FFlecsReplicatedEntitySnapshot>>* Deferred = DeferredSnapshots.Find(Record.Layout.LayoutId))
+			if (TArray<TPair<FGuid, FFlecsReplicatedEntityUpdate>>* Deferred = DeferredUpdates.Find(Record.Layout.LayoutId))
 			{
-				TArray<TPair<FGuid, FFlecsReplicatedEntitySnapshot>> Pending = MoveTemp(*Deferred);
-				DeferredSnapshots.Remove(Record.Layout.LayoutId);
+				TArray<TPair<FGuid, FFlecsReplicatedEntityUpdate>> Pending = MoveTemp(*Deferred);
+				DeferredUpdates.Remove(Record.Layout.LayoutId);
 				
-				for (const TPair<FGuid, FFlecsReplicatedEntitySnapshot>& Item : Pending)
+				for (const TPair<FGuid, FFlecsReplicatedEntityUpdate>& Item : Pending)
 				{
-					ApplySnapshot(Item.Key, Item.Value);
+					ApplyUpdate(Item.Key, Item.Value);
 				}
 			}
 				
 			break;
 		}
 		case EFlecsReplicationInboxRecordType::UpsertEntity:
-			ApplySnapshot(Record.SourceShard, Record.Snapshot);
+			ApplyUpdate(Record.SourceShard, Record.Update);
 			break;
 		case EFlecsReplicationInboxRecordType::RemoveEntity:
-			RemoveRemoteEntity(Record.NetworkId);
+			RemoveRemoteEntity(Record.NetworkId, &Record.SourceShard);
 			break;
 		case EFlecsReplicationInboxRecordType::DetachShard:
 			DetachRemoteShard(Record.SourceShard);
@@ -481,28 +599,95 @@ void UFlecsNetworkWorldSubsystem::DrainInbox()
 	RetryEntityPairFixups();
 }
 
-void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
-	const FFlecsReplicatedEntitySnapshot& Snapshot)
+void UFlecsNetworkWorldSubsystem::ApplyUpdate(const FGuid& SourceShard,
+	const FFlecsReplicatedEntityUpdate& Update)
 {
-	const FFlecsReplicationLayoutDefinition* Layout = LayoutRegistry.Find(Snapshot.LayoutId);
+	if (const uint32* Revision = LastAppliedStateRevisions.Find(Update.NetworkId);
+		Revision && *Revision >= Update.StateRevision)
+	{
+		return;
+	}
+
+	if (!LayoutRegistry.Find(Update.LayoutId))
+	{
+		DeferredUpdates.FindOrAdd(Update.LayoutId).Emplace(SourceShard, Update);
+		return;
+	}
+
+	if (Update.Kind == EFlecsReplicatedEntityUpdateKind::Full)
+	{
+		TOptional<TPair<FGuid, FFlecsReplicatedEntityUpdate>> DeferredDelta;
+		if (TPair<FGuid, FFlecsReplicatedEntityUpdate>* Found = DeferredDeltaUpdates.Find(Update.NetworkId))
+		{
+			DeferredDelta = *Found;
+		}
+		MaterializedRemoteUpdates.Add(Update.NetworkId, Update);
+		DeferredDeltaUpdates.Remove(Update.NetworkId);
+		ApplyMaterializedUpdate(SourceShard, Update);
+		if (DeferredDelta.IsSet() && DeferredDelta->Value.LayoutId == Update.LayoutId
+			&& DeferredDelta->Value.StateRevision > Update.StateRevision)
+		{
+			ApplyUpdate(DeferredDelta->Key, DeferredDelta->Value);
+		}
+		return;
+	}
+
+	FFlecsReplicatedEntityUpdate* Materialized = MaterializedRemoteUpdates.Find(Update.NetworkId);
+	if (!Materialized || Materialized->LayoutId != Update.LayoutId)
+	{
+		TPair<FGuid, FFlecsReplicatedEntityUpdate>& Deferred = DeferredDeltaUpdates.FindOrAdd(Update.NetworkId);
+		if (Deferred.Value.StateRevision < Update.StateRevision)
+		{
+			Deferred.Key = SourceShard;
+			Deferred.Value = Update;
+		}
+		return;
+	}
+
+	for (const FFlecsReplicatedValue& ChangedValue : Update.Values)
+	{
+		if (FFlecsReplicatedValue* Existing = Materialized->Values.FindByPredicate(
+			[&ChangedValue](const FFlecsReplicatedValue& Candidate)
+			{
+				return Candidate.KeyIndex == ChangedValue.KeyIndex;
+			}))
+		{
+			*Existing = ChangedValue;
+		}
+		else
+		{
+			Materialized->Values.Add(ChangedValue);
+		}
+	}
+	Materialized->StateRevision = Update.StateRevision;
+	Materialized->CompositionRevision = Update.CompositionRevision;
+	Materialized->Route = Update.Route;
+	Materialized->ChangedKeys = Update.ChangedKeys;
+	ApplyMaterializedUpdate(SourceShard, *Materialized);
+}
+
+void UFlecsNetworkWorldSubsystem::ApplyMaterializedUpdate(const FGuid& SourceShard,
+	const FFlecsReplicatedEntityUpdate& Update)
+{
+	const FFlecsReplicationLayoutDefinition* Layout = LayoutRegistry.Find(Update.LayoutId);
 	
 	if (!Layout)
 	{
-		DeferredSnapshots.FindOrAdd(Snapshot.LayoutId).Emplace(SourceShard, Snapshot);
+		DeferredUpdates.FindOrAdd(Update.LayoutId).Emplace(SourceShard, Update);
 		return;
 	}
 	
-	if (const uint32* Revision = LastAppliedStateRevisions.Find(Snapshot.NetworkId);
-		Revision && *Revision >= Snapshot.StateRevision)
+	if (const uint32* Revision = LastAppliedStateRevisions.Find(Update.NetworkId);
+		Revision && *Revision >= Update.StateRevision)
 	{
 		return;
 	}
 	
-	const FFlecsNetworkId* Bound = ClientSlotBindings.Find(Snapshot.NetworkId.GetSlot()); 
+	const FFlecsNetworkId* Bound = ClientSlotBindings.Find(Update.NetworkId.GetSlot()); 
 
-	if (Bound && *Bound != Snapshot.NetworkId)
+	if (Bound && *Bound != Update.NetworkId)
 	{
-		if (Bound->GetValue() > Snapshot.NetworkId.GetValue())
+		if (Bound->GetValue() > Update.NetworkId.GetValue())
 		{
 			return;
 		}
@@ -512,23 +697,23 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 
 	// Accepted snapshots are complete replacements. Any unresolved pairs from
 	// an older state revision no longer describe this source's current state.
-	EntityPairFixups.RemoveAll([&Snapshot](const FEntityPairFixup& Fixup)
+	EntityPairFixups.RemoveAll([&Update](const FEntityPairFixup& Fixup)
 	{
-		return Fixup.Source == Snapshot.NetworkId;
+		return Fixup.Source == Update.NetworkId;
 	});
 
 	const TSolidNotNull<UFlecsWorld*> World = GetFlecsWorldChecked();
-	FFlecsEntityHandle Entity = FindEntity(Snapshot.NetworkId);
+	FFlecsEntityHandle Entity = FindEntity(Update.NetworkId);
 	
 	if (!Entity.IsValid())
 	{
 		Entity = World->CreateEntity();
-		Entity.Set<FFlecsNetworkId>(Snapshot.NetworkId);
+		Entity.Set<FFlecsNetworkId>(Update.NetworkId);
 		Entity.Add<FFlecsReplicatedEntityComponent>();
 		Entity.Add<EFlecsNetRoleType>(EFlecsNetRoleType::SimulatedProxy);
 		
-		NetworkIdToEntityHandleMap.Add(Snapshot.NetworkId, Entity);
-		ClientSlotBindings.Add(Snapshot.NetworkId.GetSlot(), Snapshot.NetworkId);
+		NetworkIdToEntityHandleMap.Add(Update.NetworkId, Entity);
+		ClientSlotBindings.Add(Update.NetworkId.GetSlot(), Update.NetworkId);
 	}
 
 	TSet<FFlecsId> DesiredIds;
@@ -545,7 +730,7 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 		else if (Key.Secondary.Kind == EFlecsReplicationPairTargetKind::Entity)
 		{
 			TOptional<TArray<uint8>> Payload;
-			const FFlecsReplicatedValue* Value = Snapshot.Values.FindByPredicate(
+			const FFlecsReplicatedValue* Value = Update.Values.FindByPredicate(
 				[KeyIndex](const FFlecsReplicatedValue& Candidate)
 				{
 					return Candidate.KeyIndex == KeyIndex;
@@ -556,8 +741,8 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 				Payload = Value->Bytes;
 			}
 
-			EntityPairFixups.Add({ Snapshot.NetworkId, Key.Secondary.Entity, Key,
-				Snapshot.StateRevision, MoveTemp(Payload) });
+			EntityPairFixups.Add({ Update.NetworkId, Key.Secondary.Entity, Key,
+				Update.StateRevision, MoveTemp(Payload) });
 		}
 	}
 
@@ -588,7 +773,7 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 			Entity.Add(Id);
 		}
 
-		for (const FFlecsReplicatedValue& Value : Snapshot.Values)
+		for (const FFlecsReplicatedValue& Value : Update.Values)
 		{
 			if (!Layout->Keys.IsValidIndex(Value.KeyIndex))
 			{
@@ -607,12 +792,32 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshot(const FGuid& SourceShard,
 		}
 	});
 
-	LastAppliedStateRevisions.Add(Snapshot.NetworkId, Snapshot.StateRevision);
-	EntitySourceShards.Add(Snapshot.NetworkId, SourceShard);
+	LastAppliedStateRevisions.Add(Update.NetworkId, Update.StateRevision);
+	LastAppliedLayoutIds.Add(Update.NetworkId, Update.LayoutId);
+	EntitySourceShards.Add(Update.NetworkId, SourceShard);
 }
 
-void UFlecsNetworkWorldSubsystem::RemoveRemoteEntity(const FFlecsNetworkId NetworkId)
+void UFlecsNetworkWorldSubsystem::RemoveRemoteEntity(const FFlecsNetworkId NetworkId,
+	const FGuid* ExpectedSource)
 {
+	if (ExpectedSource)
+	{
+		const FGuid* AcceptedSource = EntitySourceShards.Find(NetworkId);
+		if (AcceptedSource && *AcceptedSource != *ExpectedSource)
+		{
+			return;
+		}
+
+		if (!AcceptedSource)
+		{
+			EntityPairFixups.RemoveAll([NetworkId](const FEntityPairFixup& Fixup)
+			{
+				return Fixup.Source == NetworkId || Fixup.Target == NetworkId;
+			});
+			return;
+		}
+	}
+
 	const FFlecsEntityHandle* Entity = NetworkIdToEntityHandleMap.Find(NetworkId); 
 	
 	if (IsValid(Entity))
@@ -623,7 +828,10 @@ void UFlecsNetworkWorldSubsystem::RemoveRemoteEntity(const FFlecsNetworkId Netwo
 	NetworkIdToEntityHandleMap.Remove(NetworkId);
 	ClientSlotBindings.Remove(NetworkId.GetSlot());
 	LastAppliedStateRevisions.Remove(NetworkId);
+	LastAppliedLayoutIds.Remove(NetworkId);
 	EntitySourceShards.Remove(NetworkId);
+	MaterializedRemoteUpdates.Remove(NetworkId);
+	DeferredDeltaUpdates.Remove(NetworkId);
 	
 	EntityPairFixups.RemoveAll([NetworkId](const FEntityPairFixup& Fixup)
 	{
@@ -633,6 +841,22 @@ void UFlecsNetworkWorldSubsystem::RemoveRemoteEntity(const FFlecsNetworkId Netwo
 
 void UFlecsNetworkWorldSubsystem::DetachRemoteShard(const FGuid& SourceShard)
 {
+	for (TPair<FFlecsReplicationLayoutId, TArray<TPair<FGuid, FFlecsReplicatedEntityUpdate>>>& Pair
+		: DeferredUpdates)
+	{
+		Pair.Value.RemoveAll([&SourceShard](const TPair<FGuid, FFlecsReplicatedEntityUpdate>& Deferred)
+		{
+			return Deferred.Key == SourceShard;
+		});
+	}
+	for (auto It = DeferredDeltaUpdates.CreateIterator(); It; ++It)
+	{
+		if (It.Value().Key == SourceShard)
+		{
+			It.RemoveCurrent();
+		}
+	}
+
 	TArray<FFlecsNetworkId> ToRemove;
 	
 	for (const TPair<FFlecsNetworkId, FGuid>& Pair : EntitySourceShards)

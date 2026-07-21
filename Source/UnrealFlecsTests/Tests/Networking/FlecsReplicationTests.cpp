@@ -33,6 +33,61 @@ namespace UE::Flecs::Tests
 		int32 Value = 0;
 	};
 
+	class FTestReplicationRouter final : public IFlecsReplicationRouter
+	{
+	public:
+		explicit FTestReplicationRouter(const FName& InRouteName)
+			: RouteName(&InRouteName)
+		{
+		}
+
+		virtual FFlecsReplicationRouteDescriptor Route(const FFlecsEntityHandle&) const override
+		{
+			FFlecsReplicationRouteDescriptor Result = FFlecsReplicationRouteDescriptor::Default();
+			Result.LogicalKey = FFlecsReplicationRouteKey(*RouteName);
+			return Result;
+		}
+
+	private:
+		const FName* RouteName;
+	}; // class FTestReplicationRouter
+
+	class FTestFragmentInterestPolicy final
+		: public TFlecsReplicationInterestPolicy<FFlecsReplicationEveryoneInterestDescriptor>
+	{
+	public:
+		FTestFragmentInterestPolicy()
+			: TFlecsReplicationInterestPolicy(TEXT("Tests.Fragment"))
+		{
+		}
+
+	protected:
+		virtual bool IsInterested(const FFlecsReplicationEveryoneInterestDescriptor&,
+			const FFlecsReplicationInterestEvaluationQuery& Query) const override
+		{
+			const FFlecsReplicationTestLocalOnly* Fragment =
+				Query.Context.Find<FFlecsReplicationTestLocalOnly>();
+			return Fragment && Fragment->Value == 42;
+		}
+	}; // class FTestFragmentInterestPolicy
+
+	class FTestInvalidInterestPolicy final
+		: public TFlecsReplicationInterestPolicy<FFlecsReplicationTestInvalidInterestDescriptor>
+	{
+	public:
+		FTestInvalidInterestPolicy()
+			: TFlecsReplicationInterestPolicy(TEXT("Tests.InvalidReference"))
+		{
+		}
+
+	protected:
+		virtual bool IsInterested(const FFlecsReplicationTestInvalidInterestDescriptor&,
+			const FFlecsReplicationInterestEvaluationQuery&) const override
+		{
+			return true;
+		}
+	}; // class FTestInvalidInterestPolicy
+
 	template<typename T>
 	FFlecsComponentHandle RegisterTestComponent(UFlecsWorld* World)
 	{
@@ -58,7 +113,7 @@ namespace UE::Flecs::Tests
 	struct FCapturedReplicationEntity
 	{
 		FFlecsReplicationLayoutDefinition Layout;
-		FFlecsReplicatedEntitySnapshot Snapshot;
+		FFlecsReplicatedEntityUpdate Snapshot;
 	};
 
 	FCapturedReplicationEntity CaptureEntity(UFlecsNetworkWorldSubsystem* Subsystem,
@@ -67,13 +122,13 @@ namespace UE::Flecs::Tests
 		Transport->Snapshots.Reset();
 		const FFlecsNetworkId NetworkId = Subsystem->BeginReplicatingEntity(Entity);
 		Subsystem->FlushServerReplicationForTesting();
-		const FFlecsReplicatedEntitySnapshot* FoundSnapshot = Transport->Snapshots.FindByPredicate(
-			[NetworkId](const FFlecsReplicatedEntitySnapshot& Candidate)
+		const FFlecsReplicatedEntityUpdate* FoundSnapshot = Transport->Snapshots.FindByPredicate(
+			[NetworkId](const FFlecsReplicatedEntityUpdate& Candidate)
 			{
 				return Candidate.NetworkId == NetworkId;
 			});
 		check(FoundSnapshot);
-		const FFlecsReplicatedEntitySnapshot Snapshot = *FoundSnapshot;
+		const FFlecsReplicatedEntityUpdate Snapshot = *FoundSnapshot;
 		const FFlecsReplicationLayoutDefinition* Layout = Transport->Layouts.FindByPredicate(
 			[&Snapshot](const FFlecsReplicationLayoutDefinition& Candidate)
 			{
@@ -94,16 +149,16 @@ namespace UE::Flecs::Tests
 	}
 
 	void EnqueueSnapshot(UFlecsNetworkWorldSubsystem* Subsystem, const FGuid& Shard,
-		const FFlecsReplicatedEntitySnapshot& Snapshot)
+		const FFlecsReplicatedEntityUpdate& Snapshot)
 	{
 		FFlecsReplicationInboxRecord Record;
 		Record.Type = EFlecsReplicationInboxRecordType::UpsertEntity;
 		Record.SourceShard = Shard;
-		Record.Snapshot = Snapshot;
+		Record.Update = Snapshot;
 		Subsystem->EnqueueReceivedRecord(MoveTemp(Record));
 	}
 
-	void SetSnapshotValue(UFlecsWorld* World, FFlecsReplicatedEntitySnapshot& Snapshot,
+	void SetSnapshotValue(UFlecsWorld* World, FFlecsReplicatedEntityUpdate& Snapshot,
 		const FFlecsReplicationLayoutDefinition& Layout, const FFlecsReplicationTestValue& Value)
 	{
 		const FFlecsComponentReplicationDescriptor* Descriptor =
@@ -124,7 +179,7 @@ namespace UE::Flecs::Tests
 		}
 	}
 
-	void SetSnapshotPairValue(UFlecsWorld* World, FFlecsReplicatedEntitySnapshot& Snapshot,
+	void SetSnapshotPairValue(UFlecsWorld* World, FFlecsReplicatedEntityUpdate& Snapshot,
 		const FFlecsReplicationLayoutDefinition& Layout, const FFlecsReplicationTestValueRelationship& Value)
 	{
 		const FFlecsComponentReplicationDescriptor* Descriptor =
@@ -221,6 +276,133 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 		ASSERT_THAT(AreEqual(First.GetSlot(), Reused.GetSlot()));
 		ASSERT_THAT(IsTrue(First.GetGeneration() != Reused.GetGeneration()));
 		ASSERT_THAT(IsFalse(FFlecsNetworkId().IsValid()));
+	}
+
+	TEST_METHOD(RouterReplacementResetAndInvalidation_PublishFullRouteBaselines)
+	{
+		const FFlecsEntityHandle Entity = FlecsWorld->CreateEntity();
+		Entity.Set<FFlecsReplicationTestValue>({ 1 });
+		const UE::Flecs::Tests::FCapturedReplicationEntity Initial =
+			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Entity);
+		ASSERT_THAT(IsTrue(Initial.Snapshot.Kind == EFlecsReplicatedEntityUpdateKind::Full));
+
+		CaptureTransport->Snapshots.Reset();
+		FName MutableRouteName(TEXT("Custom"));
+		NetworkSubsystem->SetReplicationRouter(
+			MakeUnique<UE::Flecs::Tests::FTestReplicationRouter>(MutableRouteName));
+		NetworkSubsystem->FlushServerReplicationForTesting();
+		ASSERT_THAT(AreEqual(1, CaptureTransport->Snapshots.Num()));
+		ASSERT_THAT(IsTrue(CaptureTransport->Snapshots[0].Kind == EFlecsReplicatedEntityUpdateKind::Full));
+		ASSERT_THAT(IsTrue(CaptureTransport->Snapshots[0].Route.LogicalKey.Name == TEXT("Custom")));
+
+		CaptureTransport->Snapshots.Reset();
+		MutableRouteName = TEXT("RoutingDirty");
+		NetworkSubsystem->MarkEntityRoutingDirty(Entity);
+		NetworkSubsystem->FlushServerReplicationForTesting();
+		ASSERT_THAT(IsTrue(CaptureTransport->Snapshots[0].Kind == EFlecsReplicatedEntityUpdateKind::Full));
+		ASSERT_THAT(IsTrue(CaptureTransport->Snapshots[0].Route.LogicalKey.Name == TEXT("RoutingDirty")));
+
+		CaptureTransport->Snapshots.Reset();
+		NetworkSubsystem->ResetReplicationRouter();
+		NetworkSubsystem->FlushServerReplicationForTesting();
+		ASSERT_THAT(IsTrue(CaptureTransport->Snapshots[0].Route.LogicalKey == FFlecsReplicationRouteKey::Default()));
+	}
+
+	TEST_METHOD(SpatialCellsOwnerAndMultiViewPolicies_AreDeterministicAndFailClosed)
+	{
+		ASSERT_THAT(IsTrue(FlecsReplicationSpatialCell(FVector(-0.1, -1000.0, 999.9), 1000.0f)
+			== FIntVector(-1, -1, 0)));
+
+		FFlecsReplicationRouteDescriptor OwnerRoute = FFlecsReplicationRouteDescriptor::Default();
+		FFlecsReplicationOwnerInterestDescriptor OwnerDescriptor;
+		OwnerDescriptor.OwnerConnection = FFlecsReplicationConnectionId(7);
+		OwnerRoute.Interest = FFlecsReplicationInterestBinding::Make(
+			FFlecsReplicationInterestPolicyNames::Owner, OwnerDescriptor);
+		const FFlecsReplicationConnectionView EmptyView;
+		ASSERT_THAT(IsTrue(NetworkSubsystem->IsRouteRelevant(OwnerRoute,
+			FFlecsReplicationConnectionId(7), EmptyView)));
+		ASSERT_THAT(IsFalse(NetworkSubsystem->IsRouteRelevant(OwnerRoute,
+			FFlecsReplicationConnectionId(8), EmptyView)));
+
+		const FFlecsReplicationRouteDescriptor SpatialRoute = MakeFlecsSpatialCellRoute(
+			FVector::ZeroVector, 100.0f, 3, 25.0f);
+		FFlecsReplicationConnectionView MultiView;
+		MultiView.Positions = { FVector(10000.0), FVector(110.0, 50.0, 50.0) };
+		ASSERT_THAT(IsTrue(NetworkSubsystem->IsRouteRelevant(SpatialRoute,
+			FFlecsReplicationConnectionId(9), MultiView)));
+		MultiView.Positions = { FVector(10000.0), FVector(126.0, 50.0, 50.0) };
+		ASSERT_THAT(IsFalse(NetworkSubsystem->IsRouteRelevant(SpatialRoute,
+			FFlecsReplicationConnectionId(9), MultiView)));
+
+		FFlecsReplicationRouteDescriptor Missing = FFlecsReplicationRouteDescriptor::Default();
+		Missing.Interest.PolicyName = TEXT("Missing.Policy");
+		
+		TestRunner->AddExpectedError(TEXT("Rejected replication route 'Default': Interest policy 'Missing.Policy' is not registered"),
+			EAutomationExpectedErrorFlags::Contains, 1, false);
+		
+		ASSERT_THAT(IsFalse(NetworkSubsystem->IsRouteRelevant(Missing,
+			FFlecsReplicationConnectionId(9), EmptyView)));
+	}
+
+	TEST_METHOD(CustomPolicyRegistrationAndTypedConnectionFragments_AreModular)
+	{
+		FString Error;
+		const FFlecsReplicationInterestBinding MissingBinding = FFlecsReplicationInterestBinding::Make(
+			TEXT("Tests.Fragment"), FFlecsReplicationEveryoneInterestDescriptor{});
+		ASSERT_THAT(IsFalse(FFlecsReplicationInterestPolicyRegistry::ValidateBinding(MissingBinding, Error)));
+		ASSERT_THAT(IsTrue(FFlecsReplicationInterestPolicyRegistry::RegisterPolicy(
+			MakeUnique<UE::Flecs::Tests::FTestFragmentInterestPolicy>())));
+		ASSERT_THAT(IsFalse(FFlecsReplicationInterestPolicyRegistry::RegisterPolicy(
+			MakeUnique<UE::Flecs::Tests::FTestFragmentInterestPolicy>())));
+		ASSERT_THAT(IsTrue(FFlecsReplicationInterestPolicyRegistry::ValidateBinding(MissingBinding, Error)));
+		const FFlecsReplicationInterestBinding WrongType = FFlecsReplicationInterestBinding::Make(
+			TEXT("Tests.Fragment"), FFlecsReplicationSpatialCellInterestDescriptor{});
+		ASSERT_THAT(IsFalse(FFlecsReplicationInterestPolicyRegistry::ValidateBinding(WrongType, Error)));
+
+		ASSERT_THAT(IsTrue(FFlecsReplicationInterestPolicyRegistry::RegisterPolicy(
+			MakeUnique<UE::Flecs::Tests::FTestInvalidInterestPolicy>())));
+		const FFlecsReplicationInterestBinding InvalidReference = FFlecsReplicationInterestBinding::Make(
+			TEXT("Tests.InvalidReference"), FFlecsReplicationTestInvalidInterestDescriptor{});
+		ASSERT_THAT(IsFalse(FFlecsReplicationInterestPolicyRegistry::ValidateBinding(InvalidReference, Error)));
+		ASSERT_THAT(IsTrue(FFlecsReplicationInterestPolicyRegistry::UnregisterPolicy(
+			TEXT("Tests.InvalidReference"))));
+
+		FFlecsReplicationRouteDescriptor Route = FFlecsReplicationRouteDescriptor::Default();
+		Route.Interest = FFlecsReplicationInterestBinding::Make(TEXT("Tests.Fragment"),
+			FFlecsReplicationEveryoneInterestDescriptor{});
+		const FFlecsReplicationConnectionId Connection(44);
+		FFlecsReplicationTestLocalOnly Fragment;
+		Fragment.Value = 42;
+		NetworkSubsystem->SetConnectionInterestFragment(Connection, Fragment);
+		ASSERT_THAT(IsTrue(NetworkSubsystem->IsRouteRelevant(Route, Connection, {})));
+		ASSERT_THAT(IsTrue(NetworkSubsystem->RemoveConnectionInterestFragment<FFlecsReplicationTestLocalOnly>(Connection)));
+		ASSERT_THAT(IsFalse(NetworkSubsystem->IsRouteRelevant(Route, Connection, {})));
+		ASSERT_THAT(IsTrue(FFlecsReplicationInterestPolicyRegistry::UnregisterPolicy(TEXT("Tests.Fragment"))));
+	}
+
+	TEST_METHOD(ComponentKeyDeltas_CoalesceSuppressNoOpsAndStructuralChangesStayFull)
+	{
+		const FFlecsEntityHandle Entity = FlecsWorld->CreateEntity();
+		Entity.Set<FFlecsReplicationTestValue>({ 10 });
+		UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Entity);
+
+		CaptureTransport->Snapshots.Reset();
+		Entity.Set<FFlecsReplicationTestValue>({ 10 });
+		NetworkSubsystem->FlushServerReplicationForTesting();
+		ASSERT_THAT(AreEqual(0, CaptureTransport->Snapshots.Num()));
+
+		Entity.Set<FFlecsReplicationTestValue>({ 20 });
+		Entity.Set<FFlecsReplicationTestValue>({ 30 });
+		NetworkSubsystem->FlushServerReplicationForTesting();
+		ASSERT_THAT(AreEqual(1, CaptureTransport->Snapshots.Num()));
+		ASSERT_THAT(IsTrue(CaptureTransport->Snapshots[0].Kind == EFlecsReplicatedEntityUpdateKind::Delta));
+		ASSERT_THAT(AreEqual(1, CaptureTransport->Snapshots[0].ChangedKeys.Num()));
+
+		CaptureTransport->Snapshots.Reset();
+		Entity.Add<FFlecsReplicationTestTag>();
+		NetworkSubsystem->MarkEntityDirty(Entity);
+		NetworkSubsystem->FlushServerReplicationForTesting();
+		ASSERT_THAT(IsTrue(CaptureTransport->Snapshots[0].Kind == EFlecsReplicatedEntityUpdateKind::Full));
 	}
 
 	TEST_METHOD(SchemaIdentity_UsesStableName_NotRegistrationOrder)
@@ -348,7 +530,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 		ASSERT_THAT(IsTrue(TableBeforeAddition == Source.GetEntity().table().get_table()));
 		NetworkSubsystem->FlushServerReplicationForTesting();
 		ASSERT_THAT(AreEqual(1, CaptureTransport->Snapshots.Num()));
-		const FFlecsReplicatedEntitySnapshot AddedSnapshot = CaptureTransport->Snapshots[0];
+		const FFlecsReplicatedEntityUpdate AddedSnapshot = CaptureTransport->Snapshots[0];
 		ASSERT_THAT(IsTrue(AddedSnapshot.NetworkId == NetworkId));
 		const FFlecsReplicationLayoutDefinition* AddedLayout = CaptureTransport->Layouts.FindByPredicate(
 			[&AddedSnapshot](const FFlecsReplicationLayoutDefinition& Candidate)
@@ -372,7 +554,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 		ASSERT_THAT(IsTrue(TableBeforeRemoval == Source.GetEntity().table().get_table()));
 		NetworkSubsystem->FlushServerReplicationForTesting();
 		ASSERT_THAT(AreEqual(1, CaptureTransport->Snapshots.Num()));
-		const FFlecsReplicatedEntitySnapshot RemovedSnapshot = CaptureTransport->Snapshots[0];
+		const FFlecsReplicatedEntityUpdate RemovedSnapshot = CaptureTransport->Snapshots[0];
 		ASSERT_THAT(IsTrue(RemovedSnapshot.LayoutId == Initial.Layout.LayoutId));
 
 		NetworkSubsystem->StopReplicatingEntity(Source);
@@ -435,8 +617,10 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 		const FFlecsEntityHandle SymbolPrimary = FlecsWorld->CreateEntity()
 			.Add<FFlecsReplicatedTrait>();
 		SymbolPrimary.GetEntity().set_symbol("ReplicationSymbolPrimary");
+		
 		const FFlecsEntityHandle SymbolSecondary = FlecsWorld->CreateEntity();
 		SymbolSecondary.GetEntity().set_symbol("ReplicationSymbolSecondary");
+		
 		const FFlecsEntityHandle PathPrimary = FlecsWorld->CreateEntity(TEXT("ReplicationPathPrimary"))
 			.Add<FFlecsStablePathTag>()
 			.Add<FFlecsReplicatedTrait>();
@@ -457,6 +641,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 			.AddPair(NetworkPrimary, NetworkSecondary)
 			.AddPair(SymbolPrimary, SymbolSecondary)
 			.AddPair(PathPrimary, PathSecondary);
+		
 		const UE::Flecs::Tests::FCapturedReplicationEntity SourceCapture =
 			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Source);
 
@@ -521,11 +706,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 		Source.Add<FFlecsReplicationTestTag>();
 		Source.Remove<FFlecsReplicationTestTag>();
 		NetworkSubsystem->FlushServerReplicationForTesting();
-		ASSERT_THAT(AreEqual(1, CaptureTransport->Snapshots.Num()));
-		ASSERT_THAT(IsTrue(CaptureTransport->Snapshots[0].LayoutId == Initial.Snapshot.LayoutId));
-		ASSERT_THAT(AreEqual(Initial.Snapshot.CompositionRevision,
-			CaptureTransport->Snapshots[0].CompositionRevision));
-		ASSERT_THAT(IsTrue(CaptureTransport->Snapshots[0].StateRevision > Initial.Snapshot.StateRevision));
+		ASSERT_THAT(AreEqual(0, CaptureTransport->Snapshots.Num()));
 	}
 
 	TEST_METHOD(Inbox_DefersUnknownLayout_RejectsStaleRevision_AndPreservesLocalComponent)
@@ -548,10 +729,10 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 		ASSERT_THAT(IsTrue(Remote.IsValid()));
 		Remote.Set<FFlecsReplicationTestLocalOnly>({ 77 });
 
-		FFlecsReplicatedEntitySnapshot Newer = Captured.Snapshot;
+		FFlecsReplicatedEntityUpdate Newer = Captured.Snapshot;
 		Newer.StateRevision = 3;
 		UE::Flecs::Tests::SetSnapshotValue(FlecsWorld, Newer, Captured.Layout, { 300 });
-		FFlecsReplicatedEntitySnapshot Stale = Captured.Snapshot;
+		FFlecsReplicatedEntityUpdate Stale = Captured.Snapshot;
 		Stale.StateRevision = 2;
 		UE::Flecs::Tests::SetSnapshotValue(FlecsWorld, Stale, Captured.Layout, { 200 });
 		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, Shard, Newer);
@@ -560,6 +741,71 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 		Remote = NetworkSubsystem->FindEntity(Captured.Snapshot.NetworkId);
 		ASSERT_THAT(AreEqual(300, Remote.Get<FFlecsReplicationTestValue>().Value));
 		ASSERT_THAT(AreEqual(77, Remote.Get<FFlecsReplicationTestLocalOnly>().Value));
+	}
+
+	TEST_METHOD(MigrationSourceOwnership_RejectsLateOldPageRemoval)
+	{
+		const FGuid OldSource = FGuid::NewGuid();
+		const FGuid NewSource = FGuid::NewGuid();
+		const FFlecsEntityHandle Source = FlecsWorld->CreateEntity().Set<FFlecsReplicationTestValue>({ 10 });
+		const UE::Flecs::Tests::FCapturedReplicationEntity Captured =
+			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Source);
+		NetworkSubsystem->StopReplicatingEntity(Source);
+		Source.Destroy();
+		NetworkSubsystem->ResetClientReplicationForTesting();
+		NetworkSubsystem->EnterClientReplicationModeForTesting();
+
+		UE::Flecs::Tests::EnqueueLayout(NetworkSubsystem, OldSource, Captured.Layout);
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, OldSource, Captured.Snapshot);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+
+		FFlecsReplicatedEntityUpdate Migrated = Captured.Snapshot;
+		Migrated.StateRevision++;
+		UE::Flecs::Tests::SetSnapshotValue(FlecsWorld, Migrated, Captured.Layout, { 99 });
+		UE::Flecs::Tests::EnqueueLayout(NetworkSubsystem, NewSource, Captured.Layout);
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, NewSource, Migrated);
+		UE::Flecs::Tests::EnqueueRemoval(NetworkSubsystem, OldSource, Migrated.NetworkId);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+
+		const FFlecsEntityHandle Remote = NetworkSubsystem->FindEntity(Migrated.NetworkId);
+		ASSERT_THAT(IsTrue(Remote.IsValid()));
+		ASSERT_THAT(AreEqual(99, Remote.Get<FFlecsReplicationTestValue>().Value));
+	}
+
+	TEST_METHOD(DeltaWithoutBaseline_DefersThenAppliesAndRejectsStaleDelta)
+	{
+		const FGuid SourceShard = FGuid::NewGuid();
+		const FFlecsEntityHandle Source = FlecsWorld->CreateEntity().Set<FFlecsReplicationTestValue>({ 10 });
+		const UE::Flecs::Tests::FCapturedReplicationEntity Captured =
+			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Source);
+		NetworkSubsystem->StopReplicatingEntity(Source);
+		Source.Destroy();
+		NetworkSubsystem->ResetClientReplicationForTesting();
+		NetworkSubsystem->EnterClientReplicationModeForTesting();
+
+		FFlecsReplicatedEntityUpdate Delta = Captured.Snapshot;
+		Delta.Kind = EFlecsReplicatedEntityUpdateKind::Delta;
+		Delta.StateRevision = 3;
+		Delta.ChangedKeys = { Delta.Values[0].KeyIndex };
+		UE::Flecs::Tests::SetSnapshotValue(FlecsWorld, Delta, Captured.Layout, { 300 });
+		UE::Flecs::Tests::EnqueueLayout(NetworkSubsystem, SourceShard, Captured.Layout);
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, SourceShard, Delta);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+		ASSERT_THAT(IsFalse(NetworkSubsystem->FindEntity(Delta.NetworkId).IsValid()));
+
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, SourceShard, Captured.Snapshot);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+		FFlecsEntityHandle Remote = NetworkSubsystem->FindEntity(Delta.NetworkId);
+		ASSERT_THAT(IsTrue(Remote.IsValid()));
+		ASSERT_THAT(AreEqual(300, Remote.Get<FFlecsReplicationTestValue>().Value));
+
+		FFlecsReplicatedEntityUpdate StaleDelta = Delta;
+		StaleDelta.StateRevision = 2;
+		UE::Flecs::Tests::SetSnapshotValue(FlecsWorld, StaleDelta, Captured.Layout, { 200 });
+		UE::Flecs::Tests::EnqueueSnapshot(NetworkSubsystem, SourceShard, StaleDelta);
+		NetworkSubsystem->FlushClientReplicationForTesting();
+		Remote = NetworkSubsystem->FindEntity(Delta.NetworkId);
+		ASSERT_THAT(AreEqual(300, Remote.Get<FFlecsReplicationTestValue>().Value));
 	}
 
 	TEST_METHOD(EntityTargetPair_ResolvesAfterTargetSnapshotArrives)
@@ -638,7 +884,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationCoreTests,
 				FFlecsReplicationTestValueRelationship{ 17 });
 		const UE::Flecs::Tests::FCapturedReplicationEntity SourceCapture =
 			UE::Flecs::Tests::CaptureEntity(NetworkSubsystem, CaptureTransport, Source);
-		FFlecsReplicatedEntitySnapshot NewerSnapshot = SourceCapture.Snapshot;
+		FFlecsReplicatedEntityUpdate NewerSnapshot = SourceCapture.Snapshot;
 		++NewerSnapshot.StateRevision;
 		UE::Flecs::Tests::SetSnapshotPairValue(FlecsWorld, NewerSnapshot,
 			SourceCapture.Layout, FFlecsReplicationTestValueRelationship{ 29 });

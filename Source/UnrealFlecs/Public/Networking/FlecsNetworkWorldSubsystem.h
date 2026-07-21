@@ -45,8 +45,44 @@ public:
 	/** Stops authority-side replication by identity, releasing the allocator slot. */
 	void StopReplicatingEntity(FFlecsNetworkId NetworkId);
 	
-	/** Marks a replicated entity for its next authoritative full snapshot. */
+	/** Marks all payload keys dirty; equal serialized values are still suppressed. */
 	void MarkEntityDirty(const FFlecsEntityHandle& EntityHandle);
+
+	/** Replaces route selection and reevaluates every authoritative entity. */
+	void SetReplicationRouter(TUniquePtr<IFlecsReplicationRouter> InRouter);
+	/** Restores Default + Everyone routing and reevaluates every authoritative entity. */
+	void ResetReplicationRouter();
+	/** Reevaluates routing without forcing a component value change. */
+	void MarkEntityRoutingDirty(const FFlecsEntityHandle& EntityHandle);
+
+	template <typename TFragment>
+	void SetConnectionInterestFragment(const FFlecsReplicationConnectionId ConnectionId,
+		const TFragment& InFragment)
+	{
+		ConnectionInterestContexts.FindOrAdd(ConnectionId.Value).Set(InFragment);
+	}
+
+	template <typename TFragment>
+	bool RemoveConnectionInterestFragment(const FFlecsReplicationConnectionId ConnectionId)
+	{
+		FFlecsReplicationConnectionInterestContext* Context = ConnectionInterestContexts.Find(ConnectionId.Value);
+		if (!Context || !Context->Remove<TFragment>())
+		{
+			return false;
+		}
+		if (Context->IsEmpty())
+		{
+			ConnectionInterestContexts.Remove(ConnectionId.Value);
+		}
+		return true;
+	}
+
+	void ClearConnectionInterestContext(FFlecsReplicationConnectionId ConnectionId);
+	
+	NO_DISCARD bool ValidateInterestBinding(const FFlecsReplicationInterestBinding& Binding,
+		FString& OutError) const;
+	NO_DISCARD bool IsRouteRelevant(const FFlecsReplicationRouteDescriptor& Route,
+		FFlecsReplicationConnectionId ConnectionId, const FFlecsReplicationConnectionView& View) const;
 
 	/** Enqueues a transport-delivered record for client-side processing on the world tick. */
 	void EnqueueReceivedRecord(FFlecsReplicationInboxRecord Record)
@@ -103,10 +139,13 @@ public:
 	void ResetClientReplicationForTesting()
 	{
 		LayoutRegistry = {};
-		DeferredSnapshots.Reset();
+		DeferredUpdates.Reset();
+		MaterializedRemoteUpdates.Reset();
+		DeferredDeltaUpdates.Reset();
 		ClientSlotBindings.Reset();
 		LastAppliedStateRevisions.Reset();
 		EntitySourceShards.Reset();
+		LastAppliedLayoutIds.Reset();
 		EntityPairFixups.Reset();
 	}
 	
@@ -119,10 +158,21 @@ private:
 		uint32 StateRevision = 0;
 		uint32 CompositionRevision = 0;
 		FFlecsReplicationLayoutId LayoutId;
-		FFlecsReplicationRouteKey RouteKey = FFlecsReplicationRouteKey::Default();
+		FFlecsReplicationRouteDescriptor Route = FFlecsReplicationRouteDescriptor::Default();
+		TMap<uint16, TArray<uint8>> RetainedValues;
+		bool bPublished = false;
+		bool bRoutingDirty = true;
 	};
 
-	/** Complete pair state from one source snapshot, waiting for its entity-target replica. */
+	struct FPublishedLayoutKey
+	{
+		FFlecsReplicationRouteDescriptor Route;
+		FFlecsReplicationLayoutId LayoutId;
+
+		friend bool operator==(const FPublishedLayoutKey&, const FPublishedLayoutKey&) = default;
+	}; // struct FPublishedLayoutKey
+
+	/** Complete pair state from one source update, waiting for its entity-target replica. */
 	struct FEntityPairFixup
 	{
 		FFlecsNetworkId Source;
@@ -140,8 +190,9 @@ private:
 	void GatherDirtyEntities();
 	void DrainInbox();
 	
-	void ApplySnapshot(const FGuid& SourceShard, const FFlecsReplicatedEntitySnapshot& Snapshot);
-	void RemoveRemoteEntity(FFlecsNetworkId NetworkId);
+	void ApplyUpdate(const FGuid& SourceShard, const FFlecsReplicatedEntityUpdate& Update);
+	void ApplyMaterializedUpdate(const FGuid& SourceShard, const FFlecsReplicatedEntityUpdate& Update);
+	void RemoveRemoteEntity(FFlecsNetworkId NetworkId, const FGuid* ExpectedSource = nullptr);
 	void DetachRemoteShard(const FGuid& SourceShard);
 	
 	void RetryEntityPairFixups();
@@ -169,8 +220,7 @@ private:
 	UPROPERTY(Transient)
 	TSet<FFlecsNetworkId> DirtyEntities;
 	
-	UPROPERTY()
-	TSet<FString> PublishedLayoutRoutes;
+	TArray<FPublishedLayoutKey> PublishedLayoutRoutes;
 	
 	UPROPERTY()
 	TArray<FFlecsObserverHandle> DirtyObservers;
@@ -178,19 +228,24 @@ private:
 	FFlecsReplicationLayoutRegistry LayoutRegistry;
 	FFlecsReplicationInbox Inbox;
 	
-	TMap<FFlecsReplicationLayoutId, TArray<TPair<FGuid, FFlecsReplicatedEntitySnapshot>>> DeferredSnapshots;
+	TMap<FFlecsReplicationLayoutId, TArray<TPair<FGuid, FFlecsReplicatedEntityUpdate>>> DeferredUpdates;
+	TMap<FFlecsNetworkId, FFlecsReplicatedEntityUpdate> MaterializedRemoteUpdates;
+	TMap<FFlecsNetworkId, TPair<FGuid, FFlecsReplicatedEntityUpdate>> DeferredDeltaUpdates;
 	
 	UPROPERTY()
 	TMap<uint32, FFlecsNetworkId> ClientSlotBindings;
 	
 	UPROPERTY()
 	TMap<FFlecsNetworkId, uint32> LastAppliedStateRevisions;
+	TMap<FFlecsNetworkId, FFlecsReplicationLayoutId> LastAppliedLayoutIds;
 	
 	TMap<FFlecsNetworkId, FGuid> EntitySourceShards;
 	
 	TArray<FEntityPairFixup> EntityPairFixups;
 	
 	TUniquePtr<IFlecsReplicationRouter> Router;
+	TMap<uint32, FFlecsReplicationConnectionInterestContext> ConnectionInterestContexts;
+	mutable TSet<FString> LoggedInvalidInterestBindings;
 	
 	FDelegateHandle PreActorTickHandle;
 	

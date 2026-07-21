@@ -9,6 +9,68 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsReplicationTypes)
 
+const FName FFlecsReplicationInterestPolicyNames::Everyone(TEXT("Everyone"));
+const FName FFlecsReplicationInterestPolicyNames::Owner(TEXT("Owner"));
+const FName FFlecsReplicationInterestPolicyNames::SpatialCell(TEXT("SpatialCell"));
+
+FFlecsReplicationInterestBinding FFlecsReplicationInterestBinding::Everyone()
+{
+	return Make(FFlecsReplicationInterestPolicyNames::Everyone,
+		FFlecsReplicationEveryoneInterestDescriptor{});
+}
+
+FFlecsReplicationRouteDescriptor::FFlecsReplicationRouteDescriptor()
+	: Interest(FFlecsReplicationInterestBinding::Everyone())
+{
+}
+
+FFlecsReplicationRouteDescriptor FFlecsReplicationRouteDescriptor::Default()
+{
+	return {};
+}
+
+FIntVector FlecsReplicationSpatialCell(const FVector& Position, const float CellSize)
+{
+	if (CellSize <= UE_SMALL_NUMBER)
+	{
+		return FIntVector::ZeroValue;
+	}
+
+	return FIntVector(FMath::FloorToInt(Position.X / CellSize),
+		FMath::FloorToInt(Position.Y / CellSize), FMath::FloorToInt(Position.Z / CellSize));
+}
+
+FFlecsReplicationRouteDescriptor MakeFlecsSpatialCellRoute(const FVector& Position,
+	const float CellSize, const int32 SpatialLayer, const float BubbleRadius, const FName LogicalRoute)
+{
+	FFlecsReplicationSpatialCellInterestDescriptor Descriptor;
+	Descriptor.Cell = FlecsReplicationSpatialCell(Position, CellSize);
+	Descriptor.CellSize = CellSize;
+	Descriptor.SpatialLayer = SpatialLayer;
+	Descriptor.BubbleRadius = BubbleRadius;
+
+	FFlecsReplicationRouteDescriptor Result = FFlecsReplicationRouteDescriptor::Default();
+	Result.LogicalKey = FFlecsReplicationRouteKey(LogicalRoute);
+	Result.Interest = FFlecsReplicationInterestBinding::Make(
+		FFlecsReplicationInterestPolicyNames::SpatialCell, Descriptor);
+	return Result;
+}
+
+uint32 FFlecsReplicatedEntityUpdate::GetPayloadByteCount() const
+{
+	uint32 Result = 0;
+	for (const FFlecsReplicatedValue& Value : Values)
+	{
+		Result += Value.Bytes.Num();
+	}
+	return Result;
+}
+
+bool FFlecsReplicatedEntityUpdate::IsKeyChanged(const uint16 KeyIndex) const
+{
+	return ChangedKeys.Contains(KeyIndex);
+}
+
 namespace
 {
 	NO_DISCARD EFlecsReplicationKeyStorageKind GetStorageKindForPair(const FFlecsComponentReplicationRegistry& Registry,
@@ -37,15 +99,15 @@ namespace
 			return true;
 		}
 
+		// Symbols and stable paths describe an eligible ID; they do not opt
+		// every named Flecs component into replicated composition.
 		const FFlecsEntityHandle IdEntity = World->GetAlive(Id);
 		return IdEntity.IsValid()
-			&& (IdEntity.Has<FFlecsNetworkId>() || IdEntity.Has<FFlecsReplicatedTrait>() 
-				|| (IdEntity.HasSymbol() || (IdEntity.Has<FFlecsStablePathTag>() && IdEntity.HasName())));
+			&& (IdEntity.Has<FFlecsNetworkId>() || IdEntity.Has<FFlecsReplicatedTrait>());
 	}
 
 	NO_DISCARD bool TryBuildIndividualKey(const TSolidNotNull<const UFlecsWorld*> World,
-		const FFlecsComponentReplicationRegistry& Registry, const FFlecsId Id,
-		FFlecsReplicationIndividualKey& OutKey)
+		const FFlecsComponentReplicationRegistry& Registry, const FFlecsId Id, FFlecsReplicationIndividualKey& OutKey)
 	{
 		OutKey = {};
 
