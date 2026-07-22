@@ -123,7 +123,73 @@ struct UNREALFLECS_API FFlecsComponentReplicationDescriptor
 
 	/** Validates the complete local descriptor before it enters the registry. */
 	NO_DISCARD bool IsValid(OUT FString* OutError = nullptr) const;
-};
+	
+	NO_DISCARD FORCEINLINE FFlecsReplicationSchemaId GetSchemaId() const
+	{
+		return SchemaId;
+	}
+	
+	NO_DISCARD FORCEINLINE FString GetStableName() const
+	{
+		return StableName;
+	}
+	
+	NO_DISCARD FORCEINLINE FFlecsId GetLocalFlecsId() const
+	{
+		return LocalFlecsId;
+	}
+	
+	NO_DISCARD FORCEINLINE uint32 GetSize() const
+	{
+		return Size;
+	}
+	
+	NO_DISCARD FORCEINLINE uint16 GetAlignment() const
+	{
+		return Alignment;
+	}
+	
+	NO_DISCARD FORCEINLINE bool IsTag() const
+	{
+		return bIsTag;
+	}
+	
+	NO_DISCARD FORCEINLINE bool IsScriptStruct() const
+	{
+		return ScriptStruct != nullptr;
+	}
+	
+	NO_DISCARD FORCEINLINE UScriptStruct* GetScriptStruct() const
+	{
+		return ScriptStruct;
+	}
+	
+	NO_DISCARD FORCEINLINE FFlecsReplicationSerializeFunction GetSerializeFunction() const
+	{
+		return Serialize;
+	}
+	
+	NO_DISCARD FORCEINLINE FFlecsReplicationSerializeFunction GetDeserializeFunction() const
+	{
+		return Deserialize;
+	}
+	
+	NO_DISCARD FORCEINLINE FFlecsReplicationConstructFunction GetConstructFunction() const
+	{
+		return Construct;
+	}
+	
+	NO_DISCARD FORCEINLINE FFlecsReplicationDestroyFunction GetDestroyFunction() const
+	{
+		return Destroy;
+	}
+	
+	NO_DISCARD FORCEINLINE bool IsStorageEligible() const
+	{
+		return Size > 0 && Alignment > 0 && !bIsTag;
+	}
+	
+}; // struct FFlecsComponentReplicationDescriptor
 
 /**
  * Replication customization point for a component type.
@@ -203,6 +269,13 @@ public:
 
 	/** Rejects reflected types that contain unsupported raw object references. */
 	static NO_DISCARD bool ValidateReflectedType(const TSolidNotNull<const UScriptStruct*> ScriptStruct, FString& OutError);
+	
+	// @TODO: Poor name.
+	/**
+	 * if opted in for replication, this checks if the entity is eligible for replication 
+	 * although stable paths and symbols can be replicated, that does not mean that every single instance of once is replicated.
+	 **/
+	static NO_DISCARD bool IsEntityReplicationEligible(const TSolidNotNull<const UFlecsWorld*> World, const FFlecsId Id);
 
 private:
 	TMap<FFlecsId, FFlecsComponentReplicationDescriptor> ByLocalId;

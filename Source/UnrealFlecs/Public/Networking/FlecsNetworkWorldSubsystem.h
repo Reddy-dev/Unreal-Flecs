@@ -10,6 +10,7 @@
 
 #include "FlecsNetworkWorldSubsystem.generated.h"
 
+class IFlecsNetworkIDGeneratorInterface;
 class UFlecsNetworkingModuleSettings;
 
 /**
@@ -36,16 +37,28 @@ public:
 	void RegisterComponentDirtyObservers();
 	void RegisterIndividualComponentDirtyObserver(const FFlecsComponentReplicationDescriptor& InDescriptor);
 	
-	FFlecsNetworkId BeginReplicatingEntity(const FFlecsEntityHandle& InEntity);
-	void StopReplicatingEntity(const FFlecsEntityHandle& InEntity);
+	FFlecsNetworkId BeginReplicatingEntity(const FFlecsEntityHandle& InEntityHandle);
+	void StopReplicatingEntity(const FFlecsEntityHandle& InEntityHandle);
+	
+	NO_DISCARD TSolidNotNull<IFlecsNetworkIDGeneratorInterface*> GetNetworkIdGenerator() const;
 
 protected:
 	NO_DISCARD bool HasAuthority() const;
 	NO_DISCARD bool IsStandalone() const;
 	
+	static NO_DISCARD TSolidNotNull<const UFlecsNetworkingModuleSettings*> GetNetworkingSettings();
+	
+	void CreateNetworkIdGenerator();
+	
+	TMap<FFlecsNetworkId, FFlecsEntityHandle> NetworkIdToEntityMap;
+	
+	
 	UPROPERTY()
 	TArray<FFlecsObserverHandle> ComponentDirtyObservers;
 	
+	UPROPERTY()
+	TObjectPtr<UObject> NetworkIdGenerator;
+
 	
 	
 }; // class UFlecsNetworkWorldSubsystem

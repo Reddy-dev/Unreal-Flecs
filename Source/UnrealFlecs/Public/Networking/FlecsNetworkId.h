@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SequentialID.h"
 
 #include "Networking/FlecsReplicatedEntityComponent.h"
 #include "Properties/FlecsComponentProperties.h"
@@ -19,23 +18,21 @@
  * Zero, and every value with a zero epoch, is invalid.
  */
 USTRUCT(BlueprintType)
-struct UNREALFLECS_API FFlecsNetworkId : public FSequentialIDBase
+struct UNREALFLECS_API FFlecsNetworkId
 {
 	GENERATED_BODY()
 	
 	static constexpr uint64 InvalidValue = 0ull;
 	
 	static constexpr uint64 SlotBitCount = 32ull;
-	static constexpr uint64 GenerationBitCount = 24ull;
-	static constexpr uint64 EpochBitCount = 8ull;
+	static constexpr uint64 GenerationBitCount = 32ull;
 
 	static constexpr uint64 SlotMask = (1ull << SlotBitCount) - 1ull;
 	
 	static constexpr uint64 GenerationValueMask = (1ull << GenerationBitCount) - 1ull;
 	static constexpr uint64 GenerationMask = GenerationValueMask << SlotBitCount;
 	
-	static constexpr uint64 EpochValueMask = (1ull << EpochBitCount) - 1ull;
-	static constexpr uint64 EpochMask = EpochValueMask << (SlotBitCount + GenerationBitCount);
+public:
 
 	FFlecsNetworkId() = default;
 	
@@ -43,14 +40,13 @@ struct UNREALFLECS_API FFlecsNetworkId : public FSequentialIDBase
 	
 	constexpr FFlecsNetworkId(const uint32 InSlot, const uint32 InGeneration, const uint8 InSessionEpoch)
 		: Value((static_cast<uint64>(InSlot) & SlotMask)
-			| ((static_cast<uint64>(InGeneration) & GenerationValueMask) << SlotBitCount)
-			| ((static_cast<uint64>(InSessionEpoch) & EpochValueMask) << (SlotBitCount + GenerationBitCount)))
+			| ((static_cast<uint64>(InGeneration) & GenerationValueMask) << SlotBitCount))
 	{
 	}
 
 	NO_DISCARD constexpr bool IsValid() const
 	{
-		return Value != 0 && GetSessionEpoch() != 0;
+		return Value != 0;
 	}
 	
 	NO_DISCARD constexpr uint64 GetValue() const
@@ -68,9 +64,9 @@ struct UNREALFLECS_API FFlecsNetworkId : public FSequentialIDBase
 		return static_cast<uint32>((Value & GenerationMask) >> SlotBitCount);
 	}
 	
-	NO_DISCARD constexpr uint8 GetSessionEpoch() const
+	NO_DISCARD FORCEINLINE FString ToString() const
 	{
-		return static_cast<uint8>((Value & EpochMask) >> (SlotBitCount + GenerationBitCount));
+		return FString::Printf(TEXT("Slot:%u Gen:%u"), GetSlot(), GetGeneration());
 	}
 
 	NO_DISCARD constexpr bool operator==(const FFlecsNetworkId& Other) const
@@ -129,11 +125,6 @@ public:
 	
 	/** Clears allocations and selects the epoch used by subsequent identities. */
 	void Reset(uint8 InSessionEpoch);
-
-	NO_DISCARD FORCEINLINE uint8 GetSessionEpoch() const
-	{
-		return SessionEpoch;
-	}
 
 private:
 	uint8 SessionEpoch = 1;

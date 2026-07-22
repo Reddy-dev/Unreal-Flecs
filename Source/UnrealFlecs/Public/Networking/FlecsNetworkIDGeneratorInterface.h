@@ -13,7 +13,7 @@
 #include "FlecsNetworkIDGeneratorInterface.generated.h"
 
 // This class does not need to be modified.
-UINTERFACE()
+UINTERFACE(NotBlueprintable, meta = (CannotImplementInterfaceInBlueprint))
 class UFlecsNetworkIDGeneratorInterface : public UInterface
 {
 	GENERATED_BODY()
@@ -30,5 +30,7 @@ class UNREALFLECS_API IFlecsNetworkIDGeneratorInterface
 public:
 
 	virtual NO_DISCARD FFlecsNetworkId GenerateNetworkId() = 0;
+	virtual bool ReleaseNetworkId(const FFlecsNetworkId& NetworkId) = 0;
+	virtual void ResetNetworkIdGenerator() = 0;
 
 }; // class IFlecsNetworkIDGeneratorInterface

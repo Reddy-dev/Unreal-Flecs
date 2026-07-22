@@ -300,3 +300,5 @@ public:
 		return bHasValue ? nullptr : std::addressof(Storage.Error);
 	}
 }; // class TReturnValueOrError
+
+

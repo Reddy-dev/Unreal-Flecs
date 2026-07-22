@@ -13,7 +13,6 @@
 #include "General/FlecsObjectRegistrationInterface.h"
 #include "UnrealFlecsTests/Fixtures/FlecsWorldFixture.h"
 #include "Properties/FlecsComponentProperties.h"
-#include "Networking/FlecsReplicationTransportBase.h"
 
 #include "FlecsTestTypes.generated.h"
 
@@ -995,59 +994,3 @@ struct TFlecsComponentTraits<FFlecsReplicationTestValueRelationship> : TFlecsCom
 	static constexpr bool Replicate = true;
 	static constexpr bool Relationship = true;
 };
-
-USTRUCT()
-struct FFlecsReplicationTestLocalOnly
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	int32 Value = 0;
-};
-
-USTRUCT()
-struct FFlecsReplicationTestInvalidInterestDescriptor : public FFlecsReplicationInterestDescriptorBase
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	TObjectPtr<UObject> Object;
-}; // struct FFlecsReplicationTestInvalidInterestDescriptor
-
-template <>
-struct TFlecsComponentTraits<FFlecsReplicationTestLocalOnly> : TFlecsComponentTraitsBase<FFlecsReplicationTestLocalOnly>
-{
-	static constexpr bool AutoRegister = false;
-};
-
-UCLASS(Transient)
-class UNREALFLECSTESTS_API UFlecsReplicationCaptureTransport : public UFlecsReplicationTransportBase
-{
-	GENERATED_BODY()
-
-public:
-	virtual void PublishLayout(const FFlecsReplicationRouteDescriptor&, const FFlecsReplicationLayoutDefinition& Layout) override
-	{
-		Layouts.Add(Layout);
-	}
-	
-	virtual void PublishEntity(const FFlecsReplicationRouteDescriptor&, const FFlecsReplicatedEntityUpdate& Snapshot) override
-	{
-		Snapshots.Add(Snapshot);
-	}
-	
-	virtual void RemoveEntity(const FFlecsReplicationRouteDescriptor&, FFlecsNetworkId NetworkId) override
-	{
-		RemovedEntities.Add(NetworkId);
-	}
-	
-	virtual void HandleProtocolError(const FString& Diagnostic) override
-	{
-		ProtocolErrors.Add(Diagnostic);
-	}
-
-	TArray<FFlecsReplicationLayoutDefinition> Layouts;
-	TArray<FFlecsReplicatedEntityUpdate> Snapshots;
-	TArray<FFlecsNetworkId> RemovedEntities;
-	TArray<FString> ProtocolErrors;
-}; // class UFlecsReplicationCaptureTransport

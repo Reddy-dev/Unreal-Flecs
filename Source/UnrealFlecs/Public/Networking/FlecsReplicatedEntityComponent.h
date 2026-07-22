@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 
+#include "FlecsReplicationTypes.h"
+
 #include "FlecsReplicatedEntityComponent.generated.h"
 
 /**
@@ -19,4 +21,9 @@ USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsReplicatedEntityComponent
 {
 	GENERATED_BODY()
+	
+public:
+	UPROPERTY()
+	FFlecsReplicationLayoutId LayoutId;
+	
 }; // struct FFlecsReplicatedEntityComponent

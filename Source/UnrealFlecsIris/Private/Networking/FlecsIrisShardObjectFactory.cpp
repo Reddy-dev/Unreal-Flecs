@@ -4,7 +4,6 @@
 
 #include "Engine/NetDriver.h"
 #include "Net/Iris/ReplicationSystem/EngineReplicationBridge.h"
-#include "Networking/FlecsIrisReplicationShard.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsIrisShardObjectFactory)
 
@@ -18,23 +17,23 @@ void UFlecsIrisShardObjectFactory::PostInit(const FPostInitContext& Context)
 {
 	Super::PostInit(Context);
 	
-	if (UFlecsIrisReplicationShard* Shard = Cast<UFlecsIrisReplicationShard>(Context.Instance))
+	/*if (UFlecsIrisReplicationShard* Shard = Cast<UFlecsIrisReplicationShard>(Context.Instance))
 	{
 		const UEngineReplicationBridge* EngineBridge = Cast<UEngineReplicationBridge>(Bridge);
 		const UNetDriver* NetDriver = EngineBridge->GetNetDriver();
 		
 		Shard->BindClient(NetDriver->GetWorld());
 		Shard->EnqueueAllReceived();
-	}
+	}*/
 }
 
 void UFlecsIrisShardObjectFactory::DetachedFromReplication(const FDetachContext& Context,
 	const TOptional<FSubObjectDetachContext>& SubObjectContext)
 {
-	if (UFlecsIrisReplicationShard* Shard = Cast<UFlecsIrisReplicationShard>(Context.DetachedInstance))
+	/*if (UFlecsIrisReplicationShard* Shard = Cast<UFlecsIrisReplicationShard>(Context.DetachedInstance))
 	{
 		Shard->DetachedFromReplication();
-	}
+	}*/
 	
 	Super::DetachedFromReplication(Context, SubObjectContext);
 }

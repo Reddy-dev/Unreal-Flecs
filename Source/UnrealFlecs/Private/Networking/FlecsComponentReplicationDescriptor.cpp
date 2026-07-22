@@ -5,6 +5,9 @@
 #include "Misc/SecureHash.h"
 #include "UObject/UnrealType.h"
 
+#include "Logs/FlecsCategories.h"
+#include "Networking/FlecsNetworkId.h"
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsComponentReplicationDescriptor)
 
 namespace
@@ -220,4 +223,18 @@ bool FFlecsComponentReplicationRegistry::ValidateReflectedType(const TSolidNotNu
 	}
 	
 	return true;
+}
+
+bool FFlecsComponentReplicationRegistry::IsEntityReplicationEligible(const TSolidNotNull<const UFlecsWorld*> World,
+	const FFlecsId Id)
+{
+	if UNLIKELY_IF(!Id.IsValid())
+	{
+		UE_LOGFMT(LogFlecsWorld, Error, 
+			"Invalid Flecs ID provided for entity replication eligibility check in world");
+		return false;
+	}
+	
+	const FFlecsEntityHandle EntityHandle = World->GetAlive(Id);
+	return EntityHandle.IsValid() && (EntityHandle.Has<FFlecsNetworkId>() || EntityHandle.Has<FFlecsReplicatedTrait>());
 }

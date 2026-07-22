@@ -41,7 +41,7 @@ FFlecsNetworkId FFlecsNetworkIdAllocator::Allocate()
 
 bool FFlecsNetworkIdAllocator::Release(const FFlecsNetworkId InId)
 {
-	if UNLIKELY_IF(!InId.IsValid() || InId.GetSessionEpoch() != SessionEpoch || !AllocatedSlots.Remove(InId.GetSlot()))
+	if UNLIKELY_IF(!InId.IsValid() || !AllocatedSlots.Remove(InId.GetSlot()))
 	{
 		return false;
 	}

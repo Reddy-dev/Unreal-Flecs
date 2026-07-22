@@ -9,6 +9,7 @@
 #include "Serialization/MemoryWriter.h"
 
 #include "Networking/FlecsNetRoleType.h"
+#include "Networking/FlecsNetworkIDGeneratorInterface.h"
 #include "Networking/FlecsNetworkingModuleSettings.h"
 #include "Networking/FlecsNetworkSubsystemSingleton.h"
 #include "Networking/FlecsReplicatedEntityComponent.h"
@@ -23,6 +24,7 @@ void UFlecsNetworkWorldSubsystem::Initialize(FSubsystemCollectionBase& Collectio
 {
 	Super::Initialize(Collection);
 	
+	
 }
 
 void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UFlecsWorld*> InWorld)
@@ -31,8 +33,15 @@ void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UF
 	
 	InWorld->Set<FFlecsNetworkSubsystemSingleton>(FFlecsNetworkSubsystemSingleton{ this });
 	
+#if WITH_SERVER_CODE
+	
+	CreateNetworkIdGenerator();
+	
 	FFlecsComponentReplicationRegistry::Get(InWorld).OnDescriptorRegistered()
 		.AddUObject(this, &UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver);
+	
+#endif // WITH_SERVER_CODE
+	
 }
 
 void UFlecsNetworkWorldSubsystem::Deinitialize()
@@ -44,6 +53,11 @@ void UFlecsNetworkWorldSubsystem::Deinitialize()
 
 void UFlecsNetworkWorldSubsystem::RegisterComponentDirtyObservers()
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
+	
 	const FFlecsComponentReplicationRegistry& Registry = FFlecsComponentReplicationRegistry::Get(GetFlecsWorld());
 	const TMap<FFlecsId, FFlecsComponentReplicationDescriptor>& Descriptors = Registry.GetDescriptors();
 	
@@ -56,6 +70,11 @@ void UFlecsNetworkWorldSubsystem::RegisterComponentDirtyObservers()
 void UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver(
 	const FFlecsComponentReplicationDescriptor& InDescriptor)
 {
+	if UNLIKELY_IF(!HasAuthority())
+	{
+		return;
+	}
+	
 	if UNLIKELY_IF(!InDescriptor.IsValid())
 	{
 		return;
@@ -91,26 +110,66 @@ void UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver(
 	ComponentDirtyObservers.Add(PairObserverHandle);
 }
 
-FFlecsNetworkId UFlecsNetworkWorldSubsystem::BeginReplicatingEntity(const FFlecsEntityHandle& EntityHandle)
+FFlecsNetworkId UFlecsNetworkWorldSubsystem::BeginReplicatingEntity(const FFlecsEntityHandle& InEntityHandle)
 {
 	if UNLIKELY_IF(!HasAuthority())
 	{
 		UE_LOG(LogFlecsWorld, Error, 
-			TEXT("Cannot begin replicating entity %s without authority"), *EntityHandle.ToString());
+			TEXT("Cannot begin replicating entity %s without authority"), *InEntityHandle.ToString());
 		return FFlecsNetworkId();
 	}
 	
-	EntityHandle.
+	if UNLIKELY_IF(!ensureAlwaysMsgf(InEntityHandle.IsValid(), TEXT("Entity handle is not valid")))
+	{
+		return FFlecsNetworkId();
+	}
+	
+	const FFlecsNetworkId* ExistingNetworkId = InEntityHandle.TryGet<FFlecsNetworkId>();
+	
+	if UNLIKELY_IF(ExistingNetworkId && ExistingNetworkId->IsValid())
+	{
+		UE_LOG(LogFlecsWorld, Error, 
+			TEXT("Entity %s is already replicating with network ID '%s'"), 
+			*InEntityHandle.ToString(), *ExistingNetworkId->ToString());
+		
+		return *ExistingNetworkId;
+	}
+	
+	const FFlecsNetworkId NetworkId = GetNetworkIdGenerator()->GenerateNetworkId();
+	
+	if UNLIKELY_IF(!ensureMsgf(NetworkId.IsValid(), TEXT("Generated network ID is not valid")))
+	{
+		return FFlecsNetworkId();
+	}
+	
+	InEntityHandle.Set<FFlecsNetworkId>(NetworkId);
+	InEntityHandle.Add<EFlecsNetRoleType>(EFlecsNetRoleType::Authority);
+	InEntityHandle.Add<FFlecsNetDirtyTag>();
+	
+	NetworkIdToEntityMap.Add(NetworkId, InEntityHandle);
+
+	return NetworkId;
 }
 
-void UFlecsNetworkWorldSubsystem::StopReplicatingEntity(const FFlecsEntityHandle& EntityHandle)
+void UFlecsNetworkWorldSubsystem::StopReplicatingEntity(const FFlecsEntityHandle& InEntityHandle)
 {
 	
 }
 
-void UFlecsNetworkWorldSubsystem::StopReplicatingEntity(const FFlecsNetworkId NetworkId)
+void UFlecsNetworkWorldSubsystem::CreateNetworkIdGenerator()
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
 	
+	const TSolidNotNull<const UFlecsNetworkingModuleSettings*> Settings = GetNetworkingSettings();
+	NetworkIdGenerator = NewObject<UObject>(this, Settings->NetworkIdGeneratorClass);
+}
+
+TSolidNotNull<IFlecsNetworkIDGeneratorInterface*> UFlecsNetworkWorldSubsystem::GetNetworkIdGenerator() const
+{
+	return CastChecked<IFlecsNetworkIDGeneratorInterface>(NetworkIdGenerator);
 }
 
 bool UFlecsNetworkWorldSubsystem::HasAuthority() const
@@ -121,4 +180,9 @@ bool UFlecsNetworkWorldSubsystem::HasAuthority() const
 bool UFlecsNetworkWorldSubsystem::IsStandalone() const
 {
 	return GetWorld()->GetNetMode() == NM_Standalone;
+}
+
+TSolidNotNull<const UFlecsNetworkingModuleSettings*> UFlecsNetworkWorldSubsystem::GetNetworkingSettings()
+{
+	return GetDefault<UFlecsNetworkingModuleSettings>();
 }
