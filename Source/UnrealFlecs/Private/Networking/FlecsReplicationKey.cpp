@@ -40,11 +40,9 @@ const FFlecsComponentReplicationDescriptor* FFlecsReplicationIndividualKey::TryG
 	return nullptr;
 }
 
-TReturnValueOrError<FFlecsReplicationIndividualKey, FString> FFlecsReplicationIndividualKey::BuildIndividualKey(
+TValueOrError<FFlecsReplicationIndividualKey, FString> FFlecsReplicationIndividualKey::BuildIndividualKey(
 	const TSolidNotNull<const UFlecsWorld*> InWorld, const FFlecsId InId)
 {
-	using FResultType = TReturnValueOrError<FFlecsReplicationIndividualKey, FString>;
-	
 	const FFlecsComponentReplicationRegistry& Registry = FFlecsComponentReplicationRegistry::Get(InWorld);
 	
 	FFlecsReplicationIndividualKey Result;
@@ -57,13 +55,13 @@ TReturnValueOrError<FFlecsReplicationIndividualKey, FString> FFlecsReplicationIn
 	
 	if UNLIKELY_IF(!ensureAlwaysMsgf(InId.IsValid(), TEXT("Invalid Flecs ID")))
 	{
-		return FResultType::FromError(TEXT("Invalid Flecs ID"));
+		return MakeError("Invalid Flecs ID");
 	}
 	
 	const FFlecsEntityHandle IdEntityHandle = InWorld->GetAlive(InId);
 	if (!ensureAlwaysMsgf(IdEntityHandle.IsValid(), TEXT("Flecs ID does not correspond to a valid entity")))
 	{
-		return FResultType::FromError(TEXT("Flecs ID does not correspond to a valid entity"));
+		return MakeError("Flecs ID does not correspond to a valid entity");
 	}
 	
 	
@@ -83,7 +81,7 @@ TReturnValueOrError<FFlecsReplicationIndividualKey, FString> FFlecsReplicationIn
 		Result.StableIdentifier = IdEntityHandle.GetPath();
 	}
 
-	return FResultType::FromValue(Result);
+	return MakeValue(Result);
 }
 
 EFlecsReplicationKeyStorageKind FFlecsReplicationKey::GetStorageKindForPair(

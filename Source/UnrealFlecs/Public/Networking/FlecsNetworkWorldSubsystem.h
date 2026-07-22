@@ -10,6 +10,7 @@
 
 #include "FlecsNetworkWorldSubsystem.generated.h"
 
+class UFlecsReplicationBridgeBase;
 class IFlecsNetworkIDGeneratorInterface;
 class UFlecsNetworkingModuleSettings;
 
@@ -41,6 +42,14 @@ public:
 	void StopReplicatingEntity(const FFlecsEntityHandle& InEntityHandle);
 	
 	NO_DISCARD TSolidNotNull<IFlecsNetworkIDGeneratorInterface*> GetNetworkIdGenerator() const;
+	NO_DISCARD TSolidNotNull<UFlecsReplicationBridgeBase*> GetReplicationBridge() const;
+	
+	template <Solid::TStaticClassConcept T>
+	requires (std::is_base_of_v<UFlecsReplicationBridgeBase, T>)
+	FORCEINLINE T* GetReplicationBridge() const
+	{
+		return CastChecked<T>(ReplicationBridge);
+	}
 
 protected:
 	NO_DISCARD bool HasAuthority() const;
@@ -48,6 +57,7 @@ protected:
 	
 	static NO_DISCARD TSolidNotNull<const UFlecsNetworkingModuleSettings*> GetNetworkingSettings();
 	
+	void CreateReplicationBridge();
 	void CreateNetworkIdGenerator();
 	
 	TMap<FFlecsNetworkId, FFlecsEntityHandle> NetworkIdToEntityMap;
@@ -58,7 +68,8 @@ protected:
 	
 	UPROPERTY()
 	TObjectPtr<UObject> NetworkIdGenerator;
-
 	
+	UPROPERTY()
+	TObjectPtr<UFlecsReplicationBridgeBase> ReplicationBridge;
 	
 }; // class UFlecsNetworkWorldSubsystem

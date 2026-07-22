@@ -69,15 +69,16 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 				continue;
 			}
 			
-			auto ReturnOrError = FFlecsReplicationIndividualKey::BuildIndividualKey(World, Id);
+			TValueOrError<FFlecsReplicationIndividualKey, FString> ValueOrError =
+				FFlecsReplicationIndividualKey::BuildIndividualKey(World, Id);
 
-			if UNLIKELY_IF(ReturnOrError.HasError())
+			if UNLIKELY_IF(ValueOrError.HasError())
 			{
-				OutError = ReturnOrError.GetError();
+				OutError = ValueOrError.GetError();
 				return nullptr;
 			}
 			
-			Key.Primary = ReturnOrError.GetValue();
+			Key.Primary = ValueOrError.GetValue();
 
 			const FFlecsComponentReplicationDescriptor* Descriptor = Registry.Find(Id);
 			
@@ -104,20 +105,23 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 		{
 			continue;
 		}
-		
-		auto FirstReturnOrError = FFlecsReplicationIndividualKey::BuildIndividualKey(World, First);
-		auto SecondReturnOrError = FFlecsReplicationIndividualKey::BuildIndividualKey(World, Second);
 
-		if UNLIKELY_IF(FirstReturnOrError.HasError() || SecondReturnOrError.HasError())
+		TValueOrError<FFlecsReplicationIndividualKey, FString> FirstValueOrError =
+			FFlecsReplicationIndividualKey::BuildIndividualKey(World, First);
+		
+		TValueOrError<FFlecsReplicationIndividualKey, FString> SecondValueOrError =
+			FFlecsReplicationIndividualKey::BuildIndividualKey(World, Second);
+
+		if UNLIKELY_IF(FirstValueOrError.HasError() || SecondValueOrError.HasError())
 		{
-			OutError = FirstReturnOrError.HasError() ? FirstReturnOrError.GetError() : SecondReturnOrError.GetError();
+			OutError = FirstValueOrError.HasError() ? FirstValueOrError.GetError() : SecondValueOrError.GetError();
 			return nullptr;
 		}
 
 		Key.Kind = EFlecsReplicationKeyKind::Pair;
 		Key.StorageKind = StorageKind;
-		Key.Primary = FirstReturnOrError.GetValue();
-		Key.Secondary = SecondReturnOrError.GetValue();
+		Key.Primary = FirstValueOrError.GetValue();
+		Key.Secondary = SecondValueOrError.GetValue();
 		Keys.Add(MoveTemp(Key));
 	}
 
@@ -156,25 +160,23 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::Find(c
 	return Definitions.Find(Id);
 }
 
-bool FFlecsReplicationLayoutRegistry::AddRemoteDefinition(const FFlecsReplicationLayoutDefinition& Definition,
-	FString& OutError)
+TValueOrError<void, FString> FFlecsReplicationLayoutRegistry::AddRemoteDefinition(const FFlecsReplicationLayoutDefinition& Definition)
 {
 	if (!Definition.LayoutId.IsValid() || ComputeLayoutId(Definition.Keys) != Definition.LayoutId)
 	{
-		OutError = TEXT("Received replication layout has an invalid identity");
-		return false;
+		return MakeError("Received replication layout has an invalid identity");
 	}
 	
 	if (const FFlecsReplicationLayoutDefinition* Existing = Definitions.Find(Definition.LayoutId))
 	{
 		if (Existing->Keys != Definition.Keys)
 		{
-			OutError = TEXT("Received replication layout collides with an existing definition");
-			return false;
+			return MakeError("Received replication layout collides with an existing definition");
 		}
-		return true;
+		
+		return MakeValue();
 	}
 	
 	Definitions.Add(Definition.LayoutId, Definition);
-	return true;
+	return MakeValue();
 }

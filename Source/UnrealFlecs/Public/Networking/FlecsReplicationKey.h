@@ -78,7 +78,7 @@ struct UNREALFLECS_API FFlecsReplicationIndividualKey
 	
 	NO_DISCARD const FFlecsComponentReplicationDescriptor* TryGetDescriptor(const TSolidNotNull<const UFlecsWorld*> InWorld) const;
 	
-	static NO_DISCARD TReturnValueOrError<FFlecsReplicationIndividualKey, FString> 
+	static NO_DISCARD TValueOrError<FFlecsReplicationIndividualKey, FString> 
 		BuildIndividualKey(const TSolidNotNull<const UFlecsWorld*> InWorld, const FFlecsId InId);
 	
 }; // struct FFlecsReplicationIndividualKey

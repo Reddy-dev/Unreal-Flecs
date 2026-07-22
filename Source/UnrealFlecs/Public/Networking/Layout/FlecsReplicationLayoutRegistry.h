@@ -39,7 +39,7 @@ public:
 	NO_DISCARD const FFlecsReplicationLayoutDefinition* Find(FFlecsReplicationLayoutId Id) const;
 	
 	/** Adds an already validated remote layout, rejecting identity collisions. */
-	bool AddRemoteDefinition(const FFlecsReplicationLayoutDefinition& Definition, OUT FString& OutError);
+	TValueOrError<void, FString> AddRemoteDefinition(const FFlecsReplicationLayoutDefinition& Definition);
 
 private:
 	// @TODO: Handle Table destruction and remove from cache.

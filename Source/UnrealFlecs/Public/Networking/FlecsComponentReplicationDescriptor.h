@@ -6,7 +6,6 @@
 
 #include "SolidMacros/Macros.h"
 #include "Concepts/SolidConcepts.h"
-#include "Types/SolidReturnValueOrError.h"
 
 #include "Entities/FlecsComponentHandle.h"
 #include "Worlds/FlecsWorld.h"

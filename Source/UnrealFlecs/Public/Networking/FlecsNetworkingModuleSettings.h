@@ -19,7 +19,6 @@ class UNREALFLECS_API UFlecsNetworkingModuleSettings : public UFlecsModuleSettin
 	GENERATED_BODY()
 
 public:
-	
 	UPROPERTY(EditAnywhere, Config,
 		meta = (AllowAbstract = false, MustImplement = "/Script/UnrealFlecs.FlecsNetworkIdGeneratorInterface"))
 	TSubclassOf<UObject> NetworkIdGeneratorClass;

@@ -13,6 +13,7 @@
 #include "Networking/FlecsNetworkingModuleSettings.h"
 #include "Networking/FlecsNetworkSubsystemSingleton.h"
 #include "Networking/FlecsReplicatedEntityComponent.h"
+#include "Networking/FlecsReplicationBridgeBase.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsNetworkWorldSubsystem)
 
@@ -39,6 +40,8 @@ void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UF
 	
 	FFlecsComponentReplicationRegistry::Get(InWorld).OnDescriptorRegistered()
 		.AddUObject(this, &UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver);
+	
+	CreateReplicationBridge();
 	
 #endif // WITH_SERVER_CODE
 	
@@ -67,11 +70,14 @@ void UFlecsNetworkWorldSubsystem::RegisterComponentDirtyObservers()
 	}
 }
 
-void UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver(
-	const FFlecsComponentReplicationDescriptor& InDescriptor)
+void UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver(const FFlecsComponentReplicationDescriptor& InDescriptor)
 {
+	// This should have been checked previously
 	if UNLIKELY_IF(!HasAuthority())
 	{
+		UE_LOG(LogFlecsWorld, Error, 
+			TEXT("Cannot register component dirty observer without authority"));
+		
 		return;
 	}
 	
@@ -112,15 +118,15 @@ void UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver(
 
 FFlecsNetworkId UFlecsNetworkWorldSubsystem::BeginReplicatingEntity(const FFlecsEntityHandle& InEntityHandle)
 {
+	if UNLIKELY_IF(!ensureAlwaysMsgf(InEntityHandle.IsValid(), TEXT("Entity handle is not valid")))
+	{
+		return FFlecsNetworkId();
+	}
+	
 	if UNLIKELY_IF(!HasAuthority())
 	{
 		UE_LOG(LogFlecsWorld, Error, 
 			TEXT("Cannot begin replicating entity %s without authority"), *InEntityHandle.ToString());
-		return FFlecsNetworkId();
-	}
-	
-	if UNLIKELY_IF(!ensureAlwaysMsgf(InEntityHandle.IsValid(), TEXT("Entity handle is not valid")))
-	{
 		return FFlecsNetworkId();
 	}
 	
@@ -164,12 +170,33 @@ void UFlecsNetworkWorldSubsystem::CreateNetworkIdGenerator()
 	}
 	
 	const TSolidNotNull<const UFlecsNetworkingModuleSettings*> Settings = GetNetworkingSettings();
+	
 	NetworkIdGenerator = NewObject<UObject>(this, Settings->NetworkIdGeneratorClass);
+	solid_checkf(IsValid(NetworkIdGenerator), TEXT("Network ID generator is not valid"));
+}
+
+void UFlecsNetworkWorldSubsystem::CreateReplicationBridge()
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+	
+	const TSolidNotNull<const UFlecsNetworkingModuleSettings*> Settings = GetNetworkingSettings();
+	
+	ReplicationBridge = NewObject<UFlecsReplicationBridgeBase>(this, Settings->ReplicationBridgeClass);
+	solid_checkf(IsValid(ReplicationBridge), TEXT("Replication bridge is not valid"));
 }
 
 TSolidNotNull<IFlecsNetworkIDGeneratorInterface*> UFlecsNetworkWorldSubsystem::GetNetworkIdGenerator() const
 {
 	return CastChecked<IFlecsNetworkIDGeneratorInterface>(NetworkIdGenerator);
+}
+
+TSolidNotNull<UFlecsReplicationBridgeBase*> UFlecsNetworkWorldSubsystem::GetReplicationBridge() const
+{
+	solid_cassumef(ReplicationBridge, TEXT("Replication bridge is not valid"));
+	return ReplicationBridge;
 }
 
 bool UFlecsNetworkWorldSubsystem::HasAuthority() const
