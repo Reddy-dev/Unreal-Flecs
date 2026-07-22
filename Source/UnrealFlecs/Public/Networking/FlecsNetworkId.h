@@ -38,7 +38,7 @@ public:
 	
 	explicit constexpr FFlecsNetworkId(const uint64 InValue) : Value(InValue) {}
 	
-	constexpr FFlecsNetworkId(const uint32 InSlot, const uint32 InGeneration, const uint8 InSessionEpoch)
+	constexpr FFlecsNetworkId(const uint32 InSlot, const uint32 InGeneration)
 		: Value((static_cast<uint64>(InSlot) & SlotMask)
 			| ((static_cast<uint64>(InGeneration) & GenerationValueMask) << SlotBitCount))
 	{
@@ -105,33 +105,3 @@ struct TStructOpsTypeTraits<FFlecsNetworkId> : public TStructOpsTypeTraitsBase2<
 	};
 	
 }; // struct TStructOpsTypeTraits<FFlecsNetworkId>
-
-/**
- * Authority-side allocator for FFlecsNetworkId values.
- *
- * Released slots are reused with an incremented generation. Resetting begins a
- * new session epoch and invalidates identities from the previous session.
- */
-class UNREALFLECS_API FFlecsNetworkIdAllocator
-{
-public:
-	explicit FFlecsNetworkIdAllocator(uint8 InSessionEpoch = 1);
-
-	/** Allocates a new valid identity, or an invalid identity if the slot space is exhausted. */
-	FFlecsNetworkId Allocate();
-	
-	/** Releases a currently allocated identity; stale generations are rejected. */
-	bool Release(FFlecsNetworkId InId);
-	
-	/** Clears allocations and selects the epoch used by subsequent identities. */
-	void Reset(uint8 InSessionEpoch);
-
-private:
-	uint8 SessionEpoch = 1;
-	uint32 NextSlot = 1;
-	
-	TArray<uint32> FreeSlots;
-	TMap<uint32, uint32> SlotGenerations;
-	TSet<uint32> AllocatedSlots;
-	
-}; // class FFlecsNetworkIdAllocator
