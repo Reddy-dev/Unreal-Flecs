@@ -390,8 +390,3 @@ bool FFlecsReplicationLayoutRegistry::AddRemoteDefinition(const FFlecsReplicatio
 	Definitions.Add(Definition.LayoutId, Definition);
 	return true;
 }
-
-void FFlecsReplicationLayoutRegistry::HandleTableDestruction(const TSolidNotNull<const UFlecsWorld*> World)
-{
-	ecs_table
-}

@@ -255,6 +255,7 @@ void UFlecsIrisReplicationTransport::PublishToPage(UFlecsIrisReplicationShard& P
 	{
 		Page.UpsertLayout(*Layout);
 	}
+	
 	Page.UpsertEntity(Update);
 	PendingRetirementTicks.Remove(&Page);
 }

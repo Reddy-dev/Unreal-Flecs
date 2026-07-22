@@ -163,7 +163,6 @@ private:
 		FFlecsReplicationRouteDescriptor Route = FFlecsReplicationRouteDescriptor::Default();
 		TMap<uint16, TArray<uint8>> RetainedValues;
 		bool bPublished = false;
-		bool bRoutingDirty = true;
 	};
 
 	/** Complete pair state from one source update, waiting for its entity-target replica. */

@@ -172,11 +172,11 @@ bool UFlecsIrisReplicationShard::TryAttachInterestFilter()
 		return true;
 	}
 
-	UWorld* World = GetWorld();
+	const UWorld* World = GetWorld();
 	UNetDriver* NetDriver = World ? World->GetNetDriver() : nullptr;
+	
 	UReplicationSystem* ReplicationSystem = NetDriver ? NetDriver->GetReplicationSystem() : nullptr;
-	UObjectReplicationBridge* ReplicationBridge = ReplicationSystem
-		? ReplicationSystem->GetReplicationBridge() : nullptr;
+	UObjectReplicationBridge* ReplicationBridge = ReplicationSystem ? ReplicationSystem->GetReplicationBridge() : nullptr;
 	if (!ReplicationSystem || !ReplicationBridge)
 	{
 		return false;
@@ -267,11 +267,17 @@ void UFlecsIrisReplicationShard::UpsertEntity(const FFlecsReplicatedEntityUpdate
 	if (Update.Kind == EFlecsReplicatedEntityUpdateKind::Full)
 	{
 		TSet<uint16> RetainedKeys;
-		for (const FFlecsReplicatedValue& Value : Update.Values) RetainedKeys.Add(Value.KeyIndex);
+		for (const FFlecsReplicatedValue& Value : Update.Values)
+		{
+			RetainedKeys.Add(Value.KeyIndex);
+		}
 		TArray<uint16> RemovedKeys;
 		for (const TPair<uint16, int32>& Pair : ValueIndices)
 		{
-			if (!RetainedKeys.Contains(Pair.Key)) RemovedKeys.Add(Pair.Key);
+			if (!RetainedKeys.Contains(Pair.Key))
+			{
+				RemovedKeys.Add(Pair.Key);
+			}
 		}
 		for (const uint16 Key : RemovedKeys)
 		{
@@ -283,7 +289,10 @@ void UFlecsIrisReplicationShard::UpsertEntity(const FFlecsReplicatedEntityUpdate
 			{
 				for (TPair<uint16, int32>& IndexPair : EntityPair.Value)
 				{
-					if (IndexPair.Value > RemovedIndex) --IndexPair.Value;
+					if (IndexPair.Value > RemovedIndex)
+					{
+						--IndexPair.Value;
+					}
 				}
 			}
 		}
@@ -318,6 +327,7 @@ void UFlecsIrisReplicationShard::UpsertEntity(const FFlecsReplicatedEntityUpdate
 	{
 		EntityBytes += EntityValues.Items[Pair.Value].Value.Bytes.Num();
 	}
+	
 	EntityPayloadBytes.Add(Update.NetworkId, EntityBytes);
 	if (EntityBytes > ByteLimit && !bWarnedOversizeEntity)
 	{
@@ -361,7 +371,10 @@ void UFlecsIrisReplicationShard::RemoveEntity(const FFlecsNetworkId NetworkId)
 			{
 				for (TPair<uint16, int32>& IndexPair : EntityPair.Value)
 				{
-					if (IndexPair.Value > RemovedIndex) --IndexPair.Value;
+					if (IndexPair.Value > RemovedIndex)
+					{
+						--IndexPair.Value;
+					}
 				}
 			}
 		}

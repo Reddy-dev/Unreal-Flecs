@@ -499,8 +499,6 @@ public:
 	
 	/** Adds an already validated remote layout, rejecting identity collisions. */
 	bool AddRemoteDefinition(const FFlecsReplicationLayoutDefinition& Definition, OUT FString& OutError);
-	
-	void HandleTableDestruction(const TSolidNotNull<const UFlecsWorld*> World);
 
 private:
 	// @TODO: Handle Table destruction and remove from cache.

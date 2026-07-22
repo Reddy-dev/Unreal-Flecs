@@ -204,9 +204,9 @@ void UFlecsNetworkWorldSubsystem::MarkEntityDirty(const FFlecsEntityHandle& Enti
 void UFlecsNetworkWorldSubsystem::SetReplicationRouter(TUniquePtr<IFlecsReplicationRouter> InRouter)
 {
 	Router = InRouter ? MoveTemp(InRouter) : MakeUnique<FFlecsDefaultReplicationRouter>();
+	
 	for (TPair<FFlecsNetworkId, FReplicatedEntityState>& Pair : EntityStates)
 	{
-		Pair.Value.bRoutingDirty = true;
 		DirtyEntities.Add(Pair.Key);
 	}
 }
@@ -227,7 +227,6 @@ void UFlecsNetworkWorldSubsystem::MarkEntityRoutingDirty(const FFlecsEntityHandl
 	
 	if LIKELY_IF(NetworkId && NetworkId->IsValid())
 	{
-		EntityStates.FindOrAdd(*NetworkId).bRoutingDirty = true;
 		DirtyEntities.Add(*NetworkId);
 	}
 }
@@ -524,7 +523,6 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 
 		if (Update.Kind == EFlecsReplicatedEntityUpdateKind::Delta && Update.ChangedKeys.IsEmpty())
 		{
-			State.bRoutingDirty = false;
 			continue;
 		}
 
@@ -538,6 +536,13 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 			}
 			else
 			{
+				// Initial publication and composition changes need a manifest on
+				// the destination before the entity update references it.
+				if (bLayoutCreated || bInitial || bLayoutChanged)
+				{
+					ReplicationTransport->PublishLayout(Route, *Layout);
+				}
+
 				ReplicationTransport->PublishEntity(Route, Update);
 			}
 		}
@@ -548,7 +553,6 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 		State.Route = Route;
 		State.RetainedValues = MoveTemp(GatheredValues);
 		State.bPublished = true;
-		State.bRoutingDirty = false;
 	}
 }
 
