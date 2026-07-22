@@ -70,10 +70,12 @@ public:
 		{
 			return false;
 		}
+		
 		if (Context->IsEmpty())
 		{
 			ConnectionInterestContexts.Remove(ConnectionId.Value);
 		}
+		
 		return true;
 	}
 
@@ -164,14 +166,6 @@ private:
 		bool bRoutingDirty = true;
 	};
 
-	struct FPublishedLayoutKey
-	{
-		FFlecsReplicationRouteDescriptor Route;
-		FFlecsReplicationLayoutId LayoutId;
-
-		friend bool operator==(const FPublishedLayoutKey&, const FPublishedLayoutKey&) = default;
-	}; // struct FPublishedLayoutKey
-
 	/** Complete pair state from one source update, waiting for its entity-target replica. */
 	struct FEntityPairFixup
 	{
@@ -190,8 +184,10 @@ private:
 	void GatherDirtyEntities();
 	void DrainInbox();
 	
+	// Updates from server
 	void ApplyUpdate(const FGuid& SourceShard, const FFlecsReplicatedEntityUpdate& Update);
 	void ApplyMaterializedUpdate(const FGuid& SourceShard, const FFlecsReplicatedEntityUpdate& Update);
+	
 	void RemoveRemoteEntity(FFlecsNetworkId NetworkId, const FGuid* ExpectedSource = nullptr);
 	void DetachRemoteShard(const FGuid& SourceShard);
 	
@@ -220,15 +216,15 @@ private:
 	UPROPERTY(Transient)
 	TSet<FFlecsNetworkId> DirtyEntities;
 	
-	TArray<FPublishedLayoutKey> PublishedLayoutRoutes;
-	
 	UPROPERTY()
 	TArray<FFlecsObserverHandle> DirtyObservers;
 	
 	FFlecsReplicationLayoutRegistry LayoutRegistry;
 	FFlecsReplicationInbox Inbox;
 	
+	// Layout didnt exist yet
 	TMap<FFlecsReplicationLayoutId, TArray<TPair<FGuid, FFlecsReplicatedEntityUpdate>>> DeferredUpdates;
+	
 	TMap<FFlecsNetworkId, FFlecsReplicatedEntityUpdate> MaterializedRemoteUpdates;
 	TMap<FFlecsNetworkId, TPair<FGuid, FFlecsReplicatedEntityUpdate>> DeferredDeltaUpdates;
 	
@@ -237,6 +233,7 @@ private:
 	
 	UPROPERTY()
 	TMap<FFlecsNetworkId, uint32> LastAppliedStateRevisions;
+	
 	TMap<FFlecsNetworkId, FFlecsReplicationLayoutId> LastAppliedLayoutIds;
 	
 	TMap<FFlecsNetworkId, FGuid> EntitySourceShards;
@@ -257,4 +254,5 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UFlecsReplicationTransportBase> ReplicationTransport;
+	
 }; // class UFlecsNetworkWorldSubsystem

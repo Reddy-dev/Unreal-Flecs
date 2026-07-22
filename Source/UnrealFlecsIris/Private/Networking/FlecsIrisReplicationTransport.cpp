@@ -19,10 +19,12 @@ bool UFlecsIrisReplicationTransport::InitializeTransport(UFlecsNetworkWorldSubsy
 {
 	const bool bInitialized = Super::InitializeTransport(InSubsystem) && InSubsystem && InSubsystem->GetWorld()
 		&& InSubsystem->GetWorld()->GetNetMode() != NM_Standalone;
+	
 	if (bInitialized)
 	{
 		EnsureReplicationFilter();
 	}
+	
 	return bInitialized;
 }
 
@@ -282,6 +284,7 @@ FFlecsReplicatedEntityUpdate UFlecsIrisReplicationTransport::MaterializeUpdate(
 	Result.CompositionRevision = Update.CompositionRevision;
 	Result.Route = Update.Route;
 	Result.ChangedKeys.Reset();
+	
 	for (const FFlecsReplicatedValue& Value : Update.Values)
 	{
 		if (FFlecsReplicatedValue* Existing = Result.Values.FindByPredicate(
@@ -297,10 +300,12 @@ FFlecsReplicatedEntityUpdate UFlecsIrisReplicationTransport::MaterializeUpdate(
 			Result.Values.Add(Value);
 		}
 	}
+	
 	for (const FFlecsReplicatedValue& Value : Result.Values)
 	{
 		Result.ChangedKeys.Add(Value.KeyIndex);
 	}
+	
 	Result.Kind = EFlecsReplicatedEntityUpdateKind::Full;
 	return Result;
 }

@@ -112,12 +112,14 @@ namespace UE::Flecs::Tests
 		Transport->Snapshots.Reset();
 		const FFlecsNetworkId NetworkId = Subsystem->BeginReplicatingEntity(Entity);
 		Subsystem->FlushServerReplicationForTesting();
+		
 		const FFlecsReplicatedEntityUpdate* FoundSnapshot = Transport->Snapshots.FindByPredicate(
 			[NetworkId](const FFlecsReplicatedEntityUpdate& Candidate)
 			{
 				return Candidate.NetworkId == NetworkId;
 			});
 		check(FoundSnapshot);
+		
 		const FFlecsReplicatedEntityUpdate Snapshot = *FoundSnapshot;
 		const FFlecsReplicationLayoutDefinition* Layout = Transport->Layouts.FindByPredicate(
 			[&Snapshot](const FFlecsReplicationLayoutDefinition& Candidate)
@@ -201,12 +203,17 @@ namespace UE::Flecs::Tests
 		Record.NetworkId = NetworkId;
 		Subsystem->EnqueueReceivedRecord(MoveTemp(Record));
 	}
+	
 }
 
 template<>
 struct TFlecsReplicationTraits<UE::Flecs::Tests::FNativeReplicatedValue>
 {
-	static FString StableName() { return TEXT("FNativeReplicatedValue"); }
+	static FString StableName()
+	{
+		return TEXT("FNativeReplicatedValue");
+	}
+	
 	static bool Serialize(FArchive& Archive, UE::Flecs::Tests::FNativeReplicatedValue& Value)
 	{
 		Archive << Value.Value;
@@ -217,7 +224,10 @@ struct TFlecsReplicationTraits<UE::Flecs::Tests::FNativeReplicatedValue>
 template<>
 struct TFlecsReplicationTraits<UE::Flecs::Tests::FNativeReplicatedValueDuplicate>
 {
-	static FString StableName() { return TEXT("FNativeReplicatedValue"); }
+	static FString StableName()
+	{
+		return TEXT("FNativeReplicatedValue");
+	}
 	
 	static bool Serialize(FArchive& Archive, UE::Flecs::Tests::FNativeReplicatedValueDuplicate& Value)
 	{

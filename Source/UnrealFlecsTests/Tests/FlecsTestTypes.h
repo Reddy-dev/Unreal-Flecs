@@ -1006,8 +1006,7 @@ struct FFlecsReplicationTestLocalOnly
 };
 
 USTRUCT()
-struct FFlecsReplicationTestInvalidInterestDescriptor
-	: public FFlecsReplicationInterestDescriptorBase
+struct FFlecsReplicationTestInvalidInterestDescriptor : public FFlecsReplicationInterestDescriptorBase
 {
 	GENERATED_BODY()
 

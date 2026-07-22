@@ -132,8 +132,8 @@ public:
 	FFlecsOwnerReplicationInterestPolicy();
 
 protected:
-	virtual bool ValidateTypedDescriptor(const FFlecsReplicationOwnerInterestDescriptor& Descriptor,
-		FString& OutError) const override;
+	virtual bool ValidateTypedDescriptor(const FFlecsReplicationOwnerInterestDescriptor& Descriptor, FString& OutError) const override;
+	
 	virtual bool IsInterested(const FFlecsReplicationOwnerInterestDescriptor& Descriptor,
 		const FFlecsReplicationInterestEvaluationQuery& Query) const override;
 	

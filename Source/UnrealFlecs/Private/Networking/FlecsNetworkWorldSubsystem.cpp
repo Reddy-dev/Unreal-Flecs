@@ -195,7 +195,7 @@ void UFlecsNetworkWorldSubsystem::MarkEntityDirty(const FFlecsEntityHandle& Enti
 	
 	const FFlecsNetworkId* NetworkId = EntityHandle.TryGet<FFlecsNetworkId>(); 
 	
-	if (NetworkId && NetworkId->IsValid())
+	if LIKELY_IF(NetworkId && NetworkId->IsValid())
 	{
 		DirtyEntities.Add(*NetworkId);
 	}
@@ -222,8 +222,10 @@ void UFlecsNetworkWorldSubsystem::MarkEntityRoutingDirty(const FFlecsEntityHandl
 	{
 		return;
 	}
-	if (const FFlecsNetworkId* NetworkId = EntityHandle.TryGet<FFlecsNetworkId>();
-		NetworkId && NetworkId->IsValid())
+	
+	const FFlecsNetworkId* NetworkId = EntityHandle.TryGet<FFlecsNetworkId>();
+	
+	if LIKELY_IF(NetworkId && NetworkId->IsValid())
 	{
 		EntityStates.FindOrAdd(*NetworkId).bRoutingDirty = true;
 		DirtyEntities.Add(*NetworkId);
@@ -260,8 +262,8 @@ bool UFlecsNetworkWorldSubsystem::IsRouteRelevant(const FFlecsReplicationRouteDe
 
 	static const FFlecsReplicationConnectionInterestContext EmptyContext;
 	const FFlecsReplicationConnectionInterestContext* Context = ConnectionInterestContexts.Find(ConnectionId.Value);
-	const IFlecsReplicationInterestPolicy* Policy =
-		FFlecsReplicationInterestPolicyRegistry::FindPolicy(Route.Interest.PolicyName);
+	const IFlecsReplicationInterestPolicy* Policy = FFlecsReplicationInterestPolicyRegistry::FindPolicy(Route.Interest.PolicyName);
+	
 	return Policy && Policy->IsInterested(Route.Interest.Descriptor,
 		{ ConnectionId, Context ? *Context : EmptyContext, View });
 }
@@ -337,8 +339,7 @@ void UFlecsNetworkWorldSubsystem::InstallDirtyObservers()
 	}
 }
 
-void UFlecsNetworkWorldSubsystem::InstallDirtyObserversForDescriptor(
-	const FFlecsComponentReplicationDescriptor& Descriptor)
+void UFlecsNetworkWorldSubsystem::InstallDirtyObserversForDescriptor(const FFlecsComponentReplicationDescriptor& Descriptor)
 {
 	if (!HasAuthority() || !IsFlecsWorldValid())
 	{
@@ -451,7 +452,9 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 		const bool bInitial = !State.bPublished;
 		const bool bLayoutChanged = State.LayoutId != Layout->LayoutId;
 		const bool bRouteChanged = State.bPublished && State.Route != Route;
+		
 		TMap<uint16, TArray<uint8>> GatheredValues;
+		
 		FFlecsReplicatedEntityUpdate Update;
 		Update.NetworkId = NetworkId;
 		Update.CompositionRevision = State.CompositionRevision + (bLayoutChanged ? 1u : 0u);
@@ -459,6 +462,7 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 		Update.Route = Route;
 		Update.Kind = (bInitial || bLayoutChanged || bRouteChanged)
 			? EFlecsReplicatedEntityUpdateKind::Full : EFlecsReplicatedEntityUpdateKind::Delta;
+		
 		bool bGatherFailed = false;
 
 		for (int32 KeyIndex = 0; KeyIndex < Layout->Keys.Num(); ++KeyIndex)
@@ -500,7 +504,9 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 
 			const uint16 SerializedKeyIndex = static_cast<uint16>(KeyIndex);
 			GatheredValues.Add(SerializedKeyIndex, Bytes);
+			
 			const TArray<uint8>* Previous = State.RetainedValues.Find(SerializedKeyIndex);
+			
 			if (Update.Kind == EFlecsReplicatedEntityUpdateKind::Full || !Previous || *Previous != Bytes)
 			{
 				Update.ChangedKeys.Add(SerializedKeyIndex);
@@ -523,12 +529,6 @@ void UFlecsNetworkWorldSubsystem::GatherDirtyEntities()
 		}
 
 		Update.StateRevision = State.StateRevision + 1;
-		const FPublishedLayoutKey PublishedKey{ Route, Layout->LayoutId };
-		if (!PublishedLayoutRoutes.Contains(PublishedKey) && ReplicationTransport)
-		{
-			ReplicationTransport->PublishLayout(Route, *Layout);
-			PublishedLayoutRoutes.Add(PublishedKey);
-		}
 
 		if (ReplicationTransport)
 		{
@@ -569,6 +569,7 @@ void UFlecsNetworkWorldSubsystem::DrainInbox()
 				{
 					ReplicationTransport->HandleProtocolError(Error);
 				}
+				
 				break;
 			}
 				
@@ -633,6 +634,7 @@ void UFlecsNetworkWorldSubsystem::ApplyUpdate(const FGuid& SourceShard, const FF
 		{
 			ApplyUpdate(DeferredDelta->Key, DeferredDelta->Value);
 		}
+		
 		return;
 	}
 
@@ -640,11 +642,13 @@ void UFlecsNetworkWorldSubsystem::ApplyUpdate(const FGuid& SourceShard, const FF
 	if (!Materialized || Materialized->LayoutId != Update.LayoutId)
 	{
 		TPair<FGuid, FFlecsReplicatedEntityUpdate>& Deferred = DeferredDeltaUpdates.FindOrAdd(Update.NetworkId);
+		
 		if (Deferred.Value.StateRevision < Update.StateRevision)
 		{
 			Deferred.Key = SourceShard;
 			Deferred.Value = Update;
 		}
+		
 		return;
 	}
 
@@ -663,6 +667,7 @@ void UFlecsNetworkWorldSubsystem::ApplyUpdate(const FGuid& SourceShard, const FF
 			Materialized->Values.Add(ChangedValue);
 		}
 	}
+	
 	Materialized->StateRevision = Update.StateRevision;
 	Materialized->CompositionRevision = Update.CompositionRevision;
 	Materialized->Route = Update.Route;
@@ -670,8 +675,7 @@ void UFlecsNetworkWorldSubsystem::ApplyUpdate(const FGuid& SourceShard, const FF
 	ApplyMaterializedUpdate(SourceShard, *Materialized);
 }
 
-void UFlecsNetworkWorldSubsystem::ApplyMaterializedUpdate(const FGuid& SourceShard,
-	const FFlecsReplicatedEntityUpdate& Update)
+void UFlecsNetworkWorldSubsystem::ApplyMaterializedUpdate(const FGuid& SourceShard, const FFlecsReplicatedEntityUpdate& Update)
 {
 	const FFlecsReplicationLayoutDefinition* Layout = LayoutRegistry.Find(Update.LayoutId);
 	
@@ -900,9 +904,12 @@ void UFlecsNetworkWorldSubsystem::RetryEntityPairFixups()
 			{
 				continue;
 			}
-
-			ApplyResolvedValue(Source, PairId, Fixup.Key,
-				Fixup.Payload.IsSet() ? &Fixup.Payload.GetValue() : nullptr);
+			
+			if (Fixup.Payload.IsSet())
+			{
+				ApplyResolvedValue(Source, PairId, Fixup.Key, &Fixup.Payload.GetValue());
+			}
+			
 			EntityPairFixups.RemoveAtSwap(Index, 1, EAllowShrinking::No);
 		}
 	});
@@ -1015,9 +1022,6 @@ bool UFlecsNetworkWorldSubsystem::ResolveIndividualKeyToLocalId(const FFlecsRepl
 
 bool UFlecsNetworkWorldSubsystem::ResolveKeyToLocalId(const FFlecsReplicationKey& Key, FFlecsId& OutId) const
 {
-	const TSolidNotNull<const UFlecsWorld*> World = GetFlecsWorldChecked();
-	const FFlecsComponentReplicationRegistry& Registry = FFlecsComponentReplicationRegistry::Get(World);
-	
 	if (Key.Kind == EFlecsReplicationKeyKind::Component)
 	{
 		return ResolveIndividualKeyToLocalId(Key.Primary, OutId);

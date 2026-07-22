@@ -257,7 +257,7 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
                                                                                          bool& bOutWasCreated, FString& OutError)
 {
 	bOutWasCreated = false;
-	if (!Entity.IsValid())
+	if UNLIKELY_IF(!Entity.IsValid())
 	{
 		OutError = TEXT("Cannot build a replication layout for an invalid world/entity");
 		return nullptr;
@@ -342,7 +342,7 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 	Definition.Keys = MoveTemp(Keys);
 	Definition.LayoutId = ComputeLayoutId(Definition.Keys);
 	
-	if (FFlecsReplicationLayoutDefinition* Existing = Definitions.Find(Definition.LayoutId))
+	if (const FFlecsReplicationLayoutDefinition* Existing = Definitions.Find(Definition.LayoutId))
 	{
 		if (Existing->Keys != Definition.Keys)
 		{
@@ -389,4 +389,9 @@ bool FFlecsReplicationLayoutRegistry::AddRemoteDefinition(const FFlecsReplicatio
 	
 	Definitions.Add(Definition.LayoutId, Definition);
 	return true;
+}
+
+void FFlecsReplicationLayoutRegistry::HandleTableDestruction(const TSolidNotNull<const UFlecsWorld*> World)
+{
+	ecs_table
 }

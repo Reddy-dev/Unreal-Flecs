@@ -99,6 +99,7 @@ struct UNREALFLECS_API FFlecsComponentReplicationDescriptor
 	FFlecsReplicationSchemaId SchemaId;
 	FString StableName;
 	FFlecsId LocalFlecsId;
+	
 	uint32 Size = 0;
 	uint16 Alignment = 0;
 	
@@ -106,6 +107,7 @@ struct UNREALFLECS_API FFlecsComponentReplicationDescriptor
 	bool bIsTag = false;
 	
 	TObjectPtr<UScriptStruct> ScriptStruct = nullptr;
+	
 	FFlecsReplicationSerializeFunction Serialize = nullptr;
 	FFlecsReplicationSerializeFunction Deserialize = nullptr;
 	FFlecsReplicationConstructFunction Construct = nullptr;
@@ -198,7 +200,7 @@ private:
 	TMap<FFlecsId, FFlecsComponentReplicationDescriptor> ByLocalId;
 	TMap<FFlecsReplicationSchemaId, FFlecsId> SchemaToLocalId;
 	FOnDescriptorRegistered DescriptorRegisteredDelegate;
-};
+}; // class FFlecsComponentReplicationRegistry
 
 namespace UE::Flecs::Replication
 {
@@ -286,4 +288,5 @@ namespace UE::Flecs::Replication
 
 		return bRegistered;
 	}
-}
+	
+} // namespace UE::Flecs::Replication

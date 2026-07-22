@@ -99,7 +99,6 @@ struct TFlecsComponentTraits<FFlecsNetworkId> : public TFlecsComponentTraitsBase
 	using WithTypes = TTuple<FFlecsReplicatedEntityComponent>;
 }; // struct TFlecsComponentTraits<FFlecsNetworkId>
 
-
 template<>
 struct TStructOpsTypeTraits<FFlecsNetworkId> : public TStructOpsTypeTraitsBase2<FFlecsNetworkId>
 {
@@ -109,23 +108,6 @@ struct TStructOpsTypeTraits<FFlecsNetworkId> : public TStructOpsTypeTraitsBase2<
 	};
 	
 }; // struct TStructOpsTypeTraits<FFlecsNetworkId>
-
-// @TODO: Implement
-/** Serializable value wrapper for references to another replicated Flecs entity. */
-USTRUCT()
-struct UNREALFLECS_API FFlecsReplicatedEntityReference
-{
-	GENERATED_BODY()
-
-	NO_DISCARD FORCEINLINE bool IsSet() const
-	{
-		return NetworkId.IsValid();
-	}
-
-	UPROPERTY()
-	FFlecsNetworkId NetworkId;
-	
-}; // struct FFlecsReplicatedEntityReference
 
 /**
  * Authority-side allocator for FFlecsNetworkId values.

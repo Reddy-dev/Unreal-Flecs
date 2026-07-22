@@ -224,6 +224,7 @@ void UFlecsIrisReplicationShard::DetachedFromReplication()
 	}
 	
 	NetworkSubsystem.Reset();
+	
 	LayoutManifest.SetOwner(nullptr);
 	EntityHeaders.SetOwner(nullptr);
 	EntityValues.SetOwner(nullptr);

@@ -321,6 +321,7 @@ struct UNREALFLECS_API FFlecsReplicationRouteDescriptor
 	/** Zero inherits UFlecsNetworkingModuleSettings::DefaultPageRetainedPayloadByteLimit. */
 	UPROPERTY(EditAnywhere, Category = "Flecs | Networking", meta = (ClampMin = "0"))
 	uint32 PageRetainedPayloadByteLimit = 0;
+
 }; // struct FFlecsReplicationRouteDescriptor
 
 /** Transport-neutral, unmodified connection viewpoints used by policies. */
@@ -498,6 +499,8 @@ public:
 	
 	/** Adds an already validated remote layout, rejecting identity collisions. */
 	bool AddRemoteDefinition(const FFlecsReplicationLayoutDefinition& Definition, OUT FString& OutError);
+	
+	void HandleTableDestruction(const TSolidNotNull<const UFlecsWorld*> World);
 
 private:
 	// @TODO: Handle Table destruction and remove from cache.
