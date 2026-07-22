@@ -12,6 +12,9 @@ USTRUCT(BlueprintType)
 struct FFlecsStablePathTag
 {
 	GENERATED_BODY()
+	
+	static constexpr bool DontFragment = true;
+	
 }; // struct FFlecsStablePathTag
 
 template <>
