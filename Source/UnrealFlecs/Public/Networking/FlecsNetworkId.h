@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SequentialID.h"
 
 #include "Networking/FlecsReplicatedEntityComponent.h"
 #include "Properties/FlecsComponentProperties.h"
@@ -18,7 +19,7 @@
  * Zero, and every value with a zero epoch, is invalid.
  */
 USTRUCT(BlueprintType)
-struct UNREALFLECS_API FFlecsNetworkId
+struct UNREALFLECS_API FFlecsNetworkId : public FSequentialIDBase
 {
 	GENERATED_BODY()
 	

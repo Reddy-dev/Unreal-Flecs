@@ -9,8 +9,7 @@
 
 namespace
 {
-	using FWorldRegistryMap = TMap<TWeakObjectPtr<const UFlecsWorld>,
-		TUniquePtr<FFlecsComponentReplicationRegistry>>;
+	using FWorldRegistryMap = TMap<TWeakObjectPtr<const UFlecsWorld>, TUniquePtr<FFlecsComponentReplicationRegistry>>;
 
 	FWorldRegistryMap& GetWorldRegistries()
 	{
@@ -156,7 +155,7 @@ FFlecsComponentReplicationRegistry& FFlecsComponentReplicationRegistry::Get(cons
 
 void FFlecsComponentReplicationRegistry::RemoveWorld(const UFlecsWorld* World)
 {
-	if (World)
+	if LIKELY_IF(World)
 	{
 		GetWorldRegistries().Remove(TWeakObjectPtr<const UFlecsWorld>(World));
 	}

@@ -3,7 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
+#include "SolidMacros/Macros.h"
 #include "Concepts/SolidConcepts.h"
+#include "Types/SolidReturnValueOrError.h"
+
 #include "Entities/FlecsComponentHandle.h"
 #include "Worlds/FlecsWorld.h"
 
@@ -41,8 +45,11 @@ struct UNREALFLECS_API FFlecsReplicationSchemaId
 	{
 		return Value.ToString(EGuidFormats::DigitsWithHyphensLower);
 	}
-
-	friend bool operator==(const FFlecsReplicationSchemaId&, const FFlecsReplicationSchemaId&) = default;
+	
+	FORCEINLINE bool operator==(const FFlecsReplicationSchemaId& Other) const
+	{
+		return Value == Other.Value;
+	}
 	
 	friend bool operator<(const FFlecsReplicationSchemaId& A, const FFlecsReplicationSchemaId& B)
 	{
@@ -72,6 +79,7 @@ struct UNREALFLECS_API FFlecsReplicationSchemaId
 
 	UPROPERTY()
 	FGuid Value;
+	
 }; // struct FFlecsReplicationSchemaId
 
 template<>
@@ -175,7 +183,7 @@ public:
 	static void RemoveWorld(const UFlecsWorld* World);
 
 	/** Adds a valid descriptor, rejecting schema IDs already owned by another local ID. */
-	bool Register(FFlecsComponentReplicationDescriptor Descriptor, FString& OutError);
+	bool Register(FFlecsComponentReplicationDescriptor Descriptor, OUT FString& OutError);
 	
 	/** Finds a descriptor by a world-local Flecs ID. */
 	NO_DISCARD const FFlecsComponentReplicationDescriptor* Find(const FFlecsId LocalId) const;
@@ -183,12 +191,12 @@ public:
 	/** Finds a descriptor by its portable protocol schema ID. */
 	NO_DISCARD const FFlecsComponentReplicationDescriptor* Find(const FFlecsReplicationSchemaId& SchemaId) const;
 	
-	NO_DISCARD const TMap<FFlecsId, FFlecsComponentReplicationDescriptor>& GetDescriptors() const
+	NO_DISCARD FORCEINLINE const TMap<FFlecsId, FFlecsComponentReplicationDescriptor>& GetDescriptors() const
 	{
 		return ByLocalId;
 	}
 	
-	NO_DISCARD FOnDescriptorRegistered& OnDescriptorRegistered()
+	NO_DISCARD FORCEINLINE FOnDescriptorRegistered& OnDescriptorRegistered()
 	{
 		return DescriptorRegisteredDelegate;
 	}
@@ -199,7 +207,9 @@ public:
 private:
 	TMap<FFlecsId, FFlecsComponentReplicationDescriptor> ByLocalId;
 	TMap<FFlecsReplicationSchemaId, FFlecsId> SchemaToLocalId;
+	
 	FOnDescriptorRegistered DescriptorRegisteredDelegate;
+	
 }; // class FFlecsComponentReplicationRegistry
 
 namespace UE::Flecs::Replication
