@@ -3,6 +3,7 @@
 #include "Networking/FlecsNetworkWorldSubsystem.h"
 
 #include "Engine/World.h"
+#include "Networking/FlecsDirtyObserverTag.h"
 #include "Networking/FlecsNetDirtyTag.h"
 
 #include "Serialization/MemoryReader.h"
@@ -93,7 +94,7 @@ void UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver(const
 	
 	auto CreateObserver = [this](const FFlecsId InComponentId) -> FFlecsObserverHandle
 	{
-		return GetFlecsWorld()->CreateObserver<FFlecsReplicatedEntityComponent>()
+		const FFlecsObserverHandle DirtyObserverHandle = GetFlecsWorld()->CreateObserver<FFlecsReplicatedEntityComponent>()
 			.With(InComponentId)
 			.With<FFlecsReplicatedEntityComponent>().Filter()
 			.Event(flecs::OnSet)
@@ -106,6 +107,10 @@ void UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver(const
 				
 				EntityHandle.Add<FFlecsNetDirtyTag>();
 			});
+		
+		DirtyObserverHandle.Add<FFlecsDirtyObserverTag>();
+		
+		return DirtyObserverHandle;
 	};
 	
 	const FFlecsObserverHandle PrimaryObserverHandle = CreateObserver(InDescriptor.LocalFlecsId);

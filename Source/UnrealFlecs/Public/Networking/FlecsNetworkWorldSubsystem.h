@@ -4,9 +4,11 @@
 
 #include "CoreMinimal.h"
 
-#include "FlecsNetworkId.h"
-#include "FlecsReplicationTypes.h"
 #include "Worlds/FlecsAbstractWorldSubsystem.h"
+
+#include "FlecsNetworkId.h"
+#include "Layout/FlecsReplicationLayoutRegistry.h"
+#include "Layout/FlecsReplicationSnapshot.h"
 
 #include "FlecsNetworkWorldSubsystem.generated.h"
 
@@ -50,10 +52,36 @@ public:
 	{
 		return CastChecked<T>(ReplicationBridge);
 	}
-
-protected:
+	
+	NO_DISCARD FORCEINLINE FFlecsReplicationLayoutRegistry& GetLayoutRegistry()
+	{
+		return LayoutRegistry;
+	}
+	
+	NO_DISCARD FORCEINLINE const FFlecsReplicationLayoutRegistry& GetLayoutRegistry() const
+	{
+		return LayoutRegistry;
+	}
+	
+	NO_DISCARD FORCEINLINE const TMap<FFlecsNetworkId, FFlecsEntityHandle>& GetNetworkIdToEntityMap() const
+	{
+		return NetworkIdToEntityMap;
+	}
+	
+	NO_DISCARD FORCEINLINE TMap<FFlecsNetworkId, FFlecsEntityReplicationSnapshot>& GetReplicationSnapshots()
+	{
+		return ReplicationSnapshots;
+	}
+	
+	NO_DISCARD FORCEINLINE const TMap<FFlecsNetworkId, FFlecsEntityReplicationSnapshot>& GetReplicationSnapshots() const
+	{
+		return ReplicationSnapshots;
+	}
+	
 	NO_DISCARD bool HasAuthority() const;
 	NO_DISCARD bool IsStandalone() const;
+
+protected:
 	
 	static NO_DISCARD TSolidNotNull<const UFlecsNetworkingModuleSettings*> GetNetworkingSettings();
 	
@@ -62,6 +90,9 @@ protected:
 	
 	TMap<FFlecsNetworkId, FFlecsEntityHandle> NetworkIdToEntityMap;
 	
+	// @TODO: maybe move to a singleton?
+	UPROPERTY()
+	TMap<FFlecsNetworkId, FFlecsEntityReplicationSnapshot> ReplicationSnapshots;
 	
 	UPROPERTY()
 	TArray<FFlecsObserverHandle> ComponentDirtyObservers;
@@ -71,5 +102,7 @@ protected:
 	
 	UPROPERTY()
 	TObjectPtr<UFlecsReplicationBridgeBase> ReplicationBridge;
+	
+	FFlecsReplicationLayoutRegistry LayoutRegistry;
 	
 }; // class UFlecsNetworkWorldSubsystem

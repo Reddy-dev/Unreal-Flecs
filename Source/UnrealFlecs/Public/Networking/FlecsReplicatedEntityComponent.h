@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 
-#include "FlecsReplicationTypes.h"
+#include "Layout/FlecsReplicationLayoutId.h"
 
 #include "FlecsReplicatedEntityComponent.generated.h"
 

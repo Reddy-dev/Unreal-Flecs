@@ -7,8 +7,7 @@
 #include "Containers/Queue.h"
 #include "StructUtils/InstancedStruct.h"
 
-#include "Networking/FlecsComponentReplicationDescriptor.h"
-#include "Layout/FlecsReplicationLayoutId.h"
+#include "SolidMacros/Macros.h"
 
 #include "FlecsReplicationTypes.generated.h"
 
@@ -40,31 +39,3 @@ struct UNREALFLECS_API FFlecsReplicationRouteKey
 	FName Name = FName("Default");
 	
 }; // struct FFlecsReplicationRouteKey
-
-/** Serialized payload for one payload-bearing layout key. */
-USTRUCT()
-struct UNREALFLECS_API FFlecsReplicatedValue
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	uint16 KeyIndex = 0;
-
-	UPROPERTY()
-	TArray<uint8> Bytes;
-	
-}; // struct FFlecsReplicatedValue
-
-USTRUCT()
-struct UNREALFLECS_API FFlecsEntityReplicationSnapshot
-{
-	GENERATED_BODY()
-	
-public:
-	UPROPERTY()
-	FFlecsReplicationLayoutId LayoutId;
-
-	UPROPERTY()
-	TArray<FFlecsReplicatedValue> Values;
-	
-}; // struct FFlecsEntityReplicationSnapshot

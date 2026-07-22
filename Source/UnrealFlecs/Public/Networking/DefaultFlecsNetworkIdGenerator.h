@@ -24,11 +24,10 @@ public:
 	virtual void ResetNetworkIdGenerator() override;
 	
 protected:
-	
 	UPROPERTY()
 	TArray<uint32> FreeSlotIds;
 	
 	UPROPERTY()
 	TArray<uint32> Generations;
 	
-}; // class UDefaultNetworkIdGenerator
+}; // class UDefaultFlecsNetworkIdGenerator

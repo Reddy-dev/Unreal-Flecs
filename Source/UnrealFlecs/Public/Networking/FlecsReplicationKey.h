@@ -76,10 +76,10 @@ struct UNREALFLECS_API FFlecsReplicationIndividualKey
 	
 	NO_DISCARD FString CanonicalString() const;
 	
-	NO_DISCARD const FFlecsComponentReplicationDescriptor* TryGetDescriptor(const TSolidNotNull<const UFlecsWorld*> InWorld) const;
+	NO_DISCARD const FFlecsComponentReplicationDescriptor* TryGetDescriptor(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const;
 	
 	static NO_DISCARD TValueOrError<FFlecsReplicationIndividualKey, FString> 
-		BuildIndividualKey(const TSolidNotNull<const UFlecsWorld*> InWorld, const FFlecsId InId);
+		BuildIndividualKey(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, const FFlecsId InId);
 	
 }; // struct FFlecsReplicationIndividualKey
 
@@ -105,7 +105,7 @@ struct UNREALFLECS_API FFlecsReplicationKey
 	GENERATED_BODY()
 	
 	static NO_DISCARD EFlecsReplicationKeyStorageKind GetStorageKindForPair(
-		const TSolidNotNull<const UFlecsWorld*> InWorld, 
+		const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, 
 		const FFlecsId InPairId)
 	{
 		const FFlecsId FirstId = InPairId.GetFirst();
@@ -114,7 +114,7 @@ struct UNREALFLECS_API FFlecsReplicationKey
 		return GetStorageKindForPair(InWorld, FirstId, SecondId);
 	}
 	
-	static NO_DISCARD EFlecsReplicationKeyStorageKind GetStorageKindForPair(const TSolidNotNull<const UFlecsWorld*> InWorld, 
+	static NO_DISCARD EFlecsReplicationKeyStorageKind GetStorageKindForPair(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, 
 		const FFlecsId InFirstId, const FFlecsId InSecondId);
 
 
@@ -136,6 +136,6 @@ struct UNREALFLECS_API FFlecsReplicationKey
 	
 	friend bool operator==(const FFlecsReplicationKey&, const FFlecsReplicationKey&) = default;
 	
-	NO_DISCARD const FFlecsComponentReplicationDescriptor* TryGetStorageDescriptor(const TSolidNotNull<const UFlecsWorld*> InWorld) const;
+	NO_DISCARD const FFlecsComponentReplicationDescriptor* TryGetStorageDescriptor(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const;
 	
 }; // struct FFlecsReplicationKey

@@ -20,4 +20,5 @@ struct UNREALFLECS_API FFlecsReplicationLayoutDefinition
 
 	UPROPERTY()
 	TArray<FFlecsReplicationKey> Keys;
+	
 }; // struct FFlecsReplicationLayoutDefinition

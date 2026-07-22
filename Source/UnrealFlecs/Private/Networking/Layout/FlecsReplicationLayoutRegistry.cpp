@@ -31,32 +31,32 @@ FFlecsReplicationLayoutId FFlecsReplicationLayoutRegistry::ComputeLayoutId(
 	return FFlecsReplicationLayoutId(Guid);
 }
 
-const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildForEntity(const TSolidNotNull<const UFlecsWorld*> World,
-																						 const FFlecsEntityHandle& Entity, 
-                                                                                         bool& bOutWasCreated, 
-                                                                                         FString& OutError)
+TValueOrError<const FFlecsReplicationLayoutDefinition*, FString> FFlecsReplicationLayoutRegistry::BuildForEntity(
+																		const TSolidNotNull<const UFlecsWorldInterfaceObject*> World,
+																		const FFlecsEntityHandle& Entity)
 {
-	bOutWasCreated = false;
-	if UNLIKELY_IF(!Entity.IsValid())
+	if UNLIKELY_IF(!ensureAlways(Entity.IsValid()))
 	{
-		OutError = TEXT("Cannot build a replication layout for an invalid world/entity");
-		return nullptr;
+		return MakeError(TEXT("Cannot build a replication layout for an invalid world/entity"));
 	}
 
 	const flecs::table_t* Table = Entity.GetEntity().table().get_table();
 	
 	if (const FFlecsReplicationLayoutId* CachedId = TableCache.Find(Table))
 	{
-		return Definitions.Find(*CachedId);
+		if (const FFlecsReplicationLayoutDefinition* Definition = Definitions.Find(*CachedId))
+		{
+			return MakeValue(Definition);
+		}
+		else UNLIKELY_ATTRIBUTE
+		{
+			return MakeError(FString::Printf(TEXT("Replication layout definition for cached layout ID %s not found"),
+				*CachedId->ToString()));
+		}
 	}
 
-	const FFlecsComponentReplicationRegistry& Registry = FFlecsComponentReplicationRegistry::Get(World);
+	const FFlecsComponentReplicationRegistry& Registry = FFlecsComponentReplicationRegistry::Get(World->GetFlecsWorld());
 	TArray<FFlecsReplicationKey> Keys;
-	
-	// @TODO: add DontFragment support.
-	/*World->CreateQueryBuilder()
-		.With(flecs::DontFragment).Src("$Component")
-		.With("$Compoent")*/
 	
 	for (const FFlecsId Id : Entity.GetType())
 	{
@@ -64,7 +64,7 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 
 		if (!Id.IsPair())
 		{
-			if (!FFlecsComponentReplicationRegistry::IsEntityReplicationEligible(World, Id))
+			if (!FFlecsComponentReplicationRegistry::IsEntityReplicationEligible(World->GetFlecsWorld(), Id))
 			{
 				continue;
 			}
@@ -74,8 +74,7 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 
 			if UNLIKELY_IF(ValueOrError.HasError())
 			{
-				OutError = ValueOrError.GetError();
-				return nullptr;
+				return MakeError(ValueOrError.GetError());
 			}
 			
 			Key.Primary = ValueOrError.GetValue();
@@ -101,7 +100,7 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 		const EFlecsReplicationKeyStorageKind StorageKind = FFlecsReplicationKey::GetStorageKindForPair(World, First, Second);
 
 		if (StorageKind == EFlecsReplicationKeyStorageKind::None
-			&& !FFlecsComponentReplicationRegistry::IsEntityReplicationEligible(World, First))
+			&& !FFlecsComponentReplicationRegistry::IsEntityReplicationEligible(World->GetFlecsWorld(), First))
 		{
 			continue;
 		}
@@ -114,8 +113,7 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 
 		if UNLIKELY_IF(FirstValueOrError.HasError() || SecondValueOrError.HasError())
 		{
-			OutError = FirstValueOrError.HasError() ? FirstValueOrError.GetError() : SecondValueOrError.GetError();
-			return nullptr;
+			return MakeError(FirstValueOrError.HasError() ? FirstValueOrError.GetError() : SecondValueOrError.GetError());
 		}
 
 		Key.Kind = EFlecsReplicationKeyKind::Pair;
@@ -138,21 +136,21 @@ const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::BuildF
 	{
 		if (Existing->Keys != Definition.Keys)
 		{
-			OutError = FString::Printf(TEXT("Replication layout hash collision for %s"), *Definition.LayoutId.ToString());
-			return nullptr;
+			return MakeError(FString::Printf(TEXT("Replication layout hash collision for %s"), *Definition.LayoutId.ToString()));
 		}
 		
 		TableCache.Add(Table, Definition.LayoutId);
-		return Existing;
+		return MakeValue(Existing);
 	}
 
 	const FFlecsReplicationLayoutId Id = Definition.LayoutId;
 	Definitions.Add(Id, MoveTemp(Definition));
 	TableCache.Add(Table, Id);
 	
-	bOutWasCreated = true;
-	
-	return Definitions.Find(Id);
+	UE_LOGFMT(LogFlecsCore, Verbose,
+		"Built replication layout for entity {Entity} with layout ID {LayoutId} and {KeyCount} keys",
+		*Entity.ToString(), *Id.ToString(), Definitions[Id].Keys.Num());
+	return MakeValue(Definitions.Find(Id));
 }
 
 const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::Find(const FFlecsReplicationLayoutId Id) const

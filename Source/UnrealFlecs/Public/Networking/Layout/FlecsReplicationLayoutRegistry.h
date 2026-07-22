@@ -30,10 +30,9 @@ public:
 	/** Computes the deterministic layout ID from a sorted key list. */
 	static NO_DISCARD FFlecsReplicationLayoutId ComputeLayoutId(const TArray<FFlecsReplicationKey>& Keys);
 	
-	// @TODO: ReturnOrError
 	/** Builds or reuses a local layout for Entity's current Flecs table. */
-	const FFlecsReplicationLayoutDefinition* BuildForEntity(const TSolidNotNull<const UFlecsWorld*> World,
-		const FFlecsEntityHandle& Entity, OUT bool& bOutWasCreated, OUT FString& OutError);
+	TValueOrError<const FFlecsReplicationLayoutDefinition*, FString> BuildForEntity(const TSolidNotNull<const UFlecsWorldInterfaceObject*> World,
+		const FFlecsEntityHandle& Entity);
 	
 	/** Finds a previously generated or accepted layout definition. */
 	NO_DISCARD const FFlecsReplicationLayoutDefinition* Find(FFlecsReplicationLayoutId Id) const;

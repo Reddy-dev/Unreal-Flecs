@@ -30,20 +30,20 @@ FString FFlecsReplicationIndividualKey::CanonicalString() const
 }
 
 const FFlecsComponentReplicationDescriptor* FFlecsReplicationIndividualKey::TryGetDescriptor(
-	const TSolidNotNull<const UFlecsWorld*> InWorld) const
+	const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const
 {
 	if (Kind == EFlecsReplicationPairTargetKind::Schema)
 	{
-		return FFlecsComponentReplicationRegistry::Get(InWorld).Find(Schema);
+		return FFlecsComponentReplicationRegistry::Get(InWorld->GetFlecsWorld()).Find(Schema);
 	}
 	
 	return nullptr;
 }
 
 TValueOrError<FFlecsReplicationIndividualKey, FString> FFlecsReplicationIndividualKey::BuildIndividualKey(
-	const TSolidNotNull<const UFlecsWorld*> InWorld, const FFlecsId InId)
+	const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, const FFlecsId InId)
 {
-	const FFlecsComponentReplicationRegistry& Registry = FFlecsComponentReplicationRegistry::Get(InWorld);
+	const FFlecsComponentReplicationRegistry& Registry = FFlecsComponentReplicationRegistry::Get(InWorld->GetFlecsWorld());
 	
 	FFlecsReplicationIndividualKey Result;
 	
@@ -85,15 +85,19 @@ TValueOrError<FFlecsReplicationIndividualKey, FString> FFlecsReplicationIndividu
 }
 
 EFlecsReplicationKeyStorageKind FFlecsReplicationKey::GetStorageKindForPair(
-	const TSolidNotNull<const UFlecsWorld*> InWorld, const FFlecsId InFirstId, const FFlecsId InSecondId)
+	const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, const FFlecsId InFirstId, const FFlecsId InSecondId)
 {
-	const FFlecsComponentReplicationDescriptor* FirstDescriptor = FFlecsComponentReplicationRegistry::Get(InWorld).Find(InFirstId);
+	const FFlecsComponentReplicationDescriptor* FirstDescriptor = FFlecsComponentReplicationRegistry::Get(InWorld->GetFlecsWorld())
+		.Find(InFirstId);
+	
 	if (FirstDescriptor && FirstDescriptor->IsStorageEligible())
 	{
 		return EFlecsReplicationKeyStorageKind::Primary;
 	}
 	
-	const FFlecsComponentReplicationDescriptor* SecondDescriptor = FFlecsComponentReplicationRegistry::Get(InWorld).Find(InSecondId);
+	const FFlecsComponentReplicationDescriptor* SecondDescriptor = FFlecsComponentReplicationRegistry::Get(InWorld->GetFlecsWorld())
+		.Find(InSecondId);
+	
 	if (SecondDescriptor && SecondDescriptor->IsStorageEligible())
 	{
 		return EFlecsReplicationKeyStorageKind::Secondary;
@@ -127,7 +131,7 @@ FString FFlecsReplicationKey::CanonicalString() const
 }
 
 const FFlecsComponentReplicationDescriptor* FFlecsReplicationKey::TryGetStorageDescriptor(
-	const TSolidNotNull<const UFlecsWorld*> InWorld) const
+	const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const
 {
 	// @TODO: Convert to switch
 	if (StorageKind == EFlecsReplicationKeyStorageKind::Primary)

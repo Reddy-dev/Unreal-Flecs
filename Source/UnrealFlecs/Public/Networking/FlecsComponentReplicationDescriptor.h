@@ -240,8 +240,7 @@ class UNREALFLECS_API FFlecsComponentReplicationRegistry
 {
 public:
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnDescriptorRegistered, const FFlecsComponentReplicationDescriptor&);
-
-	/** Returns the registry owned by the supplied Flecs world. */
+		
 	static NO_DISCARD FFlecsComponentReplicationRegistry& Get(const TSolidNotNull<const UFlecsWorld*> World);
 	
 	/** Removes the registry during Flecs world teardown. */
