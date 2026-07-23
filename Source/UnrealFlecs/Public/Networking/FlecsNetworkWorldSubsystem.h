@@ -115,10 +115,10 @@ public:
 			InFunc(InIter, InIndex);
 		});*/
 	}
-
-protected:
 	
 	void ReceiveNetworkEntitySnapshot(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot);
+
+protected:
 	
 	static NO_DISCARD TSolidNotNull<const UFlecsNetworkingModuleSettings*> GetNetworkingSettings();
 	
