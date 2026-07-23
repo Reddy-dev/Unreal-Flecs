@@ -1,15 +1,12 @@
-// Elie Wiese-Namir © 2026. All Rights Reserved.
+﻿// Elie Wiese-Namir © 2026. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
 
-#include "Containers/Queue.h"
-#include "StructUtils/InstancedStruct.h"
-
 #include "SolidMacros/Macros.h"
 
-#include "FlecsReplicationTypes.generated.h"
+#include "FlecsReplicationRouteKey.generated.h"
 
 /** Transport-facing partition key used by IFlecsReplicationRouter. */
 USTRUCT(BlueprintType)
@@ -28,7 +25,7 @@ struct UNREALFLECS_API FFlecsReplicationRouteKey
 	}
 
 	FFlecsReplicationRouteKey() = default;
-	explicit FFlecsReplicationRouteKey(const FName InName) 
+	explicit FFlecsReplicationRouteKey(const FName& InName) 
 		: Name(InName)
 	{
 	}

@@ -118,6 +118,8 @@ public:
 
 protected:
 	
+	void ReceiveNetworkEntitySnapshot(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot);
+	
 	static NO_DISCARD TSolidNotNull<const UFlecsNetworkingModuleSettings*> GetNetworkingSettings();
 	
 	void CreateReplicationBridge();

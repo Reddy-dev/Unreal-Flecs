@@ -226,6 +226,12 @@ bool UFlecsNetworkWorldSubsystem::IsStandalone() const
 	return GetWorld()->GetNetMode() == NM_Standalone;
 }
 
+void UFlecsNetworkWorldSubsystem::ReceiveNetworkEntitySnapshot(const FFlecsNetworkId& InNetworkId,
+	const FFlecsEntityReplicationSnapshot& InSnapshot)
+{
+	
+}
+
 TSolidNotNull<const UFlecsNetworkingModuleSettings*> UFlecsNetworkWorldSubsystem::GetNetworkingSettings()
 {
 	return GetDefault<UFlecsNetworkingModuleSettings>();

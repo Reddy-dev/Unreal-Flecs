@@ -29,6 +29,12 @@ void UFlecsReplicationBridgeBase::ReceiveEntityLayout(const FFlecsReplicationLay
 	OnEntityLayoutPublished(InLayoutDefinition);
 }
 
+void UFlecsReplicationBridgeBase::ReceiveNetEntity(const FFlecsNetworkId& InNetworkId,
+	const FFlecsEntityReplicationSnapshot& InSnapshot)
+{
+	GetNetworkWorldSubsystem()->ReceiveNetworkEntitySnapshot(InNetworkId, InSnapshot);
+}
+
 void UFlecsReplicationBridgeBase::HandleProtocolError(const FString& InErrorMessage)
 {
 	UE_LOG(LogFlecsCore, Error, TEXT("Protocol error: %s"), *InErrorMessage);
