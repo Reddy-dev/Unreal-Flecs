@@ -183,15 +183,6 @@ void UFlecsNetworkWorldSubsystem::CreateNetworkIdGenerator()
 	solid_checkf(IsValid(NetworkIdGenerator), TEXT("Network ID generator is not valid"));
 }
 
-void UFlecsNetworkWorldSubsystem::CreateDontFragmentEntityQuery()
-{
-	/*DontFragmentEntityPrimaryQuery = GetFlecsWorldChecked()->CreateQueryBuilder("DontFragmentEntityQuery")
-		.With(flecs::This).Src("$MatchingEntity") // 0
-		.With(flecs::DontFragment) // 1
-		.With<FFlecsReplicatedTrait>() // 2
-		.Build();*/
-}
-
 void UFlecsNetworkWorldSubsystem::CreateReplicationBridge()
 {
 	if (!HasAuthority())
@@ -231,8 +222,13 @@ bool UFlecsNetworkWorldSubsystem::IsStandalone() const
 	return GetWorld()->GetNetMode() == NM_Standalone;
 }
 
+void UFlecsNetworkWorldSubsystem::OnEntityLayoutReceived(const FFlecsReplicationLayoutDefinition& InLayout)
+{
+	
+}
+
 void UFlecsNetworkWorldSubsystem::ReceiveNetworkEntitySnapshot(const FFlecsNetworkId& InNetworkId,
-	const FFlecsEntityReplicationSnapshot& InSnapshot)
+                                                               const FFlecsEntityReplicationSnapshot& InSnapshot)
 {
 	const TOptional<FFlecsEntityHandle> EntityHandlePtr = GetEntityFromNetworkId(InNetworkId);
 	
@@ -272,12 +268,11 @@ void UFlecsNetworkWorldSubsystem::ReceiveNetworkEntitySnapshot(const FFlecsNetwo
 	const FFlecsReplicationLayoutDefinition* LayoutDefinition = GetLayoutRegistry().Find(InSnapshot.LayoutId);
 	if (!LayoutDefinition)
 	{
-		// @TODO: Handle missing layout definition (prob hasnt been received yet)
+		AddDeferredEntityLayout(EntityHandle, InSnapshot.LayoutDefinition);
 		return;
 	}
 		
 	ApplySnapshotToEntity(EntityHandle, InSnapshot);
-	
 }
 
 void UFlecsNetworkWorldSubsystem::ApplySnapshotToEntity(const FFlecsEntityHandle& InEntityHandle,
@@ -324,6 +319,11 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshotToEntity(const FFlecsEntityHandle
 		
 		InEntityHandle.Set(ComponentId, Value.Bytes.GetData());
 	}
+}
+
+void UFlecsNetworkWorldSubsystem::AddDeferredEntityLayout(const FFlecsEntityHandle& InEntityHandle,
+	const FFlecsReplicationLayoutDefinition& InLayout, const FFlecsEntityReplicationSnapshot& InSnapshot)
+{
 }
 
 TSolidNotNull<const UFlecsNetworkingModuleSettings*> UFlecsNetworkWorldSubsystem::GetNetworkingSettings()

@@ -105,16 +105,7 @@ public:
 		return T();
 	}
 	
-	FORCEINLINE void IterateDontFragmentOnEntity(const FFlecsEntityHandle& InEntityHandle, 
-		TFunctionRef<void(const flecs::iter& InIter, size_t InIndex)> InFunc) const
-	{
-		/*DontFragmentEntityPrimaryQuery.set_var("$MatchingEntity", InEntityHandle);
-		
-		DontFragmentEntityPrimaryQuery.each([&InFunc](const flecs::iter& InIter, size_t InIndex)
-		{
-			InFunc(InIter, InIndex);
-		});*/
-	}
+	void OnEntityLayoutReceived(const FFlecsReplicationLayoutDefinition& InLayout);
 	
 	void ReceiveNetworkEntitySnapshot(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot);
 
@@ -122,17 +113,20 @@ protected:
 	
 	void ApplySnapshotToEntity(const FFlecsEntityHandle& InEntityHandle, const FFlecsEntityReplicationSnapshot& InSnapshot);
 	
+	// Ran on Client
+	void AddDeferredEntityLayout(const FFlecsEntityHandle& InEntityHandle, const FFlecsReplicationLayoutDefinition& InLayout,
+		const FFlecsEntityReplicationSnapshot& InSnapshot);
+	
 	static NO_DISCARD TSolidNotNull<const UFlecsNetworkingModuleSettings*> GetNetworkingSettings();
 	
 	void CreateReplicationBridge();
 	void CreateNetworkIdGenerator();
 	
-	void CreateDontFragmentEntityQuery();
+	TMap<FFlecsReplicationLayoutId, TArray<TPair<FFlecsEntityHandle, FFlecsEntityReplicationSnapshot>>> DeferredEntityLayouts;
 	
 	TMap<FFlecsNetworkId, FFlecsEntityHandle> NetworkIdToEntityMap;
 	
-	// @TODO: maybe move to a singleton?
-	UPROPERTY()
+	// @TODO: maybe move to a singleton or on the entity?
 	TMap<FFlecsNetworkId, FFlecsEntityReplicationSnapshot> ReplicationSnapshots;
 	
 	UPROPERTY()
@@ -145,8 +139,5 @@ protected:
 	TObjectPtr<UFlecsReplicationBridgeBase> ReplicationBridge;
 	
 	FFlecsReplicationLayoutRegistry LayoutRegistry;
-	
-	/*UPROPERTY()
-	FFlecsQuery DontFragmentEntityPrimaryQuery;*/
 	
 }; // class UFlecsNetworkWorldSubsystem

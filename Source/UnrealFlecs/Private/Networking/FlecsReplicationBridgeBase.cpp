@@ -26,11 +26,13 @@ void UFlecsReplicationBridgeBase::ReceiveEntityLayout(const FFlecsReplicationLay
 {
 	GetNetworkWorldSubsystem()->GetLayoutRegistry().AddRemoteDefinition(InLayoutDefinition);
 	
+	GetNetworkWorldSubsystem()->OnEntityLayoutReceived(InLayoutDefinition);
+	
 	OnEntityLayoutPublished(InLayoutDefinition);
 }
 
 void UFlecsReplicationBridgeBase::ReceiveNetEntity(const FFlecsNetworkId& InNetworkId,
-	const FFlecsEntityReplicationSnapshot& InSnapshot)
+                                                   const FFlecsEntityReplicationSnapshot& InSnapshot)
 {
 	GetNetworkWorldSubsystem()->ReceiveNetworkEntitySnapshot(InNetworkId, InSnapshot);
 }
