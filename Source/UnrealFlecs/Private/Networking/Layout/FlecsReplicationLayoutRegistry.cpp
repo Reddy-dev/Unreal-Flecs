@@ -97,7 +97,8 @@ TValueOrError<const FFlecsReplicationLayoutDefinition*, FString> FFlecsReplicati
 		const FFlecsId First = RelationshipEntity.IsValid() ? RelationshipEntity.GetFlecsId() : Id.GetFirst();
 		const FFlecsId Second = TargetEntity.IsValid() ? TargetEntity.GetFlecsId() : Id.GetSecond();
 		
-		const EFlecsReplicationKeyStorageKind StorageKind = FFlecsReplicationKey::GetStorageKindForPair(World, First, Second);
+		const EFlecsReplicationKeyStorageKind StorageKind 
+			= FFlecsReplicationKey::GetStorageKindForPair(World, First, Second);
 
 		if (StorageKind == EFlecsReplicationKeyStorageKind::None
 			&& !FFlecsComponentReplicationRegistry::IsEntityReplicationEligible(World->GetFlecsWorld(), First))

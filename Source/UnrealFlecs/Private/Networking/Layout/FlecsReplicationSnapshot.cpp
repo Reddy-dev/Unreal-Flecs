@@ -8,8 +8,8 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsReplicationSnapshot)
 
-void FFlecsEntityReplicationSnapshot::FillFromEntity(const TSolidNotNull<UFlecsNetworkWorldSubsystem*> InNetworkWorldSubsystem,
-	const FFlecsEntityHandle& InEntityHandle, const FFlecsReplicationLayoutRegistry& InLayoutRegistry)
+void FFlecsEntityReplicationSnapshot::FillFromEntity(const FFlecsEntityHandle& InEntityHandle, 
+	const FFlecsReplicationLayoutRegistry& InLayoutRegistry)
 {
 	solid_checkf(InEntityHandle.IsValid(), TEXT("Cannot fill snapshot from invalid entity handle"));
 	
@@ -20,7 +20,7 @@ void FFlecsEntityReplicationSnapshot::FillFromEntity(const TSolidNotNull<UFlecsN
 	{
 		UE_LOGFMT(LogFlecsCore, Error, 
 			"Failed to find layout definition for layout ID {Layout} when filling snapshot for entity {Entity}.", 
-			LayoutId, *InEntityHandle.ToString());
+			LayoutId.ToString(), *InEntityHandle.ToString());
 		return;
 	}
 	
@@ -43,7 +43,7 @@ void FFlecsEntityReplicationSnapshot::FillFromEntity(const TSolidNotNull<UFlecsN
 		
 		FFlecsReplicatedValue Value;
 		Value.KeyIndex = Index;
-		Value.bDontFragment = false;
+		//Value.bDontFragment = false;
 		
 		if (!FFlecsReplicationKey::IsValidPairStorageKind(Key.StorageKind))
 		{
@@ -56,7 +56,9 @@ void FFlecsEntityReplicationSnapshot::FillFromEntity(const TSolidNotNull<UFlecsN
 		FMemory::Memcpy(Value.Bytes.GetData(), ComponentValuePtr, Value.Bytes.Num());
 		
 		Values.Add(MoveTemp(Value));
-		solid_checkf(Values.Num() == Index + 1, TEXT("Values array size mismatch after adding value for key %s"), *Key.CanonicalString());
+		solid_checkf(Values.Num() == Index + 1, 
+			TEXT("Values array size mismatch after adding value for key %s"), 
+			*Key.CanonicalString());
 	}
 	
 	/*TArray<FFlecsReplicationKey> DontFragmentKeys;

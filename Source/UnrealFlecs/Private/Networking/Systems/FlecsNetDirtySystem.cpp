@@ -26,50 +26,40 @@ void UFlecsNetDirtySystem::BuildSystem(const TSolidNotNull<const UFlecsWorldInte
 }
 
 void UFlecsNetDirtySystem::EachIterator(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld,
-	flecs::iter& InIterator, const FFlecsId InIndex)
+                                        flecs::iter& InIterator, const FFlecsId InIndex)
 {
-	auto ReplicatedComponentsField = InIterator.field<FFlecsReplicatedEntityComponent>(1);
-	auto NetworkIdsField = InIterator.field<const FFlecsNetworkId>(2);
-	auto NetworkSubsystemField = InIterator.field<FFlecsNetworkSubsystemSingleton>(3);
+	FFlecsReplicatedEntityComponent& ReplicatedComponent = InIterator.field_at<FFlecsReplicatedEntityComponent>(1, InIndex);
+	const FFlecsNetworkId& NetworkId = InIterator.field_at<FFlecsNetworkId>(2, InIndex);
 	
-	const TSolidNotNull<UFlecsNetworkWorldSubsystem*> NetworkSubsystem
-		= NetworkSubsystemField->GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
-	
-	for (const FFlecsId EntityIndex : InIterator)
+	const TSolidNotNull<UFlecsNetworkWorldSubsystem*> NetworkSubsystem 
+		= InIterator.field_at<FFlecsNetworkSubsystemSingleton>(3, 0).GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
+		
+	const FFlecsEntityHandle EntityHandle = InIterator.entity(InIndex);
+		
+	TValueOrError<const FFlecsReplicationLayoutDefinition*, FString> LayoutResult = 
+		NetworkSubsystem->GetLayoutRegistry().BuildForEntity(InWorld, EntityHandle);
+		
+	// @TODO: Remove this in shipping?
+	if UNLIKELY_IF(LayoutResult.HasError())
 	{
-		FFlecsReplicatedEntityComponent& ReplicatedComponent = ReplicatedComponentsField[EntityIndex];
-		const FFlecsNetworkId& NetworkId = NetworkIdsField[EntityIndex];
-		
-		const FFlecsEntityHandle EntityHandle = InIterator.entity(EntityIndex);
-		
-		TValueOrError<const FFlecsReplicationLayoutDefinition*, FString> LayoutResult = 
-			NetworkSubsystem->GetLayoutRegistry().BuildForEntity(InWorld, EntityHandle);
-		
-		// @TODO: Remove this in shipping?
-		if UNLIKELY_IF(LayoutResult.HasError())
-		{
-			UE_LOG(LogFlecsCore, Error, TEXT("Failed to build replication layout for entity %s: %s"),
-				*EntityHandle.ToString(), *LayoutResult.GetError());
-			EntityHandle.Remove<FFlecsNetDirtyTag>();
-			
-			continue;
-		}
-		
-		// @TODO: DontFragment
-		
-		const FFlecsReplicationLayoutId NewLayoutId = LayoutResult.GetValue()->LayoutId;
-		
-		ReplicatedComponent.LayoutId = NewLayoutId;
-		
-		FFlecsEntityReplicationSnapshot& Snapshot = NetworkSubsystem->GetReplicationSnapshots().FindOrAdd(NetworkId);
-		Snapshot.LayoutId = NewLayoutId;
-		Snapshot.FillFromEntity(
-			NetworkSubsystem, 
-			EntityHandle, 
-			NetworkSubsystem->GetLayoutRegistry());
-		
-		NetworkSubsystem->GetReplicationBridge()->PublishNetEntity(NetworkId, Snapshot);
-
+		UE_LOG(LogFlecsCore, Error, TEXT("Failed to build replication layout for entity %s: %s"),
+			*EntityHandle.ToString(), *LayoutResult.GetError());
 		EntityHandle.Remove<FFlecsNetDirtyTag>();
+
+		return;
 	}
+		
+	// @TODO: DontFragment
+		
+	const FFlecsReplicationLayoutId NewLayoutId = LayoutResult.GetValue()->LayoutId;
+		
+	ReplicatedComponent.LayoutId = NewLayoutId;
+		
+	FFlecsEntityReplicationSnapshot& Snapshot = NetworkSubsystem->GetReplicationSnapshots().FindOrAdd(NetworkId);
+	Snapshot.LayoutId = NewLayoutId;
+	Snapshot.FillFromEntity(EntityHandle, NetworkSubsystem->GetLayoutRegistry());
+		
+	NetworkSubsystem->GetReplicationBridge()->PublishNetEntity(NetworkId, Snapshot);
+
+	EntityHandle.Remove<FFlecsNetDirtyTag>();
 }
