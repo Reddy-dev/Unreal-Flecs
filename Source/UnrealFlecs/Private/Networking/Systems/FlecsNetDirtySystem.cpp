@@ -46,8 +46,8 @@ void UFlecsNetDirtySystem::EachIterator(const TSolidNotNull<UFlecsWorldInterface
 	{
 		UE_LOG(LogFlecsCore, Error, TEXT("Failed to build replication layout for entity %s: %s"),
 			*EntityHandle.ToString(), *LayoutResult.GetError());
+		
 		EntityHandle.Remove<FFlecsNetDirtyTag>();
-
 		return;
 	}
 		
