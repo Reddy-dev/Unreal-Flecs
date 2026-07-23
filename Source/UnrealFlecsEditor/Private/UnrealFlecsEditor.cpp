@@ -185,10 +185,8 @@ void FUnrealFlecsEditorModule::HandlePostPIEStarted(MAYBE_UNUSED bool bInIsSimul
 	}
 }
 
-TSharedRef<SDockTab> FUnrealFlecsEditorModule::SpawnExplorerTab(const FSpawnTabArgs& InSpawnTabArgs)
+TSharedRef<SDockTab> FUnrealFlecsEditorModule::SpawnExplorerTab(MAYBE_UNUSED const FSpawnTabArgs& InSpawnTabArgs)
 {
-	(void)InSpawnTabArgs;
-
 	return SAssignNew(ExplorerTab, SDockTab)
 		.TabRole(ETabRole::NomadTab)
 		[
