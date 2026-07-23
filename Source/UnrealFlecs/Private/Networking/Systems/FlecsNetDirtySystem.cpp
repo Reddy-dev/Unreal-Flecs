@@ -22,17 +22,17 @@ void UFlecsNetDirtySystem::BuildSystem(const TSolidNotNull<const UFlecsWorldInte
 		.With<FFlecsNetDirtyTag>().ReadWrite() // 0
 		.With<FFlecsReplicatedEntityComponent&>() // 1
 		.With<const FFlecsNetworkId>() // 2
-		.With<FFlecsNetworkSubsystemSingleton&>(); // 3
+		.With<const FFlecsNetworkSubsystemSingleton>(); // 3
 }
 
 void UFlecsNetDirtySystem::EachIterator(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld,
                                         flecs::iter& InIterator, const FFlecsId InIndex)
 {
 	FFlecsReplicatedEntityComponent& ReplicatedComponent = InIterator.field_at<FFlecsReplicatedEntityComponent>(1, InIndex);
-	const FFlecsNetworkId& NetworkId = InIterator.field_at<FFlecsNetworkId>(2, InIndex);
+	const FFlecsNetworkId& NetworkId = InIterator.field_at<const FFlecsNetworkId>(2, InIndex);
 	
 	const TSolidNotNull<UFlecsNetworkWorldSubsystem*> NetworkSubsystem 
-		= InIterator.field_at<FFlecsNetworkSubsystemSingleton>(3, 0).GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
+		= InIterator.field_at<const FFlecsNetworkSubsystemSingleton>(3, 0).GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
 		
 	const FFlecsEntityHandle EntityHandle = InIterator.entity(InIndex);
 	
