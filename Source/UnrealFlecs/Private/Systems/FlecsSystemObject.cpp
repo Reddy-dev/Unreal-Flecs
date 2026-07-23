@@ -78,6 +78,8 @@ void UFlecsSystemObject::InitializeSystem(const TSolidNotNull<const UFlecsWorldI
 			IteratorWorld = GetFlecsWorld();
 		}
 		
+		solid_cassumef(IteratorWorld, TEXT("FlecsSystemObject '%s' is not contained within a UFlecsWorld."), *GetName());
+		
 		this->RunIterator(IteratorWorld, InIterator);
 	});
 	
