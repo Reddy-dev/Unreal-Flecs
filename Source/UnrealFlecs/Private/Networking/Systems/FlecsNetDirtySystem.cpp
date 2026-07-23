@@ -35,9 +35,11 @@ void UFlecsNetDirtySystem::EachIterator(const TSolidNotNull<UFlecsWorldInterface
 		= InIterator.field_at<FFlecsNetworkSubsystemSingleton>(3, 0).GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
 		
 	const FFlecsEntityHandle EntityHandle = InIterator.entity(InIndex);
+	
+	bool bCreatedNewLayout = false;
 		
 	TValueOrError<const FFlecsReplicationLayoutDefinition*, FString> LayoutResult = 
-		NetworkSubsystem->GetLayoutRegistry().BuildForEntity(InWorld, EntityHandle);
+		NetworkSubsystem->GetLayoutRegistry().BuildForEntity(InWorld, EntityHandle, bCreatedNewLayout);
 		
 	// @TODO: Remove this in shipping?
 	if UNLIKELY_IF(LayoutResult.HasError())
@@ -50,6 +52,8 @@ void UFlecsNetDirtySystem::EachIterator(const TSolidNotNull<UFlecsWorldInterface
 	}
 		
 	// @TODO: DontFragment
+	
+	const TSolidNotNull<const FFlecsReplicationLayoutDefinition*> LayoutDefinition = LayoutResult.GetValue();
 		
 	const FFlecsReplicationLayoutId NewLayoutId = LayoutResult.GetValue()->LayoutId;
 		
@@ -58,6 +62,11 @@ void UFlecsNetDirtySystem::EachIterator(const TSolidNotNull<UFlecsWorldInterface
 	FFlecsEntityReplicationSnapshot& Snapshot = NetworkSubsystem->GetReplicationSnapshots().FindOrAdd(NetworkId);
 	Snapshot.LayoutId = NewLayoutId;
 	Snapshot.FillFromEntity(EntityHandle, NetworkSubsystem->GetLayoutRegistry());
+	
+	if (bCreatedNewLayout)
+	{
+		NetworkSubsystem->GetReplicationBridge()->PublishEntityLayout(*LayoutDefinition);
+	}
 		
 	NetworkSubsystem->GetReplicationBridge()->PublishNetEntity(NetworkId, Snapshot);
 

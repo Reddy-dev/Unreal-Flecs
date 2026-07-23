@@ -33,8 +33,7 @@ public:
 	uint32 StateRevision = 0;
 	
 	// Increments StateRevision
-	void FillFromEntity(const FFlecsEntityHandle& InEntityHandle, 
-		const FFlecsReplicationLayoutRegistry& InLayoutRegistry);
+	void FillFromEntity(const FFlecsEntityHandle& InEntityHandle, const FFlecsReplicationLayoutRegistry& InLayoutRegistry);
 	
 }; // struct FFlecsEntityReplicationSnapshot
 

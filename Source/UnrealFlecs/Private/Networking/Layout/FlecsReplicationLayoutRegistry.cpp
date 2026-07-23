@@ -33,10 +33,11 @@ FFlecsReplicationLayoutId FFlecsReplicationLayoutRegistry::ComputeLayoutId(
 
 TValueOrError<const FFlecsReplicationLayoutDefinition*, FString> FFlecsReplicationLayoutRegistry::BuildForEntity(
 																		const TSolidNotNull<const UFlecsWorldInterfaceObject*> World,
-																		const FFlecsEntityHandle& Entity)
+																		const FFlecsEntityHandle& Entity,
+																		OUT bool& bOutCreatedNewLayout)
 {
 	if UNLIKELY_IF(!ensureAlways(Entity.IsValid()))
-	{
+	{					
 		return MakeError(TEXT("Cannot build a replication layout for an invalid world/entity"));
 	}
 
@@ -140,13 +141,17 @@ TValueOrError<const FFlecsReplicationLayoutDefinition*, FString> FFlecsReplicati
 			return MakeError(FString::Printf(TEXT("Replication layout hash collision for %s"), *Definition.LayoutId.ToString()));
 		}
 		
+		solid_ensure(TableCache.Contains(Table));
 		TableCache.Add(Table, Definition.LayoutId);
 		return MakeValue(Existing);
 	}
 
 	const FFlecsReplicationLayoutId Id = Definition.LayoutId;
+	
+	solid_ensure(!Definitions.Contains(Id));
 	Definitions.Add(Id, MoveTemp(Definition));
 	TableCache.Add(Table, Id);
+	bOutCreatedNewLayout = true;
 	
 	UE_LOGFMT(LogFlecsCore, Verbose,
 		"Built replication layout for entity {Entity} with layout ID {LayoutId} and {KeyCount} keys",

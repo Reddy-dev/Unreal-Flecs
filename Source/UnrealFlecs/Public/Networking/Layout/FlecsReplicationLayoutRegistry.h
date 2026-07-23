@@ -31,8 +31,10 @@ public:
 	static NO_DISCARD FFlecsReplicationLayoutId ComputeLayoutId(const TArray<FFlecsReplicationKey>& Keys);
 	
 	/** Builds or reuses a local layout for Entity's current Flecs table. */
-	TValueOrError<const FFlecsReplicationLayoutDefinition*, FString> BuildForEntity(const TSolidNotNull<const UFlecsWorldInterfaceObject*> World,
-		const FFlecsEntityHandle& Entity);
+	TValueOrError<const FFlecsReplicationLayoutDefinition*, FString> BuildForEntity(
+		const TSolidNotNull<const UFlecsWorldInterfaceObject*> World,
+		const FFlecsEntityHandle& Entity,
+		OUT bool& bOutCreatedNewLayout);
 	
 	/** Finds a previously generated or accepted layout definition. */
 	NO_DISCARD const FFlecsReplicationLayoutDefinition* Find(FFlecsReplicationLayoutId Id) const;
