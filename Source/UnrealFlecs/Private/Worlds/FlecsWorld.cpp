@@ -1022,11 +1022,6 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 
 UFlecsStage* UFlecsWorld::GetStage(const int32 InStageId) const
 {
-	if (InStageId == 0)
-	{
-		return nullptr;
-	}
-	
 	solid_cassumef(InStageId >= 0, TEXT("Stage ID must be non-negative and can't be the same as the main world (0)"));
 	solid_checkf(Stages.IsValidIndex(InStageId), TEXT("Stage ID %d is out of bounds"), InStageId);
 	return Stages[InStageId];
@@ -1071,9 +1066,12 @@ void UFlecsWorld::RegisterStages(const int32 InStageCount)
 	
 	Stages.Empty();
 	
+	const TSolidNotNull<UFlecsStage*> MainStage = NewObject<UFlecsStage>(this);
+	MainStage->SetStageWorld(GetNativeFlecsWorld().get_stage(0));
+	
 	if (InStageCount <= 1)
 	{
-		Stages.Add(nullptr);
+		Stages.Add(MainStage);
 		return;
 	}
 	
@@ -1081,7 +1079,7 @@ void UFlecsWorld::RegisterStages(const int32 InStageCount)
 	{
 		if (StageIndex == 0)
 		{
-			Stages.Add(nullptr);
+			Stages.Add(MainStage);
 			continue;
 		}
 		
