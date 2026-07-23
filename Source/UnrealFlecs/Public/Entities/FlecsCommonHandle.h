@@ -103,6 +103,12 @@ struct UNREALFLECS_API FFlecsCommonHandle
 	{
 		return Test && Test->IsValid();
 	}
+	
+	template <UE::Flecs::TFlecsEntityHandleTypeConcept T>
+	NO_DISCARD FORCEINLINE friend bool IsValid(const TOptional<T>& Test)
+	{
+		return Test.IsSet() && Test->IsValid();
+	}
 
 public:
 	FFlecsCommonHandle() = default;

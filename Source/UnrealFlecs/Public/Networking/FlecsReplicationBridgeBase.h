@@ -47,7 +47,6 @@ public:
 	virtual void HandleProtocolError(const FString& InErrorMessage);
 	
 	
-	
 protected:
 	NO_DISCARD TSolidNotNull<UFlecsNetworkWorldSubsystem*> GetNetworkWorldSubsystem() const;
 	

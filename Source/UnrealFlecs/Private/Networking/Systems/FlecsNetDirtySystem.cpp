@@ -72,3 +72,8 @@ void UFlecsNetDirtySystem::EachIterator(const TSolidNotNull<UFlecsWorldInterface
 
 	EntityHandle.Remove<FFlecsNetDirtyTag>();
 }
+
+EFlecsObjectRegistrationNetworkFlags UFlecsNetDirtySystem::GetObjectRegistrationNetworkFlags() const
+{
+	return EFlecsObjectRegistrationNetworkFlags::Server;
+}

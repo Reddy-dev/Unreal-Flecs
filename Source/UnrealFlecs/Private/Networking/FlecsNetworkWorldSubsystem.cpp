@@ -229,7 +229,96 @@ bool UFlecsNetworkWorldSubsystem::IsStandalone() const
 void UFlecsNetworkWorldSubsystem::ReceiveNetworkEntitySnapshot(const FFlecsNetworkId& InNetworkId,
 	const FFlecsEntityReplicationSnapshot& InSnapshot)
 {
+	const TOptional<FFlecsEntityHandle> EntityHandlePtr = GetEntityFromNetworkId(InNetworkId);
 	
+	FFlecsEntityHandle EntityHandle;
+	if (EntityHandlePtr.IsSet())
+	{
+		EntityHandle = EntityHandlePtr.GetValue();
+		solid_checkf(EntityHandle.IsValid(), TEXT("Entity handle for network ID '%s' is not valid"), *InNetworkId.ToString());
+	}
+	else
+	{
+		EntityHandle = GetFlecsWorldChecked()->CreateEntity()
+			.Set<FFlecsNetworkId>(InNetworkId)
+			.Add<EFlecsNetRoleType>(EFlecsNetRoleType::SimulatedProxy);
+	
+		NetworkIdToEntityMap.Add(InNetworkId, EntityHandle);
+	}
+	
+	if UNLIKELY_IF(!GetReplicationSnapshots().Contains(InNetworkId))
+	{
+		UE_LOG(LogFlecsWorld, Error,
+			TEXT("Received replication snapshot for network ID '%s' but no existing snapshot was found"),
+			*InNetworkId.ToString());
+		return;
+	}
+		
+	const FFlecsEntityReplicationSnapshot& ExistingSnapshot = GetReplicationSnapshots()[InNetworkId];
+		
+	if (ExistingSnapshot.StateRevision >= InSnapshot.StateRevision)
+	{
+		UE_LOG(LogFlecsWorld, Warning,
+			TEXT("Received replication snapshot for network ID '%s' with state revision %d, but existing snapshot has state revision %d"),
+			*InNetworkId.ToString(), InSnapshot.StateRevision, ExistingSnapshot.StateRevision);
+		return;
+	}
+		
+	const FFlecsReplicationLayoutDefinition* LayoutDefinition = GetLayoutRegistry().Find(InSnapshot.LayoutId);
+	if (!LayoutDefinition)
+	{
+		// @TODO: Handle missing layout definition (prob hasnt been received yet)
+		return;
+	}
+		
+	ApplySnapshotToEntity(EntityHandle, InSnapshot);
+	
+}
+
+void UFlecsNetworkWorldSubsystem::ApplySnapshotToEntity(const FFlecsEntityHandle& InEntityHandle,
+	const FFlecsEntityReplicationSnapshot& InSnapshot)
+{
+	//FFlecsScopedDeferWindow DeferWindow(InEntityHandle.GetFlecsWorldChecked());
+	
+	for (const FFlecsReplicationKey& Key : GetLayoutRegistry().Find(InSnapshot.LayoutId)->Keys)
+	{
+		const FFlecsId ComponentId = FFlecsReplicationKey::ResolveToId(GetFlecsWorldChecked(), Key);
+		
+		if UNLIKELY_IF(!ComponentId.IsValid())
+		{
+			UE_LOG(LogFlecsWorld, Error,
+				TEXT("Cannot apply snapshot to entity %s because component ID for key '%s' is not valid"),
+				*InEntityHandle.ToString(), *Key.CanonicalString());
+			continue;
+		}
+		
+		InEntityHandle.Remove(ComponentId);
+	}
+	
+	for (const FFlecsReplicatedValue& Value : InSnapshot.Values)
+	{
+		if UNLIKELY_IF(!LayoutRegistry.Find(InSnapshot.LayoutId))
+		{
+			UE_LOG(LogFlecsWorld, Error,
+				TEXT("Cannot apply snapshot to entity %s because layout ID '%s' is not registered"),
+				*InEntityHandle.ToString(), *InSnapshot.LayoutId.ToString());
+			continue;
+		}
+		
+		const FFlecsReplicationKey& Key = LayoutRegistry.Find(InSnapshot.LayoutId)->Keys[Value.KeyIndex];
+		
+		const FFlecsId ComponentId = FFlecsReplicationKey::ResolveToId(GetFlecsWorldChecked(), Key);
+		
+		if UNLIKELY_IF(!ComponentId.IsValid())
+		{
+			UE_LOG(LogFlecsWorld, Error,
+				TEXT("Cannot apply snapshot to entity %s because component ID for key '%s' is not valid"),
+				*InEntityHandle.ToString(), *Key.CanonicalString());
+			continue;
+		}
+		
+		InEntityHandle.Set(ComponentId, Value.Bytes.GetData());
+	}
 }
 
 TSolidNotNull<const UFlecsNetworkingModuleSettings*> UFlecsNetworkWorldSubsystem::GetNetworkingSettings()

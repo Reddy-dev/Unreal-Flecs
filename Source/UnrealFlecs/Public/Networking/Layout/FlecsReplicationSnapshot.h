@@ -22,8 +22,8 @@ public:
 	UPROPERTY()
 	FFlecsReplicationLayoutId LayoutId;
 	
-	UPROPERTY()
-	TArray<FFlecsReplicationKey> DontFragmentKeys;
+	/*UPROPERTY()
+	TArray<FFlecsReplicationKey> DontFragmentKeys;*/
 
 	// Serves both DontFragment and Layout
 	UPROPERTY()
