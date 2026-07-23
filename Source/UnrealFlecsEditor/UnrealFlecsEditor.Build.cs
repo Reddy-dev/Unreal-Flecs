@@ -33,6 +33,7 @@ public class UnrealFlecsEditor : ModuleRules
                 "SolidMacros",
                 "UnrealEd",
                 "ToolMenus",
+                "WebBrowser",
                 "EditorStyle",
                 "PropertyEditor",
                 "GraphEditor",
