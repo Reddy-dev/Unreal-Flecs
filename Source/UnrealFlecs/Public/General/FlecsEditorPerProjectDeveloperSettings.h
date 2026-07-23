@@ -23,8 +23,7 @@ public:
 	UPROPERTY(EditAnywhere, Config, Category = "Explorer")
 	bool bOpenFlecsExplorerExternally = false;
 
-	UPROPERTY(EditAnywhere, Config, Category = "Explorer",
-		meta = (ClampMin = "1", UIMin = "1", UIMax = "240"))
+	UPROPERTY(EditAnywhere, Config, Category = "Explorer", meta = (ClampMin = "1", UIMin = "1", UIMax = "240"))
 	uint32 InEditorExplorerFrameRate = 60;
 
 	/**
