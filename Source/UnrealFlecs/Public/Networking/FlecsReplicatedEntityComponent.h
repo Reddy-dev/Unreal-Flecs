@@ -24,6 +24,9 @@ struct UNREALFLECS_API FFlecsReplicatedEntityComponent
 	
 public:
 	UPROPERTY()
+	bool bInitialReplicationComplete = false;
+	
+	UPROPERTY()
 	FFlecsReplicationLayoutId LayoutId;
 	
 }; // struct FFlecsReplicatedEntityComponent
