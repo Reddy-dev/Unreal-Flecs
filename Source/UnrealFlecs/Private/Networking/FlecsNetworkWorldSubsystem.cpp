@@ -201,7 +201,7 @@ void UFlecsNetworkWorldSubsystem::CreateReplicationBridge()
 	
 	const TSolidNotNull<const UFlecsNetworkingModuleSettings*> Settings = GetNetworkingSettings();
 	
-	if UNLIKELY_IF(!ensureAlwaysMsgf(Settings->ReplicationBridgeClass, TEXT("Replication bridge class is not set in settings")))
+	if UNLIKELY_IF(!ensureMsgf(Settings->ReplicationBridgeClass, TEXT("Replication bridge class is not set in settings")))
 	{
 		return;
 	}
