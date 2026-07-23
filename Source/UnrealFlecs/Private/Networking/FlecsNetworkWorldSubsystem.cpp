@@ -37,12 +37,15 @@ void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UF
 	
 #if WITH_SERVER_CODE
 	
+	CreateDontFragmentEntityQuery();
+	
 	CreateNetworkIdGenerator();
 	
 	FFlecsComponentReplicationRegistry::Get(InWorld).OnDescriptorRegistered()
 		.AddUObject(this, &UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver);
 	
 	CreateReplicationBridge();
+	
 	
 #endif // WITH_SERVER_CODE
 	
@@ -178,6 +181,15 @@ void UFlecsNetworkWorldSubsystem::CreateNetworkIdGenerator()
 	
 	NetworkIdGenerator = NewObject<UObject>(this, Settings->NetworkIdGeneratorClass);
 	solid_checkf(IsValid(NetworkIdGenerator), TEXT("Network ID generator is not valid"));
+}
+
+void UFlecsNetworkWorldSubsystem::CreateDontFragmentEntityQuery()
+{
+	DontFragmentEntityPrimaryQuery = GetFlecsWorldChecked()->CreateQueryBuilder("DontFragmentEntityQuery")
+		.With(flecs::This).Src("$MatchingEntity") // 0
+		.With(flecs::DontFragment) // 1
+		.With<FFlecsReplicatedTrait>() // 2
+		.Build();
 }
 
 void UFlecsNetworkWorldSubsystem::CreateReplicationBridge()

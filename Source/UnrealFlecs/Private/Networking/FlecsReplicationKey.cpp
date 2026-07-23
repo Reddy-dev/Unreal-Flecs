@@ -2,6 +2,8 @@
 
 #include "Networking/FlecsReplicationKey.h"
 
+#include "Networking/FlecsNetworkSubsystemSingleton.h"
+#include "Networking/FlecsNetworkWorldSubsystem.h"
 #include "Networking/FlecsStablePathTag.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsReplicationKey)
@@ -84,6 +86,57 @@ TValueOrError<FFlecsReplicationIndividualKey, FString> FFlecsReplicationIndividu
 	return MakeValue(Result);
 }
 
+FFlecsId FFlecsReplicationIndividualKey::ResolveToId(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld,
+	const FFlecsReplicationIndividualKey& InKey)
+{
+	switch (InKey.Kind)
+	{
+		case EFlecsReplicationPairTargetKind::Schema:
+		{
+			if (const FFlecsComponentReplicationDescriptor* Descriptor = InKey.TryGetDescriptor(InWorld))
+			{
+				return Descriptor->LocalFlecsId;
+			}
+			break;
+		}
+		case EFlecsReplicationPairTargetKind::StableSymbolValue:
+			{
+				const FFlecsEntityHandle EntityHandle = InWorld->LookupEntityBySymbol_Internal(InKey.StableIdentifier);
+				if (EntityHandle.IsValid())
+				{
+					return EntityHandle;
+				}
+				
+				break;
+			}
+		case EFlecsReplicationPairTargetKind::StablePathValue:
+		{
+			const FFlecsEntityHandle EntityHandle = InWorld->LookupEntity(InKey.StableIdentifier);
+			if (EntityHandle.IsValid())
+			{
+				return EntityHandle;
+			}
+			break;
+		}
+		case EFlecsReplicationPairTargetKind::Entity:
+		{
+			const TSolidNotNull<UFlecsNetworkWorldSubsystem*> NetworkSubsystem 
+					= InWorld->Get<FFlecsNetworkSubsystemSingleton>().GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
+				
+			const FFlecsEntityHandle EntityHandle = NetworkSubsystem->GetEntityFromNetworkIdChecked(InKey.Entity);
+			if LIKELY_IF(EntityHandle.IsValid())
+			{
+				return EntityHandle;
+			}
+			break;
+		}
+		default:
+			break;
+	}
+
+	return FFlecsId();
+}
+
 EFlecsReplicationKeyStorageKind FFlecsReplicationKey::GetStorageKindForPair(
 	const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, const FFlecsId InFirstId, const FFlecsId InSecondId)
 {
@@ -104,6 +157,85 @@ EFlecsReplicationKeyStorageKind FFlecsReplicationKey::GetStorageKindForPair(
 	}
 	
 	return EFlecsReplicationKeyStorageKind::None;
+}
+
+FFlecsId FFlecsReplicationKey::ResolveToId(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld,
+	const FFlecsReplicationKey& InKey)
+{
+	if (InKey.Kind == EFlecsReplicationKeyKind::Component)
+	{
+		return FFlecsReplicationIndividualKey::ResolveToId(InWorld, InKey.Primary);
+	}
+	else if (InKey.Kind == EFlecsReplicationKeyKind::Pair)
+	{
+		const FFlecsId FirstId = FFlecsReplicationIndividualKey::ResolveToId(InWorld, InKey.Primary);
+		const FFlecsId SecondId = FFlecsReplicationIndividualKey::ResolveToId(InWorld, InKey.Secondary);
+		
+		return FFlecsId::MakePair(FirstId, SecondId);
+	}
+	
+	UNREACHABLE
+	return FFlecsId();
+}
+
+TValueOrError<FFlecsReplicationKey, FString> FFlecsReplicationKey::BuildKey(
+	const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, const FFlecsId InId)
+{
+	solid_check(InId.IsValid());
+	
+	if (InId.IsPair())
+	{
+		const FFlecsId FirstId = InId.GetFirst();
+		const FFlecsId SecondId = InId.GetSecond();
+		
+		const EFlecsReplicationKeyStorageKind StorageKind = GetStorageKindForPair(InWorld, FirstId, SecondId);
+		
+		if UNLIKELY_IF(StorageKind == EFlecsReplicationKeyStorageKind::None)
+		{
+			return MakeError("Neither component in the pair is eligible for storage");
+		}
+		
+		const TValueOrError<FFlecsReplicationIndividualKey, FString> FirstKeyResult = FFlecsReplicationIndividualKey::BuildIndividualKey(InWorld, FirstId);
+		if UNLIKELY_IF(!FirstKeyResult.IsValid())
+		{
+			return MakeError(FString::Printf(TEXT("Failed to build first individual key: %s"), *FirstKeyResult.GetError()));
+		}
+		
+		const TValueOrError<FFlecsReplicationIndividualKey, FString> SecondKeyResult = FFlecsReplicationIndividualKey::BuildIndividualKey(InWorld, SecondId);
+		if UNLIKELY_IF(!SecondKeyResult.IsValid())
+		{
+			return MakeError(FString::Printf(TEXT("Failed to build second individual key: %s"), *SecondKeyResult.GetError()));
+		}
+		
+		FFlecsReplicationKey Result;
+		Result.Kind = EFlecsReplicationKeyKind::Pair;
+		Result.Primary = FirstKeyResult.GetValue();
+		Result.Secondary = SecondKeyResult.GetValue();
+		Result.StorageKind = StorageKind;
+		
+		return MakeValue(Result);
+	}
+	else
+	{
+		const TValueOrError<FFlecsReplicationIndividualKey, FString> IndividualKeyResult = FFlecsReplicationIndividualKey::BuildIndividualKey(InWorld, InId);
+		
+		if UNLIKELY_IF(!IndividualKeyResult.IsValid())
+		{
+			return MakeError(FString::Printf(TEXT("Failed to build individual key: %s"), *IndividualKeyResult.GetError()));
+		}
+		
+		FFlecsReplicationKey Result;
+		Result.Kind = EFlecsReplicationKeyKind::Component;
+		Result.Primary = IndividualKeyResult.GetValue();
+
+		const FFlecsComponentReplicationDescriptor* Descriptor =
+			FFlecsComponentReplicationRegistry::Get(InWorld->GetFlecsWorld()).Find(InId);
+		Result.StorageKind = Descriptor && Descriptor->IsStorageEligible()
+			? EFlecsReplicationKeyStorageKind::Primary
+			: EFlecsReplicationKeyStorageKind::None;
+
+		return MakeValue(Result);
+	}
 }
 
 FString FFlecsReplicationKey::CanonicalString() const

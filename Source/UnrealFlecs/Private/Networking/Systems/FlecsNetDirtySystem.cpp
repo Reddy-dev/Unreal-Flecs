@@ -6,6 +6,7 @@
 #include "Networking/FlecsNetworkSubsystemSingleton.h"
 #include "Networking/FlecsNetworkWorldSubsystem.h"
 #include "Networking/FlecsReplicatedEntityComponent.h"
+#include "Networking/FlecsReplicationBridgeBase.h"
 #include "Networking/Layout/FlecsReplicationSnapshot.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsNetDirtySystem)
@@ -62,6 +63,12 @@ void UFlecsNetDirtySystem::EachIterator(const TSolidNotNull<UFlecsWorldInterface
 		
 		FFlecsEntityReplicationSnapshot& Snapshot = NetworkSubsystem->GetReplicationSnapshots().FindOrAdd(NetworkId);
 		Snapshot.LayoutId = NewLayoutId;
+		Snapshot.FillFromEntity(
+			NetworkSubsystem, 
+			EntityHandle, 
+			NetworkSubsystem->GetLayoutRegistry());
+		
+		NetworkSubsystem->GetReplicationBridge()->PublishNetEntity(NetworkId, Snapshot);
 
 		EntityHandle.Remove<FFlecsNetDirtyTag>();
 	}

@@ -4,8 +4,9 @@
 
 #include "CoreMinimal.h"
 
-#include "Networking/FlecsReplicatedEntityComponent.h"
 #include "Properties/FlecsComponentProperties.h"
+
+#include "Networking/FlecsReplicatedEntityComponent.h"
 
 #include "FlecsNetworkId.generated.h"
 

@@ -80,6 +80,41 @@ public:
 	
 	NO_DISCARD bool HasAuthority() const;
 	NO_DISCARD bool IsStandalone() const;
+	
+	template <UE::Flecs::TFlecsEntityHandleTypeConcept T = FFlecsEntityHandle>
+	NO_DISCARD TOptional<T> GetEntityFromNetworkId(const FFlecsNetworkId& InNetworkId) const
+	{
+		if LIKELY_IF(const FFlecsEntityHandle* EntityHandle = NetworkIdToEntityMap.Find(InNetworkId))
+		{
+			return TOptional<T>(*EntityHandle);
+		}
+		
+		return TOptional<T>();
+	}
+	
+	template <UE::Flecs::TFlecsEntityHandleTypeConcept T = FFlecsEntityHandle>
+	NO_DISCARD T GetEntityFromNetworkIdChecked(const FFlecsNetworkId& InNetworkId) const
+	{
+		if LIKELY_IF(const FFlecsEntityHandle* EntityHandle = NetworkIdToEntityMap.Find(InNetworkId))
+		{
+			return static_cast<T>(*EntityHandle);
+		}
+		
+		checkf(false, TEXT("No entity found for network ID %s"), *InNetworkId.ToString());
+		
+		return T();
+	}
+	
+	FORCEINLINE void IterateDontFragmentOnEntity(const FFlecsEntityHandle& InEntityHandle, 
+		TFunctionRef<void(const flecs::iter& InIter, size_t InIndex)> InFunc) const
+	{
+		DontFragmentEntityPrimaryQuery.set_var("$MatchingEntity", InEntityHandle);
+		
+		DontFragmentEntityPrimaryQuery.each([&InFunc](const flecs::iter& InIter, size_t InIndex)
+		{
+			InFunc(InIter, InIndex);
+		});
+	}
 
 protected:
 	
@@ -87,6 +122,8 @@ protected:
 	
 	void CreateReplicationBridge();
 	void CreateNetworkIdGenerator();
+	
+	void CreateDontFragmentEntityQuery();
 	
 	TMap<FFlecsNetworkId, FFlecsEntityHandle> NetworkIdToEntityMap;
 	
@@ -104,5 +141,8 @@ protected:
 	TObjectPtr<UFlecsReplicationBridgeBase> ReplicationBridge;
 	
 	FFlecsReplicationLayoutRegistry LayoutRegistry;
+	
+	UPROPERTY()
+	FFlecsQuery DontFragmentEntityPrimaryQuery;
 	
 }; // class UFlecsNetworkWorldSubsystem

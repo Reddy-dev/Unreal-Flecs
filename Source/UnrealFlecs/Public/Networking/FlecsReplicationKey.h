@@ -81,6 +81,8 @@ struct UNREALFLECS_API FFlecsReplicationIndividualKey
 	static NO_DISCARD TValueOrError<FFlecsReplicationIndividualKey, FString> 
 		BuildIndividualKey(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, const FFlecsId InId);
 	
+	static NO_DISCARD FFlecsId ResolveToId(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, const FFlecsReplicationIndividualKey& InKey);
+	
 }; // struct FFlecsReplicationIndividualKey
 
 UENUM()
@@ -114,9 +116,19 @@ struct UNREALFLECS_API FFlecsReplicationKey
 		return GetStorageKindForPair(InWorld, FirstId, SecondId);
 	}
 	
+	static NO_DISCARD bool IsValidPairStorageKind(const EFlecsReplicationKeyStorageKind InStorageKind)
+	{
+		return InStorageKind == EFlecsReplicationKeyStorageKind::Primary || 
+			InStorageKind == EFlecsReplicationKeyStorageKind::Secondary;
+	}
+	
 	static NO_DISCARD EFlecsReplicationKeyStorageKind GetStorageKindForPair(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, 
 		const FFlecsId InFirstId, const FFlecsId InSecondId);
-
+	
+	static NO_DISCARD FFlecsId ResolveToId(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, const FFlecsReplicationKey& InKey);
+	
+	static NO_DISCARD TValueOrError<FFlecsReplicationKey, FString> 
+		BuildKey(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, const FFlecsId InId);
 
 	UPROPERTY()
 	EFlecsReplicationKeyKind Kind = EFlecsReplicationKeyKind::Component;
