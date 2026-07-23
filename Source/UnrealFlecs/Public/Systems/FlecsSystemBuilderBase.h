@@ -77,6 +77,76 @@ public:
 		
 		return this->GetSelf();
 	}
+
+	FORCEINLINE TInherited& PipelineInput(const FFlecsSystemPipelineInput& InPipelineInput)
+	{
+		GetSystemDefinition().PipelineInput = InPipelineInput;
+		return this->GetSelf();
+	}
+
+	FORCEINLINE TInherited& PipelineInput(const FGameplayTag& InTag)
+	{
+		GetSystemDefinition().PipelineInput.InputType = EFlecsSystemPipelineInputType::Tag;
+		GetSystemDefinition().PipelineInput.Tag = InTag;
+		return this->GetSelf();
+	}
+
+	FORCEINLINE TInherited& PipelineInput(const FFlecsQueryGeneratorInput& InTypeInput)
+	{
+		GetSystemDefinition().PipelineInput.InputType = EFlecsSystemPipelineInputType::Type;
+		GetSystemDefinition().PipelineInput.TypeInput = InTypeInput;
+		return this->GetSelf();
+	}
+
+	FORCEINLINE TInherited& PipelineInput(const FFlecsId InTypeId)
+	{
+		GetSystemDefinition().PipelineInput.InputType = EFlecsSystemPipelineInputType::Type;
+		GetSystemDefinition().PipelineInput.TypeInput.bPair = false;
+		GetSystemDefinition().PipelineInput.TypeInput.First.InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
+		GetSystemDefinition().PipelineInput.TypeInput.First.GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InTypeId;
+		return this->GetSelf();
+	}
+
+	FORCEINLINE TInherited& PipelineInput(const TSolidNotNull<const UScriptStruct*> InStruct)
+	{
+		GetSystemDefinition().PipelineInput.InputType = EFlecsSystemPipelineInputType::Type;
+		GetSystemDefinition().PipelineInput.TypeInput.bPair = false;
+		GetSystemDefinition().PipelineInput.TypeInput.First.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
+		GetSystemDefinition().PipelineInput.TypeInput.First.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
+		return this->GetSelf();
+	}
+
+	FORCEINLINE TInherited& PipelineInput(const FSolidEnumSelector& InEnum)
+	{
+		GetSystemDefinition().PipelineInput.InputType = EFlecsSystemPipelineInputType::Type;
+		GetSystemDefinition().PipelineInput.TypeInput.bPair = true;
+
+		GetSystemDefinition().PipelineInput.TypeInput.First.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnum>();
+		GetSystemDefinition().PipelineInput.TypeInput.First.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum.Class;
+
+		GetSystemDefinition().PipelineInput.TypeInput.Second.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnumConstant>();
+		GetSystemDefinition().PipelineInput.TypeInput.Second.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnumConstant>().EnumValue = InEnum;
+
+		return this->GetSelf();
+	}
+
+	FORCEINLINE TInherited& PipelineInput(const FString& InCppTypeSymbol)
+	{
+		GetSystemDefinition().PipelineInput.InputType = EFlecsSystemPipelineInputType::Type;
+		GetSystemDefinition().PipelineInput.TypeInput.bPair = false;
+		GetSystemDefinition().PipelineInput.TypeInput.First.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
+		GetSystemDefinition().PipelineInput.TypeInput.First.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = InCppTypeSymbol;
+		return this->GetSelf();
+	}
+
+	template <typename T>
+	FORCEINLINE TInherited& PipelineInput()
+	{
+		const std::string_view TypeName = nameof(T);
+		PipelineInput(FString(TypeName.data()));
+
+		return this->GetSelf();
+	}
 	
 	FORCEINLINE TInherited& MultiThreaded(const bool bInMultiThreaded = true)
 	{
@@ -239,4 +309,3 @@ public:
 	}
 	
 }; // struct TFlecsSystemBuilderBase
-
