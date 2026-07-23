@@ -9,6 +9,7 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "General/FlecsEditorDeveloperSettings.h"
+#include "General/FlecsEditorPerProjectDeveloperSettings.h"
 #include "General/FlecsExplorerURLSettings.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Layout/SBorder.h"
@@ -289,13 +290,22 @@ void SFlecsExplorer::EnsureTargetBrowser(
 		return;
 	}
 
+	const UFlecsEditorPerProjectDeveloperSettings* PerProjectSettings =
+		GetDefault<UFlecsEditorPerProjectDeveloperSettings>();
+	const uint32 ConfiguredFrameRate = PerProjectSettings
+		? PerProjectSettings->InEditorExplorerFrameRate
+		: 60;
+	const int32 BrowserFrameRate = static_cast<int32>(
+		FMath::Clamp<uint32>(ConfiguredFrameRate, 1, static_cast<uint32>(MAX_int32))
+		);
+
 	InTarget->Browser = SNew(SWebBrowser)
 		.InitialURL(GetTargetURL(InTarget))
 		.ShowAddressBar(false)
 		.ShowControls(false)
 		.ShowErrorMessage(true)
 		.ShowInitialThrobber(true)
-		.BrowserFrameRate(60)
+		.BrowserFrameRate(BrowserFrameRate)
 		.OnBeforePopup(this, &SFlecsExplorer::HandleBeforePopup);
 }
 

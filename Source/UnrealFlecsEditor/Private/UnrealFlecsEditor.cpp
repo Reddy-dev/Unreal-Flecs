@@ -2,6 +2,8 @@
 
 #include "UnrealFlecsEditor.h"
 
+#include "Editor.h"
+#include "PlayInEditorDataTypes.h"
 #include "PropertyEditorModule.h"
 #include "ToolMenus.h"
 #include "Engine/AssetManagerSettings.h"
@@ -16,6 +18,7 @@
 #include "Types/SolidNotNull.h"
 
 #include "General/FlecsEditorDeveloperSettings.h"
+#include "General/FlecsEditorPerProjectDeveloperSettings.h"
 #include "General/FlecsThreadAllocationPolicyBaseAsset.h"
 
 #include "UnrealFlecsEditorStyle.h"
@@ -47,6 +50,10 @@ void FUnrealFlecsEditorModule::StartupModule()
 
 	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this,
 		&FUnrealFlecsEditorModule::RegisterExplorerMenuExtension));
+	PostPIEStartedHandle = FEditorDelegates::PostPIEStarted.AddRaw(
+		this,
+		&FUnrealFlecsEditorModule::HandlePostPIEStarted
+		);
 
 	FPropertyEditorModule& PropertyEditorModule
 		= FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
@@ -70,6 +77,8 @@ void FUnrealFlecsEditorModule::StartupModule()
 
 void FUnrealFlecsEditorModule::ShutdownModule()
 {
+	FEditorDelegates::PostPIEStarted.Remove(PostPIEStartedHandle);
+
 	if (FSlateApplication::IsInitialized())
 	{
 		FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(FlecsExplorerTabName);
@@ -111,7 +120,7 @@ void FUnrealFlecsEditorModule::RegisterExplorerMenuExtension()
 
 	Section.AddEntry(FToolMenuEntry::InitToolBarButton(
 		"OpenFlecsExplorer", FUIAction(
-			FExecuteAction::CreateRaw(this, &FUnrealFlecsEditorModule::OpenExplorerTab)
+			FExecuteAction::CreateRaw(this, &FUnrealFlecsEditorModule::OpenExplorer)
 		),
 		INVTEXT("Open Flecs Explorer"),
 		INVTEXT("Open Flecs Explorer in the editor"),
@@ -119,9 +128,61 @@ void FUnrealFlecsEditorModule::RegisterExplorerMenuExtension()
 	));
 }
 
+void FUnrealFlecsEditorModule::OpenExplorer()
+{
+	const UFlecsEditorPerProjectDeveloperSettings* PerProjectSettings =
+		GetDefault<UFlecsEditorPerProjectDeveloperSettings>();
+
+	if (PerProjectSettings && PerProjectSettings->bOpenFlecsExplorerExternally)
+	{
+		OpenExplorerExternally();
+		return;
+	}
+
+	OpenExplorerTab();
+}
+
 void FUnrealFlecsEditorModule::OpenExplorerTab()
 {
 	FGlobalTabmanager::Get()->TryInvokeTab(FTabId(FlecsExplorerTabName));
+}
+
+void FUnrealFlecsEditorModule::OpenExplorerExternally()
+{
+	int32 InstanceCount = 1;
+
+	if (GEditor)
+	{
+		const TOptional<FPlayInEditorSessionInfo> PIEInfo = GEditor->GetPlayInEditorSessionInfo();
+		if (PIEInfo.IsSet())
+		{
+			InstanceCount = FMath::Max(PIEInfo->PIEInstanceCount, 1);
+		}
+	}
+
+	const UFlecsEditorDeveloperSettings* EditorSettings = GetDefault<UFlecsEditorDeveloperSettings>();
+	if (!ensureMsgf(EditorSettings, TEXT("Failed to get Flecs Editor Developer Settings.")))
+	{
+		return;
+	}
+
+	const FFlecsEditorExplorerURL ExplorerURL = EditorSettings->GetFlecsExplorerURL();
+	for (int32 Index = 0; Index < InstanceCount; ++Index)
+	{
+		const FString TargetURL = ExplorerURL.ToURLString(static_cast<uint16>(Index));
+		FPlatformProcess::LaunchURL(*TargetURL, nullptr, nullptr);
+	}
+}
+
+void FUnrealFlecsEditorModule::HandlePostPIEStarted(MAYBE_UNUSED bool bInIsSimulating)
+{
+	const UFlecsEditorPerProjectDeveloperSettings* PerProjectSettings =
+		GetDefault<UFlecsEditorPerProjectDeveloperSettings>();
+
+	if (PerProjectSettings && PerProjectSettings->bOpenFlecsExplorerOnPlay)
+	{
+		OpenExplorer();
+	}
 }
 
 TSharedRef<SDockTab> FUnrealFlecsEditorModule::SpawnExplorerTab(const FSpawnTabArgs& InSpawnTabArgs)

@@ -17,11 +17,15 @@ public:
 
 private:
 	void RegisterExplorerMenuExtension();
+	void OpenExplorer();
 	void OpenExplorerTab();
+	void OpenExplorerExternally();
+	void HandlePostPIEStarted(bool bInIsSimulating);
 	TSharedRef<SDockTab> SpawnExplorerTab(const FSpawnTabArgs& InSpawnTabArgs);
 	void AddPrimaryAssetTypes() const;
 
 	TSharedPtr<FFlecsIdPinFactory> FlecsIdPinFactory;
 	TWeakPtr<SDockTab> ExplorerTab;
+	FDelegateHandle PostPIEStartedHandle;
 
 }; // class FUnrealFlecsEditorModule
