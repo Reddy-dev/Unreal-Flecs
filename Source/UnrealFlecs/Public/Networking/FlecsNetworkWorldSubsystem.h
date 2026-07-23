@@ -108,12 +108,12 @@ public:
 	FORCEINLINE void IterateDontFragmentOnEntity(const FFlecsEntityHandle& InEntityHandle, 
 		TFunctionRef<void(const flecs::iter& InIter, size_t InIndex)> InFunc) const
 	{
-		DontFragmentEntityPrimaryQuery.set_var("$MatchingEntity", InEntityHandle);
+		/*DontFragmentEntityPrimaryQuery.set_var("$MatchingEntity", InEntityHandle);
 		
 		DontFragmentEntityPrimaryQuery.each([&InFunc](const flecs::iter& InIter, size_t InIndex)
 		{
 			InFunc(InIter, InIndex);
-		});
+		});*/
 	}
 
 protected:
@@ -142,7 +142,7 @@ protected:
 	
 	FFlecsReplicationLayoutRegistry LayoutRegistry;
 	
-	UPROPERTY()
-	FFlecsQuery DontFragmentEntityPrimaryQuery;
+	/*UPROPERTY()
+	FFlecsQuery DontFragmentEntityPrimaryQuery;*/
 	
 }; // class UFlecsNetworkWorldSubsystem

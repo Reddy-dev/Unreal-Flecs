@@ -185,11 +185,11 @@ void UFlecsNetworkWorldSubsystem::CreateNetworkIdGenerator()
 
 void UFlecsNetworkWorldSubsystem::CreateDontFragmentEntityQuery()
 {
-	DontFragmentEntityPrimaryQuery = GetFlecsWorldChecked()->CreateQueryBuilder("DontFragmentEntityQuery")
+	/*DontFragmentEntityPrimaryQuery = GetFlecsWorldChecked()->CreateQueryBuilder("DontFragmentEntityQuery")
 		.With(flecs::This).Src("$MatchingEntity") // 0
 		.With(flecs::DontFragment) // 1
 		.With<FFlecsReplicatedTrait>() // 2
-		.Build();
+		.Build();*/
 }
 
 void UFlecsNetworkWorldSubsystem::CreateReplicationBridge()
