@@ -110,7 +110,6 @@ struct UNREALFLECS_API FFlecsComponentReplicationDescriptor
 	uint32 Size = 0;
 	uint16 Alignment = 0;
 	
-	// @TODO: Deprecated Maybe?
 	bool bIsTag = false;
 	
 	TObjectPtr<UScriptStruct> ScriptStruct = nullptr;
