@@ -15,7 +15,6 @@ public:
 	UPROPERTY()
 	uint16 CommandSlot;
 	
-	UPROPERTY()
-	
+
 	
 }; // struct FFlecsReplicationCommandHeader
