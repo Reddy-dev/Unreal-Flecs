@@ -149,6 +149,7 @@ TValueOrError<const FFlecsReplicationLayoutDefinition*, FString> FFlecsReplicati
 	const FFlecsReplicationLayoutId Id = Definition.LayoutId;
 	
 	solid_ensure(!Definitions.Contains(Id));
+	
 	Definitions.Add(Id, MoveTemp(Definition));
 	TableCache.Add(Table, Id);
 	bOutCreatedNewLayout = true;
