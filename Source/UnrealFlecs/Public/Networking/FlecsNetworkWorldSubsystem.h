@@ -114,7 +114,7 @@ protected:
 	void ApplySnapshotToEntity(const FFlecsEntityHandle& InEntityHandle, const FFlecsEntityReplicationSnapshot& InSnapshot);
 	
 	// Ran on Client
-	void AddDeferredEntityLayout(const FFlecsEntityHandle& InEntityHandle, const FFlecsReplicationLayoutDefinition& InLayout,
+	void AddDeferredEntityLayout(const FFlecsEntityHandle& InEntityHandle, const FFlecsReplicationLayoutId& InLayout,
 		const FFlecsEntityReplicationSnapshot& InSnapshot);
 	
 	static NO_DISCARD TSolidNotNull<const UFlecsNetworkingModuleSettings*> GetNetworkingSettings();

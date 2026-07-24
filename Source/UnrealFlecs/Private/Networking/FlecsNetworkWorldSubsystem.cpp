@@ -37,8 +37,6 @@ void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UF
 	
 #if WITH_SERVER_CODE
 	
-	CreateDontFragmentEntityQuery();
-	
 	CreateNetworkIdGenerator();
 	
 	FFlecsComponentReplicationRegistry::Get(InWorld).OnDescriptorRegistered()
@@ -268,7 +266,7 @@ void UFlecsNetworkWorldSubsystem::ReceiveNetworkEntitySnapshot(const FFlecsNetwo
 	const FFlecsReplicationLayoutDefinition* LayoutDefinition = GetLayoutRegistry().Find(InSnapshot.LayoutId);
 	if (!LayoutDefinition)
 	{
-		AddDeferredEntityLayout(EntityHandle, *LayoutDefinition, InSnapshot);
+		AddDeferredEntityLayout(EntityHandle, InSnapshot.LayoutId, InSnapshot);
 		return;
 	}
 		
@@ -322,9 +320,15 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshotToEntity(const FFlecsEntityHandle
 }
 
 void UFlecsNetworkWorldSubsystem::AddDeferredEntityLayout(const FFlecsEntityHandle& InEntityHandle,
-	const FFlecsReplicationLayoutDefinition& InLayout, const FFlecsEntityReplicationSnapshot& InSnapshot)
+	const FFlecsReplicationLayoutId& InLayout, const FFlecsEntityReplicationSnapshot& InSnapshot)
 {
+	if UNLIKELY_IF(!ensureAlwaysMsgf(InEntityHandle.IsValid(), TEXT("Entity handle is not valid")))
+	{
+		return;
+	}
 	
+	TArray<TPair<FFlecsEntityHandle, FFlecsEntityReplicationSnapshot>>& DeferredSnapshots = DeferredEntityLayouts.FindOrAdd(InLayout);
+	DeferredSnapshots.Add(TPair<FFlecsEntityHandle, FFlecsEntityReplicationSnapshot>(InEntityHandle, InSnapshot));
 }
 
 TSolidNotNull<const UFlecsNetworkingModuleSettings*> UFlecsNetworkWorldSubsystem::GetNetworkingSettings()
