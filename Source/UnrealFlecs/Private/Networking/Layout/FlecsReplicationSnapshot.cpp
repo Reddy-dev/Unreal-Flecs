@@ -2,6 +2,8 @@
 
 #include "Networking/Layout/FlecsReplicationSnapshot.h"
 
+#include "Serialization/MemoryWriter.h"
+
 #include "Networking/FlecsNetworkWorldSubsystem.h"
 #include "Networking/Layout/FlecsReplicationLayoutDefinition.h"
 #include "Networking/Layout/FlecsReplicationLayoutRegistry.h"
@@ -14,6 +16,8 @@ void FFlecsEntityReplicationSnapshot::FillFromEntity(const FFlecsEntityHandle& I
 	solid_checkf(InEntityHandle.IsValid(), TEXT("Cannot fill snapshot from invalid entity handle"));
 	
 	const TSolidNotNull<UFlecsWorldInterfaceObject*> World = InEntityHandle.GetFlecsWorld();
+	
+	const FFlecsComponentReplicationRegistry& ComponentRegistry = FFlecsComponentReplicationRegistry::Get(World->GetFlecsWorld());
 	
 	const FFlecsReplicationLayoutDefinition* LayoutDefinition = InLayoutRegistry.Find(LayoutId);
 	if UNLIKELY_IF (!LayoutDefinition)
@@ -50,10 +54,27 @@ void FFlecsEntityReplicationSnapshot::FillFromEntity(const FFlecsEntityHandle& I
 			continue;
 		}
 		
-		const void* ComponentValuePtr = InEntityHandle.TryGet(ComponentId);
+		const TSolidNotNull<const FFlecsComponentReplicationDescriptor*> Descriptor = ComponentRegistry.Find(ComponentId);
 		
-		Value.Bytes.SetNumUninitialized(Key.TryGetStorageDescriptor(World)->GetSize());
-		FMemory::Memcpy(Value.Bytes.GetData(), ComponentValuePtr, Value.Bytes.Num());
+		const void* ComponentValuePtr = InEntityHandle.TryGet(ComponentId);
+		if UNLIKELY_IF(!ComponentValuePtr)
+		{
+			UE_LOGFMT(LogFlecsCore, Error, 
+				"Failed to get component value for component ID {ComponentId} when filling snapshot for entity {Entity}.", 
+				ComponentId.ToString(), *InEntityHandle.ToString());
+			continue;
+		}
+		
+		Value.Bytes.Reset();
+		FMemoryWriter Writer(Value.Bytes, true);
+		
+		if UNLIKELY_IF(!Descriptor->GetSerializeFunction()(Writer, const_cast<void*>(ComponentValuePtr)) || Writer.IsError())
+		{
+			UE_LOGFMT(LogFlecsCore, Error,
+					"Failed to serialize component ID {ComponentId}.",
+					ComponentId.ToString());
+			continue;
+		}
 		
 		Values.Add(MoveTemp(Value));
 		solid_checkf(Values.Num() == Index + 1, 
