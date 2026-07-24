@@ -12,7 +12,10 @@ void FFlecsQueryTerm::ApplyToQueryBuilder(const TSolidNotNull<const UFlecsWorldI
 	FFlecsQueryBuilderView& InQueryBuilder) const
 {
 	FFlecsTermRefAtom_Internal TermRef = Input.GetFirstTermRef(InWorld);
+	const bool bIsPair = Input.IsPair();
+	
 	InQueryBuilder.term();
+	
 	if (TermRef.IsType<FFlecsId>())
 	{
 		InQueryBuilder.first(TermRef.Get<FFlecsId>());
@@ -26,7 +29,7 @@ void FFlecsQueryTerm::ApplyToQueryBuilder(const TSolidNotNull<const UFlecsWorldI
 		UNREACHABLE
 	}
 	
-	if (Input.IsPair())
+	if (bIsPair)
 	{
 		FFlecsTermRefAtom_Internal SecondTermRef = Input.GetSecondTermRef(InWorld);
 		if (SecondTermRef.IsType<FFlecsId>())

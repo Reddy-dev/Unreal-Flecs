@@ -4,6 +4,7 @@
 
 #include "Networking/FlecsNetworkWorldSubsystem.h"
 #include "UnrealFlecsTests/Fixtures/FlecsRegisteredWorldFixture.h"
+#include "UnrealFlecsTests/Fixtures/FlecsTestReplicationBridge.h"
 
 #if WITH_AUTOMATION_TESTS
 
@@ -15,11 +16,11 @@ struct TFlecsReplicationTest : TFlecsRegisteredWorldTest<TDerived, TAsserter>
 protected:
 	virtual void OnRegisteredWorldSetUp() override
 	{
-		NetworkSubsystemInstance = this->UnrealWorld()->GetSubsystem<UFlecsNetworkWorldSubsystem>();
+		NetworkSubsystemInstance = this->UnrealWorld()->template GetSubsystem<UFlecsNetworkWorldSubsystem>();
 		check(NetworkSubsystemInstance);
 
-		CaptureTransportInstance = NewObject<UFlecsReplicationCaptureTransport>(NetworkSubsystemInstance);
-		NetworkSubsystemInstance->SetReplicationTransportForTesting(CaptureTransportInstance);
+		TestBridgeInstance = NewObject<UFlecsTestReplicationBridge>(NetworkSubsystemInstance);
+		NetworkSubsystemInstance->SetReplicationBridgeForTesting(TestBridgeInstance);
 
 		RegisterReplicationComponent<FFlecsReplicationTestRequiredTag>();
 		RegisterReplicationComponent<FFlecsReplicationTestValue>();
@@ -29,17 +30,16 @@ protected:
 		RegisterReplicationComponent<FFlecsReplicationTestRelationship>();
 		RegisterReplicationComponent<FFlecsReplicationTestValueRelationship>();
 		RegisterReplicationComponent<FFlecsReplicationTestWithValue>();
-		RegisterReplicationComponent<FFlecsReplicationTestLocalOnly>();
 	}
 
 	virtual void OnWorldTearDown() override
 	{
 		if (NetworkSubsystemInstance)
 		{
-			NetworkSubsystemInstance->SetReplicationTransportForTesting(nullptr);
+			NetworkSubsystemInstance->SetReplicationBridgeForTesting(nullptr);
 		}
 
-		CaptureTransportInstance = nullptr;
+		TestBridgeInstance = nullptr;
 		NetworkSubsystemInstance = nullptr;
 		Super::OnWorldTearDown();
 	}
@@ -49,9 +49,9 @@ protected:
 		return NetworkSubsystemInstance;
 	}
 
-	NO_DISCARD UFlecsReplicationCaptureTransport* CaptureTransport() const
+	NO_DISCARD UFlecsTestReplicationBridge* TestBridge() const
 	{
-		return CaptureTransportInstance;
+		return TestBridgeInstance;
 	}
 
 private:
@@ -64,7 +64,7 @@ private:
 	}
 
 	TObjectPtr<UFlecsNetworkWorldSubsystem> NetworkSubsystemInstance = nullptr;
-	TObjectPtr<UFlecsReplicationCaptureTransport> CaptureTransportInstance = nullptr;
+	TObjectPtr<UFlecsTestReplicationBridge> TestBridgeInstance = nullptr;
 }; // struct TFlecsReplicationTest
 
 #define FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(_ClassName, _TestDir, _Flags, _TestTags) \

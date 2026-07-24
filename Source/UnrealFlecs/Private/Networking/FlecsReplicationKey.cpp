@@ -66,7 +66,6 @@ TValueOrError<FFlecsReplicationIndividualKey, FString> FFlecsReplicationIndividu
 		return MakeError("Flecs ID does not correspond to a valid entity");
 	}
 	
-	
 	if (const FFlecsNetworkId* NetworkIdComponent = IdEntityHandle.TryGet<FFlecsNetworkId>())
 	{
 		Result.Kind = EFlecsReplicationPairTargetKind::Entity;

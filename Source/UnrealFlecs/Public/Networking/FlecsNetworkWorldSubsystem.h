@@ -45,6 +45,10 @@ public:
 	
 	NO_DISCARD TSolidNotNull<IFlecsNetworkIDGeneratorInterface*> GetNetworkIdGenerator() const;
 	NO_DISCARD TSolidNotNull<UFlecsReplicationBridgeBase*> GetReplicationBridge() const;
+
+#if WITH_AUTOMATION_TESTS
+	void SetReplicationBridgeForTesting(UFlecsReplicationBridgeBase* InReplicationBridge);
+#endif // WITH_AUTOMATION_TESTS
 	
 	template <Solid::TStaticClassConcept T>
 	requires (std::is_base_of_v<UFlecsReplicationBridgeBase, T>)

@@ -51,6 +51,12 @@ void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UF
 
 void UFlecsNetworkWorldSubsystem::Deinitialize()
 {
+	if (ReplicationBridge)
+	{
+		ReplicationBridge->DeinitializeBridge();
+		ReplicationBridge = nullptr;
+	}
+
 	FFlecsComponentReplicationRegistry::RemoveWorld(GetFlecsWorld());
 	
 	Super::Deinitialize();
@@ -95,13 +101,13 @@ void UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver(const
 	
 	auto CreateObserver = [this](const FFlecsId InComponentId) -> FFlecsObserverHandle
 	{
-		const FFlecsObserverHandle DirtyObserverHandle = GetFlecsWorld()->CreateObserver<FFlecsReplicatedEntityComponent>()
+		const FFlecsObserverHandle DirtyObserverHandle = GetFlecsWorld()->CreateObserver()
 			.With(InComponentId)
 			.With<FFlecsReplicatedEntityComponent>().Filter()
 			.Event(flecs::OnSet)
 			.Event(flecs::OnAdd)
 			.Event(flecs::OnRemove)
-			.each([this](flecs::iter& Iter, size_t Index, const FFlecsReplicatedEntityComponent& InReplicatedEntityComponent)
+			.each([this](flecs::iter& Iter, size_t Index)
 			{
 				const FFlecsEntityHandle EntityHandle = Iter.entity(Index);
 				solid_check(EntityHandle.IsValid());
@@ -115,11 +121,14 @@ void UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver(const
 	};
 	
 	const FFlecsObserverHandle PrimaryObserverHandle = CreateObserver(InDescriptor.LocalFlecsId);
-	const FFlecsObserverHandle PairObserverHandle = CreateObserver(
-		FFlecsId::MakePair(InDescriptor.LocalFlecsId, flecs::Wildcard));
+	const FFlecsObserverHandle PairFirstObserverHandle =
+		CreateObserver(FFlecsId::MakePair(InDescriptor.LocalFlecsId, flecs::Wildcard));
+	/*const FFlecsObserverHandle PairSecondObserverHandle =
+		CreateObserver(flecs::Wildcard, InDescriptor.LocalFlecsId);*/
 	
 	ComponentDirtyObservers.Add(PrimaryObserverHandle);
-	ComponentDirtyObservers.Add(PairObserverHandle);
+	ComponentDirtyObservers.Add(PairFirstObserverHandle);
+	/*ComponentDirtyObservers.Add(PairSecondObserverHandle);*/
 }
 
 FFlecsNetworkId UFlecsNetworkWorldSubsystem::BeginReplicatingEntity(const FFlecsEntityHandle& InEntityHandle)
@@ -197,6 +206,7 @@ void UFlecsNetworkWorldSubsystem::CreateReplicationBridge()
 	
 	ReplicationBridge = NewObject<UFlecsReplicationBridgeBase>(this, Settings->ReplicationBridgeClass);
 	solid_checkf(IsValid(ReplicationBridge), TEXT("Replication bridge is not valid"));
+	ReplicationBridge->InitializeBridge();
 }
 
 TSolidNotNull<IFlecsNetworkIDGeneratorInterface*> UFlecsNetworkWorldSubsystem::GetNetworkIdGenerator() const
@@ -210,6 +220,30 @@ TSolidNotNull<UFlecsReplicationBridgeBase*> UFlecsNetworkWorldSubsystem::GetRepl
 	return ReplicationBridge;
 }
 
+#if WITH_AUTOMATION_TESTS
+
+void UFlecsNetworkWorldSubsystem::SetReplicationBridgeForTesting(UFlecsReplicationBridgeBase* InReplicationBridge)
+{
+	if (ReplicationBridge == InReplicationBridge)
+	{
+		return;
+	}
+
+	if (ReplicationBridge)
+	{
+		ReplicationBridge->DeinitializeBridge();
+	}
+
+	ReplicationBridge = InReplicationBridge;
+
+	if (ReplicationBridge)
+	{
+		ReplicationBridge->InitializeBridge();
+	}
+}
+
+#endif // WITH_AUTOMATION_TESTS
+
 bool UFlecsNetworkWorldSubsystem::HasAuthority() const
 {
 	return GetWorld()->GetNetMode() != NM_Client;
@@ -222,7 +256,26 @@ bool UFlecsNetworkWorldSubsystem::IsStandalone() const
 
 void UFlecsNetworkWorldSubsystem::OnEntityLayoutReceived(const FFlecsReplicationLayoutDefinition& InLayout)
 {
+	const TArray<TPair<FFlecsEntityHandle, FFlecsEntityReplicationSnapshot>>* DeferredSnapshotsPtr
+		= DeferredEntityLayouts.Find(InLayout.LayoutId);
+
+	if (!DeferredSnapshotsPtr)
+	{
+		return;
+	}
 	
+	for (const TPair<FFlecsEntityHandle, FFlecsEntityReplicationSnapshot>& Pair : *DeferredSnapshotsPtr)
+	{
+		const FFlecsEntityHandle& EntityHandle = Pair.Key;
+		const FFlecsEntityReplicationSnapshot& Snapshot = Pair.Value;
+
+		if UNLIKELY_IF(!ensureAlwaysMsgf(EntityHandle.IsValid(), TEXT("Deferred entity handle is not valid")))
+		{
+			continue;
+		}
+
+		ApplySnapshotToEntity(EntityHandle, Snapshot);
+	}
 }
 
 void UFlecsNetworkWorldSubsystem::ReceiveNetworkEntitySnapshot(const FFlecsNetworkId& InNetworkId,

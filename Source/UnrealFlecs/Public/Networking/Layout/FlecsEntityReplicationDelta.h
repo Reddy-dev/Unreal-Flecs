@@ -4,5 +4,3 @@
 
 #include "CoreMinimal.h"
 
-#include "FlecsEntityReplicationDelta.generated.h"
-
