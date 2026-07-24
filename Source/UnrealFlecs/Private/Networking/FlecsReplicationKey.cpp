@@ -123,10 +123,10 @@ FFlecsId FFlecsReplicationIndividualKey::ResolveToId(const TSolidNotNull<const U
 			const TSolidNotNull<UFlecsNetworkWorldSubsystem*> NetworkSubsystem 
 					= InWorld->Get<FFlecsNetworkSubsystemSingleton>().GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
 				
-			const FFlecsEntityHandle EntityHandle = NetworkSubsystem->GetEntityFromNetworkIdChecked(InKey.Entity);
-			if LIKELY_IF(EntityHandle.IsValid())
+			const TOptional<FFlecsEntityHandle> EntityHandle = NetworkSubsystem->GetEntityFromNetworkId(InKey.Entity);
+			if LIKELY_IF(IsValid(EntityHandle))
 			{
-				return EntityHandle;
+				return EntityHandle.GetValue();
 			}
 			break;
 		}

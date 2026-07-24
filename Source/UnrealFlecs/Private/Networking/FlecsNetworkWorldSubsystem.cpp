@@ -268,7 +268,7 @@ void UFlecsNetworkWorldSubsystem::ReceiveNetworkEntitySnapshot(const FFlecsNetwo
 	const FFlecsReplicationLayoutDefinition* LayoutDefinition = GetLayoutRegistry().Find(InSnapshot.LayoutId);
 	if (!LayoutDefinition)
 	{
-		AddDeferredEntityLayout(EntityHandle, InSnapshot.LayoutDefinition);
+		AddDeferredEntityLayout(EntityHandle, *LayoutDefinition, InSnapshot);
 		return;
 	}
 		
@@ -324,6 +324,7 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshotToEntity(const FFlecsEntityHandle
 void UFlecsNetworkWorldSubsystem::AddDeferredEntityLayout(const FFlecsEntityHandle& InEntityHandle,
 	const FFlecsReplicationLayoutDefinition& InLayout, const FFlecsEntityReplicationSnapshot& InSnapshot)
 {
+	
 }
 
 TSolidNotNull<const UFlecsNetworkingModuleSettings*> UFlecsNetworkWorldSubsystem::GetNetworkingSettings()

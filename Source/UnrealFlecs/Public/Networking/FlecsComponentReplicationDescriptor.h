@@ -18,8 +18,8 @@ class FArchive;
  * Portable identity of a replicated component schema.
  *
  * The value is derived from the component's stable name and is exchanged in
- * layouts instead of a world-local Flecs ID. It identifies a schema, not a
- * serializer version; use the descriptor's SchemaVersion for compatibility.
+ * layouts instead of a world-local Flecs ID. Client and server must use the
+ * same protocol build.
  */
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsReplicationSchemaId
@@ -98,8 +98,8 @@ using FFlecsReplicationDestroyFunction = void(*)(void*);
  * Per-world description of one component that may appear in replication.
  *
  * LocalFlecsId and the lifetime/serialization callbacks are local runtime
- * details. SchemaId, StableName, and SchemaVersion form the portable contract
- * checked before a received layout can be applied.
+ * details. SchemaId and StableName form the portable identity checked before
+ * a received layout can be applied.
  */
 struct UNREALFLECS_API FFlecsComponentReplicationDescriptor
 {
