@@ -82,53 +82,5 @@ void FFlecsEntityReplicationSnapshot::FillFromEntity(const FFlecsEntityHandle& I
 			*Key.CanonicalString());
 	}
 	
-	/*TArray<FFlecsReplicationKey> DontFragmentKeys;
-	
-	InNetworkWorldSubsystem->IterateDontFragmentOnEntity(InEntityHandle,
-		[this, World, &DontFragmentKeys](const flecs::iter& InIter, size_t InIndex)
-	{
-		// Should be the component on our $this entity
-		FFlecsEntityHandle ComponentEntity = InIter.entity(InIndex);
-			
-		TValueOrError<FFlecsReplicationKey, FString> Key = FFlecsReplicationKey::BuildKey(World, ComponentEntity);
-		solid_checkf(Key.IsValid(), TEXT("Failed to build replication key for component entity %s"), *ComponentEntity.ToString());
-			
-		DontFragmentKeys.Add(Key.GetValue());
-	});
-	
-	DontFragmentKeys.Sort([](const FFlecsReplicationKey& A, const FFlecsReplicationKey& B)
-	{
-		return A.CanonicalString() < B.CanonicalString();
-	});
-	
-	const uint32 DontFragmentKeyCount = DontFragmentKeys.Num();
-	
-	for (uint32 Index = 0; Index < DontFragmentKeyCount; ++Index)
-	{
-		const FFlecsReplicationKey& Key = DontFragmentKeys[Index];
-		
-		const FFlecsId ComponentId = FFlecsReplicationKey::ResolveToId(World, Key);
-		if UNLIKELY_IF(!ComponentId.IsValid())
-		{
-			UE_LOGFMT(LogFlecsCore, Error, 
-				"Failed to resolve component ID for key {Key} when marking snapshot values as DontFragment for entity {Entity}.", 
-				Key.CanonicalString(), *InEntityHandle.ToString());
-			continue;
-		}
-		
-		const void* ComponentValuePtr = InEntityHandle.TryGet(ComponentId);
-		
-		if UNLIKELY_IF(!ComponentValuePtr)
-		{
-			UE_LOGFMT(LogFlecsCore, Error, 
-				"Failed to get component value for component ID {ComponentId} when marking snapshot values as DontFragment for entity {Entity}.", 
-				ComponentId.ToString(), *InEntityHandle.ToString());
-			continue;
-		}
-		
-		
-	}
-	*/
-	
 	++StateRevision;
 }
