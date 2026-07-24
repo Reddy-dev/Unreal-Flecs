@@ -2,6 +2,8 @@
 
 #include "Pipelines/FlecsTickFunctionObservers.h"
 
+#include "Engine/World.h"
+
 #include "Pipelines/TickFunctions/FlecsTickFunctionComponent.h"
 #include "Pipelines/TickFunctions/FlecsTickTypeRelationship.h"
 
