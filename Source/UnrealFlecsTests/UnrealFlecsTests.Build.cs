@@ -1,4 +1,4 @@
-using UnrealBuildTool;
+﻿using UnrealBuildTool;
 
 public class UnrealFlecsTests : ModuleRules
 {
@@ -39,7 +39,6 @@ public class UnrealFlecsTests : ModuleRules
                 "SolidMacros",
                 "FlecsLibrary",
 				"UnrealFlecs",
-				"UnrealFlecsIris",
             }
         );
 

@@ -36,11 +36,6 @@
 			"LoadingPhase": "Default"
 		},
 		{
-			"Name": "UnrealFlecsIris",
-			"Type": "Runtime",
-			"LoadingPhase": "Default"
-		},
-		{
 			"Name": "UnrealFlecsEditor",
 			"Type": "Editor",
 			"LoadingPhase": "Default"

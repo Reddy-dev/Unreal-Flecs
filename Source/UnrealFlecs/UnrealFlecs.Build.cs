@@ -11,6 +11,8 @@ public class UnrealFlecs : ModuleRules
 		CppStandard = CppStandardVersion.Cpp20;
 		IWYUSupport = IWYUSupport.Full;
 		
+		SetupIrisSupport(Target, true);
+		
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{

@@ -11,7 +11,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(Abstract)
 class UNREALFLECS_API UFlecsReplicationChunkBase : public UObject
 {
 	GENERATED_BODY()

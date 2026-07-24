@@ -309,16 +309,8 @@ void UFlecsNetworkWorldSubsystem::ReceiveNetworkEntitySnapshot(const FFlecsNetwo
 	
 		NetworkIdToEntityMap.Add(InNetworkId, EntityHandle);
 	}
-	
-	if UNLIKELY_IF(!GetReplicationSnapshots().Contains(InNetworkId))
-	{
-		UE_LOG(LogFlecsWorld, Error,
-			TEXT("Received replication snapshot for network ID '%s' but no existing snapshot was found"),
-			*InNetworkId.ToString());
-		return;
-	}
 		
-	const FFlecsEntityReplicationSnapshot& ExistingSnapshot = GetReplicationSnapshots()[InNetworkId];
+	const FFlecsEntityReplicationSnapshot& ExistingSnapshot = GetReplicationSnapshots().FindOrAdd(InNetworkId);
 		
 	if (ExistingSnapshot.StateRevision >= InSnapshot.StateRevision)
 	{
