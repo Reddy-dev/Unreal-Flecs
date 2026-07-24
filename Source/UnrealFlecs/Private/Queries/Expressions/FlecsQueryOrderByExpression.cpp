@@ -34,7 +34,8 @@ void FFlecsQueryOrderByExpression::Apply(const TSolidNotNull<const UFlecsWorldIn
 		UE::Flecs::Queries::MakeOrderByFunction(OrderByCallback.Get<FFlecsOrderByCallbackDefinition>().GetOrderByFunction()));
 }
 
-FFlecsQueryOrderByCPPExpressionWrapper::FFlecsQueryOrderByCPPExpressionWrapper() : Super(false /* bInAllowsChildExpressions */)
+FFlecsQueryOrderByCPPExpressionWrapper::FFlecsQueryOrderByCPPExpressionWrapper() 
+	: Super(false /* bInAllowsChildExpressions */)
 {
 }
 
