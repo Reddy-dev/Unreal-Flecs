@@ -15,8 +15,8 @@ struct UNREALFLECS_API FFlecsReplicatedValue
 	UPROPERTY()
 	uint16 KeyIndex = 0;
 	
-	/*UPROPERTY()
-	bool bDontFragment = false;*/
+	UPROPERTY()
+	bool bDontFragment = false;
 
 	UPROPERTY()
 	TArray<uint8> Bytes;
