@@ -74,6 +74,7 @@ Plugins/*/Intermediate/*
 DerivedDataCache/*
 
 Scripts/*
+Plugins/*/Scripts/*
 
 .uet/
 /.idea
