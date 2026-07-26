@@ -29,7 +29,8 @@ public:
 	virtual void DeinitializeBridge() PURE_VIRTUAL(UFlecsReplicationBridgeBase::DeinitializeBridge, );
 	
 	// Override PublishEntityLayout, you dont need to override ReceiveEntityLayout unless you want to do something special when receiving a layout.
-	virtual void PublishEntityLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition);
+	virtual void PublishEntityLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition)
+		PURE_VIRTUAL(UFlecsReplicationBridgeBase::PublishEntityLayout, );
 	virtual void ReceiveEntityLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition);
 	
 	// Called on both Client and Server when a new layout is published. This is called after the layout has been received and processed.

@@ -17,18 +17,11 @@ UFlecsReplicationBridgeBase::~UFlecsReplicationBridgeBase()
 {
 }
 
-void UFlecsReplicationBridgeBase::PublishEntityLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition)
-{
-	OnEntityLayoutPublished(InLayoutDefinition);
-}
-
 void UFlecsReplicationBridgeBase::ReceiveEntityLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition)
 {
 	GetNetworkWorldSubsystem()->GetLayoutRegistry().AddRemoteDefinition(InLayoutDefinition);
 	
 	GetNetworkWorldSubsystem()->OnEntityLayoutReceived(InLayoutDefinition);
-	
-	OnEntityLayoutPublished(InLayoutDefinition);
 }
 
 void UFlecsReplicationBridgeBase::ReceiveNetEntity(const FFlecsNetworkId& InNetworkId,
