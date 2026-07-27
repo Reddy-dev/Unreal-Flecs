@@ -14,11 +14,14 @@ class UNREALFLECSTESTS_API UFlecsTestReplicationBridge : public UFlecsReplicatio
 	GENERATED_BODY()
 
 public:
+	using UFlecsReplicationBridgeBase::PublishNetEntity;
+
 	virtual void InitializeBridge() override;
 	virtual void DeinitializeBridge() override;
 
 	virtual void PublishEntityLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition) override;
 	virtual void PublishNetEntity(
+		const FFlecsNetRouteId& InRouteId,
 		const FFlecsNetworkId& InNetworkId,
 		const FFlecsEntityReplicationSnapshot& InSnapshot) override;
 
@@ -40,6 +43,11 @@ public:
 		return PublishedSnapshots;
 	}
 
+	NO_DISCARD const TArray<FFlecsNetRouteId>& GetPublishedRouteIds() const
+	{
+		return PublishedRouteIds;
+	}
+
 private:
 	UPROPERTY(Transient)
 	TObjectPtr<UFlecsTestReplicationBridge> Peer = nullptr;
@@ -48,6 +56,8 @@ private:
 	TArray<FFlecsReplicationLayoutDefinition> PublishedLayouts;
 
 	TArray<TPair<FFlecsNetworkId, FFlecsEntityReplicationSnapshot>> PublishedSnapshots;
+
+	TArray<FFlecsNetRouteId> PublishedRouteIds;
 
 	bool bInitialized = false;
 }; // class UFlecsTestReplicationBridge

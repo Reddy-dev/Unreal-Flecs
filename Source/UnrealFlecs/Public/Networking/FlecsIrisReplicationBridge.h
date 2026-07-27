@@ -17,9 +17,16 @@ class UNREALFLECS_API UFlecsIrisReplicationBridge : public UFlecsReplicationBrid
 	GENERATED_BODY()
 
 public:
+	
+	virtual void InitializeBridge() override;
+	virtual void DeinitializeBridge() override;
+
 	virtual void PublishEntityLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition) override;
 	
-	virtual void PublishNetEntity(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot) override;
+	virtual void PublishNetEntity(
+		const FFlecsNetRouteId& InRouteId,
+		const FFlecsNetworkId& InNetworkId,
+		const FFlecsEntityReplicationSnapshot& InSnapshot) override;
 	
 protected:
 	

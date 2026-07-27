@@ -11,6 +11,7 @@
 #include "FlecsNetworkingModuleSettings.generated.h"
 
 class UFlecsReplicationBridgeBase;
+class UFlecsReplicationRouterBase;
 
 /** Runtime configuration for the Flecs replication core and its selected transport provider. */
 UCLASS()
@@ -27,5 +28,8 @@ public:
 	
 	UPROPERTY(EditAnywhere, Config, meta = (AllowAbstract = false))
 	TSubclassOf<UFlecsReplicationBridgeBase> ReplicationBridgeClass;
+
+	UPROPERTY(EditAnywhere, Config, meta = (AllowAbstract = false))
+	TSubclassOf<UFlecsReplicationRouterBase> ReplicationRouterClass;
 	
 }; // class UFlecsNetworkingModuleSettings

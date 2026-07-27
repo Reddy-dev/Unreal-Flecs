@@ -15,6 +15,7 @@
 #include "Networking/FlecsNetworkSubsystemSingleton.h"
 #include "Networking/FlecsReplicatedEntityComponent.h"
 #include "Networking/FlecsReplicationBridgeBase.h"
+#include "Networking/Router/FlecsReplicationRouterBase.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsNetworkWorldSubsystem)
 
@@ -42,6 +43,7 @@ void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UF
 	FFlecsComponentReplicationRegistry::Get(InWorld).OnDescriptorRegistered()
 		.AddUObject(this, &UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver);
 	
+	CreateReplicationRouter();
 	CreateReplicationBridge();
 	
 	
@@ -55,6 +57,12 @@ void UFlecsNetworkWorldSubsystem::Deinitialize()
 	{
 		ReplicationBridge->DeinitializeBridge();
 		ReplicationBridge = nullptr;
+	}
+
+	if (ReplicationRouter)
+	{
+		ReplicationRouter->DeinitializeRouter();
+		ReplicationRouter = nullptr;
 	}
 
 	FFlecsComponentReplicationRegistry::RemoveWorld(GetFlecsWorld());
@@ -221,6 +229,27 @@ void UFlecsNetworkWorldSubsystem::CreateReplicationBridge()
 	ReplicationBridge->InitializeBridge();
 }
 
+void UFlecsNetworkWorldSubsystem::CreateReplicationRouter()
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	const TSolidNotNull<const UFlecsNetworkingModuleSettings*> Settings = GetNetworkingSettings();
+
+	if UNLIKELY_IF(!ensureMsgf(
+		Settings->ReplicationRouterClass,
+		TEXT("Replication router class is not set in settings")))
+	{
+		return;
+	}
+
+	ReplicationRouter = NewObject<UFlecsReplicationRouterBase>(this, Settings->ReplicationRouterClass);
+	solid_checkf(IsValid(ReplicationRouter), TEXT("Replication router is not valid"));
+	ReplicationRouter->InitializeRouter();
+}
+
 TSolidNotNull<IFlecsNetworkIDGeneratorInterface*> UFlecsNetworkWorldSubsystem::GetNetworkIdGenerator() const
 {
 	return CastChecked<IFlecsNetworkIDGeneratorInterface>(NetworkIdGenerator);
@@ -230,6 +259,12 @@ TSolidNotNull<UFlecsReplicationBridgeBase*> UFlecsNetworkWorldSubsystem::GetRepl
 {
 	solid_cassumef(ReplicationBridge, TEXT("Replication bridge is not valid"));
 	return ReplicationBridge;
+}
+
+TSolidNotNull<UFlecsReplicationRouterBase*> UFlecsNetworkWorldSubsystem::GetReplicationRouter() const
+{
+	solid_cassumef(ReplicationRouter, TEXT("Replication router is not valid"));
+	return ReplicationRouter;
 }
 
 #if WITH_AUTOMATION_TESTS

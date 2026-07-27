@@ -3,8 +3,10 @@
 #include "Networking/FlecsReplicationBridgeBase.h"
 
 #include "Engine/World.h"
+#include "Iris/ReplicationSystem/ReplicationFragmentUtil.h"
 
 #include "Networking/FlecsNetworkWorldSubsystem.h"
+#include "Networking/Shards/FlecsNetShardBase.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsReplicationBridgeBase)
 
@@ -15,6 +17,17 @@ UFlecsReplicationBridgeBase::UFlecsReplicationBridgeBase(const FObjectInitialize
 
 UFlecsReplicationBridgeBase::~UFlecsReplicationBridgeBase()
 {
+}
+
+void UFlecsReplicationBridgeBase::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+}
+
+void UFlecsReplicationBridgeBase::RegisterReplicationFragments(UE::Net::FFragmentRegistrationContext& Context,
+	UE::Net::EFragmentRegistrationFlags RegistrationFlags)
+{
+	UE::Net::FReplicationFragmentUtil::CreateAndRegisterFragmentsForObject(this, Context, RegistrationFlags);
 }
 
 void UFlecsReplicationBridgeBase::ReceiveEntityLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition)

@@ -4,9 +4,7 @@
 
 #include "CoreMinimal.h"
 
-#include "UObject/Object.h"
-#include "Net/Core/PushModel/PushModelMacros.h"
-
+#include "Networking/Shards/FlecsNetShardBase.h"
 #include "FlecsIrisFastArraySerializer.h"
 
 #include "FlecsNetEntityPageBase.generated.h"
@@ -15,22 +13,14 @@
  * 
  */
 UCLASS(Abstract)
-class UNREALFLECS_API UFlecsNetEntityPageBase : public UObject
+class UNREALFLECS_API UFlecsNetEntityPageBase : public UFlecsNetShardBase
 {
 	GENERATED_BODY()
-	REPLICATED_BASE_CLASS(UFlecsNetEntityPageBase)
 
 public:
-	virtual bool IsSupportedForNetworking() const override
-	{
-		return true;
-	}
-	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	virtual void RegisterReplicationFragments(UE::Net::FFragmentRegistrationContext& Fragments, 
-		UE::Net::EFragmentRegistrationFlags RegistrationFlags) override;
 	
-	UPROPERTY(ReplicatedUsing = OnRep_EntityPage)
+	UPROPERTY(Replicated)
 	FFlecsNetEntityPageArray EntityPage;
 	
 	UFUNCTION()

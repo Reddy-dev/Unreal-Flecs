@@ -6,8 +6,13 @@
 #if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
 
 #include "Networking/FlecsNetDirtyTag.h"
+#include "Networking/FlecsNetEntityProxyBase.h"
+#include "Networking/FlecsNetworkingModuleSettings.h"
 #include "Networking/FlecsReplicatedEntityComponent.h"
 #include "Networking/Layout/FlecsReplicationLayoutRegistry.h"
+#include "Networking/Pages/FlecsNetEntityPageBase.h"
+#include "Networking/Router/FlecsDefaultReplicationRouter.h"
+#include "Networking/Shards/FlecsNetShardBase.h"
 
 FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 	"UnrealFlecs.Networking.Replication.FakeBridge",
@@ -19,6 +24,71 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 		ASSERT_THAT(IsNotNull(TestBridge()));
 		ASSERT_THAT(IsTrue(TestBridge()->IsInitialized()));
 		ASSERT_THAT(IsTrue(NetworkSubsystem()->GetReplicationBridge() == TestBridge()));
+	}
+
+	TEST_METHOD(EntityPageAndEntityProxy_AreShardStorageTypes)
+	{
+		ASSERT_THAT(IsTrue(
+			UFlecsNetEntityPageBase::StaticClass()->IsChildOf(UFlecsNetShardBase::StaticClass())));
+		ASSERT_THAT(IsTrue(
+			UFlecsNetEntityProxyBase::StaticClass()->IsChildOf(UFlecsNetShardBase::StaticClass())));
+	}
+
+	TEST_METHOD(ConfiguredRouter_IsCreatedByTheNetworkingSubsystem)
+	{
+		UFlecsReplicationRouterBase* Router = NetworkSubsystem()->GetReplicationRouter();
+
+		ASSERT_THAT(IsTrue(
+			Router->GetClass() == GetDefault<UFlecsNetworkingModuleSettings>()->ReplicationRouterClass.Get()));
+	}
+
+	TEST_METHOD(DefaultRouter_RoutesEveryEntityToDefault)
+	{
+		const UFlecsDefaultReplicationRouter* Router =
+			NewObject<UFlecsDefaultReplicationRouter>(NetworkSubsystem());
+		const FFlecsEntityHandle Entity = World()->CreateEntity();
+
+		ASSERT_THAT(IsTrue(Router->RouteEntity(Entity) == FFlecsNetRouteId::Default()));
+	}
+
+	TEST_METHOD(RegisterShard_RoutesByIdWithoutDependingOnConcreteStorageType)
+	{
+		const FFlecsNetRouteId RouteId(FName(TEXT("Replication.Route.Test")));
+		UFlecsNetShardBase* Shard = NewObject<UFlecsNetShardBase>(TestBridge());
+
+		ASSERT_THAT(IsTrue(TestBridge()->RegisterShard(RouteId, Shard)));
+		ASSERT_THAT(IsTrue(Shard->GetRouteId() == RouteId));
+		ASSERT_THAT(IsTrue(TestBridge()->ResolveShard(RouteId) == Shard));
+
+		ASSERT_THAT(IsTrue(TestBridge()->UnregisterShard(RouteId, Shard)));
+		ASSERT_THAT(IsNull(TestBridge()->ResolveShard(RouteId)));
+	}
+
+	TEST_METHOD(RegisterShard_DoesNotReplaceAnOccupiedRoute)
+	{
+		const FFlecsNetRouteId RouteId(FName(TEXT("Replication.Route.Occupied")));
+		UFlecsNetShardBase* FirstShard = NewObject<UFlecsNetShardBase>(TestBridge());
+		UFlecsNetShardBase* SecondShard = NewObject<UFlecsNetShardBase>(TestBridge());
+
+		ASSERT_THAT(IsTrue(TestBridge()->RegisterShard(RouteId, FirstShard)));
+		ASSERT_THAT(IsFalse(TestBridge()->RegisterShard(RouteId, SecondShard)));
+		ASSERT_THAT(IsTrue(TestBridge()->ResolveShard(RouteId) == FirstShard));
+
+		ASSERT_THAT(IsTrue(TestBridge()->UnregisterShard(RouteId, FirstShard)));
+	}
+
+	TEST_METHOD(RegisterShard_DoesNotAssociateOneShardWithMultipleRoutes)
+	{
+		const FFlecsNetRouteId FirstRouteId(FName(TEXT("Replication.Route.First")));
+		const FFlecsNetRouteId SecondRouteId(FName(TEXT("Replication.Route.Second")));
+		UFlecsNetShardBase* Shard = NewObject<UFlecsNetShardBase>(TestBridge());
+
+		ASSERT_THAT(IsTrue(TestBridge()->RegisterShard(FirstRouteId, Shard)));
+		ASSERT_THAT(IsFalse(TestBridge()->RegisterShard(SecondRouteId, Shard)));
+		ASSERT_THAT(IsTrue(TestBridge()->ResolveShard(FirstRouteId) == Shard));
+		ASSERT_THAT(IsNull(TestBridge()->ResolveShard(SecondRouteId)));
+
+		ASSERT_THAT(IsTrue(TestBridge()->UnregisterShard(FirstRouteId, Shard)));
 	}
 
 	TEST_METHOD(DirtyObservers_ComponentAndEncodedPair_MarkReplicatedEntityDirty)
@@ -78,6 +148,8 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 
 		TestBridge()->PublishNetEntity(NetworkId, Snapshot);
 
+		ASSERT_THAT(AreEqual(1, TestBridge()->GetPublishedRouteIds().Num()));
+		ASSERT_THAT(IsTrue(TestBridge()->GetPublishedRouteIds()[0] == FFlecsNetRouteId::Default()));
 		ASSERT_THAT(AreEqual(1, TestBridge()->GetPublishedSnapshots().Num()));
 		const TPair<FFlecsNetworkId, FFlecsEntityReplicationSnapshot>& Published =
 			TestBridge()->GetPublishedSnapshots()[0];
@@ -128,6 +200,7 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 		TestBridge()->ResetCapturedRecords();
 
 		ASSERT_THAT(AreEqual(0, TestBridge()->GetPublishedLayouts().Num()));
+		ASSERT_THAT(AreEqual(0, TestBridge()->GetPublishedRouteIds().Num()));
 		ASSERT_THAT(AreEqual(0, TestBridge()->GetPublishedSnapshots().Num()));
 		ASSERT_THAT(IsTrue(TestBridge()->IsInitialized()));
 	}

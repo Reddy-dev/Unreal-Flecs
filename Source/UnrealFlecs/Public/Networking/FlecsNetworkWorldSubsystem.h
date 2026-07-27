@@ -13,6 +13,7 @@
 #include "FlecsNetworkWorldSubsystem.generated.h"
 
 class UFlecsReplicationBridgeBase;
+class UFlecsReplicationRouterBase;
 class IFlecsNetworkIDGeneratorInterface;
 class UFlecsNetworkingModuleSettings;
 
@@ -45,6 +46,7 @@ public:
 	
 	NO_DISCARD TSolidNotNull<IFlecsNetworkIDGeneratorInterface*> GetNetworkIdGenerator() const;
 	NO_DISCARD TSolidNotNull<UFlecsReplicationBridgeBase*> GetReplicationBridge() const;
+	NO_DISCARD TSolidNotNull<UFlecsReplicationRouterBase*> GetReplicationRouter() const;
 
 #if WITH_AUTOMATION_TESTS
 	void SetReplicationBridgeForTesting(UFlecsReplicationBridgeBase* InReplicationBridge);
@@ -124,6 +126,7 @@ protected:
 	static NO_DISCARD TSolidNotNull<const UFlecsNetworkingModuleSettings*> GetNetworkingSettings();
 	
 	void CreateReplicationBridge();
+	void CreateReplicationRouter();
 	void CreateNetworkIdGenerator();
 	
 	TMap<FFlecsReplicationLayoutId, TArray<TPair<FFlecsEntityHandle, FFlecsEntityReplicationSnapshot>>> DeferredEntityLayouts;
@@ -142,6 +145,9 @@ protected:
 	
 	UPROPERTY()
 	TObjectPtr<UFlecsReplicationBridgeBase> ReplicationBridge;
+
+	UPROPERTY()
+	TObjectPtr<UFlecsReplicationRouterBase> ReplicationRouter;
 	
 	FFlecsReplicationLayoutRegistry LayoutRegistry;
 	

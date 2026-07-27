@@ -8,6 +8,7 @@
 #include "Networking/FlecsReplicatedEntityComponent.h"
 #include "Networking/FlecsReplicationBridgeBase.h"
 #include "Networking/Layout/FlecsReplicationSnapshot.h"
+#include "Networking/Router/FlecsReplicationRouterBase.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsNetDirtySystem)
 
@@ -35,6 +36,17 @@ void UFlecsNetDirtySystem::EachIterator(const TSolidNotNull<UFlecsWorldInterface
 		= InIterator.field_at<const FFlecsNetworkSubsystemSingleton>(3, 0).GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
 		
 	const FFlecsEntityHandle EntityHandle = InIterator.entity(InIndex);
+
+	const FFlecsNetRouteId RouteId = NetworkSubsystem->GetReplicationRouter()->RouteEntity(EntityHandle);
+	if UNLIKELY_IF(!RouteId.IsValid())
+	{
+		NetworkSubsystem->GetReplicationBridge()->HandleProtocolError(FString::Printf(
+			TEXT("Replication router returned an invalid route for entity %s"),
+			*EntityHandle.ToString()));
+
+		EntityHandle.Remove<FFlecsNetDirtyTag>();
+		return;
+	}
 	
 	bool bCreatedNewLayout = false;
 		
@@ -44,8 +56,9 @@ void UFlecsNetDirtySystem::EachIterator(const TSolidNotNull<UFlecsWorldInterface
 	// @TODO: Remove this in shipping?
 	if UNLIKELY_IF(LayoutResult.HasError())
 	{
-		UE_LOG(LogFlecsCore, Error, TEXT("Failed to build replication layout for entity %s: %s"),
-			*EntityHandle.ToString(), *LayoutResult.GetError());
+		NetworkSubsystem->GetReplicationBridge()->HandleProtocolError(FString::Printf(
+			TEXT("Failed to build replication layout for entity %s: %s"),
+			*EntityHandle.ToString(), *LayoutResult.GetError()));
 		
 		EntityHandle.Remove<FFlecsNetDirtyTag>();
 		return;
@@ -68,7 +81,7 @@ void UFlecsNetDirtySystem::EachIterator(const TSolidNotNull<UFlecsWorldInterface
 		NetworkSubsystem->GetReplicationBridge()->PublishEntityLayout(*LayoutDefinition);
 	}
 		
-	NetworkSubsystem->GetReplicationBridge()->PublishNetEntity(NetworkId, Snapshot);
+	NetworkSubsystem->GetReplicationBridge()->PublishNetEntity(RouteId, NetworkId, Snapshot);
 
 	EntityHandle.Remove<FFlecsNetDirtyTag>();
 }
