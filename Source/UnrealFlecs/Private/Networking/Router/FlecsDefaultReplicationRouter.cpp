@@ -8,3 +8,9 @@ FFlecsNetRouteId UFlecsDefaultReplicationRouter::RouteEntity(const FFlecsEntityH
 {
 	return FFlecsNetRouteId::Default();
 }
+
+EFlecsReplicationRoutedShardType UFlecsDefaultReplicationRouter::GetRoutedShardType(
+	const FFlecsEntityHandle& InEntityHandle, const FFlecsNetRouteId& InRouteId) const
+{
+	return Super::GetRoutedShardType(InEntityHandle, InRouteId);
+}

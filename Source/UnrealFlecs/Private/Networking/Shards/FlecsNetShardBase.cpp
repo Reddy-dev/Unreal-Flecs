@@ -6,7 +6,23 @@
 #include "Net/UnrealNetwork.h"
 #include "Net/Core/PushModel/PushModel.h"
 
+#include "Networking/FlecsNetworkWorldSubsystem.h"
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsNetShardBase)
+
+void UFlecsNetShardBase::InitializeShard()
+{
+	UE::Net::FRootObjectSettings Settings;
+	ConfigureObjectSettings(Settings);
+	
+	RootObjectAdapter.Configure(Settings);
+	RootObjectAdapter.InitAdapter(this);
+}
+
+void UFlecsNetShardBase::DeinitializeShard()
+{
+	RootObjectAdapter.DeinitAdapter();
+}
 
 void UFlecsNetShardBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -26,16 +42,31 @@ void UFlecsNetShardBase::RegisterReplicationFragments(UE::Net::FFragmentRegistra
 void UFlecsNetShardBase::FillRootObjectReplicationParams(const UE::Net::FRootObjectReplicationParamsContext& Context,
 	UE::Net::FRootObjectReplicationParams& OutParams) const
 {
-	OutParams.
+	RootObjectAdapter.FillRootObjectReplicationParams(Context, OutParams);
 }
 
-UFlecsReplicationBridgeBase* UFlecsNetShardBase::GetReplicationBridge() const
+void UFlecsNetShardBase::ConfigureObjectSettings(OUT UE::Net::FRootObjectSettings& OutSettings) const
 {
-	return GetTypedOuter<UFlecsReplicationBridgeBase>();
+	OutSettings.bIsNotRouted = false;
+}
+
+void UFlecsNetShardBase::SetOwningNetworkWorldSubsystem(UFlecsNetworkWorldSubsystem* InOwningNetworkWorldSubsystem)
+{
+	OwningNetworkWorldSubsystem = InOwningNetworkWorldSubsystem;
+}
+
+UFlecsNetworkWorldSubsystem* UFlecsNetShardBase::GetOwningNetworkWorldSubsystem() const
+{
+	return OwningNetworkWorldSubsystem.Get();
 }
 
 void UFlecsNetShardBase::SetRouteId(const FFlecsNetRouteId& InRouteId)
 {
 	RouteId = InRouteId;
 	MARK_PROPERTY_DIRTY_FROM_NAME(UFlecsNetShardBase, RouteId, this);
+}
+
+void UFlecsNetShardBase::ReceiveEntityUpdate(const FFlecsNetworkId& InNetworkId,
+	const FFlecsEntityReplicationSnapshot& InSnapshot)
+{
 }

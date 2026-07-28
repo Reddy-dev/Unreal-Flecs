@@ -80,7 +80,8 @@ namespace
 		
 		return true;
 	}
-}
+	
+} // namespace
 
 FFlecsReplicationSchemaId FFlecsReplicationSchemaId::FromStableName(const FString& StableName)
 {

@@ -7,13 +7,13 @@
 #include "Networking/Shards/FlecsNetShardBase.h"
 #include "FlecsIrisFastArraySerializer.h"
 
-#include "FlecsNetEntityPageBase.generated.h"
+#include "FlecsNetEntityPage.generated.h"
 
 /**
  * 
  */
-UCLASS(Abstract)
-class UNREALFLECS_API UFlecsNetEntityPageBase : public UFlecsNetShardBase
+UCLASS()
+class UNREALFLECS_API UFlecsNetEntityPage : public UFlecsNetShardBase
 {
 	GENERATED_BODY()
 

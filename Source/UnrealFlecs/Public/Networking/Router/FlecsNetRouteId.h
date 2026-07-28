@@ -6,18 +6,22 @@
 
 #include "SolidMacros/Macros.h"
 
+#include "Properties/FlecsComponentProperties.h"
+
 #include "FlecsNetRouteId.generated.h"
 
 /** Stable bridge-local identity used to resolve a replication shard. */
-USTRUCT(BlueprintType)
+USTRUCT()
 struct UNREALFLECS_API FFlecsNetRouteId
 {
 	GENERATED_BODY()
+	
+	static constexpr flecs::on_instantiate on_instantiate = flecs::on_instantiate::inherit;
 
 public:
 	FFlecsNetRouteId() = default;
 
-	FORCEINLINE explicit FFlecsNetRouteId(const FName InName)
+	FORCEINLINE explicit FFlecsNetRouteId(const FName& InName)
 		: Name(InName)
 	{
 	}
@@ -39,7 +43,12 @@ public:
 		return GetTypeHash(InRouteId.Name);
 	}
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Networking")
+	UPROPERTY()
 	FName Name = FName("Default");
 
 }; // struct FFlecsNetRouteId
+
+template <>
+struct TFlecsComponentTraits<FFlecsNetRouteId> : public TFlecsComponentTraitsBase<FFlecsNetRouteId>
+{
+}; // struct TFlecsComponentTraits<FFlecsNetRouteId>

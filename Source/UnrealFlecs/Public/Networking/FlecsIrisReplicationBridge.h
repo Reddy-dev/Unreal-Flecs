@@ -28,6 +28,10 @@ public:
 		const FFlecsNetworkId& InNetworkId,
 		const FFlecsEntityReplicationSnapshot& InSnapshot) override;
 	
+	virtual UFlecsNetShardBase* ResolveShard(const FFlecsNetRouteId& InRouteId, const FFlecsEntityHandle& InEntityHandle) override;
+	
 protected:
+	UPROPERTY()
+	TMap<FFlecsNetRouteId, TObjectPtr<UFlecsNetShardBase>> ShardMap;
 	
 }; // class UFlecsIrisReplicationBridge

@@ -4,7 +4,10 @@
 
 #include "CoreMinimal.h"
 
+#include "SolidMacros/Macros.h"
+
 #include "FlecsReplicationRouterBase.h"
+#include "FlecsNetRouteId.h"
 
 #include "FlecsDefaultReplicationRouter.generated.h"
 
@@ -16,5 +19,8 @@ class UNREALFLECS_API UFlecsDefaultReplicationRouter : public UFlecsReplicationR
 
 public:
 	virtual NO_DISCARD FFlecsNetRouteId RouteEntity(const FFlecsEntityHandle& InEntityHandle) const override;
+	
+	virtual NO_DISCARD EFlecsReplicationRoutedShardType GetRoutedShardType(
+		const FFlecsEntityHandle& InEntityHandle, const FFlecsNetRouteId& InRouteId) const override;
 
 }; // class UFlecsDefaultReplicationRouter

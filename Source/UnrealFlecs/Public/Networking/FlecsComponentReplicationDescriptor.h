@@ -88,7 +88,7 @@ struct TStructOpsTypeTraits<FFlecsReplicationSchemaId> : TStructOpsTypeTraitsBas
 	{
 		WithIdenticalViaEquality = true
 	};
-};
+}; // struct TStructOpsTypeTraits<FFlecsReplicationSchemaId>
 
 using FFlecsReplicationSerializeFunction = bool(*)(FArchive&, void*);
 using FFlecsReplicationConstructFunction = void(*)(void*);

@@ -46,7 +46,6 @@ void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UF
 	CreateReplicationRouter();
 	CreateReplicationBridge();
 	
-	
 #endif // WITH_SERVER_CODE
 	
 }

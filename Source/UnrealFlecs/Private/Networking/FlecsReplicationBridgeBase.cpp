@@ -19,17 +19,6 @@ UFlecsReplicationBridgeBase::~UFlecsReplicationBridgeBase()
 {
 }
 
-void UFlecsReplicationBridgeBase::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-}
-
-void UFlecsReplicationBridgeBase::RegisterReplicationFragments(UE::Net::FFragmentRegistrationContext& Context,
-	UE::Net::EFragmentRegistrationFlags RegistrationFlags)
-{
-	UE::Net::FReplicationFragmentUtil::CreateAndRegisterFragmentsForObject(this, Context, RegistrationFlags);
-}
-
 void UFlecsReplicationBridgeBase::ReceiveEntityLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition)
 {
 	GetNetworkWorldSubsystem()->GetLayoutRegistry().AddRemoteDefinition(InLayoutDefinition);

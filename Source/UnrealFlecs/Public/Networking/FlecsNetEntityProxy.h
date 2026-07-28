@@ -8,23 +8,25 @@
 #include "Networking/Shards/FlecsNetShardBase.h"
 #include "Layout/FlecsReplicationSnapshot.h"
 
-#include "FlecsNetEntityProxyBase.generated.h"
+#include "FlecsNetEntityProxy.generated.h"
 
 /**
  * 
  */
-UCLASS(Abstract)
-class UNREALFLECS_API UFlecsNetEntityProxyBase : public UFlecsNetShardBase
+UCLASS()
+class UNREALFLECS_API UFlecsNetEntityProxy : public UFlecsNetShardBase
 {
 	GENERATED_BODY()
 
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
+	virtual void PublishNetEntity(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot) override;
 
 	UPROPERTY(ReplicatedUsing = OnRep_NetworkId)
 	FFlecsNetworkId NetworkId;
 	
-	UFUNCTION()	
+	UFUNCTION()
 	void OnRep_NetworkId();
 
 	UPROPERTY(ReplicatedUsing = OnRep_Snapshot)

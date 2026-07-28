@@ -10,10 +10,11 @@
 #include "SolidMacros/Macros.h"
 #include "Types/SolidNotNull.h"
 
-#include "FlecsNetRouteId.h"
+#include "Net/Iris/ReplicationSystem/NetRootObjectAdapter.h"
 #include "Net/Iris/ReplicationSystem/NetRootObjectFactory.h"
 #include "Networking/FlecsNetworkId.h"
 #include "Networking/Layout/FlecsReplicationSnapshot.h"
+#include "Networking/Router/FlecsNetRouteId.h"
 
 #include "FlecsNetShardBase.generated.h"
 
@@ -31,45 +32,49 @@ class UNREALFLECS_API UFlecsNetShardBase : public UObject, public INetRootObject
 	REPLICATED_BASE_CLASS(UFlecsNetShardBase)
 
 public:
+	
 	virtual bool IsSupportedForNetworking() const override
 	{
 		return true;
 	}
+	
+	virtual void InitializeShard();
+	virtual void DeinitializeShard();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void RegisterReplicationFragments(UE::Net::FFragmentRegistrationContext& Fragments,
 		UE::Net::EFragmentRegistrationFlags RegistrationFlags) override;
-	virtual void FillRootObjectReplicationParams(const UE::Net::FRootObjectReplicationParamsContext& Context, UE::Net::FRootObjectReplicationParams& OutParams) const override;
+	virtual void FillRootObjectReplicationParams(const UE::Net::FRootObjectReplicationParamsContext& Context,
+	                                             UE::Net::FRootObjectReplicationParams& OutParams) const override;
+	
+	virtual void ConfigureObjectSettings(OUT UE::Net::FRootObjectSettings& OutSettings) const;
 
 	NO_DISCARD const FFlecsNetRouteId& GetRouteId() const
 	{
 		return RouteId;
 	}
 	
-	NO_DISCARD UFlecsReplicationBridgeBase* GetReplicationBridge() const;
-	
-	template <typename T>
-	NO_DISCARD T* GetReplicationBridge() const
-	{
-		return Cast<T>(GetReplicationBridge());
-	}
-	
-	template <typename T>
-	NO_DISCARD TSolidNotNull<T*> GetReplicationBridgeChecked() const
-	{
-		return CastChecked<T>(GetReplicationBridge());
-	}
-	
 	virtual void PublishNetEntity(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot)
 		PURE_VIRTUAL(UFlecsNetShardBase::PublishNetEntity, );
 	
+	void SetOwningNetworkWorldSubsystem(UFlecsNetworkWorldSubsystem* InOwningNetworkWorldSubsystem);
+	
+	NO_DISCARD UFlecsNetworkWorldSubsystem* GetOwningNetworkWorldSubsystem() const;
+	
+	void SetRouteId(const FFlecsNetRouteId& InRouteId);
+	
+protected:
+	
+	void ReceiveEntityUpdate(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot);
 
 private:
-	friend class UFlecsReplicationBridgeBase;
-
-	void SetRouteId(const FFlecsNetRouteId& InRouteId);
 
 	UPROPERTY(Replicated)
 	FFlecsNetRouteId RouteId = FFlecsNetRouteId::Default();
+	
+	UPROPERTY()
+	TWeakObjectPtr<UFlecsNetworkWorldSubsystem> OwningNetworkWorldSubsystem;
+	
+	UE::Net::FNetRootObjectAdapter RootObjectAdapter;
 
 }; // class UFlecsNetShardBase

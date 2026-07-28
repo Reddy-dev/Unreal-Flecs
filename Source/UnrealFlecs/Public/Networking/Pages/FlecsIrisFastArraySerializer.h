@@ -11,7 +11,7 @@
 
 #include "FlecsIrisFastArraySerializer.generated.h"
 
-class UFlecsNetEntityPageBase;
+class UFlecsNetEntityPage;
 
 USTRUCT()
 struct UNREALFLECS_API FFlecsNetEntityPageItem : public FFastArraySerializerItem
@@ -38,13 +38,13 @@ public:
 	{
 	}
 
-	void SetOwner(UFlecsNetEntityPageBase* InOwner);
+	void SetOwner(const TSolidNotNull<UFlecsNetEntityPage*> InOwner);
 
 	UPROPERTY()
 	TArray<FFlecsNetEntityPageItem> Items;
 	
 	UPROPERTY()
-	TWeakObjectPtr<UFlecsNetEntityPageBase> Owner;
+	TWeakObjectPtr<UFlecsNetEntityPage> Owner;
 	
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
 	

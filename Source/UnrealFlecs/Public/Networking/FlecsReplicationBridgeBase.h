@@ -5,11 +5,10 @@
 #include "CoreMinimal.h"
 
 #include "UObject/Object.h"
-#include "Net/Core/PushModel/PushModelMacros.h"
 
 #include "Layout/FlecsReplicationLayoutDefinition.h"
 #include "Layout/FlecsReplicationSnapshot.h"
-#include "Shards/FlecsNetRouteId.h"
+#include "Router/FlecsNetRouteId.h"
 
 #include "FlecsReplicationBridgeBase.generated.h"
 
@@ -23,25 +22,11 @@ UCLASS(Abstract, BlueprintType, NotBlueprintable)
 class UNREALFLECS_API UFlecsReplicationBridgeBase : public UObject
 {
 	GENERATED_BODY()
-	REPLICATED_BASE_CLASS(UFlecsReplicationBridgeBase)
 
 public:
 	UFlecsReplicationBridgeBase(const FObjectInitializer& ObjectInitializer);
 	virtual ~UFlecsReplicationBridgeBase() override;
-	
-	virtual bool IsSupportedForNetworking() const override
-	{
-		return true;
-	}
 
-	virtual bool IsNameStableForNetworking() const override
-	{
-		return true;
-	}
-	
-	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
-	virtual void RegisterReplicationFragments(UE::Net::FFragmentRegistrationContext& Context, UE::Net::EFragmentRegistrationFlags RegistrationFlags) override;
-	
 	virtual void InitializeBridge() {}
 	virtual void DeinitializeBridge() {}
 	
@@ -53,7 +38,8 @@ public:
 	// Called on both Client and Server when a new layout is published. This is called after the layout has been received and processed.
 	virtual void OnEntityLayoutPublished(const FFlecsReplicationLayoutDefinition& InLayoutDefinition) {}
 
-	/* *****IMPORTANT NOTE*****
+	/* 
+	 * *****IMPORTANT NOTE*****
 	 * @TODO: in the future these will be reserved for creating new entities, rather than component changes, updates, AND 
 	 * NEW ENTITY CREATION. For now, we will use this for both, but in the future we will need to separate these two concepts.
 	 **/

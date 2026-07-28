@@ -23,8 +23,11 @@ struct UNREALFLECS_API FFlecsReplicatedEntityComponent
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY()
+
+	// @TODO:
+	/*UPROPERTY()
 	bool bInitialReplicationComplete = false;
+	*/
 	
 	UPROPERTY()
 	FFlecsReplicationLayoutId LayoutId;
