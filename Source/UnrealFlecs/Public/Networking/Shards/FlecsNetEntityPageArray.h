@@ -9,10 +9,11 @@
 #include "Networking/FlecsNetworkId.h"
 #include "Networking/Layout/FlecsReplicationSnapshot.h"
 
-#include "FlecsIrisFastArraySerializer.generated.h"
+#include "FlecsNetEntityPageArray.generated.h"
 
 class UFlecsNetEntityPage;
 
+/** One replicated entity record stored in a paged shard. */
 USTRUCT()
 struct UNREALFLECS_API FFlecsNetEntityPageItem : public FFastArraySerializerItem
 {
@@ -21,17 +22,18 @@ struct UNREALFLECS_API FFlecsNetEntityPageItem : public FFastArraySerializerItem
 public:
 	UPROPERTY()
 	FFlecsNetworkId NetworkId;
-	
+
 	UPROPERTY()
 	FFlecsEntityReplicationSnapshot Snapshot;
-	
+
 }; // struct FFlecsNetEntityPageItem
 
+/** Iris Fast Array payload owned by a paged shard. */
 USTRUCT()
 struct UNREALFLECS_API FFlecsNetEntityPageArray : public FIrisFastArraySerializer
 {
 	GENERATED_BODY()
-	
+
 public:
 	FFlecsNetEntityPageArray()
 		: Owner(nullptr)
@@ -42,16 +44,16 @@ public:
 
 	UPROPERTY()
 	TArray<FFlecsNetEntityPageItem> Items;
-	
+
 	UPROPERTY()
 	TWeakObjectPtr<UFlecsNetEntityPage> Owner;
-	
+
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
-	
+
 	void PreReplicatedRemove(const TArrayView<int32>& RemovedIndices, int32 FinalSize);
 	void PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize);
 	void PostReplicatedChange(const TArrayView<int32>& ChangedIndices, int32 FinalSize);
-	
+
 }; // struct FFlecsNetEntityPageArray
 
 template<>

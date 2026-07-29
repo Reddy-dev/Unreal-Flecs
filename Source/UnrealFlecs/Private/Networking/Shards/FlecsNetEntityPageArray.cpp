@@ -1,10 +1,10 @@
 ﻿// Elie Wiese-Namir © 2026. All Rights Reserved.
 
-#include "Networking/Pages/FlecsIrisFastArraySerializer.h"
+#include "Networking/Shards/FlecsNetEntityPageArray.h"
 
-#include "Networking/Pages/FlecsNetEntityPage.h"
+#include "Networking/Shards/FlecsNetEntityPage.h"
 
-#include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsIrisFastArraySerializer)
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsNetEntityPageArray)
 
 void FFlecsNetEntityPageArray::SetOwner(const TSolidNotNull<UFlecsNetEntityPage*> InOwner)
 {
@@ -20,7 +20,7 @@ bool FFlecsNetEntityPageArray::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaPa
 
 void FFlecsNetEntityPageArray::PreReplicatedRemove(const TArrayView<int32>& RemovedIndices, int32 FinalSize)
 {
-	
+
 }
 
 void FFlecsNetEntityPageArray::PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize)

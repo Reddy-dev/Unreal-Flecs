@@ -13,7 +13,7 @@
  * 
  */
 UCLASS()
-class UNREALFLECS_API UFlecsLayoutReplicator : public UObject, public INetRootObjectFactoryExtension
+class UNREALFLECS_API UFlecsLayoutReplicator : public UObject
 {
 	GENERATED_BODY()
 

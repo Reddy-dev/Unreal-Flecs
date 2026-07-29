@@ -18,7 +18,6 @@
 
 #include "FlecsNetShardBase.generated.h"
 
-class UFlecsReplicationBridgeBase;
 /**
  * Generic replicated storage object addressed through a bridge route.
  *
@@ -32,12 +31,12 @@ class UNREALFLECS_API UFlecsNetShardBase : public UObject, public INetRootObject
 	REPLICATED_BASE_CLASS(UFlecsNetShardBase)
 
 public:
-	
+
 	virtual bool IsSupportedForNetworking() const override
 	{
 		return true;
 	}
-	
+
 	virtual void InitializeShard();
 	virtual void DeinitializeShard();
 
@@ -46,35 +45,35 @@ public:
 		UE::Net::EFragmentRegistrationFlags RegistrationFlags) override;
 	virtual void FillRootObjectReplicationParams(const UE::Net::FRootObjectReplicationParamsContext& Context,
 	                                             UE::Net::FRootObjectReplicationParams& OutParams) const override;
-	
+
 	virtual void ConfigureObjectSettings(OUT UE::Net::FRootObjectSettings& OutSettings) const;
 
 	NO_DISCARD const FFlecsNetRouteId& GetRouteId() const
 	{
 		return RouteId;
 	}
-	
+
 	virtual void PublishNetEntity(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot)
 		PURE_VIRTUAL(UFlecsNetShardBase::PublishNetEntity, );
-	
+
 	void SetOwningNetworkWorldSubsystem(UFlecsNetworkWorldSubsystem* InOwningNetworkWorldSubsystem);
-	
+
 	NO_DISCARD UFlecsNetworkWorldSubsystem* GetOwningNetworkWorldSubsystem() const;
-	
+
 	void SetRouteId(const FFlecsNetRouteId& InRouteId);
-	
+
 protected:
-	
+
 	void ReceiveEntityUpdate(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot);
 
 private:
 
 	UPROPERTY(Replicated)
 	FFlecsNetRouteId RouteId = FFlecsNetRouteId::Default();
-	
+
 	UPROPERTY()
 	TWeakObjectPtr<UFlecsNetworkWorldSubsystem> OwningNetworkWorldSubsystem;
-	
+
 	UE::Net::FNetRootObjectAdapter RootObjectAdapter;
 
 }; // class UFlecsNetShardBase

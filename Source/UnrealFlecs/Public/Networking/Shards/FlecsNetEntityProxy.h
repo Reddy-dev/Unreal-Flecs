@@ -4,15 +4,13 @@
 
 #include "CoreMinimal.h"
 
-#include "FlecsNetworkId.h"
-#include "Networking/Shards/FlecsNetShardBase.h"
-#include "Layout/FlecsReplicationSnapshot.h"
+#include "Networking/FlecsNetworkId.h"
+#include "FlecsNetShardBase.h"
+#include "Networking/Layout/FlecsReplicationSnapshot.h"
 
 #include "FlecsNetEntityProxy.generated.h"
 
-/**
- * 
- */
+/** Individually replicated shard storage for one Flecs entity. */
 UCLASS()
 class UNREALFLECS_API UFlecsNetEntityProxy : public UFlecsNetShardBase
 {
@@ -20,19 +18,19 @@ class UNREALFLECS_API UFlecsNetEntityProxy : public UFlecsNetShardBase
 
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
+
 	virtual void PublishNetEntity(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot) override;
 
 	UPROPERTY(ReplicatedUsing = OnRep_NetworkId)
 	FFlecsNetworkId NetworkId;
-	
+
 	UFUNCTION()
 	void OnRep_NetworkId();
 
 	UPROPERTY(ReplicatedUsing = OnRep_Snapshot)
 	FFlecsEntityReplicationSnapshot Snapshot;
-	
-	UFUNCTION()	
+
+	UFUNCTION()
 	void OnRep_Snapshot();
 
-}; // class UFlecsNetEntityProxyBase
+}; // class UFlecsNetEntityProxy

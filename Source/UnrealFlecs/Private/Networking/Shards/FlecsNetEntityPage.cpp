@@ -1,6 +1,6 @@
 ﻿// Elie Wiese-Namir © 2026. All Rights Reserved.
 
-#include "Networking/Pages/FlecsNetEntityPage.h"
+#include "Networking/Shards/FlecsNetEntityPage.h"
 
 #include "Net/UnrealNetwork.h"
 
@@ -9,7 +9,7 @@
 void UFlecsNetEntityPage::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	
+
 	FDoRepLifetimeParams LifetimeParams;
 	LifetimeParams.bIsPushBased = false;
 	DOREPLIFETIME_WITH_PARAMS_FAST(UFlecsNetEntityPage, EntityPage, LifetimeParams);

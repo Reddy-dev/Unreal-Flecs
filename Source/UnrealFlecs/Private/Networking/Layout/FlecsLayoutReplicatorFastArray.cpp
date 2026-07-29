@@ -4,8 +4,8 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsLayoutReplicatorFastArray)
 
-void FFlecsReplicatorFastArray::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
+bool FFlecsReplicatorFastArray::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
 {
-	FFastArraySerializer::FastArrayDeltaSerialize<FFlecsLayoutReplicatorItem, FFlecsReplicatorFastArray>(
+	return FFastArraySerializer::FastArrayDeltaSerialize<FFlecsLayoutReplicatorItem, FFlecsReplicatorFastArray>(
 		Items, DeltaParms, *this);
 }

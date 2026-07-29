@@ -6,12 +6,12 @@
 #if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
 
 #include "Networking/FlecsNetDirtyTag.h"
-#include "Networking/FlecsNetEntityProxy.h"
 #include "Networking/FlecsNetworkingModuleSettings.h"
 #include "Networking/FlecsReplicatedEntityComponent.h"
 #include "Networking/Layout/FlecsReplicationLayoutRegistry.h"
-#include "Networking/Pages/FlecsNetEntityPage.h"
 #include "Networking/Router/FlecsDefaultReplicationRouter.h"
+#include "Networking/Shards/FlecsNetEntityPage.h"
+#include "Networking/Shards/FlecsNetEntityProxy.h"
 #include "Networking/Shards/FlecsNetShardBase.h"
 
 FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,

@@ -4,14 +4,12 @@
 
 #include "CoreMinimal.h"
 
-#include "Networking/Shards/FlecsNetShardBase.h"
-#include "FlecsIrisFastArraySerializer.h"
+#include "FlecsNetShardBase.h"
+#include "FlecsNetEntityPageArray.h"
 
 #include "FlecsNetEntityPage.generated.h"
 
-/**
- * 
- */
+/** Batched shard storage for multiple replicated Flecs entities. */
 UCLASS()
 class UNREALFLECS_API UFlecsNetEntityPage : public UFlecsNetShardBase
 {
@@ -19,11 +17,11 @@ class UNREALFLECS_API UFlecsNetEntityPage : public UFlecsNetShardBase
 
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
+
 	UPROPERTY(Replicated)
 	FFlecsNetEntityPageArray EntityPage;
-	
+
 	UFUNCTION()
 	void OnRep_EntityPage();
-	
-}; // class UFlecsNetEntityPageBase
+
+}; // class UFlecsNetEntityPage

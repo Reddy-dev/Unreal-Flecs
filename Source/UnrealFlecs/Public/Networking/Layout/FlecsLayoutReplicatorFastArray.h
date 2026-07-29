@@ -28,7 +28,7 @@ struct FFlecsReplicatorFastArray : public FFastArraySerializer
 	
 public:
 	
-	void NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
+	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
 
 	UPROPERTY()
 	TArray<FFlecsLayoutReplicatorItem> Items;
