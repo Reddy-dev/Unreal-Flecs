@@ -29,11 +29,7 @@ void FFlecsReplicatorFastArray::SetOwner(UFlecsLayoutReplicator* InOwner)
 
 bool FFlecsReplicatorFastArray::AddLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition)
 {
-	if (FFlecsLayoutReplicatorItem* ExistingItem = Items.FindByPredicate(
-		[&InLayoutDefinition](const FFlecsLayoutReplicatorItem& Item)
-		{
-			return Item.LayoutDefinition.LayoutId == InLayoutDefinition.LayoutId;
-		}))
+	if (const FFlecsLayoutReplicatorItem* ExistingItem = FindLayout(InLayoutDefinition.LayoutId))
 	{
 		if (ExistingItem->LayoutDefinition.Keys == InLayoutDefinition.Keys)
 		{
@@ -43,17 +39,18 @@ bool FFlecsReplicatorFastArray::AddLayout(const FFlecsReplicationLayoutDefinitio
 		UE_LOG(LogFlecsCore, Error,
 			TEXT("Cannot replace immutable Flecs layout '%s' with a different definition"),
 			*InLayoutDefinition.LayoutId.ToString());
+		
 		return false;
 	}
 
 	FFlecsLayoutReplicatorItem& NewItem = Items.AddDefaulted_GetRef();
 	NewItem.LayoutDefinition = InLayoutDefinition;
 	MarkItemDirty(NewItem);
+	
 	return true;
 }
 
-const FFlecsLayoutReplicatorItem* FFlecsReplicatorFastArray::FindLayout(
-	const FFlecsReplicationLayoutId& InLayoutId) const
+const FFlecsLayoutReplicatorItem* FFlecsReplicatorFastArray::FindLayout(const FFlecsReplicationLayoutId& InLayoutId) const
 {
 	return Items.FindByPredicate(
 		[&InLayoutId](const FFlecsLayoutReplicatorItem& Item)
@@ -62,10 +59,9 @@ const FFlecsLayoutReplicatorItem* FFlecsReplicatorFastArray::FindLayout(
 		});
 }
 
-void FFlecsReplicatorFastArray::ReceiveLayout(
-	const FFlecsReplicationLayoutDefinition& InLayoutDefinition) const
+void FFlecsReplicatorFastArray::ReceiveLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition) const
 {
-	if (Owner)
+	if LIKELY_IF(Owner.IsValid())
 	{
 		Owner->ReceiveLayout(InLayoutDefinition);
 	}

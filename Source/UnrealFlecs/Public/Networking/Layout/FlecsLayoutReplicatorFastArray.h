@@ -39,10 +39,9 @@ public:
 	void SetOwner(UFlecsLayoutReplicator* InOwner);
 
 	/** Adds an immutable layout, or leaves an identical retained definition untouched. */
-	NO_DISCARD bool AddLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition);
+	bool AddLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition);
 
-	NO_DISCARD const FFlecsLayoutReplicatorItem* FindLayout(
-		const FFlecsReplicationLayoutId& InLayoutId) const;
+	NO_DISCARD const FFlecsLayoutReplicatorItem* FindLayout(const FFlecsReplicationLayoutId& InLayoutId) const;
 
 	UPROPERTY()
 	TArray<FFlecsLayoutReplicatorItem> Items;
@@ -52,7 +51,8 @@ private:
 
 	void ReceiveLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition) const;
 
-	UFlecsLayoutReplicator* Owner = nullptr;
+	UPROPERTY()
+	TWeakObjectPtr<UFlecsLayoutReplicator> Owner;
 	
 }; // struct FFlecsReplicatorFastArray
 

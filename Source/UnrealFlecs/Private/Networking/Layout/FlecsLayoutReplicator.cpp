@@ -47,7 +47,7 @@ void UFlecsLayoutReplicator::FillRootObjectReplicationParams(
 	RootObjectAdapter.FillRootObjectReplicationParams(Context, OutParams);
 }
 
-void UFlecsLayoutReplicator::InitializeReplicator(UFlecsReplicationBridgeBase* InReplicationBridge)
+void UFlecsLayoutReplicator::InitializeReplicator(const TSolidNotNull<UFlecsReplicationBridgeBase*> InReplicationBridge)
 {
 	check(IsValid(InReplicationBridge));
 
@@ -61,7 +61,7 @@ void UFlecsLayoutReplicator::InitializeReplicator(UFlecsReplicationBridgeBase* I
 	RootObjectAdapter.InitAdapter(this);
 	RootObjectAdapter.Configure(Settings);
 
-	(void)TryStartReplication();
+	TryStartReplication();
 }
 
 void UFlecsLayoutReplicator::DeinitializeReplicator()
@@ -91,13 +91,13 @@ bool UFlecsLayoutReplicator::TryStartReplication()
 		return true;
 	}
 
-	UWorld* World = GetWorld();
+	const UWorld* World = GetWorld();
 	if (!World || World->GetNetMode() == NM_Standalone)
 	{
 		return true;
 	}
 
-	UNetDriver* NetDriver = World->GetNetDriver();
+	const UNetDriver* NetDriver = World->GetNetDriver();
 	if (!NetDriver || !NetDriver->GetReplicationSystem())
 	{
 		return false;
@@ -107,9 +107,8 @@ bool UFlecsLayoutReplicator::TryStartReplication()
 	return RootObjectAdapter.IsReplicating();
 }
 
-void UFlecsLayoutReplicator::BindReplicationBridge(UFlecsReplicationBridgeBase* InReplicationBridge)
+void UFlecsLayoutReplicator::BindReplicationBridge(const TSolidNotNull<UFlecsReplicationBridgeBase*> InReplicationBridge)
 {
-	check(IsValid(InReplicationBridge));
 	ReplicationBridge = InReplicationBridge;
 	ReplicatedLayouts.SetOwner(this);
 
@@ -128,7 +127,7 @@ void UFlecsLayoutReplicator::PublishLayout(
 		return;
 	}
 
-	(void)ReplicatedLayouts.AddLayout(InLayoutDefinition);
+	ReplicatedLayouts.AddLayout(InLayoutDefinition);
 }
 
 void UFlecsLayoutReplicator::ReceiveLayout(

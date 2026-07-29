@@ -20,7 +20,7 @@ bool FFlecsNetEntityPageArray::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaPa
 
 void FFlecsNetEntityPageArray::PreReplicatedRemove(const TArrayView<int32>& RemovedIndices, int32 FinalSize)
 {
-
+	
 }
 
 void FFlecsNetEntityPageArray::PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize)

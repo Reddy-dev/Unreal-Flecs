@@ -43,12 +43,11 @@ public:
 		const UE::Net::FRootObjectReplicationParamsContext& Context,
 		UE::Net::FRootObjectReplicationParams& OutParams) const override;
 
-	void InitializeReplicator(UFlecsReplicationBridgeBase* InReplicationBridge);
+	void InitializeReplicator(const TSolidNotNull<UFlecsReplicationBridgeBase*> InReplicationBridge);
 	void DeinitializeReplicator();
-	NO_DISCARD bool TryStartReplication();
-
-	/** Rebinds a factory-created client object and replays its retained layouts. */
-	void BindReplicationBridge(UFlecsReplicationBridgeBase* InReplicationBridge);
+	bool TryStartReplication();
+	
+	void BindReplicationBridge(const TSolidNotNull<UFlecsReplicationBridgeBase*> InReplicationBridge);
 
 	void PublishLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition);
 
