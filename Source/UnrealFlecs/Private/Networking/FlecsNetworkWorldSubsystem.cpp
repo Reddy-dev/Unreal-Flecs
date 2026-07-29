@@ -44,10 +44,9 @@ void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UF
 		.AddUObject(this, &UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver);
 	
 	CreateReplicationRouter();
+	CreateReplicationBridge();
 	
 #endif // WITH_SERVER_CODE
-
-	CreateReplicationBridge();
 	
 }
 

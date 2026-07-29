@@ -24,7 +24,7 @@ public:
 	virtual void InitializeBridge() override;
 	virtual void DeinitializeBridge() override;
 
-	void BindLayoutReplicator(UFlecsLayoutReplicator* InLayoutReplicator);
+	void BindLayoutReplicator(const TSolidNotNull<UFlecsLayoutReplicator*> InLayoutReplicator);
 
 	virtual void PublishEntityLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition) override;
 	

@@ -63,4 +63,5 @@ struct TStructOpsTypeTraits<FFlecsNetEntityPageArray> : public TStructOpsTypeTra
 	{
 		WithNetDeltaSerializer = true
 	};
+	
 }; // struct TStructOpsTypeTraits<FFlecsNetEntityPageArray>

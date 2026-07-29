@@ -118,8 +118,7 @@ void UFlecsLayoutReplicator::BindReplicationBridge(const TSolidNotNull<UFlecsRep
 	}
 }
 
-void UFlecsLayoutReplicator::PublishLayout(
-	const FFlecsReplicationLayoutDefinition& InLayoutDefinition)
+void UFlecsLayoutReplicator::PublishLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition)
 {
 	if UNLIKELY_IF(!ReplicationBridge.IsValid() || !ReplicationBridge->HasAuthority())
 	{

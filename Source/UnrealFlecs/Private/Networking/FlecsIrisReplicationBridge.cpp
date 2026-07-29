@@ -2,6 +2,8 @@
 
 #include "Networking/FlecsIrisReplicationBridge.h"
 
+#include "Engine/World.h"
+
 #include "Networking/FlecsNetworkWorldSubsystem.h"
 #include "Networking/Layout/FlecsLayoutReplicator.h"
 #include "Networking/Router/FlecsReplicationRouterBase.h"
@@ -16,8 +18,9 @@ void UFlecsIrisReplicationBridge::InitializeBridge()
 		return;
 	}
 
-	LayoutReplicator = NewObject<UFlecsLayoutReplicator>(this);
-	check(IsValid(LayoutReplicator));
+	LayoutReplicator = NewObject<UFlecsLayoutReplicator>(GetWorld());
+	solid_check(IsValid(LayoutReplicator));
+	
 	LayoutReplicator->InitializeReplicator(this);
 
 	if (!LayoutReplicator->TryStartReplication())
@@ -43,7 +46,7 @@ void UFlecsIrisReplicationBridge::DeinitializeBridge()
 
 }
 
-void UFlecsIrisReplicationBridge::BindLayoutReplicator(UFlecsLayoutReplicator* InLayoutReplicator)
+void UFlecsIrisReplicationBridge::BindLayoutReplicator(const TSolidNotNull<UFlecsLayoutReplicator*> InLayoutReplicator)
 {
 	check(IsValid(InLayoutReplicator));
 	check(!HasAuthority());
