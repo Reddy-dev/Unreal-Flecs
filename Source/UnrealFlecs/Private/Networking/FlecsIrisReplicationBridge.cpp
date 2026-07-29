@@ -75,12 +75,6 @@ void UFlecsIrisReplicationBridge::PublishEntityLayout(const FFlecsReplicationLay
 	LayoutReplicator->PublishLayout(InLayoutDefinition);
 }
 
-void UFlecsIrisReplicationBridge::RemoveEntityLayout(const FFlecsReplicationLayoutId& InLayoutId)
-{
-	check(IsValid(LayoutReplicator));
-	LayoutReplicator->RemoveLayoutForDeletedTable(InLayoutId);
-}
-
 void UFlecsIrisReplicationBridge::PublishNetEntity(
 	const FFlecsNetRouteId& InRouteId,
 	const FFlecsNetworkId& InNetworkId,

@@ -27,7 +27,6 @@ public:
 	void BindLayoutReplicator(UFlecsLayoutReplicator* InLayoutReplicator);
 
 	virtual void PublishEntityLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition) override;
-	virtual void RemoveEntityLayout(const FFlecsReplicationLayoutId& InLayoutId) override;
 	
 	virtual void PublishNetEntity(
 		const FFlecsNetRouteId& InRouteId,

@@ -112,7 +112,6 @@ public:
 	}
 	
 	void OnEntityLayoutReceived(const FFlecsReplicationLayoutDefinition& InLayout);
-	void OnEntityLayoutRemoved(const FFlecsReplicationLayoutId& InLayoutId);
 	
 	void ReceiveNetworkEntitySnapshot(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot);
 
@@ -140,9 +139,6 @@ protected:
 	
 	UPROPERTY()
 	TArray<FFlecsObserverHandle> ComponentDirtyObservers;
-
-	UPROPERTY()
-	FFlecsObserverHandle TableDeleteObserver;
 	
 	UPROPERTY()
 	TObjectPtr<UObject> NetworkIdGenerator;

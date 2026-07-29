@@ -42,16 +42,8 @@ public:
 	/** Adds an already validated remote layout, rejecting identity collisions. */
 	TValueOrError<void, FString> AddRemoteDefinition(const FFlecsReplicationLayoutDefinition& Definition);
 
-	/**
-	 * Removes a local table cache entry. Returns its layout only when no other
-	 * cached table still retains the same definition.
-	 */
-	NO_DISCARD TOptional<FFlecsReplicationLayoutId> RemoveLocalTable(const flecs::table_t* InTable);
-
-	/** Removes a definition in response to an authority Fast Array delete. */
-	NO_DISCARD bool RemoveRemoteDefinition(const FFlecsReplicationLayoutId& InLayoutId);
-
 private:
+	// Layouts are currently retained even if Flecs deletes the originating table.
 	TMap<const flecs::table_t*, FFlecsReplicationLayoutId> TableCache;
 	TMap<FFlecsReplicationLayoutId, FFlecsReplicationLayoutDefinition> Definitions;
 	

@@ -34,8 +34,6 @@ public:
 	virtual void PublishEntityLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition)
 		PURE_VIRTUAL(UFlecsReplicationBridgeBase::PublishEntityLayout, );
 	virtual void ReceiveEntityLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition);
-	virtual void RemoveEntityLayout(const FFlecsReplicationLayoutId& InLayoutId) {}
-	virtual void ReceiveEntityLayoutRemoval(const FFlecsReplicationLayoutId& InLayoutId);
 	
 	// Called on both Client and Server when a new layout is published. This is called after the layout has been received and processed.
 	virtual void OnEntityLayoutPublished(const FFlecsReplicationLayoutDefinition& InLayoutDefinition) {}

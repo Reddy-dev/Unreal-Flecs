@@ -131,30 +131,11 @@ void UFlecsLayoutReplicator::PublishLayout(
 	(void)ReplicatedLayouts.AddLayout(InLayoutDefinition);
 }
 
-void UFlecsLayoutReplicator::RemoveLayoutForDeletedTable(const FFlecsReplicationLayoutId& InLayoutId)
-{
-	if UNLIKELY_IF(!ReplicationBridge.IsValid() || !ReplicationBridge->HasAuthority())
-	{
-		UE_LOG(LogFlecsCore, Error, TEXT("Cannot remove a Flecs layout without an authority replication bridge"));
-		return;
-	}
-
-	(void)ReplicatedLayouts.RemoveLayout(InLayoutId);
-}
-
 void UFlecsLayoutReplicator::ReceiveLayout(
 	const FFlecsReplicationLayoutDefinition& InLayoutDefinition)
 {
 	if (ReplicationBridge.IsValid())
 	{
 		ReplicationBridge->ReceiveEntityLayout(InLayoutDefinition);
-	}
-}
-
-void UFlecsLayoutReplicator::ReceiveLayoutRemoval(const FFlecsReplicationLayoutId& InLayoutId)
-{
-	if (ReplicationBridge.IsValid())
-	{
-		ReplicationBridge->ReceiveEntityLayoutRemoval(InLayoutId);
 	}
 }

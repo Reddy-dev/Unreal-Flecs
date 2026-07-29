@@ -11,6 +11,7 @@
 #include "FlecsLayoutReplicatorFastArray.generated.h"
 
 class UFlecsLayoutReplicator;
+
 struct FFlecsReplicatorFastArray;
 
 USTRUCT()
@@ -22,7 +23,6 @@ public:
 	UPROPERTY()
 	FFlecsReplicationLayoutDefinition LayoutDefinition;
 
-	void PreReplicatedRemove(const FFlecsReplicatorFastArray& InArraySerializer);
 	void PostReplicatedAdd(const FFlecsReplicatorFastArray& InArraySerializer);
 	void PostReplicatedChange(const FFlecsReplicatorFastArray& InArraySerializer);
 	
@@ -41,9 +41,6 @@ public:
 	/** Adds an immutable layout, or leaves an identical retained definition untouched. */
 	NO_DISCARD bool AddLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition);
 
-	/** Removes a retained layout after its final Flecs table has been deleted. */
-	NO_DISCARD bool RemoveLayout(const FFlecsReplicationLayoutId& InLayoutId);
-
 	NO_DISCARD const FFlecsLayoutReplicatorItem* FindLayout(
 		const FFlecsReplicationLayoutId& InLayoutId) const;
 
@@ -54,7 +51,6 @@ private:
 	friend struct FFlecsLayoutReplicatorItem;
 
 	void ReceiveLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition) const;
-	void ReceiveLayoutRemoval(const FFlecsReplicationLayoutId& InLayoutId) const;
 
 	UFlecsLayoutReplicator* Owner = nullptr;
 	

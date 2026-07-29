@@ -44,23 +44,6 @@ void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UF
 		.AddUObject(this, &UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver);
 	
 	CreateReplicationRouter();
-
-	if (HasAuthority())
-	{
-		TableDeleteObserver = InWorld->CreateObserver()
-			.With<FFlecsReplicatedEntityComponent>()
-			.Event(flecs::OnTableDelete)
-			.run([this](flecs::iter& Iter)
-			{
-				const TOptional<FFlecsReplicationLayoutId> RemovedLayoutId =
-					LayoutRegistry.RemoveLocalTable(Iter.table());
-
-				if (RemovedLayoutId.IsSet() && ReplicationBridge)
-				{
-					ReplicationBridge->RemoveEntityLayout(RemovedLayoutId.GetValue());
-				}
-			});
-	}
 	
 #endif // WITH_SERVER_CODE
 
@@ -335,11 +318,6 @@ void UFlecsNetworkWorldSubsystem::OnEntityLayoutReceived(const FFlecsReplication
 
 		ApplySnapshotToEntity(EntityHandle, Snapshot);
 	}
-}
-
-void UFlecsNetworkWorldSubsystem::OnEntityLayoutRemoved(const FFlecsReplicationLayoutId& InLayoutId)
-{
-	DeferredEntityLayouts.Remove(InLayoutId);
 }
 
 void UFlecsNetworkWorldSubsystem::ReceiveNetworkEntitySnapshot(const FFlecsNetworkId& InNetworkId,

@@ -33,12 +33,6 @@ void UFlecsReplicationBridgeBase::ReceiveEntityLayout(const FFlecsReplicationLay
 	GetNetworkWorldSubsystem()->OnEntityLayoutReceived(InLayoutDefinition);
 }
 
-void UFlecsReplicationBridgeBase::ReceiveEntityLayoutRemoval(const FFlecsReplicationLayoutId& InLayoutId)
-{
-	(void)GetNetworkWorldSubsystem()->GetLayoutRegistry().RemoveRemoteDefinition(InLayoutId);
-	GetNetworkWorldSubsystem()->OnEntityLayoutRemoved(InLayoutId);
-}
-
 void UFlecsReplicationBridgeBase::ReceiveNetEntity(const FFlecsNetworkId& InNetworkId,
                                                    const FFlecsEntityReplicationSnapshot& InSnapshot)
 {

@@ -6,11 +6,6 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsLayoutReplicatorFastArray)
 
-void FFlecsLayoutReplicatorItem::PreReplicatedRemove(const FFlecsReplicatorFastArray& InArraySerializer)
-{
-	InArraySerializer.ReceiveLayoutRemoval(LayoutDefinition.LayoutId);
-}
-
 void FFlecsLayoutReplicatorItem::PostReplicatedAdd(const FFlecsReplicatorFastArray& InArraySerializer)
 {
 	InArraySerializer.ReceiveLayout(LayoutDefinition);
@@ -57,24 +52,6 @@ bool FFlecsReplicatorFastArray::AddLayout(const FFlecsReplicationLayoutDefinitio
 	return true;
 }
 
-bool FFlecsReplicatorFastArray::RemoveLayout(const FFlecsReplicationLayoutId& InLayoutId)
-{
-	const int32 ItemIndex = Items.IndexOfByPredicate(
-		[&InLayoutId](const FFlecsLayoutReplicatorItem& Item)
-		{
-			return Item.LayoutDefinition.LayoutId == InLayoutId;
-		});
-
-	if (ItemIndex == INDEX_NONE)
-	{
-		return false;
-	}
-
-	Items.RemoveAtSwap(ItemIndex, EAllowShrinking::No);
-	MarkArrayDirty();
-	return true;
-}
-
 const FFlecsLayoutReplicatorItem* FFlecsReplicatorFastArray::FindLayout(
 	const FFlecsReplicationLayoutId& InLayoutId) const
 {
@@ -91,13 +68,5 @@ void FFlecsReplicatorFastArray::ReceiveLayout(
 	if (Owner)
 	{
 		Owner->ReceiveLayout(InLayoutDefinition);
-	}
-}
-
-void FFlecsReplicatorFastArray::ReceiveLayoutRemoval(const FFlecsReplicationLayoutId& InLayoutId) const
-{
-	if (Owner)
-	{
-		Owner->ReceiveLayoutRemoval(InLayoutId);
 	}
 }

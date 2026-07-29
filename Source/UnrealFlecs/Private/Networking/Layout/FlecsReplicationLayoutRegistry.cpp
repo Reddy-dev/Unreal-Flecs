@@ -185,30 +185,3 @@ TValueOrError<void, FString> FFlecsReplicationLayoutRegistry::AddRemoteDefinitio
 	Definitions.Add(Definition.LayoutId, Definition);
 	return MakeValue();
 }
-
-TOptional<FFlecsReplicationLayoutId> FFlecsReplicationLayoutRegistry::RemoveLocalTable(
-	const flecs::table_t* InTable)
-{
-	FFlecsReplicationLayoutId RemovedLayoutId;
-	if (!TableCache.RemoveAndCopyValue(InTable, RemovedLayoutId))
-	{
-		return NullOpt;
-	}
-
-	for (const TPair<const flecs::table_t*, FFlecsReplicationLayoutId>& CachedTable : TableCache)
-	{
-		if (CachedTable.Value == RemovedLayoutId)
-		{
-			return NullOpt;
-		}
-	}
-
-	Definitions.Remove(RemovedLayoutId);
-	return RemovedLayoutId;
-}
-
-bool FFlecsReplicationLayoutRegistry::RemoveRemoteDefinition(
-	const FFlecsReplicationLayoutId& InLayoutId)
-{
-	return Definitions.Remove(InLayoutId) > 0;
-}

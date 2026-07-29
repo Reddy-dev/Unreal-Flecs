@@ -18,8 +18,7 @@ class UFlecsReplicationBridgeBase;
 /**
  * Always-relevant catalogue of immutable Flecs table layouts.
  *
- * Layouts are retained for late joiners. An authority removes a definition
- * only after the final local Flecs table using that layout is deleted.
+ * Layouts are retained for late joiners for the lifetime of the replicator.
  */
 UCLASS()
 class UNREALFLECS_API UFlecsLayoutReplicator : public UObject, public INetRootObjectFactoryExtension
@@ -52,10 +51,8 @@ public:
 	void BindReplicationBridge(UFlecsReplicationBridgeBase* InReplicationBridge);
 
 	void PublishLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition);
-	void RemoveLayoutForDeletedTable(const FFlecsReplicationLayoutId& InLayoutId);
 
 	void ReceiveLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition);
-	void ReceiveLayoutRemoval(const FFlecsReplicationLayoutId& InLayoutId);
 
 	NO_DISCARD const FFlecsReplicatorFastArray& GetReplicatedLayouts() const
 	{
