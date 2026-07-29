@@ -4,7 +4,7 @@
 
 #include "Engine/World.h"
 
-#include "Networking/FlecsNetworkWorldSubsystem.h"
+#include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 #include "Networking/Layout/FlecsLayoutReplicator.h"
 #include "Networking/Router/FlecsReplicationRouterBase.h"
 #include "Networking/Shards/FlecsNetShardBase.h"

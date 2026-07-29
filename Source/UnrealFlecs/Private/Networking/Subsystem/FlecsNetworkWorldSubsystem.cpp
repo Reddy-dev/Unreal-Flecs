@@ -1,6 +1,6 @@
 // Elie Wiese-Namir © 2026. All Rights Reserved.
 
-#include "Networking/FlecsNetworkWorldSubsystem.h"
+#include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 
 #include "Engine/World.h"
 #include "Networking/FlecsDirtyObserverTag.h"
@@ -12,7 +12,7 @@
 #include "Networking/FlecsNetRoleType.h"
 #include "Networking/FlecsNetworkIDGeneratorInterface.h"
 #include "Networking/FlecsNetworkingModuleSettings.h"
-#include "Networking/FlecsNetworkSubsystemSingleton.h"
+#include "Networking/Subsystem/FlecsNetworkSubsystemSingleton.h"
 #include "Networking/FlecsReplicatedEntityComponent.h"
 #include "Networking/FlecsReplicationBridgeBase.h"
 #include "Networking/Router/FlecsReplicationRouterBase.h"
@@ -44,10 +44,10 @@ void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UF
 		.AddUObject(this, &UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver);
 	
 	CreateReplicationRouter();
-	CreateReplicationBridge();
 	
 #endif // WITH_SERVER_CODE
-	
+
+	CreateReplicationBridge();
 }
 
 void UFlecsNetworkWorldSubsystem::Deinitialize()
@@ -220,6 +220,7 @@ void UFlecsNetworkWorldSubsystem::CreateReplicationBridge()
 	
 	ReplicationBridge = NewObject<UFlecsReplicationBridgeBase>(this, Settings->ReplicationBridgeClass);
 	solid_checkf(IsValid(ReplicationBridge), TEXT("Replication bridge is not valid"));
+	
 	ReplicationBridge->InitializeBridge();
 }
 
@@ -232,8 +233,7 @@ void UFlecsNetworkWorldSubsystem::CreateReplicationRouter()
 
 	const TSolidNotNull<const UFlecsNetworkingModuleSettings*> Settings = GetNetworkingSettings();
 
-	if UNLIKELY_IF(!ensureMsgf(
-		Settings->ReplicationRouterClass,
+	if UNLIKELY_IF(!ensureMsgf(Settings->ReplicationRouterClass,
 		TEXT("Replication router class is not set in settings")))
 	{
 		return;
@@ -241,6 +241,7 @@ void UFlecsNetworkWorldSubsystem::CreateReplicationRouter()
 
 	ReplicationRouter = NewObject<UFlecsReplicationRouterBase>(this, Settings->ReplicationRouterClass);
 	solid_checkf(IsValid(ReplicationRouter), TEXT("Replication router is not valid"));
+	
 	ReplicationRouter->InitializeRouter();
 }
 

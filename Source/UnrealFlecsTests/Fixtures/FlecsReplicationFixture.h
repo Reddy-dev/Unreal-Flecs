@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Networking/FlecsNetworkWorldSubsystem.h"
+#include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 #include "UnrealFlecsTests/Fixtures/FlecsRegisteredWorldFixture.h"
 #include "UnrealFlecsTests/Fixtures/FlecsTestReplicationBridge.h"
 

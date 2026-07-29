@@ -3,7 +3,7 @@
 #include "FlecsAbstractWorldSubsystemTestTypes.h"
 
 #include "Engine/World.h"
-#include "Networking/FlecsNetworkSubsystemSingleton.h"
+#include "Networking/Subsystem/FlecsNetworkSubsystemSingleton.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsAbstractWorldSubsystemTestTypes)
 

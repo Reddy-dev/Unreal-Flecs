@@ -2,8 +2,8 @@
 
 #include "Networking/FlecsReplicationKey.h"
 
-#include "Networking/FlecsNetworkSubsystemSingleton.h"
-#include "Networking/FlecsNetworkWorldSubsystem.h"
+#include "Networking/Subsystem/FlecsNetworkSubsystemSingleton.h"
+#include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 #include "Networking/FlecsStablePathTag.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsReplicationKey)

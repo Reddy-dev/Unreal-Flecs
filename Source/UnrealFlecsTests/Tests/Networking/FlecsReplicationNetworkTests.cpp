@@ -8,7 +8,7 @@
 #include "Engine/NetDriver.h"
 #include "GameFramework/GameModeBase.h"
 
-#include "Networking/FlecsNetworkWorldSubsystem.h"
+#include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 #include "Networking/FlecsReplicatedEntityComponent.h"
 #include "Networking/FlecsReplicationBridgeBase.h"
 #include "Pipelines/FlecsDefaultGameLoop.h"

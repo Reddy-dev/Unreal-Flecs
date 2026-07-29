@@ -5,7 +5,7 @@
 #include "Engine/World.h"
 #include "Iris/ReplicationSystem/ReplicationFragmentUtil.h"
 
-#include "Networking/FlecsNetworkWorldSubsystem.h"
+#include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 #include "Networking/Shards/FlecsNetShardBase.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsReplicationBridgeBase)

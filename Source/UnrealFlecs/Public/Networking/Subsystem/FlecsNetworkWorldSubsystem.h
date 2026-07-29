@@ -6,9 +6,9 @@
 
 #include "Worlds/FlecsAbstractWorldSubsystem.h"
 
-#include "FlecsNetworkId.h"
-#include "Layout/FlecsReplicationLayoutRegistry.h"
-#include "Layout/FlecsReplicationSnapshot.h"
+#include "Networking/FlecsNetworkId.h"
+#include "Networking/Layout/FlecsReplicationLayoutRegistry.h"
+#include "Networking/Layout/FlecsReplicationSnapshot.h"
 
 #include "FlecsNetworkWorldSubsystem.generated.h"
 
@@ -45,6 +45,7 @@ public:
 	void StopReplicatingEntity(const FFlecsEntityHandle& InEntityHandle);
 	
 	NO_DISCARD TSolidNotNull<IFlecsNetworkIDGeneratorInterface*> GetNetworkIdGenerator() const;
+	
 	NO_DISCARD TSolidNotNull<UFlecsReplicationBridgeBase*> GetReplicationBridge() const;
 	NO_DISCARD TSolidNotNull<UFlecsReplicationRouterBase*> GetReplicationRouter() const;
 

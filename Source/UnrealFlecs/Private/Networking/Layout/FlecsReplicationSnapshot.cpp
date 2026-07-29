@@ -4,7 +4,7 @@
 
 #include "Serialization/MemoryWriter.h"
 
-#include "Networking/FlecsNetworkWorldSubsystem.h"
+#include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 #include "Networking/Layout/FlecsReplicationLayoutDefinition.h"
 #include "Networking/Layout/FlecsReplicationLayoutRegistry.h"
 

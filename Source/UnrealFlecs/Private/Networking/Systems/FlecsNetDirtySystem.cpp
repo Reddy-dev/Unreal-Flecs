@@ -3,8 +3,8 @@
 #include "Networking/Systems/FlecsNetDirtySystem.h"
 
 #include "Networking/FlecsNetDirtyTag.h"
-#include "Networking/FlecsNetworkSubsystemSingleton.h"
-#include "Networking/FlecsNetworkWorldSubsystem.h"
+#include "Networking/Subsystem/FlecsNetworkSubsystemSingleton.h"
+#include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 #include "Networking/FlecsReplicatedEntityComponent.h"
 #include "Networking/FlecsReplicationBridgeBase.h"
 #include "Networking/Layout/FlecsReplicationSnapshot.h"

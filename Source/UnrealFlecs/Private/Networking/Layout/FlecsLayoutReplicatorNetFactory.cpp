@@ -5,7 +5,7 @@
 #include "Iris/ReplicationSystem/ObjectReplicationBridge.h"
 
 #include "Networking/FlecsIrisReplicationBridge.h"
-#include "Networking/FlecsNetworkWorldSubsystem.h"
+#include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 #include "Networking/Layout/FlecsLayoutReplicator.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsLayoutReplicatorNetFactory)

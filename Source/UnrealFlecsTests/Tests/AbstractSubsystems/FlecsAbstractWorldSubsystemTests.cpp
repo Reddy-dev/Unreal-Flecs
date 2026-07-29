@@ -6,8 +6,8 @@
 
 #include "FlecsAbstractWorldSubsystemTestTypes.h"
 
-#include "Networking/FlecsNetworkSubsystemSingleton.h"
-#include "Networking/FlecsNetworkWorldSubsystem.h"
+#include "Networking/Subsystem/FlecsNetworkSubsystemSingleton.h"
+#include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 
 FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsWorldSubsystems, "UnrealFlecs.World.Subsystems",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter

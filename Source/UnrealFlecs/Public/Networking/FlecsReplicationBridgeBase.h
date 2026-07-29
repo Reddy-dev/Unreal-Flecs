@@ -26,6 +26,11 @@ class UNREALFLECS_API UFlecsReplicationBridgeBase : public UObject
 public:
 	UFlecsReplicationBridgeBase(const FObjectInitializer& ObjectInitializer);
 	virtual ~UFlecsReplicationBridgeBase() override;
+	
+	virtual bool IsSupportedForNetworking() const override
+	{
+		return true;
+	}
 
 	virtual void InitializeBridge() {}
 	virtual void DeinitializeBridge() {}
