@@ -38,6 +38,9 @@ public class UnrealFlecs : ModuleRules
 			{
 				"CoreUObject",
 				"Engine",
+				"Json",
+				"TraceLog",
+				"RewindDebuggerRuntimeInterface",
 				"Slate",
 				"SlateCore"
 			}

@@ -9,9 +9,16 @@ class FFlecsIdPinFactory;
 class SDockTab;
 class FSpawnTabArgs;
 
+namespace UE::Flecs::RewindDebugger
+{
+	class FTraceModule;
+	class FTrackCreator;
+}
+
 class FUnrealFlecsEditorModule : public IModuleInterface
 {
 public:
+	virtual ~FUnrealFlecsEditorModule() override;
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
@@ -27,5 +34,7 @@ private:
 	TSharedPtr<FFlecsIdPinFactory> FlecsIdPinFactory;
 	TWeakPtr<SDockTab> ExplorerTab;
 	FDelegateHandle PostPIEStartedHandle;
+	TUniquePtr<UE::Flecs::RewindDebugger::FTraceModule> FlecsRewindDebuggerTraceModule;
+	TUniquePtr<UE::Flecs::RewindDebugger::FTrackCreator> FlecsRewindDebuggerTrackCreator;
 
 }; // class FUnrealFlecsEditorModule

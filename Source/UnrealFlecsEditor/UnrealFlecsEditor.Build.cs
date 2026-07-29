@@ -39,6 +39,10 @@ public class UnrealFlecsEditor : ModuleRules
                 "GraphEditor",
                 "BlueprintGraph",
                 "StructUtilsEditor",
+                "Json",
+                "TraceServices",
+                "RewindDebuggerInterface",
+                "TraceAnalysis",
             }
         );
         

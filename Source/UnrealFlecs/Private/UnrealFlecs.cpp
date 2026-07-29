@@ -7,6 +7,9 @@
 #include "General/FlecsOSAPI.h"
 #include "Entities/FlecsDefaultEntityEngine.h"
 #include "General/FlecsModuleRegistry.h"
+#include "Debugging/FlecsRewindDebuggerRuntimeExtension.h"
+#include "Features/IModularFeatures.h"
+#include "RewindDebuggerRuntimeInterface/IRewindDebuggerRuntimeExtension.h"
 
 #define LOCTEXT_NAMESPACE "FUnrealFlecsModule"
 
@@ -16,9 +19,15 @@ namespace UE::Flecs
 	static FOSApiInitializer OSApiInitializer;
 } // namespace UE::Flecs
 
+FUnrealFlecsModule::~FUnrealFlecsModule() = default;
+
 void FUnrealFlecsModule::StartupModule()
 {
 	UE::Flecs::FFlecsModuleRegistry::Get().RegisterUnrealFlecsModule("UnrealFlecs");
+	RewindDebuggerRuntimeExtension = MakeUnique<FFlecsRewindDebuggerRuntimeExtension>();
+	IModularFeatures::Get().RegisterModularFeature(
+		IRewindDebuggerRuntimeExtension::ModularFeatureName,
+		RewindDebuggerRuntimeExtension.Get());
 	/*FFlecsReplicationInterestPolicyRegistry::RegisterPolicy(MakeUnique<FFlecsEveryoneReplicationInterestPolicy>());
 	FFlecsReplicationInterestPolicyRegistry::RegisterPolicy(MakeUnique<FFlecsOwnerReplicationInterestPolicy>());
 	FFlecsReplicationInterestPolicyRegistry::RegisterPolicy(MakeUnique<FFlecsSpatialCellReplicationInterestPolicy>());*/
@@ -32,6 +41,14 @@ void FUnrealFlecsModule::StartupModule()
 
 void FUnrealFlecsModule::ShutdownModule()
 {
+	if (RewindDebuggerRuntimeExtension)
+	{
+		IModularFeatures::Get().UnregisterModularFeature(
+			IRewindDebuggerRuntimeExtension::ModularFeatureName,
+			RewindDebuggerRuntimeExtension.Get());
+		RewindDebuggerRuntimeExtension.Reset();
+	}
+
 	/*FFlecsReplicationInterestPolicyRegistry::UnregisterPolicy(FFlecsReplicationInterestPolicyNames::SpatialCell);
 	FFlecsReplicationInterestPolicyRegistry::UnregisterPolicy(FFlecsReplicationInterestPolicyNames::Owner);
 	FFlecsReplicationInterestPolicyRegistry::UnregisterPolicy(FFlecsReplicationInterestPolicyNames::Everyone);*/

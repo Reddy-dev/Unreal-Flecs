@@ -32,4 +32,12 @@ public:
 	UPROPERTY(EditAnywhere, Config, Category = "Explorer")
 	TOptional<FFlecsEditorExplorerURL> FlecsExplorerURLOverride;
 
+	/**
+	 * Enables opt-in Flecs entity state capture when a Rewind Debugger recording starts.
+	 * Only entities with FFlecsRewindDebuggerTag are captured. Changing this setting
+	 * does not affect a recording already in progress.
+	 */
+	UPROPERTY(EditAnywhere, Config, Category = "Rewind Debugger")
+	bool bEnableFlecsRewindDebugger = false;
+
 }; // class UFlecsEditorPerProjectDeveloperSettings

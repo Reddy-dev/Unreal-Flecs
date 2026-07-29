@@ -11,6 +11,9 @@
 #include "Framework/Application/SlateApplication.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Framework/Docking/TabManager.h"
+#include "Features/IModularFeatures.h"
+#include "IRewindDebuggerTrackCreator.h"
+#include "TraceServices/ModuleService.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/Notifications/SNotificationList.h"
 
@@ -25,6 +28,8 @@
 #include "Widgets/EntityHandle/FlecsIdCustomization.h"
 #include "Widgets/EntityHandle/FlecsIdPinFactory.h"
 #include "Widgets/Explorer/SFlecsExplorer.h"
+#include "RewindDebugger/FlecsRewindDebuggerTraceModule.h"
+#include "RewindDebugger/FlecsRewindDebuggerTrack.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogFlecsEditor, Log, All);
 
@@ -35,9 +40,22 @@ namespace
 	const FName FlecsExplorerTabName(TEXT("UnrealFlecs.Explorer"));
 } // namespace
 
+FUnrealFlecsEditorModule::~FUnrealFlecsEditorModule() = default;
+
 void FUnrealFlecsEditorModule::StartupModule()
 {
 	FUnrealFlecsEditorStyle::Initialize();
+
+	FlecsRewindDebuggerTraceModule =
+		MakeUnique<UE::Flecs::RewindDebugger::FTraceModule>();
+	FlecsRewindDebuggerTrackCreator =
+		MakeUnique<UE::Flecs::RewindDebugger::FTrackCreator>();
+	IModularFeatures::Get().RegisterModularFeature(
+		TraceServices::ModuleFeatureName,
+		FlecsRewindDebuggerTraceModule.Get());
+	IModularFeatures::Get().RegisterModularFeature(
+		RewindDebugger::IRewindDebuggerTrackCreator::ModularFeatureName,
+		FlecsRewindDebuggerTrackCreator.Get());
 
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(
 		FlecsExplorerTabName,
@@ -77,6 +95,22 @@ void FUnrealFlecsEditorModule::StartupModule()
 
 void FUnrealFlecsEditorModule::ShutdownModule()
 {
+	if (FlecsRewindDebuggerTrackCreator)
+	{
+		IModularFeatures::Get().UnregisterModularFeature(
+			RewindDebugger::IRewindDebuggerTrackCreator::ModularFeatureName,
+			FlecsRewindDebuggerTrackCreator.Get());
+		FlecsRewindDebuggerTrackCreator.Reset();
+	}
+
+	if (FlecsRewindDebuggerTraceModule)
+	{
+		IModularFeatures::Get().UnregisterModularFeature(
+			TraceServices::ModuleFeatureName,
+			FlecsRewindDebuggerTraceModule.Get());
+		FlecsRewindDebuggerTraceModule.Reset();
+	}
+
 	FEditorDelegates::PostPIEStarted.Remove(PostPIEStartedHandle);
 
 	if (FSlateApplication::IsInitialized())
