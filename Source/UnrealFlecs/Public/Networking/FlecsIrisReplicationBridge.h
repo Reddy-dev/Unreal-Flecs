@@ -8,6 +8,9 @@
 
 #include "FlecsIrisReplicationBridge.generated.h"
 
+class UFlecsLayoutReplicator;
+class UWorld;
+
 /**
  * 
  */
@@ -21,7 +24,10 @@ public:
 	virtual void InitializeBridge() override;
 	virtual void DeinitializeBridge() override;
 
+	void BindLayoutReplicator(UFlecsLayoutReplicator* InLayoutReplicator);
+
 	virtual void PublishEntityLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition) override;
+	virtual void RemoveEntityLayout(const FFlecsReplicationLayoutId& InLayoutId) override;
 	
 	virtual void PublishNetEntity(
 		const FFlecsNetRouteId& InRouteId,
@@ -31,7 +37,14 @@ public:
 	virtual UFlecsNetShardBase* ResolveShard(const FFlecsNetRouteId& InRouteId, const FFlecsEntityHandle& InEntityHandle);
 	
 protected:
+	void HandleWorldPreActorTick(UWorld* InWorld, ELevelTick InTickType, float InDeltaSeconds);
+
+	UPROPERTY(Transient)
+	TObjectPtr<UFlecsLayoutReplicator> LayoutReplicator;
+
 	UPROPERTY()
 	TMap<FFlecsNetRouteId, TObjectPtr<UFlecsNetShardBase>> ShardMap;
+
+	FDelegateHandle WorldPreActorTickHandle;
 	
 }; // class UFlecsIrisReplicationBridge

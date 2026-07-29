@@ -34,6 +34,8 @@ public:
 	virtual void PublishEntityLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition)
 		PURE_VIRTUAL(UFlecsReplicationBridgeBase::PublishEntityLayout, );
 	virtual void ReceiveEntityLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition);
+	virtual void RemoveEntityLayout(const FFlecsReplicationLayoutId& InLayoutId) {}
+	virtual void ReceiveEntityLayoutRemoval(const FFlecsReplicationLayoutId& InLayoutId);
 	
 	// Called on both Client and Server when a new layout is published. This is called after the layout has been received and processed.
 	virtual void OnEntityLayoutPublished(const FFlecsReplicationLayoutDefinition& InLayoutDefinition) {}
@@ -57,10 +59,10 @@ public:
 	virtual NO_DISCARD UFlecsNetShardBase* ResolveShard(const FFlecsNetRouteId& InRouteId)
 		PURE_VIRTUAL(UFlecsReplicationBridgeBase::ResolveShard, return nullptr;);
 
+	NO_DISCARD bool HasAuthority() const;
+
 protected:
 	NO_DISCARD TSolidNotNull<UFlecsNetworkWorldSubsystem*> GetNetworkWorldSubsystem() const;
-	
-	NO_DISCARD bool HasAuthority() const;
 	
 	// @TODO
 	/*UPROPERTY(Transient)

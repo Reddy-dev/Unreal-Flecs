@@ -10,28 +10,53 @@
 
 #include "FlecsLayoutReplicatorFastArray.generated.h"
 
+class UFlecsLayoutReplicator;
+struct FFlecsReplicatorFastArray;
+
 USTRUCT()
-struct FFlecsLayoutReplicatorItem : public FFastArraySerializerItem
+struct UNREALFLECS_API FFlecsLayoutReplicatorItem : public FFastArraySerializerItem
 {
 	GENERATED_BODY()
 	
 public:
 	UPROPERTY()
 	FFlecsReplicationLayoutDefinition LayoutDefinition;
+
+	void PreReplicatedRemove(const FFlecsReplicatorFastArray& InArraySerializer);
+	void PostReplicatedAdd(const FFlecsReplicatorFastArray& InArraySerializer);
+	void PostReplicatedChange(const FFlecsReplicatorFastArray& InArraySerializer);
 	
 }; // struct FFlecsLayoutReplicatorItem
 
 USTRUCT()
-struct FFlecsReplicatorFastArray : public FFastArraySerializer
+struct UNREALFLECS_API FFlecsReplicatorFastArray : public FFastArraySerializer
 {
 	GENERATED_BODY()
 	
 public:
-	
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
+
+	void SetOwner(UFlecsLayoutReplicator* InOwner);
+
+	/** Adds an immutable layout, or leaves an identical retained definition untouched. */
+	NO_DISCARD bool AddLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition);
+
+	/** Removes a retained layout after its final Flecs table has been deleted. */
+	NO_DISCARD bool RemoveLayout(const FFlecsReplicationLayoutId& InLayoutId);
+
+	NO_DISCARD const FFlecsLayoutReplicatorItem* FindLayout(
+		const FFlecsReplicationLayoutId& InLayoutId) const;
 
 	UPROPERTY()
 	TArray<FFlecsLayoutReplicatorItem> Items;
+
+private:
+	friend struct FFlecsLayoutReplicatorItem;
+
+	void ReceiveLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition) const;
+	void ReceiveLayoutRemoval(const FFlecsReplicationLayoutId& InLayoutId) const;
+
+	UFlecsLayoutReplicator* Owner = nullptr;
 	
 }; // struct FFlecsReplicatorFastArray
 

@@ -3,6 +3,7 @@
 #include "Networking/FlecsIrisReplicationBridge.h"
 
 #include "Networking/FlecsNetworkWorldSubsystem.h"
+#include "Networking/Layout/FlecsLayoutReplicator.h"
 #include "Networking/Router/FlecsReplicationRouterBase.h"
 #include "Networking/Shards/FlecsNetShardBase.h"
 
@@ -10,17 +11,74 @@
 
 void UFlecsIrisReplicationBridge::InitializeBridge()
 {
-	
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	LayoutReplicator = NewObject<UFlecsLayoutReplicator>(this);
+	check(IsValid(LayoutReplicator));
+	LayoutReplicator->InitializeReplicator(this);
+
+	if (!LayoutReplicator->TryStartReplication())
+	{
+		WorldPreActorTickHandle = FWorldDelegates::OnWorldPreActorTick.AddUObject(
+			this, &UFlecsIrisReplicationBridge::HandleWorldPreActorTick);
+	}
 }
 
 void UFlecsIrisReplicationBridge::DeinitializeBridge()
 {
+	if (WorldPreActorTickHandle.IsValid())
+	{
+		FWorldDelegates::OnWorldPreActorTick.Remove(WorldPreActorTickHandle);
+		WorldPreActorTickHandle.Reset();
+	}
 
+	if (LayoutReplicator)
+	{
+		LayoutReplicator->DeinitializeReplicator();
+		LayoutReplicator = nullptr;
+	}
+
+}
+
+void UFlecsIrisReplicationBridge::BindLayoutReplicator(UFlecsLayoutReplicator* InLayoutReplicator)
+{
+	check(IsValid(InLayoutReplicator));
+	check(!HasAuthority());
+
+	LayoutReplicator = InLayoutReplicator;
+	LayoutReplicator->BindReplicationBridge(this);
+}
+
+void UFlecsIrisReplicationBridge::HandleWorldPreActorTick(
+	UWorld* InWorld,
+	ELevelTick,
+	float)
+{
+	if (InWorld != GetWorld() || !LayoutReplicator)
+	{
+		return;
+	}
+
+	if (LayoutReplicator->TryStartReplication())
+	{
+		FWorldDelegates::OnWorldPreActorTick.Remove(WorldPreActorTickHandle);
+		WorldPreActorTickHandle.Reset();
+	}
 }
 
 void UFlecsIrisReplicationBridge::PublishEntityLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition)
 {
-	
+	check(IsValid(LayoutReplicator));
+	LayoutReplicator->PublishLayout(InLayoutDefinition);
+}
+
+void UFlecsIrisReplicationBridge::RemoveEntityLayout(const FFlecsReplicationLayoutId& InLayoutId)
+{
+	check(IsValid(LayoutReplicator));
+	LayoutReplicator->RemoveLayoutForDeletedTable(InLayoutId);
 }
 
 void UFlecsIrisReplicationBridge::PublishNetEntity(

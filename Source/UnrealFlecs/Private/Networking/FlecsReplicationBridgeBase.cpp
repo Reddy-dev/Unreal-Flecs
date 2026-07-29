@@ -21,9 +21,22 @@ UFlecsReplicationBridgeBase::~UFlecsReplicationBridgeBase()
 
 void UFlecsReplicationBridgeBase::ReceiveEntityLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition)
 {
-	GetNetworkWorldSubsystem()->GetLayoutRegistry().AddRemoteDefinition(InLayoutDefinition);
+	const TValueOrError<void, FString> Result =
+		GetNetworkWorldSubsystem()->GetLayoutRegistry().AddRemoteDefinition(InLayoutDefinition);
+
+	if UNLIKELY_IF(Result.HasError())
+	{
+		HandleProtocolError(Result.GetError());
+		return;
+	}
 	
 	GetNetworkWorldSubsystem()->OnEntityLayoutReceived(InLayoutDefinition);
+}
+
+void UFlecsReplicationBridgeBase::ReceiveEntityLayoutRemoval(const FFlecsReplicationLayoutId& InLayoutId)
+{
+	(void)GetNetworkWorldSubsystem()->GetLayoutRegistry().RemoveRemoteDefinition(InLayoutId);
+	GetNetworkWorldSubsystem()->OnEntityLayoutRemoved(InLayoutId);
 }
 
 void UFlecsReplicationBridgeBase::ReceiveNetEntity(const FFlecsNetworkId& InNetworkId,
