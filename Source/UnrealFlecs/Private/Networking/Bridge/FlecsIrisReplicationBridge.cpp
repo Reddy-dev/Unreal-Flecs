@@ -153,8 +153,7 @@ void UFlecsIrisReplicationBridge::PublishEntityLayout(const FFlecsReplicationLay
 	ReplicatedLayouts.AddLayout(InLayoutDefinition);
 }
 
-void UFlecsIrisReplicationBridge::ReceiveLayout(
-	const FFlecsReplicationLayoutDefinition& InLayoutDefinition)
+void UFlecsIrisReplicationBridge::ReceiveLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition)
 {
 	ReceiveEntityLayout(InLayoutDefinition);
 }
