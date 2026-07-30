@@ -2,6 +2,7 @@
 
 #include "Networking/Bridge/FlecsIrisReplicationBridgeNetFactory.h"
 
+#include "Engine/World.h"
 #include "Iris/ReplicationSystem/ObjectReplicationBridge.h"
 
 #include "Networking/Bridge/FlecsIrisReplicationBridge.h"
@@ -15,14 +16,13 @@ FName UFlecsIrisReplicationBridgeNetFactory::GetFactoryName()
 	return FactoryName;
 }
 
-void UFlecsIrisReplicationBridgeNetFactory::PostInstantiation(
-	const FPostInstantiationContext& Context)
+void UFlecsIrisReplicationBridgeNetFactory::PostInstantiation(const FPostInstantiationContext& Context)
 {
 	Super::PostInstantiation(Context);
 
-	UFlecsIrisReplicationBridge* FlecsBridge =
-		Cast<UFlecsIrisReplicationBridge>(Context.Instance);
+	UFlecsIrisReplicationBridge* FlecsBridge = Cast<UFlecsIrisReplicationBridge>(Context.Instance);
 	UWorld* World = Bridge ? Bridge->GetWorld() : nullptr;
+	
 	UFlecsNetworkWorldSubsystem* NetworkSubsystem =
 		World ? World->GetSubsystem<UFlecsNetworkWorldSubsystem>() : nullptr;
 
@@ -40,11 +40,9 @@ void UFlecsIrisReplicationBridgeNetFactory::DetachedFromReplication(
 	const FDetachContext& Context,
 	const TOptional<FSubObjectDetachContext>& SubObjectContext)
 {
-	UFlecsIrisReplicationBridge* FlecsBridge =
-		Cast<UFlecsIrisReplicationBridge>(Context.DetachedInstance);
+	UFlecsIrisReplicationBridge* FlecsBridge = Cast<UFlecsIrisReplicationBridge>(Context.DetachedInstance);
 	UWorld* World = Bridge ? Bridge->GetWorld() : nullptr;
-	UFlecsNetworkWorldSubsystem* NetworkSubsystem =
-		World ? World->GetSubsystem<UFlecsNetworkWorldSubsystem>() : nullptr;
+	UFlecsNetworkWorldSubsystem* NetworkSubsystem = World ? World->GetSubsystem<UFlecsNetworkWorldSubsystem>() : nullptr;
 
 	if (Context.Reason != UE::Net::EDetachReason::TornOff
 		&& FlecsBridge

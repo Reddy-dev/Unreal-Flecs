@@ -9,7 +9,7 @@
 #include "Net/Iris/ReplicationSystem/NetRootObjectFactory.h"
 
 #include "Networking/Bridge/FlecsReplicationBridgeBase.h"
-#include "Layout/FlecsLayoutReplicatorFastArray.h"
+#include "Networking/Layout/FlecsLayoutReplicatorFastArray.h"
 
 #include "FlecsIrisReplicationBridge.generated.h"
 

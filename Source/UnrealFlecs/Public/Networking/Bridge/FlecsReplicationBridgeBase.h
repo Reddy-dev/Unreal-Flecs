@@ -6,9 +6,9 @@
 
 #include "UObject/Object.h"
 
-#include "Layout/FlecsReplicationLayoutDefinition.h"
-#include "Layout/FlecsReplicationSnapshot.h"
-#include "Router/FlecsNetRouteId.h"
+#include "Networking/Layout/FlecsReplicationLayoutDefinition.h"
+#include "Networking/Layout/FlecsReplicationSnapshot.h"
+#include "Networking/Router/FlecsNetRouteId.h"
 
 #include "FlecsReplicationBridgeBase.generated.h"
 
