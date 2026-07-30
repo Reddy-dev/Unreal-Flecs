@@ -62,13 +62,14 @@ public:
 	virtual NO_DISCARD UFlecsNetShardBase* ResolveShard(const FFlecsNetRouteId& InRouteId)
 		PURE_VIRTUAL(UFlecsReplicationBridgeBase::ResolveShard, return nullptr;);
 
+	void SetNetworkWorldSubsystem(UFlecsNetworkWorldSubsystem* InNetworkWorldSubsystem);
+
 	NO_DISCARD bool HasAuthority() const;
 
 protected:
 	NO_DISCARD TSolidNotNull<UFlecsNetworkWorldSubsystem*> GetNetworkWorldSubsystem() const;
 	
-	// @TODO
-	/*UPROPERTY(Transient)
-	TWeakObjectPtr<UFlecsNetworkWorldSubsystem> NetworkWorldSubsystem;*/
+	UPROPERTY(Transient)
+	TWeakObjectPtr<UFlecsNetworkWorldSubsystem> NetworkWorldSubsystem;
 	
 }; // class UFlecsReplicationBridgeBase

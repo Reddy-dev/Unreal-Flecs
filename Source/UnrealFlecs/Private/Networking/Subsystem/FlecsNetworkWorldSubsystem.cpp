@@ -14,7 +14,7 @@
 #include "Networking/FlecsNetworkingModuleSettings.h"
 #include "Networking/Subsystem/FlecsNetworkSubsystemSingleton.h"
 #include "Networking/FlecsReplicatedEntityComponent.h"
-#include "Networking/FlecsReplicationBridgeBase.h"
+#include "Networking/Bridge/FlecsReplicationBridgeBase.h"
 #include "Networking/Router/FlecsReplicationRouterBase.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsNetworkWorldSubsystem)
@@ -211,6 +211,11 @@ void UFlecsNetworkWorldSubsystem::CreateNetworkIdGenerator()
 
 void UFlecsNetworkWorldSubsystem::CreateReplicationBridge()
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
+
 	const TSolidNotNull<const UFlecsNetworkingModuleSettings*> Settings = GetNetworkingSettings();
 	
 	if UNLIKELY_IF(!ensureMsgf(Settings->ReplicationBridgeClass, TEXT("Replication bridge class is not set in settings")))
@@ -221,7 +226,40 @@ void UFlecsNetworkWorldSubsystem::CreateReplicationBridge()
 	ReplicationBridge = NewObject<UFlecsReplicationBridgeBase>(this, Settings->ReplicationBridgeClass);
 	solid_checkf(IsValid(ReplicationBridge), TEXT("Replication bridge is not valid"));
 	
+	ReplicationBridge->SetNetworkWorldSubsystem(this);
 	ReplicationBridge->InitializeBridge();
+}
+
+void UFlecsNetworkWorldSubsystem::BindReplicationBridge(const TSolidNotNull<UFlecsReplicationBridgeBase*> InReplicationBridge)
+{
+	solid_check(!HasAuthority());
+
+	if (ReplicationBridge == InReplicationBridge)
+	{
+		return;
+	}
+
+	if (ReplicationBridge)
+	{
+		ReplicationBridge->DeinitializeBridge();
+	}
+
+	ReplicationBridge = InReplicationBridge;
+	ReplicationBridge->SetNetworkWorldSubsystem(this);
+	ReplicationBridge->InitializeBridge();
+}
+
+void UFlecsNetworkWorldSubsystem::UnbindReplicationBridge(const UFlecsReplicationBridgeBase* InReplicationBridge)
+{
+	check(!HasAuthority());
+
+	if (ReplicationBridge != InReplicationBridge)
+	{
+		return;
+	}
+
+	ReplicationBridge->DeinitializeBridge();
+	ReplicationBridge = nullptr;
 }
 
 void UFlecsNetworkWorldSubsystem::CreateReplicationRouter()
@@ -262,6 +300,11 @@ TSolidNotNull<UFlecsReplicationRouterBase*> UFlecsNetworkWorldSubsystem::GetRepl
 	return ReplicationRouter;
 }
 
+bool UFlecsNetworkWorldSubsystem::HasReplicationBridge() const
+{
+	return IsValid(ReplicationBridge);
+}
+
 #if WITH_AUTOMATION_TESTS
 
 void UFlecsNetworkWorldSubsystem::SetReplicationBridgeForTesting(UFlecsReplicationBridgeBase* InReplicationBridge)
@@ -280,6 +323,7 @@ void UFlecsNetworkWorldSubsystem::SetReplicationBridgeForTesting(UFlecsReplicati
 
 	if (ReplicationBridge)
 	{
+		ReplicationBridge->SetNetworkWorldSubsystem(this);
 		ReplicationBridge->InitializeBridge();
 	}
 }

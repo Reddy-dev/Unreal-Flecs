@@ -1,6 +1,6 @@
 ﻿// Elie Wiese-Namir © 2026. All Rights Reserved.
 
-#include "Networking/FlecsReplicationBridgeBase.h"
+#include "Networking/Bridge/FlecsReplicationBridgeBase.h"
 
 #include "Engine/World.h"
 #include "Iris/ReplicationSystem/ReplicationFragmentUtil.h"
@@ -44,8 +44,19 @@ void UFlecsReplicationBridgeBase::HandleProtocolError(const FString& InErrorMess
 	UE_LOG(LogFlecsCore, Error, TEXT("Protocol error: %s"), *InErrorMessage);
 }
 
+void UFlecsReplicationBridgeBase::SetNetworkWorldSubsystem(
+	UFlecsNetworkWorldSubsystem* InNetworkWorldSubsystem)
+{
+	NetworkWorldSubsystem = InNetworkWorldSubsystem;
+}
+
 TSolidNotNull<UFlecsNetworkWorldSubsystem*> UFlecsReplicationBridgeBase::GetNetworkWorldSubsystem() const
 {
+	if LIKELY_IF(NetworkWorldSubsystem.IsValid())
+	{
+		return NetworkWorldSubsystem.Get();
+	}
+
 	return GetWorld()->GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
 }
 

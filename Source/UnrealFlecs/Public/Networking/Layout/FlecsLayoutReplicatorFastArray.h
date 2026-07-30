@@ -10,7 +10,7 @@
 
 #include "FlecsLayoutReplicatorFastArray.generated.h"
 
-class UFlecsLayoutReplicator;
+class UFlecsIrisReplicationBridge;
 
 struct FFlecsReplicatorFastArray;
 
@@ -36,7 +36,7 @@ struct UNREALFLECS_API FFlecsReplicatorFastArray : public FFastArraySerializer
 public:
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
 
-	void SetOwner(UFlecsLayoutReplicator* InOwner);
+	void SetOwner(UFlecsIrisReplicationBridge* InOwner);
 
 	/** Adds an immutable layout, or leaves an identical retained definition untouched. */
 	bool AddLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition);
@@ -52,7 +52,7 @@ private:
 	void ReceiveLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition) const;
 
 	UPROPERTY()
-	TWeakObjectPtr<UFlecsLayoutReplicator> Owner;
+	TWeakObjectPtr<UFlecsIrisReplicationBridge> Owner;
 	
 }; // struct FFlecsReplicatorFastArray
 

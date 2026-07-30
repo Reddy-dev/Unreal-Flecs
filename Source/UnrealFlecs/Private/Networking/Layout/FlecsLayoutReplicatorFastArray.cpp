@@ -2,7 +2,7 @@
 
 #include "Networking/Layout/FlecsLayoutReplicatorFastArray.h"
 
-#include "Networking/Layout/FlecsLayoutReplicator.h"
+#include "Networking/Bridge/FlecsIrisReplicationBridge.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsLayoutReplicatorFastArray)
 
@@ -22,7 +22,7 @@ bool FFlecsReplicatorFastArray::NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaP
 		Items, DeltaParms, *this);
 }
 
-void FFlecsReplicatorFastArray::SetOwner(UFlecsLayoutReplicator* InOwner)
+void FFlecsReplicatorFastArray::SetOwner(UFlecsIrisReplicationBridge* InOwner)
 {
 	Owner = InOwner;
 }

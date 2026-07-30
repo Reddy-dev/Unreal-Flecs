@@ -49,6 +49,11 @@ public:
 	NO_DISCARD TSolidNotNull<UFlecsReplicationBridgeBase*> GetReplicationBridge() const;
 	NO_DISCARD TSolidNotNull<UFlecsReplicationRouterBase*> GetReplicationRouter() const;
 
+	NO_DISCARD bool HasReplicationBridge() const;
+
+	void BindReplicationBridge(const TSolidNotNull<UFlecsReplicationBridgeBase*> InReplicationBridge);
+	void UnbindReplicationBridge(const UFlecsReplicationBridgeBase* InReplicationBridge);
+
 #if WITH_AUTOMATION_TESTS
 	void SetReplicationBridgeForTesting(UFlecsReplicationBridgeBase* InReplicationBridge);
 #endif // WITH_AUTOMATION_TESTS

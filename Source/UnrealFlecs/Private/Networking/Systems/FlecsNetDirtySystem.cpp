@@ -6,7 +6,7 @@
 #include "Networking/Subsystem/FlecsNetworkSubsystemSingleton.h"
 #include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 #include "Networking/FlecsReplicatedEntityComponent.h"
-#include "Networking/FlecsReplicationBridgeBase.h"
+#include "Networking/Bridge/FlecsReplicationBridgeBase.h"
 #include "Networking/Layout/FlecsReplicationSnapshot.h"
 #include "Networking/Router/FlecsReplicationRouterBase.h"
 

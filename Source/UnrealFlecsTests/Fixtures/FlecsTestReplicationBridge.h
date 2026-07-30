@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 
-#include "Networking/FlecsReplicationBridgeBase.h"
+#include "Networking/Bridge/FlecsReplicationBridgeBase.h"
 
 #include "FlecsTestReplicationBridge.generated.h"
 

@@ -8,9 +8,10 @@
 #include "Engine/NetDriver.h"
 #include "GameFramework/GameModeBase.h"
 
-#include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
+#include "Networking/Bridge/FlecsIrisReplicationBridge.h"
 #include "Networking/FlecsReplicatedEntityComponent.h"
-#include "Networking/FlecsReplicationBridgeBase.h"
+#include "Networking/Bridge/FlecsReplicationBridgeBase.h"
+#include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 #include "Pipelines/FlecsDefaultGameLoop.h"
 #include "UnrealFlecsTests/Fixtures/FlecsTestReplicationBridge.h"
 #include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
@@ -76,6 +77,27 @@ NETWORK_TEST_CLASS(FlecsReplicationRealBridgeNetworkTests,
 			.WithGameInstanceClass(UGameInstance::StaticClass())
 			.WithGameMode(AGameModeBase::StaticClass())
 			.Build(Network);
+	}
+
+	TEST_METHOD(ConfiguredRealBridge_IsReplicatedToClients)
+	{
+		Network
+			.ThenServer([](FState& State)
+			{
+				State.FlecsWorld = UE::Flecs::Tests::CreateNetworkTestWorld(State.World);
+			})
+			.ThenClients([](FState& State)
+			{
+				State.FlecsWorld = UE::Flecs::Tests::CreateNetworkTestWorld(State.World);
+			})
+			.UntilClients(TEXT("Iris creates and binds the replicated Flecs bridge"), [](FState& State)
+			{
+				const UFlecsNetworkWorldSubsystem* NetworkSubsystem =
+					State.World->GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
+
+				return NetworkSubsystem->HasReplicationBridge()
+					&& NetworkSubsystem->GetReplicationBridge()->IsA<UFlecsIrisReplicationBridge>();
+			});
 	}
 
 	TEST_METHOD(ConfiguredRealBridge_ReplicatesInitialEntitySnapshot)
