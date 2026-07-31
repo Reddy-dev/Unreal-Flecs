@@ -49,7 +49,6 @@ public:
 	 * NEW ENTITY CREATION. For now, we will use this for both, but in the future we will need to separate these two concepts.
 	 **/
 	virtual void PublishNetEntity(
-		const FFlecsNetRouteId& InRouteId,
 		const FFlecsNetworkId& InNetworkId,
 		const FFlecsEntityReplicationSnapshot& InSnapshot)
 		PURE_VIRTUAL(UFlecsReplicationBridgeBase::PublishNetEntity, );
@@ -59,7 +58,7 @@ public:
 	virtual void HandleProtocolError(const FString& InErrorMessage);
 
 	/** Resolves the generic storage object selected by a route. */
-	virtual NO_DISCARD UFlecsNetShardBase* ResolveShard(const FFlecsNetRouteId& InRouteId)
+	virtual NO_DISCARD UFlecsNetShardBase* ResolveShard(const FFlecsEntityHandle& InEntity)
 		PURE_VIRTUAL(UFlecsReplicationBridgeBase::ResolveShard, return nullptr;);
 
 	void SetNetworkWorldSubsystem(UFlecsNetworkWorldSubsystem* InNetworkWorldSubsystem);

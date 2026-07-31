@@ -43,9 +43,8 @@ public:
 
 	void ReceiveLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition);
 	
-	virtual void PublishNetEntity(const FFlecsNetRouteId& InRouteId,
-		const FFlecsNetworkId& InNetworkId,
-		const FFlecsEntityReplicationSnapshot& InSnapshot) override;
+	virtual void PublishNetEntity(const FFlecsNetworkId& InNetworkId,
+		const FFlecsEntityReplicationSnapshot& InSnapshot);
 	
 	//virtual UFlecsNetShardBase* ResolveShard(const FFlecsNetRouteId& InRouteId, const FFlecsEntityHandle& InEntityHandle);
 
@@ -61,7 +60,7 @@ protected:
 	FFlecsReplicatorFastArray ReplicatedLayouts;
 
 	UPROPERTY()
-	TMap<FFlecsNetRouteId, TObjectPtr<UFlecsNetShardBase>> ShardMap;
+	TMap<FFlecsEntityHandle, 
 
 	FDelegateHandle WorldPreActorTickHandle;
 
