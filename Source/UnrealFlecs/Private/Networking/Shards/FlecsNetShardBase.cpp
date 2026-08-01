@@ -28,9 +28,7 @@ void UFlecsNetShardBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	FDoRepLifetimeParams LifetimeParams;
-	LifetimeParams.bIsPushBased = true;
-	DOREPLIFETIME_WITH_PARAMS_FAST(UFlecsNetShardBase, RouteId, LifetimeParams);
+
 }
 
 void UFlecsNetShardBase::RegisterReplicationFragments(UE::Net::FFragmentRegistrationContext& Fragments,
@@ -58,12 +56,6 @@ void UFlecsNetShardBase::SetOwningNetworkWorldSubsystem(UFlecsNetworkWorldSubsys
 UFlecsNetworkWorldSubsystem* UFlecsNetShardBase::GetOwningNetworkWorldSubsystem() const
 {
 	return OwningNetworkWorldSubsystem.Get();
-}
-
-void UFlecsNetShardBase::SetRouteId(const FFlecsNetRouteId& InRouteId)
-{
-	RouteId = InRouteId;
-	MARK_PROPERTY_DIRTY_FROM_NAME(UFlecsNetShardBase, RouteId, this);
 }
 
 void UFlecsNetShardBase::ReceiveEntityUpdate(const FFlecsNetworkId& InNetworkId,

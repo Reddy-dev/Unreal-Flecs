@@ -14,7 +14,6 @@
 #include "Net/Iris/ReplicationSystem/NetRootObjectFactory.h"
 #include "Networking/FlecsNetworkId.h"
 #include "Networking/Layout/FlecsReplicationSnapshot.h"
-#include "Networking/Router/FlecsNetRouteId.h"
 
 #include "FlecsNetShardBase.generated.h"
 
@@ -47,12 +46,7 @@ public:
 	                                             UE::Net::FRootObjectReplicationParams& OutParams) const override;
 
 	virtual void ConfigureObjectSettings(OUT UE::Net::FRootObjectSettings& OutSettings) const;
-
-	NO_DISCARD const FFlecsNetRouteId& GetRouteId() const
-	{
-		return RouteId;
-	}
-
+	
 	virtual void PublishNetEntity(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot)
 		PURE_VIRTUAL(UFlecsNetShardBase::PublishNetEntity, );
 
@@ -60,16 +54,11 @@ public:
 
 	NO_DISCARD UFlecsNetworkWorldSubsystem* GetOwningNetworkWorldSubsystem() const;
 
-	void SetRouteId(const FFlecsNetRouteId& InRouteId);
-
 protected:
 
 	void ReceiveEntityUpdate(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot);
 
 private:
-
-	UPROPERTY(Replicated)
-	FFlecsNetRouteId RouteId = FFlecsNetRouteId::Default();
 
 	UPROPERTY()
 	TWeakObjectPtr<UFlecsNetworkWorldSubsystem> OwningNetworkWorldSubsystem;

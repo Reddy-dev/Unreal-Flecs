@@ -43,10 +43,10 @@ public:
 
 	void ReceiveLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition);
 	
-	virtual void PublishNetEntity(const FFlecsNetworkId& InNetworkId,
+	virtual void PublishNetEntity(const FFlecsEntityHandle& EntityHandle, const FFlecsNetworkId& InNetworkId,
 		const FFlecsEntityReplicationSnapshot& InSnapshot);
 	
-	//virtual UFlecsNetShardBase* ResolveShard(const FFlecsNetRouteId& InRouteId, const FFlecsEntityHandle& InEntityHandle);
+	virtual NO_DISCARD UFlecsNetShardBase* ResolveShard(const FFlecsEntityHandle& InEntityHandle, const FFlecsNetworkId& InNetworkId);
 
 	NO_DISCARD const FFlecsReplicatorFastArray& GetReplicatedLayouts() const
 	{
@@ -55,12 +55,14 @@ public:
 	
 protected:
 	void HandleWorldPreActorTick(UWorld* InWorld, ELevelTick InTickType, float InDeltaSeconds);
+	
+	NO_DISCARD UFlecsNetShardBase* CreateNewShard(const FFlecsEntityHandle& InEntityHandle, const FFlecsNetworkId& InNetworkId);
 
 	UPROPERTY(Replicated)
 	FFlecsReplicatorFastArray ReplicatedLayouts;
 
 	UPROPERTY()
-	TMap<FFlecsEntityHandle, 
+	TMap<FFlecsEntityView, TObjectPtr<UFlecsNetShardBase>> ShardMap;
 
 	FDelegateHandle WorldPreActorTickHandle;
 

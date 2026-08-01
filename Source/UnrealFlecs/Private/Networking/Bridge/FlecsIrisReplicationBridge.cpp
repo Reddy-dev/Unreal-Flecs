@@ -10,6 +10,7 @@
 #include "Networking/Bridge/FlecsIrisReplicationBridgeNetFactory.h"
 #include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 #include "Networking/Router/FlecsReplicationRouterBase.h"
+#include "Networking/Shards/FlecsNetEntityProxy.h"
 #include "Networking/Shards/FlecsNetShardBase.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsIrisReplicationBridge)
@@ -32,7 +33,7 @@ void UFlecsIrisReplicationBridge::GetLifetimeReplicatedProps(TArray<FLifetimePro
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	FDoRepLifetimeParams LifetimeParams;
-	LifetimeParams.bIsPushBased = false;
+	LifetimeParams.bIsPushBased = true;
 	DOREPLIFETIME_WITH_PARAMS_FAST(UFlecsIrisReplicationBridge, ReplicatedLayouts, LifetimeParams);
 }
 
@@ -158,12 +159,31 @@ void UFlecsIrisReplicationBridge::ReceiveLayout(const FFlecsReplicationLayoutDef
 	ReceiveEntityLayout(InLayoutDefinition);
 }
 
-void UFlecsIrisReplicationBridge::PublishNetEntity(
-	const FFlecsNetRouteId& InRouteId,
-	const FFlecsNetworkId& InNetworkId,
+void UFlecsIrisReplicationBridge::PublishNetEntity(const FFlecsEntityHandle& EntityHandle, const FFlecsNetworkId& InNetworkId,
 	const FFlecsEntityReplicationSnapshot& InSnapshot)
 {
+	TSolidNotNull<UFlecsNetShardBase*> Shard = ResolveShard(EntityHandle, InNetworkId);
+	Shard->PublishNetEntity(InNetworkId, InSnapshot);
+}
+
+UFlecsNetShardBase* UFlecsIrisReplicationBridge::ResolveShard(const FFlecsEntityHandle& InEntityHandle, const FFlecsNetworkId& InNetworkId)
+{
+	if (ShardMap.Contains(InEntityHandle))
+	{
+		return ShardMap[InEntityHandle].Get();
+	}
 	
+	const TSolidNotNull<UFlecsNetShardBase*> Shard = CreateNewShard(InEntityHandle, InNetworkId);
+	return Shard;
+}
+
+UFlecsNetShardBase* UFlecsIrisReplicationBridge::CreateNewShard(const FFlecsEntityHandle& InEntityHandle,
+	const FFlecsNetworkId& InNetworkId)
+{
+	UFlecsNetShardBase* Shard = NewObject<UFlecsNetEntityProxy>();
+	Shard->InitializeShard();
+	
+	return Shard;
 }
 
 /*UFlecsNetShardBase* UFlecsIrisReplicationBridge::ResolveShard(const FFlecsNetRouteId& InRouteId,

@@ -8,7 +8,6 @@
 #include "Networking/FlecsReplicatedEntityComponent.h"
 #include "Networking/Bridge/FlecsReplicationBridgeBase.h"
 #include "Networking/Layout/FlecsReplicationSnapshot.h"
-#include "Networking/Router/FlecsReplicationRouterBase.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsNetDirtySystem)
 
@@ -37,17 +36,6 @@ void UFlecsNetDirtySystem::EachIterator(const TSolidNotNull<UFlecsWorldInterface
 		
 	const FFlecsEntityHandle EntityHandle = InIterator.entity(InIndex);
 
-	const FFlecsNetRouteId RouteId = NetworkSubsystem->GetReplicationRouter()->RouteEntity(EntityHandle);
-	if UNLIKELY_IF(!RouteId.IsValid())
-	{
-		NetworkSubsystem->GetReplicationBridge()->HandleProtocolError(FString::Printf(
-			TEXT("Replication router returned an invalid route for entity %s"),
-			*EntityHandle.ToString()));
-
-		EntityHandle.Remove<FFlecsNetDirtyTag>();
-		return;
-	}
-	
 	bool bCreatedNewLayout = false;
 		
 	TValueOrError<const FFlecsReplicationLayoutDefinition*, FString> LayoutResult = 
@@ -81,7 +69,7 @@ void UFlecsNetDirtySystem::EachIterator(const TSolidNotNull<UFlecsWorldInterface
 		NetworkSubsystem->GetReplicationBridge()->PublishEntityLayout(*LayoutDefinition);
 	}
 		
-	NetworkSubsystem->GetReplicationBridge()->PublishNetEntity(RouteId, NetworkId, Snapshot);
+	NetworkSubsystem->GetReplicationBridge()->PublishNetEntity(EntityHandle, NetworkId, Snapshot);
 
 	EntityHandle.Remove<FFlecsNetDirtyTag>();
 }
