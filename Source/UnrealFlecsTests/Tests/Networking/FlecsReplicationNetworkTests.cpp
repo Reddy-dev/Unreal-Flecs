@@ -163,6 +163,38 @@ NETWORK_TEST_CLASS(FlecsReplicationRealBridgeNetworkTests,
 				return Entity.IsValid() && Entity.Get<FFlecsReplicationTestValue>().Value == 91;
 			});
 	}
+
+	TEST_METHOD(ConfiguredRealBridge_RemovesEntityWhenReplicationMarkerIsRemoved)
+	{
+		Network
+			.ThenServer([](FState& State)
+			{
+				State.FlecsWorld = UE::Flecs::Tests::CreateNetworkTestWorld(State.World);
+			})
+			.ThenClients([](FState& State)
+			{
+				State.FlecsWorld = UE::Flecs::Tests::CreateNetworkTestWorld(State.World);
+			})
+			.ThenServer([](FState& State)
+			{
+				State.AuthorityEntity = State.FlecsWorld->CreateEntity()
+					.Set<FFlecsReplicationTestValue>({ 37 })
+					.Add<FFlecsReplicatedEntityComponent>();
+			})
+			.UntilClients([](FState& State)
+			{
+				return UE::Flecs::Tests::FindReplicatedValueEntity(State.FlecsWorld).IsValid();
+			})
+			.ThenServer([](FState& State)
+			{
+				State.AuthorityEntity.Remove<FFlecsReplicatedEntityComponent>();
+			})
+			.UntilClients(TEXT("Removing the replication marker detaches the proxy and destroys the remote entity"),
+				[](FState& State)
+			{
+				return !UE::Flecs::Tests::FindReplicatedValueEntity(State.FlecsWorld).IsValid();
+			});
+	}
 }; // FlecsReplicationRealBridgeNetworkTests
 
 #endif // WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS && ENABLE_PIE_NETWORK_TEST

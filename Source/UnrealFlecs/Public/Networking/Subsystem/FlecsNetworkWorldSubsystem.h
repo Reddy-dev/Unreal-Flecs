@@ -47,7 +47,6 @@ public:
 	NO_DISCARD TSolidNotNull<IFlecsNetworkIDGeneratorInterface*> GetNetworkIdGenerator() const;
 	
 	NO_DISCARD TSolidNotNull<UFlecsReplicationBridgeBase*> GetReplicationBridge() const;
-	NO_DISCARD TSolidNotNull<UFlecsReplicationRouterBase*> GetReplicationRouter() const;
 
 	NO_DISCARD bool HasReplicationBridge() const;
 
@@ -120,6 +119,7 @@ public:
 	void OnEntityLayoutReceived(const FFlecsReplicationLayoutDefinition& InLayout);
 	
 	void ReceiveNetworkEntitySnapshot(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot);
+	void RemoveReceivedNetworkEntity(const FFlecsNetworkId& InNetworkId);
 
 protected:
 	
@@ -132,7 +132,6 @@ protected:
 	static NO_DISCARD TSolidNotNull<const UFlecsNetworkingModuleSettings*> GetNetworkingSettings();
 	
 	void CreateReplicationBridge();
-	void CreateReplicationRouter();
 	void CreateNetworkIdGenerator();
 	
 	TMap<FFlecsReplicationLayoutId, TArray<TPair<FFlecsEntityHandle, FFlecsEntityReplicationSnapshot>>> DeferredEntityLayouts;
@@ -151,9 +150,6 @@ protected:
 	
 	UPROPERTY()
 	TObjectPtr<UFlecsReplicationBridgeBase> ReplicationBridge;
-
-	UPROPERTY()
-	TObjectPtr<UFlecsReplicationRouterBase> ReplicationRouter;
 	
 	FFlecsReplicationLayoutRegistry LayoutRegistry;
 	

@@ -18,8 +18,11 @@ class UNREALFLECS_API UFlecsNetEntityProxy : public UFlecsNetShardBase
 
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void ConfigureObjectSettings(OUT UE::Net::FRootObjectSettings& OutSettings) const override;
 
 	virtual void PublishNetEntity(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot) override;
+
+	void HandleReplicationDetached();
 
 	UPROPERTY(ReplicatedUsing = OnRep_NetworkId)
 	FFlecsNetworkId NetworkId;

@@ -10,6 +10,7 @@
 #include "Entities/FlecsDefaultEntityEngine.h"
 #include "General/FlecsModuleRegistry.h"
 #include "Networking/Bridge/FlecsIrisReplicationBridgeNetFactory.h"
+#include "Networking/Shards/FlecsNetEntityProxyNetFactory.h"
 
 #define LOCTEXT_NAMESPACE "FUnrealFlecsModule"
 
@@ -25,6 +26,9 @@ void FUnrealFlecsModule::StartupModule()
 	UE::Net::FNetObjectFactoryRegistry::RegisterFactory(
 		UFlecsIrisReplicationBridgeNetFactory::StaticClass(),
 		UFlecsIrisReplicationBridgeNetFactory::GetFactoryName());
+	UE::Net::FNetObjectFactoryRegistry::RegisterFactory(
+		UFlecsNetEntityProxyNetFactory::StaticClass(),
+		UFlecsNetEntityProxyNetFactory::GetFactoryName());
 	/*FFlecsReplicationInterestPolicyRegistry::RegisterPolicy(MakeUnique<FFlecsEveryoneReplicationInterestPolicy>());
 	FFlecsReplicationInterestPolicyRegistry::RegisterPolicy(MakeUnique<FFlecsOwnerReplicationInterestPolicy>());
 	FFlecsReplicationInterestPolicyRegistry::RegisterPolicy(MakeUnique<FFlecsSpatialCellReplicationInterestPolicy>());*/
@@ -40,6 +44,8 @@ void FUnrealFlecsModule::ShutdownModule()
 {
 	UE::Net::FNetObjectFactoryRegistry::UnregisterFactory(
 		UFlecsIrisReplicationBridgeNetFactory::GetFactoryName());
+	UE::Net::FNetObjectFactoryRegistry::UnregisterFactory(
+		UFlecsNetEntityProxyNetFactory::GetFactoryName());
 
 	/*FFlecsReplicationInterestPolicyRegistry::UnregisterPolicy(FFlecsReplicationInterestPolicyNames::SpatialCell);
 	FFlecsReplicationInterestPolicyRegistry::UnregisterPolicy(FFlecsReplicationInterestPolicyNames::Owner);

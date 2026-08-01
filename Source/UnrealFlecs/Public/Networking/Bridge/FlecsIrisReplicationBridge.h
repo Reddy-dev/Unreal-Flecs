@@ -13,8 +13,6 @@
 
 #include "FlecsIrisReplicationBridge.generated.h"
 
-class UWorld;
-
 /**
  * Always-relevant Iris root object coordinating Flecs replication.
  */
@@ -37,14 +35,13 @@ public:
 	virtual void InitializeBridge() override;
 	virtual void DeinitializeBridge() override;
 
-	bool TryStartReplication();
-
 	virtual void PublishEntityLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition) override;
 
 	void ReceiveLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition);
 	
 	virtual void PublishNetEntity(const FFlecsEntityHandle& EntityHandle, const FFlecsNetworkId& InNetworkId,
 		const FFlecsEntityReplicationSnapshot& InSnapshot);
+	virtual void StopReplicatingEntity(const FFlecsEntityHandle& InEntityHandle) override;
 	
 	virtual NO_DISCARD UFlecsNetShardBase* ResolveShard(const FFlecsEntityHandle& InEntityHandle, const FFlecsNetworkId& InNetworkId);
 
@@ -54,8 +51,6 @@ public:
 	}
 	
 protected:
-	void HandleWorldPreActorTick(UWorld* InWorld, ELevelTick InTickType, float InDeltaSeconds);
-	
 	NO_DISCARD UFlecsNetShardBase* CreateNewShard(const FFlecsEntityHandle& InEntityHandle, const FFlecsNetworkId& InNetworkId);
 
 	UPROPERTY(Replicated)
@@ -63,8 +58,6 @@ protected:
 
 	UPROPERTY()
 	TMap<FFlecsEntityView, TObjectPtr<UFlecsNetShardBase>> ShardMap;
-
-	FDelegateHandle WorldPreActorTickHandle;
 
 	UE::Net::FNetRootObjectAdapter RootObjectAdapter;
 	

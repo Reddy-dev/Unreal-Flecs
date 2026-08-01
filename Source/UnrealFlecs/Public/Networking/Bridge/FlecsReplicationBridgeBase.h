@@ -54,6 +54,7 @@ public:
 		PURE_VIRTUAL(UFlecsReplicationBridgeBase::PublishNetEntity, );
 	
 	virtual void ReceiveNetEntity(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot);
+	virtual void StopReplicatingEntity(const FFlecsEntityHandle& InEntityHandle) {}
 	
 	virtual void HandleProtocolError(const FString& InErrorMessage);
 

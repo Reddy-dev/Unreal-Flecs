@@ -38,6 +38,13 @@ public:
 
 	virtual void InitializeShard();
 	virtual void DeinitializeShard();
+	void StartShardReplication();
+	void StopShardReplication();
+
+	NO_DISCARD bool IsShardReplicating() const
+	{
+		return RootObjectAdapter.IsReplicating();
+	}
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void RegisterReplicationFragments(UE::Net::FFragmentRegistrationContext& Fragments,

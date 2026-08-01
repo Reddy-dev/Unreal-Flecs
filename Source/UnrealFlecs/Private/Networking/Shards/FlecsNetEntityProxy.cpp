@@ -5,6 +5,9 @@
 #include "Net/UnrealNetwork.h"
 #include "Net/Core/PushModel/PushModel.h"
 
+#include "Networking/Shards/FlecsNetEntityProxyNetFactory.h"
+#include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsNetEntityProxy)
 
 void UFlecsNetEntityProxy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -16,6 +19,12 @@ void UFlecsNetEntityProxy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 
 	DOREPLIFETIME_WITH_PARAMS_FAST(UFlecsNetEntityProxy, NetworkId, Params);
 	DOREPLIFETIME_WITH_PARAMS_FAST(UFlecsNetEntityProxy, Snapshot, Params);
+}
+
+void UFlecsNetEntityProxy::ConfigureObjectSettings(OUT UE::Net::FRootObjectSettings& OutSettings) const
+{
+	Super::ConfigureObjectSettings(OutSettings);
+	OutSettings.FactoryName = UFlecsNetEntityProxyNetFactory::GetFactoryName();
 }
 
 void UFlecsNetEntityProxy::PublishNetEntity(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot)
@@ -35,4 +44,12 @@ void UFlecsNetEntityProxy::OnRep_NetworkId()
 void UFlecsNetEntityProxy::OnRep_Snapshot()
 {
 	ReceiveEntityUpdate(NetworkId, Snapshot);
+}
+
+void UFlecsNetEntityProxy::HandleReplicationDetached()
+{
+	if (UFlecsNetworkWorldSubsystem* NetworkSubsystem = GetOwningNetworkWorldSubsystem())
+	{
+		NetworkSubsystem->RemoveReceivedNetworkEntity(NetworkId);
+	}
 }

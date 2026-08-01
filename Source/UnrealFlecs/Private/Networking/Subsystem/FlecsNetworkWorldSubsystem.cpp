@@ -15,7 +15,6 @@
 #include "Networking/Subsystem/FlecsNetworkSubsystemSingleton.h"
 #include "Networking/FlecsReplicatedEntityComponent.h"
 #include "Networking/Bridge/FlecsReplicationBridgeBase.h"
-#include "Networking/Router/FlecsReplicationRouterBase.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsNetworkWorldSubsystem)
 
@@ -43,8 +42,6 @@ void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UF
 	FFlecsComponentReplicationRegistry::Get(InWorld).OnDescriptorRegistered()
 		.AddUObject(this, &UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver);
 	
-	CreateReplicationRouter();
-	
 #endif // WITH_SERVER_CODE
 
 	CreateReplicationBridge();
@@ -56,12 +53,6 @@ void UFlecsNetworkWorldSubsystem::Deinitialize()
 	{
 		ReplicationBridge->DeinitializeBridge();
 		ReplicationBridge = nullptr;
-	}
-
-	if (ReplicationRouter)
-	{
-		ReplicationRouter->DeinitializeRouter();
-		ReplicationRouter = nullptr;
 	}
 
 	FFlecsComponentReplicationRegistry::RemoveWorld(GetFlecsWorld());
@@ -193,7 +184,40 @@ FFlecsNetworkId UFlecsNetworkWorldSubsystem::BeginReplicatingEntity(const FFlecs
 
 void UFlecsNetworkWorldSubsystem::StopReplicatingEntity(const FFlecsEntityHandle& InEntityHandle)
 {
-	
+	if UNLIKELY_IF(!HasAuthority())
+	{
+		UE_LOG(LogFlecsWorld, Error,
+			TEXT("Cannot stop replicating entity %s without authority"),
+			*InEntityHandle.ToString());
+		return;
+	}
+
+	const FFlecsNetworkId* NetworkId = InEntityHandle.TryGet<FFlecsNetworkId>();
+	if (!NetworkId || !NetworkId->IsValid())
+	{
+		return;
+	}
+
+	if (!NetworkIdToEntityMap.Contains(*NetworkId))
+	{
+		return;
+	}
+
+	if (ReplicationBridge)
+	{
+		ReplicationBridge->StopReplicatingEntity(InEntityHandle);
+	}
+
+	NetworkIdToEntityMap.Remove(*NetworkId);
+	ReplicationSnapshots.Remove(*NetworkId);
+
+	if (NetworkIdGenerator)
+	{
+		GetNetworkIdGenerator()->ReleaseNetworkId(*NetworkId);
+	}
+
+	InEntityHandle.Remove<FFlecsNetworkId>();
+	InEntityHandle.Remove<EFlecsNetRoleType>();
 }
 
 void UFlecsNetworkWorldSubsystem::CreateNetworkIdGenerator()
@@ -262,27 +286,6 @@ void UFlecsNetworkWorldSubsystem::UnbindReplicationBridge(const UFlecsReplicatio
 	ReplicationBridge = nullptr;
 }
 
-void UFlecsNetworkWorldSubsystem::CreateReplicationRouter()
-{
-	if (!HasAuthority())
-	{
-		return;
-	}
-
-	const TSolidNotNull<const UFlecsNetworkingModuleSettings*> Settings = GetNetworkingSettings();
-
-	if UNLIKELY_IF(!ensureMsgf(Settings->ReplicationRouterClass,
-		TEXT("Replication router class is not set in settings")))
-	{
-		return;
-	}
-
-	ReplicationRouter = NewObject<UFlecsReplicationRouterBase>(this, Settings->ReplicationRouterClass);
-	solid_checkf(IsValid(ReplicationRouter), TEXT("Replication router is not valid"));
-	
-	ReplicationRouter->InitializeRouter();
-}
-
 TSolidNotNull<IFlecsNetworkIDGeneratorInterface*> UFlecsNetworkWorldSubsystem::GetNetworkIdGenerator() const
 {
 	return CastChecked<IFlecsNetworkIDGeneratorInterface>(NetworkIdGenerator);
@@ -292,12 +295,6 @@ TSolidNotNull<UFlecsReplicationBridgeBase*> UFlecsNetworkWorldSubsystem::GetRepl
 {
 	solid_cassumef(ReplicationBridge, TEXT("Replication bridge is not valid"));
 	return ReplicationBridge;
-}
-
-TSolidNotNull<UFlecsReplicationRouterBase*> UFlecsNetworkWorldSubsystem::GetReplicationRouter() const
-{
-	solid_cassumef(ReplicationRouter, TEXT("Replication router is not valid"));
-	return ReplicationRouter;
 }
 
 bool UFlecsNetworkWorldSubsystem::HasReplicationBridge() const
@@ -342,15 +339,19 @@ bool UFlecsNetworkWorldSubsystem::IsStandalone() const
 
 void UFlecsNetworkWorldSubsystem::OnEntityLayoutReceived(const FFlecsReplicationLayoutDefinition& InLayout)
 {
-	const TArray<TPair<FFlecsEntityHandle, FFlecsEntityReplicationSnapshot>>* DeferredSnapshotsPtr
+	TArray<TPair<FFlecsEntityHandle, FFlecsEntityReplicationSnapshot>>* DeferredSnapshotsPtr
 		= DeferredEntityLayouts.Find(InLayout.LayoutId);
 
 	if (!DeferredSnapshotsPtr)
 	{
 		return;
 	}
+
+	TArray<TPair<FFlecsEntityHandle, FFlecsEntityReplicationSnapshot>> DeferredSnapshots =
+		MoveTemp(*DeferredSnapshotsPtr);
+	DeferredEntityLayouts.Remove(InLayout.LayoutId);
 	
-	for (const TPair<FFlecsEntityHandle, FFlecsEntityReplicationSnapshot>& Pair : *DeferredSnapshotsPtr)
+	for (const TPair<FFlecsEntityHandle, FFlecsEntityReplicationSnapshot>& Pair : DeferredSnapshots)
 	{
 		const FFlecsEntityHandle& EntityHandle = Pair.Key;
 		const FFlecsEntityReplicationSnapshot& Snapshot = Pair.Value;
@@ -367,6 +368,12 @@ void UFlecsNetworkWorldSubsystem::OnEntityLayoutReceived(const FFlecsReplication
 void UFlecsNetworkWorldSubsystem::ReceiveNetworkEntitySnapshot(const FFlecsNetworkId& InNetworkId,
                                                                const FFlecsEntityReplicationSnapshot& InSnapshot)
 {
+	if UNLIKELY_IF(!InNetworkId.IsValid() || !InSnapshot.LayoutId.IsValid())
+	{
+		UE_LOG(LogFlecsWorld, Error, TEXT("Received an invalid Flecs entity snapshot"));
+		return;
+	}
+
 	const TOptional<FFlecsEntityHandle> EntityHandlePtr = GetEntityFromNetworkId(InNetworkId);
 	
 	FFlecsEntityHandle EntityHandle;
@@ -384,7 +391,7 @@ void UFlecsNetworkWorldSubsystem::ReceiveNetworkEntitySnapshot(const FFlecsNetwo
 		NetworkIdToEntityMap.Add(InNetworkId, EntityHandle);
 	}
 		
-	const FFlecsEntityReplicationSnapshot& ExistingSnapshot = GetReplicationSnapshots().FindOrAdd(InNetworkId);
+	FFlecsEntityReplicationSnapshot& ExistingSnapshot = GetReplicationSnapshots().FindOrAdd(InNetworkId);
 		
 	if (ExistingSnapshot.StateRevision >= InSnapshot.StateRevision)
 	{
@@ -397,19 +404,70 @@ void UFlecsNetworkWorldSubsystem::ReceiveNetworkEntitySnapshot(const FFlecsNetwo
 	const FFlecsReplicationLayoutDefinition* LayoutDefinition = GetLayoutRegistry().Find(InSnapshot.LayoutId);
 	if (!LayoutDefinition)
 	{
+		ExistingSnapshot = InSnapshot;
 		AddDeferredEntityLayout(EntityHandle, InSnapshot.LayoutId, InSnapshot);
 		return;
 	}
 		
 	ApplySnapshotToEntity(EntityHandle, InSnapshot);
+	ExistingSnapshot = InSnapshot;
+}
+
+void UFlecsNetworkWorldSubsystem::RemoveReceivedNetworkEntity(const FFlecsNetworkId& InNetworkId)
+{
+	if (HasAuthority())
+	{
+		return;
+	}
+
+	if (!InNetworkId.IsValid())
+	{
+		return;
+	}
+
+	if (FFlecsEntityHandle* EntityHandle = NetworkIdToEntityMap.Find(InNetworkId))
+	{
+		if (EntityHandle->IsValid())
+		{
+			EntityHandle->Destroy();
+		}
+
+		NetworkIdToEntityMap.Remove(InNetworkId);
+	}
+
+	ReplicationSnapshots.Remove(InNetworkId);
+
+	for (auto It = DeferredEntityLayouts.CreateIterator(); It; ++It)
+	{
+		It.Value().RemoveAll(
+			[&InNetworkId](const TPair<FFlecsEntityHandle, FFlecsEntityReplicationSnapshot>& Pair)
+			{
+				const FFlecsNetworkId* PairNetworkId = Pair.Key.TryGet<FFlecsNetworkId>();
+				return PairNetworkId && *PairNetworkId == InNetworkId;
+			});
+
+		if (It.Value().IsEmpty())
+		{
+			It.RemoveCurrent();
+		}
+	}
 }
 
 void UFlecsNetworkWorldSubsystem::ApplySnapshotToEntity(const FFlecsEntityHandle& InEntityHandle,
 	const FFlecsEntityReplicationSnapshot& InSnapshot)
 {
 	//FFlecsScopedDeferWindow DeferWindow(InEntityHandle.GetFlecsWorldChecked());
-	
-	for (const FFlecsReplicationKey& Key : GetLayoutRegistry().Find(InSnapshot.LayoutId)->Keys)
+
+	const FFlecsReplicationLayoutDefinition* LayoutDefinition = GetLayoutRegistry().Find(InSnapshot.LayoutId);
+	if UNLIKELY_IF(!LayoutDefinition)
+	{
+		UE_LOG(LogFlecsWorld, Error,
+			TEXT("Cannot apply snapshot to entity %s because layout ID '%s' is not registered"),
+			*InEntityHandle.ToString(), *InSnapshot.LayoutId.ToString());
+		return;
+	}
+
+	for (const FFlecsReplicationKey& Key : LayoutDefinition->Keys)
 	{
 		const FFlecsId ComponentId = FFlecsReplicationKey::ResolveToId(GetFlecsWorldChecked(), Key);
 		
@@ -426,15 +484,15 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshotToEntity(const FFlecsEntityHandle
 	
 	for (const FFlecsReplicatedValue& Value : InSnapshot.Values)
 	{
-		if UNLIKELY_IF(!LayoutRegistry.Find(InSnapshot.LayoutId))
+		if UNLIKELY_IF(!LayoutDefinition->Keys.IsValidIndex(Value.KeyIndex))
 		{
 			UE_LOG(LogFlecsWorld, Error,
-				TEXT("Cannot apply snapshot to entity %s because layout ID '%s' is not registered"),
-				*InEntityHandle.ToString(), *InSnapshot.LayoutId.ToString());
+				TEXT("Cannot apply snapshot to entity %s because value key index %d is outside layout '%s'"),
+				*InEntityHandle.ToString(), Value.KeyIndex, *InSnapshot.LayoutId.ToString());
 			continue;
 		}
 		
-		const FFlecsReplicationKey& Key = LayoutRegistry.Find(InSnapshot.LayoutId)->Keys[Value.KeyIndex];
+		const FFlecsReplicationKey& Key = LayoutDefinition->Keys[Value.KeyIndex];
 		
 		const FFlecsId ComponentId = FFlecsReplicationKey::ResolveToId(GetFlecsWorldChecked(), Key);
 		
@@ -446,7 +504,43 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshotToEntity(const FFlecsEntityHandle
 			continue;
 		}
 		
-		InEntityHandle.Set(ComponentId, Value.Bytes.GetData());
+		const FFlecsComponentReplicationDescriptor* Descriptor =
+			FFlecsComponentReplicationRegistry::Get(GetFlecsWorldChecked()).Find(ComponentId);
+		if UNLIKELY_IF(!Descriptor || !Descriptor->GetDeserializeFunction()
+			|| !Descriptor->GetConstructFunction() || !Descriptor->GetDestroyFunction())
+		{
+			UE_LOG(LogFlecsWorld, Error,
+				TEXT("Cannot deserialize snapshot value for entity %s and component key '%s'"),
+				*InEntityHandle.ToString(), *Key.CanonicalString());
+			continue;
+		}
+
+		void* ComponentData = FMemory::Malloc(Descriptor->GetSize(), Descriptor->GetAlignment());
+		if UNLIKELY_IF(!ComponentData)
+		{
+			UE_LOG(LogFlecsWorld, Error,
+				TEXT("Cannot allocate snapshot value for entity %s and component key '%s'"),
+				*InEntityHandle.ToString(), *Key.CanonicalString());
+			continue;
+		}
+
+		Descriptor->GetConstructFunction()(ComponentData);
+
+		FMemoryReader Reader(Value.Bytes, true);
+		const bool bDeserialized = Descriptor->GetDeserializeFunction()(Reader, ComponentData);
+		if UNLIKELY_IF(!bDeserialized || Reader.IsError())
+		{
+			UE_LOG(LogFlecsWorld, Error,
+				TEXT("Cannot deserialize snapshot value for entity %s and component key '%s'"),
+				*InEntityHandle.ToString(), *Key.CanonicalString());
+			Descriptor->GetDestroyFunction()(ComponentData);
+			FMemory::Free(ComponentData);
+			continue;
+		}
+
+		InEntityHandle.Set(ComponentId, Descriptor->GetSize(), ComponentData);
+		Descriptor->GetDestroyFunction()(ComponentData);
+		FMemory::Free(ComponentData);
 	}
 }
 

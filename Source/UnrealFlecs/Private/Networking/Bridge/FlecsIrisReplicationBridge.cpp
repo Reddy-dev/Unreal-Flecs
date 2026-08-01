@@ -9,7 +9,6 @@
 
 #include "Networking/Bridge/FlecsIrisReplicationBridgeNetFactory.h"
 #include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
-#include "Networking/Router/FlecsReplicationRouterBase.h"
 #include "Networking/Shards/FlecsNetEntityProxy.h"
 #include "Networking/Shards/FlecsNetShardBase.h"
 
@@ -40,8 +39,7 @@ void UFlecsIrisReplicationBridge::GetLifetimeReplicatedProps(TArray<FLifetimePro
 void UFlecsIrisReplicationBridge::RegisterReplicationFragments(UE::Net::FFragmentRegistrationContext& Fragments,
 	UE::Net::EFragmentRegistrationFlags RegistrationFlags)
 {
-	UE::Net::FReplicationFragmentUtil::CreateAndRegisterFragmentsForObject(
-		this, Fragments, RegistrationFlags);
+	UE::Net::FReplicationFragmentUtil::CreateAndRegisterFragmentsForObject(this, Fragments, RegistrationFlags);
 }
 
 void UFlecsIrisReplicationBridge::FillRootObjectReplicationParams(
@@ -73,20 +71,28 @@ void UFlecsIrisReplicationBridge::InitializeBridge()
 	RootObjectAdapter.InitAdapter(this);
 	RootObjectAdapter.Configure(Settings);
 
-	if (!TryStartReplication())
+	const UWorld* World = GetWorld();
+	if (World && World->GetNetMode() != NM_Standalone)
 	{
-		WorldPreActorTickHandle = FWorldDelegates::OnWorldPreActorTick.AddUObject(
-			this, &UFlecsIrisReplicationBridge::HandleWorldPreActorTick);
+		const UNetDriver* NetDriver = World->GetNetDriver();
+		if (NetDriver && NetDriver->GetReplicationSystem())
+		{
+			RootObjectAdapter.StartReplication(World->PersistentLevel);
+		}
 	}
 }
 
 void UFlecsIrisReplicationBridge::DeinitializeBridge()
 {
-	if (WorldPreActorTickHandle.IsValid())
+	for (TPair<FFlecsEntityView, TObjectPtr<UFlecsNetShardBase>>& Pair : ShardMap)
 	{
-		FWorldDelegates::OnWorldPreActorTick.Remove(WorldPreActorTickHandle);
-		WorldPreActorTickHandle.Reset();
+		if (UFlecsNetShardBase* Shard = Pair.Value.Get())
+		{
+			Shard->DeinitializeShard();
+			Shard->SetOwningNetworkWorldSubsystem(nullptr);
+		}
 	}
+	ShardMap.Reset();
 
 	if (RootObjectAdapter.IsReplicating())
 	{
@@ -99,48 +105,6 @@ void UFlecsIrisReplicationBridge::DeinitializeBridge()
 	}
 
 	SetNetworkWorldSubsystem(nullptr);
-}
-
-bool UFlecsIrisReplicationBridge::TryStartReplication()
-{
-	if (RootObjectAdapter.IsReplicating())
-	{
-		return true;
-	}
-
-	if (!HasAuthority())
-	{
-		return true;
-	}
-
-	const UWorld* World = GetWorld();
-	if (!World || World->GetNetMode() == NM_Standalone)
-	{
-		return true;
-	}
-
-	const UNetDriver* NetDriver = World->GetNetDriver();
-	if (!NetDriver || !NetDriver->GetReplicationSystem())
-	{
-		return false;
-	}
-
-	RootObjectAdapter.StartReplication(World->PersistentLevel);
-	return RootObjectAdapter.IsReplicating();
-}
-
-void UFlecsIrisReplicationBridge::HandleWorldPreActorTick(UWorld* InWorld, ELevelTick InTickType, float InDeltaSeconds)
-{
-	if (InWorld != GetWorld())
-	{
-		return;
-	}
-
-	if (TryStartReplication())
-	{
-		FWorldDelegates::OnWorldPreActorTick.Remove(WorldPreActorTickHandle);
-		WorldPreActorTickHandle.Reset();
-	}
 }
 
 void UFlecsIrisReplicationBridge::PublishEntityLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition)
@@ -162,52 +126,64 @@ void UFlecsIrisReplicationBridge::ReceiveLayout(const FFlecsReplicationLayoutDef
 void UFlecsIrisReplicationBridge::PublishNetEntity(const FFlecsEntityHandle& EntityHandle, const FFlecsNetworkId& InNetworkId,
 	const FFlecsEntityReplicationSnapshot& InSnapshot)
 {
-	TSolidNotNull<UFlecsNetShardBase*> Shard = ResolveShard(EntityHandle, InNetworkId);
+	UFlecsNetShardBase* Shard = ResolveShard(EntityHandle, InNetworkId);
+	if UNLIKELY_IF(!Shard)
+	{
+		return;
+	}
+
 	Shard->PublishNetEntity(InNetworkId, InSnapshot);
+}
+
+void UFlecsIrisReplicationBridge::StopReplicatingEntity(const FFlecsEntityHandle& InEntityHandle)
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	if (TObjectPtr<UFlecsNetShardBase>* ShardPtr = ShardMap.Find(InEntityHandle))
+	{
+		if (UFlecsNetShardBase* Shard = ShardPtr->Get())
+		{
+			Shard->DeinitializeShard();
+			Shard->SetOwningNetworkWorldSubsystem(nullptr);
+		}
+
+		ShardMap.Remove(InEntityHandle);
+	}
 }
 
 UFlecsNetShardBase* UFlecsIrisReplicationBridge::ResolveShard(const FFlecsEntityHandle& InEntityHandle, const FFlecsNetworkId& InNetworkId)
 {
-	if (ShardMap.Contains(InEntityHandle))
+	if (TObjectPtr<UFlecsNetShardBase>* ShardPtr = ShardMap.Find(InEntityHandle))
 	{
-		return ShardMap[InEntityHandle].Get();
+		return ShardPtr->Get();
 	}
 	
-	const TSolidNotNull<UFlecsNetShardBase*> Shard = CreateNewShard(InEntityHandle, InNetworkId);
-	return Shard;
+	return CreateNewShard(InEntityHandle, InNetworkId);
 }
 
 UFlecsNetShardBase* UFlecsIrisReplicationBridge::CreateNewShard(const FFlecsEntityHandle& InEntityHandle,
 	const FFlecsNetworkId& InNetworkId)
 {
-	UFlecsNetShardBase* Shard = NewObject<UFlecsNetEntityProxy>();
-	Shard->InitializeShard();
-	
-	return Shard;
-}
-
-/*UFlecsNetShardBase* UFlecsIrisReplicationBridge::ResolveShard(const FFlecsNetRouteId& InRouteId,
-	const FFlecsEntityHandle& InEntityHandle)
-{
-	if UNLIKELY_IF(!InRouteId.IsValid())
+	if UNLIKELY_IF(!InNetworkId.IsValid())
 	{
-		UE_LOG(LogTemp, Error, TEXT("Invalid route id passed to ResolveShard"));
+		UE_LOG(LogFlecsCore, Error, TEXT("Cannot create a Flecs entity proxy without a valid network ID"));
 		return nullptr;
 	}
-	
-	EFlecsReplicationRoutedShardType ShardType = GetNetworkWorldSubsystem()->GetReplicationRouter()
-		->GetRoutedShardType(InEntityHandle, InRouteId);
-	
-	// @TODO: switch to a switch
-	if (ShardType == EFlecsReplicationRoutedShardType::Proxy)
+
+	UFlecsNetShardBase* Shard = NewObject<UFlecsNetEntityProxy>(this);
+	if UNLIKELY_IF(!Shard)
 	{
-		
+		return nullptr;
 	}
-	else if (ShardType == EFlecsReplicationRoutedShardType::Paged)
-	{
-		
-	}
-	
-	checkf(false, TEXT("Unsupported shard type %d"), static_cast<int32>(ShardType));
-	return nullptr;
-}*/
+
+	Shard->SetOwningNetworkWorldSubsystem(GetNetworkWorldSubsystem());
+	Shard->InitializeShard();
+	ShardMap.Add(InEntityHandle, Shard);
+
+	Shard->StartShardReplication();
+
+	return Shard;
+}

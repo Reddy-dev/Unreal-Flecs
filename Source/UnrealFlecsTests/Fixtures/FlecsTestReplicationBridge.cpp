@@ -28,11 +28,11 @@ void UFlecsTestReplicationBridge::PublishEntityLayout(
 }
 
 void UFlecsTestReplicationBridge::PublishNetEntity(
-	const FFlecsNetRouteId& InRouteId,
+	const FFlecsEntityHandle& InEntityHandle,
 	const FFlecsNetworkId& InNetworkId,
 	const FFlecsEntityReplicationSnapshot& InSnapshot)
 {
-	PublishedRouteIds.Add(InRouteId);
+	(void)InEntityHandle;
 	PublishedSnapshots.Emplace(InNetworkId, InSnapshot);
 
 	if (Peer)
@@ -49,6 +49,5 @@ void UFlecsTestReplicationBridge::SetPeer(UFlecsTestReplicationBridge* InPeer)
 void UFlecsTestReplicationBridge::ResetCapturedRecords()
 {
 	PublishedLayouts.Reset();
-	PublishedRouteIds.Reset();
 	PublishedSnapshots.Reset();
 }
