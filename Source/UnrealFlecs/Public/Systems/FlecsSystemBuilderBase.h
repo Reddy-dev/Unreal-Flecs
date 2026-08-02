@@ -78,6 +78,37 @@ public:
 		return this->GetSelf();
 	}
 
+	FORCEINLINE TInherited& Phase(const EFlecsPhaseType InPhase)
+	{
+		return Kind(InPhase);
+	}
+
+	FORCEINLINE TInherited& Phase(const FFlecsId InPhase)
+	{
+		return Kind(InPhase);
+	}
+
+	FORCEINLINE TInherited& Phase(const TSolidNotNull<const UScriptStruct*> InPhase)
+	{
+		return Kind(InPhase);
+	}
+
+	FORCEINLINE TInherited& Phase(const FSolidEnumSelector& InPhase)
+	{
+		return Kind(InPhase);
+	}
+
+	FORCEINLINE TInherited& Phase(const FString& InCppTypeSymbol)
+	{
+		return Kind(InCppTypeSymbol);
+	}
+
+	template <typename T>
+	FORCEINLINE TInherited& Phase()
+	{
+		return Kind<T>();
+	}
+
 	FORCEINLINE TInherited& PipelineInput(const FFlecsSystemPipelineInput& InPipelineInput)
 	{
 		GetSystemDefinition().PipelineInput = InPipelineInput;
