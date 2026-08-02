@@ -115,5 +115,10 @@ public class FlecsLibrary : ModuleRules
                 "Engine",
             }
         );
+
+        if (Target.bBuildEditor || Target.Configuration == UnrealTargetConfiguration.Test)
+        {
+            PrivateDependencyModuleNames.Add("AutomationUtils");
+        }
     }
 }

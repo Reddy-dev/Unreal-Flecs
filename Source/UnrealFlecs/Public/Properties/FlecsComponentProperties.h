@@ -18,8 +18,7 @@
 #include "Worlds/FlecsWorld.h"
 #include "Entities/FlecsComponentHandle.h"
 #include "Components/FlecsAddReferencedObjectsTrait.h"
-#include "Networking/FlecsReplicatedTrait.h"
-#include "Networking/FlecsComponentReplicationDescriptor.h"
+#include "Properties/FlecsComponentRegistrationHooks.h"
 #include "Queries/Generator/FlecsQueryGeneratorInput.h"
 #include "Queries/Generator/FlecsQueryGeneratorInputType.h"
 
@@ -556,10 +555,12 @@ public:
 
 			if constexpr (TFlecsComponentTraits<T>::Replicate)
 			{
+				const FFlecsReplicationComponentDefinition ReplicationDefinition =
+					UE::Flecs::Replication::MakeComponentDefinition<T>(ComponentHandle);
 				FString ReplicationRegistrationError;
 
-				if (!UE::Flecs::Replication::RegisterComponent<T>(InFlecsWorld, ComponentHandle,
-					&ReplicationRegistrationError))
+				if UNLIKELY_IF(!UE::Flecs::FFlecsComponentRegistrationHooks::RegisterReplicatedComponent(
+					InFlecsWorld, ReplicationDefinition, &ReplicationRegistrationError))
 				{
 					UE_LOG(LogFlecsCore, Error,
 						TEXT("Failed to register replicated component '%s': %s"),
@@ -567,7 +568,7 @@ public:
 					return;
 				}
 
-				ComponentHandle.Add<FFlecsReplicatedTrait>();
+				UE::Flecs::FFlecsComponentRegistrationHooks::MarkReplicatedComponent(ComponentHandle);
 			}
 
 			if constexpr (TFlecsComponentTraits<T>::WithAddReferencedObjects)

@@ -19,7 +19,7 @@
 #include "Components/UWorldPtrComponent.h"
 #include "Components/FlecsBeginPlayComponent.h"
 
-#include "Networking/FlecsStablePathTag.h"
+#include "Entities/FlecsStablePathTag.h"
 
 #include "General/FlecsDeveloperSettings.h"
 #include "General/FlecsGameplayTagManagerEntity.h"

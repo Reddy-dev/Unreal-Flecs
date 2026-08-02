@@ -74,6 +74,15 @@ Plugins/*/Intermediate/*
 DerivedDataCache/*
 
 Scripts/*
+!Scripts/
+!Scripts/*.bat
+!Scripts/*.json
+!Scripts/*.md
+!Scripts/*.py
+!Scripts/ForkTests/
+!Scripts/ForkTests/**
+!Scripts/Tests/
+!Scripts/Tests/**
 Plugins/*/Scripts/*
 
 .uet/

@@ -8,6 +8,7 @@
 #include "Iris/ReplicationSystem/NetObjectFactoryRegistry.h"
 
 #include "Networking/FlecsNetDirtyTag.h"
+#include "Networking/FlecsReplicationInbox.h"
 #include "Networking/FlecsNetworkingModuleSettings.h"
 #include "Networking/FlecsReplicatedEntityComponent.h"
 #include "Networking/Layout/FlecsLayoutReplicatorFastArray.h"
@@ -27,6 +28,64 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 		ASSERT_THAT(IsNotNull(TestBridge()));
 		ASSERT_THAT(IsTrue(TestBridge()->IsInitialized()));
 		ASSERT_THAT(IsTrue(NetworkSubsystem()->GetReplicationBridge() == TestBridge()));
+	}
+
+	TEST_METHOD(ReplicationInbox_IsInstalledAsSingleton)
+	{
+		ASSERT_THAT(IsTrue(World()->Has<FFlecsReplicationInbox>()));
+	}
+
+	TEST_METHOD(ReplicationInbox_CoalescesByLatestStateRevision)
+	{
+		FFlecsReplicationInbox Inbox;
+		const FFlecsNetworkId NetworkId(21, 1);
+
+		FFlecsEntityReplicationSnapshot OlderSnapshot;
+		OlderSnapshot.LayoutId = FFlecsReplicationLayoutId(FGuid::NewGuid());
+		OlderSnapshot.StateRevision = 4;
+
+		FFlecsEntityReplicationSnapshot NewerSnapshot = OlderSnapshot;
+		NewerSnapshot.StateRevision = 5;
+
+		Inbox.EnqueueSnapshot(NetworkId, NewerSnapshot);
+		Inbox.EnqueueSnapshot(NetworkId, OlderSnapshot);
+
+		const TArray<FFlecsReplicationInboxUpdate> Updates = Inbox.Drain();
+		ASSERT_THAT(AreEqual(1, Updates.Num()));
+		if (Updates.Num() != 1)
+		{
+			return;
+		}
+
+		ASSERT_THAT(IsFalse(Updates[0].bRemove));
+		ASSERT_THAT(AreEqual(5u, Updates[0].StateRevision));
+		ASSERT_THAT(AreEqual(5u, Updates[0].Snapshot.StateRevision));
+	}
+
+	TEST_METHOD(ReplicationInbox_OrdersRemovalsByStateRevision)
+	{
+		FFlecsReplicationInbox Inbox;
+		const FFlecsNetworkId NetworkId(22, 1);
+
+		FFlecsEntityReplicationSnapshot Snapshot;
+		Snapshot.LayoutId = FFlecsReplicationLayoutId(FGuid::NewGuid());
+		Snapshot.StateRevision = 7;
+		FFlecsEntityReplicationSnapshot OlderSnapshot = Snapshot;
+		OlderSnapshot.StateRevision = 6;
+
+		Inbox.EnqueueSnapshot(NetworkId, Snapshot);
+		Inbox.EnqueueRemoval(NetworkId, 7);
+		Inbox.EnqueueSnapshot(NetworkId, OlderSnapshot);
+
+		const TArray<FFlecsReplicationInboxUpdate> Updates = Inbox.Drain();
+		ASSERT_THAT(AreEqual(1, Updates.Num()));
+		if (Updates.Num() != 1)
+		{
+			return;
+		}
+
+		ASSERT_THAT(IsTrue(Updates[0].bRemove));
+		ASSERT_THAT(AreEqual(7u, Updates[0].StateRevision));
 	}
 
 	TEST_METHOD(EntityPageAndEntityProxy_AreShardStorageTypes)
@@ -108,6 +167,7 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 		Proxy->NetworkId = NetworkId;
 		Proxy->Snapshot = InitialSnapshot;
 		Proxy->OnRep_Snapshot();
+		World()->Progress(0.0);
 
 		TOptional<FFlecsEntityHandle> ReceivedEntity = NetworkSubsystem()->GetEntityFromNetworkId(NetworkId);
 		ASSERT_THAT(IsTrue(ReceivedEntity.IsSet()));
@@ -124,10 +184,12 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 
 		Proxy->Snapshot = UpdatedSnapshot;
 		Proxy->OnRep_Snapshot();
+		World()->Progress(0.0);
 		ASSERT_THAT(AreEqual(91, ReceivedEntity.GetValue().Get<FFlecsReplicationTestValue>().Value));
 
 		Proxy->Snapshot = InitialSnapshot;
 		Proxy->OnRep_Snapshot();
+		World()->Progress(0.0);
 		ASSERT_THAT(AreEqual(91, ReceivedEntity.GetValue().Get<FFlecsReplicationTestValue>().Value));
 	}
 

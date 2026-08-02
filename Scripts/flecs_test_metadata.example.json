@@ -1,0 +1,20 @@
+{
+  "tests": [
+    {
+      "source": "fork/component.cpp",
+      "id": "ForkComponent_manual_registration",
+      "function": "ForkComponent_manual_registration",
+      "category": "ForkComponent",
+      "tags": ["fork"],
+      "fixture": "raw_world",
+      "registrations": [
+        {
+          "type": "FForkComponent",
+          "kind": "fork",
+          "hook": "RegisterForkComponent"
+        }
+      ],
+      "required_headers": ["Fork/ForkComponent.h"]
+    }
+  ]
+}

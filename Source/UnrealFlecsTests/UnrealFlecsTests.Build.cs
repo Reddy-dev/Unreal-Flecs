@@ -39,6 +39,7 @@ public class UnrealFlecsTests : ModuleRules
                 "SolidMacros",
                 "FlecsLibrary",
 				"UnrealFlecs",
+                "UnrealFlecsNetworking",
             }
         );
 

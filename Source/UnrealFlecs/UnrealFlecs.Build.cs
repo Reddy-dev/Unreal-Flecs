@@ -11,8 +11,6 @@ public class UnrealFlecs : ModuleRules
 		CppStandard = CppStandardVersion.Cpp20;
 		IWYUSupport = IWYUSupport.Full;
 		
-		SetupIrisSupport(Target, true);
-		
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
@@ -22,7 +20,6 @@ public class UnrealFlecs : ModuleRules
 				"GameplayTags",
 				"AssetRegistry",
 				"StructUtils",
-				"NetCore",
 				"PhysicsCore",
                 "Chaos",
                 "ChaosCore",
