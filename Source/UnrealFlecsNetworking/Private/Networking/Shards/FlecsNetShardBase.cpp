@@ -115,8 +115,8 @@ bool UFlecsNetShardBase::ApplyReplicationProfile(const FFlecsReplicationProfile&
 
 	if (!InProfile.FilterName.IsNone())
 	{
-		const UE::Net::FNetObjectFilterHandle FilterHandle =
-			ReplicationSystem->GetFilterHandle(InProfile.FilterName);
+		const UE::Net::FNetObjectFilterHandle FilterHandle = ReplicationSystem->GetFilterHandle(InProfile.FilterName);
+		
 		if UNLIKELY_IF(FilterHandle == UE::Net::InvalidNetObjectFilterHandle)
 		{
 			UE_LOG(LogFlecsCore, Error,
@@ -136,8 +136,7 @@ bool UFlecsNetShardBase::ApplyReplicationProfile(const FFlecsReplicationProfile&
 
 	if (!InProfile.ObjectPrioritizerName.IsNone())
 	{
-		const UE::Net::FNetObjectPrioritizerHandle PrioritizerHandle =
-			ReplicationSystem->GetPrioritizerHandle(InProfile.ObjectPrioritizerName);
+		const UE::Net::FNetObjectPrioritizerHandle PrioritizerHandle = ReplicationSystem->GetPrioritizerHandle(InProfile.ObjectPrioritizerName);
 		if UNLIKELY_IF(PrioritizerHandle == UE::Net::InvalidNetObjectPrioritizerHandle)
 		{
 			UE_LOG(LogFlecsCore, Error,
