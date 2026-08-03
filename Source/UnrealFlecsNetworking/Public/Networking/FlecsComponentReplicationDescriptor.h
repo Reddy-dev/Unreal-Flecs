@@ -246,7 +246,7 @@ namespace UE::Flecs::Replication
 	UNREALFLECSNETWORKING_API bool RegisterComponentDefinition(
 		const TSolidNotNull<const UFlecsWorld*> InWorld,
 		const FFlecsReplicationComponentDefinition& InDefinition,
-		FString* OutError = nullptr);
+		OUT FString* OutError = nullptr);
 
 	UNREALFLECSNETWORKING_API void MarkComponentReplicated(const FFlecsComponentHandle& InComponent);
 
@@ -255,10 +255,9 @@ namespace UE::Flecs::Replication
 	bool RegisterComponent(
 		const TSolidNotNull<const UFlecsWorld*> InWorld,
 		const FFlecsComponentHandle& InComponent,
-		FString* OutError = nullptr)
+		OUT FString* OutError = nullptr)
 	{
-		const FFlecsReplicationComponentDefinition Definition =
-			UE::Flecs::Replication::MakeComponentDefinition<T>(InComponent);
+		const FFlecsReplicationComponentDefinition Definition = UE::Flecs::Replication::MakeComponentDefinition<T>(InComponent);
 		return RegisterComponentDefinition(InWorld, Definition, OutError);
 	}
 	

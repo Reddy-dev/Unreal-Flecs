@@ -64,6 +64,7 @@ struct TFlecsReplicationTraits
 			return false;
 		}
 	}
+	
 }; // struct TFlecsReplicationTraits<T>
 
 namespace UE::Flecs::Replication

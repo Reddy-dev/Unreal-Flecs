@@ -244,7 +244,7 @@ bool FFlecsComponentReplicationRegistry::IsEntityReplicationEligible(const TSoli
 bool UE::Flecs::Replication::RegisterComponentDefinition(
 	const TSolidNotNull<const UFlecsWorld*> InWorld,
 	const FFlecsReplicationComponentDefinition& InDefinition,
-	FString* OutError)
+	OUT FString* OutError)
 {
 	FFlecsComponentReplicationDescriptor Descriptor;
 	Descriptor.StableName = InDefinition.StableName;
@@ -273,9 +273,7 @@ bool UE::Flecs::Replication::RegisterComponentDefinition(
 
 void UE::Flecs::Replication::MarkComponentReplicated(const FFlecsComponentHandle& InComponent)
 {
-	const FFlecsComponentHandle ReplicatedTrait =
-		InComponent.GetFlecsWorldChecked()->RegisterComponentType<FFlecsReplicatedTrait>();
-	ReplicatedTrait.Add(flecs::Trait);
+	InComponent.GetFlecsWorldChecked()->RegisterComponentType<FFlecsReplicatedTrait>();
 
 	InComponent.Add<FFlecsReplicatedTrait>();
 }

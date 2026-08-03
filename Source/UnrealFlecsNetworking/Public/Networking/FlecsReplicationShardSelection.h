@@ -12,11 +12,11 @@
 struct FFlecsReplicationShardSelection
 {
 	TSubclassOf<UFlecsNetShardBase> ShardClass;
-	FName CohortKey = NAME_None;
+	FName ShardGroupKey = NAME_None;
 
 	NO_DISCARD bool operator==(const FFlecsReplicationShardSelection& Other) const
 	{
-		return ShardClass == Other.ShardClass && CohortKey == Other.CohortKey;
+		return ShardClass == Other.ShardClass && ShardGroupKey == Other.ShardGroupKey;
 	}
 
 	NO_DISCARD bool operator!=(const FFlecsReplicationShardSelection& Other) const

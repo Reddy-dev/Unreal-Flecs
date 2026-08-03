@@ -41,6 +41,7 @@ public:
 
 	virtual void InitializeShard();
 	virtual void DeinitializeShard();
+	
 	void StartShardReplication();
 	void StopShardReplication();
 
@@ -52,11 +53,12 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void RegisterReplicationFragments(UE::Net::FFragmentRegistrationContext& Fragments,
 		UE::Net::EFragmentRegistrationFlags RegistrationFlags) override;
+	
 	virtual void FillRootObjectReplicationParams(const UE::Net::FRootObjectReplicationParamsContext& Context,
 	                                             UE::Net::FRootObjectReplicationParams& OutParams) const override;
 
 	virtual void ConfigureObjectSettings(OUT UE::Net::FRootObjectSettings& OutSettings) const;
-	NO_DISCARD bool ApplyReplicationProfile(const FFlecsReplicationProfile& InProfile);
+	bool ApplyReplicationProfile(const FFlecsReplicationProfile& InProfile);
 	
 	virtual void PublishNetEntity(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot)
 		PURE_VIRTUAL(UFlecsNetShardBase::PublishNetEntity, );
@@ -66,7 +68,6 @@ public:
 	NO_DISCARD UFlecsNetworkWorldSubsystem* GetOwningNetworkWorldSubsystem() const;
 
 protected:
-
 	void ReceiveEntityUpdate(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot);
 
 private:

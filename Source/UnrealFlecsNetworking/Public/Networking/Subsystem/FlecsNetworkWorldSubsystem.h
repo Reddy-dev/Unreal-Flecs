@@ -151,7 +151,7 @@ public:
 	NO_DISCARD bool SelectReplicationShard(const FFlecsEntityHandle& InEntity,
 		const FFlecsNetworkId& InNetworkId,
 		const FFlecsReplicationProfile& InProfile,
-		FFlecsReplicationShardSelection& OutSelection) const;
+		OUT FFlecsReplicationShardSelection& OutSelection) const;
 
 	void QueueReplicationSnapshot(const FFlecsNetworkId& InNetworkId,
 		const FFlecsEntityReplicationSnapshot& InSnapshot);

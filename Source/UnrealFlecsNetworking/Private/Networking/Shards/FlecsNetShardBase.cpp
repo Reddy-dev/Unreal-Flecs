@@ -91,6 +91,7 @@ bool UFlecsNetShardBase::ApplyReplicationProfile(const FFlecsReplicationProfile&
 	const UWorld* World = GetWorld();
 	const UNetDriver* NetDriver = World ? World->GetNetDriver() : nullptr;
 	UReplicationSystem* ReplicationSystem = NetDriver ? NetDriver->GetReplicationSystem() : nullptr;
+	
 	if (!ReplicationSystem)
 	{
 		return true;

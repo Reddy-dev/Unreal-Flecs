@@ -25,11 +25,15 @@ struct FFlecsReplicationShardPlacement
 
 	UPROPERTY()
 	TObjectPtr<UFlecsNetShardBase> Shard = nullptr;
+	
 	UPROPERTY()
 	FFlecsReplicationProfile Profile;
+	
 	FFlecsReplicationShardSelection Selection;
+	
 	UPROPERTY()
 	uint32 TargetGeneration = 0;
+	
 	UPROPERTY()
 	uint32 PlacementGeneration = 0;
 

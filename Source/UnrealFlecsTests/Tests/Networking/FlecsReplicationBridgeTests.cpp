@@ -146,7 +146,7 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 			{
 				bSelectorCalled = true;
 				OutSelection.ShardClass = UFlecsNetEntityProxy::StaticClass();
-				OutSelection.CohortKey = FName(TEXT("TestCohort"));
+				OutSelection.ShardGroupKey = FName(TEXT("TestShardGroup"));
 				return true;
 			})));
 
@@ -159,7 +159,7 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 			World()->CreateEntity(), NetworkId, Profile, Selection)));
 		ASSERT_THAT(IsTrue(bSelectorCalled));
 		ASSERT_THAT(IsTrue(Selection.ShardClass == UFlecsNetEntityProxy::StaticClass()));
-		ASSERT_THAT(IsTrue(Selection.CohortKey == FName(TEXT("TestCohort"))));
+		ASSERT_THAT(IsTrue(Selection.ShardGroupKey == FName(TEXT("TestShardGroup"))));
 	}
 
 	TEST_METHOD(EntityTableAndEntityProxy_AreShardStorageTypes)

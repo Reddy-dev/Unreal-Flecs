@@ -46,7 +46,7 @@ void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UF
 		[](const FFlecsEntityHandle&, const FFlecsNetworkId&, const FFlecsReplicationProfile&, FFlecsReplicationShardSelection& OutSelection)
 		{
 			OutSelection.ShardClass = UFlecsNetEntityProxy::StaticClass();
-			OutSelection.CohortKey = NAME_None;
+			OutSelection.ShardGroupKey = NAME_None;
 			return true;
 		});
 
@@ -471,9 +471,7 @@ FFlecsEntityHandle UFlecsNetworkWorldSubsystem::RegisterReplicationProfileAsset(
 		return FFlecsEntityHandle();
 	}
 
-	const FName ProfileName = InAsset->ProfileName.IsNone()
-		? InAsset->GetFName()
-		: InAsset->ProfileName;
+	const FName ProfileName = InAsset->ProfileName.IsNone() ? InAsset->GetFName() : InAsset->ProfileName;
 
 	return RegisterReplicationProfileDefinition(ProfileName, InAsset->Definition);
 }
@@ -623,7 +621,7 @@ bool UFlecsNetworkWorldSubsystem::RegisterReplicationShardSelector(FName InName,
 
 bool UFlecsNetworkWorldSubsystem::SelectReplicationShard(const FFlecsEntityHandle& InEntity,
 	const FFlecsNetworkId& InNetworkId, const FFlecsReplicationProfile& InProfile,
-	FFlecsReplicationShardSelection& OutSelection) const
+	OUT FFlecsReplicationShardSelection& OutSelection) const
 {
 	const FName SelectorName = InProfile.ShardSelectorName.IsNone()
 		? FName(TEXT("Proxy"))

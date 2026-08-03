@@ -36,4 +36,5 @@ namespace UE::Flecs
 
 		static void MarkReplicatedComponent(const FFlecsComponentHandle& InComponent);
 	}; // struct FFlecsComponentRegistrationHooks
+	
 } // namespace UE::Flecs
