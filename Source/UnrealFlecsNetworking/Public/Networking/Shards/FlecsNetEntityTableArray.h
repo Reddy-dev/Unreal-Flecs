@@ -9,13 +9,13 @@
 #include "Networking/FlecsNetworkId.h"
 #include "Networking/Layout/FlecsReplicationSnapshot.h"
 
-#include "FlecsNetEntityPageArray.generated.h"
+#include "FlecsNetEntityTableArray.generated.h"
 
-class UFlecsNetEntityPage;
+class UFlecsNetEntityTable;
 
-/** One replicated entity record stored in a paged shard. */
+/** One replicated entity record stored in a table-backed shard. */
 USTRUCT()
-struct UNREALFLECSNETWORKING_API FFlecsNetEntityPageItem : public FFastArraySerializerItem
+struct UNREALFLECSNETWORKING_API FFlecsNetEntityTableItem : public FFastArraySerializerItem
 {
 	GENERATED_BODY()
 
@@ -26,27 +26,27 @@ public:
 	UPROPERTY()
 	FFlecsEntityReplicationSnapshot Snapshot;
 
-}; // struct FFlecsNetEntityPageItem
+}; // struct FFlecsNetEntityTableItem
 
-/** Iris Fast Array payload owned by a paged shard. */
+/** Iris Fast Array payload owned by a table-backed shard. */
 USTRUCT()
-struct UNREALFLECSNETWORKING_API FFlecsNetEntityPageArray : public FIrisFastArraySerializer
+struct UNREALFLECSNETWORKING_API FFlecsNetEntityTableArray : public FIrisFastArraySerializer
 {
 	GENERATED_BODY()
 
 public:
-	FFlecsNetEntityPageArray()
+	FFlecsNetEntityTableArray()
 		: Owner(nullptr)
 	{
 	}
 
-	void SetOwner(const TSolidNotNull<UFlecsNetEntityPage*> InOwner);
+	void SetOwner(const TSolidNotNull<UFlecsNetEntityTable*> InOwner);
 
 	UPROPERTY()
-	TArray<FFlecsNetEntityPageItem> Items;
+	TArray<FFlecsNetEntityTableItem> Items;
 
 	UPROPERTY()
-	TWeakObjectPtr<UFlecsNetEntityPage> Owner;
+	TWeakObjectPtr<UFlecsNetEntityTable> Owner;
 
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
 
@@ -54,14 +54,14 @@ public:
 	void PostReplicatedAdd(const TArrayView<int32>& AddedIndices, int32 FinalSize);
 	void PostReplicatedChange(const TArrayView<int32>& ChangedIndices, int32 FinalSize);
 
-}; // struct FFlecsNetEntityPageArray
+}; // struct FFlecsNetEntityTableArray
 
 template<>
-struct TStructOpsTypeTraits<FFlecsNetEntityPageArray> : public TStructOpsTypeTraitsBase2<FFlecsNetEntityPageArray>
+struct TStructOpsTypeTraits<FFlecsNetEntityTableArray> : public TStructOpsTypeTraitsBase2<FFlecsNetEntityTableArray>
 {
 	enum
 	{
 		WithNetDeltaSerializer = true
 	};
 	
-}; // struct TStructOpsTypeTraits<FFlecsNetEntityPageArray>
+}; // struct TStructOpsTypeTraits<FFlecsNetEntityTableArray>

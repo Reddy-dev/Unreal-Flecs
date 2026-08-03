@@ -16,7 +16,7 @@
 #include "Networking/FlecsReplicatedEntityComponent.h"
 #include "Networking/Layout/FlecsLayoutReplicatorFastArray.h"
 #include "Networking/Layout/FlecsReplicationLayoutRegistry.h"
-#include "Networking/Shards/FlecsNetEntityPage.h"
+#include "Networking/Shards/FlecsNetEntityTable.h"
 #include "Networking/Shards/FlecsNetEntityProxy.h"
 #include "Networking/Shards/FlecsNetEntityProxyNetFactory.h"
 #include "Networking/Shards/FlecsNetShardBase.h"
@@ -162,10 +162,10 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 		ASSERT_THAT(IsTrue(Selection.CohortKey == FName(TEXT("TestCohort"))));
 	}
 
-	TEST_METHOD(EntityPageAndEntityProxy_AreShardStorageTypes)
+	TEST_METHOD(EntityTableAndEntityProxy_AreShardStorageTypes)
 	{
 		ASSERT_THAT(IsTrue(
-			UFlecsNetEntityPage::StaticClass()->IsChildOf(UFlecsNetShardBase::StaticClass())));
+			UFlecsNetEntityTable::StaticClass()->IsChildOf(UFlecsNetShardBase::StaticClass())));
 		ASSERT_THAT(IsTrue(
 			UFlecsNetEntityProxy::StaticClass()->IsChildOf(UFlecsNetShardBase::StaticClass())));
 	}
