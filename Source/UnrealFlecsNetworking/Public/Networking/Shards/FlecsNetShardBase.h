@@ -17,11 +17,14 @@
 
 #include "FlecsNetShardBase.generated.h"
 
+class UFlecsNetworkWorldSubsystem;
+struct FFlecsReplicationProfile;
+
 /**
- * Generic replicated storage object addressed through a bridge route.
+ * Generic replicated storage object selected by the replication bridge.
  *
  * Concrete shards define the stored payload. The bridge only depends on this
- * base class and resolves the concrete storage object by RouteId.
+ * base class and resolves the concrete storage object from the entity profile.
  */
 UCLASS()
 class UNREALFLECSNETWORKING_API UFlecsNetShardBase : public UObject, public INetRootObjectFactoryExtension
@@ -53,6 +56,7 @@ public:
 	                                             UE::Net::FRootObjectReplicationParams& OutParams) const override;
 
 	virtual void ConfigureObjectSettings(OUT UE::Net::FRootObjectSettings& OutSettings) const;
+	NO_DISCARD bool ApplyReplicationProfile(const FFlecsReplicationProfile& InProfile);
 	
 	virtual void PublishNetEntity(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot)
 		PURE_VIRTUAL(UFlecsNetShardBase::PublishNetEntity, );

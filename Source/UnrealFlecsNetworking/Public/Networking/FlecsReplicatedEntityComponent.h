@@ -31,5 +31,9 @@ public:
 	
 	UPROPERTY()
 	FFlecsReplicationLayoutId LayoutId;
+
+	/** Registered Flecs replication profile name. None uses the inherited/default profile. */
+	UPROPERTY()
+	FName ProfileId = NAME_None;
 	
 }; // struct FFlecsReplicatedEntityComponent

@@ -84,9 +84,9 @@ void UFlecsIrisReplicationBridge::InitializeBridge()
 
 void UFlecsIrisReplicationBridge::DeinitializeBridge()
 {
-	for (TPair<FFlecsEntityView, TObjectPtr<UFlecsNetShardBase>>& Pair : ShardMap)
+	for (TPair<FFlecsEntityView, FFlecsReplicationShardPlacement>& Pair : ShardMap)
 	{
-		if (UFlecsNetShardBase* Shard = Pair.Value.Get())
+		if (UFlecsNetShardBase* Shard = Pair.Value.Shard.Get())
 		{
 			Shard->DeinitializeShard();
 			Shard->SetOwningNetworkWorldSubsystem(nullptr);
@@ -126,7 +126,7 @@ void UFlecsIrisReplicationBridge::ReceiveLayout(const FFlecsReplicationLayoutDef
 void UFlecsIrisReplicationBridge::PublishNetEntity(const FFlecsEntityHandle& EntityHandle, const FFlecsNetworkId& InNetworkId,
 	const FFlecsEntityReplicationSnapshot& InSnapshot)
 {
-	UFlecsNetShardBase* Shard = ResolveShard(EntityHandle, InNetworkId);
+	UFlecsNetShardBase* Shard = ResolveShard(EntityHandle, InNetworkId, InSnapshot);
 	if UNLIKELY_IF(!Shard)
 	{
 		return;
@@ -142,9 +142,9 @@ void UFlecsIrisReplicationBridge::StopReplicatingEntity(const FFlecsEntityHandle
 		return;
 	}
 
-	if (TObjectPtr<UFlecsNetShardBase>* ShardPtr = ShardMap.Find(InEntityHandle))
+	if (FFlecsReplicationShardPlacement* Placement = ShardMap.Find(InEntityHandle))
 	{
-		if (UFlecsNetShardBase* Shard = ShardPtr->Get())
+		if (UFlecsNetShardBase* Shard = Placement->Shard.Get())
 		{
 			Shard->DeinitializeShard();
 			Shard->SetOwningNetworkWorldSubsystem(nullptr);
@@ -154,18 +154,72 @@ void UFlecsIrisReplicationBridge::StopReplicatingEntity(const FFlecsEntityHandle
 	}
 }
 
-UFlecsNetShardBase* UFlecsIrisReplicationBridge::ResolveShard(const FFlecsEntityHandle& InEntityHandle, const FFlecsNetworkId& InNetworkId)
+UFlecsNetShardBase* UFlecsIrisReplicationBridge::ResolveShard(const FFlecsEntityHandle& InEntityHandle,
+	const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot)
 {
-	if (TObjectPtr<UFlecsNetShardBase>* ShardPtr = ShardMap.Find(InEntityHandle))
+	const TSolidNotNull<UFlecsNetworkWorldSubsystem*> NetworkSubsystem = GetNetworkWorldSubsystem();
+
+	FFlecsReplicationProfile Profile;
+	if UNLIKELY_IF(!NetworkSubsystem->ResolveReplicationProfile(InEntityHandle, Profile))
 	{
-		return ShardPtr->Get();
+		UE_LOG(LogFlecsCore, Error,
+			TEXT("Cannot resolve a replication profile for entity '%s'"), *InEntityHandle.ToString());
+		return nullptr;
+	}
+
+	FFlecsReplicationShardSelection Selection;
+	if UNLIKELY_IF(!NetworkSubsystem->SelectReplicationShard(InEntityHandle, InNetworkId, Profile, Selection))
+	{
+		return nullptr;
+	}
+
+	if (FFlecsReplicationShardPlacement* Placement = ShardMap.Find(InEntityHandle))
+	{
+		if (Placement->Shard && Placement->Profile == Profile && Placement->Selection == Selection)
+		{
+			return Placement->Shard.Get();
+		}
+
+		UFlecsNetShardBase* DestinationShard = CreateNewShard(InNetworkId, Profile, Selection);
+		if UNLIKELY_IF(!DestinationShard)
+		{
+			return nullptr;
+		}
+
+		// Publish the full baseline before removing the old physical target.
+		DestinationShard->PublishNetEntity(InNetworkId, InSnapshot);
+
+		if (UFlecsNetShardBase* SourceShard = Placement->Shard.Get())
+		{
+			SourceShard->DeinitializeShard();
+			SourceShard->SetOwningNetworkWorldSubsystem(nullptr);
+		}
+
+		Placement->Shard = DestinationShard;
+		Placement->Profile = Profile;
+		Placement->Selection = Selection;
+		Placement->TargetGeneration++;
+		Placement->PlacementGeneration++;
+		return DestinationShard;
 	}
 	
-	return CreateNewShard(InEntityHandle, InNetworkId);
+	UFlecsNetShardBase* Shard = CreateNewShard(InNetworkId, Profile, Selection);
+	if UNLIKELY_IF(!Shard)
+	{
+		return nullptr;
+	}
+
+	FFlecsReplicationShardPlacement& Placement = ShardMap.Add(InEntityHandle);
+	Placement.Shard = Shard;
+	Placement.Profile = Profile;
+	Placement.Selection = Selection;
+	Placement.TargetGeneration = 1;
+	Placement.PlacementGeneration = 1;
+	return Shard;
 }
 
-UFlecsNetShardBase* UFlecsIrisReplicationBridge::CreateNewShard(const FFlecsEntityHandle& InEntityHandle,
-	const FFlecsNetworkId& InNetworkId)
+UFlecsNetShardBase* UFlecsIrisReplicationBridge::CreateNewShard(const FFlecsNetworkId& InNetworkId,
+	const FFlecsReplicationProfile& InProfile, const FFlecsReplicationShardSelection& InSelection)
 {
 	if UNLIKELY_IF(!InNetworkId.IsValid())
 	{
@@ -173,7 +227,7 @@ UFlecsNetShardBase* UFlecsIrisReplicationBridge::CreateNewShard(const FFlecsEnti
 		return nullptr;
 	}
 
-	UFlecsNetShardBase* Shard = NewObject<UFlecsNetEntityProxy>(this);
+	UFlecsNetShardBase* Shard = NewObject<UFlecsNetShardBase>(this, InSelection.ShardClass);
 	if UNLIKELY_IF(!Shard)
 	{
 		return nullptr;
@@ -181,9 +235,14 @@ UFlecsNetShardBase* UFlecsIrisReplicationBridge::CreateNewShard(const FFlecsEnti
 
 	Shard->SetOwningNetworkWorldSubsystem(GetNetworkWorldSubsystem());
 	Shard->InitializeShard();
-	ShardMap.Add(InEntityHandle, Shard);
-
 	Shard->StartShardReplication();
+
+	if UNLIKELY_IF(!Shard->ApplyReplicationProfile(InProfile))
+	{
+		Shard->DeinitializeShard();
+		Shard->SetOwningNetworkWorldSubsystem(nullptr);
+		return nullptr;
+	}
 
 	return Shard;
 }

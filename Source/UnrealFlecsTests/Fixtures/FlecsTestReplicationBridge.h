@@ -23,8 +23,9 @@ public:
 		const FFlecsNetworkId& InNetworkId,
 		const FFlecsEntityReplicationSnapshot& InSnapshot) override;
 	virtual NO_DISCARD UFlecsNetShardBase* ResolveShard(
-		const FFlecsEntityHandle& InEntityHandle,
-		const FFlecsNetworkId& InNetworkId) override
+		const FFlecsEntityHandle&,
+		const FFlecsNetworkId&,
+		const FFlecsEntityReplicationSnapshot&) override
 	{
 		return nullptr;
 	}

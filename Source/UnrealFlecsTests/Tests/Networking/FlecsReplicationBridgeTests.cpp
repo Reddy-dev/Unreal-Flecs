@@ -8,7 +8,10 @@
 #include "Iris/ReplicationSystem/NetObjectFactoryRegistry.h"
 
 #include "Networking/FlecsNetDirtyTag.h"
-#include "Networking/FlecsReplicationInbox.h"
+#include "Networking/FlecsReplicationProfile.h"
+#include "Networking/FlecsReplicationProfileDataAsset.h"
+#include "Networking/FlecsReplicationShardSelection.h"
+#include "Networking/FlecsReplicationUpdateQueue.h"
 #include "Networking/FlecsNetworkingModuleSettings.h"
 #include "Networking/FlecsReplicatedEntityComponent.h"
 #include "Networking/Layout/FlecsLayoutReplicatorFastArray.h"
@@ -30,14 +33,9 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 		ASSERT_THAT(IsTrue(NetworkSubsystem()->GetReplicationBridge() == TestBridge()));
 	}
 
-	TEST_METHOD(ReplicationInbox_IsInstalledAsSingleton)
+	TEST_METHOD(ReplicationQueue_CoalescesByLatestStateRevision)
 	{
-		ASSERT_THAT(IsTrue(World()->Has<FFlecsReplicationInbox>()));
-	}
-
-	TEST_METHOD(ReplicationInbox_CoalescesByLatestStateRevision)
-	{
-		FFlecsReplicationInbox Inbox;
+		FFlecsReplicationUpdateQueue Queue;
 		const FFlecsNetworkId NetworkId(21, 1);
 
 		FFlecsEntityReplicationSnapshot OlderSnapshot;
@@ -47,10 +45,10 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 		FFlecsEntityReplicationSnapshot NewerSnapshot = OlderSnapshot;
 		NewerSnapshot.StateRevision = 5;
 
-		Inbox.EnqueueSnapshot(NetworkId, NewerSnapshot);
-		Inbox.EnqueueSnapshot(NetworkId, OlderSnapshot);
+		Queue.EnqueueSnapshot(NetworkId, NewerSnapshot);
+		Queue.EnqueueSnapshot(NetworkId, OlderSnapshot);
 
-		const TArray<FFlecsReplicationInboxUpdate> Updates = Inbox.Drain();
+		const TArray<FFlecsReplicationQueuedUpdate> Updates = Queue.Drain();
 		ASSERT_THAT(AreEqual(1, Updates.Num()));
 		if (Updates.Num() != 1)
 		{
@@ -62,9 +60,9 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 		ASSERT_THAT(AreEqual(5u, Updates[0].Snapshot.StateRevision));
 	}
 
-	TEST_METHOD(ReplicationInbox_OrdersRemovalsByStateRevision)
+	TEST_METHOD(ReplicationQueue_OrdersRemovalsByStateRevision)
 	{
-		FFlecsReplicationInbox Inbox;
+		FFlecsReplicationUpdateQueue Queue;
 		const FFlecsNetworkId NetworkId(22, 1);
 
 		FFlecsEntityReplicationSnapshot Snapshot;
@@ -73,11 +71,11 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 		FFlecsEntityReplicationSnapshot OlderSnapshot = Snapshot;
 		OlderSnapshot.StateRevision = 6;
 
-		Inbox.EnqueueSnapshot(NetworkId, Snapshot);
-		Inbox.EnqueueRemoval(NetworkId, 7);
-		Inbox.EnqueueSnapshot(NetworkId, OlderSnapshot);
+		Queue.EnqueueSnapshot(NetworkId, Snapshot);
+		Queue.EnqueueRemoval(NetworkId, 7);
+		Queue.EnqueueSnapshot(NetworkId, OlderSnapshot);
 
-		const TArray<FFlecsReplicationInboxUpdate> Updates = Inbox.Drain();
+		const TArray<FFlecsReplicationQueuedUpdate> Updates = Queue.Drain();
 		ASSERT_THAT(AreEqual(1, Updates.Num()));
 		if (Updates.Num() != 1)
 		{
@@ -86,6 +84,82 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 
 		ASSERT_THAT(IsTrue(Updates[0].bRemove));
 		ASSERT_THAT(AreEqual(7u, Updates[0].StateRevision));
+	}
+
+	TEST_METHOD(ReplicationProfile_AssetCreatesFlecsPrefab)
+	{
+		UFlecsReplicationProfileDataAsset* Asset = NewObject<UFlecsReplicationProfileDataAsset>(NetworkSubsystem());
+		Asset->ProfileName = FName(TEXT("TestProfile"));
+		Asset->Definition.FilterName = FName(TEXT("TestFilter"));
+		Asset->Definition.ObjectPrioritizerName = FName(TEXT("TestPrioritizer"));
+		Asset->Definition.ShardSelectorName = FName(TEXT("Proxy"));
+
+		const FFlecsEntityHandle ProfilePrefab = NetworkSubsystem()->RegisterReplicationProfileAsset(Asset);
+		ASSERT_THAT(IsTrue(ProfilePrefab.IsValid()));
+		ASSERT_THAT(IsTrue(ProfilePrefab.IsPrefab()));
+		ASSERT_THAT(IsTrue(ProfilePrefab.Has<FFlecsReplicationProfileTag>()));
+
+		const FFlecsEntityHandle Entity = World()->CreateEntity().AddPrefab(ProfilePrefab.GetFlecsId());
+		FFlecsReplicationProfile ResolvedProfile;
+		ASSERT_THAT(IsTrue(NetworkSubsystem()->ResolveReplicationProfile(Entity, ResolvedProfile)));
+		ASSERT_THAT(IsTrue(ResolvedProfile == Asset->Definition));
+	}
+
+	TEST_METHOD(ReplicationProfile_SetProfileReplacesRegisteredIsAProfile)
+	{
+		FFlecsReplicationProfile FirstDefinition;
+		FirstDefinition.FilterName = FName(TEXT("FirstFilter"));
+		const FFlecsEntityHandle FirstPrefab = NetworkSubsystem()->RegisterReplicationProfileDefinition(
+			FName(TEXT("FirstProfile")), FirstDefinition);
+
+		FFlecsReplicationProfile SecondDefinition;
+		SecondDefinition.FilterName = FName(TEXT("SecondFilter"));
+		const FFlecsEntityHandle SecondPrefab = NetworkSubsystem()->RegisterReplicationProfileDefinition(
+			FName(TEXT("SecondProfile")), SecondDefinition);
+
+		const FFlecsEntityHandle Entity = World()->CreateEntity()
+			.Add<FFlecsReplicatedEntityComponent>()
+			.AddPrefab(FirstPrefab.GetFlecsId());
+		ASSERT_THAT(IsTrue(NetworkSubsystem()->SetReplicationProfile(Entity, SecondPrefab)));
+
+		const FFlecsReplicatedEntityComponent* ReplicatedEntity = Entity.TryGet<FFlecsReplicatedEntityComponent>();
+		ASSERT_THAT(IsNotNull(ReplicatedEntity));
+		if (!ReplicatedEntity)
+		{
+			return;
+		}
+
+		ASSERT_THAT(IsTrue(ReplicatedEntity->ProfileId == FName(TEXT("SecondProfile"))));
+
+		FFlecsReplicationProfile ResolvedProfile;
+		ASSERT_THAT(IsTrue(NetworkSubsystem()->ResolveReplicationProfile(Entity, ResolvedProfile)));
+		ASSERT_THAT(IsTrue(ResolvedProfile == SecondDefinition));
+	}
+
+	TEST_METHOD(ReplicationShardSelector_UsesRegisteredImplementation)
+	{
+		bool bSelectorCalled = false;
+		ASSERT_THAT(IsTrue(NetworkSubsystem()->RegisterReplicationShardSelector(
+			FName(TEXT("TestSelector")),
+			[&bSelectorCalled](const FFlecsEntityHandle&, const FFlecsNetworkId&,
+				const FFlecsReplicationProfile&, FFlecsReplicationShardSelection& OutSelection)
+			{
+				bSelectorCalled = true;
+				OutSelection.ShardClass = UFlecsNetEntityProxy::StaticClass();
+				OutSelection.CohortKey = FName(TEXT("TestCohort"));
+				return true;
+			})));
+
+		FFlecsReplicationProfile Profile;
+		Profile.ShardSelectorName = FName(TEXT("TestSelector"));
+		FFlecsReplicationShardSelection Selection;
+		const FFlecsNetworkId NetworkId(44, 1);
+
+		ASSERT_THAT(IsTrue(NetworkSubsystem()->SelectReplicationShard(
+			World()->CreateEntity(), NetworkId, Profile, Selection)));
+		ASSERT_THAT(IsTrue(bSelectorCalled));
+		ASSERT_THAT(IsTrue(Selection.ShardClass == UFlecsNetEntityProxy::StaticClass()));
+		ASSERT_THAT(IsTrue(Selection.CohortKey == FName(TEXT("TestCohort"))));
 	}
 
 	TEST_METHOD(EntityPageAndEntityProxy_AreShardStorageTypes)

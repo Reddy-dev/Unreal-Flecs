@@ -9,6 +9,8 @@
 #include "Net/Iris/ReplicationSystem/NetRootObjectFactory.h"
 
 #include "Networking/Bridge/FlecsReplicationBridgeBase.h"
+#include "Networking/FlecsReplicationProfile.h"
+#include "Networking/FlecsReplicationShardSelection.h"
 #include "Networking/Layout/FlecsLayoutReplicatorFastArray.h"
 
 #include "FlecsIrisReplicationBridge.generated.h"
@@ -16,6 +18,23 @@
 /**
  * Always-relevant Iris root object coordinating Flecs replication.
  */
+USTRUCT()
+struct FFlecsReplicationShardPlacement
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TObjectPtr<UFlecsNetShardBase> Shard = nullptr;
+	UPROPERTY()
+	FFlecsReplicationProfile Profile;
+	FFlecsReplicationShardSelection Selection;
+	UPROPERTY()
+	uint32 TargetGeneration = 0;
+	UPROPERTY()
+	uint32 PlacementGeneration = 0;
+
+}; // struct FFlecsReplicationShardPlacement
+
 UCLASS()
 class UNREALFLECSNETWORKING_API UFlecsIrisReplicationBridge : public UFlecsReplicationBridgeBase, public INetRootObjectFactoryExtension
 {
@@ -43,7 +62,8 @@ public:
 		const FFlecsEntityReplicationSnapshot& InSnapshot);
 	virtual void StopReplicatingEntity(const FFlecsEntityHandle& InEntityHandle) override;
 	
-	virtual NO_DISCARD UFlecsNetShardBase* ResolveShard(const FFlecsEntityHandle& InEntityHandle, const FFlecsNetworkId& InNetworkId);
+	virtual NO_DISCARD UFlecsNetShardBase* ResolveShard(const FFlecsEntityHandle& InEntityHandle,
+		const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot);
 
 	NO_DISCARD const FFlecsReplicatorFastArray& GetReplicatedLayouts() const
 	{
@@ -51,13 +71,15 @@ public:
 	}
 	
 protected:
-	NO_DISCARD UFlecsNetShardBase* CreateNewShard(const FFlecsEntityHandle& InEntityHandle, const FFlecsNetworkId& InNetworkId);
+	NO_DISCARD UFlecsNetShardBase* CreateNewShard(const FFlecsNetworkId& InNetworkId,
+		const FFlecsReplicationProfile& InProfile,
+		const FFlecsReplicationShardSelection& InSelection);
 
 	UPROPERTY(Replicated)
 	FFlecsReplicatorFastArray ReplicatedLayouts;
 
 	UPROPERTY()
-	TMap<FFlecsEntityView, TObjectPtr<UFlecsNetShardBase>> ShardMap;
+	TMap<FFlecsEntityView, FFlecsReplicationShardPlacement> ShardMap;
 
 	UE::Net::FNetRootObjectAdapter RootObjectAdapter;
 	

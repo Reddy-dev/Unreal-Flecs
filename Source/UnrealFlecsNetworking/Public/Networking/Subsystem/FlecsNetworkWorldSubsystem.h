@@ -4,19 +4,29 @@
 
 #include "CoreMinimal.h"
 
+#include "Templates/Function.h"
+
 #include "Worlds/FlecsAbstractWorldSubsystem.h"
 
 #include "Networking/FlecsNetworkId.h"
+#include "Networking/FlecsReplicationProfile.h"
+#include "Networking/FlecsReplicationProfileDataAsset.h"
+#include "Networking/FlecsReplicationShardSelection.h"
+#include "Networking/FlecsReplicationUpdateQueue.h"
 #include "Networking/Layout/FlecsReplicationLayoutRegistry.h"
 #include "Networking/Layout/FlecsReplicationSnapshot.h"
 
 #include "FlecsNetworkWorldSubsystem.generated.h"
 
 class UFlecsReplicationBridgeBase;
-class UFlecsReplicationRouterBase;
 class IFlecsNetworkIDGeneratorInterface;
 class UFlecsNetworkingModuleSettings;
-struct FFlecsReplicationInbox;
+
+using FFlecsReplicationShardSelectorFunction = TFunction<bool(
+	const FFlecsEntityHandle&,
+	const FFlecsNetworkId&,
+	const FFlecsReplicationProfile&,
+	FFlecsReplicationShardSelection&)>;
 
 /**
  * Per-UWorld coordinator for Flecs replication.
@@ -121,7 +131,37 @@ public:
 	
 	void ReceiveNetworkEntitySnapshot(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot);
 	void RemoveReceivedNetworkEntity(const FFlecsNetworkId& InNetworkId, uint32 InStateRevision);
-	void ApplyReplicationInbox(FFlecsReplicationInbox& InInbox);
+
+	UFUNCTION(BlueprintCallable, Category = "Flecs|Networking")
+	FFlecsEntityHandle RegisterReplicationProfileAsset(const UFlecsReplicationProfileDataAsset* InAsset);
+
+	FFlecsEntityHandle RegisterReplicationProfileDefinition(const FName InName,
+		const FFlecsReplicationProfile& InDefinition);
+
+	NO_DISCARD FFlecsEntityHandle GetReplicationProfilePrefab(const FName InName) const;
+
+	bool SetReplicationProfile(const FFlecsEntityHandle& InEntity,
+		const FFlecsEntityHandle& InProfilePrefab);
+
+	NO_DISCARD bool ResolveReplicationProfile(const FFlecsEntityHandle& InEntity,
+		FFlecsReplicationProfile& OutProfile) const;
+
+	bool RegisterReplicationShardSelector(FName InName, FFlecsReplicationShardSelectorFunction InSelector);
+
+	NO_DISCARD bool SelectReplicationShard(const FFlecsEntityHandle& InEntity,
+		const FFlecsNetworkId& InNetworkId,
+		const FFlecsReplicationProfile& InProfile,
+		FFlecsReplicationShardSelection& OutSelection) const;
+
+	void QueueReplicationSnapshot(const FFlecsNetworkId& InNetworkId,
+		const FFlecsEntityReplicationSnapshot& InSnapshot);
+	void QueueReplicationRemoval(const FFlecsNetworkId& InNetworkId, uint32 InStateRevision);
+	void ApplyQueuedReplicationUpdates();
+
+	NO_DISCARD int32 GetQueuedReplicationUpdateCount() const
+	{
+		return ReplicationUpdateQueue.Num();
+	}
 
 protected:
 	
@@ -150,6 +190,10 @@ protected:
 	TMap<FFlecsNetworkId, FFlecsEntityReplicationSnapshot> ReplicationSnapshots;
 	// Prevents a late snapshot from resurrecting a removed network entity.
 	TMap<FFlecsNetworkId, uint32> RemovedEntityRevisions;
+
+	TMap<FName, FFlecsEntityHandle> ReplicationProfilePrefabs;
+	TMap<FName, FFlecsReplicationShardSelectorFunction> ReplicationShardSelectors;
+	FFlecsReplicationUpdateQueue ReplicationUpdateQueue;
 	
 	UPROPERTY()
 	TArray<FFlecsObserverHandle> ComponentDirtyObservers;

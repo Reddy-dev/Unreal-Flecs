@@ -58,8 +58,9 @@ public:
 	
 	virtual void HandleProtocolError(const FString& InErrorMessage);
 
-	/** Resolves the generic storage object selected by a route. */
-	virtual NO_DISCARD UFlecsNetShardBase* ResolveShard(const FFlecsEntityHandle& InEntity, const FFlecsNetworkId& NetworkId)
+	/** Resolves the generic storage object selected by the entity's profile. */
+	virtual NO_DISCARD UFlecsNetShardBase* ResolveShard(const FFlecsEntityHandle& InEntity,
+		const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot)
 		PURE_VIRTUAL(UFlecsReplicationBridgeBase::ResolveShard, return nullptr;);
 
 	void SetNetworkWorldSubsystem(UFlecsNetworkWorldSubsystem* InNetworkWorldSubsystem);

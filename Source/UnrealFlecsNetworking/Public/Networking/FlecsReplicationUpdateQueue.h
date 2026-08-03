@@ -4,43 +4,26 @@
 
 #include "CoreMinimal.h"
 
-#include "SolidMacros/Macros.h"
-
-#include "Properties/FlecsComponentProperties.h"
-
 #include "Networking/FlecsNetworkId.h"
 #include "Networking/Layout/FlecsReplicationSnapshot.h"
 
-#include "FlecsReplicationInbox.generated.h"
-
-USTRUCT()
-struct UNREALFLECSNETWORKING_API FFlecsReplicationInboxUpdate
+/** One deferred client-side replication update owned by the world subsystem. */
+struct FFlecsReplicationQueuedUpdate
 {
-	GENERATED_BODY()
-
-	UPROPERTY()
 	FFlecsNetworkId NetworkId;
-
-	UPROPERTY()
 	FFlecsEntityReplicationSnapshot Snapshot;
-
-	/** Snapshot revision, or the removal tombstone revision when bRemove is true. */
-	UPROPERTY()
 	uint32 StateRevision = 0;
-
-	UPROPERTY()
 	bool bRemove = false;
 
-}; // struct FFlecsReplicationInboxUpdate
+}; // struct FFlecsReplicationQueuedUpdate
 
-USTRUCT()
-struct UNREALFLECSNETWORKING_API FFlecsReplicationInbox
+/** Coalesces deferred snapshots and removals by network ID. */
+class FFlecsReplicationUpdateQueue
 {
-	GENERATED_BODY()
-
+public:
 	void EnqueueSnapshot(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot)
 	{
-		FFlecsReplicationInboxUpdate* ExistingUpdate = FindPendingUpdate(InNetworkId);
+		FFlecsReplicationQueuedUpdate* ExistingUpdate = FindPendingUpdate(InNetworkId);
 		if (ExistingUpdate)
 		{
 			if (ExistingUpdate->StateRevision > InSnapshot.StateRevision)
@@ -54,7 +37,7 @@ struct UNREALFLECSNETWORKING_API FFlecsReplicationInbox
 			return;
 		}
 
-		FFlecsReplicationInboxUpdate& Update = Updates.Emplace_GetRef();
+		FFlecsReplicationQueuedUpdate& Update = Updates.Emplace_GetRef();
 		Update.NetworkId = InNetworkId;
 		Update.Snapshot = InSnapshot;
 		Update.StateRevision = InSnapshot.StateRevision;
@@ -62,7 +45,7 @@ struct UNREALFLECSNETWORKING_API FFlecsReplicationInbox
 
 	void EnqueueRemoval(const FFlecsNetworkId& InNetworkId, const uint32 InStateRevision)
 	{
-		FFlecsReplicationInboxUpdate* ExistingUpdate = FindPendingUpdate(InNetworkId);
+		FFlecsReplicationQueuedUpdate* ExistingUpdate = FindPendingUpdate(InNetworkId);
 		if (ExistingUpdate)
 		{
 			if (ExistingUpdate->StateRevision > InStateRevision)
@@ -76,35 +59,37 @@ struct UNREALFLECSNETWORKING_API FFlecsReplicationInbox
 			return;
 		}
 
-		FFlecsReplicationInboxUpdate& Update = Updates.Emplace_GetRef();
+		FFlecsReplicationQueuedUpdate& Update = Updates.Emplace_GetRef();
 		Update.NetworkId = InNetworkId;
 		Update.StateRevision = InStateRevision;
 		Update.bRemove = true;
 	}
 
-	NO_DISCARD TArray<FFlecsReplicationInboxUpdate> Drain()
+	NO_DISCARD TArray<FFlecsReplicationQueuedUpdate> Drain()
 	{
 		return MoveTemp(Updates);
 	}
 
-private:
+	NO_DISCARD int32 Num() const
+	{
+		return Updates.Num();
+	}
 
-	NO_DISCARD FFlecsReplicationInboxUpdate* FindPendingUpdate(const FFlecsNetworkId& InNetworkId)
+	void Reset()
+	{
+		Updates.Reset();
+	}
+
+private:
+	NO_DISCARD FFlecsReplicationQueuedUpdate* FindPendingUpdate(const FFlecsNetworkId& InNetworkId)
 	{
 		return Updates.FindByPredicate(
-			[&InNetworkId](const FFlecsReplicationInboxUpdate& InUpdate)
+			[&InNetworkId](const FFlecsReplicationQueuedUpdate& InUpdate)
 			{
 				return InUpdate.NetworkId == InNetworkId;
 			});
 	}
 
-	UPROPERTY()
-	TArray<FFlecsReplicationInboxUpdate> Updates;
+	TArray<FFlecsReplicationQueuedUpdate> Updates;
 
-}; // struct FFlecsReplicationInbox
-
-template <>
-struct TFlecsComponentTraits<FFlecsReplicationInbox> : public TFlecsComponentTraitsBase<FFlecsReplicationInbox>
-{
-	static constexpr bool Singleton = true;
-}; // struct TFlecsComponentTraits<FFlecsReplicationInbox>
+}; // class FFlecsReplicationUpdateQueue

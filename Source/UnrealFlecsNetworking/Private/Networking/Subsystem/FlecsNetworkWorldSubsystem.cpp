@@ -5,7 +5,10 @@
 #include "Engine/World.h"
 #include "Networking/FlecsDirtyObserverTag.h"
 #include "Networking/FlecsNetDirtyTag.h"
-#include "Networking/FlecsReplicationInbox.h"
+#include "Networking/FlecsReplicationProfile.h"
+#include "Networking/FlecsReplicationProfileDataAsset.h"
+#include "Networking/FlecsReplicationShardSelection.h"
+#include "Networking/Shards/FlecsNetEntityProxy.h"
 
 #include "Serialization/MemoryReader.h"
 #include "Serialization/MemoryWriter.h"
@@ -35,7 +38,32 @@ void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UF
 	Super::OnFlecsWorldInitialized(InWorld);
 	
 	InWorld->Set<FFlecsNetworkSubsystemSingleton>(FFlecsNetworkSubsystemSingleton{ this });
-	InWorld->Set<FFlecsReplicationInbox>(FFlecsReplicationInbox{});
+	InWorld->RegisterComponentType<FFlecsReplicationProfile>();
+	InWorld->RegisterComponentType<FFlecsReplicationProfileTag>();
+
+	RegisterReplicationShardSelector(
+		FName(TEXT("Proxy")),
+		[](const FFlecsEntityHandle&, const FFlecsNetworkId&, const FFlecsReplicationProfile&, FFlecsReplicationShardSelection& OutSelection)
+		{
+			OutSelection.ShardClass = UFlecsNetEntityProxy::StaticClass();
+			OutSelection.CohortKey = NAME_None;
+			return true;
+		});
+
+	TFlecsObserverBuilder<> ProfileObserverBuilder = GetFlecsWorldChecked()->CreateObserver();
+	const FFlecsObserverHandle ProfileObserverHandle = ProfileObserverBuilder
+		.WithPair(flecs::IsA, flecs::Wildcard)
+		.With<FFlecsReplicatedEntityComponent>().Filter()
+		.Event(flecs::OnAdd)
+		.Event(flecs::OnRemove)
+		.each([](flecs::iter& InIterator, size_t InIndex)
+		{
+			const FFlecsEntityHandle EntityHandle = InIterator.entity(InIndex);
+			EntityHandle.Add<FFlecsNetDirtyTag>();
+		});
+
+	ProfileObserverHandle.Add<FFlecsDirtyObserverTag>();
+	ComponentDirtyObservers.Add(ProfileObserverHandle);
 	
 #if WITH_SERVER_CODE
 	
@@ -58,6 +86,9 @@ void UFlecsNetworkWorldSubsystem::Deinitialize()
 	}
 
 	FFlecsComponentReplicationRegistry::RemoveWorld(GetFlecsWorld());
+	ReplicationProfilePrefabs.Reset();
+	ReplicationShardSelectors.Reset();
+	ReplicationUpdateQueue.Reset();
 	
 	Super::Deinitialize();
 }
@@ -173,6 +204,22 @@ FFlecsNetworkId UFlecsNetworkWorldSubsystem::BeginReplicatingEntity(const FFlecs
 	if UNLIKELY_IF(!ensureMsgf(NetworkId.IsValid(), TEXT("Generated network ID is not valid")))
 	{
 		return FFlecsNetworkId();
+	}
+
+	if (FFlecsReplicatedEntityComponent* ReplicatedEntity = InEntityHandle.TryGetMut<FFlecsReplicatedEntityComponent>())
+	{
+		if (ReplicatedEntity->ProfileId.IsNone())
+		{
+			for (const TTuple<FName, FFlecsEntityHandle>& Pair : ReplicationProfilePrefabs)
+			{
+				if (InEntityHandle.IsA(Pair.Value.GetFlecsId()))
+				{
+					ReplicatedEntity->ProfileId = Pair.Key;
+					InEntityHandle.Modified<FFlecsReplicatedEntityComponent>();
+					break;
+				}
+			}
+		}
 	}
 	
 	InEntityHandle.Set<FFlecsNetworkId>(NetworkId);
@@ -341,7 +388,7 @@ bool UFlecsNetworkWorldSubsystem::IsStandalone() const
 
 void UFlecsNetworkWorldSubsystem::OnEntityLayoutReceived(const FFlecsReplicationLayoutDefinition&)
 {
-	// The inbox system applies deferred snapshots during the Flecs frame.
+	// The replication queue system applies deferred snapshots during the Flecs frame.
 }
 
 void UFlecsNetworkWorldSubsystem::ReceiveNetworkEntitySnapshot(const FFlecsNetworkId& InNetworkId,
@@ -353,14 +400,7 @@ void UFlecsNetworkWorldSubsystem::ReceiveNetworkEntitySnapshot(const FFlecsNetwo
 		return;
 	}
 
-	FFlecsReplicationInbox* Inbox = GetFlecsWorldChecked()->TryGetMut<FFlecsReplicationInbox>();
-	if UNLIKELY_IF(!Inbox)
-	{
-		UE_LOG(LogFlecsWorld, Error, TEXT("Cannot queue a Flecs entity snapshot without a replication inbox"));
-		return;
-	}
-
-	Inbox->EnqueueSnapshot(InNetworkId, InSnapshot);
+	QueueReplicationSnapshot(InNetworkId, InSnapshot);
 }
 
 void UFlecsNetworkWorldSubsystem::RemoveReceivedNetworkEntity(const FFlecsNetworkId& InNetworkId,
@@ -376,31 +416,36 @@ void UFlecsNetworkWorldSubsystem::RemoveReceivedNetworkEntity(const FFlecsNetwor
 		return;
 	}
 
-	FFlecsReplicationInbox* Inbox = GetFlecsWorldChecked()->TryGetMut<FFlecsReplicationInbox>();
-	if UNLIKELY_IF(!Inbox)
-	{
-		UE_LOG(LogFlecsWorld, Error, TEXT("Cannot queue a Flecs entity removal without a replication inbox"));
-		return;
-	}
-
-	Inbox->EnqueueRemoval(InNetworkId, InStateRevision);
+	QueueReplicationRemoval(InNetworkId, InStateRevision);
 }
 
-void UFlecsNetworkWorldSubsystem::ApplyReplicationInbox(FFlecsReplicationInbox& InInbox)
+void UFlecsNetworkWorldSubsystem::QueueReplicationSnapshot(const FFlecsNetworkId& InNetworkId,
+	const FFlecsEntityReplicationSnapshot& InSnapshot)
 {
-	const TArray<FFlecsReplicationInboxUpdate> Updates = InInbox.Drain();
+	ReplicationUpdateQueue.EnqueueSnapshot(InNetworkId, InSnapshot);
+}
 
-	for (const FFlecsReplicationInboxUpdate& Update : Updates)
+void UFlecsNetworkWorldSubsystem::QueueReplicationRemoval(const FFlecsNetworkId& InNetworkId,
+	const uint32 InStateRevision)
+{
+	ReplicationUpdateQueue.EnqueueRemoval(InNetworkId, InStateRevision);
+}
+
+void UFlecsNetworkWorldSubsystem::ApplyQueuedReplicationUpdates()
+{
+	const TArray<FFlecsReplicationQueuedUpdate> Updates = ReplicationUpdateQueue.Drain();
+
+	for (const FFlecsReplicationQueuedUpdate& Update : Updates)
 	{
 		if UNLIKELY_IF(!Update.NetworkId.IsValid())
 		{
-			UE_LOG(LogFlecsWorld, Error, TEXT("Replication inbox contains an invalid network ID"));
+			UE_LOG(LogFlecsWorld, Error, TEXT("Replication queue contains an invalid network ID"));
 			continue;
 		}
 
 		if UNLIKELY_IF(!Update.bRemove && !Update.Snapshot.LayoutId.IsValid())
 		{
-			UE_LOG(LogFlecsWorld, Error, TEXT("Replication inbox contains an invalid entity snapshot"));
+			UE_LOG(LogFlecsWorld, Error, TEXT("Replication queue contains an invalid entity snapshot"));
 			continue;
 		}
 
@@ -415,6 +460,210 @@ void UFlecsNetworkWorldSubsystem::ApplyReplicationInbox(FFlecsReplicationInbox& 
 	}
 
 	ApplyDeferredEntityLayouts();
+}
+
+FFlecsEntityHandle UFlecsNetworkWorldSubsystem::RegisterReplicationProfileAsset(
+	const UFlecsReplicationProfileDataAsset* InAsset)
+{
+	if UNLIKELY_IF(!InAsset)
+	{
+		UE_LOG(LogFlecsWorld, Error, TEXT("Cannot register a null Flecs replication profile asset"));
+		return FFlecsEntityHandle();
+	}
+
+	const FName ProfileName = InAsset->ProfileName.IsNone()
+		? InAsset->GetFName()
+		: InAsset->ProfileName;
+
+	return RegisterReplicationProfileDefinition(ProfileName, InAsset->Definition);
+}
+
+FFlecsEntityHandle UFlecsNetworkWorldSubsystem::RegisterReplicationProfileDefinition(
+	const FName InName, const FFlecsReplicationProfile& InDefinition)
+{
+	if UNLIKELY_IF(InName.IsNone())
+	{
+		UE_LOG(LogFlecsWorld, Error, TEXT("Cannot register a Flecs replication profile without a name"));
+		return FFlecsEntityHandle();
+	}
+
+	if (const FFlecsEntityHandle* ExistingPrefab = ReplicationProfilePrefabs.Find(InName))
+	{
+		return *ExistingPrefab;
+	}
+
+	const FFlecsEntityHandle ProfilePrefab = GetFlecsWorldChecked()->CreatePrefab(InName.ToString())
+		.Add<FFlecsReplicationProfileTag>()
+		.Set<FFlecsReplicationProfile>(InDefinition);
+
+	ReplicationProfilePrefabs.Add(InName, ProfilePrefab);
+	return ProfilePrefab;
+}
+
+FFlecsEntityHandle UFlecsNetworkWorldSubsystem::GetReplicationProfilePrefab(const FName InName) const
+{
+	if (const FFlecsEntityHandle* ProfilePrefab = ReplicationProfilePrefabs.Find(InName))
+	{
+		return *ProfilePrefab;
+	}
+
+	return FFlecsEntityHandle();
+}
+
+bool UFlecsNetworkWorldSubsystem::SetReplicationProfile(const FFlecsEntityHandle& InEntity,
+	const FFlecsEntityHandle& InProfilePrefab)
+{
+	if UNLIKELY_IF(!InEntity.IsValid() || !InProfilePrefab.IsValid())
+	{
+		return false;
+	}
+
+	if UNLIKELY_IF(!InProfilePrefab.IsPrefab() || !InProfilePrefab.Has<FFlecsReplicationProfileTag>()
+		|| !InProfilePrefab.Has<FFlecsReplicationProfile>())
+	{
+		UE_LOG(LogFlecsWorld, Error,
+			TEXT("Cannot assign a Flecs replication profile from an entity that is not a registered profile prefab"));
+		return false;
+	}
+
+	FName ProfileId = NAME_None;
+	for (const TTuple<FName, FFlecsEntityHandle>& Pair : ReplicationProfilePrefabs)
+	{
+		if (Pair.Value == InProfilePrefab)
+		{
+			ProfileId = Pair.Key;
+			break;
+		}
+	}
+
+	if UNLIKELY_IF(ProfileId.IsNone())
+	{
+		UE_LOG(LogFlecsWorld, Error,
+			TEXT("Cannot assign an unregistered Flecs replication profile prefab"));
+		return false;
+	}
+
+	for (const TTuple<FName, FFlecsEntityHandle>& Pair : ReplicationProfilePrefabs)
+	{
+		if (InEntity.IsA(Pair.Value.GetFlecsId()))
+		{
+			InEntity.RemovePrefab(Pair.Value.GetFlecsId());
+		}
+	}
+
+	InEntity.AddPrefab(InProfilePrefab.GetFlecsId());
+	if (FFlecsReplicatedEntityComponent* ReplicatedEntity = InEntity.TryGetMut<FFlecsReplicatedEntityComponent>())
+	{
+		ReplicatedEntity->ProfileId = ProfileId;
+		InEntity.Modified<FFlecsReplicatedEntityComponent>();
+	}
+
+	if (HasAuthority() && InEntity.Has<FFlecsReplicatedEntityComponent>())
+	{
+		InEntity.Add<FFlecsNetDirtyTag>();
+	}
+
+	return true;
+}
+
+bool UFlecsNetworkWorldSubsystem::ResolveReplicationProfile(const FFlecsEntityHandle& InEntity,
+	FFlecsReplicationProfile& OutProfile) const
+{
+	if UNLIKELY_IF(!InEntity.IsValid())
+	{
+		return false;
+	}
+
+	if (const FFlecsReplicatedEntityComponent* ReplicatedEntity = InEntity.TryGet<FFlecsReplicatedEntityComponent>())
+	{
+		if (!ReplicatedEntity->ProfileId.IsNone())
+		{
+			if (const FFlecsEntityHandle* ProfilePrefab = ReplicationProfilePrefabs.Find(ReplicatedEntity->ProfileId))
+			{
+				if (InEntity.IsA(ProfilePrefab->GetFlecsId()))
+				{
+					if (const FFlecsReplicationProfile* Profile = ProfilePrefab->TryGet<FFlecsReplicationProfile>())
+					{
+						OutProfile = *Profile;
+						return true;
+					}
+				}
+			}
+		}
+	}
+
+	if (const FFlecsReplicationProfile* Profile = InEntity.TryGet<FFlecsReplicationProfile>())
+	{
+		OutProfile = *Profile;
+		return true;
+	}
+
+	OutProfile = FFlecsReplicationProfile();
+	return true;
+}
+
+bool UFlecsNetworkWorldSubsystem::RegisterReplicationShardSelector(FName InName,
+	FFlecsReplicationShardSelectorFunction InSelector)
+{
+	if UNLIKELY_IF(InName.IsNone() || !InSelector)
+	{
+		return false;
+	}
+
+	if (ReplicationShardSelectors.Contains(InName))
+	{
+		UE_LOG(LogFlecsWorld, Warning,
+			TEXT("Flecs replication shard selector '%s' is already registered"), *InName.ToString());
+		return false;
+	}
+
+	ReplicationShardSelectors.Add(InName, MoveTemp(InSelector));
+	return true;
+}
+
+bool UFlecsNetworkWorldSubsystem::SelectReplicationShard(const FFlecsEntityHandle& InEntity,
+	const FFlecsNetworkId& InNetworkId, const FFlecsReplicationProfile& InProfile,
+	FFlecsReplicationShardSelection& OutSelection) const
+{
+	const FName SelectorName = InProfile.ShardSelectorName.IsNone()
+		? FName(TEXT("Proxy"))
+		: InProfile.ShardSelectorName;
+
+	const FFlecsReplicationShardSelectorFunction* Selector = ReplicationShardSelectors.Find(SelectorName);
+	if UNLIKELY_IF(!Selector)
+	{
+		UE_LOG(LogFlecsWorld, Error,
+			TEXT("Cannot select a Flecs replication shard because selector '%s' is not registered"),
+			*SelectorName.ToString());
+		return false;
+	}
+
+	OutSelection = FFlecsReplicationShardSelection();
+	if UNLIKELY_IF(!(*Selector)(InEntity, InNetworkId, InProfile, OutSelection))
+	{
+		UE_LOG(LogFlecsWorld, Error,
+			TEXT("Flecs replication shard selector '%s' rejected network ID '%s'"),
+			*SelectorName.ToString(), *InNetworkId.ToString());
+		return false;
+	}
+
+	if UNLIKELY_IF(!OutSelection.ShardClass)
+	{
+		UE_LOG(LogFlecsWorld, Error,
+			TEXT("Flecs replication shard selector '%s' returned no shard class"),
+			*SelectorName.ToString());
+		return false;
+	}
+
+	if UNLIKELY_IF(OutSelection.ShardClass->HasAnyClassFlags(CLASS_Abstract))
+	{
+		UE_LOG(LogFlecsWorld, Error,
+			TEXT("Flecs replication shard selector '%s' returned abstract shard class '%s'"),
+			*SelectorName.ToString(), *OutSelection.ShardClass->GetName());
+		return false;
+	}
+
+	return true;
 }
 
 void UFlecsNetworkWorldSubsystem::ApplyReceivedNetworkEntitySnapshot(const FFlecsNetworkId& InNetworkId,
