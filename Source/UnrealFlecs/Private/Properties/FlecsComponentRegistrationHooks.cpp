@@ -22,8 +22,8 @@ namespace
 
 void UE::Flecs::FFlecsComponentRegistrationHooks::InstallReplicationHooks(
 	const void* InOwner,
-	FFlecsReplicationComponentRegistrationFunction InRegister,
-	FFlecsReplicationComponentMarkerFunction InMark)
+	const FFlecsReplicationComponentRegistrationFunction InRegister,
+	const FFlecsReplicationComponentMarkerFunction InMark)
 {
 	solid_check(InOwner);
 	solid_check(InRegister);
@@ -60,11 +60,12 @@ bool UE::Flecs::FFlecsComponentRegistrationHooks::RegisterReplicatedComponent(
 	FString* OutError)
 {
 	const FReplicationHooks& Hooks = GetReplicationHooks();
+	
 	if (!Hooks.Register)
 	{
-		if (OutError)
+		if UNLIKELY_IF(OutError)
 		{
-			*OutError = TEXT("UnrealFlecsNetworking is not loaded");
+			*OutError = TEXT("No Networking Module loaded");
 		}
 
 		return false;

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 
+#include "Engine/World.h"
 #include "UObject/Object.h"
 #include "Net/Core/PushModel/PushModelMacros.h"
 
@@ -13,6 +14,7 @@
 #include "Net/Iris/ReplicationSystem/NetRootObjectAdapter.h"
 #include "Net/Iris/ReplicationSystem/NetRootObjectFactory.h"
 #include "Networking/FlecsNetworkId.h"
+#include "Networking/FlecsReplicationUpdateQueue.h"
 #include "Networking/Layout/FlecsReplicationSnapshot.h"
 
 #include "FlecsNetShardBase.generated.h"
@@ -38,6 +40,8 @@ public:
 	{
 		return true;
 	}
+
+	virtual UWorld* GetWorld() const override;
 
 	virtual void InitializeShard();
 	virtual void DeinitializeShard();
@@ -77,6 +81,10 @@ public:
 	virtual bool IsEmpty() const
 		PURE_VIRTUAL(UFlecsNetShardBase::IsEmpty, return true;);
 
+	/** Assigns the local world even when this dynamic Iris root has a transient outer. */
+	void SetOwningWorld(const TSolidNotNull<UWorld*> InOwningWorld);
+
+	/** Binds the local networking subsystem and flushes any early received state. */
 	void SetOwningNetworkWorldSubsystem(UFlecsNetworkWorldSubsystem* InOwningNetworkWorldSubsystem);
 
 	NO_DISCARD UFlecsNetworkWorldSubsystem* GetOwningNetworkWorldSubsystem() const;
@@ -85,10 +93,21 @@ protected:
 	void ReceiveEntityUpdate(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot);
 	void ReceiveEntityRemoval(const FFlecsNetworkId& InNetworkId, uint32 InStateRevision);
 
+	void ResolveOwningNetworkWorldSubsystem();
+	void HandleWorldPreActorTick(UWorld* InWorld, ELevelTick, float);
+	void StartOwningNetworkWorldSubsystemRetry();
+	void StopOwningNetworkWorldSubsystemRetry();
+	void FlushPendingReplicationUpdates();
+
 private:
+	UPROPERTY(Transient)
+	TWeakObjectPtr<UWorld> OwningWorld;
 
 	UPROPERTY()
 	TWeakObjectPtr<UFlecsNetworkWorldSubsystem> OwningNetworkWorldSubsystem;
+
+	FFlecsReplicationUpdateQueue PendingReplicationUpdateQueue;
+	FDelegateHandle WorldPreActorTickHandle;
 
 	UE::Net::FNetRootObjectAdapter RootObjectAdapter;
 

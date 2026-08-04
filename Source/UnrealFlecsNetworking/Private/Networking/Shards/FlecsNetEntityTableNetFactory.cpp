@@ -6,8 +6,6 @@
 #include "Iris/ReplicationSystem/ObjectReplicationBridge.h"
 
 #include "Networking/Shards/FlecsNetEntityTable.h"
-#include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
-
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsNetEntityTableNetFactory)
 
 FName UFlecsNetEntityTableNetFactory::GetFactoryName()
@@ -21,17 +19,16 @@ void UFlecsNetEntityTableNetFactory::PostInstantiation(const FPostInstantiationC
 	Super::PostInstantiation(Context);
 
 	UFlecsNetEntityTable* Table = Cast<UFlecsNetEntityTable>(Context.Instance);
-	const UWorld* World = Bridge ? Bridge->GetWorld() : nullptr;
-	UFlecsNetworkWorldSubsystem* NetworkSubsystem = World ? World->GetSubsystem<UFlecsNetworkWorldSubsystem>() : nullptr;
+	UWorld* World = Bridge ? Bridge->GetWorld() : nullptr;
 
-	if UNLIKELY_IF(!Table || !NetworkSubsystem)
+	if UNLIKELY_IF(!Table || !World)
 	{
 		UE_LOG(LogFlecsCore, Error,
-			TEXT("Could not bind a received Flecs entity table to its network world"));
+			TEXT("Could not assign a received Flecs entity table to its receiving world"));
 		return;
 	}
 
-	Table->SetOwningNetworkWorldSubsystem(NetworkSubsystem);
+	Table->SetOwningWorld(World);
 }
 
 void UFlecsNetEntityTableNetFactory::DetachedFromReplication(const FDetachContext& Context,

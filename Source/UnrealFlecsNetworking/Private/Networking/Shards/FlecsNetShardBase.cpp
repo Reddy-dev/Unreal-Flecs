@@ -17,6 +17,11 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsNetShardBase)
 
+UWorld* UFlecsNetShardBase::GetWorld() const
+{
+	return OwningWorld.IsValid() ? OwningWorld.Get() : Super::GetWorld();
+}
+
 void UFlecsNetShardBase::InitializeShard()
 {
 	if (RootObjectAdapter.IsInitialized())
@@ -34,6 +39,8 @@ void UFlecsNetShardBase::InitializeShard()
 void UFlecsNetShardBase::DeinitializeShard()
 {
 	StopShardReplication();
+	
+	StopOwningNetworkWorldSubsystemRetry();
 	RootObjectAdapter.DeinitAdapter();
 }
 
@@ -64,8 +71,7 @@ void UFlecsNetShardBase::StopShardReplication()
 void UFlecsNetShardBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-
+	
 }
 
 void UFlecsNetShardBase::RegisterReplicationFragments(UE::Net::FFragmentRegistrationContext& Fragments,
@@ -160,11 +166,100 @@ bool UFlecsNetShardBase::ApplyReplicationProfile(const FFlecsReplicationProfile&
 void UFlecsNetShardBase::SetOwningNetworkWorldSubsystem(UFlecsNetworkWorldSubsystem* InOwningNetworkWorldSubsystem)
 {
 	OwningNetworkWorldSubsystem = InOwningNetworkWorldSubsystem;
+
+	if (!InOwningNetworkWorldSubsystem)
+	{
+		StopOwningNetworkWorldSubsystemRetry();
+		return;
+	}
+
+	OwningWorld = InOwningNetworkWorldSubsystem->GetWorld();
+	StopOwningNetworkWorldSubsystemRetry();
+	FlushPendingReplicationUpdates();
+}
+
+void UFlecsNetShardBase::SetOwningWorld(const TSolidNotNull<UWorld*> InOwningWorld)
+{
+	OwningWorld = InOwningWorld;
+	ResolveOwningNetworkWorldSubsystem();
 }
 
 UFlecsNetworkWorldSubsystem* UFlecsNetShardBase::GetOwningNetworkWorldSubsystem() const
 {
 	return OwningNetworkWorldSubsystem.Get();
+}
+
+void UFlecsNetShardBase::ResolveOwningNetworkWorldSubsystem()
+{
+	if (OwningNetworkWorldSubsystem.IsValid())
+	{
+		StopOwningNetworkWorldSubsystemRetry();
+		return;
+	}
+
+	UWorld* World = GetWorld();
+	if (!World || World->bIsTearingDown)
+	{
+		return;
+	}
+
+	if (UFlecsNetworkWorldSubsystem* NetworkSubsystem = World->GetSubsystem<UFlecsNetworkWorldSubsystem>())
+	{
+		SetOwningNetworkWorldSubsystem(NetworkSubsystem);
+		return;
+	}
+
+	StartOwningNetworkWorldSubsystemRetry();
+}
+
+void UFlecsNetShardBase::HandleWorldPreActorTick(UWorld* InWorld, ELevelTick, float)
+{
+	if (InWorld != GetWorld())
+	{
+		return;
+	}
+
+	ResolveOwningNetworkWorldSubsystem();
+}
+
+void UFlecsNetShardBase::StartOwningNetworkWorldSubsystemRetry()
+{
+	if (!WorldPreActorTickHandle.IsValid())
+	{
+		WorldPreActorTickHandle = FWorldDelegates::OnWorldPreActorTick.AddUObject(
+			this, &UFlecsNetShardBase::HandleWorldPreActorTick);
+	}
+}
+
+void UFlecsNetShardBase::StopOwningNetworkWorldSubsystemRetry()
+{
+	if (WorldPreActorTickHandle.IsValid())
+	{
+		FWorldDelegates::OnWorldPreActorTick.Remove(WorldPreActorTickHandle);
+		WorldPreActorTickHandle.Reset();
+	}
+}
+
+void UFlecsNetShardBase::FlushPendingReplicationUpdates()
+{
+	UFlecsNetworkWorldSubsystem* NetworkSubsystem = GetOwningNetworkWorldSubsystem();
+	if (!NetworkSubsystem)
+	{
+		return;
+	}
+
+	const TArray<FFlecsReplicationQueuedUpdate> Updates = PendingReplicationUpdateQueue.Drain();
+	for (const FFlecsReplicationQueuedUpdate& Update : Updates)
+	{
+		if (Update.bRemove)
+		{
+			NetworkSubsystem->RemoveReceivedNetworkEntity(Update.NetworkId, Update.StateRevision);
+		}
+		else
+		{
+			NetworkSubsystem->ReceiveNetworkEntitySnapshot(Update.NetworkId, Update.Snapshot);
+		}
+	}
 }
 
 void UFlecsNetShardBase::ReceiveEntityUpdate(const FFlecsNetworkId& InNetworkId,
@@ -175,12 +270,11 @@ void UFlecsNetShardBase::ReceiveEntityUpdate(const FFlecsNetworkId& InNetworkId,
 		return;
 	}
 
+	ResolveOwningNetworkWorldSubsystem();
 	UFlecsNetworkWorldSubsystem* NetworkSubsystem = GetOwningNetworkWorldSubsystem();
 	if UNLIKELY_IF(!NetworkSubsystem)
 	{
-		UE_LOG(LogFlecsCore, Error,
-			TEXT("Received Flecs entity update for '%s' without an owning network world"),
-			*InNetworkId.ToString());
+		PendingReplicationUpdateQueue.EnqueueSnapshot(InNetworkId, InSnapshot);
 		return;
 	}
 
@@ -194,12 +288,11 @@ void UFlecsNetShardBase::ReceiveEntityRemoval(const FFlecsNetworkId& InNetworkId
 		return;
 	}
 
+	ResolveOwningNetworkWorldSubsystem();
 	UFlecsNetworkWorldSubsystem* NetworkSubsystem = GetOwningNetworkWorldSubsystem();
 	if UNLIKELY_IF(!NetworkSubsystem)
 	{
-		UE_LOG(LogFlecsCore, Error,
-			TEXT("Received Flecs entity removal for '%s' without an owning network world"),
-			*InNetworkId.ToString());
+		PendingReplicationUpdateQueue.EnqueueRemoval(InNetworkId, InStateRevision);
 		return;
 	}
 

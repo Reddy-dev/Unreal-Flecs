@@ -6,8 +6,6 @@
 #include "Iris/ReplicationSystem/ObjectReplicationBridge.h"
 
 #include "Networking/Shards/FlecsNetEntityProxy.h"
-#include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
-
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsNetEntityProxyNetFactory)
 
 FName UFlecsNetEntityProxyNetFactory::GetFactoryName()
@@ -21,17 +19,16 @@ void UFlecsNetEntityProxyNetFactory::PostInstantiation(const FPostInstantiationC
 	Super::PostInstantiation(Context);
 
 	UFlecsNetEntityProxy* Proxy = Cast<UFlecsNetEntityProxy>(Context.Instance);
-	const UWorld* World = Bridge ? Bridge->GetWorld() : nullptr;
-	UFlecsNetworkWorldSubsystem* NetworkSubsystem = World ? World->GetSubsystem<UFlecsNetworkWorldSubsystem>() : nullptr;
+	UWorld* World = Bridge ? Bridge->GetWorld() : nullptr;
 
-	if UNLIKELY_IF(!Proxy || !NetworkSubsystem)
+	if UNLIKELY_IF(!Proxy || !World)
 	{
 		UE_LOG(LogFlecsCore, Error,
-			TEXT("Could not bind a received Flecs entity proxy to its network world"));
+			TEXT("Could not assign a received Flecs entity proxy to its receiving world"));
 		return;
 	}
 
-	Proxy->SetOwningNetworkWorldSubsystem(NetworkSubsystem);
+	Proxy->SetOwningWorld(World);
 }
 
 void UFlecsNetEntityProxyNetFactory::DetachedFromReplication(const FDetachContext& Context,

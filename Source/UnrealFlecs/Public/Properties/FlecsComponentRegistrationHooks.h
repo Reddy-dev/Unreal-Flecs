@@ -16,8 +16,7 @@ namespace UE::Flecs
 		const FFlecsReplicationComponentDefinition& InDefinition,
 		FString* OutError);
 
-	using FFlecsReplicationComponentMarkerFunction = void(*)(
-		const FFlecsComponentHandle& InComponent);
+	using FFlecsReplicationComponentMarkerFunction = void(*)(const FFlecsComponentHandle& InComponent);
 
 	/** Optional core hook installed by UnrealFlecsNetworking. */
 	struct UNREALFLECS_API FFlecsComponentRegistrationHooks

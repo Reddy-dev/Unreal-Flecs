@@ -412,8 +412,7 @@ void UFlecsNetworkWorldSubsystem::ReceiveNetworkEntitySnapshot(const FFlecsNetwo
 	QueueReplicationSnapshot(InNetworkId, InSnapshot);
 }
 
-void UFlecsNetworkWorldSubsystem::RemoveReceivedNetworkEntity(const FFlecsNetworkId& InNetworkId,
-	const uint32 InStateRevision)
+void UFlecsNetworkWorldSubsystem::RemoveReceivedNetworkEntity(const FFlecsNetworkId& InNetworkId, const uint32 InStateRevision)
 {
 	if (HasAuthority())
 	{
@@ -471,8 +470,7 @@ void UFlecsNetworkWorldSubsystem::ApplyQueuedReplicationUpdates()
 	ApplyDeferredEntityLayouts();
 }
 
-FFlecsEntityHandle UFlecsNetworkWorldSubsystem::RegisterReplicationProfileAsset(
-	const UFlecsReplicationProfileDataAsset* InAsset)
+FFlecsEntityHandle UFlecsNetworkWorldSubsystem::RegisterReplicationProfileAsset(const UFlecsReplicationProfileDataAsset* InAsset)
 {
 	if UNLIKELY_IF(!InAsset)
 	{
@@ -574,7 +572,7 @@ bool UFlecsNetworkWorldSubsystem::SetReplicationProfile(const FFlecsEntityHandle
 }
 
 bool UFlecsNetworkWorldSubsystem::ResolveReplicationProfile(const FFlecsEntityHandle& InEntity,
-	FFlecsReplicationProfile& OutProfile) const
+	OUT FFlecsReplicationProfile& OutProfile) const
 {
 	if UNLIKELY_IF(!InEntity.IsValid())
 	{
@@ -609,7 +607,7 @@ bool UFlecsNetworkWorldSubsystem::ResolveReplicationProfile(const FFlecsEntityHa
 	return true;
 }
 
-bool UFlecsNetworkWorldSubsystem::RegisterReplicationShardSelector(FName InName,
+bool UFlecsNetworkWorldSubsystem::RegisterReplicationShardSelector(const FName InName,
 	FFlecsReplicationShardSelectorFunction InSelector)
 {
 	if UNLIKELY_IF(InName.IsNone() || !InSelector)

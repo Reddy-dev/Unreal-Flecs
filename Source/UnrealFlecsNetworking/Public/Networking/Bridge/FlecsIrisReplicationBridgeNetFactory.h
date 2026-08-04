@@ -4,7 +4,10 @@
 
 #include "CoreMinimal.h"
 
+#include "Engine/World.h"
 #include "Net/Iris/ReplicationSystem/NetRootObjectFactory.h"
+
+class UFlecsIrisReplicationBridge;
 
 #include "FlecsIrisReplicationBridgeNetFactory.generated.h"
 
@@ -26,5 +29,14 @@ protected:
 	virtual void DetachedFromReplication(
 		const FDetachContext& Context,
 		const TOptional<FSubObjectDetachContext>& SubObjectContext) override;
+	virtual void OnDeinit() override;
+
+private:
+	void ResolvePendingReplicationBridge();
+	void HandleWorldPreActorTick(UWorld* InWorld, ELevelTick, float);
+	void StopReplicationBridgeRetry();
+
+	TWeakObjectPtr<UFlecsIrisReplicationBridge> PendingReplicationBridge;
+	FDelegateHandle WorldPreActorTickHandle;
 
 }; // class UFlecsIrisReplicationBridgeNetFactory

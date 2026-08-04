@@ -26,7 +26,7 @@ using FFlecsReplicationShardSelectorFunction = TFunction<bool(
 	const FFlecsEntityHandle&,
 	const FFlecsNetworkId&,
 	const FFlecsReplicationProfile&,
-	FFlecsReplicationShardSelection&)>;
+	OUT FFlecsReplicationShardSelection&)>;
 
 /**
  * Per-UWorld coordinator for Flecs replication.

@@ -21,19 +21,15 @@ void UFlecsIrisReplicationBridgeNetFactory::PostInstantiation(const FPostInstant
 	Super::PostInstantiation(Context);
 
 	UFlecsIrisReplicationBridge* FlecsBridge = Cast<UFlecsIrisReplicationBridge>(Context.Instance);
-	UWorld* World = Bridge ? Bridge->GetWorld() : nullptr;
-	
-	UFlecsNetworkWorldSubsystem* NetworkSubsystem =
-		World ? World->GetSubsystem<UFlecsNetworkWorldSubsystem>() : nullptr;
-
-	if UNLIKELY_IF(!FlecsBridge || !NetworkSubsystem)
+	if UNLIKELY_IF(!FlecsBridge)
 	{
 		UE_LOG(LogFlecsCore, Error,
-			TEXT("Could not bind a received Flecs Iris replication bridge to its network world"));
+			TEXT("Received object is not a Flecs Iris replication bridge"));
 		return;
 	}
 
-	NetworkSubsystem->BindReplicationBridge(FlecsBridge);
+	PendingReplicationBridge = FlecsBridge;
+	ResolvePendingReplicationBridge();
 }
 
 void UFlecsIrisReplicationBridgeNetFactory::DetachedFromReplication(
@@ -41,6 +37,12 @@ void UFlecsIrisReplicationBridgeNetFactory::DetachedFromReplication(
 	const TOptional<FSubObjectDetachContext>& SubObjectContext)
 {
 	UFlecsIrisReplicationBridge* FlecsBridge = Cast<UFlecsIrisReplicationBridge>(Context.DetachedInstance);
+	if (PendingReplicationBridge.Get() == FlecsBridge)
+	{
+		PendingReplicationBridge = nullptr;
+		StopReplicationBridgeRetry();
+	}
+
 	UWorld* World = Bridge ? Bridge->GetWorld() : nullptr;
 	UFlecsNetworkWorldSubsystem* NetworkSubsystem = World ? World->GetSubsystem<UFlecsNetworkWorldSubsystem>() : nullptr;
 
@@ -53,4 +55,70 @@ void UFlecsIrisReplicationBridgeNetFactory::DetachedFromReplication(
 	}
 
 	Super::DetachedFromReplication(Context, SubObjectContext);
+}
+
+void UFlecsIrisReplicationBridgeNetFactory::OnDeinit()
+{
+	PendingReplicationBridge = nullptr;
+	StopReplicationBridgeRetry();
+	Super::OnDeinit();
+}
+
+void UFlecsIrisReplicationBridgeNetFactory::ResolvePendingReplicationBridge()
+{
+	UFlecsIrisReplicationBridge* FlecsBridge = PendingReplicationBridge.Get();
+	if (!FlecsBridge)
+	{
+		StopReplicationBridgeRetry();
+		return;
+	}
+
+	UWorld* World = Bridge ? Bridge->GetWorld() : nullptr;
+	if (!World)
+	{
+		if (!WorldPreActorTickHandle.IsValid())
+		{
+			WorldPreActorTickHandle = FWorldDelegates::OnWorldPreActorTick.AddUObject(
+				this, &UFlecsIrisReplicationBridgeNetFactory::HandleWorldPreActorTick);
+		}
+		return;
+	}
+
+	if (World->bIsTearingDown)
+	{
+		return;
+	}
+
+	if (UFlecsNetworkWorldSubsystem* NetworkSubsystem = World->GetSubsystem<UFlecsNetworkWorldSubsystem>())
+	{
+		NetworkSubsystem->BindReplicationBridge(FlecsBridge);
+		PendingReplicationBridge = nullptr;
+		StopReplicationBridgeRetry();
+		return;
+	}
+
+	if (!WorldPreActorTickHandle.IsValid())
+	{
+		WorldPreActorTickHandle = FWorldDelegates::OnWorldPreActorTick.AddUObject(
+			this, &UFlecsIrisReplicationBridgeNetFactory::HandleWorldPreActorTick);
+	}
+}
+
+void UFlecsIrisReplicationBridgeNetFactory::HandleWorldPreActorTick(UWorld* InWorld, ELevelTick, float)
+{
+	if (InWorld != (Bridge ? Bridge->GetWorld() : nullptr))
+	{
+		return;
+	}
+
+	ResolvePendingReplicationBridge();
+}
+
+void UFlecsIrisReplicationBridgeNetFactory::StopReplicationBridgeRetry()
+{
+	if (WorldPreActorTickHandle.IsValid())
+	{
+		FWorldDelegates::OnWorldPreActorTick.Remove(WorldPreActorTickHandle);
+		WorldPreActorTickHandle.Reset();
+	}
 }
