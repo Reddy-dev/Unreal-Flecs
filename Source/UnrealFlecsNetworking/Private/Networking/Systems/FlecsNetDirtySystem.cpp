@@ -19,10 +19,11 @@ void UFlecsNetDirtySystem::BuildSystem(const TSolidNotNull<const UFlecsWorldInte
                                        TFlecsSystemBuilder<>& InBuilder) const
 {
 	InBuilder
-		.With<FFlecsNetDirtyTag>().ReadWrite() // 0
+		.With<FFlecsNetDirtyTag>() // 0
 		.With<FFlecsReplicatedEntityComponent&>() // 1
 		.With<const FFlecsNetworkId>() // 2
-		.With<const FFlecsNetworkSubsystemSingleton>(); // 3
+		.With<const FFlecsNetworkSubsystemSingleton>() // 3
+		.With<FFlecsNetDirtyTag>().ReadWrite(); // 4
 }
 
 void UFlecsNetDirtySystem::EachIterator(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld,
