@@ -20,7 +20,11 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void ConfigureObjectSettings(OUT UE::Net::FRootObjectSettings& OutSettings) const override;
 
+	virtual bool CanAcceptNetEntity(const FFlecsNetworkId& InNetworkId,
+		const FFlecsEntityReplicationSnapshot&) const override;
 	virtual void PublishNetEntity(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot) override;
+	virtual void RemoveNetEntity(const FFlecsNetworkId& InNetworkId) override;
+	virtual bool IsEmpty() const override;
 
 	void HandleReplicationDetached();
 
@@ -35,5 +39,9 @@ public:
 
 	UFUNCTION()
 	void OnRep_Snapshot();
+
+private:
+
+	bool bContainsEntity = false;
 
 }; // class UFlecsNetEntityProxy

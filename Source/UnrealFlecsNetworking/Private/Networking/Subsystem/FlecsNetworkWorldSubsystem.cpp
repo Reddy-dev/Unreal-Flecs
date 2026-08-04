@@ -8,6 +8,7 @@
 #include "Networking/FlecsReplicationProfile.h"
 #include "Networking/FlecsReplicationProfileDataAsset.h"
 #include "Networking/FlecsReplicationShardSelection.h"
+#include "Networking/Shards/FlecsNetEntityTable.h"
 #include "Networking/Shards/FlecsNetEntityProxy.h"
 
 #include "Serialization/MemoryReader.h"
@@ -47,6 +48,14 @@ void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UF
 		{
 			OutSelection.ShardClass = UFlecsNetEntityProxy::StaticClass();
 			OutSelection.ShardGroupKey = NAME_None;
+			return true;
+		});
+	RegisterReplicationShardSelector(
+		FName(TEXT("Table")),
+		[](const FFlecsEntityHandle&, const FFlecsNetworkId&, const FFlecsReplicationProfile&, FFlecsReplicationShardSelection& OutSelection)
+		{
+			OutSelection.ShardClass = UFlecsNetEntityTable::StaticClass();
+			OutSelection.ShardGroupKey = FName(TEXT("Default"));
 			return true;
 		});
 

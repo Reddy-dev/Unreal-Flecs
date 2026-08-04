@@ -28,13 +28,38 @@ void UFlecsNetEntityProxy::ConfigureObjectSettings(OUT UE::Net::FRootObjectSetti
 	OutSettings.FactoryName = UFlecsNetEntityProxyNetFactory::GetFactoryName();
 }
 
+bool UFlecsNetEntityProxy::CanAcceptNetEntity(const FFlecsNetworkId& InNetworkId,
+	const FFlecsEntityReplicationSnapshot&) const
+{
+	return !bContainsEntity || NetworkId == InNetworkId;
+}
+
 void UFlecsNetEntityProxy::PublishNetEntity(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot)
 {
+	solid_checkf(CanAcceptNetEntity(InNetworkId, InSnapshot),
+		TEXT("Cannot publish network ID '%s' to occupied Flecs entity proxy '%s'"),
+		*InNetworkId.ToString(), *GetName());
+
+	bContainsEntity = true;
 	NetworkId = InNetworkId;
 	Snapshot = InSnapshot;
 
 	MARK_PROPERTY_DIRTY_FROM_NAME(UFlecsNetEntityProxy, NetworkId, this);
 	MARK_PROPERTY_DIRTY_FROM_NAME(UFlecsNetEntityProxy, Snapshot, this);
+}
+
+void UFlecsNetEntityProxy::RemoveNetEntity(const FFlecsNetworkId& InNetworkId)
+{
+	solid_checkf(bContainsEntity && NetworkId == InNetworkId,
+		TEXT("Cannot remove network ID '%s' from Flecs entity proxy '%s'"),
+		*InNetworkId.ToString(), *GetName());
+
+	bContainsEntity = false;
+}
+
+bool UFlecsNetEntityProxy::IsEmpty() const
+{
+	return !bContainsEntity;
 }
 
 void UFlecsNetEntityProxy::OnRep_NetworkId()
@@ -49,8 +74,5 @@ void UFlecsNetEntityProxy::OnRep_Snapshot()
 
 void UFlecsNetEntityProxy::HandleReplicationDetached()
 {
-	if (UFlecsNetworkWorldSubsystem* NetworkSubsystem = GetOwningNetworkWorldSubsystem())
-	{
-		NetworkSubsystem->RemoveReceivedNetworkEntity(NetworkId, Snapshot.StateRevision);
-	}
+	ReceiveEntityRemoval(NetworkId, Snapshot.StateRevision);
 }

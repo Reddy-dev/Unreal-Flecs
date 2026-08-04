@@ -28,6 +28,9 @@ struct FFlecsReplicationShardPlacement
 	
 	UPROPERTY()
 	FFlecsReplicationProfile Profile;
+
+	UPROPERTY()
+	FFlecsNetworkId NetworkId;
 	
 	FFlecsReplicationShardSelection Selection;
 	
@@ -38,6 +41,43 @@ struct FFlecsReplicationShardPlacement
 	uint32 PlacementGeneration = 0;
 
 }; // struct FFlecsReplicationShardPlacement
+
+/** Identifies a physical shard pool with shared Iris object settings. */
+struct FFlecsReplicationShardPoolKey
+{
+	UClass* ShardClass = nullptr;
+	FName ShardGroupKey = NAME_None;
+	FName ObjectPrioritizerName = NAME_None;
+	FName FilterName = NAME_None;
+
+	FFlecsReplicationShardPoolKey() = default;
+
+	FFlecsReplicationShardPoolKey(const FFlecsReplicationProfile& InProfile,
+		const FFlecsReplicationShardSelection& InSelection)
+		: ShardClass(InSelection.ShardClass.Get())
+		, ShardGroupKey(InSelection.ShardGroupKey)
+		, ObjectPrioritizerName(InProfile.ObjectPrioritizerName)
+		, FilterName(InProfile.FilterName)
+	{
+	}
+
+	NO_DISCARD bool operator==(const FFlecsReplicationShardPoolKey& Other) const
+	{
+		return ShardClass == Other.ShardClass
+			&& ShardGroupKey == Other.ShardGroupKey
+			&& ObjectPrioritizerName == Other.ObjectPrioritizerName
+			&& FilterName == Other.FilterName;
+	}
+
+	friend uint32 GetTypeHash(const FFlecsReplicationShardPoolKey& Key)
+	{
+		uint32 Hash = GetTypeHash(Key.ShardClass);
+		Hash = HashCombine(Hash, GetTypeHash(Key.ShardGroupKey));
+		Hash = HashCombine(Hash, GetTypeHash(Key.ObjectPrioritizerName));
+		return HashCombine(Hash, GetTypeHash(Key.FilterName));
+	}
+
+}; // struct FFlecsReplicationShardPoolKey
 
 UCLASS()
 class UNREALFLECSNETWORKING_API UFlecsIrisReplicationBridge : public UFlecsReplicationBridgeBase, public INetRootObjectFactoryExtension
@@ -76,6 +116,14 @@ public:
 	
 protected:
 	NO_DISCARD UFlecsNetShardBase* CreateNewShard(const FFlecsNetworkId& InNetworkId,
+		const FFlecsEntityReplicationSnapshot& InSnapshot,
+		const FFlecsReplicationProfile& InProfile,
+		const FFlecsReplicationShardSelection& InSelection);
+	NO_DISCARD UFlecsNetShardBase* FindOrCreateShard(const FFlecsNetworkId& InNetworkId,
+		const FFlecsEntityReplicationSnapshot& InSnapshot,
+		const FFlecsReplicationProfile& InProfile,
+		const FFlecsReplicationShardSelection& InSelection);
+	void ReleaseShardIfEmpty(UFlecsNetShardBase* InShard,
 		const FFlecsReplicationProfile& InProfile,
 		const FFlecsReplicationShardSelection& InSelection);
 
@@ -84,6 +132,8 @@ protected:
 
 	UPROPERTY()
 	TMap<FFlecsEntityView, FFlecsReplicationShardPlacement> ShardMap;
+
+	TMap<FFlecsReplicationShardPoolKey, TArray<TObjectPtr<UFlecsNetShardBase>>> ShardPools;
 
 	UE::Net::FNetRootObjectAdapter RootObjectAdapter;
 	

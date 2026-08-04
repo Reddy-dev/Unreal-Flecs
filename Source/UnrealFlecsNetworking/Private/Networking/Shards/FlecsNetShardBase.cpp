@@ -186,3 +186,22 @@ void UFlecsNetShardBase::ReceiveEntityUpdate(const FFlecsNetworkId& InNetworkId,
 
 	NetworkSubsystem->ReceiveNetworkEntitySnapshot(InNetworkId, InSnapshot);
 }
+
+void UFlecsNetShardBase::ReceiveEntityRemoval(const FFlecsNetworkId& InNetworkId, const uint32 InStateRevision)
+{
+	if (!InNetworkId.IsValid())
+	{
+		return;
+	}
+
+	UFlecsNetworkWorldSubsystem* NetworkSubsystem = GetOwningNetworkWorldSubsystem();
+	if UNLIKELY_IF(!NetworkSubsystem)
+	{
+		UE_LOG(LogFlecsCore, Error,
+			TEXT("Received Flecs entity removal for '%s' without an owning network world"),
+			*InNetworkId.ToString());
+		return;
+	}
+
+	NetworkSubsystem->RemoveReceivedNetworkEntity(InNetworkId, InStateRevision);
+}

@@ -7,6 +7,7 @@
 #include "General/FlecsModuleRegistry.h"
 #include "Networking/Bridge/FlecsIrisReplicationBridgeNetFactory.h"
 #include "Networking/FlecsComponentReplicationDescriptor.h"
+#include "Networking/Shards/FlecsNetEntityTableNetFactory.h"
 #include "Networking/Shards/FlecsNetEntityProxyNetFactory.h"
 #include "Properties/FlecsComponentRegistrationHooks.h"
 
@@ -25,6 +26,9 @@ void FUnrealFlecsNetworkingModule::StartupModule()
 	UE::Net::FNetObjectFactoryRegistry::RegisterFactory(
 		UFlecsNetEntityProxyNetFactory::StaticClass(),
 		UFlecsNetEntityProxyNetFactory::GetFactoryName());
+	UE::Net::FNetObjectFactoryRegistry::RegisterFactory(
+		UFlecsNetEntityTableNetFactory::StaticClass(),
+		UFlecsNetEntityTableNetFactory::GetFactoryName());
 }
 
 void FUnrealFlecsNetworkingModule::ShutdownModule()
@@ -33,6 +37,8 @@ void FUnrealFlecsNetworkingModule::ShutdownModule()
 		UFlecsIrisReplicationBridgeNetFactory::GetFactoryName());
 	UE::Net::FNetObjectFactoryRegistry::UnregisterFactory(
 		UFlecsNetEntityProxyNetFactory::GetFactoryName());
+	UE::Net::FNetObjectFactoryRegistry::UnregisterFactory(
+		UFlecsNetEntityTableNetFactory::GetFactoryName());
 
 	UE::Flecs::FFlecsComponentRegistrationHooks::UninstallReplicationHooks(this);
 }

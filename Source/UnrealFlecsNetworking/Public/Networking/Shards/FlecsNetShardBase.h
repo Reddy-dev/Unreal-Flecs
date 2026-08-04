@@ -60,8 +60,22 @@ public:
 	virtual void ConfigureObjectSettings(OUT UE::Net::FRootObjectSettings& OutSettings) const;
 	bool ApplyReplicationProfile(const FFlecsReplicationProfile& InProfile);
 	
+	/** Returns whether this shard can store an update for the supplied entity. */
+	virtual bool CanAcceptNetEntity(const FFlecsNetworkId& InNetworkId,
+		const FFlecsEntityReplicationSnapshot& InSnapshot) const
+		PURE_VIRTUAL(UFlecsNetShardBase::CanAcceptNetEntity, return false;);
+
+	/** Inserts or replaces the replicated state for one entity. */
 	virtual void PublishNetEntity(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot)
 		PURE_VIRTUAL(UFlecsNetShardBase::PublishNetEntity, );
+
+	/** Removes one replicated entity without tearing down the physical shard. */
+	virtual void RemoveNetEntity(const FFlecsNetworkId& InNetworkId)
+		PURE_VIRTUAL(UFlecsNetShardBase::RemoveNetEntity, );
+
+	/** Whether the physical shard contains no replicated entities. */
+	virtual bool IsEmpty() const
+		PURE_VIRTUAL(UFlecsNetShardBase::IsEmpty, return true;);
 
 	void SetOwningNetworkWorldSubsystem(UFlecsNetworkWorldSubsystem* InOwningNetworkWorldSubsystem);
 
@@ -69,6 +83,7 @@ public:
 
 protected:
 	void ReceiveEntityUpdate(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot);
+	void ReceiveEntityRemoval(const FFlecsNetworkId& InNetworkId, uint32 InStateRevision);
 
 private:
 

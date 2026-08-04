@@ -17,6 +17,7 @@
 #include "Networking/Layout/FlecsLayoutReplicatorFastArray.h"
 #include "Networking/Layout/FlecsReplicationLayoutRegistry.h"
 #include "Networking/Shards/FlecsNetEntityTable.h"
+#include "Networking/Shards/FlecsNetEntityTableNetFactory.h"
 #include "Networking/Shards/FlecsNetEntityProxy.h"
 #include "Networking/Shards/FlecsNetEntityProxyNetFactory.h"
 #include "Networking/Shards/FlecsNetShardBase.h"
@@ -206,6 +207,54 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 		ASSERT_THAT(AreEqual(Snapshot.StateRevision, Proxy->Snapshot.StateRevision));
 		ASSERT_THAT(AreEqual(Snapshot.Values.Num(), Proxy->Snapshot.Values.Num()));
 		ASSERT_THAT(IsTrue(Proxy->Snapshot.Values[0].Bytes == Value.Bytes));
+	}
+
+	TEST_METHOD(EntityProxy_RemovingEntityDoesNotRequireShardTeardown)
+	{
+		UFlecsNetEntityProxy* Proxy = NewObject<UFlecsNetEntityProxy>(NetworkSubsystem());
+		const FFlecsNetworkId NetworkId(18, 3);
+
+		FFlecsEntityReplicationSnapshot Snapshot;
+		Snapshot.LayoutId = FFlecsReplicationLayoutId(FGuid::NewGuid());
+		Snapshot.StateRevision = 1;
+
+		Proxy->PublishNetEntity(NetworkId, Snapshot);
+		ASSERT_THAT(IsFalse(Proxy->IsEmpty()));
+		ASSERT_THAT(IsTrue(Proxy->CanAcceptNetEntity(NetworkId, Snapshot)));
+		ASSERT_THAT(IsFalse(Proxy->CanAcceptNetEntity(FFlecsNetworkId(19, 3), Snapshot)));
+
+		Proxy->RemoveNetEntity(NetworkId);
+		ASSERT_THAT(IsTrue(Proxy->IsEmpty()));
+	}
+
+	TEST_METHOD(EntityTable_UsesRegisteredFactoryAndUpsertsByNetworkId)
+	{
+		UFlecsNetEntityTable* Table = NewObject<UFlecsNetEntityTable>(NetworkSubsystem());
+		UE::Net::FRootObjectSettings Settings;
+		Table->ConfigureObjectSettings(Settings);
+
+		ASSERT_THAT(IsTrue(Settings.FactoryName == UFlecsNetEntityTableNetFactory::GetFactoryName()));
+		ASSERT_THAT(IsTrue(
+			UE::Net::FNetObjectFactoryRegistry::GetFactoryIdFromName(Settings.FactoryName)
+				!= UE::Net::InvalidNetObjectFactoryId));
+
+		const FFlecsNetworkId NetworkId(20, 3);
+		FFlecsEntityReplicationSnapshot InitialSnapshot;
+		InitialSnapshot.LayoutId = FFlecsReplicationLayoutId(FGuid::NewGuid());
+		InitialSnapshot.StateRevision = 1;
+
+		Table->PublishNetEntity(NetworkId, InitialSnapshot);
+		ASSERT_THAT(AreEqual(1, Table->EntityTable.Items.Num()));
+		ASSERT_THAT(IsFalse(Table->IsEmpty()));
+
+		FFlecsEntityReplicationSnapshot UpdatedSnapshot = InitialSnapshot;
+		UpdatedSnapshot.StateRevision = 2;
+		Table->PublishNetEntity(NetworkId, UpdatedSnapshot);
+		ASSERT_THAT(AreEqual(1, Table->EntityTable.Items.Num()));
+		ASSERT_THAT(AreEqual(2u, Table->EntityTable.Items[0].Snapshot.StateRevision));
+
+		Table->RemoveNetEntity(NetworkId);
+		ASSERT_THAT(IsTrue(Table->IsEmpty()));
 	}
 
 	TEST_METHOD(EntityProxy_AppliesUpdatesAndRejectsStaleRevisions)
