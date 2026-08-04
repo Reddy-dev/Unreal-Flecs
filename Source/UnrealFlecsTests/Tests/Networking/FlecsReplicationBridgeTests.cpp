@@ -290,7 +290,7 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 		Proxy->NetworkId = NetworkId;
 		Proxy->Snapshot = InitialSnapshot;
 		Proxy->OnRep_Snapshot();
-		World()->Progress(0.0);
+		NetworkSubsystem()->ApplyQueuedReplicationUpdates();
 
 		TOptional<FFlecsEntityHandle> ReceivedEntity = NetworkSubsystem()->GetEntityFromNetworkId(NetworkId);
 		ASSERT_THAT(IsTrue(ReceivedEntity.IsSet()));
@@ -307,12 +307,12 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 
 		Proxy->Snapshot = UpdatedSnapshot;
 		Proxy->OnRep_Snapshot();
-		World()->Progress(0.0);
+		NetworkSubsystem()->ApplyQueuedReplicationUpdates();
 		ASSERT_THAT(AreEqual(91, ReceivedEntity.GetValue().Get<FFlecsReplicationTestValue>().Value));
 
 		Proxy->Snapshot = InitialSnapshot;
 		Proxy->OnRep_Snapshot();
-		World()->Progress(0.0);
+		NetworkSubsystem()->ApplyQueuedReplicationUpdates();
 		ASSERT_THAT(AreEqual(91, ReceivedEntity.GetValue().Get<FFlecsReplicationTestValue>().Value));
 	}
 

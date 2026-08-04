@@ -88,13 +88,14 @@ void UFlecsIrisReplicationBridge::DeinitializeBridge()
 	{
 		for (UFlecsNetShardBase* Shard : Pair.Value)
 		{
-			if (Shard)
+			if LIKELY_IF(Shard)
 			{
 				Shard->DeinitializeShard();
 				Shard->SetOwningNetworkWorldSubsystem(nullptr);
 			}
 		}
 	}
+	
 	ShardMap.Reset();
 	ShardPools.Reset();
 
@@ -199,7 +200,9 @@ UFlecsNetShardBase* UFlecsIrisReplicationBridge::ResolveShard(const FFlecsEntity
 		// Publish the full baseline before removing the old physical target.
 		DestinationShard->PublishNetEntity(InNetworkId, InSnapshot);
 
-		if (UFlecsNetShardBase* SourceShard = Placement->Shard.Get(); SourceShard && SourceShard != DestinationShard)
+		UFlecsNetShardBase* SourceShard = Placement->Shard.Get();
+		
+		if (SourceShard && SourceShard != DestinationShard)
 		{
 			SourceShard->RemoveNetEntity(Placement->NetworkId);
 			ReleaseShardIfEmpty(SourceShard, Placement->Profile, Placement->Selection);

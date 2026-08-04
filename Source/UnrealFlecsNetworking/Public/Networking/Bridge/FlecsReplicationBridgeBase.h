@@ -44,7 +44,7 @@ public:
 
 	/* 
 	 * *****IMPORTANT NOTE*****
-	 * @TODO: in the future these will be reserved for creating new entities, rather than component changes, updates, AND 
+	 * @TODO: in the future this will be reserved for creating new entities, rather than component changes, updates, AND 
 	 * NEW ENTITY CREATION. For now, we will use this for both, but in the future we will need to separate these two concepts.
 	 **/
 	virtual void PublishNetEntity(

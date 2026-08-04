@@ -28,8 +28,7 @@ void UFlecsNetEntityProxy::ConfigureObjectSettings(OUT UE::Net::FRootObjectSetti
 	OutSettings.FactoryName = UFlecsNetEntityProxyNetFactory::GetFactoryName();
 }
 
-bool UFlecsNetEntityProxy::CanAcceptNetEntity(const FFlecsNetworkId& InNetworkId,
-	const FFlecsEntityReplicationSnapshot&) const
+bool UFlecsNetEntityProxy::CanAcceptNetEntity(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot&) const
 {
 	return !bContainsEntity || NetworkId == InNetworkId;
 }

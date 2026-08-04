@@ -23,9 +23,11 @@ void FUnrealFlecsNetworkingModule::StartupModule()
 	UE::Net::FNetObjectFactoryRegistry::RegisterFactory(
 		UFlecsIrisReplicationBridgeNetFactory::StaticClass(),
 		UFlecsIrisReplicationBridgeNetFactory::GetFactoryName());
+	
 	UE::Net::FNetObjectFactoryRegistry::RegisterFactory(
 		UFlecsNetEntityProxyNetFactory::StaticClass(),
 		UFlecsNetEntityProxyNetFactory::GetFactoryName());
+	
 	UE::Net::FNetObjectFactoryRegistry::RegisterFactory(
 		UFlecsNetEntityTableNetFactory::StaticClass(),
 		UFlecsNetEntityTableNetFactory::GetFactoryName());
@@ -35,8 +37,10 @@ void FUnrealFlecsNetworkingModule::ShutdownModule()
 {
 	UE::Net::FNetObjectFactoryRegistry::UnregisterFactory(
 		UFlecsIrisReplicationBridgeNetFactory::GetFactoryName());
+	
 	UE::Net::FNetObjectFactoryRegistry::UnregisterFactory(
 		UFlecsNetEntityProxyNetFactory::GetFactoryName());
+	
 	UE::Net::FNetObjectFactoryRegistry::UnregisterFactory(
 		UFlecsNetEntityTableNetFactory::GetFactoryName());
 

@@ -260,8 +260,7 @@ bool UE::Flecs::Replication::RegisterComponentDefinition(
 	Descriptor.Destroy = InDefinition.Destroy;
 
 	FString Error;
-	const bool bRegistered = FFlecsComponentReplicationRegistry::Get(InWorld).Register(
-		MoveTemp(Descriptor), Error);
+	const bool bRegistered = FFlecsComponentReplicationRegistry::Get(InWorld).Register(MoveTemp(Descriptor), Error);
 
 	if (OutError)
 	{
