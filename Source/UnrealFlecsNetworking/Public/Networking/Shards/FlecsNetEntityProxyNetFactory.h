@@ -17,9 +17,11 @@ class UNREALFLECSNETWORKING_API UFlecsNetEntityProxyNetFactory : public UNetRoot
 public:
 	static FName GetFactoryName();
 
-	virtual void PostInstantiation(const FPostInstantiationContext& Context) override;
-
 protected:
+	virtual FInstantiateResult InstantiateReplicatedObjectFromHeader(
+		const FInstantiateContext& Context,
+		const UE::Net::FNetObjectCreationHeader* Header) override;
+
 	virtual void DetachedFromReplication(
 		const FDetachContext& Context,
 		const TOptional<FSubObjectDetachContext>& SubObjectContext) override;

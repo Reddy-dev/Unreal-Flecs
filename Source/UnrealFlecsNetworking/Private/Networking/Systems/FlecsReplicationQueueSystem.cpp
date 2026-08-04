@@ -15,19 +15,20 @@ void UFlecsReplicationQueueSystem::BuildSystem(const TSolidNotNull<const UFlecsW
 	TFlecsSystemBuilder<>& InBuilder) const
 {
 	InBuilder
+		.Phase(EFlecsPhaseType::PostUpdate)
 		.With<const FFlecsNetworkSubsystemSingleton>();
 }
 
-void UFlecsReplicationQueueSystem::EachIterator(const TSolidNotNull<UFlecsWorldInterfaceObject*>,
-	flecs::iter& InIterator, const FFlecsId)
+void UFlecsReplicationQueueSystem::RunEachIterator(const TSolidNotNull<UFlecsWorldInterfaceObject*>,
+	flecs::iter& InIterator)
 {
 	const TSolidNotNull<UFlecsNetworkWorldSubsystem*> NetworkSubsystem =
 		InIterator.field_at<const FFlecsNetworkSubsystemSingleton>(0, 0).GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
-
-	NetworkSubsystem->ApplyQueuedReplicationUpdates();
+	
+	NetworkSubsystem->ApplyQueuedReplicationUpdates();	
 }
 
 EFlecsObjectRegistrationNetworkFlags UFlecsReplicationQueueSystem::GetObjectRegistrationNetworkFlags() const
 {
-	return EFlecsObjectRegistrationNetworkFlags::All;
+	return EFlecsObjectRegistrationNetworkFlags::Client;
 }

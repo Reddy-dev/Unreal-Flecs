@@ -6,6 +6,7 @@
 #if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
 
 #include "Iris/ReplicationSystem/NetObjectFactoryRegistry.h"
+#include "UObject/UObjectGlobals.h"
 
 #include "Networking/FlecsNetDirtyTag.h"
 #include "Networking/FlecsReplicationProfile.h"
@@ -184,6 +185,33 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 		ASSERT_THAT(IsTrue(
 			UE::Net::FNetObjectFactoryRegistry::GetFactoryIdFromName(Settings.FactoryName)
 				!= UE::Net::InvalidNetObjectFactoryId));
+	}
+
+	TEST_METHOD(EntityProxy_UsesAssignedWorldWithoutWorldOuter)
+	{
+		UFlecsNetEntityProxy* Proxy = NewObject<UFlecsNetEntityProxy>(GetTransientPackage());
+		ASSERT_THAT(IsTrue(Proxy->GetOuter() == GetTransientPackage()));
+
+		Proxy->SetOwningWorld(NetworkSubsystem()->GetWorld());
+		ASSERT_THAT(IsTrue(Proxy->GetWorld() == NetworkSubsystem()->GetWorld()));
+	}
+
+	TEST_METHOD(EntityProxy_QueuesUpdateUntilWorldIsAssigned)
+	{
+		UFlecsNetEntityProxy* Proxy = NewObject<UFlecsNetEntityProxy>(GetTransientPackage());
+		const FFlecsNetworkId NetworkId(16, 3);
+
+		FFlecsEntityReplicationSnapshot Snapshot;
+		Snapshot.LayoutId = FFlecsReplicationLayoutId(FGuid::NewGuid());
+		Snapshot.StateRevision = 1;
+
+		Proxy->NetworkId = NetworkId;
+		Proxy->Snapshot = Snapshot;
+		Proxy->OnRep_Snapshot();
+		ASSERT_THAT(AreEqual(0, NetworkSubsystem()->GetQueuedReplicationUpdateCount()));
+
+		Proxy->SetOwningWorld(NetworkSubsystem()->GetWorld());
+		ASSERT_THAT(AreEqual(1, NetworkSubsystem()->GetQueuedReplicationUpdateCount()));
 	}
 
 	TEST_METHOD(EntityProxy_PublishNetEntity_CopiesIdentityAndSnapshot)

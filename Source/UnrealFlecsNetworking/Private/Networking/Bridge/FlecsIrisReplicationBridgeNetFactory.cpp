@@ -6,6 +6,7 @@
 #include "Iris/ReplicationSystem/ObjectReplicationBridge.h"
 
 #include "Networking/Bridge/FlecsIrisReplicationBridge.h"
+#include "Networking/Bridge/FlecsIrisReplicationWorldResolver.h"
 #include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsIrisReplicationBridgeNetFactory)
@@ -43,7 +44,7 @@ void UFlecsIrisReplicationBridgeNetFactory::DetachedFromReplication(
 		StopReplicationBridgeRetry();
 	}
 
-	UWorld* World = Bridge ? Bridge->GetWorld() : nullptr;
+	UWorld* World = UE::Flecs::Replication::GetReplicationBridgeWorld(Bridge);
 	UFlecsNetworkWorldSubsystem* NetworkSubsystem = World ? World->GetSubsystem<UFlecsNetworkWorldSubsystem>() : nullptr;
 
 	if (Context.Reason != UE::Net::EDetachReason::TornOff
@@ -73,7 +74,7 @@ void UFlecsIrisReplicationBridgeNetFactory::ResolvePendingReplicationBridge()
 		return;
 	}
 
-	UWorld* World = Bridge ? Bridge->GetWorld() : nullptr;
+	UWorld* World = UE::Flecs::Replication::GetReplicationBridgeWorld(Bridge);
 	if (!World)
 	{
 		if (!WorldPreActorTickHandle.IsValid())
@@ -106,7 +107,7 @@ void UFlecsIrisReplicationBridgeNetFactory::ResolvePendingReplicationBridge()
 
 void UFlecsIrisReplicationBridgeNetFactory::HandleWorldPreActorTick(UWorld* InWorld, ELevelTick, float)
 {
-	if (InWorld != (Bridge ? Bridge->GetWorld() : nullptr))
+	if (InWorld != UE::Flecs::Replication::GetReplicationBridgeWorld(Bridge))
 	{
 		return;
 	}

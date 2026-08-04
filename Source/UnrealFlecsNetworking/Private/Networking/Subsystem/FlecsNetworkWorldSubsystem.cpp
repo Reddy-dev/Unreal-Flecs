@@ -39,20 +39,24 @@ void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UF
 	Super::OnFlecsWorldInitialized(InWorld);
 	
 	InWorld->Set<FFlecsNetworkSubsystemSingleton>(FFlecsNetworkSubsystemSingleton{ this });
+	
 	InWorld->RegisterComponentType<FFlecsReplicationProfile>();
 	InWorld->RegisterComponentType<FFlecsReplicationProfileTag>();
 
 	RegisterReplicationShardSelector(
 		FName(TEXT("Proxy")),
-		[](const FFlecsEntityHandle&, const FFlecsNetworkId&, const FFlecsReplicationProfile&, FFlecsReplicationShardSelection& OutSelection)
+		[](const FFlecsEntityHandle&, const FFlecsNetworkId&, const FFlecsReplicationProfile&, 
+			OUT FFlecsReplicationShardSelection& OutSelection)
 		{
 			OutSelection.ShardClass = UFlecsNetEntityProxy::StaticClass();
 			OutSelection.ShardGroupKey = NAME_None;
 			return true;
 		});
+	
 	RegisterReplicationShardSelector(
 		FName(TEXT("Table")),
-		[](const FFlecsEntityHandle&, const FFlecsNetworkId&, const FFlecsReplicationProfile&, FFlecsReplicationShardSelection& OutSelection)
+		[](const FFlecsEntityHandle&, const FFlecsNetworkId&, const FFlecsReplicationProfile&, 
+			OUT FFlecsReplicationShardSelection& OutSelection)
 		{
 			OutSelection.ShardClass = UFlecsNetEntityTable::StaticClass();
 			OutSelection.ShardGroupKey = FName(TEXT("Default"));

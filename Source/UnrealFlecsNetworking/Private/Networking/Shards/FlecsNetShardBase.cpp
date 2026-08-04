@@ -236,6 +236,7 @@ void UFlecsNetShardBase::StopOwningNetworkWorldSubsystemRetry()
 	if (WorldPreActorTickHandle.IsValid())
 	{
 		FWorldDelegates::OnWorldPreActorTick.Remove(WorldPreActorTickHandle);
+		
 		WorldPreActorTickHandle.Reset();
 	}
 }

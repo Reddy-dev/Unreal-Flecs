@@ -5,7 +5,9 @@
 #include "Engine/World.h"
 #include "Iris/ReplicationSystem/ObjectReplicationBridge.h"
 
+#include "Networking/Bridge/FlecsIrisReplicationWorldResolver.h"
 #include "Networking/Shards/FlecsNetEntityProxy.h"
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsNetEntityProxyNetFactory)
 
 FName UFlecsNetEntityProxyNetFactory::GetFactoryName()
@@ -14,21 +16,31 @@ FName UFlecsNetEntityProxyNetFactory::GetFactoryName()
 	return FactoryName;
 }
 
-void UFlecsNetEntityProxyNetFactory::PostInstantiation(const FPostInstantiationContext& Context)
+UNetObjectFactory::FInstantiateResult UFlecsNetEntityProxyNetFactory::InstantiateReplicatedObjectFromHeader(
+	const FInstantiateContext& Context,
+	const UE::Net::FNetObjectCreationHeader* Header)
 {
-	Super::PostInstantiation(Context);
+	FInstantiateResult Result = Super::InstantiateReplicatedObjectFromHeader(Context, Header);
+	if UNLIKELY_IF(!Result.Instance)
+	{
+		return Result;
+	}
 
-	UFlecsNetEntityProxy* Proxy = Cast<UFlecsNetEntityProxy>(Context.Instance);
-	UWorld* World = Bridge ? Bridge->GetWorld() : nullptr;
+	UFlecsNetEntityProxy* Proxy = Cast<UFlecsNetEntityProxy>(Result.Instance);
+	UWorld* World = UE::Flecs::Replication::GetReplicationBridgeWorld(Bridge);
 
 	if UNLIKELY_IF(!Proxy || !World)
 	{
-		UE_LOG(LogFlecsCore, Error,
-			TEXT("Could not assign a received Flecs entity proxy to its receiving world"));
-		return;
+		Result.Instance = nullptr;
+		Result.Template = nullptr;
+		Result.FailureDiagnosticMessage = !Proxy
+			? TEXT("Instantiated an object that is not a UFlecsNetEntityProxy")
+			: TEXT("The receiving replication bridge does not have a valid UWorld");
+		return Result;
 	}
 
 	Proxy->SetOwningWorld(World);
+	return Result;
 }
 
 void UFlecsNetEntityProxyNetFactory::DetachedFromReplication(const FDetachContext& Context,

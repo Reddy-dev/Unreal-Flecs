@@ -5,7 +5,9 @@
 #include "Engine/World.h"
 #include "Iris/ReplicationSystem/ObjectReplicationBridge.h"
 
+#include "Networking/Bridge/FlecsIrisReplicationWorldResolver.h"
 #include "Networking/Shards/FlecsNetEntityTable.h"
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsNetEntityTableNetFactory)
 
 FName UFlecsNetEntityTableNetFactory::GetFactoryName()
@@ -14,21 +16,31 @@ FName UFlecsNetEntityTableNetFactory::GetFactoryName()
 	return FactoryName;
 }
 
-void UFlecsNetEntityTableNetFactory::PostInstantiation(const FPostInstantiationContext& Context)
+UNetObjectFactory::FInstantiateResult UFlecsNetEntityTableNetFactory::InstantiateReplicatedObjectFromHeader(
+	const FInstantiateContext& Context,
+	const UE::Net::FNetObjectCreationHeader* Header)
 {
-	Super::PostInstantiation(Context);
+	FInstantiateResult Result = Super::InstantiateReplicatedObjectFromHeader(Context, Header);
+	if UNLIKELY_IF(!Result.Instance)
+	{
+		return Result;
+	}
 
-	UFlecsNetEntityTable* Table = Cast<UFlecsNetEntityTable>(Context.Instance);
-	UWorld* World = Bridge ? Bridge->GetWorld() : nullptr;
+	UFlecsNetEntityTable* Table = Cast<UFlecsNetEntityTable>(Result.Instance);
+	UWorld* World = UE::Flecs::Replication::GetReplicationBridgeWorld(Bridge);
 
 	if UNLIKELY_IF(!Table || !World)
 	{
-		UE_LOG(LogFlecsCore, Error,
-			TEXT("Could not assign a received Flecs entity table to its receiving world"));
-		return;
+		Result.Instance = nullptr;
+		Result.Template = nullptr;
+		Result.FailureDiagnosticMessage = !Table
+			? TEXT("Instantiated an object that is not a UFlecsNetEntityTable")
+			: TEXT("The receiving replication bridge does not have a valid UWorld");
+		return Result;
 	}
 
 	Table->SetOwningWorld(World);
+	return Result;
 }
 
 void UFlecsNetEntityTableNetFactory::DetachedFromReplication(const FDetachContext& Context,

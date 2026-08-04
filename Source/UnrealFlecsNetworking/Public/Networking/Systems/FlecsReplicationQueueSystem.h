@@ -19,8 +19,8 @@ public:
 
 	virtual void BuildSystem(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld,
 		TFlecsSystemBuilder<>& InBuilder) const override;
-	virtual void EachIterator(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld,
-		flecs::iter& InIterator, const FFlecsId InIndex) override;
+	virtual void RunEachIterator(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld,
+		flecs::iter& InIterator) override;
 
 	virtual EFlecsObjectRegistrationNetworkFlags GetObjectRegistrationNetworkFlags() const override;
 
