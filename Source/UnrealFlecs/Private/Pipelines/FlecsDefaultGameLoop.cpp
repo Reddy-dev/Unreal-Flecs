@@ -128,7 +128,8 @@ FFlecsEntityHandle UFlecsDefaultGameLoop::CreatePipelineForTickType(const FGamep
 
 	//PipelineBuilder.order_by(flecs_entity_compare);
 
-	const FString PipelineName = FString::Printf(TEXT("%s_Pipeline"), *InTickType.ToString().Replace(TEXT("."), TEXT("_")));
+	const FString PipelineName = FString::Printf(TEXT("%s_Pipeline"), 
+		*InTickType.ToString().Replace(TEXT("."), TEXT("_")));
 
 	ResultPipeline = PipelineBuilder
 		.with(InWorld->GetTagEntity(InTickType))
