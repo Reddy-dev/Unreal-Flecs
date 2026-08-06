@@ -32,7 +32,7 @@ struct UNREALFLECSNETWORKING_API FFlecsReplicationSchemaId
 		: Value(InValue)
 	{
 	}
-
+	
 	/** Creates a deterministic schema ID from a non-empty protocol stable name. */
 	static NO_DISCARD FFlecsReplicationSchemaId FromStableName(const FString& StableName);
 	
