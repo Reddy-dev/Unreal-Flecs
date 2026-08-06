@@ -7,10 +7,13 @@
 #include "Components/PIENetworkComponent.h"
 #include "Engine/NetDriver.h"
 #include "GameFramework/GameModeBase.h"
+#include "UObject/UObjectGlobals.h"
+#include "UObject/UObjectIterator.h"
 
 #include "Networking/Bridge/FlecsIrisReplicationBridge.h"
 #include "Networking/FlecsReplicatedEntityComponent.h"
 #include "Networking/Bridge/FlecsReplicationBridgeBase.h"
+#include "Networking/Shards/FlecsNetEntityProxy.h"
 #include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 #include "Pipelines/FlecsDefaultGameLoop.h"
 #include "UnrealFlecsTests/Fixtures/FlecsTestReplicationBridge.h"
@@ -55,6 +58,20 @@ namespace UE::Flecs::Tests
 			});
 
 		return Result;
+	}
+
+	static UFlecsNetEntityProxy* FindReplicatedEntityProxy(const UWorld* InWorld)
+	{
+		for (TObjectIterator<UFlecsNetEntityProxy> It; It; ++It)
+		{
+			UFlecsNetEntityProxy* Proxy = *It;
+			if (Proxy->GetWorld() == InWorld && Proxy->NetworkId.IsValid() && !Proxy->IsEmpty())
+			{
+				return Proxy;
+			}
+		}
+
+		return nullptr;
 	}
 } // namespace UE::Flecs::Tests
 
@@ -127,6 +144,78 @@ NETWORK_TEST_CLASS(FlecsReplicationRealBridgeNetworkTests,
 					UE::Flecs::Tests::FindReplicatedValueEntity(State.FlecsWorld);
 				return Entity.IsValid() && Entity.Get<FFlecsReplicationTestValue>().Value == 73;
 			});
+	}
+
+	TEST_METHOD(ConfiguredRealBridge_BindsReceivedProxyToClientWorld)
+	{
+		Network
+			.ThenServer([](FState& State)
+			{
+				State.FlecsWorld = UE::Flecs::Tests::CreateNetworkTestWorld(State.World);
+				State.AuthorityEntity = State.FlecsWorld->CreateEntity()
+					.Set<FFlecsReplicationTestValue>({ 47 })
+					.Add<FFlecsReplicatedEntityComponent>();
+			})
+			.ThenClients([](FState& State)
+			{
+				State.FlecsWorld = UE::Flecs::Tests::CreateNetworkTestWorld(State.World);
+			})
+			.UntilClients(TEXT("Received Flecs proxy is assigned to the client world before applying its snapshot"),
+				[](FState& State)
+			{
+					const FFlecsEntityHandle Entity =
+						UE::Flecs::Tests::FindReplicatedValueEntity(State.FlecsWorld);
+					UFlecsNetEntityProxy* Proxy = UE::Flecs::Tests::FindReplicatedEntityProxy(State.World);
+					return Entity.IsValid()
+						&& Entity.Get<FFlecsReplicationTestValue>().Value == 47
+						&& Proxy
+						&& Proxy->GetWorld() == State.World;
+				})
+			.ThenClients([this](FState& State)
+			{
+				UFlecsNetEntityProxy* Proxy = UE::Flecs::Tests::FindReplicatedEntityProxy(State.World);
+				ASSERT_THAT(IsNotNull(Proxy));
+				if (!Proxy)
+				{
+					return;
+				}
+
+				ASSERT_THAT(IsTrue(Proxy->GetOuter() == GetTransientPackage()));
+				ASSERT_THAT(IsTrue(Proxy->GetWorld() == State.World));
+			});
+	}
+
+	TEST_METHOD(ConfiguredRealBridge_DefersInitialSnapshotUntilClientFlecsWorldExists)
+	{
+		Network
+			.ThenServer([](FState& State)
+			{
+				State.FlecsWorld = UE::Flecs::Tests::CreateNetworkTestWorld(State.World);
+				State.AuthorityEntity = State.FlecsWorld->CreateEntity()
+					.Set<FFlecsReplicationTestValue>({ 59 })
+					.Add<FFlecsReplicatedEntityComponent>();
+			})
+			.UntilClients(TEXT("Client queues the initial Flecs snapshot until its local Flecs world exists"),
+				[](FState& State)
+			{
+					const UFlecsNetworkWorldSubsystem* NetworkSubsystem =
+						State.World->GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
+					return !State.FlecsWorld
+						&& NetworkSubsystem->HasReplicationBridge()
+						&& NetworkSubsystem->GetQueuedReplicationUpdateCount() > 0
+						&& UE::Flecs::Tests::FindReplicatedEntityProxy(State.World) != nullptr;
+				})
+			.ThenClients([](FState& State)
+			{
+				State.FlecsWorld = UE::Flecs::Tests::CreateNetworkTestWorld(State.World);
+			})
+			.UntilClients(TEXT("Queued initial Flecs snapshot is applied after the client Flecs world is created"),
+				[](FState& State)
+			{
+					const FFlecsEntityHandle Entity =
+						UE::Flecs::Tests::FindReplicatedValueEntity(State.FlecsWorld);
+					return Entity.IsValid() && Entity.Get<FFlecsReplicationTestValue>().Value == 59;
+				});
 	}
 
 	TEST_METHOD(ConfiguredRealBridge_ReplicatesRuntimeValueChange)
