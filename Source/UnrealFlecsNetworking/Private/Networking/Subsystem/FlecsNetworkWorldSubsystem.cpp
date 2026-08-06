@@ -80,10 +80,13 @@ void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UF
 	
 #if WITH_SERVER_CODE
 	
-	CreateNetworkIdGenerator();
+	if (HasAuthority())
+	{
+		CreateNetworkIdGenerator();
 	
-	FFlecsComponentReplicationRegistry::Get(InWorld).OnDescriptorRegistered()
-		.AddUObject(this, &UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver);
+		FFlecsComponentReplicationRegistry::Get(InWorld).OnDescriptorRegistered()
+			.AddUObject(this, &UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver);
+	}
 	
 #endif // WITH_SERVER_CODE
 
