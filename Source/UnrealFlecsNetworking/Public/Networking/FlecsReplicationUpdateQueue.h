@@ -24,6 +24,7 @@ public:
 	void EnqueueSnapshot(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot)
 	{
 		FFlecsReplicationQueuedUpdate* ExistingUpdate = FindPendingUpdate(InNetworkId);
+		
 		if (ExistingUpdate)
 		{
 			if (ExistingUpdate->StateRevision > InSnapshot.StateRevision)
@@ -41,6 +42,7 @@ public:
 		Update.NetworkId = InNetworkId;
 		Update.Snapshot = InSnapshot;
 		Update.StateRevision = InSnapshot.StateRevision;
+		Update.bRemove = false;
 	}
 
 	void EnqueueRemoval(const FFlecsNetworkId& InNetworkId, const uint32 InStateRevision)
