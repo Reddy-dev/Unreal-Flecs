@@ -42,6 +42,7 @@ public:
 
 private:
 
+	UPROPERTY()
 	bool bContainsEntity = false;
 
 }; // class UFlecsNetEntityProxy

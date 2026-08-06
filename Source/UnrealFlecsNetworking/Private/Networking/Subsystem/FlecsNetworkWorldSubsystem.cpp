@@ -614,7 +614,7 @@ bool UFlecsNetworkWorldSubsystem::ResolveReplicationProfile(const FFlecsEntityHa
 	return true;
 }
 
-bool UFlecsNetworkWorldSubsystem::RegisterReplicationShardSelector(const FName InName,
+bool UFlecsNetworkWorldSubsystem::RegisterReplicationShardSelector(const FName& InName,
 	FFlecsReplicationShardSelectorFunction InSelector)
 {
 	if UNLIKELY_IF(InName.IsNone() || !InSelector)

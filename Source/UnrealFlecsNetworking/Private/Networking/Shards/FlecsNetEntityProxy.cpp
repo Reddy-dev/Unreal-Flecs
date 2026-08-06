@@ -63,6 +63,7 @@ bool UFlecsNetEntityProxy::IsEmpty() const
 
 void UFlecsNetEntityProxy::OnRep_NetworkId()
 {
+	bContainsEntity = NetworkId.IsValid();
 	ReceiveEntityUpdate(NetworkId, Snapshot);
 }
 
@@ -73,5 +74,6 @@ void UFlecsNetEntityProxy::OnRep_Snapshot()
 
 void UFlecsNetEntityProxy::HandleReplicationDetached()
 {
+	bContainsEntity = false;
 	ReceiveEntityRemoval(NetworkId, Snapshot.StateRevision);
 }

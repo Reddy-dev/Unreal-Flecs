@@ -18,12 +18,9 @@ namespace
 uint64 UE::Flecs::Tests::GroupByTableHasTag(
 	const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld,
 	FFlecsTableHandle InTable,
-	FFlecsId InId,
-	void* InContext)
+	MAYBE_UNUSED FFlecsId InId,
+	MAYBE_UNUSED void* InContext)
 {
-	(void)InId;
-	(void)InContext;
-
 	const FFlecsEntityHandle TagComponent = InWorld->GetScriptStructEntity(FFlecsTestStruct_Tag::StaticStruct());
 	return InTable.GetTable().has(TagComponent) ? GroupByWithTagGroupId : GroupByWithoutTagGroupId;
 }
@@ -63,14 +60,11 @@ void* UE::Flecs::Tests::RecordGroupCreated(
 }
 
 void UE::Flecs::Tests::RecordGroupDestroyed(
-	const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld,
+	MAYBE_UNUSED const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld,
 	uint64 InGroupId,
 	void* InGroupContext,
-	void* InGroupByContext)
+	MAYBE_UNUSED void* InGroupByContext)
 {
-	(void)InWorld;
-	(void)InGroupByContext;
-
 	GDestroyedGroupIds.Add(InGroupId);
 	uint64* GroupContext = static_cast<uint64*>(InGroupContext);
 	GDestroyedGroupContextIds.Add(GroupContext != nullptr ? *GroupContext : 0);

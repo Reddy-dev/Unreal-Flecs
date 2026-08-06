@@ -146,7 +146,7 @@ public:
 	NO_DISCARD bool ResolveReplicationProfile(const FFlecsEntityHandle& InEntity,
 		FFlecsReplicationProfile& OutProfile) const;
 
-	bool RegisterReplicationShardSelector(FName InName, FFlecsReplicationShardSelectorFunction InSelector);
+	bool RegisterReplicationShardSelector(const FName& InName, FFlecsReplicationShardSelectorFunction InSelector);
 
 	NO_DISCARD bool SelectReplicationShard(const FFlecsEntityHandle& InEntity,
 		const FFlecsNetworkId& InNetworkId,

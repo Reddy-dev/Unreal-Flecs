@@ -4,9 +4,8 @@
 
 #include "CoreMinimal.h"
 
-#include "Net/Serialization/FastArraySerializer.h"
-
 #include "FlecsReplicationLayoutDefinition.h"
+#include "Iris/ReplicationState/IrisFastArraySerializer.h"
 
 #include "FlecsLayoutReplicatorFastArray.generated.h"
 
@@ -29,7 +28,7 @@ public:
 }; // struct FFlecsLayoutReplicatorItem
 
 USTRUCT()
-struct UNREALFLECSNETWORKING_API FFlecsReplicatorFastArray : public FFastArraySerializer
+struct UNREALFLECSNETWORKING_API FFlecsReplicatorFastArray : public FIrisFastArraySerializer
 {
 	GENERATED_BODY()
 	
@@ -51,7 +50,7 @@ private:
 
 	void ReceiveLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition) const;
 
-	UPROPERTY()
+	UPROPERTY(Transient, NotReplicated)
 	TWeakObjectPtr<UFlecsIrisReplicationBridge> Owner;
 	
 }; // struct FFlecsReplicatorFastArray

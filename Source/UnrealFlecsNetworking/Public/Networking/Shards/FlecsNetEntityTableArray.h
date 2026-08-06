@@ -45,7 +45,7 @@ public:
 	UPROPERTY()
 	TArray<FFlecsNetEntityTableItem> Items;
 
-	UPROPERTY()
+	UPROPERTY(Transient, NotReplicated)
 	TWeakObjectPtr<UFlecsNetEntityTable> Owner;
 
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms);
