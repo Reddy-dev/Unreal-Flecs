@@ -16,6 +16,7 @@
 #include "Networking/Shards/FlecsNetEntityProxy.h"
 #include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 #include "Pipelines/FlecsDefaultGameLoop.h"
+#include "Queries/FlecsQuery.h"
 #include "UnrealFlecsTests/Fixtures/FlecsTestReplicationBridge.h"
 #include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 #include "Worlds/FlecsWorld.h"
@@ -46,16 +47,18 @@ namespace UE::Flecs::Tests
 	static FFlecsEntityHandle FindReplicatedValueEntity(UFlecsWorld* InWorld)
 	{
 		FFlecsEntityHandle Result;
-		InWorld->CreateQueryBuilder<const FFlecsReplicationTestValue>()
+		const TTypedFlecsQuery<FFlecsReplicationTestValue> Query =
+			InWorld->CreateQueryBuilder<const FFlecsReplicationTestValue>()
 			.With<FFlecsNetworkId>()
-			.Build()
-			.each([&Result](flecs::iter& InIter, size_t InIndex, const FFlecsReplicationTestValue&)
+			.Build();
+
+		Query.each([&Result](flecs::iter& InIter, size_t InIndex, const FFlecsReplicationTestValue)
+		{
+			if (!Result.IsValid())
 			{
-				if (!Result.IsValid())
-				{
-					Result = InIter.entity(InIndex);
-				}
-			});
+				Result = InIter.entity(InIndex);
+			}
+		});
 
 		return Result;
 	}
@@ -140,8 +143,7 @@ NETWORK_TEST_CLASS(FlecsReplicationRealBridgeNetworkTests,
 			})
 			.UntilClients(TEXT("Configured bridge replicates the initial Flecs entity"), [](FState& State)
 			{
-				const FFlecsEntityHandle Entity =
-					UE::Flecs::Tests::FindReplicatedValueEntity(State.FlecsWorld);
+				const FFlecsEntityHandle Entity = UE::Flecs::Tests::FindReplicatedValueEntity(State.FlecsWorld);
 				return Entity.IsValid() && Entity.Get<FFlecsReplicationTestValue>().Value == 73;
 			});
 	}
@@ -163,8 +165,7 @@ NETWORK_TEST_CLASS(FlecsReplicationRealBridgeNetworkTests,
 			.UntilClients(TEXT("Received Flecs proxy is assigned to the client world before applying its snapshot"),
 				[](FState& State)
 			{
-					const FFlecsEntityHandle Entity =
-						UE::Flecs::Tests::FindReplicatedValueEntity(State.FlecsWorld);
+					const FFlecsEntityHandle Entity = UE::Flecs::Tests::FindReplicatedValueEntity(State.FlecsWorld);
 					UFlecsNetEntityProxy* Proxy = UE::Flecs::Tests::FindReplicatedEntityProxy(State.World);
 					return Entity.IsValid()
 						&& Entity.Get<FFlecsReplicationTestValue>().Value == 47
