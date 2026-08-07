@@ -86,6 +86,8 @@ void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UF
 	
 		FFlecsComponentReplicationRegistry::Get(InWorld).OnDescriptorRegistered()
 			.AddUObject(this, &UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver);
+		
+		RegisterComponentDirtyObservers();
 	}
 	
 #endif // WITH_SERVER_CODE
