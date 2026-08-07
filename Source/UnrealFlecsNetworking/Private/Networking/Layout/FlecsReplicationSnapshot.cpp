@@ -47,7 +47,6 @@ void FFlecsEntityReplicationSnapshot::FillFromEntity(const FFlecsEntityHandle& I
 		
 		FFlecsReplicatedValue Value;
 		Value.KeyIndex = Index;
-		Value.bDontFragment = false;
 		
 		if (!FFlecsReplicationKey::IsValidPairStorageKind(Key.StorageKind))
 		{
