@@ -162,11 +162,11 @@ void FFlecsComponentReplicationRegistry::RemoveWorld(const UFlecsWorld* World)
 {
 	if LIKELY_IF(World)
 	{
-		GetWorldRegistries().Remove(TWeakObjectPtr<const UFlecsWorld>(World));
+		GetWorldRegistries().Remove(TWeakObjectPtr(World));
 	}
 }
 
-bool FFlecsComponentReplicationRegistry::Register(FFlecsComponentReplicationDescriptor Descriptor, FString& OutError)
+bool FFlecsComponentReplicationRegistry::Register(const FFlecsComponentReplicationDescriptor& Descriptor, FString& OutError)
 {
 	if (!Descriptor.IsValid(&OutError))
 	{
@@ -194,7 +194,7 @@ bool FFlecsComponentReplicationRegistry::Register(FFlecsComponentReplicationDesc
 	
 	SchemaToLocalId.Add(Descriptor.SchemaId, LocalId);
 	
-	ByLocalId.Add(LocalId, MoveTemp(Descriptor));
+	ByLocalId.Add(LocalId, Descriptor);
 	DescriptorRegisteredDelegate.Broadcast(ByLocalId.FindChecked(LocalId));
 	
 	return true;

@@ -205,7 +205,7 @@ public:
 	static void RemoveWorld(const UFlecsWorld* World);
 
 	/** Adds a valid descriptor, rejecting schema IDs already owned by another local ID. */
-	bool Register(FFlecsComponentReplicationDescriptor Descriptor, OUT FString& OutError);
+	bool Register(const FFlecsComponentReplicationDescriptor& Descriptor, OUT FString& OutError);
 	
 	/** Finds a descriptor by a world-local Flecs ID. */
 	NO_DISCARD const FFlecsComponentReplicationDescriptor* Find(const FFlecsId LocalId) const;
