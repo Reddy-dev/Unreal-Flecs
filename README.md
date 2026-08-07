@@ -20,11 +20,6 @@ Only tested on Version: UE 5.8 MSVC/partially Clang
 
 ## Wiki/Documentation coming soon
 
-## Replication
-
-The Flecs replication framework and its optional Iris aggregate transport are
-documented in [`../../Docs/flecs_replication.md`](../../Docs/flecs_replication.md).
-
 ## Features:
 Universalized Component Type Registration CPP <--> Meta Type, Works with USTRUCT, UENUM, and UCLASS \
 \
