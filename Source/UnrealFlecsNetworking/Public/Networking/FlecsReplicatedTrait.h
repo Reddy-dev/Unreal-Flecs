@@ -28,5 +28,4 @@ template <>
 struct TFlecsComponentTraits<FFlecsReplicatedTrait> : public TFlecsComponentTraitsBase<FFlecsReplicatedTrait>
 {
 	static constexpr bool Trait = true;
-
 }; // struct TFlecsComponentTraits<FFlecsReplicatedTrait>
