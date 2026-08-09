@@ -8,6 +8,12 @@
 
 #include "FlecsModuleSettings.generated.h"
 
+template <typename TInherited>
+class TStaticGetter
+{
+	
+};
+
 /**
  * 
  */
