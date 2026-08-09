@@ -17,6 +17,7 @@ class UNREALFLECSGAMEFRAMEWORK_API UFlecsSynchronizeViewersSystem : public UFlec
 	GENERATED_BODY()
 
 public:
+	virtual void BuildSystem(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, TFlecsSystemBuilder<>& InBuilder) const override;
 	
 	
 }; // class UFlecsSynchronizeViewersSystem
