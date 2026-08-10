@@ -147,6 +147,7 @@ void UFlecsStreamingSourceViewerSyncSystem::EachIterator(const TSolidNotNull<UFl
 		= InIterator.field_at<const FFlecsViewerStreamingSourceComponent>(0, InIndex);
 	FFlecsViewerTransformComponent& TransformComponent 
 		= InIterator.field_at<FFlecsViewerTransformComponent>(1, InIndex);
+	
 	if UNLIKELY_IF(WorldPartition == nullptr)
 	{
 		TransformComponent.Location = FVector::ZeroVector;
