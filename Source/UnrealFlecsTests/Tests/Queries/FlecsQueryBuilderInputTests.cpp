@@ -8,6 +8,7 @@
 
 #include "FlecsQueryDefinitionTestTypes.h"
 #include "Queries/FlecsQuery.h"
+#include "Queries/FlecsQueryBuilder.h"
 #include "Queries/FlecsQueryBuilderView.h"
 
 #include "Queries/FlecsQueryDefinition.h"
@@ -27,6 +28,46 @@ protected:
 	}
 
 public:
+	TEST_METHOD(BuilderConstruction_ReadWriteVariants_AddStagedTerms_CPPAPI)
+	{
+		FFlecsQueryBuilder Builder = World()->CreateQueryBuilder();
+		Builder
+			.Read<FFlecsTestStruct_Value>()
+			.Write<FFlecsTest_CPPStructValue>()
+			.ReadWrite<FFlecsTestStruct_PairIsTag>();
+
+		const FFlecsQueryDefinition& Definition = Builder.GetQueryDefinition();
+		ASSERT_THAT(IsTrue(Definition.Terms.Num() == 3));
+
+		ASSERT_THAT(IsTrue(Definition.Terms[0].InOut == EFlecsQueryInOut::Read));
+		ASSERT_THAT(IsTrue(Definition.Terms[1].InOut == EFlecsQueryInOut::Write));
+		ASSERT_THAT(IsTrue(Definition.Terms[2].InOut == EFlecsQueryInOut::ReadWrite));
+
+		ASSERT_THAT(IsTrue(Definition.Terms[0].bStage));
+		ASSERT_THAT(IsTrue(Definition.Terms[1].bStage));
+		ASSERT_THAT(IsTrue(Definition.Terms[2].bStage));
+	}
+
+	TEST_METHOD(BuilderConstruction_ReadWriteVariants_AddStagedTerms_InputAPI)
+	{
+		FFlecsQueryBuilder Builder = World()->CreateQueryBuilder();
+		Builder
+			.Read(FFlecsTestStruct_Value::StaticStruct())
+			.Write(FString(TEXT("FFlecsTest_CPPStructValue")))
+			.ReadWrite(StaticEnum<EFlecsTestEnum_UENUM>());
+
+		const FFlecsQueryDefinition& Definition = Builder.GetQueryDefinition();
+		ASSERT_THAT(IsTrue(Definition.Terms.Num() == 3));
+
+		ASSERT_THAT(IsTrue(Definition.Terms[0].InOut == EFlecsQueryInOut::Read));
+		ASSERT_THAT(IsTrue(Definition.Terms[1].InOut == EFlecsQueryInOut::Write));
+		ASSERT_THAT(IsTrue(Definition.Terms[2].InOut == EFlecsQueryInOut::ReadWrite));
+
+		ASSERT_THAT(IsTrue(Definition.Terms[0].bStage));
+		ASSERT_THAT(IsTrue(Definition.Terms[1].bStage));
+		ASSERT_THAT(IsTrue(Definition.Terms[2].bStage));
+	}
+
 	TEST_METHOD(BuilderConstruction_WithScriptStructTagTerm_ScriptStructAPI)
 	{
 		FFlecsQuery Query = World()->CreateQueryBuilder()
