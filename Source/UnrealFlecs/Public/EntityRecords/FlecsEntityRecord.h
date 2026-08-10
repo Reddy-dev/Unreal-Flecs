@@ -176,6 +176,8 @@ USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsRecordPair
 {
 	GENERATED_BODY()
+	
+public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component Tree")
 	FFlecsRecordPairSlot First;

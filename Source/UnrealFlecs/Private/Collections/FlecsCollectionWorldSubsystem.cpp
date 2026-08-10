@@ -513,8 +513,7 @@ void UFlecsCollectionWorldSubsystem::ApplyCollectionParametersToEntity(const FFl
 
 	const bool bHasInputParameters = InParameters.IsValid();
 
-	const FFlecsCollectionParametersComponent& ParametersComponent 
-		= InCollectionEntity.Get<FFlecsCollectionParametersComponent>();
+	const FFlecsCollectionParametersComponent& ParametersComponent = InCollectionEntity.Get<FFlecsCollectionParametersComponent>();
 
 	if UNLIKELY_IF(!ParametersComponent.ParameterType.IsValid())
 	{

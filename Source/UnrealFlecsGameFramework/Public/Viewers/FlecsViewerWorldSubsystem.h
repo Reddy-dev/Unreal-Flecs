@@ -21,8 +21,8 @@ public:
 	virtual void OnFlecsWorldInitialized(const TSolidNotNull<UFlecsWorld*> InWorld) override;
 	virtual void Deinitialize() override;
 	
-	FFlecsEntityHandle CreatePlayerViewer(const TSolidNotNull<APlayerController*> InPlayerController);
-	FFlecsEntityHandle AddActorViewer(const TSolidNotNull<AActor*> InActor);
+	FFlecsEntityHandle CreatePlayerViewer(const TSolidNotNull<const APlayerController*> InPlayerController);
+	FFlecsEntityHandle AddActorViewer(const TSolidNotNull<const AActor*> InActor);
 	FFlecsEntityHandle AddStreamSourceViewer(const FName& InStreamSourceName);
 	
 

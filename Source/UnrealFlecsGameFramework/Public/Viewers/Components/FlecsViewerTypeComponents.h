@@ -63,7 +63,7 @@ struct UNREALFLECSGAMEFRAMEWORK_API FFlecsViewerPlayerComponent
 	
 public:
 	UPROPERTY()
-	TObjectPtr<APlayerController> PlayerController;
+	TObjectPtr<const APlayerController> PlayerController;
 	
 }; // struct FFlecsViewerPlayerComponent
 
@@ -80,7 +80,7 @@ struct UNREALFLECSGAMEFRAMEWORK_API FFlecsViewerActorComponent
 	
 public:
 	UPROPERTY()
-	TObjectPtr<AActor> Actor;
+	TObjectPtr<const AActor> Actor;
 	
 }; // struct FFlecsViewerActorComponent
 

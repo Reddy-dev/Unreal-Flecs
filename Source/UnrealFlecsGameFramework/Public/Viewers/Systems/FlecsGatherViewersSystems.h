@@ -19,6 +19,12 @@ public:
 	virtual void BuildSystem(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, TFlecsSystemBuilder<>& InBuilder) const override;
 	virtual void RunEachIterator(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld, flecs::iter& InIterator) override;
 	
+	virtual void RegisterObject(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld) override;
+	virtual void FlecsWorldBeginPlay(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld) override;
+	virtual void UnregisterObject(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld) override;
+	
 private:
-	TTypedFlecsQuery<flecs::pair<>> ViewerQuery;
+	UPROPERTY(Transient)
+	FFlecsQuery ViewerQuery;
+	
 }; // class UFlecsGatherViewersSystem
