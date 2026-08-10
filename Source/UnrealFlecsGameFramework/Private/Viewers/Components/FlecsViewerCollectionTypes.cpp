@@ -3,6 +3,7 @@
 #include "Viewers/Components/FlecsViewerCollectionTypes.h"
 
 #include "Collections/FlecsCollectionBuilder.h"
+#include "Viewers/Components/FlecsViewerPerspectiveComponent.h"
 #include "Viewers/Components/FlecsViewerTransformComponent.h"
 #include "Viewers/Components/FlecsViewerTypeComponents.h"
 
@@ -17,6 +18,7 @@ void UFlecsViewerCollectionBase::BuildCollection(FFlecsCollectionBuilder& Builde
 void UFlecsPlayerViewerCollection::BuildCollection(FFlecsCollectionBuilder& Builder) const
 {
 	Super::BuildCollection(Builder);
+	Builder.Add<FFlecsViewerPerspectiveComponent>();
 	
 	FFlecsRecordPair RecordPair;
 	RecordPair.First = FFlecsRecordPairSlot::Make<FFlecsViewerRelationship>();
@@ -25,9 +27,9 @@ void UFlecsPlayerViewerCollection::BuildCollection(FFlecsCollectionBuilder& Buil
 	Builder
 		.AddPair(RecordPair)
 		.Parameters<FFlecsViewerPlayerComponent>({},
-			[&](FFlecsEntityHandle TargetEntity, const FInstancedStruct& Parameters)
+			[&](FFlecsEntityHandle TargetEntity, const FFlecsViewerPlayerComponent& Parameters)
 		{
-			TargetEntity.Assign<FFlecsViewerPlayerComponent>(Parameters.Get<FFlecsViewerPlayerComponent>());
+			TargetEntity.Assign<FFlecsViewerPlayerComponent>(Parameters);
 		});
 }
 
@@ -47,9 +49,9 @@ void UFlecsActorViewerCollection::BuildCollection(FFlecsCollectionBuilder& Build
 	Builder
 		.AddPair(RecordPair)
 		.Parameters<FFlecsViewerActorComponent>({},
-			[&](const FFlecsEntityHandle TargetEntity, const FInstancedStruct& Parameters)
+			[&](const FFlecsEntityHandle TargetEntity, const FFlecsViewerActorComponent& Parameters)
 		{
-			TargetEntity.Assign<FFlecsViewerActorComponent>(Parameters.Get<FFlecsViewerActorComponent>());
+			TargetEntity.Assign<FFlecsViewerActorComponent>(Parameters);
 		});
 }
 
@@ -69,9 +71,9 @@ void UFlecsStreamSourceViewerCollection::BuildCollection(FFlecsCollectionBuilder
 	Builder
 		.AddPair(RecordPair)
 		.Parameters<FFlecsViewerStreamingSourceComponent>({},
-			[&](const FFlecsEntityHandle TargetEntity, const FInstancedStruct& Parameters)
+			[&](const FFlecsEntityHandle TargetEntity, const FFlecsViewerStreamingSourceComponent& Parameters)
 		{
-			TargetEntity.Assign<FFlecsViewerStreamingSourceComponent>(Parameters.Get<FFlecsViewerStreamingSourceComponent>());
+			TargetEntity.Assign<FFlecsViewerStreamingSourceComponent>(Parameters);
 		});
 }
 

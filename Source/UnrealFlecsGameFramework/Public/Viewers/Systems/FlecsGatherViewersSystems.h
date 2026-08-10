@@ -9,7 +9,7 @@
 #include "FlecsGatherViewersSystems.generated.h"
 
 UCLASS()
-class UNREALFLECS_API UFlecsGatherViewersSystem : public UFlecsSystemObject
+class UNREALFLECSGAMEFRAMEWORK_API UFlecsGatherViewersSystem : public UFlecsSystemObject
 {
 	GENERATED_BODY()
 	
@@ -26,5 +26,7 @@ public:
 private:
 	UPROPERTY(Transient)
 	FFlecsQuery ViewerQuery;
+
+	uint64 LastGatheredFrame = TNumericLimits<uint64>::Max();
 	
 }; // class UFlecsGatherViewersSystem
