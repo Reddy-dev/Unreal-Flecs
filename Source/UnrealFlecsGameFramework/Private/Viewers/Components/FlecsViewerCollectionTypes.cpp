@@ -29,7 +29,7 @@ void UFlecsPlayerViewerCollection::BuildCollection(FFlecsCollectionBuilder& Buil
 		.Parameters<FFlecsViewerPlayerComponent>({},
 			[&](FFlecsEntityHandle TargetEntity, const FFlecsViewerPlayerComponent& Parameters)
 		{
-			TargetEntity.Assign<FFlecsViewerPlayerComponent>(Parameters);
+			TargetEntity.SetPair<FFlecsViewerRelationship, FFlecsViewerPlayerComponent>(Parameters);
 		});
 }
 
@@ -51,7 +51,7 @@ void UFlecsActorViewerCollection::BuildCollection(FFlecsCollectionBuilder& Build
 		.Parameters<FFlecsViewerActorComponent>({},
 			[&](const FFlecsEntityHandle TargetEntity, const FFlecsViewerActorComponent& Parameters)
 		{
-			TargetEntity.Assign<FFlecsViewerActorComponent>(Parameters);
+			TargetEntity.SetPair<FFlecsViewerRelationship, FFlecsViewerActorComponent>(Parameters);
 		});
 }
 
@@ -73,7 +73,7 @@ void UFlecsStreamSourceViewerCollection::BuildCollection(FFlecsCollectionBuilder
 		.Parameters<FFlecsViewerStreamingSourceComponent>({},
 			[&](const FFlecsEntityHandle TargetEntity, const FFlecsViewerStreamingSourceComponent& Parameters)
 		{
-			TargetEntity.Assign<FFlecsViewerStreamingSourceComponent>(Parameters);
+			TargetEntity.SetPair<FFlecsViewerRelationship, FFlecsViewerStreamingSourceComponent>(Parameters);
 		});
 }
 
