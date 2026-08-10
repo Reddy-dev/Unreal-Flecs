@@ -9,7 +9,7 @@
 #include "FlecsViewerPerspectiveComponent.generated.h"
 
 USTRUCT(BlueprintType)
-struct UNREALFLECS_API FFlecsViewerPerspectiveComponent
+struct UNREALFLECSGAMEFRAMEWORK_API FFlecsViewerPerspectiveComponent
 {
 	GENERATED_BODY()
 	
