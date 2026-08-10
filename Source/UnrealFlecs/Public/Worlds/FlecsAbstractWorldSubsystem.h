@@ -39,7 +39,7 @@ public:
 
 private:
 	UPROPERTY()
-	TWeakObjectPtr<UFlecsWorld> FlecsWorldRef;
+	mutable TWeakObjectPtr<UFlecsWorld> FlecsWorldRef;
 
 	UPROPERTY()
 	TWeakObjectPtr<UFlecsWorldSubsystem> FlecsWorldSubsystemRef;

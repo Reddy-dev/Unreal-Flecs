@@ -3,6 +3,7 @@
 #include "Viewers/FlecsViewerWorldSubsystem.h"
 
 #include "Collections/FlecsCollectionWorldSubsystem.h"
+#include "Subsystems/SubsystemCollection.h"
 #include "Viewers/Components/FlecsViewerCollectionTypes.h"
 #include "Viewers/Components/FlecsViewerSubsystemSingleton.h"
 #include "Viewers/Components/FlecsViewerTypeComponents.h"
@@ -11,9 +12,9 @@
 
 void UFlecsViewerWorldSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
+	Collection.InitializeDependency<UFlecsCollectionWorldSubsystem>();
+
 	Super::Initialize(Collection);
-	
-	
 }
 
 void UFlecsViewerWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UFlecsWorld*> InWorld)
