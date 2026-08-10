@@ -6,21 +6,19 @@
 
 #include "Systems/FlecsSystemObject.h"
 
-#include "FlecsGatherControllerViewersSystem.generated.h"
+#include "FlecsGatherViewersSystems.generated.h"
 
-/**
- * 
- */
 UCLASS()
-class UNREALFLECSGAMEFRAMEWORK_API UFlecsGatherControllerViewersSystem : public UFlecsSystemObject
+class UNREALFLECS_API UFlecsGatherViewersSystem : public UFlecsSystemObject
 {
 	GENERATED_BODY()
-
+	
 public:
-	UFlecsGatherControllerViewersSystem(const FObjectInitializer& ObjectInitializer);
+	UFlecsGatherViewersSystem();
 	
 	virtual void BuildSystem(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, TFlecsSystemBuilder<>& InBuilder) const override;
 	virtual void RunEachIterator(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld, flecs::iter& InIterator) override;
 	
-	
-}; // class UFlecsGatherControllerViewersSystem
+private:
+	TTypedFlecsQuery<flecs::pair<>> ViewerQuery;
+}; // class UFlecsGatherViewersSystem

@@ -17,8 +17,16 @@ class UNREALFLECSGAMEFRAMEWORK_API UFlecsViewerWorldSubsystem : public UFlecsAbs
 	GENERATED_BODY()
 
 public:
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual void OnFlecsWorldInitialized(const TSolidNotNull<UFlecsWorld*> InWorld) override;
+	virtual void Deinitialize() override;
 	
+	FFlecsEntityHandle CreatePlayerViewer(const TSolidNotNull<APlayerController*> InPlayerController);
+	FFlecsEntityHandle AddActorViewer(const TSolidNotNull<AActor*> InActor);
+	FFlecsEntityHandle AddStreamSourceViewer(const FName& InStreamSourceName);
 	
+
 private:
+	
 	
 }; // class UFlecsViewerWorldSubsystem

@@ -13,6 +13,8 @@ struct UNREALFLECS_API FFlecsViewerPerspectiveComponent
 {
 	GENERATED_BODY()
 	
+	// @TODO
+	
 public:
 	UPROPERTY()
 	float FieldOfView = 90.0f;

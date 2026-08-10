@@ -140,8 +140,8 @@ UFlecsWorldInterfaceObject* UFlecsWorldInterfaceObject::GetWorldInterfaceFromFle
 UFlecsWorldInterfaceObject* UFlecsWorldInterfaceObject::GetWorldInterfaceFromFlecsWorld(flecs::world_t* InWorld)
 {
 	solid_cassume(InWorld != nullptr);
-	
-	flecs::world World = flecs::world(InWorld);
+
+	const flecs::world World = flecs::world(InWorld);
 	return GetWorldInterfaceFromFlecsWorld(World);
 }
 
