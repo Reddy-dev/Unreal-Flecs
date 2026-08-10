@@ -2,6 +2,7 @@
 
 #include "Viewers/FlecsViewerWorldSubsystem.h"
 
+#include "Collections/FlecsCollectionWorldSubsystem.h"
 #include "Viewers/Components/FlecsViewerCollectionTypes.h"
 #include "Viewers/Components/FlecsViewerSubsystemSingleton.h"
 #include "Viewers/Components/FlecsViewerTypeComponents.h"
@@ -19,6 +20,14 @@ void UFlecsViewerWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UFl
 {
 	InWorld->RegisterComponentType<FFlecsViewerSubsystemSingleton>();
 	InWorld->Set<FFlecsViewerSubsystemSingleton>(FFlecsViewerSubsystemSingleton{ this });
+	
+	const TSolidNotNull<UFlecsCollectionWorldSubsystem*> CollectionSubsystem 
+		= InWorld->GetWorld()->GetSubsystemChecked<UFlecsCollectionWorldSubsystem>();
+	
+	CollectionSubsystem->RegisterCollectionInterfaceClass<UFlecsPlayerViewerCollection>();
+	CollectionSubsystem->RegisterCollectionInterfaceClass<UFlecsActorViewerCollection>();
+	CollectionSubsystem->RegisterCollectionInterfaceClass<UFlecsStreamSourceViewerCollection>();
+	
 }
 
 void UFlecsViewerWorldSubsystem::Deinitialize()
