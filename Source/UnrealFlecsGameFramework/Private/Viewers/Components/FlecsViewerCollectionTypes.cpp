@@ -18,7 +18,7 @@ void UFlecsViewerCollectionBase::BuildCollection(FFlecsCollectionBuilder& Builde
 void UFlecsPlayerViewerCollection::BuildCollection(FFlecsCollectionBuilder& Builder) const
 {
 	Super::BuildCollection(Builder);
-	Builder.Add<FFlecsViewerPerspectiveComponent>();
+	//Builder.Add<FFlecsViewerPerspectiveComponent>();
 	
 	FFlecsRecordPair RecordPair;
 	RecordPair.First = FFlecsRecordPairSlot::Make<FFlecsViewerRelationship>();

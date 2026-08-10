@@ -28,8 +28,8 @@ void UFlecsPlayerViewerSyncSystem::BuildSystem(const TSolidNotNull<const UFlecsW
 	InBuilder
 		.Phase(EFlecsPhaseType::OnLoad)
 		.WithPair<FFlecsViewerRelationship, const FFlecsViewerPlayerComponent>() // 0
-		.With<FFlecsViewerTransformComponent&>() // 1
-		.With<FFlecsViewerPerspectiveComponent&>(); // 2
+		.With<FFlecsViewerTransformComponent&>(); // 1
+		//.With<FFlecsViewerPerspectiveComponent&>(); // 2
 }
 
 void UFlecsPlayerViewerSyncSystem::EachIterator(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld,
@@ -42,7 +42,7 @@ void UFlecsPlayerViewerSyncSystem::EachIterator(const TSolidNotNull<UFlecsWorldI
 	const FFlecsViewerPlayerComponent& PlayerComponent = InIterator.field_at<const FFlecsViewerPlayerComponent>(0, InIndex);
 	
 	FFlecsViewerTransformComponent& TransformComponent = InIterator.field_at<FFlecsViewerTransformComponent>(1, InIndex);
-	FFlecsViewerPerspectiveComponent& PerspectiveComponent = InIterator.field_at<FFlecsViewerPerspectiveComponent>(2, InIndex);
+	//FFlecsViewerPerspectiveComponent& PerspectiveComponent = InIterator.field_at<FFlecsViewerPerspectiveComponent>(2, InIndex);
 	
 	const APlayerController* PlayerController = PlayerComponent.PlayerController.Get();
 	if UNLIKELY_IF(!::IsValid(PlayerController))
@@ -73,7 +73,7 @@ void UFlecsPlayerViewerSyncSystem::EachIterator(const TSolidNotNull<UFlecsWorldI
 		TransformComponent.Rotation = PlayerCameraRotation;
 	}
 
-	const ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer();
+	/*const ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer();
 	if (LocalPlayer != nullptr && LocalPlayer->ViewportClient != nullptr && LocalPlayer->ViewportClient->Viewport != nullptr)
 	{
 		FSceneViewProjectionData ProjectionData;
@@ -93,7 +93,7 @@ void UFlecsPlayerViewerSyncSystem::EachIterator(const TSolidNotNull<UFlecsWorldI
 				PerspectiveComponent.AspectRatio = static_cast<float>(TanHalfHorizontal / TanHalfVertical);
 			}
 		}
-	}
+	}*/
 }
 
 UFlecsActorViewerSyncSystem::UFlecsActorViewerSyncSystem()
