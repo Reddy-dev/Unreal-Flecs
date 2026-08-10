@@ -1165,7 +1165,7 @@ void UFlecsWorld::AddReferencedObjects(UObject* InThis, FReferenceCollector& Col
 		    const FFlecsEntityHandle Component = Iter.get_var("Component");
 		    solid_check(Component.IsValid());
 		
-			void* ComponentPtr = nullptr;
+			void* ComponentPtr;
 
 			if (FFlecsId(FFlecsId(Iter.id(2)).GetTypeInfo(Iter.world())->component) == Component)
 			{
