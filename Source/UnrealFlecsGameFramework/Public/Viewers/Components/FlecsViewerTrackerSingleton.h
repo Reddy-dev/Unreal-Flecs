@@ -15,9 +15,9 @@ struct UNREALFLECSGAMEFRAMEWORK_API FFlecsViewerTrackerSingleton
 
 public:
 	
-	TMap<FName, FFlecsEntityView> StreamSourceViewers;
-	TMap<TWeakObjectPtr<const APlayerController>, FFlecsEntityView> PCViewers;
-	TMap<TWeakObjectPtr<const AActor>, FFlecsEntityView> ActorViewers;
+	TSortedMap<FName, FFlecsEntityView, FDefaultAllocator, FNameFastLess> StreamSourceViewers;
+	TSortedMap<TObjectKey<const APlayerController>, FFlecsEntityView> PCViewers;
+	TSortedMap<TObjectKey<const AActor>, FFlecsEntityView> ActorViewers;
 
 }; // struct FFlecsViewerTrackerSingleton
 

@@ -25,7 +25,6 @@ void UFlecsGatherViewersSystem::BuildSystem(const TSolidNotNull<const UFlecsWorl
                                             TFlecsSystemBuilder<>& InBuilder) const
 {
 	InBuilder
-		// Resolve viewer membership before the OnLoad transform/perspective sync systems.
 		.Phase(EFlecsPhaseType::PreFrame)
 		.With<FFlecsViewerTrackerSingleton&>() // 0
 		.With<const FFlecsViewerSubsystemSingleton>() // 1
@@ -44,9 +43,8 @@ void UFlecsGatherViewersSystem::RunEachIterator(const TSolidNotNull<UFlecsWorldI
 
 	const TSolidNotNull<UWorld*> World = InWorld->GetWorld();
 	const UWorldPartition* WorldPartition = World->GetWorldPartition();
-	const TArray<FWorldPartitionStreamingSource>* StreamingSources = WorldPartition != nullptr
-		? &WorldPartition->GetStreamingSources()
-		: nullptr;
+	const TArray<FWorldPartitionStreamingSource>* StreamingSources 
+		= WorldPartition != nullptr ? &WorldPartition->GetStreamingSources() : nullptr;
 	
 	FFlecsViewerTrackerSingleton& ViewerTrackerSingleton = InIterator.field_at<FFlecsViewerTrackerSingleton>(0, 0);
 	
@@ -58,7 +56,7 @@ void UFlecsGatherViewersSystem::RunEachIterator(const TSolidNotNull<UFlecsWorldI
 	const bool bGatherStreamingSources = GameFrameworkModuleSettings->bGatherStreamingSources;
 	const bool bAllowNonPlayerViewerActors = GameFrameworkModuleSettings->bAllowNonPlayerViewerActors;
 
-	TSet<TWeakObjectPtr<const APlayerController>> CurrentPlayerControllers;
+	TSet<TObjectKey<const APlayerController>> CurrentPlayerControllers;
 	if (bGatherPlayerControllers)
 	{
 		CurrentPlayerControllers.Reserve(World->GetNumPlayerControllers());
@@ -101,6 +99,10 @@ void UFlecsGatherViewersSystem::RunEachIterator(const TSolidNotNull<UFlecsWorldI
 			DestroyedViewerIds.Add(ViewerId);
 			InViewer.ToMut<FFlecsEntityHandle>(InIterator).Destroy();
 		}
+		else
+		{
+			UE_LOGFMT(LogTemp, Warning, "Attempted to destroy an invalid viewer entity.");
+		}
 	};
 
 	// Keep the Flecs handles synchronized with the current engine-side sources. This
@@ -108,8 +110,8 @@ void UFlecsGatherViewersSystem::RunEachIterator(const TSolidNotNull<UFlecsWorldI
 	for (auto It = ViewerTrackerSingleton.PCViewers.CreateIterator(); It; ++It)
 	{
 		if UNLIKELY_IF(!bGatherPlayerControllers
-			|| !It.Key().IsValid()
-			|| !CurrentPlayerControllers.Contains(It.Key())
+			|| !It.Key().ResolveObjectPtr()
+			|| !CurrentPlayerControllers.Contains(It.Key().ResolveObjectPtr())
 			|| !It.Value().IsValid())
 		{
 			DestroyViewer(It.Value());
@@ -131,7 +133,7 @@ void UFlecsGatherViewersSystem::RunEachIterator(const TSolidNotNull<UFlecsWorldI
 	for (auto It = ViewerTrackerSingleton.ActorViewers.CreateIterator(); It; ++It)
 	{
 		if UNLIKELY_IF(!bAllowNonPlayerViewerActors
-			|| !It.Key().IsValid()
+			|| !It.Key().ResolveObjectPtr()
 			|| !It.Value().IsValid())
 		{
 			DestroyViewer(It.Value());
@@ -149,16 +151,15 @@ void UFlecsGatherViewersSystem::RunEachIterator(const TSolidNotNull<UFlecsWorldI
 				= Viewer.TryGetPairSecond<FFlecsViewerRelationship, FFlecsViewerPlayerComponent>())
 			{
 				const APlayerController* PlayerController = PlayerComponent->PlayerController.Get();
-				const TWeakObjectPtr<const APlayerController> PlayerControllerKey = PlayerController;
 
 				if UNLIKELY_IF(!bGatherPlayerControllers || !::IsValid(PlayerController)
-					|| !CurrentPlayerControllers.Contains(PlayerControllerKey))
+					|| !CurrentPlayerControllers.Contains(PlayerController))
 				{
 					DestroyViewer(Viewer);
 					return;
 				}
 
-				if (const FFlecsEntityView* ExistingViewer = ViewerTrackerSingleton.PCViewers.Find(PlayerControllerKey))
+				if (const FFlecsEntityView* ExistingViewer = ViewerTrackerSingleton.PCViewers.Find(PlayerController))
 				{
 					if (ExistingViewer->IsValid() && ExistingViewer->GetRawId() != Viewer.GetRawId())
 					{
@@ -167,7 +168,7 @@ void UFlecsGatherViewersSystem::RunEachIterator(const TSolidNotNull<UFlecsWorldI
 					}
 				}
 
-				ViewerTrackerSingleton.PCViewers.Add(PlayerControllerKey, Viewer);
+				ViewerTrackerSingleton.PCViewers.Add(PlayerController, Viewer);
 				return;
 			}
 
@@ -200,7 +201,6 @@ void UFlecsGatherViewersSystem::RunEachIterator(const TSolidNotNull<UFlecsWorldI
 				= Viewer.TryGetPairSecond<FFlecsViewerRelationship, FFlecsViewerActorComponent>())
 			{
 				const AActor* Actor = ActorComponent->Actor.Get();
-				const TWeakObjectPtr<const AActor> ActorKey = Actor;
 
 				if UNLIKELY_IF(!bAllowNonPlayerViewerActors || !::IsValid(Actor))
 				{
@@ -208,16 +208,16 @@ void UFlecsGatherViewersSystem::RunEachIterator(const TSolidNotNull<UFlecsWorldI
 					return;
 				}
 
-				if (FFlecsEntityView* ExistingViewer = ViewerTrackerSingleton.ActorViewers.Find(ActorKey))
+				if (const FFlecsEntityView* ExistingViewer = ViewerTrackerSingleton.ActorViewers.Find(Actor))
 				{
-					if (ExistingViewer->IsValid() && ExistingViewer->GetRawId() != Viewer.GetRawId())
+					if (ExistingViewer->IsValid() && *ExistingViewer != Viewer)
 					{
 						DestroyViewer(Viewer);
 						return;
 					}
 				}
 
-				ViewerTrackerSingleton.ActorViewers.Add(ActorKey, Viewer);
+				ViewerTrackerSingleton.ActorViewers.Add(Actor, Viewer);
 				return;
 			}
 
@@ -227,7 +227,7 @@ void UFlecsGatherViewersSystem::RunEachIterator(const TSolidNotNull<UFlecsWorldI
 
 	if (bGatherPlayerControllers)
 	{
-		for (const TWeakObjectPtr<const APlayerController>& PlayerControllerKey : CurrentPlayerControllers)
+		for (const TObjectKey<const APlayerController>& PlayerControllerKey : CurrentPlayerControllers)
 		{
 			FFlecsEntityView* ExistingViewer = ViewerTrackerSingleton.PCViewers.Find(PlayerControllerKey);
 			if (ExistingViewer != nullptr && ExistingViewer->IsValid())
@@ -235,8 +235,8 @@ void UFlecsGatherViewersSystem::RunEachIterator(const TSolidNotNull<UFlecsWorldI
 				continue;
 			}
 
-			const APlayerController* PlayerController = PlayerControllerKey.Get();
-			if UNLIKELY_IF(!::IsValid(PlayerController))
+			const APlayerController* PlayerController = PlayerControllerKey.ResolveObjectPtr();
+			if UNLIKELY_IF(!PlayerController)
 			{
 				continue;
 			}
