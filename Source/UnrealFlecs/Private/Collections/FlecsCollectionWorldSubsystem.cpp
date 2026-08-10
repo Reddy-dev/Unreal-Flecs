@@ -134,7 +134,7 @@ FFlecsEntityHandle UFlecsCollectionWorldSubsystem::RegisterCollectionClass(const
 	ApplyNamesToSubEntities(CollectionDefinition);
 	
 	const FFlecsEntityHandle Prefab
-		= CreatePrefabEntity(CPPClassName, CollectionDefinition.Record);
+		= CreatePrefabEntity(InClass, CollectionDefinition.Record);
 	
 	FFlecsCollectionDefinitionComponent& DefinitionComponent = Prefab.Obtain<FFlecsCollectionDefinitionComponent>();
 	DefinitionComponent.Definition = CollectionDefinition;
@@ -492,7 +492,8 @@ FFlecsEntityHandle UFlecsCollectionWorldSubsystem::CreatePrefabEntity(const TSol
 {
 	const TSolidNotNull<const UFlecsWorld*> FlecsWorld = GetFlecsWorldChecked();
 	
-	const FFlecsEntityHandle Prefab = FlecsWorld->CreatePrefabWithRecord(Record, InClass->GetName())
+	const FFlecsEntityHandle Prefab = FlecsWorld->CreatePrefabWithRecord(Record,
+		GetFlecsWorldChecked()->ObtainTypedEntity(InClass).GetName())
 		.Add<FFlecsCollectionPrefabTag>();
 
 	return Prefab;

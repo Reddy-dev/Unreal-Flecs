@@ -145,7 +145,8 @@ void UFlecsGatherViewersSystem::RunEachIterator(const TSolidNotNull<UFlecsWorldI
 		{
 			const FFlecsEntityView Viewer(Entity);
 
-			if (const FFlecsViewerPlayerComponent* PlayerComponent = Viewer.TryGet<FFlecsViewerPlayerComponent>())
+			if (const FFlecsViewerPlayerComponent* PlayerComponent
+				= Viewer.TryGetPairSecond<FFlecsViewerRelationship, FFlecsViewerPlayerComponent>())
 			{
 				const APlayerController* PlayerController = PlayerComponent->PlayerController.Get();
 				const TWeakObjectPtr<const APlayerController> PlayerControllerKey = PlayerController;
@@ -171,7 +172,7 @@ void UFlecsGatherViewersSystem::RunEachIterator(const TSolidNotNull<UFlecsWorldI
 			}
 
 			if (const FFlecsViewerStreamingSourceComponent* StreamingSourceComponent
-				= Viewer.TryGet<FFlecsViewerStreamingSourceComponent>())
+				= Viewer.TryGetPairSecond<FFlecsViewerRelationship, FFlecsViewerStreamingSourceComponent>())
 			{
 				const FName StreamingSourceName = StreamingSourceComponent->StreamingSourceName;
 				if UNLIKELY_IF(!bGatherStreamingSources
@@ -195,7 +196,8 @@ void UFlecsGatherViewersSystem::RunEachIterator(const TSolidNotNull<UFlecsWorldI
 				return;
 			}
 
-			if (const FFlecsViewerActorComponent* ActorComponent = Viewer.TryGet<FFlecsViewerActorComponent>())
+			if (const FFlecsViewerActorComponent* ActorComponent
+				= Viewer.TryGetPairSecond<FFlecsViewerRelationship, FFlecsViewerActorComponent>())
 			{
 				const AActor* Actor = ActorComponent->Actor.Get();
 				const TWeakObjectPtr<const AActor> ActorKey = Actor;
