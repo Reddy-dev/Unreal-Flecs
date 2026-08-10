@@ -89,5 +89,5 @@ TSolidNotNull<UFlecsWorld*> UFlecsAbstractWorldSubsystem::GetFlecsWorldChecked()
 	}
 	
 	solid_checkf(FlecsWorldRef.IsValid(), TEXT("FlecsWorld is not valid!"));
-	return GetFlecsWorld();
+	return FlecsWorldRef.Get();
 }
