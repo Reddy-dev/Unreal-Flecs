@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "FlecsCollectionDefinition.h"
 
+#include "Types/SolidEnumSelector.h"
+
 #include "EntityRecords//FlecsEntityRecord.h"
 #include "FlecsCollectionTypes.h"
 
@@ -116,6 +118,25 @@ public:
 		return *this;
 	}
 
+	FORCEINLINE FFlecsSubEntityCollectionBuilder& Add(const FSolidEnumSelector& InEnumSelector)
+	{
+		GetRecord().AddComponent(InEnumSelector);
+		return *this;
+	}
+
+	FORCEINLINE FFlecsSubEntityCollectionBuilder& Add(FSolidEnumSelector&& InEnumSelector)
+	{
+		GetRecord().AddComponent(MoveTemp(InEnumSelector));
+		return *this;
+	}
+
+	template <Solid::TStaticEnumConcept TEnum>
+	FORCEINLINE FFlecsSubEntityCollectionBuilder& Add(const TEnum InEnumValue)
+	{
+		GetRecord().AddComponent<TEnum>(InEnumValue);
+		return *this;
+	}
+
 	FORCEINLINE FFlecsSubEntityCollectionBuilder& Add(const FFlecsId InId)
 	{
 		GetRecord().AddComponent(InId);
@@ -138,6 +159,15 @@ public:
 	{
 		GetRecord().AddComponent(InPair);
 		return *this;
+	}
+
+	template <UE::Flecs::CNonStructUtilScriptStructType TFirst, UE::Flecs::CNonStructUtilScriptStructType TSecond>
+	FORCEINLINE FFlecsSubEntityCollectionBuilder& AddPair()
+	{
+		FFlecsRecordPair Pair;
+		Pair.First = FFlecsRecordPairSlot::Make<TFirst>();
+		Pair.Second = FFlecsRecordPairSlot::Make<TSecond>();
+		return AddPair(Pair);
 	}
 
 	FFlecsSubEntityCollectionBuilder& ReferenceCollection(const TSolidNotNull<UFlecsCollectionDataAsset*> InAsset,
@@ -227,6 +257,34 @@ public:
 		return *this;
 	}
 
+	FORCEINLINE const FFlecsCollectionBuilder& Add(const FSolidEnumSelector& InEnumSelector) const
+	{
+		solid_cassume(CollectionDefinition);
+
+		GetCollectionDefinition().Record.AddComponent(InEnumSelector);
+
+		return *this;
+	}
+
+	FORCEINLINE const FFlecsCollectionBuilder& Add(FSolidEnumSelector&& InEnumSelector) const
+	{
+		solid_cassume(CollectionDefinition);
+
+		GetCollectionDefinition().Record.AddComponent(MoveTemp(InEnumSelector));
+
+		return *this;
+	}
+
+	template <Solid::TStaticEnumConcept TEnum>
+	FORCEINLINE const FFlecsCollectionBuilder& Add(const TEnum InEnumValue) const
+	{
+		solid_cassume(CollectionDefinition);
+
+		GetCollectionDefinition().Record.AddComponent<TEnum>(InEnumValue);
+
+		return *this;
+	}
+
 	FORCEINLINE const FFlecsCollectionBuilder& Add(const FFlecsId InId) const
 	{
 		solid_cassume(CollectionDefinition);
@@ -261,6 +319,15 @@ public:
 		GetCollectionDefinition().Record.AddComponent(InPair);
 		
 		return *this;
+	}
+
+	template <UE::Flecs::CNonStructUtilScriptStructType TFirst, UE::Flecs::CNonStructUtilScriptStructType TSecond>
+	FORCEINLINE const FFlecsCollectionBuilder& AddPair() const
+	{
+		FFlecsRecordPair Pair;
+		Pair.First = FFlecsRecordPairSlot::Make<TFirst>();
+		Pair.Second = FFlecsRecordPairSlot::Make<TSecond>();
+		return AddPair(Pair);
 	}
 
 	FORCEINLINE FFlecsSubEntityCollectionBuilder BeginSubEntity(const FString& InName = FString(),
