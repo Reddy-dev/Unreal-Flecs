@@ -67,6 +67,28 @@ public:
 		ASSERT_THAT(IsFalse(TestEntity.HasCollection(CollectionPrefab)));
 	}
 
+	TEST_METHOD(InstantiateCollection_AppliesEnumAndTypedPair_BuilderAPI)
+	{
+		World()->RegisterComponentType<EFlecsTestEnum_UENUM>();
+		World()->RegisterComponentType<FUSTRUCTPairTestComponent>();
+		World()->RegisterComponentType<FUSTRUCTPairTestComponent_Second>();
+
+		const FFlecsEntityHandle CollectionPrefab = CollectionSubsystem()->RegisterCollectionBuilder([](FFlecsCollectionBuilder& Builder)
+		{
+			Builder
+				.Name("TestCollectionWithEnumAndPair")
+				.Add(EFlecsTestEnum_UENUM::Two)
+				.AddPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>();
+		});
+
+		const FFlecsEntityHandle TestEntity = World()->CreateEntity("TestEntity");
+		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
+
+		TestEntity.AddCollection(CollectionPrefab);
+		ASSERT_THAT(IsTrue(TestEntity.Has<EFlecsTestEnum_UENUM>(EFlecsTestEnum_UENUM::Two)));
+		ASSERT_THAT(IsTrue(TestEntity.HasPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>()));
+	}
+
 	TEST_METHOD(InstantiateEmptyCollection_CreatesEntityFromPrefab_ClassBuilderAPI)
 	{
 		const FFlecsEntityHandle CollectionPrefab = CollectionSubsystem()->RegisterCollectionClass(UFlecsCollectionTestClassNoInterface::StaticClass(),

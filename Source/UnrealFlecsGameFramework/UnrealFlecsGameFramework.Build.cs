@@ -17,6 +17,7 @@ public class UnrealFlecsGameFramework : ModuleRules
 				"Core",
 				"CoreUObject",
 				"Engine",
+				"SolidMacros",
 				"FlecsLibrary",
 				"UnrealFlecs",
 			}

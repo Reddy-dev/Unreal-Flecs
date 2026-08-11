@@ -8,7 +8,7 @@
 
 #include "FlecsViewerTypeComponents.generated.h"
 
-/*UENUM(BlueprintType)
+UENUM(BlueprintType)
 enum class EFlecsViewerType : uint8
 {
 	Player,
@@ -20,7 +20,7 @@ template <>
 struct TFlecsComponentTraits<EFlecsViewerType> : public TFlecsComponentTraitsBase<EFlecsViewerType>
 {
 	static constexpr bool Exclusive = true;
-}; // struct TFlecsComponentTraits<EFlecsViewerType>*/
+}; // struct TFlecsComponentTraits<EFlecsViewerType>
 
 USTRUCT(BlueprintType)
 struct UNREALFLECSGAMEFRAMEWORK_API FFlecsViewerRelationship

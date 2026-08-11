@@ -20,12 +20,9 @@ void UFlecsPlayerViewerCollection::BuildCollection(FFlecsCollectionBuilder& Buil
 	Super::BuildCollection(Builder);
 	//Builder.Add<FFlecsViewerPerspectiveComponent>();
 	
-	FFlecsRecordPair RecordPair;
-	RecordPair.First = FFlecsRecordPairSlot::Make<FFlecsViewerRelationship>();
-	RecordPair.Second = FFlecsRecordPairSlot::Make<FFlecsViewerPlayerComponent>();
-	
 	Builder
-		.AddPair(RecordPair)
+		.Add(EFlecsViewerType::Player)
+		.AddPair<FFlecsViewerRelationship, FFlecsViewerPlayerComponent>()
 		.Parameters<FFlecsViewerPlayerComponent>({},
 			[&](FFlecsEntityHandle TargetEntity, const FFlecsViewerPlayerComponent& Parameters)
 		{
@@ -42,12 +39,9 @@ void UFlecsActorViewerCollection::BuildCollection(FFlecsCollectionBuilder& Build
 {
 	Super::BuildCollection(Builder);
 	
-	FFlecsRecordPair RecordPair;
-	RecordPair.First = FFlecsRecordPairSlot::Make<FFlecsViewerRelationship>();
-	RecordPair.Second = FFlecsRecordPairSlot::Make<FFlecsViewerActorComponent>();
-	
 	Builder
-		.AddPair(RecordPair)
+		.Add(EFlecsViewerType::Actor)
+		.AddPair<FFlecsViewerRelationship, FFlecsViewerActorComponent>()
 		.Parameters<FFlecsViewerActorComponent>({},
 			[&](const FFlecsEntityHandle TargetEntity, const FFlecsViewerActorComponent& Parameters)
 		{
@@ -64,12 +58,9 @@ void UFlecsStreamSourceViewerCollection::BuildCollection(FFlecsCollectionBuilder
 {
 	Super::BuildCollection(Builder);
 	
-	FFlecsRecordPair RecordPair;
-	RecordPair.First = FFlecsRecordPairSlot::Make<FFlecsViewerRelationship>();
-	RecordPair.Second = FFlecsRecordPairSlot::Make<FFlecsViewerStreamingSourceComponent>();
-	
 	Builder
-		.AddPair(RecordPair)
+		.Add(EFlecsViewerType::StreamingSource)
+		.AddPair<FFlecsViewerRelationship, FFlecsViewerStreamingSourceComponent>()
 		.Parameters<FFlecsViewerStreamingSourceComponent>({},
 			[&](const FFlecsEntityHandle TargetEntity, const FFlecsViewerStreamingSourceComponent& Parameters)
 		{

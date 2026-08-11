@@ -141,89 +141,87 @@ void UFlecsGatherViewersSystem::RunEachIterator(const TSolidNotNull<UFlecsWorldI
 		}
 	}
 
-	if LIKELY_IF(ViewerQuery.IsValid())
+
+	ViewerQuery.iter(InIterator).each([&](flecs::entity Entity)
 	{
-		ViewerQuery.iter(InIterator).each([&](flecs::entity Entity)
+		const FFlecsEntityView Viewer(Entity);
+
+		if (const FFlecsViewerPlayerComponent* PlayerComponent
+			= Viewer.TryGetPairSecond<FFlecsViewerRelationship, FFlecsViewerPlayerComponent>())
 		{
-			const FFlecsEntityView Viewer(Entity);
+			const APlayerController* PlayerController = PlayerComponent->PlayerController.Get();
 
-			if (const FFlecsViewerPlayerComponent* PlayerComponent
-				= Viewer.TryGetPairSecond<FFlecsViewerRelationship, FFlecsViewerPlayerComponent>())
+			if UNLIKELY_IF(!bGatherPlayerControllers || !::IsValid(PlayerController)
+				|| !CurrentPlayerControllers.Contains(PlayerController))
 			{
-				const APlayerController* PlayerController = PlayerComponent->PlayerController.Get();
+				DestroyViewer(Viewer);
+				return;
+			}
 
-				if UNLIKELY_IF(!bGatherPlayerControllers || !::IsValid(PlayerController)
-					|| !CurrentPlayerControllers.Contains(PlayerController))
+			if (const FFlecsEntityView* ExistingViewer = ViewerTrackerSingleton.PCViewers.Find(PlayerController))
+			{
+				if (ExistingViewer->IsValid() && ExistingViewer->GetRawId() != Viewer.GetRawId())
 				{
 					DestroyViewer(Viewer);
 					return;
 				}
+			}
 
-				if (const FFlecsEntityView* ExistingViewer = ViewerTrackerSingleton.PCViewers.Find(PlayerController))
-				{
-					if (ExistingViewer->IsValid() && ExistingViewer->GetRawId() != Viewer.GetRawId())
-					{
-						DestroyViewer(Viewer);
-						return;
-					}
-				}
+			ViewerTrackerSingleton.PCViewers.Add(PlayerController, Viewer);
+			return;
+		}
 
-				ViewerTrackerSingleton.PCViewers.Add(PlayerController, Viewer);
+		if (const FFlecsViewerStreamingSourceComponent* StreamingSourceComponent
+			= Viewer.TryGetPairSecond<FFlecsViewerRelationship, FFlecsViewerStreamingSourceComponent>())
+		{
+			const FName StreamingSourceName = StreamingSourceComponent->StreamingSourceName;
+			if UNLIKELY_IF(!bGatherStreamingSources
+				|| StreamingSourceName.IsNone()
+				|| !CurrentStreamingSources.Contains(StreamingSourceName))
+			{
+				DestroyViewer(Viewer);
 				return;
 			}
 
-			if (const FFlecsViewerStreamingSourceComponent* StreamingSourceComponent
-				= Viewer.TryGetPairSecond<FFlecsViewerRelationship, FFlecsViewerStreamingSourceComponent>())
+			if (const FFlecsEntityView* ExistingViewer = ViewerTrackerSingleton.StreamSourceViewers.Find(StreamingSourceName))
 			{
-				const FName StreamingSourceName = StreamingSourceComponent->StreamingSourceName;
-				if UNLIKELY_IF(!bGatherStreamingSources
-					|| StreamingSourceName.IsNone()
-					|| !CurrentStreamingSources.Contains(StreamingSourceName))
+				if (ExistingViewer->IsValid() && ExistingViewer->GetRawId() != Viewer.GetRawId())
 				{
 					DestroyViewer(Viewer);
 					return;
 				}
+			}
 
-				if (const FFlecsEntityView* ExistingViewer = ViewerTrackerSingleton.StreamSourceViewers.Find(StreamingSourceName))
-				{
-					if (ExistingViewer->IsValid() && ExistingViewer->GetRawId() != Viewer.GetRawId())
-					{
-						DestroyViewer(Viewer);
-						return;
-					}
-				}
+			ViewerTrackerSingleton.StreamSourceViewers.Add(StreamingSourceName, Viewer);
+			return;
+		}
 
-				ViewerTrackerSingleton.StreamSourceViewers.Add(StreamingSourceName, Viewer);
+		if (const FFlecsViewerActorComponent* ActorComponent
+			= Viewer.TryGetPairSecond<FFlecsViewerRelationship, FFlecsViewerActorComponent>())
+		{
+			const AActor* Actor = ActorComponent->Actor.Get();
+
+			if UNLIKELY_IF(!bAllowNonPlayerViewerActors || !::IsValid(Actor))
+			{
+				DestroyViewer(Viewer);
 				return;
 			}
 
-			if (const FFlecsViewerActorComponent* ActorComponent
-				= Viewer.TryGetPairSecond<FFlecsViewerRelationship, FFlecsViewerActorComponent>())
+			if (const FFlecsEntityView* ExistingViewer = ViewerTrackerSingleton.ActorViewers.Find(Actor))
 			{
-				const AActor* Actor = ActorComponent->Actor.Get();
-
-				if UNLIKELY_IF(!bAllowNonPlayerViewerActors || !::IsValid(Actor))
+				if (ExistingViewer->IsValid() && *ExistingViewer != Viewer)
 				{
 					DestroyViewer(Viewer);
 					return;
 				}
-
-				if (const FFlecsEntityView* ExistingViewer = ViewerTrackerSingleton.ActorViewers.Find(Actor))
-				{
-					if (ExistingViewer->IsValid() && *ExistingViewer != Viewer)
-					{
-						DestroyViewer(Viewer);
-						return;
-					}
-				}
-
-				ViewerTrackerSingleton.ActorViewers.Add(Actor, Viewer);
-				return;
 			}
 
-			DestroyViewer(Viewer);
-		});
-	}
+			ViewerTrackerSingleton.ActorViewers.Add(Actor, Viewer);
+			return;
+		}
+
+		DestroyViewer(Viewer);
+	});
 
 	if (bGatherPlayerControllers)
 	{
