@@ -11,7 +11,6 @@
 
 #include "FlecsReplicationKey.generated.h"
 
-
 /** Distinguishes a standalone component key from a Flecs pair key. */
 UENUM()
 enum class EFlecsReplicationKeyKind : uint8

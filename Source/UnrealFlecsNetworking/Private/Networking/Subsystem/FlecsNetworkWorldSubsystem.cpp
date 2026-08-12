@@ -14,7 +14,6 @@
 #include "Serialization/MemoryReader.h"
 #include "Serialization/MemoryWriter.h"
 
-#include "Networking/FlecsNetRoleType.h"
 #include "Networking/FlecsNetworkIDGeneratorInterface.h"
 #include "Networking/FlecsNetworkingModuleSettings.h"
 #include "Networking/Subsystem/FlecsNetworkSubsystemSingleton.h"
@@ -241,7 +240,6 @@ FFlecsNetworkId UFlecsNetworkWorldSubsystem::BeginReplicatingEntity(const FFlecs
 	}
 	
 	InEntityHandle.Set<FFlecsNetworkId>(NetworkId);
-	InEntityHandle.Add<EFlecsNetRoleType>(EFlecsNetRoleType::Authority);
 	InEntityHandle.Add<FFlecsNetDirtyTag>();
 	
 	NetworkIdToEntityMap.Add(NetworkId, InEntityHandle);
@@ -284,7 +282,6 @@ void UFlecsNetworkWorldSubsystem::StopReplicatingEntity(const FFlecsEntityHandle
 	}
 
 	InEntityHandle.Remove<FFlecsNetworkId>();
-	InEntityHandle.Remove<EFlecsNetRoleType>();
 }
 
 void UFlecsNetworkWorldSubsystem::CreateNetworkIdGenerator()
@@ -716,8 +713,7 @@ void UFlecsNetworkWorldSubsystem::ApplyReceivedNetworkEntitySnapshot(const FFlec
 	else
 	{
 		EntityHandle = GetFlecsWorldChecked()->CreateEntity()
-			.Set<FFlecsNetworkId>(InNetworkId)
-			.Add<EFlecsNetRoleType>(EFlecsNetRoleType::SimulatedProxy);
+			.Set<FFlecsNetworkId>(InNetworkId);
 	
 		NetworkIdToEntityMap.Add(InNetworkId, EntityHandle);
 	}
