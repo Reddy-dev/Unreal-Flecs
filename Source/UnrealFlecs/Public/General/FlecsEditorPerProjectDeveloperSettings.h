@@ -25,7 +25,7 @@ public:
 
 	UPROPERTY(EditAnywhere, Config, Category = "Explorer", meta = (ClampMin = "1", UIMin = "1", UIMax = "240"))
 	uint32 InEditorExplorerFrameRate = 60;
-
+	
 	/**
 	 * @brief Override URL used to connect to the Flecs Explorer for this project. Leave empty to use the global editor setting.
 	 */
