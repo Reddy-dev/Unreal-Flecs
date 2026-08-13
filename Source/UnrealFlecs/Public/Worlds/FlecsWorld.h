@@ -47,7 +47,7 @@ public:
 	
 	virtual ~UFlecsWorld() override;
 
-	static NO_DISCARD UFlecsWorld* GetDefaultWorld(const UObject* WorldContextObject);
+	static NO_DISCARD UFlecsWorld* GetDefaultWorld(const TSolidNotNull<const UObject*> WorldContextObject);
 
 	void WorldStart();
  
