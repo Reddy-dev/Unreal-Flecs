@@ -102,10 +102,8 @@ UFlecsWorld::~UFlecsWorld()
 	FCoreUObjectDelegates::GarbageCollectComplete.RemoveAll(this);
 }
 
-UFlecsWorld* UFlecsWorld::GetDefaultWorld(const UObject* WorldContextObject)
+UFlecsWorld* UFlecsWorld::GetDefaultWorld(const TSolidNotNull<const UObject*> WorldContextObject)
 {
-	solid_cassume(WorldContextObject);
-
 	const TSolidNotNull<const UWorld*> GameWorld = GEngine->GetWorldFromContextObjectChecked(WorldContextObject);
 	
 	const TSolidNotNull<const UFlecsWorldSubsystem*> WorldSubsystem = GameWorld->GetSubsystemChecked<UFlecsWorldSubsystem>();
