@@ -57,7 +57,7 @@ void UE::Flecs::FFlecsComponentRegistrationHooks::UninstallReplicationHooks(cons
 bool UE::Flecs::FFlecsComponentRegistrationHooks::RegisterReplicatedComponent(
 	const TSolidNotNull<const UFlecsWorld*> InWorld,
 	const FFlecsReplicationComponentDefinition& InDefinition,
-	FString* OutError)
+	OUT FString* OutError)
 {
 	const FReplicationHooks& Hooks = GetReplicationHooks();
 	

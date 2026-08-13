@@ -95,7 +95,6 @@ FFlecsId FFlecsReplicationIndividualKey::ResolveToId(const TSolidNotNull<const U
 			if (const FFlecsComponentReplicationDescriptor* Descriptor = InKey.TryGetDescriptor(InWorld))
 			{
 				const FFlecsId ComponentId = Descriptor->GetLocalFlecsId();
-				solid_checkf(ComponentId.IsValid(), TEXT("Descriptor for schema '%s' has invalid component ID"), *Descriptor->SchemaId.ToString());
 				return ComponentId;
 			}
 			break;
@@ -103,7 +102,6 @@ FFlecsId FFlecsReplicationIndividualKey::ResolveToId(const TSolidNotNull<const U
 		case EFlecsReplicationPairTargetKind::StableSymbolValue:
 			{
 				const FFlecsEntityHandle EntityHandle = InWorld->LookupEntityBySymbol_Internal(InKey.StableIdentifier);
-				solid_checkf(EntityHandle.IsValid(), TEXT("Failed to resolve stable symbol '%s' to a valid entity"), *InKey.StableIdentifier);
 				
 				if (EntityHandle.IsValid())
 				{

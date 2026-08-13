@@ -5,6 +5,7 @@
 #include "Engine/World.h"
 #include "Iris/ReplicationSystem/ReplicationFragmentUtil.h"
 
+#include "Worlds/FlecsWorld.h"
 #include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 #include "Networking/Shards/FlecsNetShardBase.h"
 
@@ -21,8 +22,13 @@ UFlecsReplicationBridgeBase::~UFlecsReplicationBridgeBase()
 
 void UFlecsReplicationBridgeBase::ReceiveEntityLayout(const FFlecsReplicationLayoutDefinition& InLayoutDefinition)
 {
-	const TValueOrError<void, FString> Result =
-		GetNetworkWorldSubsystem()->GetLayoutRegistry().AddRemoteDefinition(InLayoutDefinition);
+	const TSolidNotNull<const UFlecsNetworkWorldSubsystem*> LocalNetworkWorldSubsystem = GetNetworkWorldSubsystem();
+	
+	// Not guaranteed to be valid
+	const UFlecsWorld* FlecsWorld = UFlecsWorld::GetDefaultWorld(LocalNetworkWorldSubsystem);
+	
+	const TValueOrError<bool, FString> Result =
+		GetNetworkWorldSubsystem()->GetLayoutRegistry().AddRemoteDefinition(InLayoutDefinition, FlecsWorld);
 
 	if UNLIKELY_IF(Result.HasError())
 	{

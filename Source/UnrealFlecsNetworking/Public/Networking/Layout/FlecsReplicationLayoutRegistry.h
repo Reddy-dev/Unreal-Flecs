@@ -36,15 +36,32 @@ public:
 		const FFlecsEntityHandle& Entity,
 		OUT bool& bOutCreatedNewLayout);
 	
+	NO_DISCARD bool HasDefinition(FFlecsReplicationLayoutId Id) const;
+	
 	/** Finds a previously generated or accepted layout definition. */
 	NO_DISCARD const FFlecsReplicationLayoutDefinition* Find(FFlecsReplicationLayoutId Id) const;
 	
 	/** Adds an already validated remote layout, rejecting identity collisions. */
-	TValueOrError<void, FString> AddRemoteDefinition(const FFlecsReplicationLayoutDefinition& Definition);
+	TValueOrError<bool, FString> AddRemoteDefinition(const FFlecsReplicationLayoutDefinition& Definition,
+		const UFlecsWorldInterfaceObject* World);
+	
+	NO_DISCARD bool HasPendingLayouts() const;
+	
+	void TryConsumePendingLayouts(const TSolidNotNull<const UFlecsWorldInterfaceObject*> World);
 
 private:
+	// @TODO: Handle layout invalidation when Flecs deletes a table.
 	// Layouts are currently retained even if Flecs deletes the originating table.
+	
 	TMap<const flecs::table_t*, FFlecsReplicationLayoutId> TableCache;
 	TMap<FFlecsReplicationLayoutId, FFlecsReplicationLayoutDefinition> Definitions;
+	
+	TArray<FFlecsReplicationLayoutDefinition> PendingLayouts;
+	
+	void AddPendingLayout(const FFlecsReplicationLayoutDefinition& Definition);
+	
+	NO_DISCARD bool ValidateLayoutDefinition(const FFlecsReplicationLayoutDefinition& Definition,
+		const TSolidNotNull<const UFlecsWorldInterfaceObject*> World) const;
+	
 	
 }; // class FFlecsReplicationLayoutRegistry

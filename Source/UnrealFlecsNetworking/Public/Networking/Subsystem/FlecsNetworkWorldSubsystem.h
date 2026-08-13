@@ -127,6 +127,7 @@ public:
 		return T();
 	}
 	
+	// @TODO: add a param for if the layout was deferred or not
 	void OnEntityLayoutReceived(const FFlecsReplicationLayoutDefinition& InLayout);
 	
 	void ReceiveNetworkEntitySnapshot(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot);
@@ -156,7 +157,7 @@ public:
 	void QueueReplicationSnapshot(const FFlecsNetworkId& InNetworkId,
 		const FFlecsEntityReplicationSnapshot& InSnapshot);
 	void QueueReplicationRemoval(const FFlecsNetworkId& InNetworkId, uint32 InStateRevision);
-	void ApplyQueuedReplicationUpdates();
+	void ApplyQueuedReplicationUpdates(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld);
 
 	NO_DISCARD int32 GetQueuedReplicationUpdateCount() const
 	{
@@ -165,11 +166,12 @@ public:
 
 protected:
 	
-	void ApplyReceivedNetworkEntitySnapshot(const FFlecsNetworkId& InNetworkId,
-		const FFlecsEntityReplicationSnapshot& InSnapshot);
+	void ApplyReceivedNetworkEntitySnapshot(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot);
+	
 	void ApplyReceivedNetworkEntityRemoval(const FFlecsNetworkId& InNetworkId, uint32 InStateRevision);
+	void ApplyPendingLayoutDefinitions(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld);
 	void ApplyDeferredEntityLayouts();
-
+	
 	void ApplySnapshotToEntity(const FFlecsEntityHandle& InEntityHandle, const FFlecsEntityReplicationSnapshot& InSnapshot);
 	
 	// Ran on Client
@@ -182,7 +184,6 @@ protected:
 	void CreateNetworkIdGenerator();
 	
 	TMap<FFlecsReplicationLayoutId, TArray<TPair<FFlecsEntityHandle, FFlecsEntityReplicationSnapshot>>> DeferredEntityLayouts;
-	TMap<FFlecsReplicationKey, TArray<TPair<FFlecsEntityHandle, FFlecsEntityReplicationSnapshot>>> DeferredEntitySnapshots;
 	
 	TMap<FFlecsNetworkId, FFlecsEntityHandle> NetworkIdToEntityMap;
 	

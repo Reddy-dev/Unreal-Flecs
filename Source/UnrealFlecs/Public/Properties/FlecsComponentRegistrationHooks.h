@@ -14,7 +14,7 @@ namespace UE::Flecs
 	using FFlecsReplicationComponentRegistrationFunction = bool(*)(
 		const TSolidNotNull<const UFlecsWorld*> InWorld,
 		const FFlecsReplicationComponentDefinition& InDefinition,
-		FString* OutError);
+		OUT FString* OutError);
 
 	using FFlecsReplicationComponentMarkerFunction = void(*)(const FFlecsComponentHandle& InComponent);
 
@@ -31,7 +31,7 @@ namespace UE::Flecs
 		static bool RegisterReplicatedComponent(
 			const TSolidNotNull<const UFlecsWorld*> InWorld,
 			const FFlecsReplicationComponentDefinition& InDefinition,
-			FString* OutError = nullptr);
+			OUT FString* OutError = nullptr);
 
 		static void MarkReplicatedComponent(const FFlecsComponentHandle& InComponent);
 	}; // struct FFlecsComponentRegistrationHooks

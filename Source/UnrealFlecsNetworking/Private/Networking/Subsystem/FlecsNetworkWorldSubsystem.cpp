@@ -442,7 +442,7 @@ void UFlecsNetworkWorldSubsystem::QueueReplicationRemoval(const FFlecsNetworkId&
 	ReplicationUpdateQueue.EnqueueRemoval(InNetworkId, InStateRevision);
 }
 
-void UFlecsNetworkWorldSubsystem::ApplyQueuedReplicationUpdates()
+void UFlecsNetworkWorldSubsystem::ApplyQueuedReplicationUpdates(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld)
 {
 	const TArray<FFlecsReplicationQueuedUpdate> Updates = ReplicationUpdateQueue.Drain();
 
@@ -470,6 +470,7 @@ void UFlecsNetworkWorldSubsystem::ApplyQueuedReplicationUpdates()
 		}
 	}
 
+	ApplyPendingLayoutDefinitions(InWorld);
 	ApplyDeferredEntityLayouts();
 }
 
@@ -719,7 +720,9 @@ void UFlecsNetworkWorldSubsystem::ApplyReceivedNetworkEntitySnapshot(const FFlec
 	const FFlecsReplicationLayoutDefinition* LayoutDefinition = GetLayoutRegistry().Find(InSnapshot.LayoutId);
 	if (!LayoutDefinition)
 	{
+		// @TODO: is this correct?
 		StoredSnapshot = InSnapshot;
+		
 		AddDeferredEntityLayout(EntityHandle, InSnapshot.LayoutId, InSnapshot);
 		return;
 	}
@@ -776,7 +779,7 @@ void UFlecsNetworkWorldSubsystem::ApplyReceivedNetworkEntityRemoval(const FFlecs
 
 	RemovedEntityRevisions.Add(InNetworkId, RemovalRevision);
 
-	if (FFlecsEntityHandle* EntityHandle = NetworkIdToEntityMap.Find(InNetworkId))
+	if (const FFlecsEntityHandle* EntityHandle = NetworkIdToEntityMap.Find(InNetworkId))
 	{
 		if (EntityHandle->IsValid())
 		{
@@ -804,11 +807,16 @@ void UFlecsNetworkWorldSubsystem::ApplyReceivedNetworkEntityRemoval(const FFlecs
 	}
 }
 
+void UFlecsNetworkWorldSubsystem::ApplyPendingLayoutDefinitions(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld)
+{
+	GetLayoutRegistry().TryConsumePendingLayouts(InWorld);
+}
+
 void UFlecsNetworkWorldSubsystem::ApplyDeferredEntityLayouts()
 {
 	for (auto It = DeferredEntityLayouts.CreateIterator(); It; )
 	{
-		if (!GetLayoutRegistry().Find(It.Key()))
+		if (!GetLayoutRegistry().HasDefinition(It.Key()))
 		{
 			++It;
 			continue;
@@ -832,9 +840,9 @@ void UFlecsNetworkWorldSubsystem::ApplyDeferredEntityLayouts()
 				? ReplicationSnapshots.Find(*NetworkId)
 				: nullptr;
 
-			if UNLIKELY_IF(!LatestSnapshot
-				|| LatestSnapshot->StateRevision != Snapshot.StateRevision
-				|| !(LatestSnapshot->LayoutId == Snapshot.LayoutId))
+			if UNLIKELY_IF(LatestSnapshot &&
+				(LatestSnapshot->StateRevision != Snapshot.StateRevision
+				|| !(LatestSnapshot->LayoutId == Snapshot.LayoutId)))
 			{
 				continue;
 			}
@@ -862,9 +870,11 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshotToEntity(const FFlecsEntityHandle
 	{
 		const FFlecsId ComponentId = FFlecsReplicationKey::ResolveToId(GetFlecsWorldChecked(), Key);
 		
-		if (!ComponentId.IsValid())
+		if UNLIKELY_IF(!ComponentId.IsValid())
 		{
-			DeferredEntitySnapshots.Add(Key, 
+			UE_LOG(LogFlecsWorld, Error,
+				TEXT("Cannot apply snapshot to entity %s because component ID for key '%s' is not valid"),
+				*InEntityHandle.ToString(), *Key.CanonicalString());
 			continue;
 		}
 		
@@ -893,14 +903,52 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshotToEntity(const FFlecsEntityHandle
 			continue;
 		}
 		
+		FFlecsId StorageId;
+		
+		if (ComponentId.IsPair())
+		{
+			const EFlecsReplicationKeyStorageKind StorageKind
+				= FFlecsReplicationKey::GetStorageKindForPair(GetFlecsWorldChecked(), ComponentId);
+			
+			if UNLIKELY_IF(StorageKind == EFlecsReplicationKeyStorageKind::None)
+			{
+				UE_LOG(LogFlecsWorld, Error,
+					TEXT("Cannot apply snapshot to entity %s because storage kind for pair component ID '%s' is invalid"),
+					*InEntityHandle.ToString(), *ComponentId.ToString());
+				continue;
+			}
+			
+			if (StorageKind == EFlecsReplicationKeyStorageKind::Primary)
+			{
+				StorageId = ComponentId.GetFirst();
+			}
+			else if (StorageKind == EFlecsReplicationKeyStorageKind::Secondary)
+			{
+				StorageId = ComponentId.GetSecond();
+			}
+			else UNLIKELY_ATTRIBUTE
+			{
+				UE_LOG(LogFlecsWorld, Error,
+					TEXT("Cannot apply snapshot to entity %s because storage kind for pair component ID '%s' is invalid"),
+					*InEntityHandle.ToString(), *ComponentId.ToString());
+				continue;
+			}
+		}
+		else
+		{
+			StorageId = ComponentId;
+		}
+		
 		const FFlecsComponentReplicationDescriptor* Descriptor =
-			FFlecsComponentReplicationRegistry::Get(GetFlecsWorldChecked()).Find(ComponentId);
+			FFlecsComponentReplicationRegistry::Get(GetFlecsWorldChecked()).Find(StorageId);
+		
 		if UNLIKELY_IF(!Descriptor || !Descriptor->GetDeserializeFunction()
 			|| !Descriptor->GetConstructFunction() || !Descriptor->GetDestroyFunction())
 		{
 			UE_LOG(LogFlecsWorld, Error,
 				TEXT("Cannot deserialize snapshot value for entity %s and component key '%s'"),
 				*InEntityHandle.ToString(), *Key.CanonicalString());
+			
 			continue;
 		}
 
@@ -910,6 +958,7 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshotToEntity(const FFlecsEntityHandle
 			UE_LOG(LogFlecsWorld, Error,
 				TEXT("Cannot allocate snapshot value for entity %s and component key '%s'"),
 				*InEntityHandle.ToString(), *Key.CanonicalString());
+			
 			continue;
 		}
 
@@ -917,18 +966,22 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshotToEntity(const FFlecsEntityHandle
 
 		FMemoryReader Reader(Value.Bytes, true);
 		const bool bDeserialized = Descriptor->GetDeserializeFunction()(Reader, ComponentData);
+		
 		if UNLIKELY_IF(!bDeserialized || Reader.IsError())
 		{
 			UE_LOG(LogFlecsWorld, Error,
 				TEXT("Cannot deserialize snapshot value for entity %s and component key '%s'"),
 				*InEntityHandle.ToString(), *Key.CanonicalString());
+			
 			Descriptor->GetDestroyFunction()(ComponentData);
 			FMemory::Free(ComponentData);
+			
 			continue;
 		}
 
 		InEntityHandle.Set(ComponentId, Descriptor->GetSize(), ComponentData);
 		Descriptor->GetDestroyFunction()(ComponentData);
+		
 		FMemory::Free(ComponentData);
 	}
 }

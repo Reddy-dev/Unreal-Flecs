@@ -202,6 +202,13 @@ bool FFlecsComponentReplicationRegistry::Register(const FFlecsComponentReplicati
 
 const FFlecsComponentReplicationDescriptor* FFlecsComponentReplicationRegistry::Find(const FFlecsId LocalId) const
 {
+	if UNLIKELY_IF(!LocalId.IsValid())
+	{
+		UE_LOGFMT(LogFlecsWorld, Warning, 
+			"Invalid Flecs ID provided for component replication descriptor lookup in world");
+		return nullptr;
+	}
+	
 	return ByLocalId.Find(LocalId);
 }
 

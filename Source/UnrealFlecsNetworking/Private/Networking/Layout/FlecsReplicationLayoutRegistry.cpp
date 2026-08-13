@@ -160,12 +160,18 @@ TValueOrError<const FFlecsReplicationLayoutDefinition*, FString> FFlecsReplicati
 	return MakeValue(Definitions.Find(Id));
 }
 
+bool FFlecsReplicationLayoutRegistry::HasDefinition(FFlecsReplicationLayoutId Id) const
+{
+	return Definitions.Contains(Id);
+}
+
 const FFlecsReplicationLayoutDefinition* FFlecsReplicationLayoutRegistry::Find(const FFlecsReplicationLayoutId Id) const
 {
 	return Definitions.Find(Id);
 }
 
-TValueOrError<void, FString> FFlecsReplicationLayoutRegistry::AddRemoteDefinition(const FFlecsReplicationLayoutDefinition& Definition)
+TValueOrError<bool, FString> FFlecsReplicationLayoutRegistry::AddRemoteDefinition(
+	const FFlecsReplicationLayoutDefinition& Definition, const UFlecsWorldInterfaceObject* World)
 {
 	if (!Definition.LayoutId.IsValid() || ComputeLayoutId(Definition.Keys) != Definition.LayoutId)
 	{
@@ -179,9 +185,65 @@ TValueOrError<void, FString> FFlecsReplicationLayoutRegistry::AddRemoteDefinitio
 			return MakeError("Received replication layout collides with an existing definition");
 		}
 		
-		return MakeValue();
+		return MakeValue(false);
+	}
+	
+	// Not guaranteed to be valid
+	if (!World)
+	{
+		UE_LOGFMT(LogFlecsCore, Warning,
+			"Cannot add remote replication layout definition {LayoutId} without a valid world",
+			*Definition.LayoutId.ToString());
+		AddPendingLayout(Definition);
+		return MakeValue(false);
+	}
+	
+	if (!ValidateLayoutDefinition(Definition, World))
+	{
+		AddPendingLayout(Definition);
+		return MakeValue(false);
 	}
 	
 	Definitions.Add(Definition.LayoutId, Definition);
-	return MakeValue();
+	return MakeValue(true);
+}
+
+bool FFlecsReplicationLayoutRegistry::HasPendingLayouts() const
+{
+	return !PendingLayouts.IsEmpty();
+}
+
+void FFlecsReplicationLayoutRegistry::TryConsumePendingLayouts(const TSolidNotNull<const UFlecsWorldInterfaceObject*> World)
+{
+	for (int32 Index = PendingLayouts.Num() - 1; Index >= 0; --Index)
+	{
+		const FFlecsReplicationLayoutDefinition& Definition = PendingLayouts[Index];
+		
+		if (ValidateLayoutDefinition(Definition, World))
+		{
+			Definitions.Add(Definition.LayoutId, Definition);
+			PendingLayouts.RemoveAtSwap(Index);
+		}
+	}
+}
+
+void FFlecsReplicationLayoutRegistry::AddPendingLayout(const FFlecsReplicationLayoutDefinition& Definition)
+{
+	PendingLayouts.Add(Definition);
+}
+
+bool FFlecsReplicationLayoutRegistry::ValidateLayoutDefinition(const FFlecsReplicationLayoutDefinition& Definition,
+                                                               const TSolidNotNull<const UFlecsWorldInterfaceObject*> World) const
+{
+	// Validate if all the sources, pairs, etc have been received or not
+	for (const FFlecsReplicationKey& Key : Definition.Keys)
+	{
+		const FFlecsId ResolvedId = FFlecsReplicationKey::ResolveToId(World, Key);
+		if (!ResolvedId.IsValid())
+		{
+			return false;
+		}
+	}
+
+	return true;
 }

@@ -697,7 +697,7 @@ NETWORK_TEST_CLASS(FlecsReplicationAdditionalRealBridgeNetworkTests,
 				UFlecsNetworkWorldSubsystem* NetworkSubsystem =
 					State.World->GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
 				NetworkSubsystem->ReceiveNetworkEntitySnapshot(OldNetworkId, OldSnapshot);
-				NetworkSubsystem->ApplyQueuedReplicationUpdates();
+				NetworkSubsystem->ApplyQueuedReplicationUpdates(State.FlecsWorld);
 
 				const FFlecsEntityHandle OldEntity = UE::Flecs::Tests::MissingNetwork::FindNetworkEntity(
 					State.FlecsWorld, OldNetworkId);
