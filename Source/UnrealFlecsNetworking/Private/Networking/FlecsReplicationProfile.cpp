@@ -5,4 +5,5 @@
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsReplicationProfile)
 
 REGISTER_FLECS_COMPONENT(FFlecsReplicationProfile);
+REGISTER_FLECS_COMPONENT(FFlecsReplicationProfileCullDistance);
 REGISTER_FLECS_COMPONENT(FFlecsReplicationProfileTag);

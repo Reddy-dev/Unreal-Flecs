@@ -38,9 +38,6 @@ void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UF
 	Super::OnFlecsWorldInitialized(InWorld);
 	
 	InWorld->Set<FFlecsNetworkSubsystemSingleton>(FFlecsNetworkSubsystemSingleton{ this });
-	
-	InWorld->RegisterComponentType<FFlecsReplicationProfile>();
-	InWorld->RegisterComponentType<FFlecsReplicationProfileTag>();
 
 	RegisterReplicationShardSelector(
 		FName(TEXT("Proxy")),
@@ -478,9 +475,8 @@ void UFlecsNetworkWorldSubsystem::ApplyQueuedReplicationUpdates()
 
 FFlecsEntityHandle UFlecsNetworkWorldSubsystem::RegisterReplicationProfileAsset(const UFlecsReplicationProfileDataAsset* InAsset)
 {
-	if UNLIKELY_IF(!InAsset)
+	if UNLIKELY_IF(!ensureAlwaysMsgf(InAsset, TEXT("Flecs replication profile asset is null")))
 	{
-		UE_LOG(LogFlecsWorld, Error, TEXT("Cannot register a null Flecs replication profile asset"));
 		return FFlecsEntityHandle();
 	}
 
@@ -492,9 +488,8 @@ FFlecsEntityHandle UFlecsNetworkWorldSubsystem::RegisterReplicationProfileAsset(
 FFlecsEntityHandle UFlecsNetworkWorldSubsystem::RegisterReplicationProfileDefinition(
 	const FName InName, const FFlecsReplicationProfile& InDefinition)
 {
-	if UNLIKELY_IF(InName.IsNone())
+	if UNLIKELY_IF(!ensureAlwaysMsgf(!InName.IsNone(), TEXT("Flecs replication profile name is invalid")))
 	{
-		UE_LOG(LogFlecsWorld, Error, TEXT("Cannot register a Flecs replication profile without a name"));
 		return FFlecsEntityHandle();
 	}
 
@@ -563,6 +558,7 @@ bool UFlecsNetworkWorldSubsystem::SetReplicationProfile(const FFlecsEntityHandle
 	}
 
 	InEntity.AddPrefab(InProfilePrefab.GetFlecsId());
+	
 	if (FFlecsReplicatedEntityComponent* ReplicatedEntity = InEntity.TryGetMut<FFlecsReplicatedEntityComponent>())
 	{
 		ReplicatedEntity->ProfileId = ProfileId;

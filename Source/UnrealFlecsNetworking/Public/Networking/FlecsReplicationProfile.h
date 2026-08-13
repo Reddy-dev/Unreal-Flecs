@@ -43,6 +43,34 @@ struct TFlecsComponentTraits<FFlecsReplicationProfile> : public TFlecsComponentT
 	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::Inherit;
 }; // struct TFlecsComponentTraits<FFlecsReplicationProfile>
 
+USTRUCT(BlueprintType)
+struct UNREALFLECSNETWORKING_API FFlecsReplicationProfileCullDistance
+{
+	GENERATED_BODY()
+	
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication")
+	float CullDistance = 0.f;
+
+	NO_DISCARD bool operator==(const FFlecsReplicationProfileCullDistance& Other) const
+	{
+		return CullDistance == Other.CullDistance;
+	}
+
+	NO_DISCARD bool operator!=(const FFlecsReplicationProfileCullDistance& Other) const
+	{
+		return !(*this == Other);
+	}
+	
+}; // struct FFlecsReplicationProfileCullDistance
+
+template <>
+struct TFlecsComponentTraits<FFlecsReplicationProfileCullDistance> : public TFlecsComponentTraitsBase<FFlecsReplicationProfileCullDistance>
+{
+	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::Inherit;
+}; // struct TFlecsComponentTraits<FFlecsReplicationProfileCullDistance>
+
 /** Identifies a Flecs entity as a replication profile prefab. */
 USTRUCT(BlueprintType)
 struct UNREALFLECSNETWORKING_API FFlecsReplicationProfileTag

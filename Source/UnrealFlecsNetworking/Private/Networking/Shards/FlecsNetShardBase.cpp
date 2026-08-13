@@ -178,6 +178,11 @@ void UFlecsNetShardBase::SetOwningNetworkWorldSubsystem(UFlecsNetworkWorldSubsys
 	FlushPendingReplicationUpdates();
 }
 
+TOptional<UNetObjectFactory::FWorldInfoData> UFlecsNetShardBase::GetWorldInfoData() const
+{
+	return TOptional<UNetObjectFactory::FWorldInfoData>();
+}
+
 void UFlecsNetShardBase::SetOwningWorld(const TSolidNotNull<UWorld*> InOwningWorld)
 {
 	OwningWorld = InOwningWorld;

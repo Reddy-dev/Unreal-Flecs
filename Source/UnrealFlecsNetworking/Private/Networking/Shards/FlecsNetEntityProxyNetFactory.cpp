@@ -58,3 +58,19 @@ void UFlecsNetEntityProxyNetFactory::DetachedFromReplication(const FDetachContex
 
 	Super::DetachedFromReplication(Context, SubObjectContext);
 }
+
+TOptional<UNetObjectFactory::FWorldInfoData> UFlecsNetEntityProxyNetFactory::GetWorldInfo(
+	const FWorldInfoContext& Context) const
+{
+	const UFlecsNetEntityProxy* Proxy = Cast<UFlecsNetEntityProxy>(Context.Instance);
+	
+	if UNLIKELY_IF(!Proxy)
+	{
+		UE_LOG(LogNet, Warning, 
+			TEXT("UFlecsNetEntityProxyNetFactory::GetWorldInfo: GetWorldInfo called on a non-UFlecsNetEntityProxy instance"));
+		return TOptional<FWorldInfoData>();
+	}
+	
+	TOptional<UNetObjectFactory::FWorldInfoData> WorldInfoData = Proxy->GetWorldInfoData();
+	return WorldInfoData;
+}

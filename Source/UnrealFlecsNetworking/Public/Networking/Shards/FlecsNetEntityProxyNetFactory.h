@@ -25,5 +25,7 @@ protected:
 	virtual void DetachedFromReplication(
 		const FDetachContext& Context,
 		const TOptional<FSubObjectDetachContext>& SubObjectContext) override;
+	
+	virtual TOptional<FWorldInfoData> GetWorldInfo(const FWorldInfoContext& Context) const override;
 
 }; // class UFlecsNetEntityProxyNetFactory

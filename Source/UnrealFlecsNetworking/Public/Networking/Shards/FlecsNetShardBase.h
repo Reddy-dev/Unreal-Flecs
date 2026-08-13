@@ -80,6 +80,8 @@ public:
 	/** Whether the physical shard contains no replicated entities. */
 	virtual bool IsEmpty() const
 		PURE_VIRTUAL(UFlecsNetShardBase::IsEmpty, return true;);
+	
+	virtual NO_DISCARD TOptional<UNetObjectFactory::FWorldInfoData> GetWorldInfoData() const;
 
 	/** Assigns the local world even when this dynamic Iris root has a transient outer. */
 	void SetOwningWorld(const TSolidNotNull<UWorld*> InOwningWorld);
