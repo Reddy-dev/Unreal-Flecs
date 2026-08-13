@@ -23,6 +23,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(DefaultFlecsNetworkIdGeneratorTests,
 		ASSERT_THAT(IsTrue(FirstId.IsValid()));
 		ASSERT_THAT(IsTrue(SecondId.IsValid()));
 		ASSERT_THAT(IsTrue(ThirdId.IsValid()));
+		
 		ASSERT_THAT(AreEqual(static_cast<uint32>(0), FirstId.GetSlot()));
 		ASSERT_THAT(AreEqual(static_cast<uint32>(1), SecondId.GetSlot()));
 		ASSERT_THAT(AreEqual(static_cast<uint32>(2), ThirdId.GetSlot()));
@@ -42,6 +43,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(DefaultFlecsNetworkIdGeneratorTests,
 
 		ASSERT_THAT(AreEqual(ReleasedId.GetSlot(), ReusedId.GetSlot()));
 		ASSERT_THAT(AreEqual(ReleasedId.GetGeneration() + 1, ReusedId.GetGeneration()));
+		
 		ASSERT_THAT(IsFalse(ReleasedId == ReusedId));
 	}
 
@@ -75,6 +77,8 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(DefaultFlecsNetworkIdGeneratorTests,
 	TEST_METHOD(ResetNetworkIdGenerator_PreviousStateIsCleared)
 	{
 		UDefaultFlecsNetworkIdGenerator* Generator = NewObject<UDefaultFlecsNetworkIdGenerator>();
+		ASSERT_THAT(IsTrue(IsValid(Generator)));
+		
 		const FFlecsNetworkId FirstId = Generator->GenerateNetworkId();
 		const FFlecsNetworkId ReleasedId = Generator->GenerateNetworkId();
 		Generator->ReleaseNetworkId(ReleasedId);

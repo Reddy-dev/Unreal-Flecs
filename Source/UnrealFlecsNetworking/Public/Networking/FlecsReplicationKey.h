@@ -46,7 +46,7 @@ struct UNREALFLECSNETWORKING_API FFlecsReplicationIndividualKey
 	FString StableIdentifier;
 	
 	UPROPERTY()
-	FFlecsNetworkId Entity;
+	FFlecsNetworkId EntityNetworkId;
 	
 	FORCEINLINE friend bool operator==(const FFlecsReplicationIndividualKey&, const FFlecsReplicationIndividualKey&) = default;
 	
@@ -66,7 +66,7 @@ struct UNREALFLECSNETWORKING_API FFlecsReplicationIndividualKey
 				Hash = HashCombine(Hash, GetTypeHash(Key.StableIdentifier));
 				break;
 			case EFlecsReplicationPairTargetKind::Entity:
-				Hash = HashCombine(Hash, GetTypeHash(Key.Entity));
+				Hash = HashCombine(Hash, GetTypeHash(Key.EntityNetworkId));
 				break;
 		}
 		

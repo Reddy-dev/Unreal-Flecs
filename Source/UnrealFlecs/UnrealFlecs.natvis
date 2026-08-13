@@ -9,6 +9,16 @@
         <DisplayString>
             Id={this->GetIndex()} Generation={this->GetGeneration()} RawId={this->GetId()}
         </DisplayString>
+
+        <Expand>
+            <Item Name="IsValid">this->IsValid()</Item>
+            <Item Name="IsPair">this->IsPair()</Item>
+            <Item Name="RawId">this->GetId()</Item>
+            <Item Name="Index" Condition="!this->IsPair()">this->GetIndex()</Item>
+            <Item Name="Generation" Condition="!this->IsPair()">this->GetGeneration()</Item>
+            <Item Name="Relation" Condition="this->IsPair()">this->GetRelation()</Item>
+            <Item Name="Target" Condition="this->IsPair()">this->GetTarget()</Item>
+        </Expand>
         
     </Type>
 

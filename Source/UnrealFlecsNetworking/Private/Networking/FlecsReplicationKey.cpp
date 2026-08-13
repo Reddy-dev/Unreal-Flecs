@@ -24,7 +24,7 @@ FString FFlecsReplicationIndividualKey::CanonicalString() const
 			Result = StableIdentifier;
 			break;
 		case EFlecsReplicationPairTargetKind::Entity:
-			Result = Entity.GetValue() != 0 ? FString::Printf(TEXT("%llu"), Entity.GetValue()) : FString();
+			Result = EntityNetworkId.GetValue() != 0 ? FString::Printf(TEXT("%llu"), EntityNetworkId.GetValue()) : FString();
 			break;
 	}
 	
@@ -69,7 +69,7 @@ TValueOrError<FFlecsReplicationIndividualKey, FString> FFlecsReplicationIndividu
 	if (const FFlecsNetworkId* NetworkIdComponent = IdEntityHandle.TryGet<FFlecsNetworkId>())
 	{
 		Result.Kind = EFlecsReplicationPairTargetKind::Entity;
-		Result.Entity = *NetworkIdComponent;
+		Result.EntityNetworkId = *NetworkIdComponent;
 	}
 	else if (IdEntityHandle.HasSymbol())
 	{
@@ -94,13 +94,17 @@ FFlecsId FFlecsReplicationIndividualKey::ResolveToId(const TSolidNotNull<const U
 		{
 			if (const FFlecsComponentReplicationDescriptor* Descriptor = InKey.TryGetDescriptor(InWorld))
 			{
-				return Descriptor->LocalFlecsId;
+				const FFlecsId ComponentId = Descriptor->GetLocalFlecsId();
+				solid_checkf(ComponentId.IsValid(), TEXT("Descriptor for schema '%s' has invalid component ID"), *Descriptor->SchemaId.ToString());
+				return ComponentId;
 			}
 			break;
 		}
 		case EFlecsReplicationPairTargetKind::StableSymbolValue:
 			{
 				const FFlecsEntityHandle EntityHandle = InWorld->LookupEntityBySymbol_Internal(InKey.StableIdentifier);
+				solid_checkf(EntityHandle.IsValid(), TEXT("Failed to resolve stable symbol '%s' to a valid entity"), *InKey.StableIdentifier);
+				
 				if (EntityHandle.IsValid())
 				{
 					return EntityHandle;
@@ -122,7 +126,7 @@ FFlecsId FFlecsReplicationIndividualKey::ResolveToId(const TSolidNotNull<const U
 			const TSolidNotNull<UFlecsNetworkWorldSubsystem*> NetworkSubsystem 
 					= InWorld->Get<FFlecsNetworkSubsystemSingleton>().GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
 				
-			const TOptional<FFlecsEntityHandle> EntityHandle = NetworkSubsystem->GetEntityFromNetworkId(InKey.Entity);
+			const TOptional<FFlecsEntityHandle> EntityHandle = NetworkSubsystem->GetEntityFromNetworkId(InKey.EntityNetworkId);
 			if LIKELY_IF(IsValid(EntityHandle))
 			{
 				return EntityHandle.GetValue();

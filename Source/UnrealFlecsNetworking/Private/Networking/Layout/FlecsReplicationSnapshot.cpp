@@ -45,6 +45,30 @@ void FFlecsEntityReplicationSnapshot::FillFromEntity(const FFlecsEntityHandle& I
 			continue;
 		}
 		
+#if DO_CHECK
+		
+		if (ComponentId.IsPair())
+		{
+			const FFlecsId FirstId = ComponentId.GetFirst();
+			const FFlecsId SecondId = ComponentId.GetSecond();
+			
+			solid_checkf(World->IsAlive(FirstId), 
+				TEXT("Component ID %s is not alive when filling snapshot for entity %s."), 
+				*FirstId.ToString(), *InEntityHandle.ToString());
+			
+			solid_checkf(World->IsAlive(SecondId), 
+				TEXT("Component ID %s is not alive when filling snapshot for entity %s."), 
+				*SecondId.ToString(), *InEntityHandle.ToString());
+		}
+		else
+		{
+			solid_checkf(World->IsAlive(ComponentId), 
+				TEXT("Component ID %s is not alive when filling snapshot for entity %s."), 
+				*ComponentId.ToString(), *InEntityHandle.ToString());
+		}
+		
+#endif // DO_CHECK
+		
 		FFlecsReplicatedValue Value;
 		Value.KeyIndex = Index;
 		
@@ -53,7 +77,16 @@ void FFlecsEntityReplicationSnapshot::FillFromEntity(const FFlecsEntityHandle& I
 			continue;
 		}
 		
-		const TSolidNotNull<const FFlecsComponentReplicationDescriptor*> Descriptor = ComponentRegistry.Find(ComponentId);
+		const ecs_type_info_t* ValueTypeInfo = ComponentId.GetTypeInfo(World);
+		solid_cassume(ValueTypeInfo);
+		
+		const FFlecsId ValueId = FFlecsId(ValueTypeInfo->component);
+		solid_check(ValueId.IsValid());
+		solid_checkf(ComponentRegistry.Find(ValueId), 
+			TEXT("Component ID %s does not have a replication descriptor when filling snapshot for entity %s."), 
+			*ValueId.ToString(), *InEntityHandle.ToString());
+		
+		const TSolidNotNull<const FFlecsComponentReplicationDescriptor*> Descriptor = ComponentRegistry.Find(ValueId);
 		
 		const void* ComponentValuePtr = InEntityHandle.TryGet(ComponentId);
 		if UNLIKELY_IF(!ComponentValuePtr)
@@ -67,7 +100,9 @@ void FFlecsEntityReplicationSnapshot::FillFromEntity(const FFlecsEntityHandle& I
 		Value.Bytes.Reset();
 		FMemoryWriter Writer(Value.Bytes, true);
 		
-		if UNLIKELY_IF(!Descriptor->GetSerializeFunction()(Writer, const_cast<void*>(ComponentValuePtr)) || Writer.IsError())
+		const bool bSerializeSuccess = Descriptor->GetSerializeFunction()(Writer, const_cast<void*>(ComponentValuePtr));
+		
+		if (!bSerializeSuccess || Writer.IsError())
 		{
 			UE_LOGFMT(LogFlecsCore, Error,
 					"Failed to serialize component ID {ComponentId}.",
