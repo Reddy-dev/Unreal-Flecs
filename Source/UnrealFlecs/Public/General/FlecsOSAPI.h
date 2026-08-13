@@ -11,6 +11,7 @@
 
 #include "Async/TaskGraphInterfaces.h"
 #include "Experimental/Async/ConditionVariable.h"
+#include "Tasks/Task.h"
 
 #include "HAL/Runnable.h"
 #include "HAL/RunnableThread.h"
@@ -19,7 +20,6 @@
 #include "Types/SolidNotNull.h"
 
 #include "Logs/FlecsCategories.h"
-#include "Tasks/Task.h"
 
 DECLARE_STATS_GROUP(TEXT("FlecsOS"), STATGROUP_FlecsOS, STATCAT_Advanced);
 DECLARE_CYCLE_STAT(TEXT("FlecsOS::TaskThread"), STAT_FlecsOS, STATGROUP_FlecsOS);
