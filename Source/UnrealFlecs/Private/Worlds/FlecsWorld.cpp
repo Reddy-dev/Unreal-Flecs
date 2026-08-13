@@ -885,16 +885,6 @@ FFlecsQuery UFlecsWorld::GetQueryFromEntity(const FFlecsEntityHandle& InEntity) 
 }
 */
 
-bool UFlecsWorld::IsSupportedForNetworking() const
-{
-	return false;
-}
-
-void UFlecsWorld::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-}
-
 void UFlecsWorld::ShrinkWorld() const
 {
 	GetNativeFlecsWorld().shrink();

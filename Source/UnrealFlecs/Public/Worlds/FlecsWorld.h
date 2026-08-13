@@ -267,11 +267,7 @@ public:
 	
 	/*UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
 	FFlecsQuery GetQueryFromEntity(const FFlecsEntityHandle& InEntity) const;*/
-
-	virtual bool IsSupportedForNetworking() const override;
-
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
+	
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
 	void ShrinkWorld() const;
 
