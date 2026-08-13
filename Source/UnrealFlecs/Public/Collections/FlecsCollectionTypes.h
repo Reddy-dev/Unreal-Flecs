@@ -120,6 +120,7 @@ template <>
 struct TFlecsComponentTraits<FFlecsCollectionReferenceComponent> : public TFlecsComponentTraitsBase<FFlecsCollectionReferenceComponent>
 {
 	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::DontInherit;
+	
 	static constexpr bool Sparse = true;
 }; // struct TFlecsComponentTraits<FFlecsCollectionReferenceComponent>
 
