@@ -862,11 +862,9 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshotToEntity(const FFlecsEntityHandle
 	{
 		const FFlecsId ComponentId = FFlecsReplicationKey::ResolveToId(GetFlecsWorldChecked(), Key);
 		
-		if UNLIKELY_IF(!ComponentId.IsValid())
+		if (!ComponentId.IsValid())
 		{
-			UE_LOG(LogFlecsWorld, Error,
-				TEXT("Cannot apply snapshot to entity %s because component ID for key '%s' is not valid"),
-				*InEntityHandle.ToString(), *Key.CanonicalString());
+			DeferredEntitySnapshots.Add(Key, 
 			continue;
 		}
 		

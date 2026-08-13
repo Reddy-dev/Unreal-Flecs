@@ -182,7 +182,7 @@ protected:
 	void CreateNetworkIdGenerator();
 	
 	TMap<FFlecsReplicationLayoutId, TArray<TPair<FFlecsEntityHandle, FFlecsEntityReplicationSnapshot>>> DeferredEntityLayouts;
-	//TMap<FFlecsReplicationKey, TArray<TPair<FFlecsEntityHandle, FFlecsEntityReplicationSnapshot>>> DeferredEntitySnapshots;
+	TMap<FFlecsReplicationKey, TArray<TPair<FFlecsEntityHandle, FFlecsEntityReplicationSnapshot>>> DeferredEntitySnapshots;
 	
 	TMap<FFlecsNetworkId, FFlecsEntityHandle> NetworkIdToEntityMap;
 	
