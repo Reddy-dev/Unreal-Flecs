@@ -17,6 +17,7 @@ class UNREALFLECSNETWORKING_API UFlecsNetEntityTable : public UFlecsNetShardBase
 
 public:
 	virtual void PostInitProperties() override;
+	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void ConfigureObjectSettings(OUT UE::Net::FRootObjectSettings& OutSettings) const override;
 

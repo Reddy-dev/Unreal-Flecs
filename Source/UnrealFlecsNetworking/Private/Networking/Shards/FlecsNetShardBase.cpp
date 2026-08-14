@@ -296,7 +296,8 @@ void UFlecsNetShardBase::ReceiveEntityRemoval(const FFlecsNetworkId& InNetworkId
 
 	ResolveOwningNetworkWorldSubsystem();
 	UFlecsNetworkWorldSubsystem* NetworkSubsystem = GetOwningNetworkWorldSubsystem();
-	if UNLIKELY_IF(!NetworkSubsystem)
+	
+	if (!NetworkSubsystem)
 	{
 		PendingReplicationUpdateQueue.EnqueueRemoval(InNetworkId, InStateRevision);
 		return;

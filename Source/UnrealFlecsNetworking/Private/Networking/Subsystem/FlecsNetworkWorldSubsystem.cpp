@@ -30,7 +30,6 @@ void UFlecsNetworkWorldSubsystem::Initialize(FSubsystemCollectionBase& Collectio
 {
 	Super::Initialize(Collection);
 	
-	
 }
 
 void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UFlecsWorld*> InWorld)
@@ -58,9 +57,8 @@ void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UF
 			OutSelection.ShardGroupKey = FName(TEXT("Default"));
 			return true;
 		});
-
-	TFlecsObserverBuilder<> ProfileObserverBuilder = GetFlecsWorldChecked()->CreateObserver();
-	const FFlecsObserverHandle ProfileObserverHandle = ProfileObserverBuilder
+	
+	const FFlecsObserverHandle ProfileObserverHandle = GetFlecsWorldChecked()->CreateObserver()
 		.WithPair(flecs::IsA, flecs::Wildcard)
 		.With<FFlecsReplicatedEntityComponent>().Filter()
 		.Event(flecs::OnAdd)
@@ -190,23 +188,14 @@ void UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver(const
 
 FFlecsNetworkId UFlecsNetworkWorldSubsystem::BeginReplicatingEntity(const FFlecsEntityHandle& InEntityHandle)
 {
-	if UNLIKELY_IF(!ensureAlwaysMsgf(InEntityHandle.IsValid(), TEXT("Entity handle is not valid")))
-	{
-		return FFlecsNetworkId();
-	}
-	
-	if UNLIKELY_IF(!HasAuthority())
-	{
-		UE_LOG(LogFlecsWorld, Error, 
-			TEXT("Cannot begin replicating entity %s without authority"), *InEntityHandle.ToString());
-		return FFlecsNetworkId();
-	}
+	solid_checkf(InEntityHandle.IsValid(), TEXT("Cannot begin replicating an invalid entity handle"));
+	solid_checkf(HasAuthority(), TEXT("Cannot begin replicating entity %s without authority"), *InEntityHandle.ToString());
 	
 	const FFlecsNetworkId* ExistingNetworkId = InEntityHandle.TryGet<FFlecsNetworkId>();
 	
-	if UNLIKELY_IF(ExistingNetworkId && ExistingNetworkId->IsValid())
+	if (ExistingNetworkId && ExistingNetworkId->IsValid())
 	{
-		UE_LOG(LogFlecsWorld, Error, 
+		UE_LOG(LogFlecsWorld, Warning, 
 			TEXT("Entity %s is already replicating with network ID '%s'"), 
 			*InEntityHandle.ToString(), *ExistingNetworkId->ToString());
 		
@@ -476,10 +465,7 @@ void UFlecsNetworkWorldSubsystem::ApplyQueuedReplicationUpdates(const TSolidNotN
 
 FFlecsEntityHandle UFlecsNetworkWorldSubsystem::RegisterReplicationProfileAsset(const UFlecsReplicationProfileDataAsset* InAsset)
 {
-	if UNLIKELY_IF(!ensureAlwaysMsgf(InAsset, TEXT("Flecs replication profile asset is null")))
-	{
-		return FFlecsEntityHandle();
-	}
+	solid_cassumef(InAsset, TEXT("Flecs replication profile asset is nullptr"));
 
 	const FName ProfileName = InAsset->ProfileName.IsNone() ? InAsset->GetFName() : InAsset->ProfileName;
 
@@ -489,10 +475,7 @@ FFlecsEntityHandle UFlecsNetworkWorldSubsystem::RegisterReplicationProfileAsset(
 FFlecsEntityHandle UFlecsNetworkWorldSubsystem::RegisterReplicationProfileDefinition(
 	const FName InName, const FFlecsReplicationProfile& InDefinition)
 {
-	if UNLIKELY_IF(!ensureAlwaysMsgf(!InName.IsNone(), TEXT("Flecs replication profile name is invalid")))
-	{
-		return FFlecsEntityHandle();
-	}
+	solid_checkf(!InName.IsNone(), TEXT("Flecs replication profile name is invalid"));
 
 	if (const FFlecsEntityHandle* ExistingPrefab = ReplicationProfilePrefabs.Find(InName))
 	{
@@ -520,20 +503,21 @@ FFlecsEntityHandle UFlecsNetworkWorldSubsystem::GetReplicationProfilePrefab(cons
 bool UFlecsNetworkWorldSubsystem::SetReplicationProfile(const FFlecsEntityHandle& InEntity,
 	const FFlecsEntityHandle& InProfilePrefab)
 {
-	if UNLIKELY_IF(!InEntity.IsValid() || !InProfilePrefab.IsValid())
+	solid_checkf(InEntity.IsValid(), TEXT("Cannot set replication profile for an invalid entity handle"));
+	solid_checkf(InProfilePrefab.IsValid(), TEXT("Cannot set replication profile from an invalid profile prefab handle"));
+	
+	solid_checkf(InProfilePrefab.IsPrefab(), TEXT("Cannot set replication profile from an entity that is not a prefab"));
+	
+	if (!HasAuthority())
 	{
-		return false;
-	}
-
-	if UNLIKELY_IF(!InProfilePrefab.IsPrefab() || !InProfilePrefab.Has<FFlecsReplicationProfileTag>()
-		|| !InProfilePrefab.Has<FFlecsReplicationProfile>())
-	{
-		UE_LOG(LogFlecsWorld, Error,
-			TEXT("Cannot assign a Flecs replication profile from an entity that is not a registered profile prefab"));
+		UE_LOGFMT(LogFlecsWorld, Error,
+			"Cannot set replication profile for entity %s without authority",
+			*InEntity.ToString());
 		return false;
 	}
 
 	FName ProfileId = NAME_None;
+	
 	for (const TTuple<FName, FFlecsEntityHandle>& Pair : ReplicationProfilePrefabs)
 	{
 		if (Pair.Value == InProfilePrefab)
@@ -543,12 +527,7 @@ bool UFlecsNetworkWorldSubsystem::SetReplicationProfile(const FFlecsEntityHandle
 		}
 	}
 
-	if UNLIKELY_IF(ProfileId.IsNone())
-	{
-		UE_LOG(LogFlecsWorld, Error,
-			TEXT("Cannot assign an unregistered Flecs replication profile prefab"));
-		return false;
-	}
+	solid_checkf(!ProfileId.IsNone(), TEXT("Cannot set replication profile from an unregistered profile prefab handle"));
 
 	for (const TTuple<FName, FFlecsEntityHandle>& Pair : ReplicationProfilePrefabs)
 	{
@@ -566,7 +545,7 @@ bool UFlecsNetworkWorldSubsystem::SetReplicationProfile(const FFlecsEntityHandle
 		InEntity.Modified<FFlecsReplicatedEntityComponent>();
 	}
 
-	if (HasAuthority() && InEntity.Has<FFlecsReplicatedEntityComponent>())
+	if (InEntity.Has<FFlecsReplicatedEntityComponent>())
 	{
 		InEntity.Add<FFlecsNetDirtyTag>();
 	}

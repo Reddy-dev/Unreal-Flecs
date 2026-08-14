@@ -709,8 +709,66 @@ NETWORK_TEST_CLASS(FlecsReplicationAdditionalRealBridgeNetworkTests,
 					State.FlecsWorld, 67)));
 			});
 	}
+	
+	TEST_METHOD(ProfileUse_PublishTableEntity)
+	{
+		Network
+			.ThenServer([this](FState& State)
+			{
+				UE::Flecs::Tests::MissingNetwork::EnsureNetworkTestWorld(State);
+				
+				FFlecsReplicationProfile Profile;
+				Profile.ShardSelectorName = FName(TEXT("Table"));
+				UFlecsNetworkWorldSubsystem* NetworkSubsystem =
+					State.World->GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
+								
+				const FFlecsEntityHandle ProfilePrefab = NetworkSubsystem->RegisterReplicationProfileDefinition(
+					FName(TEXT("TableMigrationProfile")), Profile);
+				
+				State.AuthorityEntity = State.FlecsWorld->CreateEntity()
+					.Set<FFlecsReplicationTestValue>({ 69 })
+					.Add<FFlecsReplicatedEntityComponent>()
+					.AddPrefab(ProfilePrefab);
+				
+				ExpectedNetworkId = UE::Flecs::Tests::MissingNetwork::GetNetworkId(State.AuthorityEntity);
+			})
+			.ThenClients([](FState& State)
+			{
+				UE::Flecs::Tests::MissingNetwork::EnsureNetworkTestWorld(State);
+			})
+			.UntilClient(TEXT("Table entity is published"), 0,
+				[this](FState& State)
+				{
+					const UFlecsNetEntityTable* Table =
+						UE::Flecs::Tests::MissingNetwork::FindTable(State.World, ExpectedNetworkId);
+					const FFlecsNetEntityTableItem* Item = UE::Flecs::Tests::MissingNetwork::FindTableItem(Table, ExpectedNetworkId);
+					return Item && UE::Flecs::Tests::MissingNetwork::HasReplicatedValue(State.FlecsWorld, 69);
+				})
+			.ThenServer([this](FState& State)
+			{
+				State.AuthorityEntity.Set<FFlecsReplicationTestValue>({ 73 });
+			})
+			.UntilClient(TEXT("Table entity receives updates"), 0,
+				[this](FState& State)
+				{
+					return UE::Flecs::Tests::MissingNetwork::HasReplicatedValue(State.FlecsWorld, 73);
+				})
+			.ThenServer([this](FState& State)
+			{
+				State.AuthorityEntity.Destroy();
+			})
+			.UntilClient(TEXT("Table entity is removed"), 0, [this](FState& State)
+				{
+					const FFlecsEntityHandle Entity = UE::Flecs::Tests::MissingNetwork::FindNetworkEntity(
+						State.FlecsWorld, ExpectedNetworkId);
+					const UFlecsNetEntityTable* Table =
+						UE::Flecs::Tests::MissingNetwork::FindTable(State.World, ExpectedNetworkId);
+					return !Entity.IsValid() && !Table;
+				});
+			
+	}
 
-	/*TEST_METHOD(ProfileMigration_ProxyToTablePublishesDestinationBaselineBeforeRemoval)
+	TEST_METHOD(ProfileMigration_ProxyToTablePublishesDestinationBaselineBeforeRemoval)
 	{
 		Network
 			.ThenServer([this](FState& State)
@@ -720,6 +778,7 @@ NETWORK_TEST_CLASS(FlecsReplicationAdditionalRealBridgeNetworkTests,
 					.Set<FFlecsReplicationTestValue>({ 71 })
 					.Add<FFlecsReplicatedEntityComponent>();
 				ExpectedNetworkId = UE::Flecs::Tests::MissingNetwork::GetNetworkId(State.AuthorityEntity);
+				
 			})
 			.ThenClients([](FState& State)
 			{
@@ -745,9 +804,10 @@ NETWORK_TEST_CLASS(FlecsReplicationAdditionalRealBridgeNetworkTests,
 					State.World->GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
 				const FFlecsEntityHandle ProfilePrefab = NetworkSubsystem->RegisterReplicationProfileDefinition(
 					FName(TEXT("TableMigrationProfile")), Profile);
+				
 				ASSERT_THAT(IsTrue(ProfilePrefab.IsValid()));
-				ASSERT_THAT(IsTrue(NetworkSubsystem->SetReplicationProfile(State.AuthorityEntity, ProfilePrefab)));
-				State.AuthorityEntity.Add<FFlecsNetDirtyTag>();
+				ASSERT_THAT(IsTrue(
+					NetworkSubsystem->SetReplicationProfile(State.AuthorityEntity, ProfilePrefab)));
 			})
 			.UntilClient(TEXT("Table destination carries a full baseline before the proxy is detached"), 0,
 				[this](FState& State)
@@ -777,7 +837,8 @@ NETWORK_TEST_CLASS(FlecsReplicationAdditionalRealBridgeNetworkTests,
 					State.World, ExpectedNetworkId)));
 				ASSERT_THAT(IsTrue(!Proxy || Proxy->IsEmpty()));
 			});
-	}*/
+	}
+	
 }; // FlecsReplicationAdditionalRealBridgeNetworkTests
 
 NETWORK_TEST_CLASS(FlecsReplicationMultipleClientNetworkTests,

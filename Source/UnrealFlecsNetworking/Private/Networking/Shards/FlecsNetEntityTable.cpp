@@ -67,6 +67,7 @@ void UFlecsNetEntityTable::RemoveNetEntity(const FFlecsNetworkId& InNetworkId)
 		{
 			return Item.NetworkId == InNetworkId;
 		});
+	
 	solid_checkf(RemovedIndex != INDEX_NONE,
 		TEXT("Cannot remove network ID '%s' from Flecs entity table '%s'"),
 		*InNetworkId.ToString(), *GetName());

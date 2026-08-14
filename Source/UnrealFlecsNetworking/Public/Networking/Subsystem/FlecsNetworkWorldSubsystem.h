@@ -141,8 +141,8 @@ public:
 
 	NO_DISCARD FFlecsEntityHandle GetReplicationProfilePrefab(const FName InName) const;
 
-	bool SetReplicationProfile(const FFlecsEntityHandle& InEntity,
-		const FFlecsEntityHandle& InProfilePrefab);
+	UFUNCTION()
+	bool SetReplicationProfile(const FFlecsEntityHandle& InEntity, const FFlecsEntityHandle& InProfilePrefab);
 
 	NO_DISCARD bool ResolveReplicationProfile(const FFlecsEntityHandle& InEntity,
 		FFlecsReplicationProfile& OutProfile) const;
@@ -189,6 +189,7 @@ protected:
 	
 	// @TODO: maybe move to a singleton or on the entity?
 	TMap<FFlecsNetworkId, FFlecsEntityReplicationSnapshot> ReplicationSnapshots;
+	
 	// Prevents a late snapshot from resurrecting a removed network entity.
 	TMap<FFlecsNetworkId, uint32> RemovedEntityRevisions;
 
@@ -206,5 +207,4 @@ protected:
 	TObjectPtr<UFlecsReplicationBridgeBase> ReplicationBridge;
 	
 	FFlecsReplicationLayoutRegistry LayoutRegistry;
-	
 }; // class UFlecsNetworkWorldSubsystem

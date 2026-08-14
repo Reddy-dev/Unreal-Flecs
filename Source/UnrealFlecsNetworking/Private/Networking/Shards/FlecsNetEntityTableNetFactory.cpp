@@ -21,21 +21,20 @@ UNetObjectFactory::FInstantiateResult UFlecsNetEntityTableNetFactory::Instantiat
 	const UE::Net::FNetObjectCreationHeader* Header)
 {
 	FInstantiateResult Result = Super::InstantiateReplicatedObjectFromHeader(Context, Header);
+	
 	if UNLIKELY_IF(!Result.Instance)
 	{
 		return Result;
 	}
 
-	UFlecsNetEntityTable* Table = Cast<UFlecsNetEntityTable>(Result.Instance);
+	const TSolidNotNull<UFlecsNetEntityTable*> Table = CastChecked<UFlecsNetEntityTable>(Result.Instance);
 	UWorld* World = UE::Flecs::Replication::GetReplicationBridgeWorld(Bridge);
 
-	if UNLIKELY_IF(!Table || !World)
+	if UNLIKELY_IF(!World)
 	{
 		Result.Instance = nullptr;
 		Result.Template = nullptr;
-		Result.FailureDiagnosticMessage = !Table
-			? TEXT("Instantiated an object that is not a UFlecsNetEntityTable")
-			: TEXT("The receiving replication bridge does not have a valid UWorld");
+		Result.FailureDiagnosticMessage = TEXT("The receiving replication bridge does not have a valid UWorld");
 		return Result;
 	}
 
