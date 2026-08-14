@@ -1069,7 +1069,7 @@ void UFlecsWorld::RegisterStages(const int32 InStageCount)
 	}
 }
 
-UFlecsStage* UFlecsWorld::CreateAsyncStage()
+TSolidNotNull<UFlecsStage*> UFlecsWorld::CreateAsyncStage()
 {
 	flecs::world AsyncStage = GetNativeFlecsWorld().async_stage();
 	

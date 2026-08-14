@@ -328,7 +328,7 @@ public:
 	
 	void RegisterStages(const int32 InStageCount);
 	
-	NO_DISCARD UFlecsStage* CreateAsyncStage();
+	NO_DISCARD TSolidNotNull<UFlecsStage*> CreateAsyncStage();
 	
 	void ImportRestModule();
 	void ImportStatsModule();
