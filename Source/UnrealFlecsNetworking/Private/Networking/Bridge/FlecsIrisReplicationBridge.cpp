@@ -131,13 +131,8 @@ void UFlecsIrisReplicationBridge::ReceiveLayout(const FFlecsReplicationLayoutDef
 void UFlecsIrisReplicationBridge::PublishNetEntity(const FFlecsEntityHandle& EntityHandle, const FFlecsNetworkId& InNetworkId,
 	const FFlecsEntityReplicationSnapshot& InSnapshot)
 {
-	UFlecsNetShardBase* Shard = ResolveShard(EntityHandle, InNetworkId, InSnapshot);
-	
-	if UNLIKELY_IF(!Shard)
-	{
-		UE_LOG(LogFlecsCore, Error, TEXT("Cannot resolve a Flecs replication shard for entity '%s'"), *EntityHandle.ToString());
-		return;
-	}
+	solid_checkf(EntityHandle.IsValid(), TEXT("Cannot publish a Flecs entity without a valid entity handle"));
+	const TSolidNotNull<UFlecsNetShardBase*> Shard = ResolveShard(EntityHandle, InNetworkId, InSnapshot);
 
 	Shard->PublishNetEntity(InNetworkId, InSnapshot);
 }
@@ -149,7 +144,7 @@ void UFlecsIrisReplicationBridge::StopReplicatingEntity(const FFlecsEntityHandle
 		return;
 	}
 
-	if (FFlecsReplicationShardPlacement* Placement = ShardMap.Find(InEntityHandle))
+	if (const FFlecsReplicationShardPlacement* Placement = ShardMap.Find(InEntityHandle))
 	{
 		if (UFlecsNetShardBase* Shard = Placement->Shard.Get())
 		{
@@ -167,18 +162,14 @@ UFlecsNetShardBase* UFlecsIrisReplicationBridge::ResolveShard(const FFlecsEntity
 	const TSolidNotNull<UFlecsNetworkWorldSubsystem*> NetworkSubsystem = GetNetworkWorldSubsystem();
 
 	FFlecsReplicationProfile Profile;
-	if UNLIKELY_IF(!NetworkSubsystem->ResolveReplicationProfile(InEntityHandle, Profile))
-	{
-		UE_LOG(LogFlecsCore, Error,
-			TEXT("Cannot resolve a replication profile for entity '%s'"), *InEntityHandle.ToString());
-		return nullptr;
-	}
+	const bool bResolvedProfile = NetworkSubsystem->ResolveReplicationProfile(InEntityHandle, Profile);
+	solid_cassumef(bResolvedProfile,
+		TEXT("Cannot resolve a replication profile for entity '%s'"), *InEntityHandle.ToString());
 
 	FFlecsReplicationShardSelection Selection;
-	if UNLIKELY_IF(!NetworkSubsystem->SelectReplicationShard(InEntityHandle, InNetworkId, Profile, Selection))
-	{
-		return nullptr;
-	}
+	const bool bSelectedShard = NetworkSubsystem->SelectReplicationShard(InEntityHandle, InNetworkId, Profile, Selection);
+	solid_cassumef(bSelectedShard,
+		TEXT("Cannot select a replication shard for entity '%s' with network ID '%s'"), *InEntityHandle.ToString(), *InNetworkId.ToString());
 
 	if (FFlecsReplicationShardPlacement* Placement = ShardMap.Find(InEntityHandle))
 	{
@@ -192,8 +183,10 @@ UFlecsNetShardBase* UFlecsIrisReplicationBridge::ResolveShard(const FFlecsEntity
 			}
 		}
 
-		UFlecsNetShardBase* DestinationShard = FindOrCreateShard(InNetworkId, InSnapshot, Profile, Selection);
-		if UNLIKELY_IF(!DestinationShard)
+		UFlecsNetShardBase* DestinationShard 
+			= FindOrCreateShard(InNetworkId, InSnapshot, Profile, Selection);
+		
+		if UNLIKELY_IF(!ensure(DestinationShard))
 		{
 			return nullptr;
 		}
@@ -218,8 +211,10 @@ UFlecsNetShardBase* UFlecsIrisReplicationBridge::ResolveShard(const FFlecsEntity
 		return DestinationShard;
 	}
 	
-	UFlecsNetShardBase* Shard = FindOrCreateShard(InNetworkId, InSnapshot, Profile, Selection);
-	if UNLIKELY_IF(!Shard)
+	UFlecsNetShardBase* Shard 
+		= FindOrCreateShard(InNetworkId, InSnapshot, Profile, Selection);
+	
+	if UNLIKELY_IF(!ensure(Shard))
 	{
 		return nullptr;
 	}
@@ -238,36 +233,25 @@ UFlecsNetShardBase* UFlecsIrisReplicationBridge::CreateNewShard(const FFlecsNetw
 	const FFlecsEntityReplicationSnapshot& InSnapshot,
 	const FFlecsReplicationProfile& InProfile, const FFlecsReplicationShardSelection& InSelection)
 {
-	if UNLIKELY_IF(!InNetworkId.IsValid())
-	{
-		UE_LOG(LogFlecsCore, Error, TEXT("Cannot create a Flecs replication shard without a valid network ID"));
-		return nullptr;
-	}
+	solid_checkf(InNetworkId.IsValid(), TEXT("Cannot create a Flecs replication shard without a valid network ID"));
 
-	UFlecsNetShardBase* Shard = NewObject<UFlecsNetShardBase>(this, InSelection.ShardClass);
-	if UNLIKELY_IF(!Shard)
-	{
-		return nullptr;
-	}
+	const TSolidNotNull<UFlecsNetShardBase*> Shard = NewObject<UFlecsNetShardBase>(this, InSelection.ShardClass);
 
 	Shard->SetOwningNetworkWorldSubsystem(GetNetworkWorldSubsystem());
 	Shard->InitializeShard();
 	Shard->StartShardReplication();
-
-	if UNLIKELY_IF(!Shard->ApplyReplicationProfile(InProfile))
-	{
-		Shard->DeinitializeShard();
-		Shard->SetOwningNetworkWorldSubsystem(nullptr);
-		return nullptr;
-	}
+	
+	Shard->ApplyReplicationProfile(InProfile);
 
 	if UNLIKELY_IF(!Shard->CanAcceptNetEntity(InNetworkId, InSnapshot))
 	{
 		UE_LOG(LogFlecsCore, Error,
 			TEXT("New Flecs replication shard '%s' rejected network ID '%s'"),
 			*Shard->GetName(), *InNetworkId.ToString());
+		
 		Shard->DeinitializeShard();
 		Shard->SetOwningNetworkWorldSubsystem(nullptr);
+		Shard->MarkAsGarbage();
 		return nullptr;
 	}
 
@@ -291,7 +275,7 @@ UFlecsNetShardBase* UFlecsIrisReplicationBridge::FindOrCreateShard(const FFlecsN
 	}
 
 	UFlecsNetShardBase* NewShard = CreateNewShard(InNetworkId, InSnapshot, InProfile, InSelection);
-	if (!NewShard)
+	if UNLIKELY_IF(!NewShard)
 	{
 		return nullptr;
 	}

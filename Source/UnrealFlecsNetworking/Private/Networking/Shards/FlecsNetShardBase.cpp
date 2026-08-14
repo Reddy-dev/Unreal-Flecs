@@ -92,75 +92,39 @@ void UFlecsNetShardBase::ConfigureObjectSettings(OUT UE::Net::FRootObjectSetting
 	OutSettings.bIsNotRouted = false;
 }
 
-bool UFlecsNetShardBase::ApplyReplicationProfile(const FFlecsReplicationProfile& InProfile)
+void UFlecsNetShardBase::ApplyReplicationProfile(const FFlecsReplicationProfile& InProfile) const
 {
-	const UWorld* World = GetWorld();
-	const UNetDriver* NetDriver = World ? World->GetNetDriver() : nullptr;
-	UReplicationSystem* ReplicationSystem = NetDriver ? NetDriver->GetReplicationSystem() : nullptr;
-	
-	if (!ReplicationSystem)
-	{
-		return true;
-	}
+	const TSolidNotNull<const UWorld*> World = GetWorld();
+	const TSolidNotNull<const UNetDriver*> NetDriver = World->GetNetDriver();
+	const TSolidNotNull<UReplicationSystem*> ReplicationSystem = NetDriver->GetReplicationSystem();
 
-	UObjectReplicationBridge* ReplicationBridge = ReplicationSystem->GetReplicationBridge();
-	if UNLIKELY_IF(!ReplicationBridge)
-	{
-		UE_LOG(LogFlecsCore, Error,
-			TEXT("Cannot apply a Flecs replication profile to '%s' without an Iris object bridge"), *GetName());
-		return false;
-	}
+	const TSolidNotNull<UObjectReplicationBridge*> ReplicationBridge = ReplicationSystem->GetReplicationBridge();
 
 	const UE::Net::FNetRefHandle NetRefHandle = ReplicationBridge->GetReplicatedRefHandle(this);
-	if UNLIKELY_IF(!NetRefHandle.IsValid())
-	{
-		UE_LOG(LogFlecsCore, Error,
-			TEXT("Cannot apply a Flecs replication profile to '%s' without a valid Iris handle"), *GetName());
-		return false;
-	}
-
+	solid_checkf(NetRefHandle.IsValid(), TEXT("Flecs shard '%s' is not registered with the Iris replication system"), *GetName());
+	
 	if (!InProfile.FilterName.IsNone())
 	{
 		const UE::Net::FNetObjectFilterHandle FilterHandle = ReplicationSystem->GetFilterHandle(InProfile.FilterName);
 		
-		if UNLIKELY_IF(FilterHandle == UE::Net::InvalidNetObjectFilterHandle)
-		{
-			UE_LOG(LogFlecsCore, Error,
-				TEXT("Cannot apply unknown Iris filter '%s' to Flecs shard '%s'"),
-				*InProfile.FilterName.ToString(), *GetName());
-			return false;
-		}
-
-		if UNLIKELY_IF(!ReplicationSystem->SetFilter(NetRefHandle, FilterHandle))
-		{
-			UE_LOG(LogFlecsCore, Error,
-				TEXT("Iris rejected filter '%s' for Flecs shard '%s'"),
-				*InProfile.FilterName.ToString(), *GetName());
-			return false;
-		}
+		solid_cassumef(FilterHandle != UE::Net::InvalidNetObjectFilterHandle, 
+			TEXT("Flecs shard '%s' is not registered with the Iris replication system"), *GetName());
+		
+		const bool bFilterSet = ReplicationSystem->SetFilter(NetRefHandle, FilterHandle);
+		solid_cassumef(bFilterSet, TEXT("Iris rejected filter '%s' for Flecs shard '%s'"),
+			*InProfile.FilterName.ToString(), *GetName());
 	}
 
 	if (!InProfile.ObjectPrioritizerName.IsNone())
 	{
 		const UE::Net::FNetObjectPrioritizerHandle PrioritizerHandle = ReplicationSystem->GetPrioritizerHandle(InProfile.ObjectPrioritizerName);
-		if UNLIKELY_IF(PrioritizerHandle == UE::Net::InvalidNetObjectPrioritizerHandle)
-		{
-			UE_LOG(LogFlecsCore, Error,
-				TEXT("Cannot apply unknown Iris prioritizer '%s' to Flecs shard '%s'"),
-				*InProfile.ObjectPrioritizerName.ToString(), *GetName());
-			return false;
-		}
-
-		if UNLIKELY_IF(!ReplicationSystem->SetPrioritizer(NetRefHandle, PrioritizerHandle))
-		{
-			UE_LOG(LogFlecsCore, Error,
-				TEXT("Iris rejected prioritizer '%s' for Flecs shard '%s'"),
-				*InProfile.ObjectPrioritizerName.ToString(), *GetName());
-			return false;
-		}
+		solid_cassumef(PrioritizerHandle != UE::Net::InvalidNetObjectPrioritizerHandle, 
+			TEXT("Flecs shard '%s' is not registered with the Iris replication system"), *GetName());
+		
+		const bool bPrioritizerSet = ReplicationSystem->SetPrioritizer(NetRefHandle, PrioritizerHandle);
+		solid_cassumef(bPrioritizerSet, TEXT("Iris rejected prioritizer '%s' for Flecs shard '%s'"),
+			*InProfile.ObjectPrioritizerName.ToString(), *GetName());
 	}
-
-	return true;
 }
 
 void UFlecsNetShardBase::SetOwningNetworkWorldSubsystem(UFlecsNetworkWorldSubsystem* InOwningNetworkWorldSubsystem)
@@ -202,8 +166,9 @@ void UFlecsNetShardBase::ResolveOwningNetworkWorldSubsystem()
 		return;
 	}
 
-	UWorld* World = GetWorld();
-	if (!World || World->bIsTearingDown)
+	const UWorld* World = GetWorld();
+	
+	if UNLIKELY_IF(!World || World->bIsTearingDown)
 	{
 		return;
 	}
@@ -268,8 +233,7 @@ void UFlecsNetShardBase::FlushPendingReplicationUpdates()
 	}
 }
 
-void UFlecsNetShardBase::ReceiveEntityUpdate(const FFlecsNetworkId& InNetworkId,
-	const FFlecsEntityReplicationSnapshot& InSnapshot)
+void UFlecsNetShardBase::ReceiveEntityUpdate(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot)
 {
 	if (!InNetworkId.IsValid() || !InSnapshot.LayoutId.IsValid())
 	{
@@ -277,6 +241,8 @@ void UFlecsNetShardBase::ReceiveEntityUpdate(const FFlecsNetworkId& InNetworkId,
 	}
 
 	ResolveOwningNetworkWorldSubsystem();
+	
+	// this may be Null
 	UFlecsNetworkWorldSubsystem* NetworkSubsystem = GetOwningNetworkWorldSubsystem();
 	if UNLIKELY_IF(!NetworkSubsystem)
 	{
@@ -289,10 +255,7 @@ void UFlecsNetShardBase::ReceiveEntityUpdate(const FFlecsNetworkId& InNetworkId,
 
 void UFlecsNetShardBase::ReceiveEntityRemoval(const FFlecsNetworkId& InNetworkId, const uint32 InStateRevision)
 {
-	if (!InNetworkId.IsValid())
-	{
-		return;
-	}
+	solid_checkf(InNetworkId.IsValid(), TEXT("Invalid network id for entity removal"));
 
 	ResolveOwningNetworkWorldSubsystem();
 	UFlecsNetworkWorldSubsystem* NetworkSubsystem = GetOwningNetworkWorldSubsystem();

@@ -22,6 +22,8 @@ void UFlecsReplicationQueueSystem::BuildSystem(const TSolidNotNull<const UFlecsW
 void UFlecsReplicationQueueSystem::RunEachIterator(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorldInterfaceObject,
 	flecs::iter& InIterator)
 {
+	QUICK_SCOPE_CYCLE_COUNTER(STAT_FlecsReplicationQueueSystem_RunEachIterator);
+	
 	const TSolidNotNull<UFlecsNetworkWorldSubsystem*> NetworkSubsystem =
 		InIterator.field_at<const FFlecsNetworkSubsystemSingleton>(0, 0).GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
 	

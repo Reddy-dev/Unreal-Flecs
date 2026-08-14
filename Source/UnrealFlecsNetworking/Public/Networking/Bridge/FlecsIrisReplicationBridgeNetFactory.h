@@ -7,9 +7,9 @@
 #include "Engine/World.h"
 #include "Net/Iris/ReplicationSystem/NetRootObjectFactory.h"
 
-class UFlecsIrisReplicationBridge;
-
 #include "FlecsIrisReplicationBridgeNetFactory.generated.h"
+
+class UFlecsIrisReplicationBridge;
 
 /**
  * Creates the remote Iris replication bridge and binds it to the receiving
@@ -36,7 +36,9 @@ private:
 	void HandleWorldPreActorTick(UWorld* InWorld, ELevelTick, float);
 	void StopReplicationBridgeRetry();
 
+	UPROPERTY()
 	TWeakObjectPtr<UFlecsIrisReplicationBridge> PendingReplicationBridge;
+	
 	FDelegateHandle WorldPreActorTickHandle;
 
 }; // class UFlecsIrisReplicationBridgeNetFactory

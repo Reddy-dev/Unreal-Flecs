@@ -21,30 +21,23 @@ void UFlecsIrisReplicationBridgeNetFactory::PostInstantiation(const FPostInstant
 {
 	Super::PostInstantiation(Context);
 
-	UFlecsIrisReplicationBridge* FlecsBridge = Cast<UFlecsIrisReplicationBridge>(Context.Instance);
-	if UNLIKELY_IF(!FlecsBridge)
-	{
-		UE_LOG(LogFlecsCore, Error,
-			TEXT("Received object is not a Flecs Iris replication bridge"));
-		return;
-	}
+	const TSolidNotNull<UFlecsIrisReplicationBridge*> FlecsBridge = Cast<UFlecsIrisReplicationBridge>(Context.Instance);
 
 	PendingReplicationBridge = FlecsBridge;
 	ResolvePendingReplicationBridge();
 }
 
-void UFlecsIrisReplicationBridgeNetFactory::DetachedFromReplication(
-	const FDetachContext& Context,
+void UFlecsIrisReplicationBridgeNetFactory::DetachedFromReplication(const FDetachContext& Context,
 	const TOptional<FSubObjectDetachContext>& SubObjectContext)
 {
-	UFlecsIrisReplicationBridge* FlecsBridge = Cast<UFlecsIrisReplicationBridge>(Context.DetachedInstance);
+	const UFlecsIrisReplicationBridge* FlecsBridge = Cast<UFlecsIrisReplicationBridge>(Context.DetachedInstance);
 	if (PendingReplicationBridge.Get() == FlecsBridge)
 	{
 		PendingReplicationBridge = nullptr;
 		StopReplicationBridgeRetry();
 	}
 
-	UWorld* World = UE::Flecs::Replication::GetReplicationBridgeWorld(Bridge);
+	const UWorld* World = UE::Flecs::Replication::GetReplicationBridgeWorld(Bridge);
 	UFlecsNetworkWorldSubsystem* NetworkSubsystem = World ? World->GetSubsystem<UFlecsNetworkWorldSubsystem>() : nullptr;
 
 	if (Context.Reason != UE::Net::EDetachReason::TornOff
@@ -62,19 +55,21 @@ void UFlecsIrisReplicationBridgeNetFactory::OnDeinit()
 {
 	PendingReplicationBridge = nullptr;
 	StopReplicationBridgeRetry();
+	
 	Super::OnDeinit();
 }
 
 void UFlecsIrisReplicationBridgeNetFactory::ResolvePendingReplicationBridge()
 {
 	UFlecsIrisReplicationBridge* FlecsBridge = PendingReplicationBridge.Get();
+	
 	if (!FlecsBridge)
 	{
 		StopReplicationBridgeRetry();
 		return;
 	}
 
-	UWorld* World = UE::Flecs::Replication::GetReplicationBridgeWorld(Bridge);
+	const UWorld* World = UE::Flecs::Replication::GetReplicationBridgeWorld(Bridge);
 	if (!World)
 	{
 		if (!WorldPreActorTickHandle.IsValid())
@@ -82,6 +77,7 @@ void UFlecsIrisReplicationBridgeNetFactory::ResolvePendingReplicationBridge()
 			WorldPreActorTickHandle = FWorldDelegates::OnWorldPreActorTick.AddUObject(
 				this, &UFlecsIrisReplicationBridgeNetFactory::HandleWorldPreActorTick);
 		}
+		
 		return;
 	}
 
@@ -95,6 +91,7 @@ void UFlecsIrisReplicationBridgeNetFactory::ResolvePendingReplicationBridge()
 		NetworkSubsystem->BindReplicationBridge(FlecsBridge);
 		PendingReplicationBridge = nullptr;
 		StopReplicationBridgeRetry();
+		
 		return;
 	}
 

@@ -564,11 +564,11 @@ bool UFlecsNetworkWorldSubsystem::ResolveReplicationProfile(const FFlecsEntityHa
 	{
 		if (!ReplicatedEntity->ProfileId.IsNone())
 		{
-			if (const FFlecsEntityHandle* ProfilePrefab = ReplicationProfilePrefabs.Find(ReplicatedEntity->ProfileId))
+			if LIKELY_IF(const FFlecsEntityHandle* ProfilePrefab = ReplicationProfilePrefabs.Find(ReplicatedEntity->ProfileId))
 			{
-				if (InEntity.IsA(ProfilePrefab->GetFlecsId()))
+				if LIKELY_IF(InEntity.IsA(ProfilePrefab->GetFlecsId()))
 				{
-					if (const FFlecsReplicationProfile* Profile = ProfilePrefab->TryGet<FFlecsReplicationProfile>())
+					if LIKELY_IF(const FFlecsReplicationProfile* Profile = ProfilePrefab->TryGet<FFlecsReplicationProfile>())
 					{
 						OutProfile = *Profile;
 						return true;
@@ -578,7 +578,7 @@ bool UFlecsNetworkWorldSubsystem::ResolveReplicationProfile(const FFlecsEntityHa
 		}
 	}
 
-	if (const FFlecsReplicationProfile* Profile = InEntity.TryGet<FFlecsReplicationProfile>())
+	if LIKELY_IF(const FFlecsReplicationProfile* Profile = InEntity.TryGet<FFlecsReplicationProfile>())
 	{
 		OutProfile = *Profile;
 		return true;

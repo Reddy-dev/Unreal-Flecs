@@ -62,7 +62,7 @@ public:
 	                                             UE::Net::FRootObjectReplicationParams& OutParams) const override;
 
 	virtual void ConfigureObjectSettings(OUT UE::Net::FRootObjectSettings& OutSettings) const;
-	bool ApplyReplicationProfile(const FFlecsReplicationProfile& InProfile);
+	void ApplyReplicationProfile(const FFlecsReplicationProfile& InProfile) const;
 	
 	/** Returns whether this shard can store an update for the supplied entity. */
 	virtual bool CanAcceptNetEntity(const FFlecsNetworkId& InNetworkId,

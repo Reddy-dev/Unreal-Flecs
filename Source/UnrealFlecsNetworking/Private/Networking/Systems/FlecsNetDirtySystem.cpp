@@ -22,13 +22,15 @@ void UFlecsNetDirtySystem::BuildSystem(const TSolidNotNull<const UFlecsWorldInte
 		.With<FFlecsNetDirtyTag>() // 0
 		.With<FFlecsReplicatedEntityComponent&>() // 1
 		.With<const FFlecsNetworkId>() // 2
-		.With<const FFlecsNetworkSubsystemSingleton>() // 3
-		.With<FFlecsNetDirtyTag>().ReadWrite(); // 4
+		.With<const FFlecsNetworkSubsystemSingleton>(); // 3
+		//.With<FFlecsNetDirtyTag>().ReadWrite(); // 4 // @TODO: is this needed?
 }
 
 void UFlecsNetDirtySystem::EachIterator(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld,
                                         flecs::iter& InIterator, const FFlecsId InIndex)
 {
+	QUICK_SCOPE_CYCLE_COUNTER(STAT_FlecsNetDirtySystem_EachIterator);
+	
 	FFlecsReplicatedEntityComponent& ReplicatedComponent = InIterator.field_at<FFlecsReplicatedEntityComponent>(1, InIndex);
 	const FFlecsNetworkId& NetworkId = InIterator.field_at<const FFlecsNetworkId>(2, InIndex);
 	
