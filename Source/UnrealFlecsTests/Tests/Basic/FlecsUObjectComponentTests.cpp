@@ -1,6 +1,7 @@
-
+﻿
 #include "Misc/AutomationTest.h"
 #include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
+// Elie Wiese-Namir © 2025. All Rights Reserved.
 
 #if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
 
@@ -9,37 +10,12 @@
 #include "Components/ObjectTypes/FFlecsUObjectTag.h"
 #include "Worlds/FlecsWorld.h"
 
-/**
- * Layout of the tests:
- * A. FFlecsUObjectComponent Struct Tests
- * B. FFlecsUObjectComponent Entity Pair Integration Tests
- * C. GC / AddReferencedObjects Tests
- **/
-TEST_CLASS_WITH_FLAGS(A13_FlecsUObjectComponentTests,
-							   "UnrealFlecs.A13_UObjectComponent",
+FLECS_TEST_CLASS_WITH_FLAGS(FlecsUObjectComponentTests,
+								   "UnrealFlecs.Components.UObject",
 							   EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter
 							    | EAutomationTestFlags::CriticalPriority)
 {
-	inline static TUniquePtr<FFlecsTestFixtureRAII> Fixture;
-	inline static TObjectPtr<UFlecsWorld> FlecsWorld = nullptr;
-
-	BEFORE_EACH()
-	{
-		Fixture = MakeUnique<FFlecsTestFixtureRAII>();
-		FlecsWorld = Fixture->Fixture.GetFlecsWorld();
-	}
-
-	AFTER_EACH()
-	{
-		FlecsWorld = nullptr;
-	}
-
-	AFTER_ALL()
-	{
-		Fixture.Reset();
-	}
-
-	TEST_METHOD(A1_DefaultConstruction_IsInvalid)
+	TEST_METHOD(DefaultConstruction_IsInvalid)
 	{
 		const FFlecsUObjectComponent Component;
 
@@ -48,7 +24,7 @@ TEST_CLASS_WITH_FLAGS(A13_FlecsUObjectComponentTests,
 		ASSERT_THAT(IsTrue(Component.GetObject() == nullptr));
 	}
 
-	TEST_METHOD(A2_ConstructionWithValidUObject_IsValid)
+	TEST_METHOD(ConstructionWithValidUObject_IsValid)
 	{
 		UFlecsUObjectComponentTestObject* TestObject
 			= NewObject<UFlecsUObjectComponentTestObject>(GetTransientPackage());
@@ -59,7 +35,7 @@ TEST_CLASS_WITH_FLAGS(A13_FlecsUObjectComponentTests,
 		ASSERT_THAT(IsTrue(Component.GetObject() == TestObject));
 	}
 
-	TEST_METHOD(A3_SetObject_UpdatesStoredObject)
+	TEST_METHOD(SetObject_UpdatesStoredObject)
 	{
 		UFlecsUObjectComponentTestObject* TestObject
 			= NewObject<UFlecsUObjectComponentTestObject>(GetTransientPackage());
@@ -73,7 +49,7 @@ TEST_CLASS_WITH_FLAGS(A13_FlecsUObjectComponentTests,
 		ASSERT_THAT(IsTrue(Component.GetObject() == TestObject));
 	}
 
-	TEST_METHOD(A4_Reset_ClearsStoredObject)
+	TEST_METHOD(Reset_ClearsStoredObject)
 	{
 		UFlecsUObjectComponentTestObject* TestObject
 			= NewObject<UFlecsUObjectComponentTestObject>(GetTransientPackage());
@@ -87,7 +63,7 @@ TEST_CLASS_WITH_FLAGS(A13_FlecsUObjectComponentTests,
 		ASSERT_THAT(IsTrue(Component.GetObject() == nullptr));
 	}
 
-	TEST_METHOD(A5_EqualityOperators)
+	TEST_METHOD(EqualityOperators)
 	{
 		UFlecsUObjectComponentTestObject* ObjectA
 			= NewObject<UFlecsUObjectComponentTestObject>(GetTransientPackage());
@@ -107,7 +83,7 @@ TEST_CLASS_WITH_FLAGS(A13_FlecsUObjectComponentTests,
 		ASSERT_THAT(IsFalse(ComponentA == ComponentEmpty));
 	}
 
-	TEST_METHOD(A6_TypedGetObject_ReturnsCorrectCast)
+	TEST_METHOD(TypedGetObject_ReturnsCorrectCast)
 	{
 		UFlecsUObjectComponentTestObject* TestObject
 			= NewObject<UFlecsUObjectComponentTestObject>(GetTransientPackage());
@@ -120,7 +96,7 @@ TEST_CLASS_WITH_FLAGS(A13_FlecsUObjectComponentTests,
 		ASSERT_THAT(IsTrue(Component.GetObject<UActorComponent>() == nullptr));
 	}
 
-	TEST_METHOD(A7_IsA_ReturnsCorrectResult)
+	TEST_METHOD(IsA_ReturnsCorrectResult)
 	{
 		UFlecsUObjectComponentTestObject* TestObject
 			= NewObject<UFlecsUObjectComponentTestObject>(GetTransientPackage());
@@ -131,7 +107,7 @@ TEST_CLASS_WITH_FLAGS(A13_FlecsUObjectComponentTests,
 		ASSERT_THAT(IsFalse(Component.IsA<AActor>()));
 	}
 
-	TEST_METHOD(A8_ToString_ReturnsObjectNameOrInvalid)
+	TEST_METHOD(ToString_ReturnsObjectNameOrInvalid)
 	{
 		UFlecsUObjectComponentTestObject* TestObject
 			= NewObject<UFlecsUObjectComponentTestObject>(GetTransientPackage());
@@ -142,22 +118,22 @@ TEST_CLASS_WITH_FLAGS(A13_FlecsUObjectComponentTests,
 		ASSERT_THAT(IsTrue(ComponentInvalid.ToString() == TEXT("Invalid")));
 	}
 
-	TEST_METHOD(B1_SetPair_HasPairReturnsTrue)
+	TEST_METHOD(SetPair_HasPairReturnsTrue)
 	{
 		UFlecsUObjectComponentTestObject* TestObject
 			= NewObject<UFlecsUObjectComponentTestObject>(GetTransientPackage());
-		const FFlecsEntityHandle Entity = FlecsWorld->CreateEntity();
+		const FFlecsEntityHandle Entity = World()->CreateEntity();
 
 		Entity.SetPair<FFlecsUObjectComponent, FFlecsUObjectTag>(FFlecsUObjectComponent{ TestObject });
 
 		ASSERT_THAT(IsTrue(Entity.HasPair<FFlecsUObjectComponent, FFlecsUObjectTag>()));
 	}
 
-	TEST_METHOD(B2_SetPair_GetPairFirstReturnsCorrectComponent)
+	TEST_METHOD(SetPair_GetPairFirstReturnsCorrectComponent)
 	{
 		UFlecsUObjectComponentTestObject* TestObject
 			= NewObject<UFlecsUObjectComponentTestObject>(GetTransientPackage());
-		const FFlecsEntityHandle Entity = FlecsWorld->CreateEntity();
+		const FFlecsEntityHandle Entity = World()->CreateEntity();
 
 		Entity.SetPair<FFlecsUObjectComponent, FFlecsUObjectTag>(FFlecsUObjectComponent{ TestObject });
 
@@ -168,11 +144,11 @@ TEST_CLASS_WITH_FLAGS(A13_FlecsUObjectComponentTests,
 		ASSERT_THAT(IsTrue(Component.GetObject() == TestObject));
 	}
 
-	TEST_METHOD(B3_RemovePair_HasPairReturnsFalse)
+	TEST_METHOD(RemovePair_HasPairReturnsFalse)
 	{
 		UFlecsUObjectComponentTestObject* TestObject
 			= NewObject<UFlecsUObjectComponentTestObject>(GetTransientPackage());
-		const FFlecsEntityHandle Entity = FlecsWorld->CreateEntity();
+		const FFlecsEntityHandle Entity = World()->CreateEntity();
 
 		Entity.SetPair<FFlecsUObjectComponent, FFlecsUObjectTag>(FFlecsUObjectComponent{ TestObject });
 		ASSERT_THAT(IsTrue(Entity.HasPair<FFlecsUObjectComponent, FFlecsUObjectTag>()));
@@ -181,15 +157,15 @@ TEST_CLASS_WITH_FLAGS(A13_FlecsUObjectComponentTests,
 		ASSERT_THAT(IsFalse(Entity.HasPair<FFlecsUObjectComponent, FFlecsUObjectTag>()));
 	}
 
-	TEST_METHOD(B4_MultipleEntities_HaveIndependentComponents)
+	TEST_METHOD(MultipleEntities_HaveIndependentComponents)
 	{
 		UFlecsUObjectComponentTestObject* ObjA
 			= NewObject<UFlecsUObjectComponentTestObject>(GetTransientPackage());
 		UFlecsUObjectComponentTestObject* ObjB
 			= NewObject<UFlecsUObjectComponentTestObject>(GetTransientPackage());
 
-		const FFlecsEntityHandle EntityA = FlecsWorld->CreateEntity();
-		const FFlecsEntityHandle EntityB = FlecsWorld->CreateEntity();
+		const FFlecsEntityHandle EntityA = World()->CreateEntity();
+		const FFlecsEntityHandle EntityB = World()->CreateEntity();
 
 		EntityA.SetPair<FFlecsUObjectComponent, FFlecsUObjectTag>(FFlecsUObjectComponent{ ObjA });
 		EntityB.SetPair<FFlecsUObjectComponent, FFlecsUObjectTag>(FFlecsUObjectComponent{ ObjB });
@@ -204,46 +180,14 @@ TEST_CLASS_WITH_FLAGS(A13_FlecsUObjectComponentTests,
 		ASSERT_THAT(IsTrue(RetrievedA != RetrievedB));
 	}
 
-	TEST_METHOD(C1_ComponentEntity_HasAddReferencedObjectsTrait)
+	TEST_METHOD(ComponentEntity_HasAddReferencedObjectsTrait)
 	{
 		const TFlecsComponentHandle<FFlecsTestStruct_WithUObjectProperty> ComponentHandle
-			= FlecsWorld->RegisterComponentType<FFlecsTestStruct_WithUObjectProperty>();
+			= World()->RegisterComponentType<FFlecsTestStruct_WithUObjectProperty>();
 
 		ASSERT_THAT(IsTrue(ComponentHandle.IsValid()));
 		ASSERT_THAT(IsTrue(ComponentHandle.Has<FFlecsAddReferencedObjectsTrait>()));
 	}
-	
-	/*TEST_METHOD(C2_AddReferencedObjectsTrait_ReferencesAreAddedToCollector)
-	{
-		UFlecsUObjectComponentTestObject* TestObject
-			= NewObject<UFlecsUObjectComponentTestObject>(GetTransientPackage());
-
-		const TFlecsComponentHandle<FFlecsTestStruct_WithUObjectProperty> ComponentHandle
-			= FlecsWorld->RegisterComponentType<FFlecsTestStruct_WithUObjectProperty>();
-		
-		FFlecsEntityHandle Entity = FlecsWorld->CreateEntity();
-		Entity.Set<FFlecsTestStruct_WithUObjectProperty>(FFlecsTestStruct_WithUObjectProperty{ TestObject });
-		
-		CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS);
-		
-		ASSERT_THAT(IsTrue(IsValid(TestObject)));
-	}
-
-	TEST_METHOD(C3_EntityDestroyedAfterGC_WhenUObjectBecomesInvalid)
-	{
-		UFlecsUObjectComponentTestObject* TestObject
-			= NewObject<UFlecsUObjectComponentTestObject>();
-
-		const FFlecsEntityHandle Entity = FlecsWorld->CreateEntity("GCDestroyTestEntity");
-		Entity.SetPair<FFlecsUObjectComponent, FFlecsUObjectTag>(FFlecsUObjectComponent{ TestObject });
-
-		ASSERT_THAT(IsTrue(Entity.IsAlive()));
-		
-		TestObject->MarkAsGarbage();
-		CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS);
-
-		ASSERT_THAT(IsFalse(Entity.IsAlive()));
-	}*/
 
 }; // TEST_CLASS FlecsUObjectComponentTests
 

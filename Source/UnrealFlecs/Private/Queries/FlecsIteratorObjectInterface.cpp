@@ -8,15 +8,21 @@ void IFlecsIteratorObjectInterface::RunIterator(const TSolidNotNull<UFlecsWorldI
 {
 	while (InIterator.next())
 	{
-		for (const FFlecsId Entity : InIterator)
-		{
-			EachIterator(InWorld, InIterator, Entity);
-		}
+		RunEachIterator(InWorld, InIterator);
+	}
+}
+
+void IFlecsIteratorObjectInterface::RunEachIterator(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld,
+	flecs::iter& InIterator)
+{
+	for (const FFlecsId Entity : InIterator)
+	{
+		EachIterator(InWorld, InIterator, Entity);
 	}
 }
 
 void IFlecsIteratorObjectInterface::EachIterator(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld,
-	flecs::iter& InIterator, const FFlecsId InIndex)
+                                                 flecs::iter& InIterator, const FFlecsId InIndex)
 {
 	// Empty
 }

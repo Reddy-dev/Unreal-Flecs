@@ -176,6 +176,8 @@ USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsRecordPair
 {
 	GENERATED_BODY()
+	
+public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Component Tree")
 	FFlecsRecordPairSlot First;
@@ -608,7 +610,7 @@ public:
 	}; // struct FBuilder
 	
 	template <UE::Flecs::CNonStructUtilScriptStructType TFragmentType>
-	using FFragmentBuilderType = FBuilder::TFragmentBuilderBase<TFragmentType>;
+	using TFragmentBuilderType = FBuilder::TFragmentBuilderBase<TFragmentType>;
 	
 	FORCEINLINE FBuilder Builder()
 	{

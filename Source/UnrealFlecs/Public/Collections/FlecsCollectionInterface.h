@@ -27,12 +27,13 @@ class UNREALFLECS_API IFlecsCollectionInterface
 public:
 	virtual void BuildCollection(FFlecsCollectionBuilder& Builder) const = 0;
 
+	// Unused
 	void CallInstantiateParameters(const FFlecsEntityHandle& InEntityHandle, const FInstancedStruct& InParameters) const;
 
-	// currently unused
+	// Currently unused
 	virtual void InstantiateParameters(const FFlecsEntityHandle& InEntityHandle, const FInstancedStruct& InParameters) const {}
 
-	// currently unused
+	// Currently unused
 	// Defaults to an invalid FInstancedStruct (this is optional)
 	virtual FInstancedStruct GetParametersType() const;
 	

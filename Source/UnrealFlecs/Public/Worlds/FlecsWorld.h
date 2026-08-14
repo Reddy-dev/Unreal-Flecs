@@ -47,7 +47,7 @@ public:
 	
 	virtual ~UFlecsWorld() override;
 
-	static NO_DISCARD UFlecsWorld* GetDefaultWorld(const UObject* WorldContextObject);
+	static NO_DISCARD UFlecsWorld* GetDefaultWorld(const TSolidNotNull<const UObject*> WorldContextObject);
 
 	void WorldStart();
  
@@ -267,11 +267,7 @@ public:
 	
 	/*UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
 	FFlecsQuery GetQueryFromEntity(const FFlecsEntityHandle& InEntity) const;*/
-
-	virtual bool IsSupportedForNetworking() const override;
-
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
+	
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
 	void ShrinkWorld() const;
 
@@ -332,7 +328,7 @@ public:
 	
 	void RegisterStages(const int32 InStageCount);
 	
-	NO_DISCARD UFlecsStage* CreateAsyncStage();
+	NO_DISCARD TSolidNotNull<UFlecsStage*> CreateAsyncStage();
 	
 	void ImportRestModule();
 	void ImportStatsModule();

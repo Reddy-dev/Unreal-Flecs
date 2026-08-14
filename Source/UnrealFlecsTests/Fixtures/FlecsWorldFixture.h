@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "CQTest.h"
 #include "Misc/AutomationTest.h"
 
 #if WITH_AUTOMATION_TESTS
@@ -19,53 +20,45 @@
 #include "Worlds/FlecsWorld.h"
 #include "Pipelines/FlecsDefaultGameLoop.h"
 
-/*namespace UE::Flecs::Testing::impl
-{
-	static const FString DefaultTags = TEXT("");
-} // namespace UE::Flecs::Testing::impl*/
-
 class UNREALFLECSTESTS_API FFlecsTestFixture
 {
 	static constexpr double DefaultTickStepInSeconds = 1.0 / 60.0;
-	
+
 public:
+	~FFlecsTestFixture()
+	{
+		TearDown();
+	}
+
 	TUniquePtr<FTestWorldWrapper> TestWorldWrapper;
 
 	TSharedPtr<FScopedTestEnvironment> TestEnvironment;
 
 	UGameInstance* StandaloneGameInstance = nullptr;
 	APlayerController* StandalonePlayerController = nullptr;
-	
+
 	TWeakObjectPtr<UWorld> TestWorld;
-	
+
 	UFlecsWorldSubsystem* WorldSubsystem = nullptr;
 	UFlecsWorld* FlecsWorld = nullptr;
 
-	// @TODO: add test support for multiple game loops
 	void SetUp(TArray<TScriptInterface<IFlecsGameLoopInterface>> InGameLoopInterfaces = {}, TArray<FFlecsTickFunctionSettingsInfo> InTickFunctions = {},
 		EWorldType::Type InWorldType = EWorldType::GameRPC)
 	{
+		TearDown();
 		TestEnvironment = FScopedTestEnvironment::Get();
-		TestEnvironment->SetConsoleVariableValue("r.RayTracing.Enable", "0");
-		
+
 		TestWorldWrapper = MakeUnique<FTestWorldWrapper>();
 		TestWorldWrapper->CreateTestWorld(InWorldType);
-		
+
 		TestWorld = TestWorldWrapper->GetTestWorld();
 		check(TestWorld.IsValid());
-		
-		/*StandaloneGameInstance = TestWorldWrapper->GetTestWorld()->GetGameInstance();
-		check(IsValid(StandaloneGameInstance));*/
 
 		WorldSubsystem = TestWorld->GetSubsystem<UFlecsWorldSubsystem>();
 		check(IsValid(WorldSubsystem));
-		
+
 		WorldSubsystem->AddToRoot();
 
-		/*StandalonePlayerController = NewObject<APlayerController>(TestWorld.Get());
-		check(IsValid(StandalonePlayerController));*/
-
-		// Create world settings
 		FFlecsWorldSettingsInfo WorldSettings;
 		WorldSettings.WorldName = "TestWorld";
 
@@ -121,10 +114,10 @@ public:
 			StandaloneGameInstance = nullptr;
 		}
 
-		/*if (StandalonePlayerController)
+		if (StandalonePlayerController)
 		{
 			StandalonePlayerController = nullptr;
-		}*/
+		}
 
 		if (TestWorldWrapper)
 		{
@@ -142,44 +135,78 @@ public:
 	{
 		return FlecsWorld;
 	}
-	
-}; // class FFlecsTestFixture
 
-struct UNREALFLECSTESTS_API FFlecsTestFixtureRAII
-{
-	mutable FFlecsTestFixture Fixture;
-
-	FFlecsTestFixtureRAII(TArray<TScriptInterface<IFlecsGameLoopInterface>> InGameLoopInterfaces = {}, const TArray<FFlecsTickFunctionSettingsInfo> InTickFunctions = {}
-		, EWorldType::Type InWorldType = EWorldType::GameRPC)
+	NO_DISCARD FORCEINLINE UFlecsWorldSubsystem* GetWorldSubsystem() const
 	{
-		Fixture.SetUp(InGameLoopInterfaces, InTickFunctions, InWorldType);
+		return WorldSubsystem;
 	}
 
-	~FFlecsTestFixtureRAII()
+	NO_DISCARD FORCEINLINE UWorld* GetTestWorld() const
 	{
+		return TestWorld.Get();
+	}
+
+}; // class FFlecsTestFixture
+
+template<typename TDerived, typename TAsserter>
+struct TFlecsWorldTest : TTest<TDerived, TAsserter>
+{
+	using Super = TTest<TDerived, TAsserter>;
+
+	virtual void Setup() override
+	{
+		Fixture.SetUp({}, {}, WorldType());
+		OnWorldSetUp();
+	}
+
+	virtual void TearDown() override
+	{
+		OnWorldTearDown();
 		Fixture.TearDown();
 	}
 
-	FORCEINLINE FFlecsTestFixture* operator->() const
+protected:
+	virtual EWorldType::Type WorldType() const
 	{
-		return &Fixture;
+		return EWorldType::GameRPC;
 	}
-	
-}; // struct FFlecsTestFixtureRAII
 
-#define FLECS_FIXTURE_LIFECYCLE(FixtureName) \
-	BeforeEach([this]() \
-	{ \
-		FixtureName.SetUp(); \
-	}); \
-	AfterEach([this]() \
-	{ \
-		FixtureName.TearDown(); \
-	})
+	virtual void OnWorldSetUp()
+	{
+	}
 
-#define xTEST_METHOD_WITH_TAGS(_MethodName, _TestTags) \
-	void _MethodName()
+	virtual void OnWorldTearDown()
+	{
+	}
 
-#define xTEST_METHOD(_MethodName) xTEST_METHOD_WITH_TAGS(_MethodName, UE::Flecs::Testing::impl::DefaultTags)
+	NO_DISCARD UFlecsWorld* World() const
+	{
+		return Fixture.GetFlecsWorld();
+	}
+
+	NO_DISCARD UFlecsWorldSubsystem* WorldSubsystem() const
+	{
+		return Fixture.GetWorldSubsystem();
+	}
+
+	NO_DISCARD UWorld* UnrealWorld() const
+	{
+		return Fixture.GetTestWorld();
+	}
+
+	void TickWorld(const double InDeltaSeconds = 1.0 / 60.0) const
+	{
+		Fixture.TickWorld(InDeltaSeconds);
+	}
+
+private:
+	FFlecsTestFixture Fixture;
+}; // struct TFlecsWorldTest
+
+#define FLECS_TEST_CLASS_WITH_FLAGS(_ClassName, _TestDir, _Flags) \
+	TEST_CLASS_WITH_BASE_AND_FLAGS(_ClassName, _TestDir, TFlecsWorldTest, _Flags)
+
+#define FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(_ClassName, _TestDir, _Flags, _TestTags) \
+	TEST_CLASS_WITH_BASE_AND_FLAGS_AND_TAGS(_ClassName, _TestDir, TFlecsWorldTest, _Flags, _TestTags)
 
 #endif // #if WITH_AUTOMATION_TESTS

@@ -6,33 +6,17 @@
 
 #include "FlecsAbstractWorldSubsystemTestTypes.h"
 
-/*
- * Layout of Tests:
- * A. Abstract Flecs World Subsystem Initialization Tests
- */
-TEST_CLASS_WITH_FLAGS_AND_TAGS(B3_FlecsWorldSubsystems, "UnrealFlecs.B3_FlecsWorldSubsystems",
+#include "Networking/Subsystem/FlecsNetworkSubsystemSingleton.h"
+#include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
+
+FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsWorldSubsystems, "UnrealFlecs.World.Subsystems",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter
 			| EAutomationTestFlags::CriticalPriority, "[Flecs]")
 {
-	inline static TUniquePtr<FFlecsTestFixtureRAII> Fixture;
-	inline static TObjectPtr<UFlecsWorld> FlecsWorld = nullptr;
-
-	BEFORE_EACH()
-	{
-		Fixture = MakeUnique<FFlecsTestFixtureRAII>();
-		FlecsWorld = Fixture->Fixture.GetFlecsWorld();
-	}
-	
-	AFTER_EACH()
-	{
-		FlecsWorld = nullptr;
-		Fixture.Reset();
-	}
-
-	TEST_METHOD(A1_AbstractFlecsWorldSubsystem_FlecsWorldInitialization)
+	TEST_METHOD(AbstractFlecsWorldSubsystem_FlecsWorldInitialization)
 	{
 		const UTestFlecsWorldSubsystem_Initialization* WorldSubsystem
-			= FlecsWorld->GetWorld()->GetSubsystem<UTestFlecsWorldSubsystem_Initialization>();
+			= World()->GetWorld()->GetSubsystem<UTestFlecsWorldSubsystem_Initialization>();
 		ASSERT_THAT(IsTrue(IsValid(WorldSubsystem)));
 		
 		ASSERT_THAT(IsTrue(WorldSubsystem->bWasFlecsWorldInitialized));
@@ -42,10 +26,10 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B3_FlecsWorldSubsystems, "UnrealFlecs.B3_FlecsWor
 		++WorldSubsystem->TimesChecked;
 	}
 	
-	TEST_METHOD(A2_AbstractFlecsWorldSubsystem_FlecsWorldInitialization_Again)
+	TEST_METHOD(AbstractFlecsWorldSubsystem_FlecsWorldInitialization_Again)
 	{
 		const UTestFlecsWorldSubsystem_Initialization* WorldSubsystem
-			= FlecsWorld->GetWorld()->GetSubsystem<UTestFlecsWorldSubsystem_Initialization>();
+			= World()->GetWorld()->GetSubsystem<UTestFlecsWorldSubsystem_Initialization>();
 		ASSERT_THAT(IsTrue(IsValid(WorldSubsystem)));
 		
 		ASSERT_THAT(IsTrue(WorldSubsystem->bWasFlecsWorldInitialized));
@@ -54,7 +38,17 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(B3_FlecsWorldSubsystems, "UnrealFlecs.B3_FlecsWor
 		ASSERT_THAT(IsTrue(WorldSubsystem->TimesChecked == 0));
 		++WorldSubsystem->TimesChecked;
 	}
+
+	TEST_METHOD(NetworkSubsystemSingleton_IsAvailableWhenAbstractSubsystemsAreInitialized)
+	{
+		const UTestFlecsWorldSubsystem_Initialization* WorldSubsystem
+			= World()->GetWorld()->GetSubsystem<UTestFlecsWorldSubsystem_Initialization>();
+		ASSERT_THAT(IsTrue(IsValid(WorldSubsystem)));
+
+		ASSERT_THAT(IsTrue(WorldSubsystem->bWasFlecsWorldInitialized));
+		ASSERT_THAT(IsFalse(WorldSubsystem->bWasNetworkSubsystemSingletonAvailable));
+	}
 	
-}; // End of B3_FlecsWorldSubsystems
+}; // FlecsWorldSubsystems
 
 #endif // WITH_AUTOMATION_TESTS

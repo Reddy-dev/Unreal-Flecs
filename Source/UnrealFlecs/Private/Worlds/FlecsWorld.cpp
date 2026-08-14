@@ -102,10 +102,8 @@ UFlecsWorld::~UFlecsWorld()
 	FCoreUObjectDelegates::GarbageCollectComplete.RemoveAll(this);
 }
 
-UFlecsWorld* UFlecsWorld::GetDefaultWorld(const UObject* WorldContextObject)
+UFlecsWorld* UFlecsWorld::GetDefaultWorld(const TSolidNotNull<const UObject*> WorldContextObject)
 {
-	solid_cassume(WorldContextObject);
-
 	const TSolidNotNull<const UWorld*> GameWorld = GEngine->GetWorldFromContextObjectChecked(WorldContextObject);
 	
 	const TSolidNotNull<const UFlecsWorldSubsystem*> WorldSubsystem = GameWorld->GetSubsystemChecked<UFlecsWorldSubsystem>();
@@ -482,8 +480,23 @@ void UFlecsWorld::RegisterUnrealTypes() const
 void UFlecsWorld::InitializeComponentPropertyObserver()
 {
 	ComponentRegisteredDelegateHandle = UE::FlecsLibrary::GetTypeRegisteredDelegate().AddWeakLambda(this,
-		[this](const flecs::id_t InEntityId)
+		[this](flecs::world_t* InWorld, const flecs::id_t InEntityId)
 	{
+		if UNLIKELY_IF(!IsValid(this))
+		{
+			return;
+		}
+			
+#if WITH_AUTOMATION_TESTS || WITH_EDITOR
+			
+		// because in PIE and automation tests we may have multiple worlds, and this is a global delegate
+		if (InWorld != GetNativeFlecsWorld())
+		{
+			return;
+		}
+			
+#endif // WITH_AUTOMATION_TESTS || WITH_EDITOR
+			
 		static const FString USTRUCTAliasPrefix = TEXT("UScriptStruct_");
 		static const FString UENUMAliasPrefix = TEXT("UEnum_");
 			
@@ -595,7 +608,7 @@ void UFlecsWorld::Reset()
 {
 	for (TTuple<FName, TObjectPtr<UFlecsEntityRange>> EntityRange : EntityRanges)
 	{
-		if (UFlecsEntityRange* EntityRangePtr = EntityRange.Value)
+		if LIKELY_IF(UFlecsEntityRange* EntityRangePtr = EntityRange.Value)
 		{
 			EntityRangePtr->InvalidateNativeEntityRange();
 			EntityRangePtr->MarkAsGarbage();
@@ -870,16 +883,6 @@ FFlecsQuery UFlecsWorld::GetQueryFromEntity(const FFlecsEntityHandle& InEntity) 
 }
 */
 
-bool UFlecsWorld::IsSupportedForNetworking() const
-{
-	return false;
-}
-
-void UFlecsWorld::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-}
-
 void UFlecsWorld::ShrinkWorld() const
 {
 	GetNativeFlecsWorld().shrink();
@@ -996,11 +999,6 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 
 UFlecsStage* UFlecsWorld::GetStage(const int32 InStageId) const
 {
-	if (InStageId == 0)
-	{
-		return nullptr;
-	}
-	
 	solid_cassumef(InStageId >= 0, TEXT("Stage ID must be non-negative and can't be the same as the main world (0)"));
 	solid_checkf(Stages.IsValidIndex(InStageId), TEXT("Stage ID %d is out of bounds"), InStageId);
 	return Stages[InStageId];
@@ -1045,9 +1043,12 @@ void UFlecsWorld::RegisterStages(const int32 InStageCount)
 	
 	Stages.Empty();
 	
+	const TSolidNotNull<UFlecsStage*> MainStage = NewObject<UFlecsStage>(this);
+	MainStage->SetStageWorld(GetNativeFlecsWorld().get_stage(0));
+	
 	if (InStageCount <= 1)
 	{
-		Stages.Add(nullptr);
+		Stages.Add(MainStage);
 		return;
 	}
 	
@@ -1055,7 +1056,7 @@ void UFlecsWorld::RegisterStages(const int32 InStageCount)
 	{
 		if (StageIndex == 0)
 		{
-			Stages.Add(nullptr);
+			Stages.Add(MainStage);
 			continue;
 		}
 		
@@ -1068,7 +1069,7 @@ void UFlecsWorld::RegisterStages(const int32 InStageCount)
 	}
 }
 
-UFlecsStage* UFlecsWorld::CreateAsyncStage()
+TSolidNotNull<UFlecsStage*> UFlecsWorld::CreateAsyncStage()
 {
 	flecs::world AsyncStage = GetNativeFlecsWorld().async_stage();
 	
@@ -1152,7 +1153,7 @@ void UFlecsWorld::AddReferencedObjects(UObject* InThis, FReferenceCollector& Col
 		    const FFlecsEntityHandle Component = Iter.get_var("Component");
 		    solid_check(Component.IsValid());
 		
-			void* ComponentPtr = nullptr;
+			void* ComponentPtr;
 
 			if (FFlecsId(FFlecsId(Iter.id(2)).GetTypeInfo(Iter.world())->component) == Component)
 			{

@@ -13,8 +13,9 @@ struct UNREALFLECS_API FFlecsSubEntityRecordNameComponent
 {
 	GENERATED_BODY()
 	
-public:
 	static constexpr bool DontFragment = true;
+	
+public:
 
 	UPROPERTY(EditAnywhere, Category = "Flecs")
 	FString SubEntityName;

@@ -68,6 +68,12 @@ public:
 	
 	NO_DISCARD FFlecsQuery Build() const;
 	
+	template <typename ...TArgs>
+	NO_DISCARD TTypedFlecsQuery<TArgs...> BuildTyped() const
+	{
+		return TTypedFlecsQuery<TArgs...>(Build());
+	}
+	
 	UPROPERTY()
 	TWeakObjectPtr<const UFlecsWorldInterfaceObject> FlecsWorld;
 	

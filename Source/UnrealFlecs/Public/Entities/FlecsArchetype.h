@@ -65,7 +65,6 @@ public:
     {
         return reinterpret_cast<const FFlecsId*>(Type.end());
     }
-
     /**
      * @brief Iterates over each component in the archetype.
      * @tparam FunctionType The type of the function to call for each component.

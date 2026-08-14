@@ -2,6 +2,9 @@
 
 #include "FlecsAbstractWorldSubsystemTestTypes.h"
 
+#include "Engine/World.h"
+#include "Networking/Subsystem/FlecsNetworkSubsystemSingleton.h"
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsAbstractWorldSubsystemTestTypes)
 
 UTestFlecsWorldSubsystem_Initialization::UTestFlecsWorldSubsystem_Initialization()
@@ -17,10 +20,10 @@ bool UTestFlecsWorldSubsystem_Initialization::ShouldCreateSubsystem(UObject* Out
 	
 	return Super::ShouldCreateSubsystem(Outer);
 }
-
 void UTestFlecsWorldSubsystem_Initialization::OnFlecsWorldInitialized(const TSolidNotNull<UFlecsWorld*> InWorld)
 {
 	Super::OnFlecsWorldInitialized(InWorld);
 
 	bWasFlecsWorldInitialized = true;
+	bWasNetworkSubsystemSingletonAvailable = InWorld->Has<FFlecsNetworkSubsystemSingleton>();
 }

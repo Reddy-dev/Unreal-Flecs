@@ -1,6 +1,7 @@
 ﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
 
 #include "Misc/AutomationTest.h"
+#include "UnrealFlecsTests/Fixtures/FlecsRegisteredWorldFixture.h"
 #include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
 
 #if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
@@ -8,44 +9,28 @@
 #include "StructUtils/StructView.h"
 #include "Worlds/FlecsWorld.h"
 
-/*
- * Layout of the tests:
- * A. Add/Remove/Set Component in Deferred Context Tests
- * B. Scoped Defer Window Tests
- * C. End Defer Tests
- */
-TEST_CLASS_WITH_FLAGS_AND_TAGS(A9_DeferWorldTests, "UnrealFlecs.A9_World_Defer",
+FLECS_REGISTERED_TEST_CLASS_WITH_FLAGS_AND_TAGS(DeferWorldTests, "UnrealFlecs.World.Deferred",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter
 	| EAutomationTestFlags::CriticalPriority, "[Flecs]")
 {
-	inline static TUniquePtr<FFlecsTestFixtureRAII> Fixture;
-	inline static TObjectPtr<UFlecsWorld> FlecsWorld = nullptr;
-
-	inline static FFlecsEntityHandle TestEntity;
-	
-	inline static FFlecsComponentHandle TestComponent;
-
-	BEFORE_EACH()
+protected:
+	virtual void OnRegisteredWorldSetUp() override
 	{
-		Fixture = MakeUnique<FFlecsTestFixtureRAII>();
-		FlecsWorld = Fixture->Fixture.GetFlecsWorld();
-
-		TestEntity = FlecsWorld->CreateEntity("TestEntity");
+		TestEntity = World()->CreateEntity("TestEntity");
 		solid_checkf(TestEntity.IsValid(), TEXT("Failed to create TestEntity!"));
 		
-		TestComponent = FlecsWorld->RegisterComponentType<FFlecsTestStruct_Value>();
+		TestComponent = World()->RegisterComponentType<FFlecsTestStruct_Value>();
 		solid_checkf(TestComponent.IsValid(), TEXT("Failed to register TestComponent!"));
 	}
 
-	AFTER_EACH()
-	{
-		FlecsWorld = nullptr;
-		Fixture.Reset();
-	}
+private:
+	FFlecsEntityHandle TestEntity;
+	FFlecsComponentHandle TestComponent;
 
-	TEST_METHOD(A1_AddRemoveComponentDeferred_Add_CPPAPI_Remove_CPPAPI)
+public:
+	TEST_METHOD(AddRemoveComponentDeferred_Add_CPPAPI_Remove_CPPAPI)
 	{
-		FlecsWorld->Defer([&]()
+		World()->Defer([&]()
 		{
 			TestEntity.Add<FFlecsTestStruct_Value>();
 			
@@ -56,7 +41,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A9_DeferWorldTests, "UnrealFlecs.A9_World_Defer",
 		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Value>(),
 			"TestEntity should have the component after the deferred context is applied!"));
 
-		FlecsWorld->Defer([&]()
+		World()->Defer([&]()
 		{
 			TestEntity.Remove<FFlecsTestStruct_Value>();
 			
@@ -68,9 +53,9 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A9_DeferWorldTests, "UnrealFlecs.A9_World_Defer",
 			"TestEntity should not have the component after the deferred context is applied!"));
 	}
 
-	TEST_METHOD(A2_AddRemoveComponentDeferred_Add_StaticStructAPI_Remove_StaticStructAPI)
+	TEST_METHOD(AddRemoveComponentDeferred_Add_StaticStructAPI_Remove_StaticStructAPI)
 	{
-		FlecsWorld->Defer([&]()
+		World()->Defer([&]()
 		{
 			TestEntity.Add(FFlecsTestStruct_Value::StaticStruct());
 			 
@@ -81,7 +66,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A9_DeferWorldTests, "UnrealFlecs.A9_World_Defer",
 		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Value>(),
 			"TestEntity should have the component after the deferred context is applied!"));
 
-		FlecsWorld->Defer([&]()
+		World()->Defer([&]()
 		{
 			TestEntity.Remove(FFlecsTestStruct_Value::StaticStruct());
 			
@@ -93,9 +78,9 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A9_DeferWorldTests, "UnrealFlecs.A9_World_Defer",
 			"TestEntity should not have the component after the deferred context is applied!"));
 	}
 
-	TEST_METHOD(A3_AddRemoveComponentDeferred_Add_EntityAPI_Remove_EntityAPI)
+	TEST_METHOD(AddRemoveComponentDeferred_Add_EntityAPI_Remove_EntityAPI)
 	{
-		FlecsWorld->Defer([&]()
+		World()->Defer([&]()
 		{
 			TestEntity.Add(TestComponent);
 			
@@ -106,7 +91,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A9_DeferWorldTests, "UnrealFlecs.A9_World_Defer",
 		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Value>(),
 			"TestEntity should have the component after the deferred context is applied!"));
 
-		FlecsWorld->Defer([&]()
+		World()->Defer([&]()
 		{
 			TestEntity.Remove(TestComponent);
 			
@@ -118,9 +103,9 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A9_DeferWorldTests, "UnrealFlecs.A9_World_Defer",
 			"TestEntity should not have the component after the deferred context is applied!"));
 	}
 
-	TEST_METHOD(A4_SetComponentDeferred_Set_CPPAPI)
+	TEST_METHOD(SetComponentDeferred_Set_CPPAPI)
 	{
-		FlecsWorld->Defer([&]()
+		World()->Defer([&]()
 		{
 			TestEntity.Set<FFlecsTestStruct_Value>({ 42 });
 			
@@ -138,9 +123,9 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A9_DeferWorldTests, "UnrealFlecs.A9_World_Defer",
 		ASSERT_THAT(IsFalse(TestEntity.Has<FFlecsTestStruct_Value>()));
 	}
 
-	TEST_METHOD(A5_SetComponentDeferred_Set_StaticStructAPI)
+	TEST_METHOD(SetComponentDeferred_Set_StaticStructAPI)
 	{
-		FlecsWorld->Defer([&]()
+		World()->Defer([&]()
 		{
 			static constexpr FFlecsTestStruct_Value ComponentValue{ 42 };
 			
@@ -160,10 +145,10 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A9_DeferWorldTests, "UnrealFlecs.A9_World_Defer",
 		ASSERT_THAT(IsFalse(TestEntity.Has<FFlecsTestStruct_Value>()));
 	}
 
-	TEST_METHOD(B1_ScopedDeferWindow_Add_CPPAPI_Remove_CPPAPI)
+	TEST_METHOD(ScopedDeferWindow_Add_CPPAPI_Remove_CPPAPI)
 	{
 		{
-			FFlecsScopedDeferWindow DeferWindow(FlecsWorld);
+			FFlecsScopedDeferWindow DeferWindow(World());
 			solid_checkf(DeferWindow.IsValid(), TEXT("DeferWindow is not valid!"));
 
 			TestEntity.Add<FFlecsTestStruct_Value>();
@@ -176,7 +161,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A9_DeferWorldTests, "UnrealFlecs.A9_World_Defer",
 			"TestEntity should have the component after the deferred context is applied!"));
 
 		{
-			FFlecsScopedDeferWindow DeferWindow(FlecsWorld);
+			FFlecsScopedDeferWindow DeferWindow(World());
 			solid_checkf(DeferWindow.IsValid(), TEXT("DeferWindow is not valid!"));
 
 			TestEntity.Remove<FFlecsTestStruct_Value>();
@@ -189,6 +174,6 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(A9_DeferWorldTests, "UnrealFlecs.A9_World_Defer",
 			"TestEntity should not have the component after the deferred context is applied!"));
 	}
 	
-}; // End of A9_DeferWorldTests
+}; // DeferWorldTests
 
 #endif // WITH_AUTOMATION_TESTS

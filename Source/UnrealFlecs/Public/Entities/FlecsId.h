@@ -76,7 +76,17 @@ public:
 
     NO_DISCARD FORCEINLINE bool IsValid() const
     {
-        return Id != 0;
+        if (Id == 0)
+        {
+            return false;
+        }
+        
+        if (IsPair())
+        {
+            return GetFirst().IsValid() && GetSecond().IsValid();
+        }
+
+        return true;
     }
     
     NO_DISCARD FORCEINLINE bool operator==(const FFlecsId& Other) const

@@ -497,6 +497,25 @@ public:
 		GetEntityView().each(FFlecsEntityView::GetInputId(*this, InFirstTypeValue),
 			std::forward<FunctionType>(InFunction));
 	}
+	
+	template <typename FunctionType>
+	SOLID_INLINE void Each(FunctionType&& InFunction) const
+	{
+		GetEntityView().each(std::forward<FunctionType>(InFunction));
+	}
+
+	template <typename TFirst, typename FunctionType>
+	SOLID_INLINE void Each(FunctionType&& InFunction) const
+	{
+		GetEntityView().each<TFirst, FunctionType>(std::forward<FunctionType>(InFunction));
+	}
+
+	template <UE::Flecs::TFlecsEntityFunctionInputDataTypeConcept TFirst, typename FunctionType>
+	SOLID_INLINE void Each(const TFirst& InFirstTypeValue, FunctionType&& InFunction) const
+	{
+		GetEntityView().each(FFlecsEntityView::GetInputId(*this, InFirstTypeValue),
+			std::forward<FunctionType>(InFunction));
+	}
 
 	template <typename FunctionType>
 	SOLID_INLINE void IterateChildren(FunctionType&& InFunction) const

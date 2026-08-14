@@ -2,6 +2,8 @@
 
 #include "General/FlecsModuleSettings.h"
 
+#include "Templates/SubclassOf.h"
+
 #include "General/FlecsGameplayDeveloperSettings.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsModuleSettings)

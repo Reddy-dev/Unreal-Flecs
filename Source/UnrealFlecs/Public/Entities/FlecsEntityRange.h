@@ -19,10 +19,11 @@ class UNREALFLECS_API UFlecsEntityRange final : public UObject
 {
 	GENERATED_BODY()
 	
+	friend class UFlecsWorld;
+	
 public:
 	UFlecsEntityRange(const FObjectInitializer& ObjectInitializer);
 	
-	void SetNativeEntityRange(const ecs_entity_range_t* InRange, const FName& InRangeName);
 	void InvalidateNativeEntityRange();
 	
 	NO_DISCARD FORCEINLINE const ecs_entity_range_t* GetNativeEntityRange() const
@@ -53,6 +54,9 @@ public:
 	{
 		return RangeName;
 	}
+	
+private:
+	void SetNativeEntityRange(const ecs_entity_range_t* InRange, const FName& InRangeName);
 	
 private:
 	// @TODO: stuff -Elie

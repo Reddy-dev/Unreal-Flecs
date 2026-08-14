@@ -20,8 +20,6 @@ public class UnrealFlecs : ModuleRules
 				"GameplayTags",
 				"AssetRegistry",
 				"StructUtils",
-				"NetCore",
-				"NetCommon",
 				"PhysicsCore",
                 "Chaos",
                 "ChaosCore",

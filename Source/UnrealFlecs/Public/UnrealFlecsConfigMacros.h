@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 
+#include "Components/PIENetworkComponent.h"
+
 #ifndef ENABLE_UNREAL_FLECS_TESTS
 #define ENABLE_UNREAL_FLECS_TESTS 0
 #endif // ENABLE_UNREAL_FLECS_TESTS

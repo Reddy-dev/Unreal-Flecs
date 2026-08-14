@@ -311,6 +311,7 @@ private:
 	
 public:
 	
+	// @TODO: Handle Pairs
 	FORCEINLINE_DEBUGGABLE FInheritedType& With(const FFlecsId InId)
 	{
 		FFlecsQueryTermExpression Expr;
@@ -398,6 +399,48 @@ public:
 		}
 		
 		return GetSelf();
+	}
+
+	template <UE::Flecs::Queries::CQueryDefinitionRecordInputType T>
+	FORCEINLINE_DEBUGGABLE FInheritedType& Read(const T& InInput)
+	{
+		this->With(InInput);
+		return InOutExpression(EFlecsQueryInOut::Read, true);
+	}
+
+	template <typename T>
+	FORCEINLINE_DEBUGGABLE FInheritedType& Read()
+	{
+		this->With<T>();
+		return InOutExpression(EFlecsQueryInOut::Read, true);
+	}
+
+	template <UE::Flecs::Queries::CQueryDefinitionRecordInputType T>
+	FORCEINLINE_DEBUGGABLE FInheritedType& Write(const T& InInput)
+	{
+		this->With(InInput);
+		return InOutExpression(EFlecsQueryInOut::Write, true);
+	}
+
+	template <typename T>
+	FORCEINLINE_DEBUGGABLE FInheritedType& Write()
+	{
+		this->With<T>();
+		return InOutExpression(EFlecsQueryInOut::Write, true);
+	}
+
+	template <UE::Flecs::Queries::CQueryDefinitionRecordInputType T>
+	FORCEINLINE_DEBUGGABLE FInheritedType& ReadWrite(const T& InInput)
+	{
+		this->With(InInput);
+		return InOutExpression(EFlecsQueryInOut::ReadWrite, true);
+	}
+
+	template <typename T>
+	FORCEINLINE_DEBUGGABLE FInheritedType& ReadWrite()
+	{
+		this->With<T>();
+		return InOutExpression(EFlecsQueryInOut::ReadWrite, true);
 	}
 	
 	FORCEINLINE_DEBUGGABLE FInheritedType& Without(const FFlecsId InId)

@@ -19,6 +19,9 @@ namespace UE::Flecs
 void FUnrealFlecsModule::StartupModule()
 {
 	UE::Flecs::FFlecsModuleRegistry::Get().RegisterUnrealFlecsModule("UnrealFlecs");
+	/*FFlecsReplicationInterestPolicyRegistry::RegisterPolicy(MakeUnique<FFlecsEveryoneReplicationInterestPolicy>());
+	FFlecsReplicationInterestPolicyRegistry::RegisterPolicy(MakeUnique<FFlecsOwnerReplicationInterestPolicy>());
+	FFlecsReplicationInterestPolicyRegistry::RegisterPolicy(MakeUnique<FFlecsSpatialCellReplicationInterestPolicy>());*/
 	
 	FCoreDelegates::GetOnPostEngineInit().AddLambda([]()
 	{
@@ -29,7 +32,9 @@ void FUnrealFlecsModule::StartupModule()
 
 void FUnrealFlecsModule::ShutdownModule()
 {
-	
+	/*FFlecsReplicationInterestPolicyRegistry::UnregisterPolicy(FFlecsReplicationInterestPolicyNames::SpatialCell);
+	FFlecsReplicationInterestPolicyRegistry::UnregisterPolicy(FFlecsReplicationInterestPolicyNames::Owner);
+	FFlecsReplicationInterestPolicyRegistry::UnregisterPolicy(FFlecsReplicationInterestPolicyNames::Everyone);*/
 }
 
 #undef LOCTEXT_NAMESPACE // "FUnrealFlecsModule"

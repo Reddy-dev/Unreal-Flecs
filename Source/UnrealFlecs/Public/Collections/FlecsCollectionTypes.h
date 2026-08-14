@@ -104,9 +104,10 @@ USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsCollectionReferenceComponent
 {
 	GENERATED_BODY()
+	
+	static constexpr bool Sparse = true;
 
 public:
-	static constexpr bool Sparse = true;
 
 	FORCEINLINE FFlecsCollectionReferenceComponent() = default;
 	
@@ -119,6 +120,7 @@ template <>
 struct TFlecsComponentTraits<FFlecsCollectionReferenceComponent> : public TFlecsComponentTraitsBase<FFlecsCollectionReferenceComponent>
 {
 	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::DontInherit;
+	
 	static constexpr bool Sparse = true;
 }; // struct TFlecsComponentTraits<FFlecsCollectionReferenceComponent>
 
@@ -156,7 +158,7 @@ USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsSubEntityIndex
 {
 	GENERATED_BODY()
-
+	
 	static constexpr bool Sparse = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs")

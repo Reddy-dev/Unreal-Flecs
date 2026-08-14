@@ -18,11 +18,14 @@
 #include "Components/FlecsWorldPtrComponent.h"
 #include "Components/UWorldPtrComponent.h"
 #include "Components/FlecsBeginPlayComponent.h"
-#include "General/FlecsDeveloperSettings.h"
 
+#include "Entities/FlecsStablePathTag.h"
+
+#include "General/FlecsDeveloperSettings.h"
 #include "General/FlecsGameplayTagManagerEntity.h"
 #include "General/FlecsModuleRegistry.h"
 #include "General/FlecsThreadAllocationPolicyBaseAsset.h"
+
 
 #include "Pipelines/FlecsGameLoopInterface.h"
 #include "Pipelines/TickFunctions/FlecsTickFunction.h"
@@ -279,6 +282,18 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	DefaultWorld->bIsInitialized = true;
 	OnWorldCreatedDelegate.Broadcast(DefaultWorld);
 	UE::Flecs::GOnFlecsWorldInitialized.Broadcast(DefaultWorld);
+
+	// A Flecs world can be created after its owning UWorld has already begun
+	// play (for example, from a PIE network-test step). In that case the
+	// subsystem's OnWorldBeginPlay callback has already passed, so initialize
+	// begin-play components and registered systems/observers here.
+	if (GetWorld()->HasBegunPlay())
+	{
+		DefaultWorld->WorldBeginPlay();
+		OnWorldBeginPlayDelegate.Broadcast(GetWorld());
+		
+		DefaultWorld->CallBeginPlayForRegisteredObjects();
+	}
 		
 	return DefaultWorld;
 }
@@ -374,6 +389,7 @@ void UFlecsWorldSubsystem::RegisterAllGameplayTags(const TSolidNotNull<UFlecsWor
 			const FFlecsEntityHandle TagEntity = InFlecsWorld->CreateEntity(Tag.ToString(), ".", ".");
 				
 			TagEntity.Set<FGameplayTag>(Tag);
+			TagEntity.Add<FFlecsStablePathTag>();
 
 			InFlecsWorld->TagEntityMap.emplace(Tag, TagEntity.GetFlecsId());
 		}

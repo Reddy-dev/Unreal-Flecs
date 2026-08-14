@@ -63,7 +63,8 @@ public:
 		{
 			URL.Appendf(TEXT("?host=%s"), *Host);
 
-			URL.Appendf(TEXT(":%d"), Port + ClientInstanceIndex);
+			const uint32 InstancePort = Port + (IncrementPortForClientInstances ? ClientInstanceIndex : 0);
+			URL.Appendf(TEXT(":%d"), InstancePort);
 		}
 
 		for (const FString& Param : AdditionalQueryParameters)
@@ -82,4 +83,3 @@ public:
 	}
 
 }; // struct FFlecsEditorExplorerURL
-

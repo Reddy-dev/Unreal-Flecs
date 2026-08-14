@@ -34,7 +34,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Flecs|Observer")
 	UFlecsWorld* GetFlecsWorld() const;
 	
-	virtual void RegisterObject(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld) override final;
+	virtual void RegisterObject(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld) override;
 	virtual void UnregisterObject(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld) override;
 	virtual void FlecsWorldBeginPlay(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld) override;
 	
