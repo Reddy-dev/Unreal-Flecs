@@ -608,7 +608,7 @@ void UFlecsWorld::Reset()
 {
 	for (TTuple<FName, TObjectPtr<UFlecsEntityRange>> EntityRange : EntityRanges)
 	{
-		if (UFlecsEntityRange* EntityRangePtr = EntityRange.Value)
+		if LIKELY_IF(UFlecsEntityRange* EntityRangePtr = EntityRange.Value)
 		{
 			EntityRangePtr->InvalidateNativeEntityRange();
 			EntityRangePtr->MarkAsGarbage();
