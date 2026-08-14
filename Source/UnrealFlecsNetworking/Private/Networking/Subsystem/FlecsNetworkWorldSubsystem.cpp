@@ -122,6 +122,7 @@ void UFlecsNetworkWorldSubsystem::RegisterComponentDirtyObservers()
 
 void UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver(const FFlecsComponentReplicationDescriptor& InDescriptor)
 {
+	// @TODO: maybe make a check?
 	// This should have been checked previously
 	if UNLIKELY_IF(!HasAuthority())
 	{
@@ -136,7 +137,7 @@ void UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver(const
 		return;
 	}
 	
-	if (InDescriptor.bIsTag)
+	if (InDescriptor.IsTag())
 	{
 		return;
 	}
@@ -175,8 +176,7 @@ void UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver(const
 	};
 	
 	const FFlecsObserverHandle PrimaryObserverHandle = CreateObserver(InDescriptor.LocalFlecsId);
-	const FFlecsObserverHandle PairFirstObserverHandle =
-		CreateObserver(InDescriptor.LocalFlecsId, flecs::Wildcard);
+	const FFlecsObserverHandle PairFirstObserverHandle = CreateObserver(InDescriptor.LocalFlecsId, flecs::Wildcard);
 	/*const FFlecsObserverHandle PairSecondObserverHandle =
 		CreateObserver(flecs::Wildcard, InDescriptor.LocalFlecsId);*/
 	
@@ -405,8 +405,11 @@ void UFlecsNetworkWorldSubsystem::ReceiveNetworkEntitySnapshot(const FFlecsNetwo
 
 void UFlecsNetworkWorldSubsystem::RemoveReceivedNetworkEntity(const FFlecsNetworkId& InNetworkId, const uint32 InStateRevision)
 {
-	if (HasAuthority())
+	if UNLIKELY_IF(HasAuthority())
 	{
+		UE_LOGFMT(LogFlecsWorld, Error,
+			"Received a network entity removal for network ID '%s' on an authoritative instance",
+			*InNetworkId.ToString());
 		return;
 	}
 
