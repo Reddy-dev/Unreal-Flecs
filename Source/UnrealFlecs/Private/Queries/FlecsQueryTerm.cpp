@@ -18,14 +18,16 @@ void FFlecsQueryTerm::ApplyToQueryBuilder(const TSolidNotNull<const UFlecsWorldI
 	
 	if (TermRef.IsType<FFlecsId>())
 	{
-		if (bIsPair)
+		const FFlecsId TermId = TermRef.Get<FFlecsId>();
+		
+		if (bIsPair || !TermId.IsPair())
 		{
 			InQueryBuilder.first(TermRef.Get<FFlecsId>());
 		}
 		else
 		{
-			// Allows for Pairs to be directly input into the With Query Builder Function
-			InQueryBuilder.id(TermRef.Get<FFlecsId>());
+			InQueryBuilder.first(TermId.GetFirst());
+			InQueryBuilder.second(TermId.GetSecond());
 		}
 	}
 	else if (TermRef.IsType<char*>())
