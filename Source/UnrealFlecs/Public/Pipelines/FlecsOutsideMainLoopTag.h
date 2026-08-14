@@ -13,3 +13,8 @@ struct UNREALFLECS_API FFlecsOutsideMainLoopTag
 {
 	GENERATED_BODY()
 }; // struct FFlecsOutsideMainLoopTag
+
+template <>
+struct TFlecsComponentTraits<FFlecsOutsideMainLoopTag> : public TFlecsComponentTraitsBase<FFlecsOutsideMainLoopTag>
+{
+}; // struct TFlecsComponentTraits
