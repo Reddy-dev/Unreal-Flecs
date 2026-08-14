@@ -136,10 +136,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Flecs|Networking")
 	FFlecsEntityHandle RegisterReplicationProfileAsset(const UFlecsReplicationProfileDataAsset* InAsset);
 
-	FFlecsEntityHandle RegisterReplicationProfileDefinition(const FName InName,
+	FFlecsEntityHandle RegisterReplicationProfileDefinition(const FName& InName,
 		const FFlecsReplicationProfile& InDefinition);
 
-	NO_DISCARD FFlecsEntityHandle GetReplicationProfilePrefab(const FName InName) const;
+	NO_DISCARD FFlecsEntityHandle GetReplicationProfilePrefab(const FName& InName) const;
 
 	UFUNCTION()
 	bool SetReplicationProfile(const FFlecsEntityHandle& InEntity, const FFlecsEntityHandle& InProfilePrefab);

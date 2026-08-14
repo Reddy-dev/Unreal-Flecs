@@ -119,10 +119,12 @@ protected:
 		const FFlecsEntityReplicationSnapshot& InSnapshot,
 		const FFlecsReplicationProfile& InProfile,
 		const FFlecsReplicationShardSelection& InSelection);
+	
 	NO_DISCARD UFlecsNetShardBase* FindOrCreateShard(const FFlecsNetworkId& InNetworkId,
 		const FFlecsEntityReplicationSnapshot& InSnapshot,
 		const FFlecsReplicationProfile& InProfile,
 		const FFlecsReplicationShardSelection& InSelection);
+	
 	void ReleaseShardIfEmpty(UFlecsNetShardBase* InShard,
 		const FFlecsReplicationProfile& InProfile,
 		const FFlecsReplicationShardSelection& InSelection);

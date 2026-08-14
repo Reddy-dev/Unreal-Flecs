@@ -132,6 +132,7 @@ void UFlecsIrisReplicationBridge::PublishNetEntity(const FFlecsEntityHandle& Ent
 	const FFlecsEntityReplicationSnapshot& InSnapshot)
 {
 	UFlecsNetShardBase* Shard = ResolveShard(EntityHandle, InNetworkId, InSnapshot);
+	
 	if UNLIKELY_IF(!Shard)
 	{
 		UE_LOG(LogFlecsCore, Error, TEXT("Cannot resolve a Flecs replication shard for entity '%s'"), *EntityHandle.ToString());

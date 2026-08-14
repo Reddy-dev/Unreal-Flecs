@@ -3,13 +3,6 @@
 #include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 
 #include "Engine/World.h"
-#include "Networking/FlecsDirtyObserverTag.h"
-#include "Networking/FlecsNetDirtyTag.h"
-#include "Networking/FlecsReplicationProfile.h"
-#include "Networking/FlecsReplicationProfileDataAsset.h"
-#include "Networking/FlecsReplicationShardSelection.h"
-#include "Networking/Shards/FlecsNetEntityTable.h"
-#include "Networking/Shards/FlecsNetEntityProxy.h"
 
 #include "Serialization/MemoryReader.h"
 #include "Serialization/MemoryWriter.h"
@@ -19,6 +12,13 @@
 #include "Networking/Subsystem/FlecsNetworkSubsystemSingleton.h"
 #include "Networking/FlecsReplicatedEntityComponent.h"
 #include "Networking/Bridge/FlecsReplicationBridgeBase.h"
+#include "Networking/FlecsDirtyObserverTag.h"
+#include "Networking/FlecsNetDirtyTag.h"
+#include "Networking/FlecsReplicationProfile.h"
+#include "Networking/FlecsReplicationProfileDataAsset.h"
+#include "Networking/FlecsReplicationShardSelection.h"
+#include "Networking/Shards/FlecsNetEntityTable.h"
+#include "Networking/Shards/FlecsNetEntityProxy.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsNetworkWorldSubsystem)
 
@@ -29,7 +29,6 @@ UFlecsNetworkWorldSubsystem::UFlecsNetworkWorldSubsystem()
 void UFlecsNetworkWorldSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-	
 }
 
 void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UFlecsWorld*> InWorld)
@@ -473,7 +472,7 @@ FFlecsEntityHandle UFlecsNetworkWorldSubsystem::RegisterReplicationProfileAsset(
 }
 
 FFlecsEntityHandle UFlecsNetworkWorldSubsystem::RegisterReplicationProfileDefinition(
-	const FName InName, const FFlecsReplicationProfile& InDefinition)
+	const FName& InName, const FFlecsReplicationProfile& InDefinition)
 {
 	solid_checkf(!InName.IsNone(), TEXT("Flecs replication profile name is invalid"));
 
@@ -490,7 +489,7 @@ FFlecsEntityHandle UFlecsNetworkWorldSubsystem::RegisterReplicationProfileDefini
 	return ProfilePrefab;
 }
 
-FFlecsEntityHandle UFlecsNetworkWorldSubsystem::GetReplicationProfilePrefab(const FName InName) const
+FFlecsEntityHandle UFlecsNetworkWorldSubsystem::GetReplicationProfilePrefab(const FName& InName) const
 {
 	if (const FFlecsEntityHandle* ProfilePrefab = ReplicationProfilePrefabs.Find(InName))
 	{
@@ -500,21 +499,22 @@ FFlecsEntityHandle UFlecsNetworkWorldSubsystem::GetReplicationProfilePrefab(cons
 	return FFlecsEntityHandle();
 }
 
-bool UFlecsNetworkWorldSubsystem::SetReplicationProfile(const FFlecsEntityHandle& InEntity,
-	const FFlecsEntityHandle& InProfilePrefab)
+bool UFlecsNetworkWorldSubsystem::SetReplicationProfile(const FFlecsEntityHandle& InEntity, const FFlecsEntityHandle& InProfilePrefab)
 {
 	solid_checkf(InEntity.IsValid(), TEXT("Cannot set replication profile for an invalid entity handle"));
 	solid_checkf(InProfilePrefab.IsValid(), TEXT("Cannot set replication profile from an invalid profile prefab handle"));
 	
 	solid_checkf(InProfilePrefab.IsPrefab(), TEXT("Cannot set replication profile from an entity that is not a prefab"));
 	
-	if (!HasAuthority())
+#if !WITH_CLIENT_CODE
+	if UNLIKELY_IF(!HasAuthority())
 	{
 		UE_LOGFMT(LogFlecsWorld, Error,
 			"Cannot set replication profile for entity %s without authority",
 			*InEntity.ToString());
 		return false;
 	}
+#endif // !WITH_CLIENT_CODE
 
 	FName ProfileId = NAME_None;
 	
@@ -543,10 +543,6 @@ bool UFlecsNetworkWorldSubsystem::SetReplicationProfile(const FFlecsEntityHandle
 	{
 		ReplicatedEntity->ProfileId = ProfileId;
 		InEntity.Modified<FFlecsReplicatedEntityComponent>();
-	}
-
-	if (InEntity.Has<FFlecsReplicatedEntityComponent>())
-	{
 		InEntity.Add<FFlecsNetDirtyTag>();
 	}
 
@@ -592,12 +588,10 @@ bool UFlecsNetworkWorldSubsystem::ResolveReplicationProfile(const FFlecsEntityHa
 bool UFlecsNetworkWorldSubsystem::RegisterReplicationShardSelector(const FName& InName,
 	FFlecsReplicationShardSelectorFunction InSelector)
 {
-	if UNLIKELY_IF(InName.IsNone() || !InSelector)
-	{
-		return false;
-	}
+	solid_checkf(!InName.IsNone(), TEXT("Flecs replication shard selector name is invalid"));
+	solid_checkf(InSelector, TEXT("Flecs replication shard selector function is invalid"));
 
-	if (ReplicationShardSelectors.Contains(InName))
+	if UNLIKELY_IF(ReplicationShardSelectors.Contains(InName))
 	{
 		UE_LOG(LogFlecsWorld, Warning,
 			TEXT("Flecs replication shard selector '%s' is already registered"), *InName.ToString());
@@ -617,39 +611,20 @@ bool UFlecsNetworkWorldSubsystem::SelectReplicationShard(const FFlecsEntityHandl
 		: InProfile.ShardSelectorName;
 
 	const FFlecsReplicationShardSelectorFunction* Selector = ReplicationShardSelectors.Find(SelectorName);
-	if UNLIKELY_IF(!Selector)
-	{
-		UE_LOG(LogFlecsWorld, Error,
-			TEXT("Cannot select a Flecs replication shard because selector '%s' is not registered"),
-			*SelectorName.ToString());
-		return false;
-	}
+	solid_cassumef(Selector, TEXT("Flecs replication shard selector '%s' is not registered"), *SelectorName.ToString());
 
 	OutSelection = FFlecsReplicationShardSelection();
-	if UNLIKELY_IF(!(*Selector)(InEntity, InNetworkId, InProfile, OutSelection))
+	if (!(*Selector)(InEntity, InNetworkId, InProfile, OutSelection))
 	{
 		UE_LOG(LogFlecsWorld, Error,
 			TEXT("Flecs replication shard selector '%s' rejected network ID '%s'"),
 			*SelectorName.ToString(), *InNetworkId.ToString());
 		return false;
 	}
-
-	if UNLIKELY_IF(!OutSelection.ShardClass)
-	{
-		UE_LOG(LogFlecsWorld, Error,
-			TEXT("Flecs replication shard selector '%s' returned no shard class"),
-			*SelectorName.ToString());
-		return false;
-	}
-
-	if UNLIKELY_IF(OutSelection.ShardClass->HasAnyClassFlags(CLASS_Abstract))
-	{
-		UE_LOG(LogFlecsWorld, Error,
-			TEXT("Flecs replication shard selector '%s' returned abstract shard class '%s'"),
-			*SelectorName.ToString(), *OutSelection.ShardClass->GetName());
-		return false;
-	}
-
+	
+	solid_checkf(OutSelection.ShardClass, TEXT("Flecs replication shard selector '%s' returned no shard class"), *SelectorName.ToString());
+	solid_checkf(!OutSelection.ShardClass->HasAnyClassFlags(CLASS_Abstract), TEXT("Flecs replication shard selector '%s' returned abstract shard class '%s'"), *SelectorName.ToString(), *OutSelection.ShardClass->GetName());
+	
 	return true;
 }
 
