@@ -965,8 +965,10 @@ NETWORK_TEST_CLASS(FlecsReplicationPacketSimulationNetworkTests,
 	BEFORE_EACH()
 	{
 		PacketSimulationSettings.ResetSettings();
-		PacketSimulationSettings.PktLoss = 5;
+		PacketSimulationSettings.PktLoss = 20;
 		PacketSimulationSettings.PktOrder = 1;
+		PacketSimulationSettings.PktJitter = 5;
+		PacketSimulationSettings.PktDup = 3;
 		ExpectedNetworkId = FFlecsNetworkId();
 		ExpectedStateRevision = 0;
 
