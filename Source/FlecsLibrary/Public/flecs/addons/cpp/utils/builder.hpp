@@ -48,6 +48,11 @@ public:
     }
     
     flecs::world_t* _internal_world_v() { return world_; }
+    
+    // Added by Elie
+    TDesc* _internal_get_desc() {
+        return &desc_;
+    }
 
 protected:
     flecs::world_t* world_v() override { return world_; }
