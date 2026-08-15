@@ -5,9 +5,8 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
-#include "Bake/FlecsTestTypes.h"
 #include "flecs.h"
-#include "Bake/FlecsGeneratedTestUtils.h"
+#include "Bake/FlecsGeneratedTestCompatibility.h"
 
 #define MyTag FlecsGeneratedType_d3f6eb7b9a_MyTag
 
@@ -22,32 +21,8 @@ namespace ns {
 static void RegisterFlecsGeneratedTestTypes_d3f6eb7b9a(flecs::world& World)
 {
 	// Explicit registrations; no automatic registration is assumed.
-	World.component<Position>();
-	World.component<Velocity>();
-	World.component<Tag0>();
-	World.component<Tag1>();
-	World.component<Tag2>();
-	World.component<Tag3>();
-	World.component<Tag4>();
-	World.component<Tag5>();
-	World.component<Tag6>();
-	World.component<Tag7>();
-	World.component<Tag8>();
-	World.component<Tag9>();
-	World.component<Tag10>();
-	World.component<Tag11>();
-	World.component<Tag12>();
-	World.component<Tag13>();
-	World.component<Tag14>();
-	World.component<Tag15>();
-	World.component<Tag16>();
-	World.component<Tag17>();
-	World.component<Tag18>();
-	World.component<Tag19>();
+	FlecsGeneratedTest::RegisterSharedTypes(World);
 	World.component<MyTag>("MyTag");
-	World.component<Tag>();
-	World.component<Mass>();
-	World.component<ns::Velocity>();
 }
 
 static void FlecsGeneratedBody_Observer_2_terms_on_add_0e8de9ac() {

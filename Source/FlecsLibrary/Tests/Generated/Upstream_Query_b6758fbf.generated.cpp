@@ -6,9 +6,8 @@
 
 #include "Misc/AutomationTest.h"
 #include <iostream>
-#include "Bake/FlecsTestTypes.h"
 #include "flecs.h"
-#include "Bake/FlecsGeneratedTestUtils.h"
+#include "Bake/FlecsGeneratedTestCompatibility.h"
 
 #define Apples FlecsGeneratedType_66c939fe99_Apples
 #define Begin FlecsGeneratedType_66c939fe99_Begin
@@ -229,18 +228,12 @@ static void ResetFlecsGeneratedFileState_66c939fe99()
 static void RegisterFlecsGeneratedTestTypes_66c939fe99(flecs::world& World)
 {
 	// Explicit registrations; no automatic registration is assumed.
-	World.component<Position>();
-	World.component<Tag>();
-	World.component<Rel>();
-	World.component<Velocity>();
-	World.component<Mass>();
-	World.component<Tag0>();
+	FlecsGeneratedTest::RegisterSharedTypes(World);
 	World.component<Pair>("Pair");
 	World.component<EatsApples>("EatsApples");
 	World.component<EatsPears>("EatsPears");
 	World.component<EndEvent>("EndEvent");
 	World.component<BeginEvent>("BeginEvent");
-	World.component<Self>();
 	World.component<VelocityDerived>("VelocityDerived");
 	World.component<TestComponent>("TestComponent");
 	World.component<Position_Df_Or>("Position_Df_Or");

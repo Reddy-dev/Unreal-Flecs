@@ -5,9 +5,8 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
-#include "Bake/FlecsTestTypes.h"
 #include "flecs.h"
-#include "Bake/FlecsGeneratedTestUtils.h"
+#include "Bake/FlecsGeneratedTestCompatibility.h"
 
 #define Base FlecsGeneratedType_b85e9def79_Base
 #define Color FlecsGeneratedType_b85e9def79_Color
@@ -67,27 +66,15 @@ enum Color {
 static void RegisterFlecsGeneratedTestTypes_b85e9def79(flecs::world& World)
 {
 	// Explicit registrations; no automatic registration is assumed.
-	World.component<Position>();
-	World.component<Velocity>();
-	World.component<Tag>();
-	World.component<Tgt>();
+	FlecsGeneratedTest::RegisterSharedTypes(World);
 	World.component<MyTag>("MyTag");
-	World.component<Mass>();
-	World.component<Pod>();
-	World.component<NoDefaultCtor>();
 	World.component<Parent>("Parent");
-	World.component<Self>();
-	World.component<Rel>();
-	World.component<R>();
 	World.component<EachDontFragment>("EachDontFragment");
 	World.component<OtherDontFragment>("OtherDontFragment");
 	World.component<PositionInitialized>("PositionInitialized");
 	World.component<EntityType>("EntityType");
 	World.component<Parent::EntityType>("Parent::EntityType");
 	World.component<Color>("Color");
-	World.component<LifecycleTracker>();
-	World.component<NonCopyAssignable>();
-	World.component<NonCopyAssignableWMoveAssign>();
 }
 
 static void FlecsGeneratedBody_Entity_new_c3ac8bb4() {

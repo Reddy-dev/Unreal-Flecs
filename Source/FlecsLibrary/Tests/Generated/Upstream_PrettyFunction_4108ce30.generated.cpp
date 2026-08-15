@@ -6,9 +6,8 @@
 
 #include "Misc/AutomationTest.h"
 #include <iostream>
-#include "Bake/FlecsTestTypes.h"
 #include "flecs.h"
-#include "Bake/FlecsGeneratedTestUtils.h"
+#include "Bake/FlecsGeneratedTestCompatibility.h"
 
 #define Color FlecsGeneratedType_cf4d3f77b0_Color
 #define ColorContainer FlecsGeneratedType_cf4d3f77b0_ColorContainer
@@ -37,6 +36,12 @@ template <typename E, E C>
 static size_t pretty_enum() {
     std::cout << ECS_FUNC_NAME << std::endl;
     return 0;
+}
+
+static void RegisterFlecsGeneratedTestTypes_cf4d3f77b0(flecs::world& World)
+{
+	// Explicit registrations; no automatic registration is assumed.
+	FlecsGeneratedTest::RegisterSharedTypes(World);
 }
 
 static void FlecsGeneratedBody_PrettyFunction_component_ecab9f8a() {

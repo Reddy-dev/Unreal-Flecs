@@ -5,9 +5,8 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
-#include "Bake/FlecsTestTypes.h"
 #include "flecs.h"
-#include "Bake/FlecsGeneratedTestUtils.h"
+#include "Bake/FlecsGeneratedTestCompatibility.h"
 
 #define Color FlecsGeneratedType_ec23d7231d_Color
 #define Other FlecsGeneratedType_ec23d7231d_Other
@@ -114,45 +113,8 @@ static void ResetFlecsGeneratedFileState_ec23d7231d()
 static void RegisterFlecsGeneratedTestTypes_ec23d7231d(flecs::world& World)
 {
 	// Explicit registrations; no automatic registration is assumed.
-	World.component<Position>();
-	World.component<Velocity>();
-	World.component<Mass>();
+	FlecsGeneratedTest::RegisterSharedTypes(World);
 	World.component<Other>("Other");
-	World.component<Self>();
-	World.component<Rel>();
-	World.component<Tag>();
-	World.component<Tag0>();
-	World.component<Tag1>();
-	World.component<Tag2>();
-	World.component<Tag3>();
-	World.component<Tag4>();
-	World.component<Tag5>();
-	World.component<Tag6>();
-	World.component<Tag7>();
-	World.component<Tag8>();
-	World.component<Tag9>();
-	World.component<Tag10>();
-	World.component<Tag11>();
-	World.component<Tag12>();
-	World.component<Tag13>();
-	World.component<Tag14>();
-	World.component<Tag15>();
-	World.component<Tag16>();
-	World.component<Tag17>();
-	World.component<Tag18>();
-	World.component<Tag19>();
-	World.component<Tag20>();
-	World.component<Tag21>();
-	World.component<Tag22>();
-	World.component<Tag23>();
-	World.component<Tag24>();
-	World.component<Tag25>();
-	World.component<Tag26>();
-	World.component<Tag27>();
-	World.component<Tag28>();
-	World.component<Tag29>();
-	World.component<Tag30>();
-	World.component<Tag31>();
 	World.component<QueryWrapper<>>("QueryWrapper<>");
 }
 

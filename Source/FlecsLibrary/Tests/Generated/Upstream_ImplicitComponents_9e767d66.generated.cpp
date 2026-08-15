@@ -5,9 +5,8 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
-#include "Bake/FlecsTestTypes.h"
 #include "flecs.h"
-#include "Bake/FlecsGeneratedTestUtils.h"
+#include "Bake/FlecsGeneratedTestCompatibility.h"
 
 #define Color FlecsGeneratedType_c220f42d20_Color
 #define EmptyType FlecsGeneratedType_c220f42d20_EmptyType
@@ -53,13 +52,8 @@ static void ResetFlecsGeneratedFileState_c220f42d20()
 static void RegisterFlecsGeneratedTestTypes_c220f42d20(flecs::world& World)
 {
 	// Explicit registrations; no automatic registration is assumed.
-	World.component<Position>();
+	FlecsGeneratedTest::RegisterSharedTypes(World);
 	World.component<Pair>("Pair");
-	World.component<Velocity>();
-	World.component<Rotation>();
-	World.component<Mass>();
-	World.component<Foo::Position>();
-	World.component<Tag>();
 	World.component<ns::NsTag>();
 	World.component<Color>("Color");
 }

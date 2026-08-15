@@ -5,9 +5,8 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
-#include "Bake/FlecsTestTypes.h"
 #include "flecs.h"
-#include "Bake/FlecsGeneratedTestUtils.h"
+#include "Bake/FlecsGeneratedTestCompatibility.h"
 
 #define CtorDtorNonTrivial FlecsGeneratedType_4131ac6661_CtorDtorNonTrivial
 #define CtorDtor_w_MoveAssign FlecsGeneratedType_4131ac6661_CtorDtor_w_MoveAssign
@@ -255,26 +254,10 @@ struct NonDefaultConstructible {
 static void RegisterFlecsGeneratedTestTypes_4131ac6661(flecs::world& World)
 {
 	// Explicit registrations; no automatic registration is assumed.
-	World.component<Pod>();
-	World.component<Position>();
-	World.component<Struct_w_string>();
-	World.component<Tag>();
-	World.component<Struct_w_vector>();
-	World.component<NoCopy>();
-	World.component<NoDefaultCtor>();
-	World.component<DefaultInit>();
-	World.component<NoCopyCtor>();
-	World.component<NoMove>();
-	World.component<NoMoveCtor>();
-	World.component<NoMoveAssign>();
-	World.component<NoCopyAssign>();
-	World.component<DefaultCtorValueCtor>();
-	World.component<CountNoDefaultCtor>();
+	FlecsGeneratedTest::RegisterSharedTypes(World);
 	World.component<CtorDtorNonTrivial>("CtorDtorNonTrivial");
 	World.component<CtorDtor_w_MoveAssign>("CtorDtor_w_MoveAssign");
 	World.component<DeferEmplaceTest>("DeferEmplaceTest");
-	World.component<Velocity>();
-	World.component<Pod::Child>();
 	World.component<WithGreaterThan>("WithGreaterThan");
 	World.component<WithLessThan>("WithLessThan");
 	World.component<WithLessAndGreaterThan>("WithLessAndGreaterThan");

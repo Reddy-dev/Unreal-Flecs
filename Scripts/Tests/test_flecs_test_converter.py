@@ -14,10 +14,13 @@ from flecs_test_converter import (  # noqa: E402
     Candidate,
     GENERATED_HEADER,
     ParsedSource,
+    Registration,
     build_model,
     parse_metadata_payload,
+    registration_function,
     render_source,
     sanitize_identifier,
+    shared_test_type_names,
     validate_manifest,
 )
 
@@ -41,6 +44,20 @@ class FlecsTestConverterTests(unittest.TestCase):
     def test_identifier_is_stable_and_valid(self) -> None:
         self.assertEqual(sanitize_identifier("entity/new-case"), "entity_new_case")
         self.assertEqual(sanitize_identifier("123 case"), "_123_case")
+
+    def test_shared_registration_is_emitted_by_compatibility_layer(self) -> None:
+        self.assertIn("LifecycleTracker", shared_test_type_names("Bake/FlecsTestTypes.h"))
+        rendered = registration_function(
+            [Registration("Position"), Registration("LocalType")],
+            [],
+            "RegisterGeneratedTypes",
+            shared_type_names={"Position"},
+            register_shared_types=True,
+        )
+        text = "\n".join(rendered)
+        self.assertIn("FlecsGeneratedTest::RegisterSharedTypes(World);", text)
+        self.assertNotIn("World.component<Position>();", text)
+        self.assertIn("World.component<LocalType>();", text)
 
     def test_manifest_validation_checks_generated_header_and_reason(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

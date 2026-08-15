@@ -5,9 +5,8 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
-#include "Bake/FlecsTestTypes.h"
 #include "flecs.h"
-#include "Bake/FlecsGeneratedTestUtils.h"
+#include "Bake/FlecsGeneratedTestCompatibility.h"
 
 #define Base FlecsGeneratedType_9843e87d65_Base
 #define BaseEmpty FlecsGeneratedType_9843e87d65_BaseEmpty
@@ -50,9 +49,7 @@ struct DerivedFromEmpty : public BaseEmpty {
 static void RegisterFlecsGeneratedTestTypes_9843e87d65(flecs::world& World)
 {
 	// Explicit registrations; no automatic registration is assumed.
-	World.component<Position>();
-	World.component<Velocity>();
-	World.component<Tag>();
+	FlecsGeneratedTest::RegisterSharedTypes(World);
 	World.component<PositionTag>("PositionTag");
 	World.component<TagPosition>("TagPosition");
 }

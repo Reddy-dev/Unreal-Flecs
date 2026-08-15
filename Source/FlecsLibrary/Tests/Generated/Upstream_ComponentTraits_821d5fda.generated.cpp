@@ -5,9 +5,8 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
-#include "Bake/FlecsTestTypes.h"
 #include "flecs.h"
-#include "Bake/FlecsGeneratedTestUtils.h"
+#include "Bake/FlecsGeneratedTestCompatibility.h"
 
 #define TraitDontFragment FlecsGeneratedType_043a8ee4cd_TraitDontFragment
 #define TraitDontFragmentDontInherit FlecsGeneratedType_043a8ee4cd_TraitDontFragmentDontInherit
@@ -89,6 +88,7 @@ struct TraitDontFragmentInherit {
 static void RegisterFlecsGeneratedTestTypes_043a8ee4cd(flecs::world& World)
 {
 	// Explicit registrations; no automatic registration is assumed.
+	FlecsGeneratedTest::RegisterSharedTypes(World);
 	World.component<TraitDontFragment>("TraitDontFragment");
 	World.component<TraitOnInstantiateOverride>("TraitOnInstantiateOverride");
 	World.component<TraitOnInstantiateInherit>("TraitOnInstantiateInherit");

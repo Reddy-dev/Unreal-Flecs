@@ -5,9 +5,8 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
-#include "Bake/FlecsTestTypes.h"
 #include "flecs.h"
-#include "Bake/FlecsGeneratedTestUtils.h"
+#include "Bake/FlecsGeneratedTestCompatibility.h"
 
 #define AnotherEnum FlecsGeneratedType_6075c5f677_AnotherEnum
 #define BitMaskEnum FlecsGeneratedType_6075c5f677_BitMaskEnum
@@ -239,6 +238,7 @@ void* thread_cb(void* arg) {
 static void RegisterFlecsGeneratedTestTypes_6075c5f677(flecs::world& World)
 {
 	// Explicit registrations; no automatic registration is assumed.
+	FlecsGeneratedTest::RegisterSharedTypes(World);
 	World.component<StandardEnum>("StandardEnum");
 	World.component<SparseEnum>("SparseEnum");
 	World.component<BitMaskEnum>("BitMaskEnum");
@@ -248,7 +248,6 @@ static void RegisterFlecsGeneratedTestTypes_6075c5f677(flecs::world& World)
 	World.component<PrefixEnum>("PrefixEnum");
 	World.component<ConstantsWithNum>("ConstantsWithNum");
 	World.component<MyTag>("MyTag");
-	World.component<Position>();
 	World.component<AnotherEnum>("AnotherEnum");
 	World.component<EnumWithLargeConstant>("EnumWithLargeConstant");
 	World.component<EnumClassWithLargeConstant>("EnumClassWithLargeConstant");

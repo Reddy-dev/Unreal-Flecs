@@ -5,9 +5,8 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
-#include "Bake/FlecsTestTypes.h"
 #include "flecs.h"
-#include "Bake/FlecsGeneratedTestUtils.h"
+#include "Bake/FlecsGeneratedTestCompatibility.h"
 
 #define Color FlecsGeneratedType_f54306614a_Color
 #define Movement FlecsGeneratedType_f54306614a_Movement
@@ -32,6 +31,7 @@ enum Color {
 static void RegisterFlecsGeneratedTestTypes_f54306614a(flecs::world& World)
 {
 	// Explicit registrations; no automatic registration is assumed.
+	FlecsGeneratedTest::RegisterSharedTypes(World);
 	World.component<Movement>("Movement");
 	World.component<Standing>("Standing");
 	World.component<Walking>("Walking");

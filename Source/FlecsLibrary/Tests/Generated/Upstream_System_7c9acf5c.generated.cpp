@@ -5,9 +5,8 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
-#include "Bake/FlecsTestTypes.h"
 #include "flecs.h"
-#include "Bake/FlecsGeneratedTestUtils.h"
+#include "Bake/FlecsGeneratedTestCompatibility.h"
 
 #define Entity FlecsGeneratedType_1758ce4574_Entity
 #define First FlecsGeneratedType_1758ce4574_First
@@ -53,17 +52,11 @@ static uint64_t system_group_by_rel(
 static void RegisterFlecsGeneratedTestTypes_1758ce4574(flecs::world& World)
 {
 	// Explicit registrations; no automatic registration is assumed.
-	World.component<Position>();
-	World.component<Velocity>();
-	World.component<Mass>();
+	FlecsGeneratedTest::RegisterSharedTypes(World);
 	World.component<MyTag>("MyTag");
 	World.component<Entity>("Entity");
-	World.component<Tag>();
-	World.component<Self>();
 	World.component<Second>("Second");
 	World.component<First>("First");
-	World.component<Rel>();
-	World.component<Tag0>();
 }
 
 static void FlecsGeneratedBody_System_iter_a90f4710() {

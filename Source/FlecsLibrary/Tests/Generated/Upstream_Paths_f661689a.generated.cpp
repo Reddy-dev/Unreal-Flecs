@@ -5,15 +5,20 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
-#include "Bake/FlecsTestTypes.h"
 #include "flecs.h"
-#include "Bake/FlecsGeneratedTestUtils.h"
+#include "Bake/FlecsGeneratedTestCompatibility.h"
 
 namespace test {
     struct Foo {
         float x;
         float y;
     };
+}
+
+static void RegisterFlecsGeneratedTestTypes_c1fd7c047c(flecs::world& World)
+{
+	// Explicit registrations; no automatic registration is assumed.
+	FlecsGeneratedTest::RegisterSharedTypes(World);
 }
 
 static void FlecsGeneratedBody_Paths_name_993943b0() {

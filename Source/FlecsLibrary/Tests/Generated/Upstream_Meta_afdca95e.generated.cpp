@@ -5,9 +5,8 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
-#include "Bake/FlecsTestTypes.h"
 #include "flecs.h"
-#include "Bake/FlecsGeneratedTestUtils.h"
+#include "Bake/FlecsGeneratedTestCompatibility.h"
 
 #define TString FlecsGeneratedTString
 #define CppEntity FlecsGeneratedType_323532010e_CppEntity
@@ -257,8 +256,8 @@ struct EnumWithBitsStruct {
 static void RegisterFlecsGeneratedTestTypes_323532010e(flecs::world& World)
 {
 	// Explicit registrations; no automatic registration is assumed.
+	FlecsGeneratedTest::RegisterSharedTypes(World);
 	World.component<uintptr_t>();
-	World.component<Position>();
 	World.component<Toppings>("Toppings");
 	World.component<Sandwich>("Sandwich");
 	World.component<Int>("Int");
@@ -270,7 +269,6 @@ static void RegisterFlecsGeneratedTestTypes_323532010e(flecs::world& World)
 	World.component<TVectorVector>("TVectorVector");
 	World.component<TVectorStringVector>("TVectorStringVector");
 	World.component<TVectorVectorString>("TVectorVectorString");
-	World.component<Tag>();
 	World.component<CppTypes>("CppTypes");
 	World.component<CppEntity>("CppEntity");
 	World.component<EnumWithBits>("EnumWithBits");

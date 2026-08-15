@@ -5,9 +5,8 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
-#include "Bake/FlecsTestTypes.h"
 #include "flecs.h"
-#include "Bake/FlecsGeneratedTestUtils.h"
+#include "Bake/FlecsGeneratedTestCompatibility.h"
 
 #define MyModule FlecsGeneratedType_3d7c2f67ed_MyModule
 
@@ -22,8 +21,7 @@ public:
 static void RegisterFlecsGeneratedTestTypes_3d7c2f67ed(flecs::world& World)
 {
 	// Explicit registrations; no automatic registration is assumed.
-	World.component<Position>();
-	World.component<Velocity>();
+	FlecsGeneratedTest::RegisterSharedTypes(World);
 }
 
 static void FlecsGeneratedBody_WorldFactory_entity_fcb88495() {

@@ -5,9 +5,8 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
-#include "Bake/FlecsTestTypes.h"
 #include "flecs.h"
-#include "Bake/FlecsGeneratedTestUtils.h"
+#include "Bake/FlecsGeneratedTestCompatibility.h"
 
 #define FooModule FlecsGeneratedType_df2287d585_FooModule
 #define FromScope FlecsGeneratedType_df2287d585_FromScope
@@ -214,15 +213,10 @@ static void ResetFlecsGeneratedFileState_df2287d585()
 static void RegisterFlecsGeneratedTestTypes_df2287d585(flecs::world& World)
 {
 	// Explicit registrations; no automatic registration is assumed.
-	World.component<Position>();
-	World.component<Velocity>();
-	World.component<Mass>();
+	FlecsGeneratedTest::RegisterSharedTypes(World);
 	World.component<ns::FooComp>();
 	World.component<Module>("Module");
 	World.component<Tmp<Test>>("Tmp<Test>");
-	World.component<Rel>();
-	World.component<Self>();
-	World.component<Tag>();
 	World.component<TemplateType<Position>>("TemplateType<Position>");
 	World.component<ns::TemplateType<Position>>("ns::TemplateType<Position>");
 	World.component<ns::TemplateType<ns::foo>>("ns::TemplateType<ns::foo>");
@@ -235,10 +229,8 @@ static void RegisterFlecsGeneratedTestTypes_df2287d585(flecs::world& World)
 	World.component<FromScope>("FromScope");
 	World.component<Nested::FromScope>("Nested::FromScope");
 	World.component<Scope>("Scope");
-	World.component<Pod>();
 	World.component<nested_component_module::Foo>("nested_component_module::Foo");
 	World.component<nested_component_module::Foo::Bar>("nested_component_module::Foo::Bar");
-	World.component<Tgt>();
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFlecsGenerated_World_multi_world_empty_ff877c482cTest, "FlecsLibrary.Generated.World.World_multi_world_empty", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)

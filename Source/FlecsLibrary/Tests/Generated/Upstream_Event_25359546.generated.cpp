@@ -5,9 +5,8 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
-#include "Bake/FlecsTestTypes.h"
 #include "flecs.h"
-#include "Bake/FlecsGeneratedTestUtils.h"
+#include "Bake/FlecsGeneratedTestCompatibility.h"
 
 #define Evt FlecsGeneratedType_05aca79120_Evt
 #define EvtData FlecsGeneratedType_05aca79120_EvtData
@@ -58,11 +57,10 @@ enum Type { A, B = 42, C };
 static void RegisterFlecsGeneratedTestTypes_05aca79120(flecs::world& World)
 {
 	// Explicit registrations; no automatic registration is assumed.
+	FlecsGeneratedTest::RegisterSharedTypes(World);
 	World.component<IdA>("IdA");
 	World.component<IdB>("IdB");
-	World.component<Tag>();
 	World.component<Evt>("Evt");
-	World.component<Position>();
 	World.component<Type>("Type");
 }
 

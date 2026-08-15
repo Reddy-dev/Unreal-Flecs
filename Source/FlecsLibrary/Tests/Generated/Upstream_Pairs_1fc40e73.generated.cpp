@@ -5,9 +5,8 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
-#include "Bake/FlecsTestTypes.h"
 #include "flecs.h"
-#include "Bake/FlecsGeneratedTestUtils.h"
+#include "Bake/FlecsGeneratedTestCompatibility.h"
 
 #define Apples FlecsGeneratedType_a7f3b59fcc_Apples
 #define Begin FlecsGeneratedType_a7f3b59fcc_Begin
@@ -50,10 +49,8 @@ using EndEvent = flecs::pair<End, Event>;
 static void RegisterFlecsGeneratedTestTypes_a7f3b59fcc(flecs::world& World)
 {
 	// Explicit registrations; no automatic registration is assumed.
+	FlecsGeneratedTest::RegisterSharedTypes(World);
 	World.component<Pair>("Pair");
-	World.component<Position>();
-	World.component<Velocity>();
-	World.component<Tag>();
 	World.component<EatsApples>("EatsApples");
 	World.component<Eats>("Eats");
 	World.component<Apples>("Apples");

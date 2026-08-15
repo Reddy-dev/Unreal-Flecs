@@ -5,9 +5,8 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
-#include "Bake/FlecsTestTypes.h"
 #include "flecs.h"
-#include "Bake/FlecsGeneratedTestUtils.h"
+#include "Bake/FlecsGeneratedTestCompatibility.h"
 
 #define Module FlecsGeneratedType_3d7af6b132_Module
 #define Module_w_dtor FlecsGeneratedType_3d7af6b132_Module_w_dtor
@@ -209,7 +208,7 @@ static void ResetFlecsGeneratedFileState_3d7af6b132()
 static void RegisterFlecsGeneratedTestTypes_3d7af6b132(flecs::world& World)
 {
 	// Explicit registrations; no automatic registration is assumed.
-	World.component<Position>();
+	FlecsGeneratedTest::RegisterSharedTypes(World);
 	World.component<ns::SimpleModule>();
 	World.component<Module>("Module");
 }

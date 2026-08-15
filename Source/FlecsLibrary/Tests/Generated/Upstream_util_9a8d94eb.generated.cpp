@@ -5,9 +5,14 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
-#include "Bake/FlecsTestTypes.h"
 #include "flecs.h"
-#include "Bake/FlecsGeneratedTestUtils.h"
+#include "Bake/FlecsGeneratedTestCompatibility.h"
+
+static void RegisterFlecsGeneratedTestTypes_c6e82fb575(flecs::world& World)
+{
+	// Explicit registrations; no automatic registration is assumed.
+	FlecsGeneratedTest::RegisterSharedTypes(World);
+}
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FFlecsGenerated_install_test_abort_92f1614774Test, "FlecsLibrary.Generated.install.install_test_abort", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 

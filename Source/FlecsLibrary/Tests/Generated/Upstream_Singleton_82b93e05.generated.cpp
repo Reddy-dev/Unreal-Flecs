@@ -5,9 +5,8 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
-#include "Bake/FlecsTestTypes.h"
 #include "flecs.h"
-#include "Bake/FlecsGeneratedTestUtils.h"
+#include "Bake/FlecsGeneratedTestCompatibility.h"
 
 #define Color FlecsGeneratedType_685647d7ad_Color
 #define Blue FlecsGeneratedEnum_685647d7ad_Blue
@@ -21,12 +20,8 @@ enum Color {
 static void RegisterFlecsGeneratedTestTypes_685647d7ad(flecs::world& World)
 {
 	// Explicit registrations; no automatic registration is assumed.
-	World.component<Position>();
-	World.component<Tag>();
-	World.component<Velocity>();
-	World.component<Mass>();
+	FlecsGeneratedTest::RegisterSharedTypes(World);
 	World.component<Color>("Color");
-	World.component<Tgt>();
 }
 
 static void FlecsGeneratedBody_Singleton_set_get_singleton_e4062b41() {

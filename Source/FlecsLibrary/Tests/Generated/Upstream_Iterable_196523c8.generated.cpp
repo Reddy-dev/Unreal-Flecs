@@ -5,14 +5,13 @@
 #if WITH_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
-#include "Bake/FlecsTestTypes.h"
 #include "flecs.h"
-#include "Bake/FlecsGeneratedTestUtils.h"
+#include "Bake/FlecsGeneratedTestCompatibility.h"
 
 static void RegisterFlecsGeneratedTestTypes_58ecb012c9(flecs::world& World)
 {
 	// Explicit registrations; no automatic registration is assumed.
-	World.component<Self>();
+	FlecsGeneratedTest::RegisterSharedTypes(World);
 }
 
 static void FlecsGeneratedBody_Iterable_page_each_07ac32d4() {
