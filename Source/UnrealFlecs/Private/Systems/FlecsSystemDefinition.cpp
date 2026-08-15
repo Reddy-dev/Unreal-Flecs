@@ -10,7 +10,8 @@
 void FFlecsSystemDefinition::ApplyToSystem(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InFlecsWorld,
 	flecs::system_builder<>& InSystemBuilder) const
 {
-	FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView_Internal<ecs_system_desc_t, &ecs_system_desc_t::query>(InFlecsWorld->GetNativeFlecsWorld(), *InSystemBuilder._internal_get_desc());
+	FFlecsQueryBuilderView QueryBuilderView = MakeQueryBuilderView_Internal<ecs_system_desc_t, &ecs_system_desc_t::query>(
+		InFlecsWorld->GetNativeFlecsWorld(), *InSystemBuilder._internal_get_desc());
 	
 	QueryDefinition.Apply(InFlecsWorld, QueryBuilderView);
 	

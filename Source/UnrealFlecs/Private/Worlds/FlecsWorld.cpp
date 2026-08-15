@@ -772,7 +772,7 @@ void UFlecsWorld::DestroyWorld()
 	MarkAsGarbage();
 }
 
-void UFlecsWorld::SetPipeline(const FFlecsEntityHandle& InPipeline) const
+void UFlecsWorld::SetPipeline(const FFlecsPipelineHandle& InPipeline) const
 {
 	GetNativeFlecsWorld().set_pipeline(InPipeline);
 }

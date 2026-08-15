@@ -7,7 +7,7 @@
 
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
-#include "SSearchableComboBox.h"
+#include "Widgets/Input/SSearchableComboBox.h"
 
 #include "SolidMacros/Macros.h"
 #include "Types/SolidEnumSelector.h"

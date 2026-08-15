@@ -10,6 +10,7 @@
 #include "Expressions/FlecsQueryTermExpression.h"
 #include "Generator/FlecsQueryGeneratorInputType.h"
 #include "FlecsQueryDefinition.h"
+#include "NativeGameplayTags.h"
 #include "Callbacks/FlecsGroupByCallbackDefinition.h"
 #include "Callbacks/FlecsOrderByCallbackDefinition.h"
 #include "Expressions/FlecsQueryCascadeExpression.h"
@@ -26,7 +27,9 @@ namespace UE::Flecs::Queries
 		|| std::is_convertible<T, const UScriptStruct*>::value
 		|| std::is_convertible<T, FString>::value
 		|| std::is_convertible<T, const UEnum*>::value
-		|| std::is_convertible<T, FSolidEnumSelector>::value;
+		|| std::is_convertible<T, FSolidEnumSelector>::value
+		|| std::is_convertible<T, FGameplayTag>::value
+		|| std::is_convertible<T, FNativeGameplayTag>::value;
 	
 	template <typename T>
 	using TNoCVRef = std::remove_cv_t<std::remove_reference_t<T>>;
@@ -372,6 +375,30 @@ public:
 		return GetSelf();
 	}
 	
+	FORCEINLINE_DEBUGGABLE FInheritedType& With(const FGameplayTag& InGameplayTag)
+	{
+		FFlecsQueryTermExpression Expr;
+		Expr.Term.Input.First.InitializeAs<FFlecsQueryGeneratorInputType_GameplayTag>();
+		Expr.Term.Input.First.GetMutable<FFlecsQueryGeneratorInputType_GameplayTag>().GameplayTag = InGameplayTag;
+		
+		this->GetQueryDefinition().AddQueryTerm(Expr);
+		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
+		
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& With(const FNativeGameplayTag& InNativeGameplayTag)
+	{
+		FFlecsQueryTermExpression Expr;
+		Expr.Term.Input.First.InitializeAs<FFlecsQueryGeneratorInputType_GameplayTag>();
+		Expr.Term.Input.First.GetMutable<FFlecsQueryGeneratorInputType_GameplayTag>().GameplayTag = InNativeGameplayTag.GetTag();
+		
+		this->GetQueryDefinition().AddQueryTerm(Expr);
+		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
+		
+		return GetSelf();
+	}
+	
 	template <typename T>
 	FORCEINLINE_DEBUGGABLE FInheritedType& With()
 	{
@@ -513,6 +540,34 @@ public:
 		return GetSelf();
 	}
 	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Without(const FGameplayTag& InGameplayTag)
+	{
+		FFlecsQueryTermExpression Expr;
+		Expr.Term.Input.First.InitializeAs<FFlecsQueryGeneratorInputType_GameplayTag>();
+		Expr.Term.Input.First.GetMutable<FFlecsQueryGeneratorInputType_GameplayTag>().GameplayTag = InGameplayTag;
+		
+		this->AddTerm(Expr);
+		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
+		
+		this->Not();
+		
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Without(const FNativeGameplayTag& InNativeGameplayTag)
+	{
+		FFlecsQueryTermExpression Expr;
+		Expr.Term.Input.First.InitializeAs<FFlecsQueryGeneratorInputType_GameplayTag>();
+		Expr.Term.Input.First.GetMutable<FFlecsQueryGeneratorInputType_GameplayTag>().GameplayTag = InNativeGameplayTag.GetTag();
+		
+		this->AddTerm(Expr);
+		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
+		
+		this->Not();
+		
+		return GetSelf();
+	}
+	
 	template <typename T>
 	FORCEINLINE_DEBUGGABLE FInheritedType& Without()
 	{
@@ -589,6 +644,30 @@ public:
 		TermExpr.Term.Input.bPair = true;
 		TermExpr.Term.Input.Second.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnumConstant>();
 		TermExpr.Term.Input.Second.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnumConstant>().EnumValue = InEnumSelector;
+		
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Second(const FGameplayTag& InGameplayTag)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		
+		FFlecsQueryTermExpression& TermExpr = this->GetQueryDefinition().Terms[LastTermIndex];
+		TermExpr.Term.Input.bPair = true;
+		TermExpr.Term.Input.Second.InitializeAs<FFlecsQueryGeneratorInputType_GameplayTag>();
+		TermExpr.Term.Input.Second.GetMutable<FFlecsQueryGeneratorInputType_GameplayTag>().GameplayTag = InGameplayTag;
+		
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Second(const FNativeGameplayTag& InNativeGameplayTag)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		
+		FFlecsQueryTermExpression& TermExpr = this->GetQueryDefinition().Terms[LastTermIndex];
+		TermExpr.Term.Input.bPair = true;
+		TermExpr.Term.Input.Second.InitializeAs<FFlecsQueryGeneratorInputType_GameplayTag>();
+		TermExpr.Term.Input.Second.GetMutable<FFlecsQueryGeneratorInputType_GameplayTag>().GameplayTag = InNativeGameplayTag.GetTag();
 		
 		return GetSelf();
 	}
@@ -823,6 +902,8 @@ public:
 		return GetSelf();
 	}
 	
+	// @TODO: does this need a gameplay tag impl?
+	
 	template <typename T>
 	FORCEINLINE_DEBUGGABLE FInheritedType& OrderByCallbackDefinition(const TInstancedStruct<FFlecsOrderByCallbackDefinition>& InCallbackDefinition)
 	{
@@ -1050,6 +1131,30 @@ public:
 		return GetSelf();
 	}
 	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Src(const FSolidEnumSelector& InEnumSelector)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.First.template InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnumConstant>();
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.First.template GetMutable<FFlecsQueryGeneratorInputType_ScriptEnumConstant>().EnumValue = InEnumSelector;
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Src(const FGameplayTag& InGameplayTag)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.First.template InitializeAs<FFlecsQueryGeneratorInputType_GameplayTag>();
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.First.template GetMutable<FFlecsQueryGeneratorInputType_GameplayTag>().GameplayTag = InGameplayTag;
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Src(const FNativeGameplayTag& InNativeGameplayTag)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.First.template InitializeAs<FFlecsQueryGeneratorInputType_GameplayTag>();
+		this->GetQueryDefinition().Terms[LastTermIndex].Source.First.template GetMutable<FFlecsQueryGeneratorInputType_GameplayTag>().GameplayTag = InNativeGameplayTag.GetTag();
+		return GetSelf();
+	}
+	
 	template <typename T>
 	FORCEINLINE_DEBUGGABLE FInheritedType& Src()
 	{
@@ -1115,6 +1220,45 @@ public:
 		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = FFlecsQueryGeneratorInput();
 		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
 		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = InCppTypeName;
+		
+		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(UpExpr);
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Up(const FSolidEnumSelector& InEnumSelector)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		TInstancedStruct<FFlecsQueryExpression> UpExpr;
+		UpExpr.InitializeAs<FFlecsQueryUpExpression>();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = FFlecsQueryGeneratorInput();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnumConstant>();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnumConstant>().EnumValue = InEnumSelector;
+		
+		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(UpExpr);
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Up(const FGameplayTag& InGameplayTag)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		TInstancedStruct<FFlecsQueryExpression> UpExpr;
+		UpExpr.InitializeAs<FFlecsQueryUpExpression>();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = FFlecsQueryGeneratorInput();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_GameplayTag>();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_GameplayTag>().GameplayTag = InGameplayTag;
+		
+		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(UpExpr);
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Up(const FNativeGameplayTag& InNativeGameplayTag)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		TInstancedStruct<FFlecsQueryExpression> UpExpr;
+		UpExpr.InitializeAs<FFlecsQueryUpExpression>();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = FFlecsQueryGeneratorInput();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_GameplayTag>();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_GameplayTag>().GameplayTag = InNativeGameplayTag.GetTag();
 		
 		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(UpExpr);
 		return GetSelf();
@@ -1196,6 +1340,45 @@ public:
 		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal = FFlecsQueryGeneratorInput();
 		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
 		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = InCppTypeName;
+		
+		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(CascadeExpr);
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Cascade(const FSolidEnumSelector& InEnumSelector)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		TInstancedStruct<FFlecsQueryExpression> CascadeExpr;
+		CascadeExpr.InitializeAs<FFlecsQueryCascadeExpression>();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal = FFlecsQueryGeneratorInput();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnumConstant>();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnumConstant>().EnumValue = InEnumSelector;
+		
+		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(CascadeExpr);
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Cascade(const FGameplayTag& InGameplayTag)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		TInstancedStruct<FFlecsQueryExpression> CascadeExpr;
+		CascadeExpr.InitializeAs<FFlecsQueryCascadeExpression>();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal = FFlecsQueryGeneratorInput();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_GameplayTag>();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_GameplayTag>().GameplayTag = InGameplayTag;
+		
+		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(CascadeExpr);
+		return GetSelf();
+	}
+	
+	FORCEINLINE_DEBUGGABLE FInheritedType& Cascade(const FNativeGameplayTag& InNativeGameplayTag)
+	{
+		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+		TInstancedStruct<FFlecsQueryExpression> CascadeExpr;
+		CascadeExpr.InitializeAs<FFlecsQueryCascadeExpression>();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal = FFlecsQueryGeneratorInput();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_GameplayTag>();
+		CascadeExpr.GetMutable<FFlecsQueryCascadeExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_GameplayTag>().GameplayTag = InNativeGameplayTag.GetTag();
 		
 		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(CascadeExpr);
 		return GetSelf();

@@ -6,7 +6,7 @@
 #include "EdGraph/EdGraphSchema.h"
 #include "Misc/OutputDeviceNull.h"
 #include "ScopedTransaction.h"
-#include "SSearchableComboBox.h"
+#include "Widgets/Input/SSearchableComboBox.h"
 #include "UObject/Class.h"
 #include "UObject/PropertyPortFlags.h"
 #include "UObject/UObjectIterator.h"

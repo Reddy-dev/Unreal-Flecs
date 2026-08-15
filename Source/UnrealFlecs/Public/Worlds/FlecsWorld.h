@@ -20,6 +20,7 @@
 #include "Entities/FlecsComponentHandle.h"
 #include "Entities/FlecsEntityRange.h"
 #include "Entities/FlecsId.h"
+#include "Pipelines/FlecsPipelineHandle.h"
 #include "Queries/FlecsQuery.h"
 #include "Worlds/FlecsWorldInterfaceObject.h"
 
@@ -161,9 +162,6 @@ public:
 
 	void DestroyWorld();
 
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	void SetPipeline(const FFlecsEntityHandle& InPipeline) const;
-
 	template <typename T>
 	void SetPipeline() const
 	{
@@ -261,6 +259,9 @@ public:
 			TEXT("Component %hs is not registered"), nameof(T).data());
 		return World.component<T>();
 	}
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
+	void SetPipeline(const FFlecsPipelineHandle& InPipeline) const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
 	void RunPipeline(const FFlecsId InPipeline, const double DeltaTime = 0.0) const;

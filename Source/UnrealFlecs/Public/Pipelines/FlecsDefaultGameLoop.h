@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 
+#include "FlecsPipelineHandle.h"
 #include "FlecsGameLoopObject.h"
 
 #include "FlecsDefaultGameLoop.generated.h"
@@ -27,21 +28,21 @@ public:
 
 	// Main Loop
 	UPROPERTY()
-	FFlecsEntityHandle MainLoopPipeline;
+	FFlecsPipelineHandle MainLoopPipeline;
 	
 	UPROPERTY()
-	FFlecsEntityHandle PrePhysicsPipeline;
+	FFlecsPipelineHandle PrePhysicsPipeline;
 
 	UPROPERTY()
-	FFlecsEntityHandle DuringPhysicsPipeline;
+	FFlecsPipelineHandle DuringPhysicsPipeline;
 
 	UPROPERTY()
-	FFlecsEntityHandle PostPhysicsPipeline;
+	FFlecsPipelineHandle PostPhysicsPipeline;
 
 	UPROPERTY()
-	FFlecsEntityHandle PostUpdateWorkPipeline;
+	FFlecsPipelineHandle PostUpdateWorkPipeline;
 
 protected:
-	NO_DISCARD FFlecsEntityHandle CreatePipelineForTickType(const FGameplayTag& InTickType, TSolidNotNull<UFlecsWorld*> InWorld) const;
+	NO_DISCARD FFlecsPipelineHandle CreatePipelineForTickType(const FGameplayTag& InTickType, TSolidNotNull<UFlecsWorld*> InWorld) const;
 	
 }; // class UFlecsDefaultGameLoop

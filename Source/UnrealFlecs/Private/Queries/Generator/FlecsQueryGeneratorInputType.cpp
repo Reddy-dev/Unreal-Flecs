@@ -69,3 +69,8 @@ FFlecsId FFlecsQueryGeneratorInputType_ScriptEnumConstant::GetFlecsIdOutput(
 	
 	return EnumConstantEntity;
 }
+
+FFlecsId FFlecsQueryGeneratorInputType_GameplayTag::GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const
+{
+	return InWorld->GetTagEntity(GameplayTag);
+}

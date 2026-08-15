@@ -15,6 +15,8 @@
 #include "Entities/FlecsComponentHandle.h"
 #include "Entities/FlecsId.h"
 #include "Observers/FlecsObserverBuilder.h"
+#include "Pipelines/FlecsPipelineBuilder.h"
+#include "Pipelines/FlecsPipelineHandle.h"
 #include "Systems/FlecsSystemBuilder.h"
 #include "Timers/FlecsTimerHandle.h"
 
@@ -654,16 +656,15 @@ public:
 		return TFlecsSystemBuilder<>(this, InName, InDefinition);
 	}
 	
-	NO_DISCARD flecs::pipeline_builder<> CreatePipeline() const
+	template <typename ...TArgs>
+	TFlecsPipelineBuilder<TArgs...> CreatePipeline(const FString& InPipelineName = FString()) const
 	{
-		return GetNativeFlecsWorld_Internal()->pipeline();
+		return TFlecsPipelineBuilder<TArgs...>(this, InPipelineName);
 	}
-
-	template <typename ...TComponents>
-	NO_DISCARD flecs::pipeline_builder<TComponents...> CreatePipeline() const
-	{
-		return GetNativeFlecsWorld_Internal()->pipeline<TComponents...>();
-	}
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
+	FFlecsPipelineHandle CreatePipeline(const FFlecsPipelineDefinition& InPipelineDefinition, 
+		const FString& InPipelineName = FString()) const;
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
 	FFlecsTimerHandle CreateTimer(const FString& Name) const;

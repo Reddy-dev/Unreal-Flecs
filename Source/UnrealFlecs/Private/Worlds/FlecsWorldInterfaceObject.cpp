@@ -1055,6 +1055,14 @@ FFlecsQuery UFlecsWorldInterfaceObject::CreateQueryWithEntity(const FFlecsQueryD
 	return FFlecsQuery(Builder.build());
 }
 
+FFlecsPipelineHandle UFlecsWorldInterfaceObject::CreatePipeline(const FFlecsPipelineDefinition& InPipelineDefinition,
+	const FString& InPipelineName) const
+{
+	flecs::pipeline_builder Builder = flecs::pipeline_builder(GetNativeFlecsWorld(), StringCast<char>(*InPipelineName).Get());
+	InPipelineDefinition.ApplyToPipeline(this, Builder);
+	return FFlecsPipelineHandle(Builder.build());
+}
+
 FFlecsTimerHandle UFlecsWorldInterfaceObject::CreateTimer(const FString& Name) const
 {
 	return GetNativeFlecsWorld_Internal()->timer(StringCast<char>(*Name).Get());

@@ -199,3 +199,22 @@ public:
 	}
 	
 }; // struct FFlecsQueryGeneratorInputType_Any
+
+USTRUCT(BlueprintType, meta = (DisplayName = "Query: Gameplay Tag"))
+struct UNREALFLECS_API FFlecsQueryGeneratorInputType_GameplayTag final : public FFlecsQueryGeneratorInputType
+{
+	GENERATED_BODY()
+	
+public:
+	FFlecsQueryGeneratorInputType_GameplayTag()
+	{
+		ReturnType = EFlecsQueryGeneratorReturnType::FlecsId;
+	}
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Query Generator")
+	FGameplayTag GameplayTag;
+	
+	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const override;
+	
+}; // struct FFlecsQueryGeneratorInputType_GameplayTag
+

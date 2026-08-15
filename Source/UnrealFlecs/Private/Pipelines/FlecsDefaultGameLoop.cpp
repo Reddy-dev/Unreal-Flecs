@@ -26,22 +26,21 @@ UFlecsDefaultGameLoop::UFlecsDefaultGameLoop()
 
 void UFlecsDefaultGameLoop::InitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsEntityHandle& InGameLoopEntity)
 {
-	MainLoopPipeline = InWorld->CreatePipeline()
-		.with(flecs::System)
-		.with(flecs::Phase).cascade(flecs::DependsOn)
-		.without(flecs::Disabled).up(flecs::DependsOn)
-		.without(flecs::Disabled).up(flecs::ChildOf)
-		.without<FFlecsOutsideMainLoopTag>()
-		.without<FFlecsOutsideMainLoopTag>().up(flecs::DependsOn)
-		.without<FFlecsOutsideMainLoopTag>().up(flecs::ChildOf)
+	MainLoopPipeline = InWorld->CreatePipeline("MainLoopPipeline")
+		.With(flecs::System)
+		.With(flecs::Phase).Cascade(flecs::DependsOn)
+		.Without(flecs::Disabled).Up(flecs::DependsOn)
+		.Without(flecs::Disabled).Up(flecs::ChildOf)
+		.Without<FFlecsOutsideMainLoopTag>()
+		.Without<FFlecsOutsideMainLoopTag>().Up(flecs::DependsOn)
+		.Without<FFlecsOutsideMainLoopTag>().Up(flecs::ChildOf)
 		//.order_by(flecs_entity_compare)
 		// @TODO: .with(InWorld->GetTagEntity(FlecsTickType_MainLoop))
-		.without(InWorld->GetTagEntity(FlecsTickType_PrePhysics))
-		.without(InWorld->GetTagEntity(FlecsTickType_DuringPhysics))
-		.without(InWorld->GetTagEntity(FlecsTickType_PostPhysics))
-		.without(InWorld->GetTagEntity(FlecsTickType_PostUpdateWork))
-		.build()
-		.set_name("MainLoopPipeline");
+		.Without(FlecsTickType_PrePhysics)
+		.Without(FlecsTickType_DuringPhysics)
+		.Without(FlecsTickType_PostPhysics)
+		.Without(FlecsTickType_PostUpdateWork)
+		.Build();
 
 	InWorld->SetPipeline(MainLoopPipeline);
 	
@@ -100,41 +99,40 @@ TArray<FGameplayTag> UFlecsDefaultGameLoop::GetTickTypeTags() const
 		FlecsTickType_PostPhysics, FlecsTickType_PostUpdateWork };
 }
 
-FFlecsEntityHandle UFlecsDefaultGameLoop::CreatePipelineForTickType(const FGameplayTag& InTickType,
+FFlecsPipelineHandle UFlecsDefaultGameLoop::CreatePipelineForTickType(const FGameplayTag& InTickType,
 	TSolidNotNull<UFlecsWorld*> InWorld) const
 {
-	auto MakeBasePipeline = [this, InWorld]() -> flecs::pipeline_builder<>
+	auto MakeBasePipeline = [this, InWorld](const FString& InPipelineName) -> TFlecsPipelineBuilder<>
 	{
-		flecs::pipeline_builder<> PipelineBuilder = InWorld->CreatePipeline()
-			.with(flecs::System)
-			.without(flecs::Disabled).up(flecs::DependsOn)
-			.without(flecs::Disabled).up(flecs::ChildOf)
-			.without<FFlecsOutsideMainLoopTag>()
-			.without<FFlecsOutsideMainLoopTag>().up(flecs::DependsOn)
-			.without<FFlecsOutsideMainLoopTag>().up(flecs::ChildOf);
+		TFlecsPipelineBuilder<> PipelineBuilder = InWorld->CreatePipeline(InPipelineName)
+			.With(flecs::System)
+			.Without(flecs::Disabled).Up(flecs::DependsOn)
+			.Without(flecs::Disabled).Up(flecs::ChildOf)
+			.Without<FFlecsOutsideMainLoopTag>()
+			.Without<FFlecsOutsideMainLoopTag>().Up(flecs::DependsOn)
+			.Without<FFlecsOutsideMainLoopTag>().Up(flecs::ChildOf);
 		
 		if (bUsePhasesInUnrealTickGroups)
 		{
 			PipelineBuilder
-				.with(flecs::Phase).cascade(flecs::DependsOn);
+				.With(flecs::Phase).Cascade(flecs::DependsOn);
 		}
 		
 		return PipelineBuilder;
 	};
 
-	FFlecsEntityHandle ResultPipeline;
-
-	flecs::pipeline_builder<> PipelineBuilder = MakeBasePipeline();
-
-	//PipelineBuilder.order_by(flecs_entity_compare);
-
+	FFlecsPipelineHandle ResultPipeline;
+	
 	const FString PipelineName = FString::Printf(TEXT("%s_Pipeline"), 
 		*InTickType.ToString().Replace(TEXT("."), TEXT("_")));
 
+	TFlecsPipelineBuilder<> PipelineBuilder = MakeBasePipeline(PipelineName);
+
+	//PipelineBuilder.order_by(flecs_entity_compare);
+
 	ResultPipeline = PipelineBuilder
-		.with(InWorld->GetTagEntity(InTickType))
-		.build()
-		.set_name(StringCast<char>(*PipelineName).Get());
+		.With(InTickType)
+		.Build();
 
 	return ResultPipeline;
 }
