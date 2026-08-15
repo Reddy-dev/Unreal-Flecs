@@ -471,6 +471,11 @@ struct Position {
         bool copied_into() const { return times_copy_assigned_into > 0 || constructed_via == Constructor::copy; }
     };
 
+    // Upstream cpp.h spells this shared fixture LifecycleTracker. Keep that
+    // source spelling available while the compatibility implementation uses a
+    // project-specific type name to avoid colliding with other test fixtures.
+    using LifecycleTracker = FlecsTestLifecycleTracker;
+
     static inline void RegisterTestTypeComponents(flecs::world& ecs) {
         ecs.component<Position>();
         ecs.component<Velocity>();

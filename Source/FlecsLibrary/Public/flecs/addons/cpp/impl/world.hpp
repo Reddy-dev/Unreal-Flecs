@@ -5,7 +5,9 @@
 
 #pragma once
 
+#if !defined(FLECS_TEST_CONVERTER)
 #include "flecs/Unreal/FlecsTypeMapComponent.h"
+#endif
 
 namespace flecs
 {
@@ -31,6 +33,7 @@ inline void world::init_builtin_components() {
     this->component<int64_t>("flecs::meta::i64");
 #   endif
 
+#if !defined(FLECS_TEST_CONVERTER)
     FFlecsTypeMapComponent* type_map = new FFlecsTypeMapComponent();
 
     this->set_binding_ctx(type_map, [](void* ctx) {
@@ -55,6 +58,7 @@ inline void world::init_builtin_components() {
     flecs::entity ScriptClassEntity = this->component<FFlecsScriptClassComponent>()
         .add(flecs::OnInstantiate, flecs::DontInherit)
         .add(flecs::Trait);
+#endif
 
 #   ifdef FLECS_SYSTEM
     _::system_init(*this);

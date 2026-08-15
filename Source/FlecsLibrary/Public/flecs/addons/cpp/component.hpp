@@ -8,14 +8,19 @@
 #include <ctype.h>
 #include <optional>
 #include <stdio.h>
+#include <string>
+#include <string_view>
 
 #include "flecs/os_api.h"
+#include "Standard/robin_hood.h"
 
+#if !defined(FLECS_TEST_CONVERTER)
 #include "Concepts/SolidConcepts.h"
 #include "flecs/Unreal/FlecsScriptClassComponent.h"
 #include "flecs/Unreal/FlecsScriptStructComponent.h"
 #include "flecs/Unreal/FlecsTypeMapComponent.h"
 #include "flecs/Unreal/FlecsTypeRegisteredDelegate.h"
+#endif
 
 /**
  * @defgroup cpp_components Components
@@ -29,6 +34,7 @@ namespace flecs {
 
 namespace _ {
     
+#if !defined(FLECS_TEST_CONVERTER)
     template <Solid::TVariantStructConcept T>
     inline const char* type_name() {
         static const std::string cached = []{
@@ -58,6 +64,7 @@ namespace _ {
     inline const char* type_name<FIntRect>() {
         return "FIntRect";
     }
+#endif
 
 template <typename T>
 inline const char* component_symbol_name() {
@@ -264,6 +271,12 @@ FLECSLIBRARY_API extern robin_hood::unordered_map<std::string, type_impl_data, F
         return nullptr;
     }
     
+#if defined(FLECS_TEST_CONVERTER)
+template <typename T>
+inline ecs_cpp_type_action_t post_register_action() {
+    return nullptr;
+}
+#else
 template <typename T>
 void register_script_struct_component(
     ecs_world_t *world,
@@ -490,6 +503,7 @@ void register_enum_component(
         return &generic_component_post_register_action<T>;
         #endif
     }
+#endif
 
 template <typename T>
 struct type_impl {
