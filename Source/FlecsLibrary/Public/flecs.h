@@ -341,13 +341,13 @@
 /** @def FLECS_ID_DESC_MAX
  * Maximum number of IDs to add in ecs_entity_desc_t / ecs_bulk_desc_t. */
 #ifndef FLECS_ID_DESC_MAX
-#define FLECS_ID_DESC_MAX 32
+#define FLECS_ID_DESC_MAX FLECS_LIBRARY_ID_DESC_MAX
 #endif
 
 /** @def FLECS_EVENT_DESC_MAX
  * Maximum number of events in ecs_observer_desc_t. */
 #ifndef FLECS_EVENT_DESC_MAX
-#define FLECS_EVENT_DESC_MAX 8
+#define FLECS_EVENT_DESC_MAX FLECS_LIBRARY_EVENT_DESC_MAX
 #endif
 
 /** @def FLECS_VARIABLE_COUNT_MAX
@@ -357,13 +357,13 @@
 /** @def FLECS_TERM_COUNT_MAX 
  * Maximum number of terms in queries. Should not exceed 64. */
 #ifndef FLECS_TERM_COUNT_MAX
-#define FLECS_TERM_COUNT_MAX 32
+#define FLECS_TERM_COUNT_MAX FLECS_LIBRARY_TERM_COUNT_MAX
 #endif
 
 /** @def FLECS_TERM_ARG_COUNT_MAX 
  * Maximum number of arguments for a term. */
 #ifndef FLECS_TERM_ARG_COUNT_MAX
-#define FLECS_TERM_ARG_COUNT_MAX 16
+#define FLECS_TERM_ARG_COUNT_MAX FLECS_LIBRARY_TERM_ARG_COUNT_MAX
 #endif
 
 /** @def FLECS_QUERY_VARIABLE_COUNT_MAX
