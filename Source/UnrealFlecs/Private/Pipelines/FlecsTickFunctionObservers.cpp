@@ -55,14 +55,15 @@ void UFlecsRemoveTickFunctionObserver::EachIterator(const TSolidNotNull<UFlecsWo
 	
 	solid_checkf(InTickFunctionComponent.TickFunction.IsValid(),
 				TEXT("FFlecsTickFunctionComponent has invalid TickFunction"));
-
-#if !NO_LOGGING
-	const FFlecsEntityHandle EntityHandle = InIterator.entity(InIndex);
-#endif // !NO_LOGGING
 			
 	InTickFunctionComponent.TickFunction.Get().UnRegisterTickFunction();
-
+	
+#if !NO_LOGGING
+	const FFlecsEntityHandle EntityHandle = InIterator.entity(InIndex);
+	
 	UE_LOGFMT(LogFlecsWorld, Verbose,
 		"Unregistered Tick Function for Entity {EntityIdentifier}",
 		EntityHandle.HasName() ? EntityHandle.GetName() : EntityHandle.ToString());
+	
+#endif // !NO_LOGGING
 }
