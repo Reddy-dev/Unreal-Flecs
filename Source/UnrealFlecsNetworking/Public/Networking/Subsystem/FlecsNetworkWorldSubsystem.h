@@ -207,4 +207,5 @@ protected:
 	TObjectPtr<UFlecsReplicationBridgeBase> ReplicationBridge;
 	
 	FFlecsReplicationLayoutRegistry LayoutRegistry;
+	
 }; // class UFlecsNetworkWorldSubsystem
