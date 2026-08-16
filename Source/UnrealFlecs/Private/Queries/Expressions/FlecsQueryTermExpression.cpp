@@ -33,6 +33,10 @@ void FFlecsQueryTermExpression::Apply(TSolidNotNull<const UFlecsWorldInterfaceOb
 			UNREACHABLE
 		}
 	}
+	else
+	{
+		InQueryBuilder.src();
+	}
 	
 	if (bStage)
 	{

@@ -43,7 +43,7 @@ public:
 	UFlecsWorld* FlecsWorld = nullptr;
 
 	void SetUp(TArray<TScriptInterface<IFlecsGameLoopInterface>> InGameLoopInterfaces = {}, TArray<FFlecsTickFunctionSettingsInfo> InTickFunctions = {},
-		EWorldType::Type InWorldType = EWorldType::GameRPC)
+		EWorldType::Type InWorldType = EWorldType::GameRPC, const bool bInUseDefaultGameLoop = true)
 	{
 		TearDown();
 		TestEnvironment = FScopedTestEnvironment::Get();
@@ -69,7 +69,7 @@ public:
 				WorldSettings.GameLoops.AddUnique(GameLoopInterface.GetObject());
 			}
 		}
-		else
+		else if (bInUseDefaultGameLoop)
 		{
 			WorldSettings.GameLoops.AddUnique(NewObject<UFlecsDefaultGameLoop>(WorldSubsystem));
 		}
@@ -155,7 +155,7 @@ struct TFlecsWorldTest : TTest<TDerived, TAsserter>
 
 	virtual void Setup() override
 	{
-		Fixture.SetUp({}, {}, WorldType());
+		Fixture.SetUp({}, {}, WorldType(), ShouldUseDefaultGameLoop());
 		OnWorldSetUp();
 	}
 
@@ -169,6 +169,11 @@ protected:
 	virtual EWorldType::Type WorldType() const
 	{
 		return EWorldType::GameRPC;
+	}
+
+	virtual bool ShouldUseDefaultGameLoop() const
+	{
+		return true;
 	}
 
 	virtual void OnWorldSetUp()

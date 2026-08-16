@@ -19,23 +19,21 @@ FFlecsTermRef FFlecsQueryGeneratorInputType::GetTermRefOutput(const TSolidNotNul
 	}
 	else UNLIKELY_ATTRIBUTE
 	{
-		solid_checkf(false, TEXT("Invalid return type for query generator input type!"));
+		solid_cassumef(false, TEXT("Invalid return type for query generator input type!"));
 		return FFlecsTermRef();
 	}
 }
 
-FFlecsId FFlecsQueryGeneratorInputType_ScriptStruct::GetFlecsIdOutput(
-	const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const
+FFlecsId FFlecsQueryGeneratorInputType_ScriptStruct::GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const
 {
-	solid_checkf(ScriptStruct != nullptr, TEXT("FFlecsQueryGeneratorInputType_ScriptStruct::GetFlecsIdOutput: ScriptStruct is null!"));
+	solid_cassumef(ScriptStruct != nullptr, TEXT("FFlecsQueryGeneratorInputType_ScriptStruct::GetFlecsIdOutput: ScriptStruct is null!"));
 	
 	return InWorld->GetScriptStructEntity(ScriptStruct);
 }
 
-FFlecsId FFlecsQueryGeneratorInputType_ScriptEnum::GetFlecsIdOutput(
-	const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const
+FFlecsId FFlecsQueryGeneratorInputType_ScriptEnum::GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const
 {
-	solid_checkf(ScriptEnum != nullptr, TEXT("FFlecsQueryGeneratorInputType_ScriptEnum::GetFlecsIdOutput: ScriptEnum is null!"));
+	solid_cassumef(ScriptEnum != nullptr, TEXT("FFlecsQueryGeneratorInputType_ScriptEnum::GetFlecsIdOutput: ScriptEnum is null!"));
 	
 	return InWorld->GetScriptEnumEntity(ScriptEnum);
 }

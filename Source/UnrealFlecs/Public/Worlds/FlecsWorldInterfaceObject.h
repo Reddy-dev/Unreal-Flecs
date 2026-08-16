@@ -23,9 +23,9 @@
 #include "FlecsWorldInterfaceObject.generated.h"
 
 class UFlecsStage;
-struct FFlecsEntityRecord;
-
 class UFlecsWorld;
+
+struct FFlecsEntityRecord;
 
 /**
  * 
@@ -748,7 +748,8 @@ public:
 	FFlecsId GetMaxId() const;
 	
 protected:
-	virtual flecs::world* GetNativeFlecsWorld_Internal() const PURE_VIRTUAL(UFlecsWorldInterfaceObject::GetNativeFlecsWorld_Internal, return nullptr;);
+	virtual flecs::world* GetNativeFlecsWorld_Internal() const 
+		PURE_VIRTUAL(UFlecsWorldInterfaceObject::GetNativeFlecsWorld_Internal, return nullptr;);
 	
 private:
 	NO_DISCARD FORCEINLINE UFlecsWorldInterfaceObject* GetSelfInterface_Internal() const
