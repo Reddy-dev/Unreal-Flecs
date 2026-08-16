@@ -118,3 +118,9 @@ void FFlecsEntityReplicationSnapshot::FillFromEntity(const FFlecsEntityHandle& I
 	
 	++StateRevision;
 }
+
+/*
+namespace UE::Net
+{
+	UE_NET_IMPLEMENT_SERIALIZER(FFlecsEntityReplicationSnapshotSerializerConfig);
+} // namespace UE::Net*/

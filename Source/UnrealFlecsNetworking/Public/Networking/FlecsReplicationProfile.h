@@ -49,7 +49,6 @@ struct UNREALFLECSNETWORKING_API FFlecsReplicationProfileCullDistance
 	GENERATED_BODY()
 	
 public:
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication")
 	float CullDistance = 0.f;
 
