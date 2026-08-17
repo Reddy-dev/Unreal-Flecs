@@ -19,8 +19,7 @@ class UFlecsWorldInterfaceObject;
 /**
  * @brief A Flecs Id equivalent to flecs::entity_t / flecs::id_t, has the same memory layout as uint64/flecs::id_t/flecs::entity_t
  */
-USTRUCT(BlueprintType, meta = (
-    DisableSplitPin,
+USTRUCT(BlueprintType, meta = (DisableSplitPin,
     HasNativeMake = "/Script/UnrealFlecs.FlecsIdBlueprintFunctionLibrary.MakeFlecsId",
     HasNativeBreak = "/Script/UnrealFlecs.FlecsIdBlueprintFunctionLibrary.BreakFlecsId"))
 struct UNREALFLECS_API FFlecsId
