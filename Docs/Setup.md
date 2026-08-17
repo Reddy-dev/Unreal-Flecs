@@ -16,6 +16,6 @@ WorldSettingsClassName=/Script/UnrealFlecs.FlecsWorldSettings
 ```
 
 ## World Setup
-To setup your world to use Unreal-Flecs, you need to make a Flecs World Settings Asset, then assign this asset as the default world in the map's World Settings.
-Make sure to also have `Use Flecs World` setting enabled in the World Settings.
+- To setup your world to use Unreal-Flecs, you need to make a Flecs World Settings Asset, then assign this asset as the default world in the map's World Settings.
+- Make sure to also have `Use Flecs World` setting enabled in the World Settings.
 
