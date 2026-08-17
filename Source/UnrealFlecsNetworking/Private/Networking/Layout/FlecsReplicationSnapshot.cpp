@@ -28,13 +28,23 @@ void FFlecsEntityReplicationSnapshot::FillFromEntity(const FFlecsEntityHandle& I
 		return;
 	}
 	
-	Values.Empty();
-	
-	const uint32 KeyCount = LayoutDefinition->Keys.Num();
-	
-	for (uint32 Index = 0; Index < KeyCount; ++Index)
+	PayloadData.Reset();
+
+	const int32 KeyCount = LayoutDefinition->Keys.Num();
+	PackedValues.SetNum(KeyCount);
+	for (FFlecsReplicatedPackedValue& PackedValue : PackedValues)
+	{
+		PackedValue.Revision = 0;
+		PackedValue.Offset = 0;
+		PackedValue.Size = 0;
+	}
+
+	const uint32 NewStateRevision = StateRevision + 1;
+
+	for (int32 Index = 0; Index < KeyCount; ++Index)
 	{
 		const FFlecsReplicationKey& Key = LayoutDefinition->Keys[Index];
+		FFlecsReplicatedPackedValue& PackedValue = PackedValues[Index];
 		
 		const FFlecsId ComponentId = FFlecsReplicationKey::ResolveToId(World, Key);
 		if UNLIKELY_IF(!ComponentId.IsValid())
@@ -69,9 +79,6 @@ void FFlecsEntityReplicationSnapshot::FillFromEntity(const FFlecsEntityHandle& I
 		
 #endif // DO_CHECK
 		
-		FFlecsReplicatedValue Value;
-		Value.KeyIndex = Index;
-		
 		if (!FFlecsReplicationKey::IsValidPairStorageKind(Key.StorageKind))
 		{
 			continue;
@@ -97,26 +104,27 @@ void FFlecsEntityReplicationSnapshot::FillFromEntity(const FFlecsEntityHandle& I
 			continue;
 		}
 		
-		Value.Bytes.Reset();
-		FMemoryWriter Writer(Value.Bytes, true);
-		
+		const int32 PayloadOffset = PayloadData.Num();
+
+		FMemoryWriter Writer(PayloadData, true, true);
 		const bool bSerializeSuccess = Descriptor->GetSerializeFunction()(Writer, const_cast<void*>(ComponentValuePtr));
-		
-		if (!bSerializeSuccess || Writer.IsError())
+		const bool bWriterError = Writer.IsError();
+
+		if UNLIKELY_IF(!bSerializeSuccess || bWriterError)
 		{
 			UE_LOGFMT(LogFlecsCore, Error,
 					"Failed to serialize component ID {ComponentId}.",
 					ComponentId.ToString());
+			PayloadData.SetNum(PayloadOffset, EAllowShrinking::No);
 			continue;
 		}
-		
-		Values.Add(MoveTemp(Value));
-		solid_checkf(Values.Num() == Index + 1, 
-			TEXT("Values array size mismatch after adding value for key %s"), 
-			*Key.CanonicalString());
+
+		PackedValue.Revision = NewStateRevision;
+		PackedValue.Offset = static_cast<uint32>(PayloadOffset);
+		PackedValue.Size = static_cast<uint32>(PayloadData.Num() - PayloadOffset);
 	}
 	
-	++StateRevision;
+	StateRevision = NewStateRevision;
 }
 
 /*

@@ -57,7 +57,7 @@ void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UF
 			return true;
 		});
 	
-	const FFlecsObserverHandle ProfileObserverHandle = GetFlecsWorldChecked()->CreateObserver()
+	const FFlecsObserverHandle ProfileObserverHandle = GetFlecsWorldChecked()->CreateObserver("NetProfileObserver")
 		.WithPair(flecs::IsA, flecs::Wildcard)
 		.With<FFlecsReplicatedEntityComponent>().Filter()
 		.Event(flecs::OnAdd)
@@ -823,6 +823,14 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshotToEntity(const FFlecsEntityHandle
 		return;
 	}
 
+	if UNLIKELY_IF(InSnapshot.PackedValues.Num() != LayoutDefinition->Keys.Num())
+	{
+		UE_LOG(LogFlecsWorld, Error,
+			TEXT("Cannot apply snapshot to entity %s because packed value count %d does not match layout '%s' key count %d"),
+			*InEntityHandle.ToString(), InSnapshot.PackedValues.Num(), *InSnapshot.LayoutId.ToString(), LayoutDefinition->Keys.Num());
+		return;
+	}
+
 	for (const FFlecsReplicationKey& Key : LayoutDefinition->Keys)
 	{
 		const FFlecsId ComponentId = FFlecsReplicationKey::ResolveToId(GetFlecsWorldChecked(), Key);
@@ -838,17 +846,23 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshotToEntity(const FFlecsEntityHandle
 		InEntityHandle.Remove(ComponentId);
 	}
 	
-	for (const FFlecsReplicatedValue& Value : InSnapshot.Values)
+	for (int32 Index = 0; Index < LayoutDefinition->Keys.Num(); ++Index)
 	{
-		if UNLIKELY_IF(!LayoutDefinition->Keys.IsValidIndex(Value.KeyIndex))
+		const FFlecsReplicatedPackedValue& PackedValue = InSnapshot.PackedValues[Index];
+		if (PackedValue.Revision == 0)
 		{
-			UE_LOG(LogFlecsWorld, Error,
-				TEXT("Cannot apply snapshot to entity %s because value key index %d is outside layout '%s'"),
-				*InEntityHandle.ToString(), Value.KeyIndex, *InSnapshot.LayoutId.ToString());
 			continue;
 		}
 		
-		const FFlecsReplicationKey& Key = LayoutDefinition->Keys[Value.KeyIndex];
+		const FFlecsReplicationKey& Key = LayoutDefinition->Keys[Index];
+		const uint64 PayloadEnd = static_cast<uint64>(PackedValue.Offset) + static_cast<uint64>(PackedValue.Size);
+		if UNLIKELY_IF(PayloadEnd > static_cast<uint64>(InSnapshot.PayloadData.Num()))
+		{
+			UE_LOG(LogFlecsWorld, Error,
+				TEXT("Cannot apply snapshot to entity %s because payload range [%u, %llu) for component key '%s' is outside the payload buffer of size %d"),
+				*InEntityHandle.ToString(), PackedValue.Offset, PayloadEnd, *Key.CanonicalString(), InSnapshot.PayloadData.Num());
+			continue;
+		}
 		
 		const FFlecsId ComponentId = FFlecsReplicationKey::ResolveToId(GetFlecsWorldChecked(), Key);
 		
@@ -910,18 +924,14 @@ void UFlecsNetworkWorldSubsystem::ApplySnapshotToEntity(const FFlecsEntityHandle
 		}
 
 		void* ComponentData = FMemory::Malloc(Descriptor->GetSize(), Descriptor->GetAlignment());
-		if UNLIKELY_IF(!ComponentData)
-		{
-			UE_LOG(LogFlecsWorld, Error,
-				TEXT("Cannot allocate snapshot value for entity %s and component key '%s'"),
-				*InEntityHandle.ToString(), *Key.CanonicalString());
-			
-			continue;
-		}
+		solid_cassume(ComponentData);
 
 		Descriptor->GetConstructFunction()(ComponentData);
 
-		FMemoryReader Reader(Value.Bytes, true);
+		FMemoryReader Reader(InSnapshot.PayloadData, true);
+		Reader.Seek(PackedValue.Offset);
+		Reader.SetLimitSize(static_cast<int64>(PayloadEnd));
+		
 		const bool bDeserialized = Descriptor->GetDeserializeFunction()(Reader, ComponentData);
 		
 		if UNLIKELY_IF(!bDeserialized || Reader.IsError())

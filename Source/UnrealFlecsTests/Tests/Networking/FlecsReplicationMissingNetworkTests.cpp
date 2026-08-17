@@ -1031,6 +1031,10 @@ NETWORK_TEST_CLASS(FlecsReplicationAdditionalRealBridgeNetworkTests,
 				return Proxy && !Proxy->IsEmpty() &&
 					UE::Flecs::Tests::MissingNetwork::HasReplicatedValue(State.FlecsWorld, 97);
 			})
+			.UntilClient(0, [this](FState& State)
+			{
+				return UE::Flecs::Tests::MissingNetwork::FindTable(State.World, ExpectedNetworkId) == nullptr;
+			})
 			.ThenClient(0, [this](FState& State)
 			{
 				const UFlecsNetEntityProxy* Proxy =
@@ -1038,8 +1042,7 @@ NETWORK_TEST_CLASS(FlecsReplicationAdditionalRealBridgeNetworkTests,
 				
 				ASSERT_THAT(IsNotNull(Proxy));
 				ASSERT_THAT(IsTrue(!Proxy->IsEmpty()));
-				ASSERT_THAT(IsTrue(UE::Flecs::Tests::MissingNetwork::FindTable(
-					State.World, ExpectedNetworkId) == nullptr));
+				ASSERT_THAT(IsTrue(UE::Flecs::Tests::MissingNetwork::FindTable(State.World, ExpectedNetworkId) == nullptr));
 				ASSERT_THAT(IsTrue(UE::Flecs::Tests::MissingNetwork::HasReplicatedValue(
 					State.FlecsWorld, 97)));
 			});

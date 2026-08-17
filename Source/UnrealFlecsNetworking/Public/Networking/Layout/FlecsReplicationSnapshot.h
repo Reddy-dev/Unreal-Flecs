@@ -8,7 +8,6 @@
 
 #include "FlecsReplicationLayoutId.h"
 #include "Networking/FlecsReplicationKey.h"
-#include "FlecsReplicatedValue.h"
 #include "Iris/Serialization/NetSerializer.h"
 
 #include "FlecsReplicationSnapshot.generated.h"
@@ -67,5 +66,4 @@ namespace UE::Net
 	UE_NET_DECLARE_SERIALIZER(FFlecsEntityReplicationSnapshotSerializerConfig, UNREALFLECSNETWORKING_API);
 } // namespace UE::Net
 */
-
 

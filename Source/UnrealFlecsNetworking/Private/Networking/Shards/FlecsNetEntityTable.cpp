@@ -42,12 +42,14 @@ void UFlecsNetEntityTable::PublishNetEntity(const FFlecsNetworkId& InNetworkId,
 {
 	solid_checkf(CanAcceptNetEntity(InNetworkId, InSnapshot),
 		TEXT("Cannot publish invalid network ID to Flecs entity table '%s'"), *GetName());
-
-	if (FFlecsNetEntityTableItem* ExistingItem = EntityTable.Items.FindByPredicate(
+	
+	FFlecsNetEntityTableItem* ExistingItem = EntityTable.Items.FindByPredicate(
 		[&InNetworkId](const FFlecsNetEntityTableItem& Item)
 		{
 			return Item.NetworkId == InNetworkId;
-		}))
+		});
+
+	if (ExistingItem)
 	{
 		ExistingItem->Snapshot = InSnapshot;
 		EntityTable.MarkItemDirty(*ExistingItem);
@@ -68,7 +70,7 @@ void UFlecsNetEntityTable::RemoveNetEntity(const FFlecsNetworkId& InNetworkId)
 			return Item.NetworkId == InNetworkId;
 		});
 	
-	solid_checkf(RemovedIndex != INDEX_NONE,
+	solid_cassumef(RemovedIndex != INDEX_NONE,
 		TEXT("Cannot remove network ID '%s' from Flecs entity table '%s'"),
 		*InNetworkId.ToString(), *GetName());
 

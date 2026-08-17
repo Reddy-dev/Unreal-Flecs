@@ -132,8 +132,8 @@ void UFlecsIrisReplicationBridge::PublishNetEntity(const FFlecsEntityHandle& Ent
 	const FFlecsEntityReplicationSnapshot& InSnapshot)
 {
 	solid_checkf(EntityHandle.IsValid(), TEXT("Cannot publish a Flecs entity without a valid entity handle"));
+	
 	const TSolidNotNull<UFlecsNetShardBase*> Shard = ResolveShard(EntityHandle, InNetworkId, InSnapshot);
-
 	Shard->PublishNetEntity(InNetworkId, InSnapshot);
 }
 
@@ -226,6 +226,7 @@ UFlecsNetShardBase* UFlecsIrisReplicationBridge::ResolveShard(const FFlecsEntity
 	Placement.NetworkId = InNetworkId;
 	Placement.TargetGeneration = 1;
 	Placement.PlacementGeneration = 1;
+	
 	return Shard;
 }
 

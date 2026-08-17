@@ -96,9 +96,9 @@ enum class EFlecsReplicationKeyStorageKind : uint8
  * Stable, transport-safe representation of one replicated component or pair.
  *
  * A key always describes structure. When StorageKind selects an individual, a
- * snapshot may carry bytes through a FFlecsReplicatedValue indexed by this
- * key's position in the layout. Local FFlecsId values are reconstructed after
- * identity validation on the receiving world.
+ * snapshot may carry bytes in a packed payload indexed by this key's position
+ * in the layout. Local FFlecsId values are reconstructed after identity
+ * validation on the receiving world.
  */
 USTRUCT()
 struct UNREALFLECSNETWORKING_API FFlecsReplicationKey

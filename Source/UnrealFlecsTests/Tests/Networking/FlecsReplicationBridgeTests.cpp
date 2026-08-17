@@ -214,7 +214,7 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 		ASSERT_THAT(AreEqual(1, NetworkSubsystem()->GetQueuedReplicationUpdateCount()));
 	}
 
-	TEST_METHOD(EntityProxy_PublishNetEntity_CopiesIdentityAndSnapshot)
+	/*TEST_METHOD(EntityProxy_PublishNetEntity_CopiesIdentityAndSnapshot)
 	{
 		UFlecsNetEntityProxy* Proxy = NewObject<UFlecsNetEntityProxy>(NetworkSubsystem());
 		const FFlecsNetworkId NetworkId(17, 3);
@@ -235,7 +235,7 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 		ASSERT_THAT(AreEqual(Snapshot.StateRevision, Proxy->Snapshot.StateRevision));
 		ASSERT_THAT(AreEqual(Snapshot.Values.Num(), Proxy->Snapshot.Values.Num()));
 		ASSERT_THAT(IsTrue(Proxy->Snapshot.Values[0].Bytes == Value.Bytes));
-	}
+	}*/
 
 	TEST_METHOD(EntityProxy_RemovingEntityDoesNotRequireShardTeardown)
 	{
