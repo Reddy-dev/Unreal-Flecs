@@ -1,4 +1,4 @@
-# Unreal-Flecs setup
+# Unreal-Flecs Setup
 
 This guide configures the source version of Unreal-Flecs in an Unreal Engine 5.8 project. The plugin is experimental and is currently tested primarily with the UE 5.8 MSVC toolchain; Clang support is partial.
 
