@@ -11,8 +11,8 @@
 #include "Iris/ReplicationSystem/ReplicationSystem.h"
 #include "Net/UnrealNetwork.h"
 #include "Net/Core/PushModel/PushModel.h"
+#include "Networking/Profiles/FlecsReplicationProfile.h"
 
-#include "Networking/FlecsReplicationProfile.h"
 #include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsNetShardBase)
@@ -158,6 +158,10 @@ UFlecsNetworkWorldSubsystem* UFlecsNetShardBase::GetOwningNetworkWorldSubsystem(
 	return OwningNetworkWorldSubsystem.Get();
 }
 
+void UFlecsNetShardBase::BindReplicationProfile(const FFlecsReplicationProfile& InProfile)
+{
+}
+
 void UFlecsNetShardBase::ResolveOwningNetworkWorldSubsystem()
 {
 	if (OwningNetworkWorldSubsystem.IsValid())
@@ -214,7 +218,7 @@ void UFlecsNetShardBase::StopOwningNetworkWorldSubsystemRetry()
 void UFlecsNetShardBase::FlushPendingReplicationUpdates()
 {
 	UFlecsNetworkWorldSubsystem* NetworkSubsystem = GetOwningNetworkWorldSubsystem();
-	if (!NetworkSubsystem)
+	if UNLIKELY_IF(!NetworkSubsystem)
 	{
 		return;
 	}

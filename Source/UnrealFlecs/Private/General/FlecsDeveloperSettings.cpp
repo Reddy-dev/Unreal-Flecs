@@ -10,12 +10,6 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsDeveloperSettings)
 
-static TAutoConsoleVariable<bool> CVarEnableFlecs(
-	TEXT("Flecs.UseFlecs"),
-	true,
-	TEXT("Enable Unreal Flecs Plugin.")
-);
-
 // Sets the Flecs log level based on the console variable and when the CVar changes
 static void FlecsLogLevelSink()
 {

@@ -2,6 +2,8 @@
 
 #include "Worlds/FlecsWorldInterfaceObject.h"
 
+#include "Types/SolidCppStructOps.h"
+
 #include "EntityRecords/FlecsEntityRecord.h"
 #include "EntityRecords/FlecsEntityRecordComponent.h"
 #include "Logs/FlecsCategories.h"
@@ -22,6 +24,7 @@ namespace
 		solid_cassume(TypeInfo->hooks.ctx != nullptr);
 
 		const UScriptStruct* ScriptStruct = static_cast<UScriptStruct*>(TypeInfo->hooks.ctx);
+		solid_cassume(ScriptStruct != nullptr);
 		solid_check(IsValid(ScriptStruct));
 
 		ScriptStruct->InitializeStruct(Ptr, Count);
@@ -34,6 +37,7 @@ namespace
 		solid_cassume(TypeInfo->hooks.ctx != nullptr);
 
 		const UScriptStruct* ScriptStruct = static_cast<UScriptStruct*>(TypeInfo->hooks.ctx);
+		solid_cassume(ScriptStruct != nullptr);
 		solid_check(IsValid(ScriptStruct));
 
 		ScriptStruct->DestroyStruct(Ptr, Count);
@@ -49,6 +53,7 @@ namespace
 		solid_cassume(TypeInfo->hooks.ctx != nullptr);
 
 		const UScriptStruct* ScriptStruct = static_cast<UScriptStruct*>(TypeInfo->hooks.ctx);
+		solid_cassume(ScriptStruct != nullptr);
 		solid_check(IsValid(ScriptStruct));
 
 		ScriptStruct->CopyScriptStruct(Destination, Source, Count);
@@ -62,9 +67,10 @@ namespace
 		solid_cassume(TypeInfo->hooks.ctx != nullptr);
 
 		const UScriptStruct* ScriptStruct = static_cast<UScriptStruct*>(TypeInfo->hooks.ctx);
+		solid_cassume(ScriptStruct != nullptr);
 		solid_check(IsValid(ScriptStruct));
 
-		Solid::MoveAssignScriptStruct(ScriptStruct, Destination, Source, Count);
+		ScriptStruct->MoveAssignScriptStruct(Destination, Source, Count);
 	}
 
 	inline void ScriptStructMoveConstruct(void* Destination, void* Source, int32_t Count, const ecs_type_info_t* TypeInfo)
@@ -75,6 +81,7 @@ namespace
 		solid_cassume(TypeInfo->hooks.ctx != nullptr);
 
 		const UScriptStruct* ScriptStruct = static_cast<UScriptStruct*>(TypeInfo->hooks.ctx);
+		solid_cassume(ScriptStruct != nullptr);
 		solid_check(IsValid(ScriptStruct));
 
 		Solid::MoveConstructScriptStruct(ScriptStruct, Destination, Source, Count);
@@ -95,6 +102,7 @@ namespace
 		solid_cassume(TypeInfo->hooks.ctx != nullptr);
 
 		const UScriptStruct* ScriptStruct = static_cast<UScriptStruct*>(TypeInfo->hooks.ctx);
+		solid_cassume(ScriptStruct != nullptr);
 		solid_check(IsValid(ScriptStruct));
 
 		return ScriptStruct->CompareScriptStruct(A, B, PPF_None);
@@ -515,7 +523,7 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterScriptStruct(const UScrip
 						const bool bHasCtor = !ScriptStruct->GetCppStructOps()->HasZeroConstructor();
 						const bool bHasDtor = ScriptStruct->GetCppStructOps()->HasDestructor();
 						const bool bHasCopy = ScriptStruct->GetCppStructOps()->HasCopy();
-						const bool bHasMove = FSolidMoveableStructRegistry::Get().IsStructMoveAssignable(ScriptStruct);
+						const bool bHasMove = ScriptStruct->GetCppStructOps()->HasMoveAssign();
 						const bool bHasMoveCtor = FSolidMoveableStructRegistry::Get().IsStructMoveConstructible(ScriptStruct);
 
 						const bool bHasIdentical = ScriptStruct->GetCppStructOps()->HasIdentical();

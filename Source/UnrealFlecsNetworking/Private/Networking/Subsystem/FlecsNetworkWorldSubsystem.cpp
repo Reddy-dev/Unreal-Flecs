@@ -14,9 +14,10 @@
 #include "Networking/Bridge/FlecsReplicationBridgeBase.h"
 #include "Networking/FlecsDirtyObserverTag.h"
 #include "Networking/FlecsNetDirtyTag.h"
-#include "Networking/FlecsReplicationProfile.h"
-#include "Networking/FlecsReplicationProfileDataAsset.h"
+#include "Networking/Profiles/FlecsReplicationProfile.h"
+#include "Networking/Profiles/FlecsReplicationProfileDataAsset.h"
 #include "Networking/FlecsReplicationShardSelection.h"
+#include "Networking/Profiles/FlecsReplicationProfileParamsBase.h"
 #include "Networking/Shards/FlecsNetEntityTable.h"
 #include "Networking/Shards/FlecsNetEntityProxy.h"
 
@@ -487,6 +488,16 @@ FFlecsEntityHandle UFlecsNetworkWorldSubsystem::RegisterReplicationProfileDefini
 	const FFlecsEntityHandle ProfilePrefab = GetFlecsWorldChecked()->CreatePrefab(InName.ToString())
 		.Add<FFlecsReplicationProfileTag>()
 		.Set<FFlecsReplicationProfile>(InDefinition);
+	
+	for (const TInstancedStruct<FFlecsReplicationProfileParamsBase>& ParamComponent : InDefinition.ParameterComponents)
+	{
+		if UNLIKELY_IF(!ParamComponent.IsValid())
+		{
+			continue;
+		}
+		
+		ParamComponent.GetPtr()->ApplyToEntity(ProfilePrefab);
+	}
 
 	ReplicationProfilePrefabs.Add(InName, ProfilePrefab);
 	return ProfilePrefab;

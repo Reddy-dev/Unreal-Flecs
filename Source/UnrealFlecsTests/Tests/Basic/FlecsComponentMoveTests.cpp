@@ -48,7 +48,7 @@ private:
 public:
 	TEST_METHOD(BasicMovableComponent_MoveUSTRUCT_MovableComponent)
 	{
-		ASSERT_THAT(IsTrue(FSolidMoveableStructRegistry::Get().IsStructMovable(FUStructTestComponent_MovableUSTRUCT::StaticStruct())));
+		ASSERT_THAT(IsTrue(FUStructTestComponent_MovableUSTRUCT::StaticStruct()->GetCppStructOps()->HasMoveAssign()));
 		
 		World()->RegisterComponentType(FUStructTestComponent_MovableUSTRUCT::StaticStruct());
 		
@@ -64,8 +64,7 @@ public:
 
 	TEST_METHOD(BasicMovableComponent_MoveUSTRUCT_NoMovableRegisteredComponent)
 	{
-		ASSERT_THAT(IsFalse(FSolidMoveableStructRegistry::Get().IsStructMovable(FUStructTestComponent_MovableNotRegisteredUSTRUCT::StaticStruct())));
-		
+		ASSERT_THAT(IsFalse(FUStructTestComponent_MovableNotRegisteredUSTRUCT::StaticStruct()->GetCppStructOps()->HasMoveAssign()));
 		World()->RegisterComponentType(FUStructTestComponent_MovableNotRegisteredUSTRUCT::StaticStruct());
 		
 		FUStructTestComponent_MovableNotRegisteredUSTRUCT InitialValue;
@@ -79,7 +78,7 @@ public:
 
 	TEST_METHOD(BasicMovableComponent_MoveLifecycleTracker_MovableRegistered)
 	{
-		ASSERT_THAT(IsTrue(FSolidMoveableStructRegistry::Get().IsStructMovable(FUStructTestComponent_LifecycleTracker::StaticStruct())));
+		ASSERT_THAT(IsTrue(FUStructTestComponent_LifecycleTracker::StaticStruct()->GetCppStructOps()->HasMoveAssign()));
 		World()->RegisterComponentType(FUStructTestComponent_LifecycleTracker::StaticStruct());
 		
 		FUStructTestComponent_LifecycleTracker Initial;
@@ -103,7 +102,7 @@ public:
 
 	TEST_METHOD(BasicMovableComponent_MoveLifecycleTracker_NoMoveRegistration)
 	{
-		ASSERT_THAT(IsFalse(FSolidMoveableStructRegistry::Get().IsStructMovable(FFlecsTestStruct_LifecycleTracker_NoMoveReg::StaticStruct())));
+		ASSERT_THAT(IsFalse(FFlecsTestStruct_LifecycleTracker_NoMoveReg::StaticStruct()->GetCppStructOps()->HasMoveAssign()));
 		
 		World()->RegisterComponentType(FFlecsTestStruct_LifecycleTracker_NoMoveReg::StaticStruct());
 		

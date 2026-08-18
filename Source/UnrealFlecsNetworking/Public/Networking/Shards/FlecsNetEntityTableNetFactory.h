@@ -25,5 +25,8 @@ protected:
 	virtual void DetachedFromReplication(
 		const FDetachContext& Context,
 		const TOptional<FSubObjectDetachContext>& SubObjectContext) override;
+	
+	virtual void FillRootObjectReplicationParams(const UE::Net::FRootObjectReplicationParamsContext& Context,
+		UE::Net::FRootObjectReplicationParams& OutParams) override;
 
 }; // class UFlecsNetEntityTableNetFactory

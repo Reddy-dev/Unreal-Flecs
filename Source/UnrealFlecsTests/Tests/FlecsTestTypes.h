@@ -511,6 +511,16 @@ struct TFlecsComponentTraits<FUStructTestComponent_MovableUSTRUCT> : public TFle
 	
 }; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
 
+template <>
+struct TStructOpsTypeTraits<FUStructTestComponent_MovableUSTRUCT> : public TStructOpsTypeTraitsBase2<FUStructTestComponent_MovableUSTRUCT>
+{
+	enum
+	{
+		WithCopy = true,
+		WithMoveAssign = true,
+	};
+}; // struct TStructOpsTypeTraits<FUStructTestComponent_MovableUSTRUCT>
+
 USTRUCT()
 struct FUStructTestComponent_MovableNotRegisteredUSTRUCT
 {
@@ -628,6 +638,17 @@ struct TFlecsComponentTraits<FUStructTestComponent_LifecycleTracker> : public TF
 	
 }; // struct TFlecsComponentTraits<FUStructTestComponent_LifecycleTracker>
 
+template <>
+struct TStructOpsTypeTraits<FUStructTestComponent_LifecycleTracker> : public TStructOpsTypeTraitsBase2<FUStructTestComponent_LifecycleTracker>
+{
+	enum
+	{
+		WithCopy = true,
+		WithMoveAssign = true, 
+	};
+	
+}; // struct TStructOpsTypeTraits<FUStructTestComponent_LifecycleTracker>
+
 USTRUCT()
 struct FFlecsTestStruct_LifecycleTracker_NoMoveReg
 {
@@ -721,6 +742,17 @@ struct TFlecsComponentTraits<FFlecsTestStruct_LifecycleTracker_NoMoveReg> : publ
 	static constexpr bool AutoRegister = false;
 	
 }; // struct TFlecsComponentTraits<FUStructTestComponent_LifecycleTracker>
+
+template <>
+struct TStructOpsTypeTraits<FFlecsTestStruct_LifecycleTracker_NoMoveReg> : public TStructOpsTypeTraitsBase2<FFlecsTestStruct_LifecycleTracker_NoMoveReg>
+{
+	enum
+	{
+		WithCopy = true,
+		WithMoveAssign = false, 
+	};
+	
+}; // struct TStructOpsTypeTraits<FFlecsTestStruct_LifecycleTracker_NoMoveReg>
 
 USTRUCT()
 struct FFlecsTestStruct_FlecsHookTracker

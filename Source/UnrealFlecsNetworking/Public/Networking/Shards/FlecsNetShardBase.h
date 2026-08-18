@@ -16,6 +16,7 @@
 #include "Networking/FlecsNetworkId.h"
 #include "Networking/FlecsReplicationUpdateQueue.h"
 #include "Networking/Layout/FlecsReplicationSnapshot.h"
+#include "Networking/Profiles/FlecsReplicationProfile.h"
 
 #include "FlecsNetShardBase.generated.h"
 
@@ -90,6 +91,8 @@ public:
 	void SetOwningNetworkWorldSubsystem(UFlecsNetworkWorldSubsystem* InOwningNetworkWorldSubsystem);
 
 	NO_DISCARD UFlecsNetworkWorldSubsystem* GetOwningNetworkWorldSubsystem() const;
+	
+	void BindReplicationProfile(const FFlecsReplicationProfile& InProfile);
 
 protected:
 	void ReceiveEntityUpdate(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot);
@@ -112,5 +115,8 @@ private:
 	FDelegateHandle WorldPreActorTickHandle;
 
 	UE::Net::FNetRootObjectAdapter RootObjectAdapter;
+	
+	UPROPERTY()
+	FFlecsReplicationProfile ReplicationProfile;
 
 }; // class UFlecsNetShardBase

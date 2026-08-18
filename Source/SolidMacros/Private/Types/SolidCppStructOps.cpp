@@ -18,11 +18,6 @@ bool FSolidMoveableStructRegistry::IsStructMoveConstructible(const TSolidNotNull
 	return IsStructMovable(InStruct) && GetStructTypeHookInfo(InStruct).MoveConstructor != nullptr;
 }
 
-bool FSolidMoveableStructRegistry::IsStructMoveAssignable(const TSolidNotNull<const UScriptStruct*> InStruct) const
-{
-	return IsStructMovable(InStruct) && GetStructTypeHookInfo(InStruct).MoveAssignment != nullptr;
-}
-
 const FSolidMoveableStructRegistry::FStructTypeHookInfo& FSolidMoveableStructRegistry::GetStructTypeHookInfo(
 	const TSolidNotNull<const UScriptStruct*> InStruct) const
 {

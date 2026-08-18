@@ -19,13 +19,12 @@ struct SOLIDMACROS_API FSolidMoveableStructRegistry : public FNoncopyable
 	struct FStructTypeHookInfo
 	{
 		FMoveFunc MoveConstructor = nullptr;
-		FMoveFunc MoveAssignment = nullptr;
 	}; // struct FStructTypeHookInfo
 	
 	static FSolidMoveableStructRegistry& Get();
 
 	template <Solid::TScriptStructConcept TStructType>
-	requires (std::is_move_constructible_v<TStructType> || std::is_move_assignable_v<TStructType>)
+	requires (std::is_move_constructible_v<TStructType>)
 	void RegisterMovableScriptStruct()
 	{
 		const TSolidNotNull<const UScriptStruct*> ScriptStruct = TBaseStructure<TStructType>::Get();
@@ -33,26 +32,6 @@ struct SOLIDMACROS_API FSolidMoveableStructRegistry : public FNoncopyable
 		FStructTypeHookInfo TypeHookInfo;
 
 		constexpr bool bIsMoveConstructible = std::is_move_constructible_v<TStructType>;
-		constexpr bool bIsMoveAssignable = std::is_move_assignable_v<TStructType>;
-		
-		if constexpr (bIsMoveAssignable)
-		{
-			const FMoveFunc MoveAssignmentFunction = [](void* Dest, void* Src)
-			{
-				TStructType* DestStruct  = static_cast<TStructType*>(Dest);
-				TStructType* SrcStruct  = static_cast<TStructType*>(Src);
-				solid_cassume(DestStruct);
-				solid_cassume(SrcStruct);
-			
-				*DestStruct = MoveTemp(*SrcStruct);
-			};
-
-			TypeHookInfo.MoveAssignment = MoveAssignmentFunction;
-		}
-		else
-		{
-			TypeHookInfo.MoveAssignment = nullptr;
-		}
 
 		if constexpr (bIsMoveConstructible)
 		{
@@ -72,7 +51,7 @@ struct SOLIDMACROS_API FSolidMoveableStructRegistry : public FNoncopyable
 			TypeHookInfo.MoveConstructor = nullptr;
 		}
 
-		solid_cassumef(TypeHookInfo.MoveConstructor || TypeHookInfo.MoveAssignment,
+		solid_cassumef(TypeHookInfo.MoveConstructor,
 			TEXT("At least one of MoveConstructor or MoveAssignment must be valid for moveable struct registration!"));
 
 		MoveableStructs.Add(ScriptStruct, MoveTemp(TypeHookInfo));
@@ -94,7 +73,6 @@ struct SOLIDMACROS_API FSolidMoveableStructRegistry : public FNoncopyable
 	
 	NO_DISCARD bool IsStructMovable(const TSolidNotNull<const UScriptStruct*> InStruct) const;
 	NO_DISCARD bool IsStructMoveConstructible(const TSolidNotNull<const UScriptStruct*> InStruct) const;
-	NO_DISCARD bool IsStructMoveAssignable(const TSolidNotNull<const UScriptStruct*> InStruct) const;
 	
 	NO_DISCARD const FStructTypeHookInfo& GetStructTypeHookInfo(const TSolidNotNull<const UScriptStruct*> InStruct) const;
 
@@ -120,29 +98,6 @@ namespace Solid
 		const FSolidMoveableStructRegistry::FMoveFunc MoveFunction =
 			FSolidMoveableStructRegistry::Get().GetStructTypeHookInfo(InStruct).MoveConstructor;
 				
-		for (uint32 Index = 0; Index < Count; ++Index)
-		{
-			MoveFunction(
-				reinterpret_cast<uint8*>(Dest) + Index * InStruct->GetStructureSize(),
-				reinterpret_cast<uint8*>(Src) + Index * InStruct->GetStructureSize()
-				);
-		}
-	}
-
-	inline void MoveAssignScriptStruct(const TSolidNotNull<const UScriptStruct*> InStruct, void* Dest, void* Src,
-	                            const uint32 Count = 1)
-	{
-		solid_checkf(IsValid(InStruct), TEXT("InStruct must be valid!"));
-		
-		solid_cassume(Dest);
-		solid_cassume(Src);
-
-		solid_checkf(FSolidMoveableStructRegistry::Get().IsStructMovable(InStruct),
-					 TEXT("InStruct is not registered as moveable!"));
-		
-		const FSolidMoveableStructRegistry::FMoveFunc MoveFunction =
-			FSolidMoveableStructRegistry::Get().GetStructTypeHookInfo(InStruct).MoveAssignment;
-			
 		for (uint32 Index = 0; Index < Count; ++Index)
 		{
 			MoveFunction(

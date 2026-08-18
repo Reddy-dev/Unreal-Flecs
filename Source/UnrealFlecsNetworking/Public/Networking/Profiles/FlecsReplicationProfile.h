@@ -8,6 +8,8 @@
 
 #include "FlecsReplicationProfile.generated.h"
 
+struct FFlecsReplicationProfileParamsBase;
+
 /** Flecs-owned policy values inherited by replicated entities through IsA. */
 USTRUCT(BlueprintType)
 struct UNREALFLECSNETWORKING_API FFlecsReplicationProfile
@@ -22,6 +24,13 @@ struct UNREALFLECSNETWORKING_API FFlecsReplicationProfile
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication")
 	FName ShardSelectorName = NAME_None;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication")
+	bool bAlwaysRelevant = false;
+	
+	// @TODO: make it only flecs components
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication")
+	TArray<TInstancedStruct<FFlecsReplicationProfileParamsBase>> ParameterComponents;
 
 	NO_DISCARD bool operator==(const FFlecsReplicationProfile& Other) const
 	{
@@ -42,33 +51,6 @@ struct TFlecsComponentTraits<FFlecsReplicationProfile> : public TFlecsComponentT
 {
 	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::Inherit;
 }; // struct TFlecsComponentTraits<FFlecsReplicationProfile>
-
-USTRUCT(BlueprintType)
-struct UNREALFLECSNETWORKING_API FFlecsReplicationProfileCullDistance
-{
-	GENERATED_BODY()
-	
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication")
-	float CullDistance = 0.f;
-
-	NO_DISCARD bool operator==(const FFlecsReplicationProfileCullDistance& Other) const
-	{
-		return CullDistance == Other.CullDistance;
-	}
-
-	NO_DISCARD bool operator!=(const FFlecsReplicationProfileCullDistance& Other) const
-	{
-		return !(*this == Other);
-	}
-	
-}; // struct FFlecsReplicationProfileCullDistance
-
-template <>
-struct TFlecsComponentTraits<FFlecsReplicationProfileCullDistance> : public TFlecsComponentTraitsBase<FFlecsReplicationProfileCullDistance>
-{
-	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::Inherit;
-}; // struct TFlecsComponentTraits<FFlecsReplicationProfileCullDistance>
 
 /** Identifies a Flecs entity as a replication profile prefab. */
 USTRUCT(BlueprintType)

@@ -21,7 +21,7 @@ public:
 	/**
 	 * @brief Enable Unreal Flecs Plugin.
 	 */
-	UPROPERTY(EditAnywhere, Config, Category = "Flecs", meta = (ConsoleVariable = "Flecs.UseFlecs"))
+	UPROPERTY(EditAnywhere, Config, Category = "Flecs")
 	bool bEnableFlecs = true;
 	
 	UPROPERTY(EditAnywhere, Config, NoClear, Category = "Flecs | Thread Allocation")

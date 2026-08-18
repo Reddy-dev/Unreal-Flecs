@@ -9,8 +9,6 @@
 #include "Worlds/FlecsAbstractWorldSubsystem.h"
 
 #include "Networking/FlecsNetworkId.h"
-#include "Networking/FlecsReplicationProfile.h"
-#include "Networking/FlecsReplicationProfileDataAsset.h"
 #include "Networking/FlecsReplicationShardSelection.h"
 #include "Networking/FlecsReplicationUpdateQueue.h"
 #include "Networking/Layout/FlecsReplicationLayoutRegistry.h"
@@ -18,6 +16,7 @@
 
 #include "FlecsNetworkWorldSubsystem.generated.h"
 
+class UFlecsReplicationProfileDataAsset;
 class UFlecsReplicationBridgeBase;
 class IFlecsNetworkIDGeneratorInterface;
 class UFlecsNetworkingModuleSettings;

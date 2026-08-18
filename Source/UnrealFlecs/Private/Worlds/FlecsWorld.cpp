@@ -21,8 +21,6 @@
 
 #include "Kismet/GameplayStatics.h"
 
-#include "Types/SolidCppStructOps.h"
-
 #include "Worlds/FlecsWorldSubsystem.h"
 
 #include "Logs/FlecsCategories.h"

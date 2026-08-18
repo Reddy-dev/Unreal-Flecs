@@ -12,7 +12,6 @@
 
 #include "SolidMacros/Macros.h"
 #include "Standard/robin_hood.h"
-#include "Types/SolidCppStructOps.h"
 
 #include "Logs/FlecsCategories.h"
 #include "Worlds/FlecsWorld.h"

@@ -6,7 +6,7 @@
 
 #include "Engine/DataAsset.h"
 
-#include "Networking/FlecsReplicationProfile.h"
+#include "Networking/Profiles/FlecsReplicationProfile.h"
 
 #include "FlecsReplicationProfileDataAsset.generated.h"
 

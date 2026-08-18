@@ -16,7 +16,7 @@
 #include "Networking/FlecsNetDirtyTag.h"
 #include "Networking/FlecsNetworkId.h"
 #include "Networking/FlecsReplicatedEntityComponent.h"
-#include "Networking/FlecsReplicationProfile.h"
+#include "Networking/Profiles/FlecsReplicationProfile.h"
 #include "Networking/FlecsReplicationShardSelection.h"
 #include "Networking/Layout/FlecsReplicationSnapshot.h"
 #include "Networking/Shards/FlecsNetEntityProxy.h"
@@ -54,10 +54,12 @@ namespace UE::Flecs::Tests::MissingNetwork
 		UFlecsWorld* World = WorldSubsystem->CreateWorld(TEXT("FlecsReplicationPIEAdditional"), Settings);
 
 		RegisterReplicationComponent<FFlecsReplicationTestValueRelationship>(World);
+		
 		if (bRegisterSchemaTarget)
 		{
 			RegisterReplicationComponent<FFlecsReplicationTestValue>(World);
 		}
+		
 		RegisterReplicationComponent<FFlecsReplicationTestDontFragmentValue>(World);
 		RegisterReplicationComponent<FFlecsReplicationTestNativeValue>(World);
 		RegisterReplicationComponent<FFlecsReplicationTestTag>(World);

@@ -39,19 +39,13 @@ FFlecsOnWorldInitializedGlobal UE::Flecs::GOnFlecsWorldInitialized;
 
 bool UFlecsWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
-	return Super::ShouldCreateSubsystem(Outer)
-		&& IConsoleManager::Get().FindConsoleVariable(TEXT("Flecs.UseFlecs"))->GetBool();
+	return Super::ShouldCreateSubsystem(Outer);
 }
 
 void UFlecsWorldSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-		
-	if (!IConsoleManager::Get().FindConsoleVariable(TEXT("Flecs.UseFlecs"))->GetBool())
-	{
-		return;
-	}
-
+	
 	solid_check(IsValid(GetWorld()->GetWorldSettings()));
 	solid_checkf(GetWorld()->GetWorldSettings()->IsA<AFlecsWorldSettings>(),
 	             TEXT("World settings must be of type AFlecsWorldSettings"));

@@ -96,13 +96,7 @@ void FFlecsEntityReplicationSnapshot::FillFromEntity(const FFlecsEntityHandle& I
 		const TSolidNotNull<const FFlecsComponentReplicationDescriptor*> Descriptor = ComponentRegistry.Find(ValueId);
 		
 		const void* ComponentValuePtr = InEntityHandle.TryGet(ComponentId);
-		if UNLIKELY_IF(!ComponentValuePtr)
-		{
-			UE_LOGFMT(LogFlecsCore, Error, 
-				"Failed to get component value for component ID {ComponentId} when filling snapshot for entity {Entity}.", 
-				ComponentId.ToString(), *InEntityHandle.ToString());
-			continue;
-		}
+		solid_cassume(ComponentValuePtr);
 		
 		const int32 PayloadOffset = PayloadData.Num();
 

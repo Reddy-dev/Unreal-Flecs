@@ -57,3 +57,9 @@ void UFlecsNetEntityTableNetFactory::DetachedFromReplication(const FDetachContex
 
 	Super::DetachedFromReplication(Context, SubObjectContext);
 }
+
+void UFlecsNetEntityTableNetFactory::FillRootObjectReplicationParams(
+	const UE::Net::FRootObjectReplicationParamsContext& Context, UE::Net::FRootObjectReplicationParams& OutParams)
+{
+	Super::FillRootObjectReplicationParams(Context, OutParams);
+}

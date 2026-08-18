@@ -9,8 +9,8 @@
 #include "UObject/UObjectGlobals.h"
 
 #include "Networking/FlecsNetDirtyTag.h"
-#include "Networking/FlecsReplicationProfile.h"
-#include "Networking/FlecsReplicationProfileDataAsset.h"
+#include "Networking/Profiles/FlecsReplicationProfile.h"
+#include "Networking/Profiles/FlecsReplicationProfileDataAsset.h"
 #include "Networking/FlecsReplicationShardSelection.h"
 #include "Networking/FlecsReplicationUpdateQueue.h"
 #include "Networking/FlecsNetworkingModuleSettings.h"
