@@ -10,7 +10,6 @@
 
 #include "FlecsReplicationProfileParamTypes.generated.h"
 
-
 USTRUCT(BlueprintType)
 struct UNREALFLECSNETWORKING_API FFlecsReplicationProfileCullDistance : public FFlecsReplicationProfileParamsBase
 {
@@ -33,12 +32,6 @@ public:
 	virtual void ApplyToEntity(const FFlecsEntityHandle& InEntity) const override;
 	
 }; // struct FFlecsReplicationProfileCullDistance
-
-template <>
-struct TFlecsComponentTraits<FFlecsReplicationProfileCullDistance> : public TFlecsComponentTraitsBase<FFlecsReplicationProfileCullDistance>
-{
-	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::Inherit;
-}; // struct TFlecsComponentTraits<FFlecsReplicationProfileCullDistance>
 
 USTRUCT(BlueprintType)
 struct UNREALFLECSNETWORKING_API FFlecsReplicationProfileUpdateRate : public FFlecsReplicationProfileParamsBase
@@ -63,8 +56,12 @@ public:
 	
 }; // struct FFlecsReplicationProfileUpdateRate
 
-template <>
-struct TFlecsComponentTraits<FFlecsReplicationProfileUpdateRate> : public TFlecsComponentTraitsBase<FFlecsReplicationProfileUpdateRate>
+USTRUCT(BlueprintType)
+struct UNREALFLECSNETWORKING_API FFlecsReplicationProfileAlwaysRelevant : public FFlecsReplicationProfileParamsBase
 {
-	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::Inherit;
-}; // struct TFlecsComponentTraits<FFlecsReplicationProfileUpdateRate>
+	GENERATED_BODY()
+	
+public:
+	virtual void ApplyToEntity(const FFlecsEntityHandle& InEntity) const override;
+	
+}; // struct FFlecsReplicationProfileAlwaysRelevant

@@ -29,6 +29,7 @@ void UFlecsNetEntityTable::ConfigureObjectSettings(OUT UE::Net::FRootObjectSetti
 	Super::ConfigureObjectSettings(OutSettings);
 
 	OutSettings.FactoryName = UFlecsNetEntityTableNetFactory::GetFactoryName();
+	OutSettings.bIsAlwaysRelevant = true; // Tables must always be relevant
 }
 
 bool UFlecsNetEntityTable::CanAcceptNetEntity(const FFlecsNetworkId& InNetworkId,

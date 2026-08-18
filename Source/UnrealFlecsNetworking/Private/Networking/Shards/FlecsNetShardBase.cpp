@@ -11,6 +11,7 @@
 #include "Iris/ReplicationSystem/ReplicationSystem.h"
 #include "Net/UnrealNetwork.h"
 #include "Net/Core/PushModel/PushModel.h"
+#include "Networking/Profiles/FlecsNetAlwaysRelevantTag.h"
 #include "Networking/Profiles/FlecsReplicationProfile.h"
 
 #include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
@@ -22,12 +23,14 @@ UWorld* UFlecsNetShardBase::GetWorld() const
 	return OwningWorld.IsValid() ? OwningWorld.Get() : Super::GetWorld();
 }
 
-void UFlecsNetShardBase::InitializeShard()
+void UFlecsNetShardBase::InitializeShard(const FFlecsReplicationProfile& InReplicationProfile)
 {
 	if (RootObjectAdapter.IsInitialized())
 	{
 		return;
 	}
+	
+	ReplicationProfile = InReplicationProfile;
 
 	UE::Net::FRootObjectSettings Settings;
 	ConfigureObjectSettings(Settings);
@@ -58,6 +61,7 @@ void UFlecsNetShardBase::StartShardReplication()
 	}
 
 	RootObjectAdapter.StartReplication(World->PersistentLevel);
+	ApplyReplicationProfile();
 }
 
 void UFlecsNetShardBase::StopShardReplication()
@@ -88,11 +92,11 @@ void UFlecsNetShardBase::FillRootObjectReplicationParams(const UE::Net::FRootObj
 
 void UFlecsNetShardBase::ConfigureObjectSettings(OUT UE::Net::FRootObjectSettings& OutSettings) const
 {
-	OutSettings.bIsAlwaysRelevant = true;
+	OutSettings.bIsAlwaysRelevant = GetReplicationProfile().ParameterComponents.Contains(TInstancedStruct<FFlecsNetAlwaysRelevantTag>::Make());
 	OutSettings.bIsNotRouted = false;
 }
 
-void UFlecsNetShardBase::ApplyReplicationProfile(const FFlecsReplicationProfile& InProfile) const
+void UFlecsNetShardBase::ApplyReplicationProfile() const
 {
 	const TSolidNotNull<const UWorld*> World = GetWorld();
 	const TSolidNotNull<const UNetDriver*> NetDriver = World->GetNetDriver();
@@ -103,27 +107,27 @@ void UFlecsNetShardBase::ApplyReplicationProfile(const FFlecsReplicationProfile&
 	const UE::Net::FNetRefHandle NetRefHandle = ReplicationBridge->GetReplicatedRefHandle(this);
 	solid_checkf(NetRefHandle.IsValid(), TEXT("Flecs shard '%s' is not registered with the Iris replication system"), *GetName());
 	
-	if (!InProfile.FilterName.IsNone())
+	if (!GetReplicationProfile().FilterName.IsNone())
 	{
-		const UE::Net::FNetObjectFilterHandle FilterHandle = ReplicationSystem->GetFilterHandle(InProfile.FilterName);
+		const UE::Net::FNetObjectFilterHandle FilterHandle = ReplicationSystem->GetFilterHandle(GetReplicationProfile().FilterName);
 		
 		solid_cassumef(FilterHandle != UE::Net::InvalidNetObjectFilterHandle, 
 			TEXT("Flecs shard '%s' is not registered with the Iris replication system"), *GetName());
 		
 		const bool bFilterSet = ReplicationSystem->SetFilter(NetRefHandle, FilterHandle);
 		solid_cassumef(bFilterSet, TEXT("Iris rejected filter '%s' for Flecs shard '%s'"),
-			*InProfile.FilterName.ToString(), *GetName());
+			*GetReplicationProfile().FilterName.ToString(), *GetName());
 	}
 
-	if (!InProfile.ObjectPrioritizerName.IsNone())
+	if (!GetReplicationProfile().ObjectPrioritizerName.IsNone())
 	{
-		const UE::Net::FNetObjectPrioritizerHandle PrioritizerHandle = ReplicationSystem->GetPrioritizerHandle(InProfile.ObjectPrioritizerName);
+		const UE::Net::FNetObjectPrioritizerHandle PrioritizerHandle = ReplicationSystem->GetPrioritizerHandle(GetReplicationProfile().ObjectPrioritizerName);
 		solid_cassumef(PrioritizerHandle != UE::Net::InvalidNetObjectPrioritizerHandle, 
 			TEXT("Flecs shard '%s' is not registered with the Iris replication system"), *GetName());
 		
 		const bool bPrioritizerSet = ReplicationSystem->SetPrioritizer(NetRefHandle, PrioritizerHandle);
 		solid_cassumef(bPrioritizerSet, TEXT("Iris rejected prioritizer '%s' for Flecs shard '%s'"),
-			*InProfile.ObjectPrioritizerName.ToString(), *GetName());
+			*GetReplicationProfile().ObjectPrioritizerName.ToString(), *GetName());
 	}
 }
 
@@ -158,8 +162,9 @@ UFlecsNetworkWorldSubsystem* UFlecsNetShardBase::GetOwningNetworkWorldSubsystem(
 	return OwningNetworkWorldSubsystem.Get();
 }
 
-void UFlecsNetShardBase::BindReplicationProfile(const FFlecsReplicationProfile& InProfile)
+const FFlecsReplicationProfile& UFlecsNetShardBase::GetReplicationProfile() const
 {
+	return ReplicationProfile;
 }
 
 void UFlecsNetShardBase::ResolveOwningNetworkWorldSubsystem()

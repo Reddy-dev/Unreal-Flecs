@@ -241,8 +241,6 @@ UFlecsNetShardBase* UFlecsIrisReplicationBridge::CreateNewShard(const FFlecsNetw
 	Shard->SetOwningNetworkWorldSubsystem(GetNetworkWorldSubsystem());
 	Shard->InitializeShard();
 	Shard->StartShardReplication();
-	
-	Shard->ApplyReplicationProfile(InProfile);
 
 	if UNLIKELY_IF(!Shard->CanAcceptNetEntity(InNetworkId, InSnapshot))
 	{

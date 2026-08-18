@@ -44,7 +44,7 @@ public:
 
 	virtual UWorld* GetWorld() const override;
 
-	virtual void InitializeShard();
+	virtual void InitializeShard(const FFlecsReplicationProfile& InReplicationProfile);
 	virtual void DeinitializeShard();
 	
 	void StartShardReplication();
@@ -63,7 +63,6 @@ public:
 	                                             UE::Net::FRootObjectReplicationParams& OutParams) const override;
 
 	virtual void ConfigureObjectSettings(OUT UE::Net::FRootObjectSettings& OutSettings) const;
-	void ApplyReplicationProfile(const FFlecsReplicationProfile& InProfile) const;
 	
 	/** Returns whether this shard can store an update for the supplied entity. */
 	virtual bool CanAcceptNetEntity(const FFlecsNetworkId& InNetworkId,
@@ -92,7 +91,7 @@ public:
 
 	NO_DISCARD UFlecsNetworkWorldSubsystem* GetOwningNetworkWorldSubsystem() const;
 	
-	void BindReplicationProfile(const FFlecsReplicationProfile& InProfile);
+	NO_DISCARD const FFlecsReplicationProfile& GetReplicationProfile() const;
 
 protected:
 	void ReceiveEntityUpdate(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot);
@@ -103,6 +102,8 @@ protected:
 	void StartOwningNetworkWorldSubsystemRetry();
 	void StopOwningNetworkWorldSubsystemRetry();
 	void FlushPendingReplicationUpdates();
+	
+	void ApplyReplicationProfile() const;
 
 private:
 	UPROPERTY(Transient)

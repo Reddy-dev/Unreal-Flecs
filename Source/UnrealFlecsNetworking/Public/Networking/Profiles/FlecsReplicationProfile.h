@@ -25,9 +25,6 @@ struct UNREALFLECSNETWORKING_API FFlecsReplicationProfile
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication")
 	FName ShardSelectorName = NAME_None;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication")
-	bool bAlwaysRelevant = false;
-	
 	// @TODO: make it only flecs components
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication")
 	TArray<TInstancedStruct<FFlecsReplicationProfileParamsBase>> ParameterComponents;
