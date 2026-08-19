@@ -6,7 +6,6 @@
 
 #include "SolidMacros/Macros.h"
 
-#include "Entities/FlecsEntityHandle.h"
 #include "Properties/FlecsComponentProperties.h"
 
 #include "FlecsReplicationCullDistanceComponent.generated.h"
@@ -33,18 +32,13 @@ public:
 }; // struct FFlecsReplicationProfileCullDistance
 
 template <>
+struct TIsPODType<FFlecsReplicationCullDistanceComponent>
+{
+	enum { Value = true };
+}; // struct TIsPODType<FFlecsReplicationCullDistanceComponent
+
+template <>
 struct TFlecsComponentTraits<FFlecsReplicationCullDistanceComponent> : public TFlecsComponentTraitsBase<FFlecsReplicationCullDistanceComponent>
 {
 	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::Inherit;
 }; // struct TFlecsComponentTraits<FFlecsReplicationProfileCullDistance>
-
-template <>
-struct TStructOpsTypeTraits<FFlecsReplicationCullDistanceComponent> : public TStructOpsTypeTraitsBase2<FFlecsReplicationCullDistanceComponent>
-{
-	enum
-	{
-		WithCopy = true,
-		WithMoveAssign = true,
-	}; // enum
-	
-}; // struct TStructOpsTypeTraitsBase<FFlecsReplicationCullDistanceComponent>

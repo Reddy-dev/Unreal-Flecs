@@ -14,7 +14,7 @@ struct FFlecsReplicationUpdateRateComponent
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication")
+	UPROPERTY(EditAnywhere, Category = "Replication")
 	float UpdateRate = 0.f;
 	
 	NO_DISCARD bool operator==(const FFlecsReplicationUpdateRateComponent& Other) const

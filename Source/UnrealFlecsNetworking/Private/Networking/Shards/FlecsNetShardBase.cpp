@@ -121,7 +121,9 @@ void UFlecsNetShardBase::ApplyReplicationProfile() const
 
 	if (!GetReplicationProfile().ObjectPrioritizerName.IsNone())
 	{
-		const UE::Net::FNetObjectPrioritizerHandle PrioritizerHandle = ReplicationSystem->GetPrioritizerHandle(GetReplicationProfile().ObjectPrioritizerName);
+		const UE::Net::FNetObjectPrioritizerHandle PrioritizerHandle
+			= ReplicationSystem->GetPrioritizerHandle(GetReplicationProfile().ObjectPrioritizerName);
+		
 		solid_cassumef(PrioritizerHandle != UE::Net::InvalidNetObjectPrioritizerHandle, 
 			TEXT("Flecs shard '%s' is not registered with the Iris replication system"), *GetName());
 		

@@ -28,6 +28,7 @@ struct TStructOpsTypeTraits<FFlecsReplicationProfileParamsBase> : public TStruct
 	enum
 	{
 		WithPureVirtual = true,
+		WithCopy = true,
 	}; // enum
 	
 }; // struct TStructOpsTypeTraits<FFlecsReplicationProfileParamsBase>

@@ -15,31 +15,10 @@ USTRUCT(BlueprintType)
 struct UNREALFLECSNETWORKING_API FFlecsReplicationProfile
 {
 	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication")
-	FName ObjectPrioritizerName = NAME_None;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication")
-	FName FilterName = NAME_None;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication")
-	FName ShardSelectorName = NAME_None;
 	
 	// @TODO: make it only flecs components
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication")
 	TArray<TInstancedStruct<FFlecsReplicationProfileParamsBase>> ParameterComponents;
-
-	NO_DISCARD bool operator==(const FFlecsReplicationProfile& Other) const
-	{
-		return ObjectPrioritizerName == Other.ObjectPrioritizerName
-			&& FilterName == Other.FilterName
-			&& ShardSelectorName == Other.ShardSelectorName;
-	}
-
-	NO_DISCARD bool operator!=(const FFlecsReplicationProfile& Other) const
-	{
-		return !(*this == Other);
-	}
 
 }; // struct FFlecsReplicationProfile
 
