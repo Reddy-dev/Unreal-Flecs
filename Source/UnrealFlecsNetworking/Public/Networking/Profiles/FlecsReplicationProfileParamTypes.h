@@ -73,7 +73,7 @@ struct UNREALFLECSNETWORKING_API FFlecsReplicationProfileObjectPrioritizer : pub
 
 public:
 	FFlecsReplicationProfileObjectPrioritizer() = default;
-	explicit FFlecsReplicationProfileObjectPrioritizer(const FName& InName)
+	FFlecsReplicationProfileObjectPrioritizer(const FName& InName)
 		: Name(InName)
 	{
 	}
@@ -102,7 +102,7 @@ struct UNREALFLECSNETWORKING_API FFlecsReplicationProfileNetFilter : public FFle
 
 public:
 	FFlecsReplicationProfileNetFilter() = default;
-	explicit FFlecsReplicationProfileNetFilter(const FName& InName)
+	FFlecsReplicationProfileNetFilter(const FName& InName)
 		: Name(InName)
 	{
 	}
@@ -131,7 +131,7 @@ struct UNREALFLECSNETWORKING_API FFlecsReplicationProfileNetShardSelector : publ
 
 public:
 	FFlecsReplicationProfileNetShardSelector() = default;
-	explicit FFlecsReplicationProfileNetShardSelector(const FName& InName)
+	FFlecsReplicationProfileNetShardSelector(const FName& InName)
 		: Name(InName)
 	{
 	}

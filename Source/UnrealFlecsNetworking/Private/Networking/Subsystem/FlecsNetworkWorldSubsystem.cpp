@@ -594,7 +594,7 @@ bool UFlecsNetworkWorldSubsystem::ResolveReplicationProfile(const FFlecsEntityHa
 		}
 	}
 
-	if UNLIKELY_IF(solid_ensure(!InEntity.Has<FFlecsReplicationProfileTag>()))
+	if UNLIKELY_IF(solid_ensure(!InEntity.Owns<FFlecsReplicationProfileTag>()))
 	{
 		// wtf are we doing here bro
 		OutProfile = InEntity;
@@ -630,8 +630,7 @@ bool UFlecsNetworkWorldSubsystem::SelectReplicationShard(const FFlecsEntityHandl
 	
 	const FFlecsNetProfileNameTarget* NameTarget = InProfile.TryGetPairSecond<FFlecsNetShardSelectorRelationship, FFlecsNetProfileNameTarget>();
 	
-	const FName SelectorName = NameTarget ? FName(TEXT("Proxy"))
-		: NameTarget->Name;
+	const FName SelectorName = NameTarget ? NameTarget->Name : FName(TEXT("Proxy"));
 
 	const FFlecsReplicationShardSelectorFunction* Selector = ReplicationShardSelectors.Find(SelectorName);
 	solid_cassumef(Selector, TEXT("Flecs replication shard selector '%s' is not registered"), *SelectorName.ToString());

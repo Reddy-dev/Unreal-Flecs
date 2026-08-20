@@ -8,11 +8,11 @@
 
 #include "FlecsNetAlwaysRelevantTag.generated.h"
 
+// @TODO: Currently does nothing
 USTRUCT()
 struct FFlecsNetAlwaysRelevantTag
 {
 	GENERATED_BODY()
-	
 }; // struct FFlecsNetAlwaysRelevantTag
 
 template <>

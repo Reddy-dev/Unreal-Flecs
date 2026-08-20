@@ -20,6 +20,23 @@ struct UNREALFLECSNETWORKING_API FFlecsReplicationProfileDefinition
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication")
 	TArray<TInstancedStruct<FFlecsReplicationProfileParamsBase>> ParameterComponents;
 	
+	uint32 AddParam(const TInstancedStruct<FFlecsReplicationProfileParamsBase>& InParam);
+	uint32 AddParam(const TSolidNotNull<const UScriptStruct*> InParamStruct);
+	
+	template <Solid::TScriptStructConcept T>
+	requires (std::is_base_of_v<FFlecsReplicationProfileParamsBase, T>)
+	FORCEINLINE uint32 AddParam(const T& InParam)
+	{
+		return AddParam(TInstancedStruct<T>::Make(InParam));
+	}
+	
+	template <Solid::TScriptStructConcept T>
+	requires (std::is_base_of_v<FFlecsReplicationProfileParamsBase, T>)
+	FORCEINLINE uint32 AddParam()
+	{
+		return AddParam(TInstancedStruct<T>::Make({}));
+	}
+	
 	FORCEINLINE bool operator==(const FFlecsReplicationProfileDefinition& Other) const
 	{
 		if (ParameterComponents.Num() != Other.ParameterComponents.Num())

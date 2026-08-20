@@ -9,12 +9,10 @@
 #include "Iris/ReplicationSystem/Prioritization/NetObjectPrioritizer.h"
 #include "Iris/ReplicationSystem/ReplicationFragmentUtil.h"
 #include "Iris/ReplicationSystem/ReplicationSystem.h"
-#include "Net/UnrealNetwork.h"
-#include "Net/Core/PushModel/PushModel.h"
+
 #include "Networking/Profiles/FlecsNetAlwaysRelevantTag.h"
 #include "Networking/Profiles/FlecsProfileRelationshipTypes.h"
 #include "Networking/Profiles/FlecsReplicationProfile.h"
-
 #include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsNetShardBase)
@@ -93,7 +91,9 @@ void UFlecsNetShardBase::FillRootObjectReplicationParams(const UE::Net::FRootObj
 
 void UFlecsNetShardBase::ConfigureObjectSettings(OUT UE::Net::FRootObjectSettings& OutSettings) const
 {
-	OutSettings.bIsAlwaysRelevant = GetReplicationProfile().Has<FFlecsNetAlwaysRelevantTag>();
+	const bool bHasAlwaysRelevantTag = GetReplicationProfile().Has<FFlecsNetAlwaysRelevantTag>();
+	
+	OutSettings.bIsAlwaysRelevant = true;
 	OutSettings.bIsNotRouted = false;
 }
 
@@ -103,7 +103,7 @@ void UFlecsNetShardBase::ApplyReplicationProfile() const
 	const TSolidNotNull<const UNetDriver*> NetDriver = World->GetNetDriver();
 	const TSolidNotNull<UReplicationSystem*> ReplicationSystem = NetDriver->GetReplicationSystem();
 
-	const TSolidNotNull<UObjectReplicationBridge*> ReplicationBridge = ReplicationSystem->GetReplicationBridge();
+	const TSolidNotNull<const UObjectReplicationBridge*> ReplicationBridge = ReplicationSystem->GetReplicationBridge();
 
 	const UE::Net::FNetRefHandle NetRefHandle = ReplicationBridge->GetReplicatedRefHandle(this);
 	solid_checkf(NetRefHandle.IsValid(), TEXT("Flecs shard '%s' is not registered with the Iris replication system"), *GetName());
