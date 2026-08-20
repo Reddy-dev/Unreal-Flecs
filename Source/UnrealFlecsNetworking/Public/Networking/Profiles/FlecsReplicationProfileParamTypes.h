@@ -72,6 +72,12 @@ struct UNREALFLECSNETWORKING_API FFlecsReplicationProfileObjectPrioritizer : pub
 	GENERATED_BODY()
 
 public:
+	FFlecsReplicationProfileObjectPrioritizer() = default;
+	explicit FFlecsReplicationProfileObjectPrioritizer(const FName& InName)
+		: Name(InName)
+	{
+	}
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication")
 	FName Name = NAME_None;
 
@@ -95,6 +101,12 @@ struct UNREALFLECSNETWORKING_API FFlecsReplicationProfileNetFilter : public FFle
 	GENERATED_BODY()
 
 public:
+	FFlecsReplicationProfileNetFilter() = default;
+	explicit FFlecsReplicationProfileNetFilter(const FName& InName)
+		: Name(InName)
+	{
+	}
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication")
 	FName Name = NAME_None;
 
@@ -118,6 +130,12 @@ struct UNREALFLECSNETWORKING_API FFlecsReplicationProfileNetShardSelector : publ
 	GENERATED_BODY()
 
 public:
+	FFlecsReplicationProfileNetShardSelector() = default;
+	explicit FFlecsReplicationProfileNetShardSelector(const FName& InName)
+		: Name(InName)
+	{
+	}
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication")
 	FName Name = NAME_None;
 

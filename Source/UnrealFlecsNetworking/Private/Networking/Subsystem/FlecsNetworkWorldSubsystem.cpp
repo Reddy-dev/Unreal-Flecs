@@ -60,6 +60,7 @@ void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UF
 			return true;
 		});
 	
+	// @TODO: maybe server only?
 	const FFlecsObserverHandle ProfileObserverHandle = GetFlecsWorldChecked()->CreateObserver("NetProfileObserver")
 		.WithPair(flecs::IsA, flecs::Wildcard)
 		.With<FFlecsReplicatedEntityComponent>().Filter()
