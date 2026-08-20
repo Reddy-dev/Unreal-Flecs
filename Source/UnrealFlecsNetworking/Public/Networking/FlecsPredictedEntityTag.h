@@ -8,6 +8,7 @@
 
 #include "FlecsPredictedEntityTag.generated.h"
 
+// @TODO: Not implemented
 USTRUCT(BlueprintType)
 struct UNREALFLECSNETWORKING_API FFlecsPredictedEntityTag
 {

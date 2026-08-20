@@ -710,13 +710,14 @@ void UFlecsNetworkWorldSubsystem::ApplyReceivedNetworkEntitySnapshot(const FFlec
 void UFlecsNetworkWorldSubsystem::ApplyReceivedNetworkEntityRemoval(const FFlecsNetworkId& InNetworkId,
 	const uint32 InStateRevision)
 {
-	if (HasAuthority())
+	if UNLIKELY_IF(HasAuthority())
 	{
 		return;
 	}
 
-	if (!InNetworkId.IsValid())
+	if UNLIKELY_IF(!InNetworkId.IsValid())
 	{
+		//UE_LOGFMT(LogFlecsCore, Error, ""
 		return;
 	}
 

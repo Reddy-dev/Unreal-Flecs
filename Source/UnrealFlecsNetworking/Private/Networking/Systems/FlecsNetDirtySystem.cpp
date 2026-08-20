@@ -13,6 +13,7 @@
 
 UFlecsNetDirtySystem::UFlecsNetDirtySystem()
 {
+	NetworkRegistrationFlags = EFlecsObjectRegistrationNetworkFlags::Server;
 }
 
 void UFlecsNetDirtySystem::BuildSystem(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld,
@@ -75,9 +76,4 @@ void UFlecsNetDirtySystem::EachIterator(const TSolidNotNull<UFlecsWorldInterface
 	NetworkSubsystem->GetReplicationBridge()->PublishNetEntity(EntityHandle, NetworkId, Snapshot);
 
 	EntityHandle.Remove<FFlecsNetDirtyTag>();
-}
-
-EFlecsObjectRegistrationNetworkFlags UFlecsNetDirtySystem::GetObjectRegistrationNetworkFlags() const
-{
-	return EFlecsObjectRegistrationNetworkFlags::Server;
 }

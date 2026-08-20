@@ -36,6 +36,10 @@ public:
 	virtual NO_DISCARD bool ShouldAutoRegisterWithWorld(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InFlecsWorld) const { return true; }
 	virtual NO_DISCARD bool ShouldRegisterWithModule() const { return true; }
 	
+#if WITH_EDITORONLY_DATA
+	virtual NO_DISCARD bool ShouldShowInSettings() const { return false; }
+#endif // WITH_EDITORONLY_DATA
+	
 	virtual NO_DISCARD EFlecsObjectRegistrationNetworkFlags GetObjectRegistrationNetworkFlags() const
 	{
 		return EFlecsObjectRegistrationNetworkFlags::All;

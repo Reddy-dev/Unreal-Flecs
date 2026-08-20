@@ -26,17 +26,19 @@ void UFlecsAddTickFunctionObserver::EachIterator(const TSolidNotNull<UFlecsWorld
 	
 	solid_checkf(InTickFunctionComponent.TickFunction.IsValid(),
 				TEXT("FFlecsTickFunctionComponent has invalid TickFunction"));
-
-#if !NO_LOGGING
-	const FFlecsEntityHandle EntityHandle = InIterator.entity(InIndex);
-#endif // !NO_LOGGING
+	
 
 	InTickFunctionComponent.TickFunction.Get().OwningWorld = InWorld->GetFlecsWorld();
 	InTickFunctionComponent.TickFunction.Get().RegisterTickFunction(GetWorld()->PersistentLevel);
-
+	
+#if !NO_LOGGING
+	const FFlecsEntityHandle EntityHandle = InIterator.entity(InIndex);
+	
 	UE_LOGFMT(LogFlecsWorld, Verbose,
 		"Registered Tick Function for Entity {EntityIdentifier}",
 		EntityHandle.HasName() ? EntityHandle.GetName() : EntityHandle.ToString());
+	
+#endif // !NO_LOGGING
 }
 
 void UFlecsRemoveTickFunctionObserver::BuildObserver(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld,

@@ -40,12 +40,26 @@ public:
 	virtual void RegisterObject(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld) override;
 	virtual void UnregisterObject(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld) override;
 	virtual void FlecsWorldBeginPlay(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld) override;
+	
+	virtual NO_DISCARD EFlecsObjectRegistrationNetworkFlags GetObjectRegistrationNetworkFlags() const override
+	{
+		return NetworkRegistrationFlags;
+	}
+	
+#if WITH_EDITORONLY_DATA
+	
+	virtual NO_DISCARD bool ShouldShowInSettings() const override { return true; }
+	
+#endif // WITH_EDITORONLY_DATA
 
 protected:
 	UPROPERTY(Transient)
 	FFlecsObserverHandle ObserverHandle;
 	
-	UPROPERTY(EditAnywhere, Category = "Flecs", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, Config, Category = "Flecs", meta = (AllowPrivateAccess = "true"))
+	EFlecsObjectRegistrationNetworkFlags NetworkRegistrationFlags = EFlecsObjectRegistrationNetworkFlags::All;
+	
+	UPROPERTY(EditAnywhere, Config, Category = "Flecs", meta = (AllowPrivateAccess = "true"))
 	FFlecsObserverDefinition ObserverDefinition;
 	
 private:

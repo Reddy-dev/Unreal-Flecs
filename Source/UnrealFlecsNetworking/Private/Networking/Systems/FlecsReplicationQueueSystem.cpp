@@ -2,6 +2,8 @@
 
 #include "Networking/Systems/FlecsReplicationQueueSystem.h"
 
+#include <devicetopology.h>
+
 #include "Networking/Subsystem/FlecsNetworkSubsystemSingleton.h"
 #include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 
@@ -9,6 +11,7 @@
 
 UFlecsReplicationQueueSystem::UFlecsReplicationQueueSystem()
 {
+	NetworkRegistrationFlags = EFlecsObjectRegistrationNetworkFlags::Client;
 }
 
 void UFlecsReplicationQueueSystem::BuildSystem(const TSolidNotNull<const UFlecsWorldInterfaceObject*>,
@@ -28,9 +31,4 @@ void UFlecsReplicationQueueSystem::RunEachIterator(const TSolidNotNull<UFlecsWor
 		InIterator.field_at<const FFlecsNetworkSubsystemSingleton>(0, 0).GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
 	
 	NetworkSubsystem->ApplyQueuedReplicationUpdates(InWorldInterfaceObject);
-}
-
-EFlecsObjectRegistrationNetworkFlags UFlecsReplicationQueueSystem::GetObjectRegistrationNetworkFlags() const
-{
-	return EFlecsObjectRegistrationNetworkFlags::Client;
 }

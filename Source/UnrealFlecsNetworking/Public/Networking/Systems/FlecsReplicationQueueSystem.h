@@ -22,6 +22,4 @@ public:
 	virtual void RunEachIterator(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld,
 		flecs::iter& InIterator) override;
 
-	virtual EFlecsObjectRegistrationNetworkFlags GetObjectRegistrationNetworkFlags() const override;
-
 }; // class UFlecsReplicationQueueSystem

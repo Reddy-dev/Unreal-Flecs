@@ -38,15 +38,40 @@ public:
 	virtual void UnregisterObject(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld) override;
 	virtual void FlecsWorldBeginPlay(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld) override;
 	
+	virtual NO_DISCARD EFlecsObjectRegistrationNetworkFlags GetObjectRegistrationNetworkFlags() const override
+	{
+		return NetworkRegistrationFlags;
+	}
+	
 	void SetContext(void* InContext) const;
 	
 	void RunSystem(const double InDeltaTime = 0.0, void* InParams = nullptr) const;
+	
+	NO_DISCARD FORCEINLINE FFlecsSystemDefinition& GetSystemDefinition()
+	{
+		return SystemDefinition;
+	}
+	
+	NO_DISCARD FORCEINLINE const FFlecsSystemDefinition& GetSystemDefinition() const
+	{
+		return SystemDefinition;
+	}
+
+	#if WITH_EDITORONLY_DATA
+	
+	virtual NO_DISCARD bool ShouldShowInSettings() const override { return true; }
+	
+#endif // WITH_EDITORONLY_DATA
 	
 protected:
 	UPROPERTY(Transient)
 	FFlecsSystemHandle SystemHandle;
 	
-	UPROPERTY(EditAnywhere, Category = "Flecs", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, Config, Category = "Flecs", meta = (AllowPrivateAccess = "true"))
+	EFlecsObjectRegistrationNetworkFlags NetworkRegistrationFlags = EFlecsObjectRegistrationNetworkFlags::All;
+	
+	// Set in BuildObserver
+	UPROPERTY(EditAnywhere, Config, Category = "Flecs", meta = (AllowPrivateAccess = "true"))
 	FFlecsSystemDefinition SystemDefinition;
 	
 private:

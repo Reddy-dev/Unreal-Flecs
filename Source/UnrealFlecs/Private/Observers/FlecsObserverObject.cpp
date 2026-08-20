@@ -73,5 +73,5 @@ void UFlecsObserverObject::InitializeObserver(const TSolidNotNull<UFlecsWorldInt
 		this->RunIterator(IteratorWorld, InIterator);
 	});
 	
-	ObserverHandle.SetPair<FFlecsUObjectComponent, FFlecsUObjectTag>(FFlecsUObjectComponent(this));
+	ObserverHandle.SetPair<FFlecsUObjectComponent, FFlecsUObjectTag>(FFlecsUObjectComponent{this});
 }

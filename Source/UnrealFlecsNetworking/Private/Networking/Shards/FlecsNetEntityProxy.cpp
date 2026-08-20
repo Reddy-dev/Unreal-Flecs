@@ -8,6 +8,7 @@
 #include "Networking/Profiles/FlecsReplicationProfileParamTypes.h"
 #include "Networking/Profiles/FlecsReplicationUpdateRateComponent.h"
 #include "Networking/Shards/FlecsNetEntityProxyNetFactory.h"
+#include "Networking/Profiles/FlecsReplicationCullDistanceComponent.h"
 #include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsNetEntityProxy)
@@ -40,6 +41,13 @@ void UFlecsNetEntityProxy::FillRootObjectReplicationParams(const UE::Net::FRootO
 	{
 		OutParams.PollFrequency = UpdateRateComponent->UpdateRate;
 	}
+	
+	/*if (const FFlecsReplicationCullDistanceComponent* CullDistanceComponent 
+		= GetReplicationProfile().TryGet<FFlecsReplicationCullDistanceComponent>())
+	{
+		OutParams.
+	}*/
+	
 }
 
 bool UFlecsNetEntityProxy::CanAcceptNetEntity(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot&) const

@@ -95,6 +95,7 @@ void UFlecsNetShardBase::ConfigureObjectSettings(OUT UE::Net::FRootObjectSetting
 	
 	OutSettings.bIsAlwaysRelevant = true;
 	OutSettings.bIsNotRouted = false;
+
 }
 
 void UFlecsNetShardBase::ApplyReplicationProfile() const
@@ -124,8 +125,7 @@ void UFlecsNetShardBase::ApplyReplicationProfile() const
 	if (const FFlecsNetProfileNameTarget* PrioritizerName 
 		= GetReplicationProfile().TryGetPairSecond<FFlecsObjectPrioritizerRelationship, FFlecsNetProfileNameTarget>())
 	{
-		const UE::Net::FNetObjectPrioritizerHandle PrioritizerHandle
-			= ReplicationSystem->GetPrioritizerHandle(PrioritizerName->Name);
+		const UE::Net::FNetObjectPrioritizerHandle PrioritizerHandle = ReplicationSystem->GetPrioritizerHandle(PrioritizerName->Name);
 		
 		solid_cassumef(PrioritizerHandle != UE::Net::InvalidNetObjectPrioritizerHandle, 
 			TEXT("Flecs shard '%s' is not registered with the Iris replication system"), *GetName());
