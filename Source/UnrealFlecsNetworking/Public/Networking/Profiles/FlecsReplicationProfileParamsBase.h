@@ -8,6 +8,7 @@
 
 #include "FlecsReplicationProfileParamsBase.generated.h"
 
+// @TODO: could use FEntityRecord builders?
 USTRUCT(BlueprintInternalUseOnly)
 struct FFlecsReplicationProfileParamsBase
 {

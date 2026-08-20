@@ -4,6 +4,13 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsProfileRelationshipTypes)
 
-REGISTER_FLECS_COMPONENT(FFlecsObjectPrioritizerRelationship)
+REGISTER_FLECS_COMPONENT(FFlecsObjectPrioritizerRelationship);
 REGISTER_FLECS_COMPONENT(FFlecsNetFilterRelationship);
 REGISTER_FLECS_COMPONENT(FFlecsNetShardSelectorRelationship);
+
+REGISTER_FLECS_COMPONENT(FFlecsNetProfileNameTarget);
+
+FFlecsNetProfileNameTarget::FFlecsNetProfileNameTarget()
+	: Name(NAME_None)
+{
+}

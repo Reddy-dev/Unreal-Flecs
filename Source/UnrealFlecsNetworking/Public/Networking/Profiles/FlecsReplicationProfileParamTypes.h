@@ -65,3 +65,72 @@ public:
 	virtual void ApplyToEntity(const FFlecsEntityHandle& InEntity) const override;
 	
 }; // struct FFlecsReplicationProfileAlwaysRelevant
+
+USTRUCT(BlueprintType)
+struct UNREALFLECSNETWORKING_API FFlecsReplicationProfileObjectPrioritizer : public FFlecsReplicationProfileParamsBase
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication")
+	FName Name = NAME_None;
+
+	NO_DISCARD bool operator==(const FFlecsReplicationProfileObjectPrioritizer& Other) const
+	{
+		return Name == Other.Name;
+	}
+
+	NO_DISCARD bool operator!=(const FFlecsReplicationProfileObjectPrioritizer& Other) const
+	{
+		return !(*this == Other);
+	}
+
+	virtual void ApplyToEntity(const FFlecsEntityHandle& InEntity) const override;
+
+}; // struct FFlecsReplicationProfileObjectPrioritizer
+
+USTRUCT(BlueprintType)
+struct UNREALFLECSNETWORKING_API FFlecsReplicationProfileNetFilter : public FFlecsReplicationProfileParamsBase
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication")
+	FName Name = NAME_None;
+
+	NO_DISCARD bool operator==(const FFlecsReplicationProfileNetFilter& Other) const
+	{
+		return Name == Other.Name;
+	}
+
+	NO_DISCARD bool operator!=(const FFlecsReplicationProfileNetFilter& Other) const
+	{
+		return !(*this == Other);
+	}
+
+	virtual void ApplyToEntity(const FFlecsEntityHandle& InEntity) const override;
+
+}; // struct FFlecsReplicationProfileNetFilter
+
+USTRUCT(BlueprintType)
+struct UNREALFLECSNETWORKING_API FFlecsReplicationProfileNetShardSelector : public FFlecsReplicationProfileParamsBase
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication")
+	FName Name = NAME_None;
+
+	NO_DISCARD bool operator==(const FFlecsReplicationProfileNetShardSelector& Other) const
+	{
+		return Name == Other.Name;
+	}
+
+	NO_DISCARD bool operator!=(const FFlecsReplicationProfileNetShardSelector& Other) const
+	{
+		return !(*this == Other);
+	}
+
+	virtual void ApplyToEntity(const FFlecsEntityHandle& InEntity) const override;
+
+}; // struct FFlecsReplicationProfileNetShardSelector

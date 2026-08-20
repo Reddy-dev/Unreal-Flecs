@@ -5,6 +5,8 @@
 #include "Net/UnrealNetwork.h"
 #include "Net/Core/PushModel/PushModel.h"
 
+#include "Networking/Profiles/FlecsReplicationProfileParamTypes.h"
+#include "Networking/Profiles/FlecsReplicationUpdateRateComponent.h"
 #include "Networking/Shards/FlecsNetEntityProxyNetFactory.h"
 #include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 
@@ -31,7 +33,13 @@ void UFlecsNetEntityProxy::ConfigureObjectSettings(OUT UE::Net::FRootObjectSetti
 void UFlecsNetEntityProxy::FillRootObjectReplicationParams(const UE::Net::FRootObjectReplicationParamsContext& Context,
 	UE::Net::FRootObjectReplicationParams& OutParams) const
 {
+	Super::FillRootObjectReplicationParams(Context, OutParams);
 	
+	if (const FFlecsReplicationUpdateRateComponent* UpdateRateComponent 
+		= GetReplicationProfile().TryGet<FFlecsReplicationUpdateRateComponent>())
+	{
+		OutParams.PollFrequency = UpdateRateComponent->UpdateRate;
+	}
 }
 
 bool UFlecsNetEntityProxy::CanAcceptNetEntity(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot&) const

@@ -12,6 +12,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Net/Core/PushModel/PushModel.h"
 #include "Networking/Profiles/FlecsNetAlwaysRelevantTag.h"
+#include "Networking/Profiles/FlecsProfileRelationshipTypes.h"
 #include "Networking/Profiles/FlecsReplicationProfile.h"
 
 #include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
@@ -23,7 +24,7 @@ UWorld* UFlecsNetShardBase::GetWorld() const
 	return OwningWorld.IsValid() ? OwningWorld.Get() : Super::GetWorld();
 }
 
-void UFlecsNetShardBase::InitializeShard(const FFlecsReplicationProfile& InReplicationProfile)
+void UFlecsNetShardBase::InitializeShard(const FFlecsEntityView& InReplicationProfile)
 {
 	if (RootObjectAdapter.IsInitialized())
 	{
@@ -92,7 +93,7 @@ void UFlecsNetShardBase::FillRootObjectReplicationParams(const UE::Net::FRootObj
 
 void UFlecsNetShardBase::ConfigureObjectSettings(OUT UE::Net::FRootObjectSettings& OutSettings) const
 {
-	OutSettings.bIsAlwaysRelevant = GetReplicationProfile().ParameterComponents.Contains(TInstancedStruct<FFlecsNetAlwaysRelevantTag>::Make());
+	OutSettings.bIsAlwaysRelevant = GetReplicationProfile().Has<FFlecsNetAlwaysRelevantTag>();
 	OutSettings.bIsNotRouted = false;
 }
 
@@ -107,29 +108,31 @@ void UFlecsNetShardBase::ApplyReplicationProfile() const
 	const UE::Net::FNetRefHandle NetRefHandle = ReplicationBridge->GetReplicatedRefHandle(this);
 	solid_checkf(NetRefHandle.IsValid(), TEXT("Flecs shard '%s' is not registered with the Iris replication system"), *GetName());
 	
-	if (!GetReplicationProfile().FilterName.IsNone())
+	if (const FFlecsNetProfileNameTarget* FilterName 
+		= GetReplicationProfile().TryGetPairSecond<FFlecsNetFilterRelationship, FFlecsNetProfileNameTarget>())
 	{
-		const UE::Net::FNetObjectFilterHandle FilterHandle = ReplicationSystem->GetFilterHandle(GetReplicationProfile().FilterName);
+		const UE::Net::FNetObjectFilterHandle FilterHandle = ReplicationSystem->GetFilterHandle(FilterName->Name);
 		
 		solid_cassumef(FilterHandle != UE::Net::InvalidNetObjectFilterHandle, 
 			TEXT("Flecs shard '%s' is not registered with the Iris replication system"), *GetName());
 		
 		const bool bFilterSet = ReplicationSystem->SetFilter(NetRefHandle, FilterHandle);
 		solid_cassumef(bFilterSet, TEXT("Iris rejected filter '%s' for Flecs shard '%s'"),
-			*GetReplicationProfile().FilterName.ToString(), *GetName());
+			*FilterName->Name.ToString(), *GetName());
 	}
 
-	if (!GetReplicationProfile().ObjectPrioritizerName.IsNone())
+	if (const FFlecsNetProfileNameTarget* PrioritizerName 
+		= GetReplicationProfile().TryGetPairSecond<FFlecsObjectPrioritizerRelationship, FFlecsNetProfileNameTarget>())
 	{
 		const UE::Net::FNetObjectPrioritizerHandle PrioritizerHandle
-			= ReplicationSystem->GetPrioritizerHandle(GetReplicationProfile().ObjectPrioritizerName);
+			= ReplicationSystem->GetPrioritizerHandle(PrioritizerName->Name);
 		
 		solid_cassumef(PrioritizerHandle != UE::Net::InvalidNetObjectPrioritizerHandle, 
 			TEXT("Flecs shard '%s' is not registered with the Iris replication system"), *GetName());
 		
 		const bool bPrioritizerSet = ReplicationSystem->SetPrioritizer(NetRefHandle, PrioritizerHandle);
 		solid_cassumef(bPrioritizerSet, TEXT("Iris rejected prioritizer '%s' for Flecs shard '%s'"),
-			*GetReplicationProfile().ObjectPrioritizerName.ToString(), *GetName());
+			*PrioritizerName->Name.ToString(), *GetName());
 	}
 }
 
@@ -164,7 +167,7 @@ UFlecsNetworkWorldSubsystem* UFlecsNetShardBase::GetOwningNetworkWorldSubsystem(
 	return OwningNetworkWorldSubsystem.Get();
 }
 
-const FFlecsReplicationProfile& UFlecsNetShardBase::GetReplicationProfile() const
+const FFlecsEntityView& UFlecsNetShardBase::GetReplicationProfile() const
 {
 	return ReplicationProfile;
 }

@@ -21,7 +21,6 @@
 #include "FlecsNetShardBase.generated.h"
 
 class UFlecsNetworkWorldSubsystem;
-struct FFlecsReplicationProfile;
 
 /**
  * Generic replicated storage object selected by the replication bridge.
@@ -44,7 +43,7 @@ public:
 
 	virtual UWorld* GetWorld() const override;
 
-	virtual void InitializeShard(const FFlecsReplicationProfile& InReplicationProfile);
+	virtual void InitializeShard(const FFlecsEntityView& InReplicationProfile);
 	virtual void DeinitializeShard();
 	
 	void StartShardReplication();
@@ -91,7 +90,7 @@ public:
 
 	NO_DISCARD UFlecsNetworkWorldSubsystem* GetOwningNetworkWorldSubsystem() const;
 	
-	NO_DISCARD const FFlecsReplicationProfile& GetReplicationProfile() const;
+	NO_DISCARD const FFlecsEntityView& GetReplicationProfile() const;
 
 protected:
 	void ReceiveEntityUpdate(const FFlecsNetworkId& InNetworkId, const FFlecsEntityReplicationSnapshot& InSnapshot);
@@ -118,6 +117,6 @@ private:
 	UE::Net::FNetRootObjectAdapter RootObjectAdapter;
 	
 	UPROPERTY()
-	FFlecsReplicationProfile ReplicationProfile;
+	FFlecsEntityView ReplicationProfile;
 
 }; // class UFlecsNetShardBase

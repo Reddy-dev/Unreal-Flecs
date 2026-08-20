@@ -27,7 +27,7 @@ struct FFlecsReplicationShardPlacement
 	TObjectPtr<UFlecsNetShardBase> Shard = nullptr;
 	
 	UPROPERTY()
-	FFlecsReplicationProfile Profile;
+	FFlecsEntityView Profile;
 
 	UPROPERTY()
 	FFlecsNetworkId NetworkId;
@@ -52,14 +52,8 @@ struct FFlecsReplicationShardPoolKey
 
 	FFlecsReplicationShardPoolKey() = default;
 
-	FFlecsReplicationShardPoolKey(const FFlecsReplicationProfile& InProfile,
-		const FFlecsReplicationShardSelection& InSelection)
-		: ShardClass(InSelection.ShardClass.Get())
-		, ShardGroupKey(InSelection.ShardGroupKey)
-		, ObjectPrioritizerName(InProfile.ObjectPrioritizerName)
-		, FilterName(InProfile.FilterName)
-	{
-	}
+	FFlecsReplicationShardPoolKey(const FFlecsEntityView& InProfile,
+		const FFlecsReplicationShardSelection& InSelection);
 
 	NO_DISCARD bool operator==(const FFlecsReplicationShardPoolKey& Other) const
 	{
@@ -117,16 +111,16 @@ public:
 protected:
 	NO_DISCARD UFlecsNetShardBase* CreateNewShard(const FFlecsNetworkId& InNetworkId,
 		const FFlecsEntityReplicationSnapshot& InSnapshot,
-		const FFlecsReplicationProfile& InProfile,
+		const FFlecsEntityView& InProfile,
 		const FFlecsReplicationShardSelection& InSelection);
 	
 	NO_DISCARD UFlecsNetShardBase* FindOrCreateShard(const FFlecsNetworkId& InNetworkId,
 		const FFlecsEntityReplicationSnapshot& InSnapshot,
-		const FFlecsReplicationProfile& InProfile,
+		const FFlecsEntityView& InProfile,
 		const FFlecsReplicationShardSelection& InSelection);
 	
 	void ReleaseShardIfEmpty(UFlecsNetShardBase* InShard,
-		const FFlecsReplicationProfile& InProfile,
+		const FFlecsEntityView& InProfile,
 		const FFlecsReplicationShardSelection& InSelection);
 
 	UPROPERTY(Replicated)

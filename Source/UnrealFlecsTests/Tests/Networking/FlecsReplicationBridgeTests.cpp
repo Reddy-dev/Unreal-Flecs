@@ -17,6 +17,7 @@
 #include "Networking/FlecsReplicatedEntityComponent.h"
 #include "Networking/Layout/FlecsLayoutReplicatorFastArray.h"
 #include "Networking/Layout/FlecsReplicationLayoutRegistry.h"
+#include "Networking/Profiles/FlecsReplicationProfileParamTypes.h"
 #include "Networking/Shards/FlecsNetEntityTable.h"
 #include "Networking/Shards/FlecsNetEntityTableNetFactory.h"
 #include "Networking/Shards/FlecsNetEntityProxy.h"
@@ -92,9 +93,15 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 	{
 		UFlecsReplicationProfileDataAsset* Asset = NewObject<UFlecsReplicationProfileDataAsset>(NetworkSubsystem());
 		Asset->ProfileName = FName(TEXT("TestProfile"));
-		Asset->Definition.FilterName = FName(TEXT("TestFilter"));
-		Asset->Definition.ObjectPrioritizerName = FName(TEXT("TestPrioritizer"));
-		Asset->Definition.ShardSelectorName = FName(TEXT("Proxy"));
+		
+		Asset->Definition.ParameterComponents.Add(
+			TInstancedStruct<FFlecsReplicationProfileNetFilter>::Make(FName(TEXT("TestFilter"))));
+
+		Asset->Definition.ParameterComponents.Add(
+			TInstancedStruct<FFlecsReplicationProfileObjectPrioritizer>::Make(FName(TEXT("TestPrioritizer"))));
+
+		Asset->Definition.ParameterComponents.Add(
+			TInstancedStruct<FFlecsReplicationProfileNetShardSelector>::Make(FName(TEXT("Proxy"))));
 
 		const FFlecsEntityHandle ProfilePrefab = NetworkSubsystem()->RegisterReplicationProfileAsset(Asset);
 		ASSERT_THAT(IsTrue(ProfilePrefab.IsValid()));
@@ -102,20 +109,23 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 		ASSERT_THAT(IsTrue(ProfilePrefab.Has<FFlecsReplicationProfileTag>()));
 
 		const FFlecsEntityHandle Entity = World()->CreateEntity().AddPrefab(ProfilePrefab.GetFlecsId());
-		FFlecsReplicationProfile ResolvedProfile;
+		FFlecsEntityView ResolvedProfile;
 		ASSERT_THAT(IsTrue(NetworkSubsystem()->ResolveReplicationProfile(Entity, ResolvedProfile)));
-		ASSERT_THAT(IsTrue(ResolvedProfile == Asset->Definition));
+		ASSERT_THAT(IsTrue(ResolvedProfile.Get<FFlecsReplicationProfileDefinition>() == Asset->Definition));
 	}
 
 	TEST_METHOD(ReplicationProfile_SetProfileReplacesRegisteredIsAProfile)
 	{
-		FFlecsReplicationProfile FirstDefinition;
-		FirstDefinition.FilterName = FName(TEXT("FirstFilter"));
+		FFlecsReplicationProfileDefinition FirstDefinition;
+		FirstDefinition.ParameterComponents.Add(
+			TInstancedStruct<FFlecsReplicationProfileNetFilter>::Make(FName(TEXT("FirstFilter"))));
+
 		const FFlecsEntityHandle FirstPrefab = NetworkSubsystem()->RegisterReplicationProfileDefinition(
 			FName(TEXT("FirstProfile")), FirstDefinition);
 
-		FFlecsReplicationProfile SecondDefinition;
-		SecondDefinition.FilterName = FName(TEXT("SecondFilter"));
+		FFlecsReplicationProfileDefinition SecondDefinition;
+		SecondDefinition.ParameterComponents.Add(
+			TInstancedStruct<FFlecsReplicationProfileNetFilter>::Make(FName(TEXT("SecondFilter"))));
 		const FFlecsEntityHandle SecondPrefab = NetworkSubsystem()->RegisterReplicationProfileDefinition(
 			FName(TEXT("SecondProfile")), SecondDefinition);
 
@@ -133,9 +143,9 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 
 		ASSERT_THAT(IsTrue(ReplicatedEntity->ProfileId == FName(TEXT("SecondProfile"))));
 
-		FFlecsReplicationProfile ResolvedProfile;
+		FFlecsEntityView ResolvedProfile;
 		ASSERT_THAT(IsTrue(NetworkSubsystem()->ResolveReplicationProfile(Entity, ResolvedProfile)));
-		ASSERT_THAT(IsTrue(ResolvedProfile == SecondDefinition));
+		ASSERT_THAT(IsTrue(ResolvedProfile.Get<FFlecsReplicationProfileDefinition>() == SecondDefinition));
 	}
 
 	TEST_METHOD(ReplicationShardSelector_UsesRegisteredImplementation)
@@ -144,7 +154,7 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 		ASSERT_THAT(IsTrue(NetworkSubsystem()->RegisterReplicationShardSelector(
 			FName(TEXT("TestSelector")),
 			[&bSelectorCalled](const FFlecsEntityHandle&, const FFlecsNetworkId&,
-				const FFlecsReplicationProfile&, FFlecsReplicationShardSelection& OutSelection)
+				const FFlecsEntityView&, FFlecsReplicationShardSelection& OutSelection)
 			{
 				bSelectorCalled = true;
 				OutSelection.ShardClass = UFlecsNetEntityProxy::StaticClass();
@@ -152,8 +162,12 @@ FLECS_REPLICATION_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsReplicationBridgeTests,
 				return true;
 			})));
 
-		FFlecsReplicationProfile Profile;
-		Profile.ShardSelectorName = FName(TEXT("TestSelector"));
+		FFlecsReplicationProfileDefinition ProfileDefinition;
+		ProfileDefinition.ParameterComponents.Add(
+			TInstancedStruct<FFlecsReplicationProfileNetShardSelector>::Make(FName(TEXT("TestSelector"))));
+		FFlecsEntityView Profile = NetworkSubsystem()->RegisterReplicationProfileDefinition("NewProfile", ProfileDefinition);
+		
+		
 		FFlecsReplicationShardSelection Selection;
 		const FFlecsNetworkId NetworkId(44, 1);
 

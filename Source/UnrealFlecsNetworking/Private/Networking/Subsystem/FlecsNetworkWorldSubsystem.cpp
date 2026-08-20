@@ -17,7 +17,9 @@
 #include "Networking/Profiles/FlecsReplicationProfile.h"
 #include "Networking/Profiles/FlecsReplicationProfileDataAsset.h"
 #include "Networking/FlecsReplicationShardSelection.h"
+#include "Networking/Profiles/FlecsProfileRelationshipTypes.h"
 #include "Networking/Profiles/FlecsReplicationProfileParamsBase.h"
+#include "Networking/Profiles/FlecsReplicationProfileParamTypes.h"
 #include "Networking/Shards/FlecsNetEntityTable.h"
 #include "Networking/Shards/FlecsNetEntityProxy.h"
 
@@ -40,7 +42,7 @@ void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UF
 
 	RegisterReplicationShardSelector(
 		FName(TEXT("Proxy")),
-		[](const FFlecsEntityHandle&, const FFlecsNetworkId&, const FFlecsReplicationProfile&, 
+		[](const FFlecsEntityHandle&, const FFlecsNetworkId&, const FFlecsEntityView&, 
 			OUT FFlecsReplicationShardSelection& OutSelection)
 		{
 			OutSelection.ShardClass = UFlecsNetEntityProxy::StaticClass();
@@ -50,7 +52,7 @@ void UFlecsNetworkWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull<UF
 	
 	RegisterReplicationShardSelector(
 		FName(TEXT("Table")),
-		[](const FFlecsEntityHandle&, const FFlecsNetworkId&, const FFlecsReplicationProfile&, 
+		[](const FFlecsEntityHandle&, const FFlecsNetworkId&, const FFlecsEntityView&, 
 			OUT FFlecsReplicationShardSelection& OutSelection)
 		{
 			OutSelection.ShardClass = UFlecsNetEntityTable::StaticClass();
@@ -469,6 +471,7 @@ void UFlecsNetworkWorldSubsystem::ApplyQueuedReplicationUpdates(const TSolidNotN
 FFlecsEntityHandle UFlecsNetworkWorldSubsystem::RegisterReplicationProfileAsset(const UFlecsReplicationProfileDataAsset* InAsset)
 {
 	solid_cassumef(InAsset, TEXT("Flecs replication profile asset is nullptr"));
+	solid_check(IsValid(InAsset));
 
 	const FName ProfileName = InAsset->ProfileName.IsNone() ? InAsset->GetFName() : InAsset->ProfileName;
 
@@ -476,7 +479,7 @@ FFlecsEntityHandle UFlecsNetworkWorldSubsystem::RegisterReplicationProfileAsset(
 }
 
 FFlecsEntityHandle UFlecsNetworkWorldSubsystem::RegisterReplicationProfileDefinition(
-	const FName& InName, const FFlecsReplicationProfile& InDefinition)
+	const FName& InName, const FFlecsReplicationProfileDefinition& InDefinition)
 {
 	solid_checkf(!InName.IsNone(), TEXT("Flecs replication profile name is invalid"));
 
@@ -487,7 +490,7 @@ FFlecsEntityHandle UFlecsNetworkWorldSubsystem::RegisterReplicationProfileDefini
 
 	const FFlecsEntityHandle ProfilePrefab = GetFlecsWorldChecked()->CreatePrefab(InName.ToString())
 		.Add<FFlecsReplicationProfileTag>()
-		.Set<FFlecsReplicationProfile>(InDefinition);
+		.Set<FFlecsReplicationProfileDefinition>(InDefinition);
 	
 	for (const TInstancedStruct<FFlecsReplicationProfileParamsBase>& ParamComponent : InDefinition.ParameterComponents)
 	{
@@ -513,7 +516,7 @@ FFlecsEntityHandle UFlecsNetworkWorldSubsystem::GetReplicationProfilePrefab(cons
 	return FFlecsEntityHandle();
 }
 
-bool UFlecsNetworkWorldSubsystem::SetReplicationProfile(const FFlecsEntityHandle& InEntity, const FFlecsEntityHandle& InProfilePrefab)
+bool UFlecsNetworkWorldSubsystem::SetReplicationProfile(const FFlecsEntityHandle& InEntity, const FFlecsEntityView& InProfilePrefab)
 {
 	solid_checkf(InEntity.IsValid(), TEXT("Cannot set replication profile for an invalid entity handle"));
 	solid_checkf(InProfilePrefab.IsValid(), TEXT("Cannot set replication profile from an invalid profile prefab handle"));
@@ -563,8 +566,7 @@ bool UFlecsNetworkWorldSubsystem::SetReplicationProfile(const FFlecsEntityHandle
 	return true;
 }
 
-bool UFlecsNetworkWorldSubsystem::ResolveReplicationProfile(const FFlecsEntityHandle& InEntity,
-	OUT FFlecsReplicationProfile& OutProfile) const
+bool UFlecsNetworkWorldSubsystem::ResolveReplicationProfile(const FFlecsEntityHandle& InEntity, OUT FFlecsEntityView& OutProfile) const
 {
 	if UNLIKELY_IF(!InEntity.IsValid())
 	{
@@ -577,25 +579,28 @@ bool UFlecsNetworkWorldSubsystem::ResolveReplicationProfile(const FFlecsEntityHa
 		{
 			if LIKELY_IF(const FFlecsEntityHandle* ProfilePrefab = ReplicationProfilePrefabs.Find(ReplicatedEntity->ProfileId))
 			{
+				solid_check(IsValid(ProfilePrefab));
+				
+				solid_checkf(ProfilePrefab->Has<FFlecsReplicationProfileTag>(), 
+					TEXT("Profile Prefab must have a FFlecsReplicationProfileTag"));
+				
 				if LIKELY_IF(InEntity.IsA(ProfilePrefab->GetFlecsId()))
 				{
-					if LIKELY_IF(const FFlecsReplicationProfile* Profile = ProfilePrefab->TryGet<FFlecsReplicationProfile>())
-					{
-						OutProfile = *Profile;
-						return true;
-					}
+					OutProfile = *ProfilePrefab;
+					return true;
 				}
 			}
 		}
 	}
 
-	if LIKELY_IF(const FFlecsReplicationProfile* Profile = InEntity.TryGet<FFlecsReplicationProfile>())
+	if UNLIKELY_IF(solid_ensure(!InEntity.Has<FFlecsReplicationProfileTag>()))
 	{
-		OutProfile = *Profile;
+		// wtf are we doing here bro
+		OutProfile = InEntity;
 		return true;
 	}
 
-	OutProfile = FFlecsReplicationProfile();
+	OutProfile = FFlecsEntityView::GetNullHandle();
 	return true;
 }
 
@@ -617,12 +622,15 @@ bool UFlecsNetworkWorldSubsystem::RegisterReplicationShardSelector(const FName& 
 }
 
 bool UFlecsNetworkWorldSubsystem::SelectReplicationShard(const FFlecsEntityHandle& InEntity,
-	const FFlecsNetworkId& InNetworkId, const FFlecsReplicationProfile& InProfile,
+	const FFlecsNetworkId& InNetworkId, const FFlecsEntityView& InProfile,
 	OUT FFlecsReplicationShardSelection& OutSelection) const
 {
-	const FName SelectorName = InProfile.ShardSelectorName.IsNone()
-		? FName(TEXT("Proxy"))
-		: InProfile.ShardSelectorName;
+	solid_check(InProfile.IsValid());
+	
+	const FFlecsNetProfileNameTarget* NameTarget = InProfile.TryGetPairSecond<FFlecsNetShardSelectorRelationship, FFlecsNetProfileNameTarget>();
+	
+	const FName SelectorName = NameTarget ? FName(TEXT("Proxy"))
+		: NameTarget->Name;
 
 	const FFlecsReplicationShardSelectorFunction* Selector = ReplicationShardSelectors.Find(SelectorName);
 	solid_cassumef(Selector, TEXT("Flecs replication shard selector '%s' is not registered"), *SelectorName.ToString());

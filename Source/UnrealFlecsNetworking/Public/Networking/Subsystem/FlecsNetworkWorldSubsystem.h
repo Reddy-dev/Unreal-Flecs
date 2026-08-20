@@ -24,7 +24,7 @@ class UFlecsNetworkingModuleSettings;
 using FFlecsReplicationShardSelectorFunction = TFunction<bool(
 	const FFlecsEntityHandle&,
 	const FFlecsNetworkId&,
-	const FFlecsReplicationProfile&,
+	const FFlecsEntityView&, /** InProfilePrefabEntity */
 	OUT FFlecsReplicationShardSelection&)>;
 
 /**
@@ -136,21 +136,21 @@ public:
 	FFlecsEntityHandle RegisterReplicationProfileAsset(const UFlecsReplicationProfileDataAsset* InAsset);
 
 	FFlecsEntityHandle RegisterReplicationProfileDefinition(const FName& InName,
-		const FFlecsReplicationProfile& InDefinition);
+		const FFlecsReplicationProfileDefinition& InDefinition);
 
 	NO_DISCARD FFlecsEntityHandle GetReplicationProfilePrefab(const FName& InName) const;
 
 	UFUNCTION()
-	bool SetReplicationProfile(const FFlecsEntityHandle& InEntity, const FFlecsEntityHandle& InProfilePrefab);
+	bool SetReplicationProfile(const FFlecsEntityHandle& InEntity, const FFlecsEntityView& InProfilePrefab);
 
 	NO_DISCARD bool ResolveReplicationProfile(const FFlecsEntityHandle& InEntity,
-		FFlecsReplicationProfile& OutProfile) const;
+		OUT FFlecsEntityView& OutProfile) const;
 
 	bool RegisterReplicationShardSelector(const FName& InName, FFlecsReplicationShardSelectorFunction InSelector);
 
 	NO_DISCARD bool SelectReplicationShard(const FFlecsEntityHandle& InEntity,
 		const FFlecsNetworkId& InNetworkId,
-		const FFlecsReplicationProfile& InProfile,
+		const FFlecsEntityView& InProfile,
 		OUT FFlecsReplicationShardSelection& OutSelection) const;
 
 	void QueueReplicationSnapshot(const FFlecsNetworkId& InNetworkId,

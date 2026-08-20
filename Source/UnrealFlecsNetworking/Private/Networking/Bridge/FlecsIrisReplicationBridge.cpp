@@ -8,11 +8,39 @@
 #include "Net/UnrealNetwork.h"
 
 #include "Networking/Bridge/FlecsIrisReplicationBridgeNetFactory.h"
+#include "Networking/Profiles/FlecsProfileRelationshipTypes.h"
 #include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 #include "Networking/Shards/FlecsNetEntityProxy.h"
 #include "Networking/Shards/FlecsNetShardBase.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsIrisReplicationBridge)
+
+FFlecsReplicationShardPoolKey::FFlecsReplicationShardPoolKey(const FFlecsEntityView& InProfile,
+	const FFlecsReplicationShardSelection& InSelection): ShardClass(InSelection.ShardClass.Get())
+	                                                     , ShardGroupKey(InSelection.ShardGroupKey)
+{
+	solid_check(InProfile.IsValid());
+	
+	if (const FFlecsNetProfileNameTarget* ObjectNameTarget 
+		= InProfile.TryGetPairSecond<FFlecsObjectPrioritizerRelationship, FFlecsNetProfileNameTarget>())
+	{
+		ObjectPrioritizerName = ObjectNameTarget->Name;
+	}
+	else
+	{
+		ObjectPrioritizerName = NAME_None;
+	}
+	
+	if (const FFlecsNetProfileNameTarget* FilterNameTarget 
+		= InProfile.TryGetPairSecond<FFlecsNetFilterRelationship, FFlecsNetProfileNameTarget>())
+	{
+		FilterName = FilterNameTarget->Name;
+	}
+	else
+	{
+		FilterName = NAME_None;
+	}
+}
 
 UFlecsIrisReplicationBridge::UFlecsIrisReplicationBridge(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -161,7 +189,7 @@ UFlecsNetShardBase* UFlecsIrisReplicationBridge::ResolveShard(const FFlecsEntity
 {
 	const TSolidNotNull<UFlecsNetworkWorldSubsystem*> NetworkSubsystem = GetNetworkWorldSubsystem();
 
-	FFlecsReplicationProfile Profile;
+	FFlecsEntityView Profile;
 	const bool bResolvedProfile = NetworkSubsystem->ResolveReplicationProfile(InEntityHandle, Profile);
 	solid_cassumef(bResolvedProfile,
 		TEXT("Cannot resolve a replication profile for entity '%s'"), *InEntityHandle.ToString());
@@ -232,7 +260,7 @@ UFlecsNetShardBase* UFlecsIrisReplicationBridge::ResolveShard(const FFlecsEntity
 
 UFlecsNetShardBase* UFlecsIrisReplicationBridge::CreateNewShard(const FFlecsNetworkId& InNetworkId,
 	const FFlecsEntityReplicationSnapshot& InSnapshot,
-	const FFlecsReplicationProfile& InProfile, const FFlecsReplicationShardSelection& InSelection)
+	const FFlecsEntityView& InProfile, const FFlecsReplicationShardSelection& InSelection)
 {
 	solid_checkf(InNetworkId.IsValid(), TEXT("Cannot create a Flecs replication shard without a valid network ID"));
 
@@ -258,7 +286,7 @@ UFlecsNetShardBase* UFlecsIrisReplicationBridge::CreateNewShard(const FFlecsNetw
 }
 
 UFlecsNetShardBase* UFlecsIrisReplicationBridge::FindOrCreateShard(const FFlecsNetworkId& InNetworkId,
-	const FFlecsEntityReplicationSnapshot& InSnapshot, const FFlecsReplicationProfile& InProfile,
+	const FFlecsEntityReplicationSnapshot& InSnapshot, const FFlecsEntityView& InProfile,
 	const FFlecsReplicationShardSelection& InSelection)
 {
 	const FFlecsReplicationShardPoolKey PoolKey(InProfile, InSelection);
@@ -284,7 +312,7 @@ UFlecsNetShardBase* UFlecsIrisReplicationBridge::FindOrCreateShard(const FFlecsN
 }
 
 void UFlecsIrisReplicationBridge::ReleaseShardIfEmpty(UFlecsNetShardBase* InShard,
-	const FFlecsReplicationProfile& InProfile, const FFlecsReplicationShardSelection& InSelection)
+	const FFlecsEntityView& InProfile, const FFlecsReplicationShardSelection& InSelection)
 {
 	if (!InShard || !InShard->IsEmpty())
 	{

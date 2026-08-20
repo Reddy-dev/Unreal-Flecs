@@ -24,6 +24,6 @@ public:
 	FName ProfileName = NAME_None;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Replication")
-	FFlecsReplicationProfile Definition;
+	FFlecsReplicationProfileDefinition Definition;
 
 }; // class UFlecsReplicationProfileDataAsset

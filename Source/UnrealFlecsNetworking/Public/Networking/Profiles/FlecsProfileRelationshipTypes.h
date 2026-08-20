@@ -3,12 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/ObjectTypes/FFlecsActorComponentTag.h"
+
+#include "Properties/FlecsComponentProperties.h"
 
 #include "FlecsProfileRelationshipTypes.generated.h"
 
 USTRUCT()
-struct FFlecsObjectPrioritizerRelationship
+struct UNREALFLECSNETWORKING_API FFlecsObjectPrioritizerRelationship
 {
 	GENERATED_BODY()
 }; // struct FFlecsObjectPrioritizerRelationship
@@ -22,7 +23,7 @@ struct TFlecsComponentTraits<FFlecsObjectPrioritizerRelationship> : public TFlec
 }; // struct TFlecsComponentTraits<FFlecsObjectPrioritizerRelationship>
 
 USTRUCT()
-struct FFlecsNetFilterRelationship
+struct UNREALFLECSNETWORKING_API FFlecsNetFilterRelationship
 {
 	GENERATED_BODY()
 }; // struct FFlecsNetFilterRelationship
@@ -36,7 +37,7 @@ struct TFlecsComponentTraits<FFlecsNetFilterRelationship> : public TFlecsCompone
 }; // struct TFlecsComponentTraits<FFlecsNetFilterRelationship>
 
 USTRUCT()
-struct FFlecsNetShardSelectorRelationship
+struct UNREALFLECSNETWORKING_API FFlecsNetShardSelectorRelationship
 {
 	GENERATED_BODY()
 }; // struct FFlecsNetShardSelectorRelationship

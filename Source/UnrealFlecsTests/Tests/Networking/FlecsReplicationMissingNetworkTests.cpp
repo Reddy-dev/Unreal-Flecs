@@ -19,6 +19,7 @@
 #include "Networking/Profiles/FlecsReplicationProfile.h"
 #include "Networking/FlecsReplicationShardSelection.h"
 #include "Networking/Layout/FlecsReplicationSnapshot.h"
+#include "Networking/Profiles/FlecsReplicationProfileParamTypes.h"
 #include "Networking/Shards/FlecsNetEntityProxy.h"
 #include "Networking/Shards/FlecsNetEntityTable.h"
 #include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
@@ -627,8 +628,9 @@ NETWORK_TEST_CLASS(FlecsReplicationAdditionalRealBridgeNetworkTests,
 			})
 			.ThenServer([this](FState& State)
 			{
-				FFlecsReplicationProfile Profile;
-				Profile.ShardSelectorName = FName(TEXT("Table"));
+				FFlecsReplicationProfileDefinition Profile;
+				Profile.ParameterComponents.Add(
+					TInstancedStruct<FFlecsReplicationProfileNetShardSelector>::Make(FName(TEXT("Table"))));
 				UFlecsNetworkWorldSubsystem* NetworkSubsystem =
 					State.World->GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
 				const FFlecsEntityHandle ProfilePrefab = NetworkSubsystem->RegisterReplicationProfileDefinition(
@@ -746,8 +748,9 @@ NETWORK_TEST_CLASS(FlecsReplicationAdditionalRealBridgeNetworkTests,
 			{
 				UE::Flecs::Tests::MissingNetwork::EnsureNetworkTestWorld(State);
 				
-				FFlecsReplicationProfile Profile;
-				Profile.ShardSelectorName = FName(TEXT("Table"));
+				FFlecsReplicationProfileDefinition Profile;
+				Profile.ParameterComponents.Add(
+					TInstancedStruct<FFlecsReplicationProfileNetShardSelector>::Make(FName(TEXT("Table"))));
 				UFlecsNetworkWorldSubsystem* NetworkSubsystem =
 					State.World->GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
 								
@@ -827,8 +830,9 @@ NETWORK_TEST_CLASS(FlecsReplicationAdditionalRealBridgeNetworkTests,
 			})
 			.ThenServer([this](FState& State)
 			{
-				FFlecsReplicationProfile Profile;
-				Profile.ShardSelectorName = FName(TEXT("Table"));
+				FFlecsReplicationProfileDefinition Profile;
+				Profile.ParameterComponents.Add(
+					TInstancedStruct<FFlecsReplicationProfileNetShardSelector>::Make(FName(TEXT("Table"))));
 				UFlecsNetworkWorldSubsystem* NetworkSubsystem =
 					State.World->GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
 				const FFlecsEntityHandle ProfilePrefab = NetworkSubsystem->RegisterReplicationProfileDefinition(
@@ -879,7 +883,7 @@ NETWORK_TEST_CLASS(FlecsReplicationAdditionalRealBridgeNetworkTests,
 					State.World->GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
 				ASSERT_THAT(IsTrue(NetworkSubsystem->RegisterReplicationShardSelector(
 					FName(TEXT("TableAlternate")),
-					[](const FFlecsEntityHandle&, const FFlecsNetworkId&, const FFlecsReplicationProfile&,
+					[](const FFlecsEntityHandle&, const FFlecsNetworkId&, const FFlecsEntityView&,
 						OUT FFlecsReplicationShardSelection& OutSelection)
 					{
 						OutSelection.ShardClass = UFlecsNetEntityTable::StaticClass();
@@ -887,8 +891,9 @@ NETWORK_TEST_CLASS(FlecsReplicationAdditionalRealBridgeNetworkTests,
 						return true;
 					})));
 
-				FFlecsReplicationProfile Profile;
-				Profile.ShardSelectorName = FName(TEXT("Table"));
+				FFlecsReplicationProfileDefinition Profile;
+				Profile.ParameterComponents.Add(
+					TInstancedStruct<FFlecsReplicationProfileNetShardSelector>::Make(FName(TEXT("Table"))));
 				const FFlecsEntityHandle ProfilePrefab = NetworkSubsystem->RegisterReplicationProfileDefinition(
 					FName(TEXT("TableToTableSourceProfile")), Profile);
 				ASSERT_THAT(IsTrue(ProfilePrefab.IsValid()));
@@ -919,8 +924,9 @@ NETWORK_TEST_CLASS(FlecsReplicationAdditionalRealBridgeNetworkTests,
 			})
 			.ThenServer([this](FState& State)
 			{
-				FFlecsReplicationProfile Profile;
-				Profile.ShardSelectorName = FName(TEXT("TableAlternate"));
+				FFlecsReplicationProfileDefinition Profile;
+				Profile.ParameterComponents.Add(
+					TInstancedStruct<FFlecsReplicationProfileNetShardSelector>::Make(FName(TEXT("TableAlternate"))));
 				UFlecsNetworkWorldSubsystem* NetworkSubsystem =
 					State.World->GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
 				const FFlecsEntityHandle ProfilePrefab = NetworkSubsystem->RegisterReplicationProfileDefinition(
@@ -975,8 +981,9 @@ NETWORK_TEST_CLASS(FlecsReplicationAdditionalRealBridgeNetworkTests,
 
 				UFlecsNetworkWorldSubsystem* NetworkSubsystem =
 					State.World->GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
-				FFlecsReplicationProfile Profile;
-				Profile.ShardSelectorName = FName(TEXT("Table"));
+				FFlecsReplicationProfileDefinition Profile;
+				Profile.ParameterComponents.Add(
+					TInstancedStruct<FFlecsReplicationProfileNetShardSelector>::Make(FName(TEXT("Table"))));
 				const FFlecsEntityHandle ProfilePrefab = NetworkSubsystem->RegisterReplicationProfileDefinition(
 					FName(TEXT("TableToProxySourceProfile")), Profile);
 				ASSERT_THAT(IsTrue(ProfilePrefab.IsValid()));
@@ -1007,8 +1014,9 @@ NETWORK_TEST_CLASS(FlecsReplicationAdditionalRealBridgeNetworkTests,
 			})
 			.ThenServer([this](FState& State)
 			{
-				FFlecsReplicationProfile Profile;
-				Profile.ShardSelectorName = FName(TEXT("Proxy"));
+				FFlecsReplicationProfileDefinition Profile;
+				Profile.ParameterComponents.Add(
+					TInstancedStruct<FFlecsReplicationProfileNetShardSelector>::Make(FName(TEXT("Proxy"))));
 				UFlecsNetworkWorldSubsystem* NetworkSubsystem =
 					State.World->GetSubsystemChecked<UFlecsNetworkWorldSubsystem>();
 				const FFlecsEntityHandle ProfilePrefab = NetworkSubsystem->RegisterReplicationProfileDefinition(
