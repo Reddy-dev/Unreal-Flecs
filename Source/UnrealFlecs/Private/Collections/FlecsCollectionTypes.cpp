@@ -12,7 +12,7 @@ REGISTER_FLECS_COMPONENT(FFlecsCollectionReferenceComponent);
 
 REGISTER_FLECS_COMPONENT(FFlecsCollectionPrefabTag);
 
-REGISTER_FLECS_COMPONENT(FFlecsCollectionSlotTag);
+//REGISTER_FLECS_COMPONENT(FFlecsCollectionSlotTag);
 
 REGISTER_FLECS_COMPONENT(FFlecsSubEntityIndex);
 

@@ -46,7 +46,7 @@ void UFlecsCollectionWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull
 	FlecsWorld->RegisterComponentType<FFlecsCollectionReference>();
 	FlecsWorld->RegisterComponentType<FFlecsCollectionReferenceComponent>();
 	
-	FlecsWorld->RegisterComponentType<FFlecsCollectionSlotTag>();
+	//FlecsWorld->RegisterComponentType<FFlecsCollectionSlotTag>();
 	FlecsWorld->RegisterComponentType<FFlecsCollectionParametersComponent>();
 	
 	UE_LOG(LogFlecsCollections, Verbose, TEXT("UCollectionsModule registered"));
@@ -442,7 +442,6 @@ void UFlecsCollectionWorldSubsystem::ExpandChildCollectionReferences(const FFlec
 
 				if (Iter.is_set(2))
 				{
-					ChildEntityHandle.MarkSlot();
 					ChildEntityHandle.Remove<FFlecsCollectionSlotTag>();
 				}
 
@@ -454,10 +453,9 @@ void UFlecsCollectionWorldSubsystem::ExpandChildCollectionReferences(const FFlec
 	// @TODO: This is faster than the UnrealFlecs API
 	FlecsWorld->GetNativeFlecsWorld().query_builder<FFlecsCollectionReferenceComponent*>() // 0 (FFlecsCollectionReferenceComponent)
 			.with(flecs::ChildOf, InCollectionEntity) // 1
-			.with<FFlecsCollectionSlotTag>().optional() // 2
+			//.with<FFlecsCollectionSlotTag>().optional() // 2
 			.group_by(flecs::ParentDepth)
-			.each([&](flecs::iter& Iter, size_t Index,
-				FFlecsCollectionReferenceComponent* ReferenceComponent)
+			.each([&](flecs::iter& Iter, size_t Index, FFlecsCollectionReferenceComponent* ReferenceComponent)
 			{
 				const FFlecsEntityHandle ChildEntityHandle = Iter.entity(Index);
 
@@ -467,11 +465,11 @@ void UFlecsCollectionWorldSubsystem::ExpandChildCollectionReferences(const FFlec
 						CollectionReference.Collection, CollectionReference.Parameters);
 				}
 
+				/*
 				if (Iter.is_set(2))
 				{
-					ChildEntityHandle.MarkSlot();
-					ChildEntityHandle.Remove<FFlecsCollectionSlotTag>();
-				}
+					//ChildEntityHandle.Remove<FFlecsCollectionSlotTag>();
+				}*/
 				
 				ExpandChildCollectionReferences(ChildEntityHandle);
 			});

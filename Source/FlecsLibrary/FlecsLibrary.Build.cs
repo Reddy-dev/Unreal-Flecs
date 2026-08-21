@@ -64,6 +64,13 @@ public class FlecsLibrary : ModuleRules
                 "FLECS_META",
                 "FLECS_JSON",
                 "FLECS_SCRIPT_MATH",
+                "FLECS_ENTITY_RANGES",
+                "FLECS_CONSTRAINT_TRAITS",
+                "FLECS_CACHED_QUERIES",
+                "FLECS_FRAME",
+                "FLECS_PREFAB",
+                "FLECS_MULTI_WORLD",
+                
             }
         );
         

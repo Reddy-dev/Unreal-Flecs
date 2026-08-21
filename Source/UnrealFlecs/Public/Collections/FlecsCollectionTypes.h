@@ -141,7 +141,7 @@ struct TFlecsComponentTraits<FFlecsCollectionPrefabTag> : public TFlecsComponent
 	}
 };
 
-USTRUCT(BlueprintType)
+/*USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsCollectionSlotTag
 {
 	GENERATED_BODY()
@@ -151,7 +151,7 @@ template <>
 struct TFlecsComponentTraits<FFlecsCollectionSlotTag> : public TFlecsComponentTraitsBase<FFlecsCollectionSlotTag>
 {
 	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::DontInherit;
-}; // struct TFlecsComponentTraits<FFlecsCollectionSlotTag>
+}; // struct TFlecsComponentTraits<FFlecsCollectionSlotTag>*/
 
 // @TODO: Add Ordered Children
 USTRUCT(BlueprintType)

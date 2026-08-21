@@ -821,32 +821,6 @@ public:
 		return *this;
 	}
 
-	SOLID_INLINE const FSelfType& MarkSlot() const
-	{
-		GetEntity().slot();
-		return *this;
-	}
-
-	SOLID_INLINE const FSelfType& MarkSlot(const FFlecsId InId) const
-	{
-		GetEntity().slot_of(InId);
-		return *this;
-	}
-
-	template <typename T>
-	SOLID_INLINE const FSelfType& MarkSlot() const
-	{
-		GetEntity().slot_of<T>();
-		return *this;
-	}
-
-	template <UE::Flecs::TFlecsEntityFunctionInputTypeConcept T>
-	SOLID_INLINE const FSelfType& MarkSlot(const T& InIdType) const
-	{
-		GetEntity().slot_of(FFlecsEntityHandle::GetInputId(*this, InIdType));
-		return *this;
-	}
-
 	template <typename T>
 	SOLID_INLINE const FSelfType& AddWith() const
 	{

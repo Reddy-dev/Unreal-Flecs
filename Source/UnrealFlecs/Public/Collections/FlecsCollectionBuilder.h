@@ -185,11 +185,12 @@ public:
 		return ReferenceCollection(T::StaticClass(), InParameters);
 	}
 
+	/*
 	FORCEINLINE FFlecsCollectionBuilder& MarkSlot() const
 	{
 		GetRecord().AddComponent<FFlecsCollectionSlotTag>();
 		return *ParentBuilder;
-	}
+	}*/
 
 	FORCEINLINE FFlecsCollectionBuilder& EndSubEntity() const;
 
@@ -429,12 +430,12 @@ public:
 
 	// @TODO: add other relationship overloads?
 	
-	void MarkSlot() const
+	/*void MarkSlot() const
 	{
 		solid_cassume(CollectionDefinition);
 		
 		GetCollectionDefinition().Record.AddComponent<FFlecsCollectionSlotTag>();
-	}
+	}*/
 
 	NO_DISCARD FORCEINLINE FFlecsCollectionDefinition& GetCollectionDefinition() const
 	{
