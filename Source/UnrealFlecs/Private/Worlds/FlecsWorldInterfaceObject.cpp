@@ -1184,7 +1184,7 @@ bool UFlecsWorldInterfaceObject::IsFlecsObjectRegistered(const TSubclassOf<UObje
 
 FFlecsEntityHandle UFlecsWorldInterfaceObject::GetFlecsModule(const FName& InModuleName) const
 {
-	FFlecsEntityHandle ModuleEntity = LookupEntity(InModuleName.ToString());
+	const FFlecsEntityHandle ModuleEntity = LookupEntity(InModuleName.ToString());
 	
 	if UNLIKELY_IF(!ModuleEntity.IsValid() || !ModuleEntity.Has(flecs::Module))
 	{
