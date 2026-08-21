@@ -151,6 +151,19 @@ void UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver(const
 		const FFlecsId InSecondId = FFlecsId()) -> FFlecsObserverHandle
 	{
 		TFlecsObserverBuilder<> ObserverBuilder = GetFlecsWorld()->CreateObserver();
+		
+		const FFlecsEntityHandle FirstEntity = GetFlecsWorldChecked()->GetAlive(InFirstId);
+		const FFlecsEntityHandle SecondEntity = GetFlecsWorldChecked()->GetAlive(InSecondId);
+		
+		if (FirstEntity.Has(flecs::Relationship) && !InSecondId.IsValid())
+		{
+			return FFlecsObserverHandle();
+		}
+		
+		if (!InFirstId.IsValid() && (SecondEntity.IsValid() && SecondEntity.Has(flecs::Target)))
+		{
+			return FFlecsObserverHandle();
+		}
 
 		if (InSecondId.IsValid())
 		{
@@ -185,8 +198,16 @@ void UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver(const
 	/*const FFlecsObserverHandle PairSecondObserverHandle =
 		CreateObserver(flecs::Wildcard, InDescriptor.LocalFlecsId);*/
 	
-	ComponentDirtyObservers.Add(PrimaryObserverHandle);
-	ComponentDirtyObservers.Add(PairFirstObserverHandle);
+	if (PrimaryObserverHandle.IsValid())
+	{
+		ComponentDirtyObservers.Add(PrimaryObserverHandle);
+	}
+	
+	if (PairFirstObserverHandle.IsValid())
+	{
+		ComponentDirtyObservers.Add(PairFirstObserverHandle);
+	}
+	
 	/*ComponentDirtyObservers.Add(PairSecondObserverHandle);*/
 }
 
