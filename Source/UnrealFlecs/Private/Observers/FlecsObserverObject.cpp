@@ -61,9 +61,9 @@ void UFlecsObserverObject::ApplyObserverDefinitionOverrides(FFlecsObserverDefini
 		InOutDefinition.Events.Append(ObserverDefinitionOverrides.EventsOverride);
 	}
 	
-	if (ObserverDefinitionOverrides.bYieldExistingOverride.IsSet())
+	if (ObserverDefinitionOverrides.YieldExistingOverride.IsSet())
 	{
-		InOutDefinition.bYieldExisting = ObserverDefinitionOverrides.bYieldExistingOverride.GetValue();
+		InOutDefinition.bYieldExisting = ObserverDefinitionOverrides.YieldExistingOverride.GetValue();
 	}
 	
 	if (ObserverDefinitionOverrides.bOverrideObserverFlags)

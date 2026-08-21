@@ -34,7 +34,7 @@ public:
 	TArray<FFlecsObserverEventInput> EventsOverride;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TOptional<bool> bYieldExistingOverride;
+	TOptional<bool> YieldExistingOverride;
 	
 	/**
 	 * if bOverrideObserverFlags is true, this will be used instead of the Flags in the ObserverDefinition, 

@@ -33,10 +33,10 @@ public:
 	TOptional<FFlecsSystemTickSourceInput> TickSourceInputOverride;
 	
 	UPROPERTY(EditAnywhere)
-	TOptional<bool> bMultiThreadedOverride;
+	TOptional<bool> MultiThreadedOverride;
 	
 	UPROPERTY(EditAnywhere)
-	TOptional<bool> bImmediateOverride;
+	TOptional<bool> ImmediateOverride;
 	
 	UPROPERTY(EditAnywhere)
 	TOptional<FFlecsSystemPipelineInput> PipelineInputOverride;

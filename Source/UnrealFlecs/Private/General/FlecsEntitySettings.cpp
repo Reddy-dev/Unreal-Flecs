@@ -43,7 +43,7 @@ void UFlecsEntitySettings::OnPostEngineInit()
 	BuildSystemList();
 }
 
-void UFlecsEntitySettings::OnModulePackagesUnloaded(TConstArrayView<UPackage*>)
+void UFlecsEntitySettings::OnModulePackagesUnloaded(MAYBE_UNUSED TConstArrayView<UPackage*> InUnloadedPackages)
 {
 	if (bEngineInitialized)
 	{

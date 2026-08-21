@@ -14,7 +14,7 @@ class UPackage;
 /**
  * 
  */
-UCLASS(Config = Flecs, DefaultConfig, DisplayName = "Flecs Entity Settings")
+UCLASS(Config = Flecs, DefaultConfig, DisplayName = "Flecs Object Registration Instance Settings")
 class UNREALFLECS_API UFlecsEntitySettings : public UFlecsModuleSettings
 {
 	GENERATED_BODY()
@@ -33,7 +33,7 @@ public:
 
 protected:
 	void OnPostEngineInit();
-	void OnModulePackagesUnloaded(TConstArrayView<UPackage*>);
+	void OnModulePackagesUnloaded(TConstArrayView<UPackage*> InUnloadedPackages);
 
 private:
 	bool bEngineInitialized = false;

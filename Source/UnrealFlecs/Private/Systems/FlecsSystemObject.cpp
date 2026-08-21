@@ -80,14 +80,14 @@ void UFlecsSystemObject::ApplySystemDefinitionOverrides(FFlecsSystemDefinition& 
 		InOutDefinition.TickSourceInput = SystemDefinitionOverrides.TickSourceInputOverride.GetValue();
 	}
 	
-	if (SystemDefinitionOverrides.bMultiThreadedOverride.IsSet())
+	if (SystemDefinitionOverrides.MultiThreadedOverride.IsSet())
 	{
-		InOutDefinition.bMultiThreaded = SystemDefinitionOverrides.bMultiThreadedOverride.GetValue();
+		InOutDefinition.bMultiThreaded = SystemDefinitionOverrides.MultiThreadedOverride.GetValue();
 	}
 	
-	if (SystemDefinitionOverrides.bImmediateOverride.IsSet())
+	if (SystemDefinitionOverrides.ImmediateOverride.IsSet())
 	{
-		InOutDefinition.bImmediate = SystemDefinitionOverrides.bImmediateOverride.GetValue();
+		InOutDefinition.bImmediate = SystemDefinitionOverrides.ImmediateOverride.GetValue();
 	}
 	
 	if (SystemDefinitionOverrides.PipelineInputOverride.IsSet())
