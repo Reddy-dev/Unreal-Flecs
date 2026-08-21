@@ -174,6 +174,7 @@ void UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver(const
 				EntityHandle.Add<FFlecsNetDirtyTag>();
 			});
 		
+		solid_check(DirtyObserverHandle.IsValid());
 		DirtyObserverHandle.Add<FFlecsDirtyObserverTag>();
 		
 		return DirtyObserverHandle;
