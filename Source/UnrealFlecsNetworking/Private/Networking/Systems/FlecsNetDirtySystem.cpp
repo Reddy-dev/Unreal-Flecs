@@ -13,7 +13,7 @@
 
 UFlecsNetDirtySystem::UFlecsNetDirtySystem()
 {
-	NetworkRegistrationFlags = EFlecsObjectRegistrationNetworkFlags::Server;
+	NetworkRegistrationFlags = static_cast<uint8>(EFlecsObjectRegistrationNetworkFlags::Server);
 }
 
 void UFlecsNetDirtySystem::BuildSystem(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld,

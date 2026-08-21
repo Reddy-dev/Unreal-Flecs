@@ -325,7 +325,7 @@ public:
 	NO_DISCARD UFlecsStage* GetStage(const flecs::world& InStageWorld) const;
 	NO_DISCARD UFlecsStage* GetStage(const flecs::iter& InIter) const;
 	
-	int32 Search(const FFlecsTableHandle& InTableHandle, const FFlecsId& InId, OUT FFlecsId& OutId) const;
+	NO_DISCARD TTuple<int32, FFlecsId> Search(const FFlecsTableHandle& InTableHandle, const FFlecsId& InId) const;
 	
 	void RegisterStages(const int32 InStageCount);
 	

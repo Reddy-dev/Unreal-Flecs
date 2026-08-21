@@ -31,7 +31,7 @@ public:
 	double Interval = 0.0;
 	
 	UPROPERTY(EditAnywhere)
-	uint32 Rate;
+	uint32 Rate = 0;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FFlecsSystemTickSourceInput TickSourceInput;
@@ -45,7 +45,7 @@ public:
 	UPROPERTY(EditAnywhere)
 	FFlecsSystemPipelineInput PipelineInput;
 	
-	ecs_iter_action_t callback;
+	ecs_iter_action_t callback = nullptr;
 
 	/** Callback that is invoked when a system is ran.
 	 * When left to NULL, the default system runner is used, which calls the
@@ -58,25 +58,25 @@ public:
 	 *
 	 * An implementation can test whether the iterator is a query iterator by
 	 * testing whether the it->next value is equal to ecs_query_next(). */
-	ecs_run_action_t run;
+	ecs_run_action_t run = nullptr;
 
 	/** Context to be passed to callback (as ecs_iter_t::param) */
-	void *ctx;
+	void *ctx = nullptr;
 
 	/** Callback to free ctx. */
-	ecs_ctx_free_t ctx_free;
+	ecs_ctx_free_t ctx_free = nullptr;
 
 	/** Context associated with callback (for language bindings). */
-	void *callback_ctx;
+	void *callback_ctx = nullptr;
 
 	/** Callback to free callback ctx. */
-	ecs_ctx_free_t callback_ctx_free;
+	ecs_ctx_free_t callback_ctx_free = nullptr;
 
 	/** Context associated with run (for language bindings). */
-	void *run_ctx;
+	void *run_ctx = nullptr;
 
 	/** Callback to free run ctx. */
-	ecs_ctx_free_t run_ctx_free;
+	ecs_ctx_free_t run_ctx_free = nullptr;
 	
 	void ApplyToSystem(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InFlecsWorld, flecs::system_builder<>& InSystemBuilder) const;
 	

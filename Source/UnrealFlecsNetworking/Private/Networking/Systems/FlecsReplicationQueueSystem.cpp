@@ -11,7 +11,7 @@
 
 UFlecsReplicationQueueSystem::UFlecsReplicationQueueSystem()
 {
-	NetworkRegistrationFlags = EFlecsObjectRegistrationNetworkFlags::Client;
+	NetworkRegistrationFlags = static_cast<uint8>(EFlecsObjectRegistrationNetworkFlags::Client);
 }
 
 void UFlecsReplicationQueueSystem::BuildSystem(const TSolidNotNull<const UFlecsWorldInterfaceObject*>,

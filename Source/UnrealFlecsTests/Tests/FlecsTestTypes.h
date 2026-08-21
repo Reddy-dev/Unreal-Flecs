@@ -839,9 +839,9 @@ public:
 		return false;
 	}
 
-	virtual EFlecsObjectRegistrationNetworkFlags GetObjectRegistrationNetworkFlags() const override
+	virtual uint8 GetObjectRegistrationNetworkFlags() const override
 	{
-		return EFlecsObjectRegistrationNetworkFlags::Server;
+		return static_cast<uint8>(EFlecsObjectRegistrationNetworkFlags::Server);
 	}
 	
 }; // class UFlecsServerOnlyObjectRegistrationTestObject
@@ -863,9 +863,9 @@ public:
 		return false;
 	}
 
-	virtual EFlecsObjectRegistrationNetworkFlags GetObjectRegistrationNetworkFlags() const override
+	virtual uint8 GetObjectRegistrationNetworkFlags() const override
 	{
-		return EFlecsObjectRegistrationNetworkFlags::Client;
+		return static_cast<uint8>(EFlecsObjectRegistrationNetworkFlags::Client);
 	}
 	
 }; // class UFlecsClientOnlyObjectRegistrationTestObject

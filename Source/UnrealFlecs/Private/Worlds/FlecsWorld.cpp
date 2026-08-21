@@ -934,7 +934,7 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 	}
 	
 	if (!UE::Flecs::Net::ShouldRegisterInWorld(GetWorld(), 
-		FlecsObjectInterface->GetObjectRegistrationNetworkFlags()))
+		static_cast<EFlecsObjectRegistrationNetworkFlags>(FlecsObjectInterface->GetObjectRegistrationNetworkFlags())))
 	{
 		FlecsObject->MarkAsGarbage();
 		return nullptr;
@@ -1024,9 +1024,13 @@ UFlecsStage* UFlecsWorld::GetStage(const flecs::iter& InIter) const
 	return GetStage(StageId);
 }
 
-int32 UFlecsWorld::Search(const FFlecsTableHandle& InTableHandle, const FFlecsId& InId, FFlecsId& OutId) const
+TTuple<int32, FFlecsId> UFlecsWorld::Search(const FFlecsTableHandle& InTableHandle, const FFlecsId& InId) const
 {
-	return ecs_search(GetNativeFlecsWorld(), InTableHandle.GetTable(), InId, reinterpret_cast<ecs_id_t*>(&OutId));
+	FFlecsId OutIdTemp;
+	const int32 Result = ecs_search(GetNativeFlecsWorld(), InTableHandle.GetTable(), 
+		InId, reinterpret_cast<ecs_id_t*>(&OutIdTemp));
+	
+	return MakeTuple(Result, OutIdTemp);
 }
 
 void UFlecsWorld::RegisterStages(const int32 InStageCount)

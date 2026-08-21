@@ -17,7 +17,7 @@
 
 #include "FlecsObserverObject.generated.h"
 
-UCLASS(Abstract, BlueprintType, NotBlueprintable)
+UCLASS(Abstract, BlueprintType, NotBlueprintable, Config = Flecs, DefaultConfig)
 class UNREALFLECS_API UFlecsObserverObject : public UObject, 
 	public IFlecsObserverHandleInterface, public IFlecsIteratorObjectInterface, public IFlecsObjectRegistrationInterface
 {
@@ -41,7 +41,7 @@ public:
 	virtual void UnregisterObject(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld) override;
 	virtual void FlecsWorldBeginPlay(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld) override;
 	
-	virtual NO_DISCARD EFlecsObjectRegistrationNetworkFlags GetObjectRegistrationNetworkFlags() const override
+	virtual NO_DISCARD uint8 GetObjectRegistrationNetworkFlags() const override
 	{
 		return NetworkRegistrationFlags;
 	}
@@ -56,8 +56,9 @@ protected:
 	UPROPERTY(Transient)
 	FFlecsObserverHandle ObserverHandle;
 	
-	UPROPERTY(EditAnywhere, Config, Category = "Flecs", meta = (AllowPrivateAccess = "true"))
-	EFlecsObjectRegistrationNetworkFlags NetworkRegistrationFlags = EFlecsObjectRegistrationNetworkFlags::All;
+	UPROPERTY(EditAnywhere, Config, Category = "Flecs", meta = (AllowPrivateAccess = "true", 
+		Bitmask, BitmaskEnum = "/Script/UnrealFlecs.EFlecsObjectRegistrationNetworkFlags"))
+	uint8 NetworkRegistrationFlags = static_cast<uint8>(EFlecsObjectRegistrationNetworkFlags::All);
 	
 	UPROPERTY(EditAnywhere, Config, Category = "Flecs", meta = (AllowPrivateAccess = "true"))
 	FFlecsObserverDefinition ObserverDefinition;

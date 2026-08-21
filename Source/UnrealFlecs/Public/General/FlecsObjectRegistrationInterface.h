@@ -40,9 +40,9 @@ public:
 	virtual NO_DISCARD bool ShouldShowInSettings() const { return false; }
 #endif // WITH_EDITORONLY_DATA
 	
-	virtual NO_DISCARD EFlecsObjectRegistrationNetworkFlags GetObjectRegistrationNetworkFlags() const
+	virtual NO_DISCARD uint8 GetObjectRegistrationNetworkFlags() const
 	{
-		return EFlecsObjectRegistrationNetworkFlags::All;
+		return static_cast<uint8>(EFlecsObjectRegistrationNetworkFlags::All);
 	}
 	
 	// Optional, if not defined will use the package name of the UObject implementing this interface

@@ -10,7 +10,7 @@
 
 UFlecsReplicatedComponentObservers::UFlecsReplicatedComponentObservers()
 {
-	
+	NetworkRegistrationFlags = static_cast<uint8>(EFlecsObjectRegistrationNetworkFlags::Server);
 }
 
 void UFlecsReplicatedComponentObservers::BuildObserver(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld,
@@ -39,9 +39,4 @@ void UFlecsReplicatedComponentObservers::EachIterator(const TSolidNotNull<UFlecs
 	}
 
 	NetworkSubsystemPtr->BeginReplicatingEntity(EntityHandle);
-}
-
-EFlecsObjectRegistrationNetworkFlags UFlecsReplicatedComponentObservers::GetObjectRegistrationNetworkFlags() const
-{
-	return EFlecsObjectRegistrationNetworkFlags::Server;
 }
