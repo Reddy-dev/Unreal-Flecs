@@ -5,8 +5,9 @@
 
 #include "../../private_api.h"
 
-static
-ecs_trav_up_t* flecs_trav_up_ensure(
+#ifdef FLECS_QUERY_PLANS
+
+static ecs_trav_up_t* flecs_trav_up_ensure(
     const ecs_query_run_ctx_t *ctx,
     ecs_trav_up_cache_t *cache,
     ecs_entity_t tgt)
@@ -23,8 +24,7 @@ ecs_trav_up_t* flecs_trav_up_ensure(
     return trav[0];
 }
 
-static
-int32_t flecs_trav_type_search(
+static int32_t flecs_trav_type_search(
     ecs_trav_up_t *up,
     const ecs_table_t *table,
     ecs_component_record_t *cr_with,
@@ -40,8 +40,7 @@ int32_t flecs_trav_type_search(
     return -1;
 }
 
-static
-int32_t flecs_trav_type_offset_search(
+static int32_t flecs_trav_type_offset_search(
     ecs_trav_up_t *up,
     const ecs_table_t *table,
     int32_t offset,
@@ -63,8 +62,7 @@ int32_t flecs_trav_type_offset_search(
     return -1;
 }
 
-static
-ecs_trav_up_t* flecs_trav_table_up(
+static ecs_trav_up_t* flecs_trav_table_up(
     const ecs_query_run_ctx_t *ctx,
     ecs_allocator_t *a,
     ecs_trav_up_cache_t *cache,
@@ -75,8 +73,7 @@ ecs_trav_up_t* flecs_trav_table_up(
     ecs_component_record_t *cr_with,
     ecs_component_record_t *cr_trav);
 
-static
-void flecs_trav_table_up_w(
+static void flecs_trav_table_up_w(
     const ecs_query_run_ctx_t *ctx,
     ecs_allocator_t *a,
     ecs_trav_up_cache_t *cache,
@@ -205,8 +202,7 @@ found:
     return;
 }
 
-static
-ecs_trav_up_t* flecs_trav_table_up(
+static ecs_trav_up_t* flecs_trav_table_up(
     const ecs_query_run_ctx_t *ctx,
     ecs_allocator_t *a,
     ecs_trav_up_cache_t *cache,
@@ -303,3 +299,5 @@ void flecs_query_up_cache_fini(
 {
     ecs_map_fini(&cache->src);
 }
+
+#endif // FLECS_QUERY_PLANS

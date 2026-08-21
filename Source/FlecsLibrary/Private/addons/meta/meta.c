@@ -73,12 +73,11 @@ static ECS_MOVE(EcsTypeSerializer, dst, src, {
     src->ops = (ecs_vec_t){0};
 })
 
-static ECS_DTOR(EcsTypeSerializer, ptr, { 
+static ECS_DTOR(EcsTypeSerializer, ptr, {
     flecs_type_serializer_dtor(ptr);
 })
 
-static
-const char* flecs_type_kind_str(
+static const char* flecs_type_kind_str(
     ecs_type_kind_t kind)
 {
     switch(kind) {
@@ -97,8 +96,7 @@ const char* flecs_type_kind_str(
 
 
 #ifdef FLECS_DEBUG
-static
-bool flecs_meta_detect_cycles_w_stack(
+static bool flecs_meta_detect_cycles_w_stack(
     ecs_world_t *world,
     ecs_entity_t type,
     ecs_entity_t target,
@@ -290,11 +288,11 @@ void FlecsMetaImport(
 
     flecs_bootstrap_component(world, EcsTypeSerializer);
 
+    ecs_entity_t type_component = ecs_entity(world, { .id = ecs_id(EcsType),
+        .name = "type", .symbol = "EcsType" });
+    ecs_add_pair(world, type_component, EcsOnInstantiate, EcsDontInherit);
     ecs_component(world, {
-        .entity = ecs_entity(world, { .id = ecs_id(EcsType),
-            .name = "type", .symbol = "EcsType",
-            .add = ecs_ids(ecs_pair(EcsOnInstantiate, EcsDontInherit))
-        }),
+        .entity = type_component,
         .type.size = sizeof(EcsType),
         .type.alignment = ECS_ALIGNOF(EcsType),
     });

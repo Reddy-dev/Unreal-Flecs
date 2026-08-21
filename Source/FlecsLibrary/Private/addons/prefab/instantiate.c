@@ -3,96 +3,11 @@
  * @brief Functions for instantiating prefabs (IsA relationship).
  */
 
-#include "private_api.h"
+#include "../../private_api.h"
 
-static
-void flecs_instantiate_slot(
-    ecs_world_t *world,
-    ecs_entity_t base,
-    ecs_entity_t instance,
-    ecs_entity_t slot_of,
-    ecs_entity_t slot,
-    ecs_entity_t child)
-{
-    if (base == slot_of) {
-        /* Instance inherits from slot_of, add slot to instance */
-        ecs_component_record_t *cr = flecs_components_ensure(
-            world, ecs_pair(slot, child));
-        ecs_assert(cr != NULL, ECS_INTERNAL_ERROR, NULL);
+#ifdef FLECS_PREFAB
 
-        ecs_record_t *r = flecs_entities_get(world, instance);
-        ecs_assert(r != NULL, ECS_INTERNAL_ERROR, NULL);
-
-        flecs_sparse_on_add_cr(world, 
-            r->table, ECS_RECORD_TO_ROW(r->row), cr, true, NULL);
-    } else {
-        /* Slot is registered for other prefab, travel hierarchy
-         * upwards to find instance that inherits from slot_of */
-        ecs_entity_t parent = instance;
-        int32_t depth = 0;
-        do {
-            if (ecs_has_pair(world, parent, EcsIsA, slot_of)) {
-                const char *name = ecs_get_name(world, slot);
-                if (name == NULL) {
-                    char *slot_of_str = ecs_get_path(world, slot_of);
-                    ecs_throw(ECS_INVALID_OPERATION, "prefab '%s' has unnamed "
-                        "slot (slots must be named)", slot_of_str);
-                    ecs_os_free(slot_of_str);
-                    return;
-                }
-
-                /* The 'slot' variable is currently pointing to a child (or 
-                 * grandchild) of the current base. Find the original slot by
-                 * looking it up under the prefab it was registered. */
-                if (depth == 0) {
-                    /* If the current instance is an instance of slot_of, just
-                     * lookup the slot by name, which is faster than having to
-                     * create a relative path. */
-                    slot = ecs_lookup_child(world, slot_of, name);
-                } else {
-                    /* If the slot is more than one level away from the slot_of
-                     * parent, use a relative path to find the slot */
-                    char *path = ecs_get_path_w_sep(world, parent, child, ".",
-                        NULL);
-                    slot = ecs_lookup_path_w_sep(world, slot_of, path, ".", 
-                        NULL, false);
-                    ecs_os_free(path);
-                }
-
-                if (slot == 0) {
-                    char *slot_of_str = ecs_get_path(world, slot_of);
-                    char *slot_str = ecs_get_path(world, slot);
-                    ecs_throw(ECS_INVALID_OPERATION,
-                        "'%s' is not in hierarchy for slot '%s'",
-                            slot_of_str, slot_str);
-                    ecs_os_free(slot_of_str);
-                    ecs_os_free(slot_str);
-                }
-
-                ecs_add_pair(world, parent, slot, child);
-                break;
-            }
-
-            depth ++;
-        } while ((parent = ecs_get_target(world, parent, EcsChildOf, 0)));
-        
-        if (parent == 0) {
-            char *slot_of_str = ecs_get_path(world, slot_of);
-            char *slot_str = ecs_get_path(world, slot);
-            ecs_throw(ECS_INVALID_OPERATION,
-                "'%s' is not in hierarchy for slot '%s'",
-                    slot_of_str, slot_str);
-            ecs_os_free(slot_of_str);
-            ecs_os_free(slot_str);
-        }
-    }
-
-error:
-    return;
-}
-
-static
-int32_t flecs_child_type_insert(
+static int32_t flecs_child_type_insert(
     ecs_type_t *type,
     void **component_data,
     ecs_id_t id)
@@ -217,8 +132,7 @@ void flecs_instantiate_sparse(
     }
 }
 
-static
-void flecs_instantiate_children(
+static void flecs_instantiate_children(
     ecs_world_t *world,
     ecs_entity_t base,
     ecs_entity_t instance,
@@ -233,7 +147,6 @@ void flecs_instantiate_children(
     ecs_table_t *child_table = child_range.table;
     ecs_type_t type = child_table->type;
 
-    ecs_entity_t slot_of = 0;
     ecs_entity_t *ids = type.array;
     int32_t type_count = type.count;
 
@@ -265,17 +178,6 @@ void flecs_instantiate_children(
             ecs_table_record_t *tr = &child_table->_->records[i];
             ecs_component_record_t *cr = tr->hdr.cr;
             if (cr->flags & EcsIdOnInstantiateDontInherit) {
-                continue;
-            }
-        }
-
-        /* If child is a slot, keep track of which parent to add it to, but
-         * don't add slot relationship to child of instance. If this is a child
-         * of a prefab, keep the SlotOf relationship intact. */
-        if (!(table->flags & EcsTableIsPrefab)) {
-            if (ECS_IS_PAIR(id) && ECS_PAIR_FIRST(id) == EcsSlotOf) {
-                ecs_assert(slot_of == 0, ECS_INTERNAL_ERROR, NULL);
-                slot_of = ecs_pair_second(world, id);
                 continue;
             }
         }
@@ -384,16 +286,6 @@ void flecs_instantiate_children(
     flecs_instantiate_sparse(
         world, &child_range, children, i_table, i_children, child_row, false);
 
-    /* If children are slots, add slot relationships to parent */
-    if (slot_of) {
-        for (j = 0; j < child_range.count; j ++) {
-            ecs_entity_t child = children[j + child_range.offset];
-            ecs_entity_t i_child = i_children[j];
-            flecs_instantiate_slot(
-                world, base, instance, slot_of, child, i_child);
-        }
-    }
-
     /* If prefab child table has children itself, recursively instantiate */
     for (j = 0; j < child_range.count; j ++) {
         ecs_entity_t child = children[j + child_range.offset];
@@ -458,8 +350,7 @@ void flecs_instantiate_dont_fragment(
     }
 }
 
-static
-void flecs_instantiate_override_dont_fragment(
+static void flecs_instantiate_override_dont_fragment(
     ecs_world_t *world,
     ecs_table_t *base_table,
     ecs_entity_t instance)
@@ -568,3 +459,106 @@ void flecs_instantiate(
 error:
     return;
 }
+
+void* flecs_get_base_component(
+    const ecs_world_t *world,
+    ecs_table_t *table,
+    ecs_id_t component,
+    ecs_component_record_t *cr,
+    int32_t recur_depth)
+{
+    ecs_check(recur_depth < ECS_MAX_RECURSION, ECS_INVALID_OPERATION,
+        "cycle detected in IsA relationship");
+
+    /* Table (and thus entity) does not have component, look for base */
+    if (!(table->flags & EcsTableHasIsA)) {
+        return NULL;
+    }
+
+    if (!(cr->flags & EcsIdOnInstantiateInherit)) {
+        return NULL;
+    }
+
+    /* Exclude Name */
+    if (component == ecs_pair(ecs_id(EcsIdentifier), EcsName)) {
+        return NULL;
+    }
+
+    /* Table should always be in the table index for (IsA, *), otherwise the
+     * HasBase flag should not have been set */
+    const ecs_table_record_t *tr_isa = flecs_component_get_table(
+        world->cr_isa_wildcard, table);
+    ecs_check(tr_isa != NULL, ECS_INTERNAL_ERROR, NULL);
+
+    ecs_type_t type = table->type;
+    ecs_id_t *ids = type.array;
+    int32_t i = tr_isa->index, end = tr_isa->count + tr_isa->index;
+    void *ptr = NULL;
+
+    do {
+        ecs_id_t pair = ids[i ++];
+        ecs_entity_t base = ecs_pair_second(world, pair);
+
+        ecs_record_t *r = flecs_entities_get(world, base);
+        ecs_assert(r != NULL, ECS_INTERNAL_ERROR, NULL);
+
+        table = r->table;
+        ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
+
+        const ecs_table_record_t *tr = flecs_component_get_table(cr, table);
+        if (!tr) {
+            if (cr->flags & EcsIdDontFragment) {
+                ptr = flecs_component_sparse_get(world, cr, table, base);
+            }
+
+            if (!ptr) {
+                ptr = flecs_get_base_component(world, table, component, cr, 
+                    recur_depth + 1);
+            }
+        } else {
+            if (cr->flags & EcsIdSparse) {
+                return flecs_component_sparse_get(world, cr, table, base);
+            } else if (tr->column != -1) {
+                int32_t row = ECS_RECORD_TO_ROW(r->row);
+                return flecs_table_get_component(table, tr->column, row).ptr;
+            }
+        }
+    } while (!ptr && (i < end));
+
+    return ptr;
+error:
+    return NULL;
+}
+
+#else
+
+void* flecs_get_base_component(
+    const ecs_world_t *world,
+    ecs_table_t *table,
+    ecs_id_t component,
+    ecs_component_record_t *cr,
+    int32_t recur_depth)
+{
+    (void)world;
+    (void)table;
+    (void)component;
+    (void)cr;
+    (void)recur_depth;
+    return NULL;
+}
+
+void flecs_instantiate(
+    ecs_world_t *world,
+    ecs_entity_t base,
+    ecs_entity_t instance,
+    const ecs_instantiate_ctx_t *ctx,
+    int32_t depth)
+{
+    (void)world;
+    (void)base;
+    (void)instance;
+    (void)ctx;
+    (void)depth;
+}
+
+#endif

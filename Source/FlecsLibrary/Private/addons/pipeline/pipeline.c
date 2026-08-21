@@ -54,8 +54,7 @@ typedef struct ecs_write_state_t {
     ecs_map_t wildcard_ids;
 } ecs_write_state_t;
 
-static
-ecs_write_kind_t flecs_pipeline_get_write_state(
+static ecs_write_kind_t flecs_pipeline_get_write_state(
     ecs_write_state_t *write_state,
     ecs_id_t id)
 {
@@ -101,8 +100,7 @@ ecs_write_kind_t flecs_pipeline_get_write_state(
     return result;
 }
 
-static
-void flecs_pipeline_set_write_state(
+static void flecs_pipeline_set_write_state(
     ecs_write_state_t *write_state,
     ecs_id_t id)
 {
@@ -112,13 +110,17 @@ void flecs_pipeline_set_write_state(
         return;
     }
 
-    ecs_map_t *ids = ecs_id_is_wildcard(id) ? &write_state->wildcard_ids : &write_state->ids;
+    ecs_map_t *ids;
+    if (ecs_id_is_wildcard(id)) {
+        ids = &write_state->wildcard_ids;
+    } else {
+        ids = &write_state->ids;
+    }
 
     ecs_map_ensure(ids, id)[0] = true;
 }
 
-static
-void flecs_pipeline_reset_write_state(
+static void flecs_pipeline_reset_write_state(
     ecs_write_state_t *write_state)
 {
     ecs_map_clear(&write_state->ids);
@@ -126,8 +128,7 @@ void flecs_pipeline_reset_write_state(
     write_state->write_barrier = false;
 }
 
-static
-bool flecs_pipeline_check_term(
+static bool flecs_pipeline_check_term(
     ecs_world_t *world,
     ecs_term_t *term,
     bool is_active,
@@ -214,8 +215,7 @@ bool flecs_pipeline_check_term(
     return false;
 }
 
-static
-bool flecs_pipeline_check_terms(
+static bool flecs_pipeline_check_terms(
     ecs_world_t *world,
     ecs_query_t *query,
     bool is_active,
@@ -245,8 +245,7 @@ bool flecs_pipeline_check_terms(
     return needs_merge;
 }
 
-static
-EcsPoly* flecs_pipeline_term_system(
+static EcsPoly* flecs_pipeline_term_system(
     ecs_iter_t *it)
 {
     int32_t index = ecs_table_get_column_index(
@@ -257,8 +256,7 @@ EcsPoly* flecs_pipeline_term_system(
     return poly;
 }
 
-static
-bool flecs_pipeline_build(
+static bool flecs_pipeline_build(
     ecs_world_t *world,
     ecs_pipeline_state_t *pq)
 {
@@ -466,8 +464,7 @@ bool flecs_pipeline_build(
     return true;
 }
 
-static
-void flecs_pipeline_next_system(
+static void flecs_pipeline_next_system(
     ecs_pipeline_state_t *pq)
 {
     if (!pq->cur_op) {
@@ -483,8 +480,7 @@ void flecs_pipeline_next_system(
     }    
 }
 
-static
-bool flecs_pipeline_update(
+static bool flecs_pipeline_update(
     ecs_world_t *world,
     ecs_pipeline_state_t *pq,
     bool start_of_frame)
@@ -546,6 +542,7 @@ int32_t flecs_run_pipeline_ops(
     ecs_ftime_t delta_time)
 {
     ecs_pipeline_state_t* pq = world->pq;
+    // Added by Elie
     ecs_assert(pq != NULL && pq->cur_op != NULL, ECS_INTERNAL_ERROR, NULL);
     ecs_pipeline_op_t* op = pq->cur_op;
     int32_t i = pq->cur_i;
@@ -684,8 +681,7 @@ void flecs_run_pipeline(
     }
 }
 
-static
-void flecs_run_startup_systems(
+static void flecs_run_startup_systems(
     ecs_world_t *world)
 {
     ecs_component_record_t *cr = flecs_components_get(world, 
@@ -710,7 +706,7 @@ void flecs_run_startup_systems(
             .terms = {
                 { .id = EcsSystem },
                 { .id = EcsPhase, .src.id = EcsCascade, .trav = EcsDependsOn },
-                { .id = ecs_dependson(EcsOnStart), .trav = EcsDependsOn },
+                { .id = ecs_dependson(EcsOnStart), .src.id = EcsSelf|EcsUp, .trav = EcsDependsOn },
                 { .id = EcsDisabled, .src.id = EcsUp, .trav = EcsDependsOn, .oper = EcsNot },
                 { .id = EcsDisabled, .src.id = EcsUp, .trav = EcsChildOf, .oper = EcsNot }
             },
@@ -777,23 +773,6 @@ error:
     return false;
 }
 
-void ecs_set_time_scale(
-    ecs_world_t *world,
-    ecs_ftime_t scale)
-{
-    flecs_poly_assert(world, ecs_world_t);
-    ecs_assert(!(world->flags & EcsWorldReadonly), ECS_INVALID_OPERATION,
-        "cannot set time scale while world is in readonly mode");
-    world->info.time_scale = scale;
-}
-
-void ecs_reset_clock(
-    ecs_world_t *world)
-{
-    world->info.world_time_total = 0;
-    world->info.world_time_total_raw = 0;
-}
-
 void ecs_set_pipeline(
     ecs_world_t *world,
     ecs_entity_t pipeline)
@@ -817,8 +796,7 @@ error:
     return 0;
 }
 
-static
-ecs_entity_t flecs_pipeline_init(
+static ecs_entity_t flecs_pipeline_init(
     ecs_world_t *world,
     ecs_entity_t entity,
     const ecs_pipeline_desc_t *desc,
@@ -854,16 +832,14 @@ error:
 
 /* Trampolines so flecs_pipeline_init can dispatch through a function pointer
  * without exposing the entity argument to ecs_query_init. */
-static
-ecs_query_t* flecs_pipeline_query_init(
+static ecs_query_t* flecs_pipeline_query_init(
     ecs_world_t *world, ecs_entity_t entity, const ecs_query_desc_t *desc)
 {
     (void)entity;
     return ecs_query_init(world, desc);
 }
 
-static
-ecs_query_t* flecs_pipeline_query_update(
+static ecs_query_t* flecs_pipeline_query_update(
     ecs_world_t *world, ecs_entity_t entity, const ecs_query_desc_t *desc)
 {
     return ecs_query_update(world, entity, desc);
@@ -927,8 +903,7 @@ error:
 
 /* -- Module implementation -- */
 
-static
-void FlecsPipelineFini(
+static void FlecsPipelineFini(
     ecs_world_t *world,
     void *ctx)
 {
@@ -943,8 +918,7 @@ void FlecsPipelineFini(
 #define flecs_bootstrap_phase(world, phase, depends_on)\
     flecs_bootstrap_tag(world, phase);\
     flecs_bootstrap_phase_(world, phase, depends_on)
-static
-void flecs_bootstrap_phase_(
+static void flecs_bootstrap_phase_(
     ecs_world_t *world,
     ecs_entity_t phase,
     ecs_entity_t depends_on)
@@ -971,14 +945,23 @@ void FlecsPipelineImport(
      * direct DependsOn relationship on EcsPreUpdate, which ensures that when
      * the EcsPreUpdate phase is disabled, EcsOnUpdate still runs. */
     ecs_entity_t phase_0 = ecs_entity(world, {0});
-    ecs_entity_t phase_1 = ecs_entity(world, { .add = ecs_ids(ecs_dependson(phase_0)) });
-    ecs_entity_t phase_2 = ecs_entity(world, { .add = ecs_ids(ecs_dependson(phase_1)) });
-    ecs_entity_t phase_3 = ecs_entity(world, { .add = ecs_ids(ecs_dependson(phase_2)) });
-    ecs_entity_t phase_4 = ecs_entity(world, { .add = ecs_ids(ecs_dependson(phase_3)) });
-    ecs_entity_t phase_5 = ecs_entity(world, { .add = ecs_ids(ecs_dependson(phase_4)) });
-    ecs_entity_t phase_6 = ecs_entity(world, { .add = ecs_ids(ecs_dependson(phase_5)) });
-    ecs_entity_t phase_7 = ecs_entity(world, { .add = ecs_ids(ecs_dependson(phase_6)) });
-    ecs_entity_t phase_8 = ecs_entity(world, { .add = ecs_ids(ecs_dependson(phase_7)) });
+    ecs_entity_t phase_1 = ecs_entity(world, {0});
+    ecs_entity_t phase_2 = ecs_entity(world, {0});
+    ecs_entity_t phase_3 = ecs_entity(world, {0});
+    ecs_entity_t phase_4 = ecs_entity(world, {0});
+    ecs_entity_t phase_5 = ecs_entity(world, {0});
+    ecs_entity_t phase_6 = ecs_entity(world, {0});
+    ecs_entity_t phase_7 = ecs_entity(world, {0});
+    ecs_entity_t phase_8 = ecs_entity(world, {0});
+
+    ecs_add_pair(world, phase_1, EcsDependsOn, phase_0);
+    ecs_add_pair(world, phase_2, EcsDependsOn, phase_1);
+    ecs_add_pair(world, phase_3, EcsDependsOn, phase_2);
+    ecs_add_pair(world, phase_4, EcsDependsOn, phase_3);
+    ecs_add_pair(world, phase_5, EcsDependsOn, phase_4);
+    ecs_add_pair(world, phase_6, EcsDependsOn, phase_5);
+    ecs_add_pair(world, phase_7, EcsDependsOn, phase_6);
+    ecs_add_pair(world, phase_8, EcsDependsOn, phase_7);
 
     flecs_bootstrap_phase(world, EcsOnStart,    0);
     flecs_bootstrap_phase(world, EcsPreFrame,   0);
@@ -999,18 +982,18 @@ void FlecsPipelineImport(
     });
 
     world->pipeline = ecs_pipeline(world, {
-       .entity = ecs_entity(world, { .name = "BuiltinPipeline" }),
-       .query = {
-           .terms = {
-               { .id = EcsSystem },
-               { .id = EcsPhase, .src.id = EcsCascade, .trav = EcsDependsOn },
-               { .id = ecs_dependson(EcsOnStart), .trav = EcsDependsOn, .oper = EcsNot },
-               { .id = EcsDisabled, .src.id = EcsUp, .trav = EcsDependsOn, .oper = EcsNot },
-               { .id = EcsDisabled, .src.id = EcsUp, .trav = EcsChildOf, .oper = EcsNot },
-           },
-           .order_by_callback = flecs_entity_compare
-       }
-   });
+        .entity = ecs_entity(world, { .name = "BuiltinPipeline" }),
+        .query = {
+            .terms = {
+                { .id = EcsSystem },
+                { .id = EcsPhase, .src.id = EcsCascade, .trav = EcsDependsOn },
+                { .id = ecs_dependson(EcsOnStart), .src.id = EcsSelf|EcsUp, .trav = EcsDependsOn, .oper = EcsNot },
+                { .id = EcsDisabled, .src.id = EcsUp, .trav = EcsDependsOn, .oper = EcsNot },
+                { .id = EcsDisabled, .src.id = EcsUp, .trav = EcsChildOf, .oper = EcsNot }
+            },
+            .order_by_callback = flecs_entity_compare
+        }
+    });
 
     /* Cleanup thread administration when world is destroyed */
     ecs_atfini(world, FlecsPipelineFini, NULL);

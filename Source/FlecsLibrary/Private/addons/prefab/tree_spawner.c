@@ -3,47 +3,11 @@
  * @brief Data structure used to speed up the creation of hierarchies.
  */
 
-#include "private_api.h"
+#include "../../private_api.h"
 
-static
-void flecs_tree_spawner_release_tables(
-    ecs_vec_t *v)
-{
-    int32_t i, count = ecs_vec_count(v);
-    ecs_tree_spawner_child_t *elems = ecs_vec_first(v);
-    for (i = 0; i < count; i ++) {
-        ecs_tree_spawner_child_t *elem = &elems[i];
-        flecs_table_release(elem->table);
-    }
-}
+#ifdef FLECS_PREFAB
 
-static
-void EcsTreeSpawner_free(EcsTreeSpawner *ptr) {
-    int32_t i;
-    for (i = 0; i < FLECS_TREE_SPAWNER_DEPTH_CACHE_SIZE; i ++) {
-        flecs_tree_spawner_release_tables(&ptr->data[i].children);
-        ecs_vec_fini_t(NULL, &ptr->data[i].children, ecs_tree_spawner_child_t);
-    }
-}
-
-static ECS_COPY(EcsTreeSpawner, dst, src, {
-    (void)dst;
-    (void)src;
-    ecs_abort(ECS_INVALID_OPERATION, "TreeSpawner component cannot be copied");
-})
-
-static ECS_MOVE(EcsTreeSpawner, dst, src, {
-    EcsTreeSpawner_free(dst);
-    *dst = *src;
-    ecs_os_zeromem(src);
-})
-
-static ECS_DTOR(EcsTreeSpawner, ptr, {
-    EcsTreeSpawner_free(ptr);
-})
-
-static
-ecs_type_t flecs_prefab_spawner_build_type(
+static ecs_type_t flecs_prefab_spawner_build_type(
     ecs_world_t *world,
     ecs_entity_t child,
     ecs_table_t *table,
@@ -98,8 +62,7 @@ ecs_type_t flecs_prefab_spawner_build_type(
     return dst;
 }
 
-static
-void flecs_prefab_spawner_build_from_cr(
+static void flecs_prefab_spawner_build_from_cr(
     ecs_world_t *world,
     ecs_component_record_t *cr,
     ecs_vec_t *spawner,
@@ -150,8 +113,7 @@ void flecs_prefab_spawner_build_from_cr(
     }
 }
 
-static
-void flecs_spawner_transpose_depth(
+static void flecs_spawner_transpose_depth(
     ecs_world_t *world,
     EcsTreeSpawner *spawner,
     ecs_vec_t *dst,
@@ -188,8 +150,7 @@ void flecs_spawner_transpose_depth(
 }
 
 #ifdef FLECS_DEBUG
-static
-bool flecs_tree_spawner_is_empty(
+static bool flecs_tree_spawner_is_empty(
     const EcsTreeSpawner *ts)
 {
     int32_t i;
@@ -386,7 +347,7 @@ void flecs_spawner_instantiate(
     }
 }
 
-void flecs_fini_tree_spawners(
+void flecs_fini_prefab(
     ecs_world_t *world)
 {
     ecs_iter_t it = ecs_each(world, EcsTreeSpawner);
@@ -399,16 +360,16 @@ void flecs_fini_tree_spawners(
     }
 }
 
-void flecs_bootstrap_spawner(
-    ecs_world_t *world)
-{
-    flecs_type_info_init(world, EcsTreeSpawner, {
-        .ctor = flecs_default_ctor,
-        .copy = ecs_copy(EcsTreeSpawner),
-        .move = ecs_move(EcsTreeSpawner),
-        .dtor = ecs_dtor(EcsTreeSpawner)
-    });
+#else
 
-    ecs_add_pair(world, ecs_id(EcsTreeSpawner), 
-        EcsOnInstantiate, EcsDontInherit);
+#ifdef FLECS_DEBUG
+void flecs_tree_spawner_assert_not_instantiated(
+    ecs_world_t *world,
+    ecs_entity_t parent)
+{
+    (void)world;
+    (void)parent;
 }
+#endif
+
+#endif

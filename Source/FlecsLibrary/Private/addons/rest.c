@@ -4,9 +4,7 @@
  */
 
 #include "../private_api.h"
-
 #include "query_dsl/query_dsl.h"
-#include "pipeline/pipeline.h"
 #include "json/json.h"
 
 #ifdef FLECS_REST
@@ -41,7 +39,7 @@ static ECS_MOVE(EcsRest, dst, src, {
     src->impl = NULL;
 })
 
-static ECS_DTOR(EcsRest, ptr, { 
+static ECS_DTOR(EcsRest, ptr, {
     ecs_rest_ctx_t *impl = ptr->impl;
     if (impl) {
         impl->rc --;
@@ -56,8 +54,7 @@ static char *rest_last_err;
 static ecs_os_api_log_t rest_prev_log;
 static ecs_os_api_log_t rest_prev_fatal_log;
 
-static
-void flecs_rest_set_prev_log(
+static void flecs_rest_set_prev_log(
     ecs_os_api_log_t prev_log,
     bool try)
 {
@@ -65,8 +62,7 @@ void flecs_rest_set_prev_log(
     rest_prev_fatal_log = prev_log;
 }
 
-static 
-void flecs_rest_capture_log(
+static void flecs_rest_capture_log(
     int32_t level, 
     const char *file,
     int32_t line, 
@@ -103,15 +99,13 @@ void flecs_rest_capture_log(
     }
 }
 
-static
-char* flecs_rest_get_captured_log(void) {
+static char* flecs_rest_get_captured_log(void) {
     char *result = rest_last_err;
     rest_last_err = NULL;
     return result;
 }
 
-static
-void flecs_reply_verror(
+static void flecs_reply_verror(
     ecs_http_reply_t *reply,
     const char *fmt,
     va_list args)
@@ -121,8 +115,7 @@ void flecs_reply_verror(
     ecs_strbuf_appendlit(&reply->body, "\"}");
 }
 
-static
-void flecs_reply_error(
+static void flecs_reply_error(
     ecs_http_reply_t *reply,
     const char *fmt,
     ...)
@@ -133,8 +126,7 @@ void flecs_reply_error(
     va_end(args);
 }
 
-static
-void flecs_rest_bool_param(
+static void flecs_rest_bool_param(
     const ecs_http_request_t *req,
     const char *name,
     bool *value_out)
@@ -149,8 +141,7 @@ void flecs_rest_bool_param(
     }
 }
 
-static
-void flecs_rest_int_param(
+static void flecs_rest_int_param(
     const ecs_http_request_t *req,
     const char *name,
     int32_t *value_out)
@@ -161,8 +152,7 @@ void flecs_rest_int_param(
     }
 }
 
-static
-void flecs_rest_string_param(
+static void flecs_rest_string_param(
     const ecs_http_request_t *req,
     const char *name,
     char **value_out)
@@ -173,8 +163,7 @@ void flecs_rest_string_param(
     }
 }
 
-static
-void flecs_rest_parse_json_ser_entity_params(
+static void flecs_rest_parse_json_ser_entity_params(
     ecs_world_t *world,
     ecs_entity_to_json_desc_t *desc,
     const ecs_http_request_t *req)
@@ -196,8 +185,7 @@ void flecs_rest_parse_json_ser_entity_params(
     }
 }
 
-static
-void flecs_rest_parse_json_ser_iter_params(
+static void flecs_rest_parse_json_ser_iter_params(
     ecs_iter_to_json_desc_t *desc,
     const ecs_http_request_t *req)
 {
@@ -220,8 +208,7 @@ void flecs_rest_parse_json_ser_iter_params(
     desc->dont_serialize_results = !results;
 }
 
-static
-bool flecs_rest_get_entity(
+static bool flecs_rest_get_entity(
     ecs_world_t *world,
     const ecs_http_request_t* req,
     ecs_http_reply_t *reply)
@@ -263,8 +250,7 @@ bool flecs_rest_get_entity(
     return true;
 }
 
-static
-bool flecs_rest_put_entity(
+static bool flecs_rest_put_entity(
     ecs_world_t *world,
     ecs_http_reply_t *reply,
     const char *path)
@@ -290,8 +276,7 @@ bool flecs_rest_put_entity(
     return true;
 }
 
-static
-void flecs_rest_parse_json_ser_world_params(
+static void flecs_rest_parse_json_ser_world_params(
     ecs_world_to_json_desc_t *desc,
     const ecs_http_request_t *req)
 {
@@ -299,8 +284,7 @@ void flecs_rest_parse_json_ser_world_params(
     flecs_rest_bool_param(req, "modules", &desc->serialize_modules);
 }
 
-static
-bool flecs_rest_get_world(
+static bool flecs_rest_get_world(
     ecs_world_t *world,
     const ecs_http_request_t* req,
     ecs_http_reply_t *reply)
@@ -316,8 +300,7 @@ bool flecs_rest_get_world(
     return true;
 }
 
-static
-ecs_entity_t flecs_rest_entity_from_path(
+static ecs_entity_t flecs_rest_entity_from_path(
     ecs_world_t *world,
     ecs_http_reply_t *reply,
     const char *path)
@@ -331,8 +314,7 @@ ecs_entity_t flecs_rest_entity_from_path(
     return e;
 }
 
-static
-bool flecs_rest_get_type_info(
+static bool flecs_rest_get_type_info(
     ecs_world_t *world,
     ecs_http_reply_t *reply,
     const char *path)
@@ -357,8 +339,7 @@ bool flecs_rest_get_type_info(
     return true;
 }
 
-static
-bool flecs_rest_get_component(
+static bool flecs_rest_get_component(
     ecs_world_t *world,
     const ecs_http_request_t* req,
     ecs_http_reply_t *reply,
@@ -402,8 +383,7 @@ bool flecs_rest_get_component(
     return true;
 }
 
-static
-bool flecs_rest_put_component(
+static bool flecs_rest_put_component(
     ecs_world_t *world,
     const ecs_http_request_t* req,
     ecs_http_reply_t *reply,
@@ -460,8 +440,7 @@ bool flecs_rest_put_component(
     return true;
 }
 
-static
-bool flecs_rest_delete_component(
+static bool flecs_rest_delete_component(
     ecs_world_t *world,
     const ecs_http_request_t* req,
     ecs_http_reply_t *reply,
@@ -491,8 +470,7 @@ bool flecs_rest_delete_component(
     return true;
 }
 
-static
-bool flecs_rest_delete_entity(
+static bool flecs_rest_delete_entity(
     ecs_world_t *world,
     ecs_http_reply_t *reply,
     const char *path)
@@ -507,8 +485,7 @@ bool flecs_rest_delete_entity(
     return true;
 }
 
-static
-bool flecs_rest_toggle(
+static bool flecs_rest_toggle(
     ecs_world_t *world,
     const ecs_http_request_t* req,
     ecs_http_reply_t *reply,
@@ -553,8 +530,7 @@ bool flecs_rest_toggle(
     return true;
 }
 
-static
-bool flecs_rest_script(
+static bool flecs_rest_script(
     ecs_world_t *world,
     const ecs_http_request_t* req,
     ecs_http_reply_t *reply,
@@ -651,8 +627,7 @@ bool flecs_rest_script(
 }
 
 #ifdef FLECS_SCRIPT
-static
-ecs_entity_t flecs_rest_call_lookup(
+static ecs_entity_t flecs_rest_call_lookup(
     const ecs_world_t *world,
     const char *name,
     void *ctx)
@@ -663,12 +638,10 @@ ecs_entity_t flecs_rest_call_lookup(
 }
 #endif
 
-static
-void flecs_rest_reply_set_captured_log(
+static void flecs_rest_reply_set_captured_log(
     ecs_http_reply_t *reply);
 
-static
-bool flecs_rest_call(
+static bool flecs_rest_call(
     ecs_world_t *world,
     const ecs_http_request_t* req,
     ecs_http_reply_t *reply,
@@ -804,8 +777,7 @@ done:
 #endif
 }
 
-static
-void flecs_rest_shrink_memory(
+static void flecs_rest_shrink_memory(
     ecs_world_t *world,
     void *ctx)
 {
@@ -813,8 +785,7 @@ void flecs_rest_shrink_memory(
     ecs_shrink(world);
 }
 
-static
-bool flecs_rest_action(
+static bool flecs_rest_action(
     ecs_world_t *world,
     const ecs_http_request_t* req,
     ecs_http_reply_t *reply,
@@ -839,8 +810,7 @@ bool flecs_rest_action(
     return true;
 }
 
-static
-void flecs_rest_reply_set_captured_log(
+static void flecs_rest_reply_set_captured_log(
     ecs_http_reply_t *reply)
 {
     char *err = flecs_rest_get_captured_log();
@@ -854,8 +824,7 @@ void flecs_rest_reply_set_captured_log(
     reply->code = 400;
 }
 
-static
-void flecs_rest_iter_to_reply(
+static void flecs_rest_iter_to_reply(
     const ecs_http_request_t* req,
     ecs_http_reply_t *reply,
     ecs_poly_t *query,
@@ -884,8 +853,7 @@ void flecs_rest_iter_to_reply(
     flecs_rest_int_param(req, "offset", &offset);
 }
 
-static
-bool flecs_rest_reply_existing_query(
+static bool flecs_rest_reply_existing_query(
     ecs_world_t *world,
     const ecs_http_request_t* req,
     ecs_http_reply_t *reply,
@@ -954,8 +922,7 @@ bool flecs_rest_reply_existing_query(
     return true;
 }
 
-static
-bool flecs_rest_get_query(
+static bool flecs_rest_get_query(
     ecs_world_t *world,
     const ecs_http_request_t* req,
     ecs_http_reply_t *reply)
@@ -1002,8 +969,7 @@ bool flecs_rest_get_query(
 
 #ifdef FLECS_STATS
 
-static
-void flecs_rest_array_append_(
+static void flecs_rest_array_append_(
     ecs_strbuf_t *reply,
     const char *field,
     int32_t field_len,
@@ -1028,8 +994,7 @@ void flecs_rest_array_append_(
 #define flecs_rest_array_append(reply, field, values, t)\
     flecs_rest_array_append_(reply, field, sizeof(field) - 1, values, t)
 
-static
-void flecs_rest_gauge_append(
+static void flecs_rest_gauge_append(
     ecs_strbuf_t *reply,
     const ecs_metric_t *m,
     const char *field,
@@ -1056,8 +1021,7 @@ void flecs_rest_gauge_append(
     ecs_strbuf_list_pop(reply, "}");
 }
 
-static
-void flecs_rest_counter_append(
+static void flecs_rest_counter_append(
     ecs_strbuf_t *reply,
     const ecs_metric_t *m,
     const char *field,
@@ -1081,8 +1045,7 @@ void flecs_rest_counter_append(
 #define ECS_COUNTER_APPEND(reply, s, field, brief)\
     ECS_COUNTER_APPEND_T(reply, s, field, (s)->t, brief)
 
-static
-void flecs_world_stats_to_json(
+static void flecs_world_stats_to_json(
     ecs_strbuf_t *reply,
     const EcsWorldStats *monitor_stats)
 {
@@ -1158,8 +1121,7 @@ void flecs_world_stats_to_json(
     ecs_strbuf_list_pop(reply, "}");
 }
 
-static
-void flecs_system_stats_to_json(
+static void flecs_system_stats_to_json(
     ecs_world_t *world,
     ecs_strbuf_t *reply,
     ecs_entity_t system,
@@ -1183,8 +1145,7 @@ void flecs_system_stats_to_json(
     ecs_strbuf_list_pop(reply, "}");
 }
 
-static
-void flecs_sync_stats_to_json(
+static void flecs_sync_stats_to_json(
     ecs_http_reply_t *reply,
     const ecs_pipeline_stats_t *pstats,
     const ecs_sync_stats_t *stats)
@@ -1203,8 +1164,7 @@ void flecs_sync_stats_to_json(
     ecs_strbuf_list_pop(&reply->body, "}");
 }
 
-static
-void flecs_all_systems_stats_to_json(
+static void flecs_all_systems_stats_to_json(
     ecs_world_t *world,
     ecs_http_reply_t *reply,
     ecs_entity_t period)
@@ -1232,8 +1192,7 @@ void flecs_all_systems_stats_to_json(
     ecs_strbuf_list_pop(&reply->body, "]");
 }
 
-static
-void flecs_pipeline_stats_to_json(
+static void flecs_pipeline_stats_to_json(
     ecs_world_t *world,
     const ecs_http_request_t* req,
     ecs_http_reply_t *reply,
@@ -1305,8 +1264,7 @@ noresults:
     ecs_strbuf_appendlit(&reply->body, "[]");
 }
 
-static
-bool flecs_rest_get_stats(
+static bool flecs_rest_get_stats(
     ecs_world_t *world,
     const ecs_http_request_t* req,
     ecs_http_reply_t *reply)
@@ -1344,8 +1302,7 @@ bool flecs_rest_get_stats(
     }
 }
 #else
-static
-bool flecs_rest_get_stats(
+static bool flecs_rest_get_stats(
     ecs_world_t *world,
     const ecs_http_request_t* req,
     ecs_http_reply_t *reply)
@@ -1357,8 +1314,7 @@ bool flecs_rest_get_stats(
 }
 #endif
 
-static
-void flecs_rest_append_type_hook(
+static void flecs_rest_append_type_hook(
     ecs_strbuf_t *reply,
     const char *name,
     uint64_t flags,
@@ -1376,8 +1332,7 @@ void flecs_rest_append_type_hook(
     }
 }
 
-static
-void flecs_rest_append_component_memory(
+static void flecs_rest_append_component_memory(
     ecs_world_t *world,
     ecs_component_record_t *cr,
     ecs_strbuf_t *reply,
@@ -1413,8 +1368,7 @@ void flecs_rest_append_component_memory(
 #endif
 }
 
-static
-void flecs_rest_append_component_traits(
+static void flecs_rest_append_component_traits(
     ecs_component_record_t *cr,
     ecs_strbuf_t *reply)
 {
@@ -1486,8 +1440,7 @@ void flecs_rest_append_component_traits(
     ecs_strbuf_list_pop(reply, "]");
 }
 
-static
-void flecs_rest_append_component(
+static void flecs_rest_append_component(
     ecs_world_t *world,
     ecs_component_record_t *cr,
     ecs_strbuf_t *reply)
@@ -1589,8 +1542,7 @@ void flecs_rest_append_component(
     ecs_strbuf_list_pop(reply, "}");
 }
 
-static
-bool flecs_rest_get_components(
+static bool flecs_rest_get_components(
     ecs_world_t *world,
     const ecs_http_request_t* req,
     ecs_http_reply_t *reply)
@@ -1608,8 +1560,7 @@ bool flecs_rest_get_components(
     return true;
 }
 
-static
-void flecs_rest_append_query_memory(
+static void flecs_rest_append_query_memory(
     ecs_world_t *world,
     ecs_query_t *query,
     ecs_strbuf_t *reply)
@@ -1633,8 +1584,7 @@ void flecs_rest_append_query_memory(
 #endif
 }
 
-static
-void flecs_rest_append_query(
+static void flecs_rest_append_query(
     ecs_world_t *world,
     ecs_query_t *query,
     ecs_entity_t entity,
@@ -1681,7 +1631,9 @@ void flecs_rest_append_query(
     switch(query->cache_kind) {
     case EcsQueryCacheDefault: ecs_strbuf_appendlit(reply, "\"Default\""); break;
     case EcsQueryCacheAuto: ecs_strbuf_appendlit(reply, "\"Auto\""); break;
+#ifdef FLECS_CACHED_QUERIES
     case EcsQueryCacheAll: ecs_strbuf_appendlit(reply, "\"All\""); break;
+#endif
     case EcsQueryCacheNone: ecs_strbuf_appendlit(reply, "\"None\""); break;
     default: ecs_strbuf_appendlit(reply, "\"!! Invalid !!\"");
     }
@@ -1743,8 +1695,7 @@ void flecs_rest_append_query(
     ecs_strbuf_list_pop(reply, "}");
 }
 
-static
-bool flecs_rest_get_queries(
+static bool flecs_rest_get_queries(
     ecs_world_t *world,
     const ecs_http_request_t* req,
     ecs_http_reply_t *reply)
@@ -1794,8 +1745,7 @@ bool flecs_rest_get_queries(
     return true;
 }
 
-static
-void flecs_rest_reply_table_append_type(
+static void flecs_rest_reply_table_append_type(
     ecs_world_t *world,
     ecs_strbuf_t *reply,
     const ecs_table_t *table)
@@ -1812,8 +1762,7 @@ void flecs_rest_reply_table_append_type(
     ecs_strbuf_list_pop(reply, "]");
 }
 
-static
-void flecs_rest_reply_table_append_memory(
+static void flecs_rest_reply_table_append_memory(
     const ecs_world_t *world,
     ecs_strbuf_t *reply,
     const ecs_table_t *table)
@@ -1845,8 +1794,7 @@ void flecs_rest_reply_table_append_memory(
 #endif
 }
 
-static
-void flecs_rest_reply_table_append(
+static void flecs_rest_reply_table_append(
     ecs_world_t *world,
     ecs_strbuf_t *reply,
     const ecs_table_t *table)
@@ -1866,8 +1814,7 @@ void flecs_rest_reply_table_append(
     ecs_strbuf_list_pop(reply, "}");
 }
 
-static
-bool flecs_rest_get_tables(
+static bool flecs_rest_get_tables(
     ecs_world_t *world,
     const ecs_http_request_t* req,
     ecs_http_reply_t *reply)
@@ -1886,8 +1833,7 @@ bool flecs_rest_get_tables(
     return true;
 }
 
-static
-const char* flecs_rest_cmd_kind_to_str(
+static const char* flecs_rest_cmd_kind_to_str(
     ecs_cmd_kind_t kind)
 {
     switch(kind) {
@@ -1915,8 +1861,7 @@ const char* flecs_rest_cmd_kind_to_str(
     }
 }
 
-static
-bool flecs_rest_cmd_has_id(
+static bool flecs_rest_cmd_has_id(
     const ecs_cmd_t *cmd)
 {
     switch(cmd->kind) {
@@ -1946,8 +1891,7 @@ bool flecs_rest_cmd_has_id(
     }
 }
 
-static
-void flecs_rest_server_garbage_collect_all(
+static void flecs_rest_server_garbage_collect_all(
     ecs_rest_ctx_t *impl)
 {
     ecs_map_iter_t it = ecs_map_iter(&impl->cmd_captures);
@@ -1967,8 +1911,7 @@ void flecs_rest_server_garbage_collect_all(
     ecs_map_fini(&impl->cmd_captures);
 }
 
-static
-void flecs_rest_server_garbage_collect(
+static void flecs_rest_server_garbage_collect(
     ecs_world_t *world,
     ecs_rest_ctx_t *impl)
 {
@@ -2007,8 +1950,7 @@ void flecs_rest_server_garbage_collect(
     }
 }
 
-static
-void flecs_rest_cmd_to_json(
+static void flecs_rest_cmd_to_json(
     ecs_world_t *world,
     ecs_strbuf_t *buf,
     ecs_cmd_t *cmd)
@@ -2063,8 +2005,7 @@ void flecs_rest_cmd_to_json(
     ecs_strbuf_list_pop(buf, "}");
 }
 
-static
-void flecs_rest_on_commands(
+static void flecs_rest_on_commands(
     const ecs_stage_t *stage,
     const ecs_vec_t *commands,
     void *ctx)
@@ -2107,8 +2048,7 @@ void flecs_rest_on_commands(
     }
 }
 
-static
-bool flecs_rest_get_commands_capture(
+static bool flecs_rest_get_commands_capture(
     ecs_world_t *world,
     ecs_rest_ctx_t *impl,
     const ecs_http_request_t* req,
@@ -2135,8 +2075,7 @@ bool flecs_rest_get_commands_capture(
     return true;
 }
 
-static
-bool flecs_rest_get_commands_request(
+static bool flecs_rest_get_commands_request(
     ecs_world_t *world,
     ecs_rest_ctx_t *impl,
     const ecs_http_request_t* req,
@@ -2178,8 +2117,7 @@ bool flecs_rest_get_commands_request(
     return true;
 }
 
-static
-bool flecs_rest_get_root(
+static bool flecs_rest_get_root(
     ecs_http_reply_t *reply)
 {
     reply->content_type = "text/plain";
@@ -2188,8 +2126,7 @@ bool flecs_rest_get_root(
     return true;
 }
 
-static
-bool flecs_rest_reply(
+static bool flecs_rest_reply(
     const ecs_http_request_t* req,
     ecs_http_reply_t *reply,
     void *ctx)
@@ -2334,8 +2271,7 @@ void ecs_rest_server_fini(
     ecs_http_server_fini(srv);
 }
 
-static
-void flecs_on_set_rest(ecs_iter_t *it) {
+static void flecs_on_set_rest(ecs_iter_t *it) {
     EcsRest *rest = ecs_field(it, EcsRest, 0);
 
     int i;
@@ -2364,8 +2300,7 @@ void flecs_on_set_rest(ecs_iter_t *it) {
     }
 }
 
-static
-void DequeueRest(ecs_iter_t *it) {
+static void DequeueRest(ecs_iter_t *it) {
     EcsRest *rest = ecs_field(it, EcsRest, 0);
 
     if (it->delta_system_time > (ecs_ftime_t)1.0) {
@@ -2388,8 +2323,7 @@ void DequeueRest(ecs_iter_t *it) {
     } 
 }
 
-static
-void DisableRest(ecs_iter_t *it) {
+static void DisableRest(ecs_iter_t *it) {
     ecs_world_t *world = it->world;
 
     ecs_iter_t rit = ecs_each_id(world, ecs_id(EcsRest));
@@ -2438,7 +2372,8 @@ void FlecsRestImport(
     });
 
     ecs_system(world, {
-        .entity = ecs_entity(world, { .name = "DequeueRest", .add = ecs_ids( ecs_dependson(EcsPostFrame)) }),
+        .entity = ecs_entity(world, { .name = "DequeueRest" }),
+        .phase = EcsPostFrame,
         .query.terms = {
             { .id = ecs_id(EcsRest) },
         },

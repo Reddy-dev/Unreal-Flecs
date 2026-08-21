@@ -8,8 +8,7 @@
 #ifdef FLECS_SCRIPT
 #include "script.h"
 
-static
-void ecs_script_params_free(ecs_vec_t *params) {
+static void ecs_script_params_free(ecs_vec_t *params) {
     int32_t i, count = ecs_vec_count(params);
     if (count) {
         ecs_script_parameter_t *array = ecs_vec_first(params);
@@ -23,8 +22,7 @@ void ecs_script_params_free(ecs_vec_t *params) {
     ecs_os_zeromem(params);
 }
 
-static
-void ecs_script_params_copy(
+static void ecs_script_params_copy(
     ecs_vec_t *dst,
     const ecs_vec_t *src)
 {
@@ -49,8 +47,7 @@ void ecs_script_params_copy(
     }
 }
 
-static
-void ecs_script_const_var_fini(
+static void ecs_script_const_var_fini(
     EcsScriptConstVar *ptr)
 {
     if (!ptr->value.ptr) {
@@ -66,8 +63,7 @@ void ecs_script_const_var_fini(
     ptr->type_info = NULL;
 }
 
-static
-ECS_COPY(EcsScriptConstVar, dst, src, {
+static ECS_COPY(EcsScriptConstVar, dst, src, {
     ecs_script_const_var_fini(dst);
     dst->value.type = src->value.type;
     dst->type_info = src->type_info;
@@ -80,8 +76,7 @@ ECS_COPY(EcsScriptConstVar, dst, src, {
     }
 })
 
-static
-ECS_MOVE(EcsScriptConstVar, dst, src, {
+static ECS_MOVE(EcsScriptConstVar, dst, src, {
     ecs_script_const_var_fini(dst);
     
     *dst = *src;
@@ -91,13 +86,11 @@ ECS_MOVE(EcsScriptConstVar, dst, src, {
     src->type_info = NULL;
 })
 
-static
-ECS_DTOR(EcsScriptConstVar, ptr, {
+static ECS_DTOR(EcsScriptConstVar, ptr, {
     ecs_script_const_var_fini(ptr);
 })
 
-static
-ECS_COPY(EcsScriptFunction, dst, src, {
+static ECS_COPY(EcsScriptFunction, dst, src, {
     ecs_script_params_free(&dst->params);
     if (dst->binding_ctx && dst->binding_ctx_free) {
         dst->binding_ctx_free(dst->binding_ctx);
@@ -112,8 +105,7 @@ ECS_COPY(EcsScriptFunction, dst, src, {
     ecs_script_params_copy(&dst->params, &src->params);
 })
 
-static
-ECS_MOVE(EcsScriptFunction, dst, src, {
+static ECS_MOVE(EcsScriptFunction, dst, src, {
     ecs_script_params_free(&dst->params);
     if (dst->binding_ctx && dst->binding_ctx_free) {
         dst->binding_ctx_free(dst->binding_ctx);
@@ -122,8 +114,7 @@ ECS_MOVE(EcsScriptFunction, dst, src, {
     ecs_os_zeromem(src);
 })
 
-static
-ECS_DTOR(EcsScriptFunction, ptr, {
+static ECS_DTOR(EcsScriptFunction, ptr, {
     ecs_script_params_free(&ptr->params);
     if (ptr->binding_ctx && ptr->binding_ctx_free) {
         ptr->binding_ctx_free(ptr->binding_ctx);
@@ -132,8 +123,7 @@ ECS_DTOR(EcsScriptFunction, ptr, {
     }
 })
 
-static
-ECS_COPY(EcsScriptMethod, dst, src, {
+static ECS_COPY(EcsScriptMethod, dst, src, {
     ecs_script_params_free(&dst->params);
     if (dst->binding_ctx && dst->binding_ctx_free) {
         dst->binding_ctx_free(dst->binding_ctx);
@@ -148,8 +138,7 @@ ECS_COPY(EcsScriptMethod, dst, src, {
     ecs_script_params_copy(&dst->params, &src->params);
 })
 
-static
-ECS_MOVE(EcsScriptMethod, dst, src, {
+static ECS_MOVE(EcsScriptMethod, dst, src, {
     ecs_script_params_free(&dst->params);
     if (dst->binding_ctx && dst->binding_ctx_free) {
         dst->binding_ctx_free(dst->binding_ctx);
@@ -158,8 +147,7 @@ ECS_MOVE(EcsScriptMethod, dst, src, {
     ecs_os_zeromem(src);
 })
 
-static
-ECS_DTOR(EcsScriptMethod, ptr, {
+static ECS_DTOR(EcsScriptMethod, ptr, {
     ecs_script_params_free(&ptr->params);
     if (ptr->binding_ctx && ptr->binding_ctx_free) {
         ptr->binding_ctx_free(ptr->binding_ctx);
@@ -225,6 +213,54 @@ error:
     return (ecs_value_t){0};
 }
 
+void* ecs_const_var_get_w_type(
+    const ecs_world_t *world,
+    const char *name,
+    ecs_entity_t type,
+    ecs_size_t size,
+    void *out)
+{
+    ecs_check(world != NULL, ECS_INVALID_PARAMETER, NULL);
+    ecs_check(name != NULL, ECS_INVALID_PARAMETER, NULL);
+    ecs_check(type != 0, ECS_INVALID_PARAMETER, NULL);
+    ecs_check(out != NULL, ECS_INVALID_PARAMETER, NULL);
+
+    ecs_entity_t var = ecs_lookup(world, name);
+    const EcsScriptConstVar *v = NULL;
+    if (var) {
+        v = ecs_get(world, var, EcsScriptConstVar);
+    }
+
+    if (!v) {
+        ecs_err("const variable '%s' not found", name);
+        goto error;
+    }
+
+    const ecs_type_info_t *ti = ecs_get_type_info(world, type);
+    if (!ti) {
+        ecs_err("requested type for const variable '%s' is not a valid type",
+            name);
+        goto error;
+    }
+
+    if (ti->size != size) {
+        ecs_err("size of requested type for const variable '%s' does not "
+            "match size of provided type", name);
+        goto error;
+    }
+
+    ecs_meta_cursor_t cur = ecs_meta_cursor(world, type, out);
+    if (ecs_meta_set_value(&cur, &v->value)) {
+        ecs_err("value of const variable '%s' cannot be converted to "
+            "requested type", name);
+        goto error;
+    }
+
+    return out;
+error:
+    return out;
+}
+
 void ecs_const_var_modified(
     ecs_world_t *world,
     ecs_entity_t entity)
@@ -233,8 +269,7 @@ void ecs_const_var_modified(
 }
 
 #ifdef FLECS_DEBUG
-static
-bool flecs_script_function_has_vector_args(
+static bool flecs_script_function_has_vector_args(
     const ecs_function_desc_t *desc)
 {
     int32_t i;
@@ -251,8 +286,7 @@ bool flecs_script_function_has_vector_args(
     return false;
 }
 
-static
-int flecs_script_function_validate_desc(
+static int flecs_script_function_validate_desc(
     const ecs_function_desc_t *desc)
 {
     ecs_check(desc != NULL, ECS_INVALID_PARAMETER, NULL);
@@ -286,8 +320,7 @@ error:
 }
 #endif
 
-static
-void flecs_script_function_parse_args(
+static void flecs_script_function_parse_args(
     const ecs_function_desc_t *desc,
     ecs_vec_t *params)
 {
