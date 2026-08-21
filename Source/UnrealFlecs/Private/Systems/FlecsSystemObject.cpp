@@ -58,12 +58,51 @@ void UFlecsSystemObject::SetContext(void* InContext) const
 	GetSystemHandle().SetContext(InContext);
 }
 
+void UFlecsSystemObject::ApplySystemDefinitionOverrides(FFlecsSystemDefinition& InOutDefinition) const
+{
+	if (SystemDefinitionOverrides.PhaseInput.IsSet())
+	{
+		InOutDefinition.PhaseInput = SystemDefinitionOverrides.PhaseInput.GetValue();
+	}
+	
+	if (SystemDefinitionOverrides.IntervalOverride.IsSet())
+	{
+		InOutDefinition.Interval = SystemDefinitionOverrides.IntervalOverride.GetValue();
+	}
+	
+	if (SystemDefinitionOverrides.RateOverride.IsSet())
+	{
+		InOutDefinition.Rate = SystemDefinitionOverrides.RateOverride.GetValue();
+	}
+	
+	if (SystemDefinitionOverrides.TickSourceInputOverride.IsSet())
+	{
+		InOutDefinition.TickSourceInput = SystemDefinitionOverrides.TickSourceInputOverride.GetValue();
+	}
+	
+	if (SystemDefinitionOverrides.bMultiThreadedOverride.IsSet())
+	{
+		InOutDefinition.bMultiThreaded = SystemDefinitionOverrides.bMultiThreadedOverride.GetValue();
+	}
+	
+	if (SystemDefinitionOverrides.bImmediateOverride.IsSet())
+	{
+		InOutDefinition.bImmediate = SystemDefinitionOverrides.bImmediateOverride.GetValue();
+	}
+	
+	if (SystemDefinitionOverrides.PipelineInputOverride.IsSet())
+	{
+		InOutDefinition.PipelineInput = SystemDefinitionOverrides.PipelineInputOverride.GetValue();
+	}
+}
+
 void UFlecsSystemObject::InitializeSystem(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld)
 {
 	const FString SystemName = GetName();
 	
 	TFlecsSystemBuilder<> SystemBuilder = InWorld->CreateSystemWithDefinition(SystemDefinition, SystemName);
 	BuildSystem(InWorld, SystemBuilder);
+	ApplySystemDefinitionOverrides(SystemBuilder.GetSystemDefinition());
 	
 	SystemHandle = SystemBuilder.run([this](flecs::iter& InIterator)
 	{

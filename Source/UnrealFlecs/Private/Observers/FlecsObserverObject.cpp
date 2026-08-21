@@ -50,12 +50,39 @@ void UFlecsObserverObject::FlecsWorldBeginPlay(const TSolidNotNull<UFlecsWorldIn
 	InitializeObserver(InFlecsWorld);
 }
 
+void UFlecsObserverObject::ApplyObserverDefinitionOverrides(FFlecsObserverDefinition& InOutDefinition) const
+{
+	if (ObserverDefinitionOverrides.bOverrideObserverEvents)
+	{
+		InOutDefinition.Events = ObserverDefinitionOverrides.EventsOverride;
+	}
+	else
+	{
+		InOutDefinition.Events.Append(ObserverDefinitionOverrides.EventsOverride);
+	}
+	
+	if (ObserverDefinitionOverrides.bYieldExistingOverride.IsSet())
+	{
+		InOutDefinition.bYieldExisting = ObserverDefinitionOverrides.bYieldExistingOverride.GetValue();
+	}
+	
+	if (ObserverDefinitionOverrides.bOverrideObserverFlags)
+	{
+		InOutDefinition.Flags = ObserverDefinitionOverrides.FlagsOverride;
+	}
+	else
+	{
+		InOutDefinition.Flags |= ObserverDefinitionOverrides.FlagsOverride;
+	}
+}
+
 void UFlecsObserverObject::InitializeObserver(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld)
 {
 	const FString ObserverName = GetName();
 	
 	TFlecsObserverBuilder<> ObserverBuilder = InWorld->CreateObserverWithDefinition(ObserverDefinition, ObserverName);
 	BuildObserver(InWorld, ObserverBuilder);
+	ApplyObserverDefinitionOverrides(ObserverBuilder.GetObserverDefinition());
 	
 	ObserverHandle = ObserverBuilder.run([this](flecs::iter& InIterator)
 	{

@@ -14,6 +14,35 @@
 
 #include "FlecsSystemObject.generated.h"
 
+USTRUCT(BlueprintType)
+struct FFlecsSystemDefinitionOverrides
+{
+	GENERATED_BODY()
+	
+public:
+	UPROPERTY(EditAnywhere)
+	TOptional<FFlecsSystemPhaseInput> PhaseInput;
+	
+	UPROPERTY(EditAnywhere)
+	TOptional<double> IntervalOverride;
+	
+	UPROPERTY(EditAnywhere)
+	TOptional<uint32> RateOverride;
+	
+	UPROPERTY(EditAnywhere)
+	TOptional<FFlecsSystemTickSourceInput> TickSourceInputOverride;
+	
+	UPROPERTY(EditAnywhere)
+	TOptional<bool> bMultiThreadedOverride;
+	
+	UPROPERTY(EditAnywhere)
+	TOptional<bool> bImmediateOverride;
+	
+	UPROPERTY(EditAnywhere)
+	TOptional<FFlecsSystemPipelineInput> PipelineInputOverride;
+	
+}; // struct FFlecsSystemDefinitionOverrides
+
 UCLASS(Abstract, BlueprintType, NotBlueprintable, Config = Flecs, DefaultConfig)
 class UNREALFLECS_API UFlecsSystemObject : public UObject, public IFlecsSystemHandleInterface
 	, public IFlecsIteratorObjectInterface, public IFlecsObjectRegistrationInterface
@@ -59,7 +88,10 @@ public:
 
 #if WITH_EDITORONLY_DATA
 	
-	virtual NO_DISCARD bool ShouldShowInSettings() const override { return true; }
+	virtual NO_DISCARD bool ShouldShowInSettings() const override
+	{
+		return true;
+	}
 	
 #endif // WITH_EDITORONLY_DATA
 	
@@ -71,9 +103,13 @@ protected:
 		Bitmask, BitmaskEnum = "/Script/UnrealFlecs.EFlecsObjectRegistrationNetworkFlags"))
 	uint8 NetworkRegistrationFlags = static_cast<uint8>(EFlecsObjectRegistrationNetworkFlags::All);
 	
-	// Set in BuildSystem
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Flecs", meta = (AllowPrivateAccess = "true"))
+	FFlecsSystemDefinitionOverrides SystemDefinitionOverrides;
+
 	UPROPERTY(EditDefaultsOnly, Config, Category = "Flecs", meta = (AllowPrivateAccess = "true"))
 	FFlecsSystemDefinition SystemDefinition;
+	
+	void ApplySystemDefinitionOverrides(FFlecsSystemDefinition& InOutDefinition) const;
 	
 private:
 	void InitializeSystem(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld);

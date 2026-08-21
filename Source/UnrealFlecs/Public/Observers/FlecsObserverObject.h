@@ -17,6 +17,37 @@
 
 #include "FlecsObserverObject.generated.h"
 
+USTRUCT(BlueprintType)
+struct UNREALFLECS_API FFlecsObserverDefinitionOverrides
+{
+	GENERATED_BODY()
+	
+public:
+	UPROPERTY(EditAnywhere)
+	bool bOverrideObserverEvents = false;
+	
+	/**
+	 * if bOverrideObserverEvents is true, this will be used instead of the Events in the ObserverDefinition, 
+	 * otherwise the Events in the ObserverDefinition will be used and these will only be appended
+	 **/
+	UPROPERTY(EditAnywhere)
+	TArray<FFlecsObserverEventInput> EventsOverride;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TOptional<bool> bYieldExistingOverride;
+	
+	/**
+	 * if bOverrideObserverFlags is true, this will be used instead of the Flags in the ObserverDefinition, 
+	 * otherwise the Flags in the ObserverDefinition will be used
+	 **/
+	UPROPERTY(EditAnywhere)
+	bool bOverrideObserverFlags = false;
+	
+	UPROPERTY(EditAnywhere, meta = (Bitmask, BitmaskEnum = "/Script/UnrealFlecs.EFlecsObserverFlags"))
+	uint32 FlagsOverride = static_cast<uint32>(EFlecsObserverFlags::None);
+	
+}; // struct FFlecsObserverDefinitionOverrides
+
 UCLASS(Abstract, BlueprintType, NotBlueprintable, Config = Flecs, DefaultConfig)
 class UNREALFLECS_API UFlecsObserverObject : public UObject, 
 	public IFlecsObserverHandleInterface, public IFlecsIteratorObjectInterface, public IFlecsObjectRegistrationInterface
@@ -61,7 +92,12 @@ protected:
 	uint8 NetworkRegistrationFlags = static_cast<uint8>(EFlecsObjectRegistrationNetworkFlags::All);
 	
 	UPROPERTY(EditAnywhere, Config, Category = "Flecs", meta = (AllowPrivateAccess = "true"))
+	FFlecsObserverDefinitionOverrides ObserverDefinitionOverrides;
+	
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Flecs", meta = (AllowPrivateAccess = "true"))
 	FFlecsObserverDefinition ObserverDefinition;
+	
+	void ApplyObserverDefinitionOverrides(FFlecsObserverDefinition& InOutDefinition) const;
 	
 private:
 	

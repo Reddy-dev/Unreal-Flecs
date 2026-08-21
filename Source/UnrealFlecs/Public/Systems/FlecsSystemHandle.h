@@ -49,7 +49,8 @@ public:
 		return GetSystem().run(InDeltaTime, InParams);
 	}
 	
-	flecs::system_runner_fluent RunWorker(const int32 StageCurrent, const int32 StageCount, const double InDeltaTime = 0.0, void* InParams = nullptr) const
+	flecs::system_runner_fluent RunWorker(const int32 StageCurrent, const int32 StageCount, 
+		const double InDeltaTime = 0.0, void* InParams = nullptr) const
 	{
 		return GetSystem().run_worker(StageCurrent, StageCount, InDeltaTime, InParams);
 	}
