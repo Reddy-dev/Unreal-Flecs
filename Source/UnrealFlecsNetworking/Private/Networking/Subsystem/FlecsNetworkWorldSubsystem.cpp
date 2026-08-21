@@ -208,6 +208,13 @@ void UFlecsNetworkWorldSubsystem::RegisterIndividualComponentDirtyObserver(const
 		ComponentDirtyObservers.Add(PairFirstObserverHandle);
 	}
 	
+	if (!PrimaryObserverHandle.IsValid() && !PairFirstObserverHandle.IsValid())
+	{
+		UE_LOGFMT(LogFlecsCore, Warning,
+			"Failed to register dirty observer for component '%s' (Flecs ID: %s)",
+			*InDescriptor.StableName, *InDescriptor.LocalFlecsId.ToString());
+	}
+	
 	/*ComponentDirtyObservers.Add(PairSecondObserverHandle);*/
 }
 
