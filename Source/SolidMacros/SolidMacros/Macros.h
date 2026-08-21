@@ -55,6 +55,7 @@ namespace Solid
 		return std::array{str[Idxs]..., '\0'};
 	}
 
+	// ReSharper disable once CppTemplateParameterNeverUsed
 	template <typename T>
 	FORCEINLINE constexpr auto type_name_array()
 	{
@@ -124,33 +125,33 @@ namespace Solid
 #define HAS_CPP_ATTRIBUTE(x) __has_cpp_attribute(x)
 #endif // HAS_CPP_ATTRIBUTE
 
-#ifndef EXPECTS
+#ifndef SOLID_EXPECTS
 
 #if HAS_CPP_ATTRIBUTE(expects)
 
-#define EXPECTS(x) [[expects : x]]
+#define SOLID_EXPECTS(x) [[expects : x]]
 
 #else // #if HAS_CPP_ATTRIBUTE(expects)
 
-#define EXPECTS(x)
+#define SOLID_EXPECTS(x)
 
 #endif // #else HAS_CPP_ATTRIBUTE(expects)
 
-#endif // EXPECTS
+#endif // SOLID_EXPECTS
 
-#ifndef ENSURES
+#ifndef SOLID_ENSURES
 
 #if HAS_CPP_ATTRIBUTE(ensures)
 
-#define ENSURES(x) [[ensures : x]]
+#define SOLID_ENSURES(x) [[ensures : x]]
 
 #else // #if HAS_CPP_ATTRIBUTE(ensures)
 
-#define ENSURES(x)
+#define SOLID_ENSURES(x)
 
 #endif // #else HAS_CPP_ATTRIBUTE(ensures)
 
-#endif // ENSURES
+#endif // SOLID_ENSURES
 
 #ifndef CLANG_ATTRIBUTE
 #define CLANG_ATTRIBUTE __attribute__
@@ -472,10 +473,6 @@ namespace Solid
 #define nameof(x) Solid::type_name<x>()
 #endif // nameof
 
-#ifndef NAME_OF
-#define NAME_OF(x) nameof(x)
-#endif // NAME_OF
-
 // Generic Output: "FunctionName"
 #ifndef FUNCTION_NAME
 
@@ -493,14 +490,6 @@ namespace Solid
 #ifndef FUNCTION_SIGNATURE
 #define FUNCTION_SIGNATURE __FUNCSIG__
 #endif // FUNCTION_SIGNATURE
-
-#ifndef FUNCTION_SIG
-#define FUNCTION_SIG FUNCTION_SIGNATURE
-#endif // FUNCTION_SIG
-
-#ifndef FUNC_SIG
-#define FUNC_SIG FUNCTION_SIGNATURE
-#endif // FUNC_SIG
 
 #ifndef FUNC_SIGNATURE
 #define FUNC_SIGNATURE FUNCTION_SIGNATURE
@@ -524,9 +513,9 @@ namespace Solid
 
 #endif // ASSUME
 
-#ifndef FALLTHROUGH
-#define FALLTHROUGH _FALLTHROUGH
-#endif // FALLTHROUGH
+#ifndef SOLID_FALLTHROUGH
+#define SOLID_FALLTHROUGH _FALLTHROUGH
+#endif // SOLID_FALLTHROUGH
 
 #ifndef OPTIMIZE_FOR_SYNC
 #define OPTIMIZE_FOR_SYNC [[optimize_for_synchronized]]
@@ -536,63 +525,35 @@ namespace Solid
 #define CARRIES_DEPENDENCY [[carries_dependency]]
 #endif // CARRIES_DEPENDENCY
 
-#ifndef FLATTEN
+#ifndef SOLID_FLATTEN
 
 	#if IS_MSVC
 
-	#define FLATTEN [[msvc::flatten]]
+	#define SOLID_FLATTEN [[msvc::flatten]]
 
 	#elif IS_GNU || IS_CLANG
 
-	#define FLATTEN __attribute__((flatten))
+	#define SOLID_FLATTEN __attribute__((flatten))
 
 	#else // IS_GNU || IS_CLANG
 
-	#define FLATTEN
+	#define SOLID_FLATTEN
 
 	#endif // IS_MSVC
 
-#endif // FLATTEN
+#endif // SOLID_FLATTEN
 
-#ifndef INTRINSIC
-#define INTRINSIC [[msvc::intrinsic]]
-#endif // INTRINSIC
+#ifndef SOLID_FILE_NAME
+#define SOLID_FILE_NAME __FILE__
+#endif // SOLID_FILE_NAME
 
-#ifndef FILE_NAME
-#define FILE_NAME __FILE__
-#endif // FILE_NAME
+#ifndef SOLID_LINE_NUMBER
+#define SOLID_LINE_NUMBER __LINE__
+#endif // SOLID_LINE_NUMBER
 
-#ifndef LINE_NUMBER
-#define LINE_NUMBER __LINE__
-#endif // LINE_NUMBER
-
-#ifndef TIME_STAMP
-#define TIME_STAMP __TIME__
-#endif // TIME_STAMP
-
-#ifndef COUNTER
-#define COUNTER __COUNTER__
-#endif // COUNTER
-
-#if defined(__GNUC__) // JETBRAINS_IDE
-
-#ifndef FORMAT
-#define FORMAT [[gnu::format]]
-#endif // FORMAT
-
-#elif defined(__clang__) // defined(__GNUC__)
-
-#ifndef FORMAT
-#define FORMAT [[clang::format]]
-#endif // FORMAT
-
-#else // defined(__clang__)
-
-#ifndef FORMAT
-#define FORMAT
-#endif // FORMAT
-
-#endif // JETBRAINS_IDE
+#ifndef SOLID_TIME_STAMP
+#define SOLID_TIME_STAMP __TIME__
+#endif // SOLID_TIME_STAMP
 
 #ifndef JETBRAINS_GUARD
 #define JETBRAINS_GUARD [[jetbrains::guard]]
