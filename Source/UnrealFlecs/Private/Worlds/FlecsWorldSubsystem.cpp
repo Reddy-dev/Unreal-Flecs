@@ -80,8 +80,10 @@ void UFlecsWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 
 void UFlecsWorldSubsystem::Deinitialize()
 {
-	if (IsValid(DefaultWorld))
+	if LIKELY_IF(IsValid(DefaultWorld))
 	{
+		OnWorldDestroyedDelegate.Broadcast(DefaultWorld);
+		
 		DefaultWorld->Remove<FFlecsWorldPtrComponent>();
 		DefaultWorld->Remove<FUWorldPtrComponent>();
 		DefaultWorld->DestroyWorld();
