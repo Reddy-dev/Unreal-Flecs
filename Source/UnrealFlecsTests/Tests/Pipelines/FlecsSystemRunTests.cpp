@@ -125,15 +125,8 @@ public:
 	{
 		static constexpr double ManualDeltaTime = 1.0 / 30.0;
 
-		UFlecsStartsDisabledSystemTestObject* SystemCDO =
-			GetMutableDefault<UFlecsStartsDisabledSystemTestObject>();
-		const bool bPreviousStartsDisabled = SystemCDO->GetStartsDisabled();
-		SystemCDO->SetStartsDisabled(true);
-
 		UFlecsStartsDisabledSystemTestObject* SystemObject =
 			World()->RegisterFlecsObject<UFlecsStartsDisabledSystemTestObject>();
-
-		SystemCDO->SetStartsDisabled(bPreviousStartsDisabled);
 
 		ASSERT_THAT(IsNotNull(SystemObject));
 		ASSERT_THAT(IsTrue(SystemObject->GetSystemHandle().IsValid()));

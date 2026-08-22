@@ -14,14 +14,9 @@ class UNREALFLECSTESTS_API UFlecsStartsDisabledSystemTestObject final : public U
 	GENERATED_BODY()
 
 public:
-	void SetStartsDisabled(const bool bInStartsDisabled)
+	UFlecsStartsDisabledSystemTestObject()
 	{
-		bStartsDisabled = bInStartsDisabled;
-	}
-
-	NO_DISCARD bool GetStartsDisabled() const
-	{
-		return bStartsDisabled;
+		bStartsDisabled = true;
 	}
 
 	NO_DISCARD int32 GetRunCount() const
