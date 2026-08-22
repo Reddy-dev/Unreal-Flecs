@@ -68,13 +68,19 @@ NETWORK_TEST_CLASS(FlecsDisabledSystemPIETests,
 							++State.RunCount;
 						}
 					});
-				State.DisabledSystem.Add(flecs::Disabled);
+				
+				State.DisabledSystem.Disable();
 			})
 			.ThenServer(TEXT("Disabled system remains outside the PIE pipeline after a world tick"), [this](FState& State)
 			{
 				ASSERT_THAT(IsTrue(State.DisabledSystem.IsValid()));
 				ASSERT_THAT(IsTrue(State.DisabledSystem.Has(flecs::Disabled)));
 				ASSERT_THAT(AreEqual(0, State.RunCount));
+				
+				State.DisabledSystem.Run();
+				ASSERT_THAT(IsTrue(State.DisabledSystem.IsValid()));
+				ASSERT_THAT(IsTrue(State.DisabledSystem.Has(flecs::Disabled)));
+				ASSERT_THAT(AreEqual(1, State.RunCount));
 			});
 	}
 }; // FlecsDisabledSystemPIETests

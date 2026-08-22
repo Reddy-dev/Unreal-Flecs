@@ -123,4 +123,9 @@ void UFlecsSystemObject::InitializeSystem(const TSolidNotNull<const UFlecsWorldI
 	});
 	
 	SystemHandle.SetPair<FFlecsUObjectComponent, FFlecsUObjectTag>(FFlecsUObjectComponent(this));
+	
+	if (bStartsDisabled)
+	{
+		SystemHandle.Disable();
+	}
 }

@@ -109,6 +109,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Config, Category = "Flecs", meta = (AllowPrivateAccess = "true"))
 	FFlecsSystemDefinition SystemDefinition;
 	
+	// Used for systems that are only rly manually run
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flecs", meta = (AllowPrivateAccess = "true"))
+	uint8 bStartsDisabled : 1 = false;
+	
 	void ApplySystemDefinitionOverrides(FFlecsSystemDefinition& InOutDefinition) const;
 	
 private:

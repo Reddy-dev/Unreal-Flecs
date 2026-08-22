@@ -8,7 +8,9 @@
 #include "Pipelines/FlecsOutsideMainLoopTag.h"
 #include "Systems/FlecsPhasesType.h"
 #include "Systems/FlecsSystemHandle.h"
+#include "UObject/UObjectGlobals.h"
 #include "Worlds/FlecsWorld.h"
+#include "UnrealFlecsTests/Tests/Types/FlecsSystemObjectTestTypes.h"
 
 FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(UnrealFlecsSystemRunTests,
 	"UnrealFlecs.Pipelines.SystemRun",
@@ -117,6 +119,39 @@ public:
 		TickWorld();
 
 		ASSERT_THAT(AreEqual(1, RunCount));
+	}
+
+	TEST_METHOD(ObjectStartsDisabled_DisablesRegisteredSystemUntilManuallyRun)
+	{
+		static constexpr double ManualDeltaTime = 1.0 / 30.0;
+
+		UFlecsStartsDisabledSystemTestObject* SystemCDO =
+			GetMutableDefault<UFlecsStartsDisabledSystemTestObject>();
+		const bool bPreviousStartsDisabled = SystemCDO->GetStartsDisabled();
+		SystemCDO->SetStartsDisabled(true);
+
+		UFlecsStartsDisabledSystemTestObject* SystemObject =
+			World()->RegisterFlecsObject<UFlecsStartsDisabledSystemTestObject>();
+
+		SystemCDO->SetStartsDisabled(bPreviousStartsDisabled);
+
+		ASSERT_THAT(IsNotNull(SystemObject));
+		ASSERT_THAT(IsTrue(SystemObject->GetSystemHandle().IsValid()));
+		ASSERT_THAT(IsTrue(SystemObject->GetSystemHandle().Has(flecs::Disabled)));
+		ASSERT_THAT(AreEqual(0, SystemObject->GetRunCount()));
+
+		TickWorld();
+
+		ASSERT_THAT(AreEqual(0, SystemObject->GetRunCount()));
+
+		SystemObject->RunSystem(ManualDeltaTime);
+
+		ASSERT_THAT(AreEqual(1, SystemObject->GetRunCount()));
+		ASSERT_THAT(IsTrue(SystemObject->GetSystemHandle().Has(flecs::Disabled)));
+
+		TickWorld();
+
+		ASSERT_THAT(AreEqual(1, SystemObject->GetRunCount()));
 	}
 }; // UnrealFlecsSystemRunTests
 
