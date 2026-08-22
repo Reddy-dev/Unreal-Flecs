@@ -27,8 +27,8 @@ void UE::Flecs::FFlecsComponentRegistrationHooks::InstallReplicationHooks(
 {
 	solid_cassume(InOwner);
 	
-	solid_check(InRegister);
-	solid_check(InMark);
+	solid_cassume(InRegister);
+	solid_cassume(InMark);
 
 	FReplicationHooks& Hooks = GetReplicationHooks();
 	solid_cassumef(!Hooks.Owner || Hooks.Owner == InOwner,
