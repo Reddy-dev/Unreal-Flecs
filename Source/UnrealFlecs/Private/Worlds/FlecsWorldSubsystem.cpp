@@ -113,7 +113,7 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	
 	UE::Flecs::FFlecsModuleRegistry::Get().InitializeRegisteredModules(DefaultWorld.Get());
 
-	TConstArrayView<TObjectPtr<UObject>> InGameLoops = Settings.GameLoops;
+	const TConstArrayView<TObjectPtr<UObject>> InGameLoops = Settings.GameLoops;
 
 	TArray<TScriptInterface<IFlecsGameLoopInterface>>  DuplicatedGameLoops;
 	DuplicatedGameLoops.Reserve(InGameLoops.Num());
@@ -253,7 +253,7 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	{
 		DefaultWorld->SetTaskThreads(ThreadAllocCount);
 	}
-	else
+	else if (ThreadAllocType == EFlecsThreadAllocationType::RunnableThreads)
 	{
 		DefaultWorld->SetThreads(ThreadAllocCount);
 	}

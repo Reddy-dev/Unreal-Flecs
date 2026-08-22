@@ -86,7 +86,7 @@ void UFlecsObserverObject::InitializeObserver(const TSolidNotNull<UFlecsWorldInt
 	
 	ObserverHandle = ObserverBuilder.run([this](flecs::iter& InIterator)
 	{
-		UFlecsWorldInterfaceObject* IteratorWorld = nullptr;
+		UFlecsWorldInterfaceObject* IteratorWorld;
 		
 		if (InIterator.world().is_stage())
 		{
@@ -96,6 +96,8 @@ void UFlecsObserverObject::InitializeObserver(const TSolidNotNull<UFlecsWorldInt
 		{
 			IteratorWorld = GetFlecsWorld();
 		}
+		
+		solid_cassume(IteratorWorld);
 		
 		this->RunIterator(IteratorWorld, InIterator);
 	});
