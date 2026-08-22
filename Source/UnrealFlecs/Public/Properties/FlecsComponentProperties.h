@@ -205,9 +205,16 @@ public:
 
 	static constexpr bool WithAddReferencedObjects = false;
 	static constexpr bool RegisterMemberProperties = true;
+	
 	static constexpr bool RegisterWithUnrealModule = std::is_void<ChildOf>::value;
+	static constexpr bool RegisterWithUnrealPlugin = false;
 
 	static FName GetOwningModule()
+	{
+		return NAME_None;
+	}
+	
+	static FName GetOwningPlugin()
 	{
 		return NAME_None;
 	}
@@ -321,6 +328,9 @@ public:
 
 	UPROPERTY()
 	uint32 bRegisterWithModule : 1 = false;
+	
+	UPROPERTY()
+	uint32 bRegisterWithPlugin : 1 = false;
 
 	UPROPERTY()
 	TArray<FFlecsQueryGeneratorInput> WithTypes;
@@ -339,6 +349,9 @@ public:
 
 	UPROPERTY()
 	FName OwningModule;
+	
+	UPROPERTY()
+	FName OwningPlugin;
 
 	UE::Flecs::FFlecsComponentRegistrationFunction RegistrationFunction;
 	UE::Flecs::FFlecsComponentPropertiesFunction PropertiesFunction;
@@ -376,7 +389,9 @@ public:
 			.bWithAddReferencedObjects = TFlecsComponentTraits<T>::WithAddReferencedObjects,
 			.bRegisterMemberProperties = TFlecsComponentTraits<T>::RegisterMemberProperties,
 			.bRegisterWithModule = TFlecsComponentTraits<T>::RegisterWithUnrealModule,
-			.OwningModule = TFlecsComponentTraits<T>::GetOwningModule()
+			.bRegisterWithPlugin = TFlecsComponentTraits<T>::RegisterWithUnrealPlugin,
+			.OwningModule = TFlecsComponentTraits<T>::GetOwningModule(),
+			.OwningPlugin = TFlecsComponentTraits<T>::GetOwningPlugin()
 		};
 
 		UE::Flecs::internal::ForEachInTuple<typename TFlecsComponentTraits<T>::WithTypes>([&Definition]<typename TWithType>()
@@ -686,7 +701,7 @@ namespace UE::Flecs::Private
 	struct TFlecsComponentPropertiesRegistrar
 	{
 	public:
-		TFlecsComponentPropertiesRegistrar(const char* InModuleName = nullptr)
+		TFlecsComponentPropertiesRegistrar(const char* InModuleName = nullptr, const char* InPluginName = nullptr)
 		{
 			FCoreDelegates::GetOnPostEngineInit().AddLambda([InModuleName]()
 			{
@@ -719,11 +734,26 @@ namespace UE::Flecs::Private
 
 } // namespace UE::Flecs::Private
 
-#define INTERNAL_REGISTER_FLECS_COMPONENT_IMPL(Name) \
+#define _INTERNAL_REGISTER_FLECS_COMPONENT_1(Name) \
 	namespace \
 	{ \
 		static UE::Flecs::Private::TFlecsComponentPropertiesRegistrar<Name> FlecsComponentPropertiesRegistrarInstance_##Name { UE_MODULE_NAME }; \
 	}
+
+#define _INTERNAL_REGISTER_FLECS_COMPONENT_2(Name) \
+	namespace \
+	{ \
+		static UE::Flecs::Private::TFlecsComponentPropertiesRegistrar<Name> FlecsComponentPropertiesRegistrarInstance_##Name { UE_MODULE_NAME, UE_PLUGIN_NAME }; \
+	}
+
+#ifdef UE_PLUGIN_NAME
+#define _INTERNAL_FLECS_HAS_PLUGIN_NAME 1
+#else // UE_PLUGIN_NAME
+#define _INTERNAL_FLECS_HAS_PLUGIN_NAME 0
+#endif // UE_PLUGIN_NAME
+
+#define INTERNAL_REGISTER_FLECS_COMPONENT_IMPL(Name) \
+	UE_IF(_INTERNAL_FLECS_HAS_PLUGIN_NAME, _INTERNAL_REGISTER_FLECS_COMPONENT_2, _INTERNAL_REGISTER_FLECS_COMPONENT_1)(Name)
 
 #define REGISTER_FLECS_COMPONENT(ComponentType, ...) \
 	INTERNAL_REGISTER_FLECS_COMPONENT_IMPL(ComponentType)
