@@ -25,12 +25,13 @@ void UE::Flecs::FFlecsComponentRegistrationHooks::InstallReplicationHooks(
 	const FFlecsReplicationComponentRegistrationFunction InRegister,
 	const FFlecsReplicationComponentMarkerFunction InMark)
 {
-	solid_check(InOwner);
+	solid_cassume(InOwner);
+	
 	solid_check(InRegister);
 	solid_check(InMark);
 
 	FReplicationHooks& Hooks = GetReplicationHooks();
-	solid_checkf(!Hooks.Owner || Hooks.Owner == InOwner,
+	solid_cassumef(!Hooks.Owner || Hooks.Owner == InOwner,
 		TEXT("Replication component hooks are already installed by another module"));
 
 	Hooks.Owner = InOwner;

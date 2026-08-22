@@ -60,9 +60,9 @@ void UFlecsSystemObject::SetContext(void* InContext) const
 
 void UFlecsSystemObject::ApplySystemDefinitionOverrides(FFlecsSystemDefinition& InOutDefinition) const
 {
-	if (SystemDefinitionOverrides.PhaseInput.IsSet())
+	if (SystemDefinitionOverrides.PhaseInputOverride.IsSet())
 	{
-		InOutDefinition.PhaseInput = SystemDefinitionOverrides.PhaseInput.GetValue();
+		InOutDefinition.PhaseInput = SystemDefinitionOverrides.PhaseInputOverride.GetValue();
 	}
 	
 	if (SystemDefinitionOverrides.IntervalOverride.IsSet())

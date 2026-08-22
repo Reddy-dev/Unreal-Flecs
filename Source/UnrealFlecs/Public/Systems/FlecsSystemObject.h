@@ -21,7 +21,7 @@ struct FFlecsSystemDefinitionOverrides
 	
 public:
 	UPROPERTY(EditAnywhere)
-	TOptional<FFlecsSystemPhaseInput> PhaseInput;
+	TOptional<FFlecsSystemPhaseInput> PhaseInputOverride;
 	
 	UPROPERTY(EditAnywhere)
 	TOptional<double> IntervalOverride;

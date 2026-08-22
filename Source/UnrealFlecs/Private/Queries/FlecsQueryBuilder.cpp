@@ -28,13 +28,16 @@ FFlecsQuery FFlecsQueryBuilder::Build() const
 		
 		flecs::query_builder<> Builder = flecs::query_builder<>(FlecsWorld->GetNativeFlecsWorld(), QueryEntity);
 		FFlecsQueryBuilderView BuilderView = MakeQueryBuilderView_Internal(Builder);
+		
 		Definition.Apply(FlecsWorld.Get(), BuilderView);
 		return FFlecsQuery(Builder.build());
 	}
 	else
 	{
-		flecs::query_builder<> Builder = flecs::query_builder<>(FlecsWorld->GetNativeFlecsWorld(), StringCast<char>(*QueryName).Get());
+		flecs::query_builder<> Builder = flecs::query_builder<>(FlecsWorld->GetNativeFlecsWorld(),
+			StringCast<char>(*QueryName).Get());
 		FFlecsQueryBuilderView BuilderView = MakeQueryBuilderView_Internal(Builder);
+		
 		Definition.Apply(FlecsWorld.Get(), BuilderView);
 		return FFlecsQuery(Builder.build());
 	}

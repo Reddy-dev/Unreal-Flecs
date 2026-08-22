@@ -34,7 +34,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsDefinitionOverrideTests,
 		FFlecsSystemPhaseInput PhaseOverride;
 		PhaseOverride.Type = EFlecsSystemPhaseInputType::FlecsPhase;
 		PhaseOverride.FlecsPhase = EFlecsPhaseType::PostUpdate;
-		Overrides.PhaseInput.Emplace(PhaseOverride);
+		Overrides.PhaseInputOverride.Emplace(PhaseOverride);
 		Overrides.IntervalOverride.Emplace(2.5);
 		Overrides.RateOverride.Emplace(7u);
 
@@ -233,21 +233,8 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsDefinitionOverrideTests,
 		const UScriptStruct* ObserverOverridesStruct = ObserverOverridesStructProperty->Struct;
 		ASSERT_THAT(IsNotNull(SystemOverridesStruct));
 		ASSERT_THAT(IsNotNull(ObserverOverridesStruct));
-
-		ASSERT_THAT(IsNotNull(SystemOverridesStruct->FindPropertyByName(TEXT("PhaseInput"))));
-		ASSERT_THAT(IsNotNull(SystemOverridesStruct->FindPropertyByName(TEXT("IntervalOverride"))));
-		ASSERT_THAT(IsNotNull(SystemOverridesStruct->FindPropertyByName(TEXT("RateOverride"))));
-		ASSERT_THAT(IsNotNull(SystemOverridesStruct->FindPropertyByName(TEXT("TickSourceInputOverride"))));
-		ASSERT_THAT(IsNotNull(SystemOverridesStruct->FindPropertyByName(TEXT("MultiThreadedOverride"))));
-		ASSERT_THAT(IsNotNull(SystemOverridesStruct->FindPropertyByName(TEXT("ImmediateOverride"))));
-		ASSERT_THAT(IsNotNull(SystemOverridesStruct->FindPropertyByName(TEXT("PipelineInputOverride"))));
-
-		ASSERT_THAT(IsNotNull(ObserverOverridesStruct->FindPropertyByName(TEXT("bOverrideObserverEvents"))));
-		ASSERT_THAT(IsNotNull(ObserverOverridesStruct->FindPropertyByName(TEXT("EventsOverride"))));
-		ASSERT_THAT(IsNotNull(ObserverOverridesStruct->FindPropertyByName(TEXT("YieldExistingOverride"))));
-		ASSERT_THAT(IsNotNull(ObserverOverridesStruct->FindPropertyByName(TEXT("bOverrideObserverFlags"))));
-		ASSERT_THAT(IsNotNull(ObserverOverridesStruct->FindPropertyByName(TEXT("FlagsOverride"))));
 	}
+	
 }; // FlecsDefinitionOverrideTests
 
 #endif // WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS

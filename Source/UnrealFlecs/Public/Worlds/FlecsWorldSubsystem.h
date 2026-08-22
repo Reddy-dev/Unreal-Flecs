@@ -24,6 +24,7 @@ class UFlecsWorld;
 DECLARE_MULTICAST_DELEGATE_OneParam(FFlecsOnWorldCreated, TSolidNotNull<UFlecsWorld*>);
 DECLARE_MULTICAST_DELEGATE_OneParam(FFlecsOnWorldBeginPlay, TSolidNotNull<UWorld*>);
 DECLARE_MULTICAST_DELEGATE_OneParam(FFlecsOnWorldDestroyed, TSolidNotNull<UFlecsWorld*>);
+
 DECLARE_MULTICAST_DELEGATE_OneParam(FFlecsOnWorldInitializedGlobal, TSolidNotNull<UFlecsWorld*>);
 
 namespace UE::Flecs
