@@ -79,6 +79,8 @@ Scripts/*
 !Scripts/*.json
 !Scripts/*.md
 !Scripts/*.py
+!Scripts/FlecsTestConversionIncludes/
+!Scripts/FlecsTestConversionIncludes/**
 !Scripts/ForkTests/
 !Scripts/ForkTests/**
 !Scripts/Tests/
