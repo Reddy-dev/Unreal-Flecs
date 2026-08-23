@@ -16,11 +16,13 @@ namespace UE::Flecs
 
 	public:
 		void RegisterUnrealFlecsModule(const FName& ModuleName);
+		void RegisterUnrealFlecsPlugin(const FName& InPluginName);
 		
 		void InitializeRegisteredModules(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld) const;
 		
 	private:
 		TSet<FName> RegisteredModules;
+		TSet<FName> RegisteredPlugins;
 		
 	}; // struct FFlecsModuleRegistry
 	

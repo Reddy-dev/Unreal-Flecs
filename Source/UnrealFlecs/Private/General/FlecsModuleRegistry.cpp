@@ -22,6 +22,15 @@ void UE::Flecs::FFlecsModuleRegistry::RegisterUnrealFlecsModule(const FName& Mod
 	RegisteredModules.Add(ModuleName);
 }
 
+void UE::Flecs::FFlecsModuleRegistry::RegisterUnrealFlecsPlugin(const FName& InPluginName)
+{
+	solid_checkf(!InPluginName.IsNone(), TEXT("ModuleName cannot be None when registering an Unreal Flecs module"));
+	solid_checkf(!RegisteredModules.Contains(InPluginName), 
+		TEXT("Module %s is already registered in the Unreal Flecs module registry"), *InPluginName.ToString());
+	
+	RegisteredPlugins.Add(InPluginName);
+}
+
 void UE::Flecs::FFlecsModuleRegistry::InitializeRegisteredModules(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld) const
 {
 	InFlecsWorld->RegisterComponentType<FUnrealFlecsModuleTag>()
