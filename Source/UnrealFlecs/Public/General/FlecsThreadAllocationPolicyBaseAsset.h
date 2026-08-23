@@ -29,7 +29,8 @@ class UNREALFLECS_API UFlecsThreadAllocationPolicyBaseAsset : public UPrimaryDat
 
 public:
 	virtual TTuple<EFlecsThreadAllocationType, int32> GetThreadCountAllocation(const TSolidNotNull<const UFlecsWorld*> InWorld) const
-		PURE_VIRTUAL(UFlecsThreadAllocationPolicyBase::GetThreadAllocationForSystem, return TTuple<EFlecsThreadAllocationType, uint32>(EFlecsThreadAllocationType::RunnableThreads, 1););
+		PURE_VIRTUAL(UFlecsThreadAllocationPolicyBase::GetThreadAllocationForSystem, 
+			return TTuple<EFlecsThreadAllocationType, uint32>(EFlecsThreadAllocationType::RunnableThreads, 1););
 	
 	virtual FPrimaryAssetId GetPrimaryAssetId() const override;
 	

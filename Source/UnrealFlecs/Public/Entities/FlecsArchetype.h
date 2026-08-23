@@ -5,8 +5,11 @@
 #include "flecs.h"
 
 #include "CoreMinimal.h"
-#include "FlecsId.h"
+
 #include "SolidMacros/Macros.h"
+
+#include "FlecsId.h"
+
 #include "FlecsArchetype.generated.h"
 
 /**
