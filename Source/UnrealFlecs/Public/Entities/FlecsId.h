@@ -54,7 +54,7 @@ struct UNREALFLECS_API FFlecsId
     {
         return FFlecsId(flecs::entity::null().id());
     }
-
+    
 public:
     FORCEINLINE FFlecsId() = default;
 
