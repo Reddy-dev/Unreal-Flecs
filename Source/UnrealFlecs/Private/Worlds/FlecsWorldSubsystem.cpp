@@ -370,7 +370,7 @@ void UFlecsWorldSubsystem::ListenBeginPlay(const FFlecsOnWorldBeginPlay::FDelega
 void UFlecsWorldSubsystem::RegisterAllGameplayTags(const TSolidNotNull<UFlecsWorld*> InFlecsWorld)
 {
 	InFlecsWorld->ObtainTypedEntity<FFlecsGameplayTagManagerEntity>()
-	            .Add(flecs::Module);
+		.Add(flecs::Module);
 
 	UGameplayTagsManager& GameplayTagsManager = UGameplayTagsManager::Get();
 

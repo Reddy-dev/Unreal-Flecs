@@ -56,8 +56,8 @@ void FFlecsQueryGroupByExpression::Apply(const TSolidNotNull<const UFlecsWorldIn
 			solid_cassumef(ContextData != nullptr, TEXT("ContextData is nullptr"));
 			
 			const TSolidNotNull<UFlecsWorldInterfaceObject*> World = UFlecsWorldInterfaceObject::GetWorldInterfaceFromFlecsWorld(InWorld);
-			return ContextData->Definition->GetGroupByFunction()(World, FFlecsTableHandle(InWorld, InTable), 
-				FFlecsId(InId), ContextData->UserContext);
+			return ContextData->Definition->GetGroupByFunction()
+				(World, FFlecsTableHandle(InWorld, InTable), FFlecsId(InId), ContextData->UserContext);
 		});
 		
 		if (GroupByCallbackDefinition.GetValue()->GetCreateGroupFunction() != nullptr)
