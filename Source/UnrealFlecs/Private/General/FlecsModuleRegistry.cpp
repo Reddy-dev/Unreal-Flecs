@@ -43,14 +43,12 @@ void UE::Flecs::FFlecsModuleRegistry::InitializeRegisteredModules(const TSolidNo
 	for (const FName& PluginName : RegisteredPlugins)
 	{
 		InFlecsWorld->CreateEntity(PluginName.ToString())
-			.Add(flecs::Module)
 			.Add<FUnrealFlecsPluginTag>();
 	}
 	
 	for (const FName& ModuleName : RegisteredModules)
 	{
 		InFlecsWorld->CreateEntity(ModuleName.ToString())
-			.Add(flecs::Module)
 			.Add<FUnrealFlecsModuleTag>();
 	}
 }
