@@ -644,7 +644,7 @@ public:
 					RegisteredComponentHandle = InFlecsWorld->RegisterComponentType<T>();
 				}
 
-				if (ScopeId.IsValid())
+				if LIKELY_IF(ScopeId.IsValid())
 				{
 					const FFlecsEntityView ScopeEntity = ScopeId.ToHandle<FFlecsEntityView>(InFlecsWorld->GetNativeFlecsWorld());
 					RegisteredComponentHandle.AddPair(flecs::ChildOf, ScopeEntity);
@@ -655,7 +655,7 @@ public:
 		{
 			Definition.RegistrationFunction = [](const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsComponentPropertiesDefinition& ComponentProperties)
 			{
-				// Do Nothing, user will manually call RegisterComponentType in this case
+				// Do nothing, user will manually call RegisterComponentType in this case
 			};
 		}
 

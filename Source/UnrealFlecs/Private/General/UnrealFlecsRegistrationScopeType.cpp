@@ -38,7 +38,7 @@ FName UE::Flecs::Registration::ResolveScopeTypeName(
 
 				if UNLIKELY_IF(!OwningPlugin)
 				{
-					UE_LOGFMT(LogFlecsCore, Error,
+					UE_LOGFMT(LogFlecsCore, Warning,
 						"Could not infer a plugin scope for registered object {ObjectName}: native module {ModuleName} has no owning plugin. Set an explicit scope name or use another scope type.",
 						InObject->GetFName(), ModuleName);
 					return NAME_None;
@@ -49,7 +49,7 @@ FName UE::Flecs::Registration::ResolveScopeTypeName(
 
 		case EUnrealFlecsRegistrationScopeType::CustomNameIdentifier:
 		case EUnrealFlecsRegistrationScopeType::CustomSymbolIdentifier:
-			UE_LOGFMT(LogFlecsCore, Error,
+			UE_LOGFMT(LogFlecsCore, Warning,
 				"Registered object {ObjectName} uses scope type {ScopeType}, which requires an explicit scope name.",
 				InObject->GetFName(), StaticEnum<EUnrealFlecsRegistrationScopeType>()->GetNameStringByValue(static_cast<int64>(InScopeType)));
 				
@@ -70,7 +70,12 @@ FFlecsId UE::Flecs::Registration::ResolveRegistrationScopeToId(
 	const FName& ScopeName, 
 	const EUnrealFlecsRegistrationScopeType InScopeType)
 {
-	if (InScopeType == EUnrealFlecsRegistrationScopeType::None)
+	if UNLIKELY_IF(InScopeType == EUnrealFlecsRegistrationScopeType::None)
+	{
+		return FFlecsId::Null();
+	}
+	
+	if UNLIKELY_IF(ScopeName.IsNone())
 	{
 		return FFlecsId::Null();
 	}
