@@ -35,6 +35,7 @@ public class UnrealFlecs : ModuleRules
 			{
 				"CoreUObject",
 				"Engine",
+				"Projects",
 				"Slate",
 				"SlateCore"
 			}

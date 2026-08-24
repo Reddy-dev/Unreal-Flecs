@@ -829,9 +829,9 @@ class UNREALFLECSTESTS_API UFlecsServerOnlyObjectRegistrationTestObject final : 
 	GENERATED_BODY()
 
 public:
-	virtual bool ShouldRegisterWithModule() const override
+	virtual EUnrealFlecsRegistrationScopeType GetRegistrationScopeType() const override
 	{
-		return false;
+		return EUnrealFlecsRegistrationScopeType::None;
 	}
 	
 	virtual bool ShouldAutoRegisterFromCDO() const override
@@ -853,9 +853,9 @@ class UNREALFLECSTESTS_API UFlecsClientOnlyObjectRegistrationTestObject final : 
 	GENERATED_BODY()
 
 public:
-	virtual bool ShouldRegisterWithModule() const override
+	virtual EUnrealFlecsRegistrationScopeType GetRegistrationScopeType() const override
 	{
-		return false;
+		return EUnrealFlecsRegistrationScopeType::None;
 	}
 	
 	virtual bool ShouldAutoRegisterFromCDO() const override

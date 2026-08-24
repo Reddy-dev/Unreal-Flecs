@@ -344,78 +344,40 @@ void UFlecsWorld::CallBeginPlayForRegisteredObjects()
 {
 	for (const TScriptInterface<IFlecsObjectRegistrationInterface>& RegisteredObject : RegisteredObjects)
 	{
-		const EUnrealFlecsRegistrationScopeType RegistrationScopeType = RegisteredObject->GetRegistrationScopeType();
-		const bool bShouldRegisterWithScope = RegistrationScopeType != EUnrealFlecsRegistrationScopeType::None;
+		const TSolidNotNull<const UObject*> RegisteredObjectUObject = RegisteredObject.GetObject();
+		const TSolidNotNull<IFlecsObjectRegistrationInterface*> RegisteredInterface = RegisteredObject.GetInterface();
 		
-		FFlecsEntityHandle ScopeEntity;
-		
-		if (bShouldRegisterWithScope)
-		{
-			FName ScopeName = RegisteredObject->GetScopeName();
-			const FString PackageName = RegisteredObject.GetObject()->GetClass()->GetOuterUPackage()->GetName();
-			
-			if (RegistrationScopeType == EUnrealFlecsRegistrationScopeType::Module)
+		ExecuteInRegistrationScope(RegisteredObjectUObject, RegisteredInterface,
+			[this, RegisteredInterface]()
 			{
-				if (ScopeName.IsNone())
-				{
-					ScopeName = FName(*FPackageName::GetShortName(PackageName));			
-				}
-				
-				ScopeEntity = GetFlecsModule(ScopeName);
-			
-				if UNLIKELY_IF(!ScopeEntity.IsValid())
-				{
-					UE_LOGFMT(LogFlecsWorld, Warning,
-						"Module {ModuleName} does not exist or is not a valid flecs entity, registered object {ObjectName} will not be registered with the module",
-						*ScopeName.ToString(), *RegisteredObject.GetObject()->GetName());
-			
-					ScopeEntity = FFlecsEntityHandle::GetNullHandle();
-				}
-			}
-			else if (RegistrationScopeType == EUnrealFlecsRegistrationScopeType::Plugin)
-			{
-				IPluginManager& PluginManager = IPluginManager::Get();
-				
-				if (ScopeName.IsNone())
-				{
-					ScopeName = FName(PluginManager.GetModuleOwnerPlugin(FName(*FPackageName::GetShortName(PackageName)))->GetName());
-				}
-				
-				ScopeEntity = GetFlecsPlugin(ScopeName);
-			}
-			else if (RegistrationScopeType == EUnrealFlecsRegistrationScopeType::CustomNameIdentifier)
-			{
-				if LIKELY_IF(ensure(!ScopeName.IsNone()))
-				{
-					ScopeEntity = LookupEntity(ScopeName.ToString());
-				}
-			}
-			else if (RegistrationScopeType == EUnrealFlecsRegistrationScopeType::CustomSymbolIdentifier)
-			{
-				if LIKELY_IF(ensure(!ScopeName.IsNone()))
-				{
-					ScopeEntity = LookupEntityBySymbol_Internal(ScopeName.ToString());
-				}
-			}
-			else
-			{
-				// should be unreachable
-				solid_cassume(false);
-			}
-			
-		}
-		
-		FFlecsId OldScope = FFlecsId::Null();
-		
-		if (bShouldRegisterWithScope && ScopeEntity.IsValid())
-		{
-			OldScope = SetScope(ScopeEntity);
-		}
-		
-		RegisteredObject->FlecsWorldBeginPlay(this);
-		
-		SetScope(OldScope);
+				RegisteredInterface->FlecsWorldBeginPlay(this);
+			});
 	}
+}
+
+void UFlecsWorld::ExecuteInRegistrationScope(
+	const TSolidNotNull<const UObject*> InObject,
+	const TSolidNotNull<const IFlecsObjectRegistrationInterface*> InObjectRegistrationInterface,
+	TFunctionRef<void()> InFunction)
+{
+	const EUnrealFlecsRegistrationScopeType ScopeType = InObjectRegistrationInterface->GetRegistrationScopeType();
+	
+	FName ResolvedName = InObjectRegistrationInterface->GetScopeName();
+	if (ResolvedName.IsNone())
+	{
+		ResolvedName = UE::Flecs::Registration::ResolveScopeTypeName(InObject, ScopeType);
+	}
+	
+	const FFlecsId ScopeId = UE::Flecs::Registration::ResolveRegistrationScopeToId(this, 
+		ResolvedName, ScopeType);
+	
+	const FFlecsEntityHandle ScopeEntity = ScopeId.ToHandle<FFlecsEntityHandle>(GetNativeFlecsWorld());
+	
+	const FFlecsId OldScope = ScopeEntity.IsValid() ? SetScope(ScopeEntity) : FFlecsId::Null();
+
+	InFunction();
+
+	SetScope(OldScope);
 }
 
 void UFlecsWorld::RegisterUnrealTypes() const
@@ -951,55 +913,16 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 
 	RegisteredObjects.Add(FlecsObject);
 	RegisteredObjectTypes.Add(InClass, FlecsObject);
-	
-	const bool bRegisterWithFlecsModule = FlecsObjectInterface->ShouldRegisterWithModule();
-	FName ModuleName = NAME_None;
-	if (bRegisterWithFlecsModule)
-	{
-		ModuleName = FlecsObjectInterface->GetScopeName();
-		
-		if (ModuleName.IsNone())
+	ExecuteInRegistrationScope(FlecsObject, FlecsObjectInterface,
+		[this, FlecsObjectInterface]()
 		{
-			const FString PackageName = InClass->GetOuterUPackage()->GetName();
-			ModuleName = FName(*FPackageName::GetShortName(PackageName));
-		}
-	}
-	
-	FFlecsEntityHandle ModuleEntity;
-	
-	if (bRegisterWithFlecsModule)
-	{
-		ModuleEntity = LookupEntity(ModuleName.ToString());
-		
-		if UNLIKELY_IF(!ModuleEntity.IsValid() || !ModuleEntity.Has(flecs::Module))
-		{
-			UE_LOGFMT(LogFlecsWorld, Warning,
-				"Module {ModuleName} does not exist or is not a valid flecs module, registered object {ObjectName} will not be registered with the module",
-				*ModuleName.ToString(), *FlecsObject->GetName());
-			
-			ModuleEntity = FFlecsEntityHandle::GetNullHandle();
-		}
-	}
-	
-	FFlecsId OldScope = FFlecsId::Null();
-	
-	if (bRegisterWithFlecsModule && ModuleEntity.IsValid())
-	{
-		OldScope = SetScope(ModuleEntity);
-	}
-	
-	FlecsObjectInterface->RegisterObject(this);
-	
-	if (Has<FFlecsBeginPlayComponent>())
-	{
-		FlecsObjectInterface->FlecsWorldBeginPlay(this);
-	}
-	else
-	{
-		// do nothing
-	}
-	
-	SetScope(OldScope);
+			FlecsObjectInterface->RegisterObject(this);
+
+			if (Has<FFlecsBeginPlayComponent>())
+			{
+				FlecsObjectInterface->FlecsWorldBeginPlay(this);
+			}
+		});
 	
 	return FlecsObject;
 }
@@ -1225,13 +1148,8 @@ void UFlecsWorld::CallUnregisterOnRegisteredObjects()
 	}
 }
 
-UFlecsEntityRange* UFlecsWorld::FindTrackedEntityRange(const ecs_entity_range_t* InNativeEntityRange) const
+UFlecsEntityRange* UFlecsWorld::FindTrackedEntityRange(const TSolidNotNull<const ecs_entity_range_t*> InNativeEntityRange) const
 {
-	if UNLIKELY_IF(!InNativeEntityRange)
-	{
-		return nullptr;
-	}
-	
 	for (const TTuple<FName, TObjectPtr<UFlecsEntityRange>>& EntityRangePair : EntityRanges)
 	{
 		if (UFlecsEntityRange* EntityRange = EntityRangePair.Value)

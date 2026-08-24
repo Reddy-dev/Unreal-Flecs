@@ -6,7 +6,7 @@
 
 #include "Types/SolidNotNull.h"
 
-#include "Interfaces/FlecsEntityInterface.h"
+#include "Entities/FlecsEntityInterface.h"
 
 #include "FlecsGameLoopInterface.generated.h"
 

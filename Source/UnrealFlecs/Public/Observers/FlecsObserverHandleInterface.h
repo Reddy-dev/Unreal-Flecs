@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 
-#include "Interfaces/FlecsEntityInterface.h"
+#include "Entities/FlecsEntityInterface.h"
 #include "FlecsObserverHandle.h"
 
 #include "FlecsObserverHandleInterface.generated.h"

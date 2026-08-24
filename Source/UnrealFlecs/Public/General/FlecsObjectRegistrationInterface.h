@@ -58,7 +58,10 @@ public:
 		return static_cast<uint8>(EFlecsObjectRegistrationNetworkFlags::All);
 	}
 	
-	// Optional, if not defined will use the package name of the UObject implementing this interface
+	/**
+	 * Optional for Module and Plugin scopes. A Module scope defaults to this object's native module;
+	 * a Plugin scope defaults to that module's owning Unreal plugin. Custom identifier scopes require a name.
+	 */
 	virtual NO_DISCARD FName GetScopeName() const { return NAME_None; }
 
 }; // class IFlecsObjectRegistrationInterface

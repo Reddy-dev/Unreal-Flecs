@@ -17,6 +17,7 @@
 #include "Worlds/FlecsWorld.h"
 #include "Entities/FlecsComponentHandle.h"
 #include "Components/FlecsAddReferencedObjectsTrait.h"
+#include "General/UnrealFlecsRegistrationScopeType.h"
 #include "Properties/FlecsComponentRegistrationHooks.h"
 #include "Queries/Generator/FlecsQueryGeneratorInput.h"
 #include "Queries/Generator/FlecsQueryGeneratorInputType.h"
@@ -77,38 +78,25 @@ namespace UE::Flecs
 	namespace internal
 	{
 		template <typename T>
-		NO_DISCARD FORCEINLINE UScriptStruct* GetScriptStructIf()
-		{
-			if constexpr (Solid::IsScriptStruct<T>())
-			{
-				return TBaseStructure<T>::Get();
-			}
-			else
-			{
-				return nullptr;
-			}
-		}
-
-		template <typename T>
-		NO_DISCARD FORCEINLINE UStruct* GetMetaTypeIf()
+		NO_DISCARD FORCEINLINE UField* GetMetaTypeIf()
 		{
 			return nullptr;
 		}
 
 		template <Solid::TScriptStructConcept T>
-		NO_DISCARD FORCEINLINE UStruct* GetMetaTypeIf()
+		NO_DISCARD FORCEINLINE UField* GetMetaTypeIf()
 		{
 			return TBaseStructure<T>::Get();
 		}
 
 		template <Solid::TStaticClassConcept T>
-		NO_DISCARD FORCEINLINE UStruct* GetMetaTypeIf()
+		NO_DISCARD FORCEINLINE UField* GetMetaTypeIf()
 		{
 			return StaticClass<T>();
 		}
 
 		template <Solid::TStaticEnumConcept T>
-		NO_DISCARD FORCEINLINE UStruct* GetMetaTypeIf()
+		NO_DISCARD FORCEINLINE UField* GetMetaTypeIf()
 		{
 			return StaticEnum<T>();
 		}
@@ -208,13 +196,10 @@ public:
 	
 	static constexpr bool RegisterWithUnrealModule = std::is_void<ChildOf>::value;
 	static constexpr bool RegisterWithUnrealPlugin = false;
-
-	static FName GetOwningModule()
-	{
-		return NAME_None;
-	}
 	
-	static FName GetOwningPlugin()
+	static constexpr EUnrealFlecsRegistrationScopeType RegistrationScopeType = EUnrealFlecsRegistrationScopeType::Module;
+
+	static FName GetRegistrationScopeName()
 	{
 		return NAME_None;
 	}
@@ -327,12 +312,6 @@ public:
 	uint32 bRegisterMemberProperties : 1 = false;
 
 	UPROPERTY()
-	uint32 bRegisterWithModule : 1 = false;
-	
-	UPROPERTY()
-	uint32 bRegisterWithPlugin : 1 = false;
-
-	UPROPERTY()
 	TArray<FFlecsQueryGeneratorInput> WithTypes;
 
 	UPROPERTY()
@@ -346,12 +325,12 @@ public:
 
 	UPROPERTY()
 	TArray<FString> CustomTypeDependencies;
-
-	UPROPERTY()
-	FName OwningModule;
 	
 	UPROPERTY()
-	FName OwningPlugin;
+	EUnrealFlecsRegistrationScopeType RegistrationScopeType;
+
+	UPROPERTY()
+	FName RegistrationScopeName;
 
 	UE::Flecs::FFlecsComponentRegistrationFunction RegistrationFunction;
 	UE::Flecs::FFlecsComponentPropertiesFunction PropertiesFunction;
@@ -388,10 +367,8 @@ public:
 			.bReplicate = TFlecsComponentTraits<T>::Replicate,
 			.bWithAddReferencedObjects = TFlecsComponentTraits<T>::WithAddReferencedObjects,
 			.bRegisterMemberProperties = TFlecsComponentTraits<T>::RegisterMemberProperties,
-			.bRegisterWithModule = TFlecsComponentTraits<T>::RegisterWithUnrealModule,
-			.bRegisterWithPlugin = TFlecsComponentTraits<T>::RegisterWithUnrealPlugin,
-			.OwningModule = TFlecsComponentTraits<T>::GetOwningModule(),
-			.OwningPlugin = TFlecsComponentTraits<T>::GetOwningPlugin()
+			.RegistrationScopeType = TFlecsComponentTraitsBase<T>::RegistrationScopeType,
+			.RegistrationScopeName = TFlecsComponentTraits<T>::GetRegistrationScopeName(),
 		};
 
 		UE::Flecs::internal::ForEachInTuple<typename TFlecsComponentTraits<T>::WithTypes>([&Definition]<typename TWithType>()
@@ -646,11 +623,14 @@ public:
 		{
 			Definition.RegistrationFunction = [](const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsComponentPropertiesDefinition& ComponentProperties)
 			{
-				FFlecsEntityHandle OwningModuleEntity;
-				if (ComponentProperties.bRegisterWithModule && !ComponentProperties.OwningModule.IsNone())
+				FFlecsId ScopeId = FFlecsId::Null();
+				
+				if (ComponentProperties.RegistrationScopeType != EUnrealFlecsRegistrationScopeType::None 
+					&& !ComponentProperties.RegistrationScopeName.IsNone())
 				{
-					// @TODO: Query Shit instead of lookups
-					OwningModuleEntity = InFlecsWorld->LookupEntity(ComponentProperties.OwningModule.ToString());
+					ScopeId = UE::Flecs::Registration::ResolveRegistrationScopeToId(InFlecsWorld,
+						ComponentProperties.RegistrationScopeName, 
+						ComponentProperties.RegistrationScopeType);
 				}
 
 				FFlecsComponentHandle RegisteredComponentHandle;
@@ -664,14 +644,10 @@ public:
 					RegisteredComponentHandle = InFlecsWorld->RegisterComponentType<T>();
 				}
 
-				if (OwningModuleEntity.IsValid())
+				if (ScopeId.IsValid())
 				{
-					if (!OwningModuleEntity.Has(flecs::Module))
-					{
-						UE_LOGFMT(LogFlecsCore, Error, "Found entity is not registered as a module");
-					}
-
-					RegisteredComponentHandle.AddPair(flecs::ChildOf, OwningModuleEntity);
+					const FFlecsEntityView ScopeEntity = ScopeId.ToHandle<FFlecsEntityView>(InFlecsWorld->GetNativeFlecsWorld());
+					RegisteredComponentHandle.AddPair(flecs::ChildOf, ScopeEntity);
 				}
 			};
 		}
@@ -692,37 +668,44 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnComponentPropertiesRegistered, FFlecsComp
 
 namespace UE::Flecs::Private
 {
-	UNREALFLECS_API FCriticalSection& GetRegisteredComponentsMutex();
+	UNREALFLECS_API NO_DISCARD FCriticalSection& GetRegisteredComponentsMutex();
 
-	UNREALFLECS_API TArray<FFlecsComponentPropertiesDefinition>& GetPendingRegisteredComponents();
+	UNREALFLECS_API NO_DISCARD TArray<FFlecsComponentPropertiesDefinition>& GetPendingRegisteredComponents();
 	UNREALFLECS_API void AddRegisteredComponentProperties_Static(const FFlecsComponentPropertiesDefinition& InDefinition);
 
 	template <typename T>
 	struct TFlecsComponentPropertiesRegistrar
 	{
 	public:
-		TFlecsComponentPropertiesRegistrar(const char* InModuleName = nullptr, const char* InPluginName = nullptr)
+		TFlecsComponentPropertiesRegistrar(const FString& InModuleName = {}, const FString& InPluginName = {})
 		{
-			FCoreDelegates::GetOnPostEngineInit().AddLambda([InModuleName]()
+			// @TODO: make safe
+			FCoreDelegates::GetOnPostEngineInit().AddLambda(
+				[InModuleName, InPluginName]
 			{
 				FFlecsComponentPropertiesDefinition Definition = FFlecsComponentPropertiesDefinition::Make<T>();
-
-				if (Definition.bRegisterWithModule && Definition.OwningModule.IsNone() && InModuleName != nullptr)
+				
+				const bool bIsScopeTypeNone = Definition.RegistrationScopeType == EUnrealFlecsRegistrationScopeType::None;
+				
+				if (!bIsScopeTypeNone)
 				{
-					Definition.OwningModule = FName(InModuleName);
+					if (Definition.RegistrationScopeType == EUnrealFlecsRegistrationScopeType::Module && !InModuleName.IsEmpty())
+					{
+						Definition.RegistrationScopeName = FName(InModuleName);
+					}
+					else if (Definition.RegistrationScopeType == EUnrealFlecsRegistrationScopeType::Plugin && !InPluginName.IsEmpty())
+					{
+						Definition.RegistrationScopeName = FName(InPluginName);
+					}
 				}
 
-				if (Definition.bRegisterWithModule && Definition.OwningModule.IsNone())
+				if (!bIsScopeTypeNone && Definition.RegistrationScopeName.IsNone())
 				{
-					if (const UScriptStruct* ScriptStruct = UE::Flecs::internal::GetScriptStructIf<T>())
+					if (const UField* FieldObject = UE::Flecs::internal::GetMetaTypeIf<T>())
 					{
-						FString PackageName = ScriptStruct->GetOutermost()->GetName();
-						FString ModuleStr;
-
-						if (PackageName.Split(TEXT("/Script/"), nullptr, &ModuleStr) && !ModuleStr.IsEmpty())
-						{
-							Definition.OwningModule = FName(*ModuleStr);
-						}
+						Definition.RegistrationScopeName = UE::Flecs::Registration::ResolveScopeTypeName(
+								FieldObject, 
+								Definition.RegistrationScopeType);
 					}
 				}
 

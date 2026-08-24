@@ -10,7 +10,7 @@
 #include "FlecsDefaultGameLoop.generated.h"
 
 UCLASS(BlueprintType)
-class UNREALFLECS_API UFlecsDefaultGameLoop final : public UFlecsGameLoopObject
+class UNREALFLECS_API UFlecsDefaultGameLoop : public UFlecsGameLoopObject
 {
 	GENERATED_BODY()
 

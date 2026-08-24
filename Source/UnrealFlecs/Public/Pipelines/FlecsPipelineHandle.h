@@ -21,6 +21,4 @@ public:
 	FFlecsPipelineHandle(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, 
 		const FFlecsPipelineDefinition& InPipelineBuilder, const FString& InPipelineName);
 	
-	
-	
 }; // struct FFlecsPipelineHandle

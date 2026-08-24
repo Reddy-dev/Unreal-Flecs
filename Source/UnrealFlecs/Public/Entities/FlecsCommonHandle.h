@@ -135,11 +135,6 @@ public:
 		: Entity(View)
 	{
 	}
-	
-	FORCEINLINE FFlecsCommonHandle(FIntrusiveUnsetOptionalState)
-		: Entity(flecs::entity())
-	{
-	}
 
 	/**
 	 * @brief Check if entity is valid.

@@ -7,14 +7,14 @@
 
 #include "Worlds/FlecsWorldSubsystem.h"
 
-#include "Interfaces/FlecsEntityInterface.h"
+#include "Entities/FlecsEntityInterface.h"
 #include "Worlds/FlecsWorldInterfaceObject.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsEntityHandleFunctionLibrary)
 
 namespace UE::Flecs::ComponentValue
 {
-	void ValidateLayout(
+	static void ValidateLayout(
 		const FFlecsEntityView& Entity,
 		const FFlecsId ComponentId,
 		const FStructProperty& ValueProperty)
@@ -31,7 +31,7 @@ namespace UE::Flecs::ComponentValue
 #endif // DO_CHECK
 	}
 
-	void CopyToStruct(
+	static void CopyToStruct(
 		const FFlecsEntityView& Entity,
 		const FFlecsId ComponentId,
 		const FStructProperty& ValueProperty,

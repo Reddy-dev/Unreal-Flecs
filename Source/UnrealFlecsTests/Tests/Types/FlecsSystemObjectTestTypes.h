@@ -44,9 +44,9 @@ public:
 		return false;
 	}
 
-	virtual bool ShouldRegisterWithModule() const override
+	virtual EUnrealFlecsRegistrationScopeType GetRegistrationScopeType() const override
 	{
-		return false;
+		return EUnrealFlecsRegistrationScopeType::None;
 	}
 
 private:

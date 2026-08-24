@@ -63,6 +63,7 @@ public:
 	void RegisterUnrealTypes() const;
 	
 	/**
+	 * TRY NOT TO USE THIS
 	 * @brief HACKY: Progress the iterator while unlocking the table lock for the duration of the function call.
 	 * does not loop over the iterator, only progresses it after each function call.
 	 * @param Iter The Flecs iterator.
@@ -391,8 +392,13 @@ private:
 	flecs::world World;
 	
 	void CallUnregisterOnRegisteredObjects();
+	
+	void ExecuteInRegistrationScope(
+		const TSolidNotNull<const UObject*> InObject,
+		const TSolidNotNull<const IFlecsObjectRegistrationInterface*> InObjectRegistrationInterface,
+		TFunctionRef<void()> InFunction);
 
-	NO_DISCARD UFlecsEntityRange* FindTrackedEntityRange(const ecs_entity_range_t* InNativeEntityRange) const;
+	NO_DISCARD UFlecsEntityRange* FindTrackedEntityRange(const TSolidNotNull<const ecs_entity_range_t*> InNativeEntityRange) const;
 	NO_DISCARD UFlecsEntityRange* FindTrackedEntityRange(const FName& InRangeName) const;
 	UFlecsEntityRange* TrackEntityRange(const ecs_entity_range_t* InNativeEntityRange, const FName& InRangeName);
 	

@@ -1,6 +1,6 @@
 ﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
 
-#include "Entities/FlecsSubEntityRecordNameObserver.h"
+#include "EntityRecords/FlecsSubEntityRecordNameObserver.h"
 
 #include "Components/FlecsSubEntityRecordNameComponent.h"
 
