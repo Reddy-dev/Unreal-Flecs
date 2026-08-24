@@ -55,8 +55,7 @@ FName UE::Flecs::Registration::ResolveScopeTypeName(
 				
 			return NAME_None;
 
-		case EUnrealFlecsRegistrationScopeType::None: UNLIKELY_ATTRIBUTE
-			solid_cassume(false);
+		case EUnrealFlecsRegistrationScopeType::None:
 			return NAME_None;
 	}
 	
