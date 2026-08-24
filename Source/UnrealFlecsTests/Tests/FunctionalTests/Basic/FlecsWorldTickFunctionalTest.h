@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 
 #include "UnrealFlecsTests/Fixtures/FunctionalTesting/FlecsFunctionalTickBase.h"
 

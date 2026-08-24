@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 
 #include "Queries/Callbacks/FlecsGroupByCallbackDefinition.h"
 #include "Queries/Callbacks/FlecsOrderByCallbackDefinition.h"

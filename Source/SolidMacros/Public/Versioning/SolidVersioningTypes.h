@@ -5,7 +5,6 @@
 
 #include <functional>
 
-#include "CoreMinimal.h"
 
 #include "UObject/Object.h"
 

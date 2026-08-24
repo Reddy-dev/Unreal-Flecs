@@ -304,7 +304,7 @@ void UFlecsWorld::InitializeDefaultComponents() const
 
 void UFlecsWorld::InitializeFlecsRegistrationObjects()
 {
-	UFlecsObjectRegistrationProviderBase::IterateProviders([this](const UFlecsObjectRegistrationProviderBase* Provider)
+	for (const UFlecsObjectRegistrationProviderBase* Provider : UFlecsObjectRegistrationProviderBase::IterateProviders())
 	{
 		if UNLIKELY_IF(!IsValid(Provider))
 		{
@@ -330,7 +330,7 @@ void UFlecsWorld::InitializeFlecsRegistrationObjects()
 		
 			RegisterFlecsObject(RegisteredClass);
 		}
-	});
+	}
 }
 
 void UFlecsWorld::CallBeginPlayForRegisteredObjects()

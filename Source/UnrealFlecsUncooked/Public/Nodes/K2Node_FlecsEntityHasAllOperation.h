@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 
 #include "Nodes/Base/K2Node_FlecsEntityHasMultipleOperation.h"
 

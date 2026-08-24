@@ -4,7 +4,6 @@
 
 #include "flecs.h"
 
-#include "CoreMinimal.h"
 
 #include "FlecsQueryFlags.generated.h"
 
@@ -79,4 +78,3 @@ enum class EFlecsQueryFlags : uint32
 }; // enum class EFlecsQueryFlags
 
 ENUM_CLASS_FLAGS(EFlecsQueryFlags)
-

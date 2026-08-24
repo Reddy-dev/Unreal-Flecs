@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 
 #include "SolidMacros/Macros.h"
 #include "Types/SolidNotNull.h"
@@ -217,4 +216,3 @@ public:
 	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const override;
 	
 }; // struct FFlecsQueryGeneratorInputType_GameplayTag
-

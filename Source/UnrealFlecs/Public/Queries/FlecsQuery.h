@@ -4,7 +4,6 @@
 
 #include "flecs.h"
 
-#include "CoreMinimal.h"
 
 #include "FlecsQueryBase.h"
 
@@ -137,5 +136,4 @@ private:
     
     
 }; // struct TTypedFlecsQuery
-
 

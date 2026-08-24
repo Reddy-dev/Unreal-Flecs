@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 
 #include "FlecsQueryExpression.h"
 
@@ -19,4 +18,3 @@ public:
 	virtual void Apply(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, FFlecsQueryBuilderView& InQueryBuilder) const override;
 	
 }; // struct FFlecsQueryDescendingExpression
-

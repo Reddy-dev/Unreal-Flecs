@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 
 #include "Entities/FlecsEntityHandle.h"
 #include "General/FlecsObjectRegistrationInterface.h"

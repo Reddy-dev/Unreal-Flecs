@@ -6,7 +6,6 @@
 
 #include <type_traits>
 
-#include "CoreMinimal.h"
 
 #include "SolidMacros/Macros.h"
 

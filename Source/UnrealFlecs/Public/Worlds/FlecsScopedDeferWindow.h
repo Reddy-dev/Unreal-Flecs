@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 
 #include "UObject/WeakObjectPtr.h"
 
@@ -61,5 +60,4 @@ public:
 	TWeakObjectPtr<const UFlecsWorldInterfaceObject> FlecsWorld;
 	
 }; // struct FFlecsScopedDeferWindow
-
 

@@ -4,7 +4,6 @@
 
 #include "flecs.h"
 
-#include "CoreMinimal.h"
 
 #include "UObject/Interface.h"
 

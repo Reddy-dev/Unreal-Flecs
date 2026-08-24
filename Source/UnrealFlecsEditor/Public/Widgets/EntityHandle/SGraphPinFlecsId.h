@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "SGraphPin.h"
 #include "Entities/FlecsId.h"
 

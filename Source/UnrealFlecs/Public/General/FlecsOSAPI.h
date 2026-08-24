@@ -7,7 +7,6 @@
 #include "flecs.h"
 #include "flecs/os_api.h"
 
-#include "CoreMinimal.h"
 
 #include "Async/TaskGraphInterfaces.h"
 #include "Experimental/Async/ConditionVariable.h"

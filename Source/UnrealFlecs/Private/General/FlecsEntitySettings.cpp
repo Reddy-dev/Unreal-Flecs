@@ -56,7 +56,7 @@ void UFlecsEntitySettings::BuildSystemList()
 {
 	CDOs.Reset();
 	
-	UFlecsObjectRegistrationProviderBase::IterateProviders([this](const UFlecsObjectRegistrationProviderBase* Provider)
+	for (const UFlecsObjectRegistrationProviderBase* Provider : UFlecsObjectRegistrationProviderBase::IterateProviders())
 	{
 		for (const TSubclassOf<UObject>& ClassToRegister : Provider->GetClassesToRegister(false))
 		{
@@ -72,8 +72,7 @@ void UFlecsEntitySettings::BuildSystemList()
 			
 			CDOs.Add(CastChecked<UObject>(RegistrationInterface));
 		}
-		
-	});
+	}
 
 	CDOs.Sort([](const UObject& LHS, const UObject& RHS) -> bool
 	{

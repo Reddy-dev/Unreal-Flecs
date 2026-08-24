@@ -39,34 +39,13 @@ std::generator<TSubclassOf<UFlecsObjectRegistrationProviderBase>> UFlecsObjectRe
 	}
 }
 
-// @TODO: use coroutines?
-void UFlecsObjectRegistrationProviderBase::IterateProviders(TFunctionRef<void(const UFlecsObjectRegistrationProviderBase*)> Callback)
+std::generator<const UFlecsObjectRegistrationProviderBase*> UFlecsObjectRegistrationProviderBase::IterateProviders()
 {
-	for (TObjectIterator<UClass> It; It; ++It)
+	for (const TSubclassOf<UFlecsObjectRegistrationProviderBase>& SubclassType : GetAllProviders())
 	{
-		const UClass* Class = *It;
-
-		if UNLIKELY_IF(!IsValid(Class))
-		{
-			continue;
-		}
-
-		if (!Class->IsChildOf(UFlecsObjectRegistrationProviderBase::StaticClass()))
-		{
-			continue;
-		}
-
-		if (Class == UFlecsObjectRegistrationProviderBase::StaticClass())
-		{
-			continue;
-		}
-
-		if (Class->HasAnyClassFlags(CLASS_Abstract | CLASS_Deprecated | CLASS_NewerVersionExists))
-		{
-			continue;
-		}
+		const UFlecsObjectRegistrationProviderBase* ProviderCDO
+			= CastChecked<UFlecsObjectRegistrationProviderBase>(SubclassType->GetDefaultObject());
 		
-		const UFlecsObjectRegistrationProviderBase* ProviderCDO = CastChecked<UFlecsObjectRegistrationProviderBase>(Class->GetDefaultObject());
-		Callback(ProviderCDO);
+		co_yield ProviderCDO;
 	}
 }

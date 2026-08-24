@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "Entities/FlecsId.h"
 #include "PropertyHandle.h" // Provides property handle support
 #include "SNameComboBox.h"

@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 
 #include "Queries/Generator/FlecsQueryGeneratorInput.h"
 #include "FlecsPhasesType.h"
@@ -38,4 +37,3 @@ public:
 	void ApplyToSystemDefinition(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InFlecsWorld, flecs::system_builder<>& InSystemBuilder) const;
 	
 }; // struct FFlecsSystemPhaseInput
-

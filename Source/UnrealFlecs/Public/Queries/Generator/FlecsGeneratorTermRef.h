@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 
 #include "Entities/FlecsId.h"
 
@@ -49,4 +48,3 @@ namespace UE::Flecs::Queries
 	}
 	
 } // namespace UE::Flecs::Queries
-

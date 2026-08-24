@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 
 #include "FlecsNetShardBase.h"
 #include "FlecsNetEntityTableArray.h"

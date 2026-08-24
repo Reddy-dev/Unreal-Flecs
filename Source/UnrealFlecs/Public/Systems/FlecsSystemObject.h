@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "FlecsSystemBuilder.h"
 
 #include "UObject/Object.h"

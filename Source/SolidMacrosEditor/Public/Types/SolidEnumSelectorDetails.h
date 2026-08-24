@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 
 #include "IPropertyTypeCustomization.h"
 #include "Layout/Visibility.h"

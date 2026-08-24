@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 
 #include "Net/Iris/ReplicationSystem/NetRootObjectFactory.h"
 

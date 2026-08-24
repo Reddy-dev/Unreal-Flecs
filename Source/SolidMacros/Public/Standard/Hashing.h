@@ -6,7 +6,6 @@
 #include <vector>
 #include <functional>
 
-#include "CoreMinimal.h"
 
 #include "UObject/ObjectKey.h"
 #include "GameplayTagsManager.h"

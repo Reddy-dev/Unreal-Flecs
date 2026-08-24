@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 
 #include "Properties/FlecsComponentProperties.h"
 
@@ -22,5 +21,4 @@ struct TFlecsComponentTraits<FFlecsNetDirtyTag> : public TFlecsComponentTraitsBa
 {
 	static constexpr bool DontFragment = true;
 }; // struct TFlecsComponentTraits<FFlecsNetDirtyTag>
-
 

@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "EdGraphUtilities.h"
 
 class FFlecsIdPinFactory : public FGraphPanelPinFactory

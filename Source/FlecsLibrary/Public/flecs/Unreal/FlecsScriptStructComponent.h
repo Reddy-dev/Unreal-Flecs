@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "Standard/Hashing.h"
 #include "FlecsScriptStructComponent.generated.h"
 

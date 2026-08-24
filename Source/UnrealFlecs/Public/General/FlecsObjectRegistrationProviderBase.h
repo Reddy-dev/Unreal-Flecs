@@ -20,6 +20,6 @@ public:
 		PURE_VIRTUAL(UFlecsObjectRegistrationProviderBase::GetClassesToRegister, co_return; );  
 	
 	static NO_DISCARD std::generator<TSubclassOf<UFlecsObjectRegistrationProviderBase>> GetAllProviders();
-	static void IterateProviders(TFunctionRef<void(const UFlecsObjectRegistrationProviderBase*)> Callback);
+	static std::generator<const UFlecsObjectRegistrationProviderBase*> IterateProviders();
 	
 }; // class UFlecsObjectRegistrationProviderBase

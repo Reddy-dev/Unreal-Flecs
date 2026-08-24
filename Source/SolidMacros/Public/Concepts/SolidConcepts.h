@@ -3,7 +3,6 @@
 #ifndef SOLID_CONCEPTS_H
 #define SOLID_CONCEPTS_H
 
-#include "CoreMinimal.h"
 
 #include "Templates/IsInvocable.h"
 #include "Templates/IsUEnumClass.h"

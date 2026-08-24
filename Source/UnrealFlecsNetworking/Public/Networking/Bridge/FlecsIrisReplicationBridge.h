@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 
 #include "Net/Core/PushModel/PushModelMacros.h"
 #include "Net/Iris/ReplicationSystem/NetRootObjectAdapter.h"

@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 
 #include "Engine/EngineBaseTypes.h"
 #include "StructUtils/SharedStruct.h"
@@ -120,4 +119,3 @@ public:
 }; // struct FFlecsWorldSettingsInfo
 
 DEFINE_STD_HASH(FFlecsWorldSettingsInfo);
-

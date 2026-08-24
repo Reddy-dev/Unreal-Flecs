@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "FlecsPhasesType.h"
 
 #include "SolidMacros/Macros.h"

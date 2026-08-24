@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 
 #include "FlecsReplicatedValue.generated.h"
 
@@ -19,5 +18,4 @@ struct UNREALFLECSNETWORKING_API FFlecsReplicatedValue
 	TArray<uint8> Bytes;
 	
 }; // struct FFlecsReplicatedValue
-
 

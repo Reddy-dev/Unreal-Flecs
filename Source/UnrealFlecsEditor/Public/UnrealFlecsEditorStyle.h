@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "Editor/EditorStyle/Public/EditorStyleSet.h"
 #include "Runtime/Projects/Public/Interfaces/IPluginManager.h"
 #include "Runtime/SlateCore/Public/Brushes/SlateImageBrush.h"

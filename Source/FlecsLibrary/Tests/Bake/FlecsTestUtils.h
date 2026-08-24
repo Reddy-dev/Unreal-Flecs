@@ -12,7 +12,6 @@
 
 #if WITH_AUTOMATION_TESTS
 
-#include "CoreMinimal.h"
 
 #define test_assert(cond) \
 	checkf((cond), TEXT(#cond)) \

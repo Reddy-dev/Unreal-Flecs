@@ -10,7 +10,6 @@
 
 #include "flecs.h"
 
-#include "CoreMinimal.h"
 
 #include "Subsystems/WorldSubsystem.h"
 

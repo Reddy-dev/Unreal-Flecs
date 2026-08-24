@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 
 #include "Iris/Serialization/NetSerializerConfig.h"
 
@@ -66,4 +65,3 @@ namespace UE::Net
 	UE_NET_DECLARE_SERIALIZER(FFlecsEntityReplicationSnapshotSerializerConfig, UNREALFLECSNETWORKING_API);
 } // namespace UE::Net
 */
-

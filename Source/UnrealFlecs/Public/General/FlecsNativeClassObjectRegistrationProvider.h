@@ -4,7 +4,6 @@
 
 #include <generator>
 
-#include "CoreMinimal.h"
 
 #include "Templates/SubclassOf.h"
 

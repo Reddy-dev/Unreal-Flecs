@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 
 #include "Networking/FlecsNetworkId.h"
 #include "Networking/Layout/FlecsReplicationSnapshot.h"

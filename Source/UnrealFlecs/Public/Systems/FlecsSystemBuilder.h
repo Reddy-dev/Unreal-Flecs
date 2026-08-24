@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 
 #include "FlecsSystemBuilderBase.h"
 #include "FlecsSystemHandle.h"
@@ -59,4 +58,3 @@ protected:
 	}
 	
 }; // struct TFlecsSystemBuilder
-

@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 
 #include "Properties/FlecsComponentProperties.h"
 
@@ -19,5 +18,4 @@ struct TFlecsComponentTraits<FFlecsUObjectTag> : public TFlecsComponentTraitsBas
 {
 	static constexpr bool Target = true;
 }; // struct TFlecsComponentTraits<FFlecsUObjectTag>
-
 

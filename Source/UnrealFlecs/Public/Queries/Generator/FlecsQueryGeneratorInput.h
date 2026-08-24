@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 
 #include "StructUtils/InstancedStruct.h"
 
@@ -48,4 +47,3 @@ public:
 private:
 	
 }; // struct FFlecsQueryGeneratorInput
-

@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 
 #include "Templates/SubclassOf.h"
 
@@ -45,4 +44,3 @@ struct FLECSLIBRARY_API FFlecsScriptClassComponent
 }; // struct FFlecsScriptClassComponent
 
 DEFINE_STD_HASH(FFlecsScriptClassComponent)
-

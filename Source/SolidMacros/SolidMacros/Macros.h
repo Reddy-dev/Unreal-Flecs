@@ -11,7 +11,6 @@
 #include <string_view>
 #include <utility>
 
-#include "CoreMinimal.h"
 
 #include "Misc/AssertionMacros.h"
 #include "GenericPlatform/GenericPlatformTime.h"

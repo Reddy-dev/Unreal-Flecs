@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 
 #include "Subsystems/WorldSubsystem.h"
 
@@ -45,4 +44,3 @@ private:
 	TWeakObjectPtr<UFlecsWorldSubsystem> FlecsWorldSubsystemRef;
 	
 }; // class UFlecsAbstractWorldSubsystem
-

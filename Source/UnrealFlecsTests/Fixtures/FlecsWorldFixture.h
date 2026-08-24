@@ -7,7 +7,6 @@
 
 #if WITH_AUTOMATION_TESTS
 
-#include "CoreMinimal.h"
 
 #include "EngineUtils.h"
 #include "UObject/Object.h"
