@@ -2,6 +2,8 @@
 
 #include "General/FlecsNativeClassObjectRegistrationProvider.h"
 
+#include "Engine/Engine.h"
+
 #include "SolidMacros/Macros.h"
 #include "Types/SolidNotNull.h"
 
@@ -44,6 +46,18 @@ std::generator<TSubclassOf<UObject>> UFlecsNativeClassObjectRegistrationProvider
 					continue;
 				}
 			}
+			
+#if WITH_AUTOMATION_TESTS
+			
+			if (!GIsAutomationTesting)
+			{
+				if (RegistrationInterface->ShouldAutoRegisterOnlyForTest())
+				{
+					continue;
+				}
+			}
+			
+#endif // WITH_AUTOMATION_TESTS
 				
 			co_yield Class;
 		}
