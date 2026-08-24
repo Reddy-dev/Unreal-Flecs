@@ -19,8 +19,6 @@ USTRUCT(BlueprintType, meta = (DisableSplitPin,
 struct UNREALFLECS_API FFlecsEntityView : public FFlecsCommonHandle
 {
 	GENERATED_BODY()
-
-	using FSelfType = FFlecsEntityView;
 	
 	static NO_DISCARD SOLID_INLINE FFlecsEntityView GetNullHandle()
 	{
