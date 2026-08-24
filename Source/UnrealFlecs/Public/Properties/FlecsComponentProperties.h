@@ -194,9 +194,6 @@ public:
 	static constexpr bool WithAddReferencedObjects = false;
 	static constexpr bool RegisterMemberProperties = true;
 	
-	static constexpr bool RegisterWithUnrealModule = std::is_void<ChildOf>::value;
-	static constexpr bool RegisterWithUnrealPlugin = false;
-	
 	static constexpr EUnrealFlecsRegistrationScopeType RegistrationScopeType = EUnrealFlecsRegistrationScopeType::Module;
 
 	static FName GetRegistrationScopeName()

@@ -58,7 +58,7 @@ void UFlecsEntitySettings::BuildSystemList()
 	
 	UFlecsObjectRegistrationProviderBase::IterateProviders([this](const UFlecsObjectRegistrationProviderBase* Provider)
 	{
-		TArray<TSubclassOf<UObject>> ClassesToRegister = Provider->GetClassesToRegister();
+		TArray<TSubclassOf<UObject>> ClassesToRegister = Provider->GetClassesToRegister(false);
 		
 		for (const TSubclassOf<UObject>& ClassToRegister : ClassesToRegister)
 		{

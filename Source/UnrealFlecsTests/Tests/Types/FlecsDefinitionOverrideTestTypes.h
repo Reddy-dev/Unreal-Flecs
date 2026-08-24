@@ -42,7 +42,7 @@ public:
 
 	virtual EUnrealFlecsRegistrationScopeType GetRegistrationScopeType() const override
 	{
-		return EUnrealFlecsRegistrationScopeType::None;
+		return EUnrealFlecsRegistrationScopeType::Module;
 	}
 
 }; // class UFlecsSystemDefinitionOverrideTestObject
@@ -80,7 +80,7 @@ public:
 
 	virtual EUnrealFlecsRegistrationScopeType GetRegistrationScopeType() const override
 	{
-		return EUnrealFlecsRegistrationScopeType::None;
+		return EUnrealFlecsRegistrationScopeType::Module;
 	}
 
 }; // class UFlecsObserverDefinitionOverrideTestObject
