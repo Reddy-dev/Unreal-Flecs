@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "FlecsPipelineHandle.h"
 #include "FlecsGameLoopObject.h"
 

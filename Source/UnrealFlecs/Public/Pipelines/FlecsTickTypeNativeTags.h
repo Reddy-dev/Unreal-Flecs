@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "NativeGameplayTags.h"
 
 UNREALFLECS_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(FlecsTickType_Root);

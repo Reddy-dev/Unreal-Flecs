@@ -2,10 +2,12 @@
 
 #include "General/FlecsObjectRegistrationProviderBase.h"
 
+#include "Templates/Casts.h"
+#include "UObject/UObjectIterator.h"
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsObjectRegistrationProviderBase)
 
-// @TODO: use coroutines?
-TArray<TSubclassOf<UFlecsObjectRegistrationProviderBase>> UFlecsObjectRegistrationProviderBase::GetAllProviders()
+std::generator<TSubclassOf<UFlecsObjectRegistrationProviderBase>> UFlecsObjectRegistrationProviderBase::GetAllProviders()
 {
 	TArray<TSubclassOf<UFlecsObjectRegistrationProviderBase>> RegisteredObjectClasses;
 	
@@ -33,10 +35,8 @@ TArray<TSubclassOf<UFlecsObjectRegistrationProviderBase>> UFlecsObjectRegistrati
 			continue;
 		}
 		
-		RegisteredObjectClasses.AddUnique(Class);
+		co_yield Class;
 	}
-
-	return RegisteredObjectClasses;
 }
 
 // @TODO: use coroutines?

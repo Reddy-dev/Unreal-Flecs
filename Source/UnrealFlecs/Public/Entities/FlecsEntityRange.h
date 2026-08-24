@@ -4,8 +4,6 @@
 
 #include "flecs.h"
 
-#include "CoreMinimal.h"
-
 #include "UObject/Object.h"
 
 #include "SolidMacros/Macros.h"

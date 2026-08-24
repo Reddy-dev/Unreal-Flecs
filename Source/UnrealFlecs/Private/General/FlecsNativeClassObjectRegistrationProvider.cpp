@@ -6,14 +6,12 @@
 #include "Types/SolidNotNull.h"
 
 #include "General/FlecsObjectRegistrationInterface.h"
+#include "UObject/UObjectIterator.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsNativeClassObjectRegistrationProvider)
 
-// @TODO: use coroutines?
-TArray<TSubclassOf<UObject>> UFlecsNativeClassObjectRegistrationProvider::GetClassesToRegister(const bool bShouldCallAutoRegister) const
+std::generator<TSubclassOf<UObject>> UFlecsNativeClassObjectRegistrationProvider::GetClassesToRegister(const bool bShouldCallAutoRegister) const
 {
-	TArray<TSubclassOf<UObject>> ClassesToRegister;
-	
 	for (TObjectIterator<UClass> It = TObjectIterator<UClass>(); It; ++It)
 	{
 		const TSolidNotNull<UClass*> Class = *It;
@@ -47,9 +45,7 @@ TArray<TSubclassOf<UObject>> UFlecsNativeClassObjectRegistrationProvider::GetCla
 				}
 			}
 				
-			ClassesToRegister.Add(Class);
+			co_yield Class;
 		}
 	}
-	
-	return ClassesToRegister;
 }

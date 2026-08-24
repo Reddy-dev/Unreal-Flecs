@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "FlecsThreadAllocationPolicyBaseAsset.h"
 
 #include "DefaultFlecsThreadAllocationPolicyAsset.generated.h"

@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "GameplayTagContainer.h"
 #include "StructUtils/StructView.h"
 

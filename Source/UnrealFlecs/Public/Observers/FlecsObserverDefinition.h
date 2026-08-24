@@ -4,8 +4,6 @@
 
 #include "flecs.h"
 
-#include "CoreMinimal.h"
-
 #include "FlecsObserverEventInput.h"
 #include "FlecsObserverFlags.h"
 #include "Queries/FlecsQueryDefinition.h"

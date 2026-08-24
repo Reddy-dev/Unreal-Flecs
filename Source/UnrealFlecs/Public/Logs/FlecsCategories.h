@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "Logging/LogMacros.h"
 #include "Logging/StructuredLog.h"
 

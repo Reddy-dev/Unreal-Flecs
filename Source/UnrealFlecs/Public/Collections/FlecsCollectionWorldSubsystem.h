@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "FlecsCollectionBuilder.h"
 #include "FlecsCollectionDefinition.h"
 #include "FlecsCollectionId.h"

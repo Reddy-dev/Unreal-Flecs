@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "UObject/ObjectPtr.h"
 
 #include "SolidMacros/Macros.h"

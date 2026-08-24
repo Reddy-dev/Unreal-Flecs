@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "StructUtils/InstancedStruct.h"
 
 #include "Concepts/SolidConcepts.h"

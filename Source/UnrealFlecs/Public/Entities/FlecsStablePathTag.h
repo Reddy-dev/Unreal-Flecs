@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "Properties/FlecsComponentProperties.h"
 
 #include "FlecsStablePathTag.generated.h"

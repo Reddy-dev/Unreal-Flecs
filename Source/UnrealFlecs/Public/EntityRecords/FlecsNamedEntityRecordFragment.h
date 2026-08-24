@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "Types/SolidNotNull.h"
 
 #include "FlecsEntityRecord.h"

@@ -304,40 +304,33 @@ void UFlecsWorld::InitializeDefaultComponents() const
 
 void UFlecsWorld::InitializeFlecsRegistrationObjects()
 {
-	TSet<TSubclassOf<UObject>> RegisteredObjectClasses;
-	
-	UFlecsObjectRegistrationProviderBase::IterateProviders([&RegisteredObjectClasses]
-		(const UFlecsObjectRegistrationProviderBase* Provider)
+	UFlecsObjectRegistrationProviderBase::IterateProviders([this](const UFlecsObjectRegistrationProviderBase* Provider)
 	{
 		if UNLIKELY_IF(!IsValid(Provider))
 		{
 			return;
 		}
-
-		const TArray<TSubclassOf<UObject>> ProviderRegisteredObjectClasses = Provider->GetClassesToRegister();
-
-		RegisteredObjectClasses.Append(ProviderRegisteredObjectClasses);
+		
+		for (const TSubclassOf<UObject>& RegisteredClass : Provider->GetClassesToRegister())
+		{
+			if UNLIKELY_IF(!ensureAlwaysMsgf(IsValid(RegisteredClass), 
+				TEXT("Invalid class in Flecs registration provider: %s"), *GetNameSafe(RegisteredClass)))
+			{
+				continue;
+			}
+		
+			if UNLIKELY_IF(IsFlecsObjectRegistered(RegisteredClass))
+			{
+				UE_LOGFMT(LogFlecsWorld, Warning,
+						  "Flecs World {WorldName} Object class {ClassName} is already registered, skipping",
+						  *GetName(),
+						  *RegisteredClass->GetName());
+				continue;
+			}
+		
+			RegisterFlecsObject(RegisteredClass);
+		}
 	});
-	
-	for (const TSubclassOf<UObject>& RegisteredClass : RegisteredObjectClasses)
-	{
-		if UNLIKELY_IF(!ensureAlwaysMsgf(IsValid(RegisteredClass), 
-			TEXT("Invalid class in Flecs registration provider: %s"), *GetNameSafe(RegisteredClass)))
-		{
-			continue;
-		}
-		
-		if UNLIKELY_IF(IsFlecsObjectRegistered(RegisteredClass))
-		{
-			UE_LOGFMT(LogFlecsWorld, Warning,
-			          "Flecs World {WorldName} Object class {ClassName} is already registered, skipping",
-			          *GetName(),
-			          *RegisteredClass->GetName());
-			continue;
-		}
-		
-		RegisterFlecsObject(RegisteredClass);
-	}
 }
 
 void UFlecsWorld::CallBeginPlayForRegisteredObjects()

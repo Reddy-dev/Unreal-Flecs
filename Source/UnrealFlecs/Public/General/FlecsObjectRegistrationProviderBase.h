@@ -2,10 +2,11 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-#include "SolidMacros/Macros.h"
+#include <generator>
 
-#include "Subsystems/EngineSubsystem.h"
+#include "Templates/SubclassOf.h"
+
+#include "SolidMacros/Macros.h"
 
 #include "FlecsObjectRegistrationProviderBase.generated.h"
 
@@ -15,10 +16,10 @@ class UNREALFLECS_API UFlecsObjectRegistrationProviderBase : public UObject
 	GENERATED_BODY()
 
 public:
-	virtual TArray<TSubclassOf<UObject>> GetClassesToRegister(const bool bShouldCallAutoRegister = true) const 
-		PURE_VIRTUAL(UFlecsObjectRegistrationProviderBase::GetClassesToRegister, return TArray<TSubclassOf<UObject>>(););
+	virtual std::generator<TSubclassOf<UObject>> GetClassesToRegister(const bool bShouldCallAutoRegister = true) const 
+		PURE_VIRTUAL(UFlecsObjectRegistrationProviderBase::GetClassesToRegister, co_return; );  
 	
-	static NO_DISCARD TArray<TSubclassOf<UFlecsObjectRegistrationProviderBase>> GetAllProviders();
+	static NO_DISCARD std::generator<TSubclassOf<UFlecsObjectRegistrationProviderBase>> GetAllProviders();
 	static void IterateProviders(TFunctionRef<void(const UFlecsObjectRegistrationProviderBase*)> Callback);
 	
 }; // class UFlecsObjectRegistrationProviderBase

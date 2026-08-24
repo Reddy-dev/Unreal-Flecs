@@ -2,10 +2,7 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "UObject/Object.h"
-#include "UObject/UObjectGlobals.h"
 
 #include "FlecsModuleSettings.generated.h"
 

@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "FlecsGameplayTagManagerEntity.generated.h"
 
 // @TODO: Maybe make this a Flecs Default Entity instead of a USTRUCT?

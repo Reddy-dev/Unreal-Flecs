@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "FlecsObjectRegistrationStateType.generated.h"
 
 UENUM(BlueprintType)

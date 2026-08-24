@@ -7,7 +7,6 @@
 
 #include "flecs.h"
 
-#include "CoreMinimal.h"
 #include "Misc/CoreDelegates.h"
 
 #include "SolidMacros/Macros.h"

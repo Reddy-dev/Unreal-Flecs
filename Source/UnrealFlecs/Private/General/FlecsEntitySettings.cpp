@@ -58,9 +58,7 @@ void UFlecsEntitySettings::BuildSystemList()
 	
 	UFlecsObjectRegistrationProviderBase::IterateProviders([this](const UFlecsObjectRegistrationProviderBase* Provider)
 	{
-		TArray<TSubclassOf<UObject>> ClassesToRegister = Provider->GetClassesToRegister(false);
-		
-		for (const TSubclassOf<UObject>& ClassToRegister : ClassesToRegister)
+		for (const TSubclassOf<UObject>& ClassToRegister : Provider->GetClassesToRegister(false))
 		{
 			const TSolidNotNull<IFlecsObjectRegistrationInterface*> RegistrationInterface
 				= CastChecked<IFlecsObjectRegistrationInterface>(ClassToRegister->GetDefaultObject());

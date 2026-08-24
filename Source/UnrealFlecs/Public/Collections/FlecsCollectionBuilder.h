@@ -2,13 +2,11 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-#include "FlecsCollectionDefinition.h"
-
 #include "Types/SolidEnumSelector.h"
 
-#include "EntityRecords//FlecsEntityRecord.h"
+#include "EntityRecords/FlecsEntityRecord.h"
 #include "FlecsCollectionTypes.h"
+#include "FlecsCollectionDefinition.h"
 
 #include "FlecsCollectionBuilder.generated.h"
 

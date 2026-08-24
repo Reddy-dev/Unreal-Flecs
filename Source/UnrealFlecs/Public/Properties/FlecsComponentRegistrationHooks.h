@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "Properties/FlecsReplicationComponentDefinition.h"
 #include "Types/SolidNotNull.h"
 

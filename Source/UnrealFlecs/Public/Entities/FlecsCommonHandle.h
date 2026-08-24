@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "FlecsEntityHandleTypes.h"
 #include "FlecsId.h"
 

@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "Observers/FlecsObserverObject.h"
 
 #include "FlecsSubEntityRecordNameObserver.generated.h"

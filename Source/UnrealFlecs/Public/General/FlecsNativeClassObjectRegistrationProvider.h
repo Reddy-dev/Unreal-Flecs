@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <generator>
+
 #include "CoreMinimal.h"
 
 #include "Templates/SubclassOf.h"
@@ -16,6 +18,6 @@ class UNREALFLECS_API UFlecsNativeClassObjectRegistrationProvider final : public
 	GENERATED_BODY()
 
 public:
-	virtual TArray<TSubclassOf<UObject>> GetClassesToRegister(const bool bShouldCallAutoRegister = true) const override;
+	virtual std::generator<TSubclassOf<UObject>> GetClassesToRegister(const bool bShouldCallAutoRegister = true) const override;
 	
 }; // class UFlecsClassObjectRegistrationProvider

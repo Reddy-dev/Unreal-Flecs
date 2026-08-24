@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "Engine/DataAsset.h"
 
 #include "Versioning/SolidVersioningTypes.h"

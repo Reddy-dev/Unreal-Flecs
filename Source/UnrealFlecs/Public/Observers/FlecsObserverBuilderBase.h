@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "FlecsObserverDefinition.h"
 
 #include "Queries/FlecsQueryBuilderBase.h"

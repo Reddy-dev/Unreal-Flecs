@@ -4,8 +4,6 @@
 
 #include "flecs.h"
 
-#include "CoreMinimal.h"
-
 #include "FlecsMemberHandle.generated.h"
 
 // Avoid using this directly

@@ -7,8 +7,6 @@
 
 #include "flecs.h"
 
-#include "CoreMinimal.h"
-
 #include "GameplayTagContainer.h"
 #include "StructUtils/InstancedStruct.h"
 

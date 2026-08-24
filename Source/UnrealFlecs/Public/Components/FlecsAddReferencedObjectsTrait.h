@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "FlecsAddReferencedObjectsTrait.generated.h"
 
 // flecs::Trait is added when this is registered

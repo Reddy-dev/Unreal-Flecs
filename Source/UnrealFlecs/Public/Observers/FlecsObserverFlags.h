@@ -4,8 +4,6 @@
 
 #include "flecs.h"
 
-#include "CoreMinimal.h"
-
 #include "FlecsObserverFlags.generated.h"
 
 UENUM(meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))

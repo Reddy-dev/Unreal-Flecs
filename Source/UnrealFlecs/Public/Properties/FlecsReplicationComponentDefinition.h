@@ -5,8 +5,6 @@
 #include <new>
 #include <type_traits>
 
-#include "CoreMinimal.h"
-
 #include "Concepts/SolidConcepts.h"
 #include "Entities/FlecsComponentHandle.h"
 #include "Serialization/Archive.h"

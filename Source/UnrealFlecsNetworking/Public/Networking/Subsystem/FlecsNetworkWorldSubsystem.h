@@ -2,9 +2,8 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "Templates/Function.h"
+#include "Misc/AutomationTest.h"
 
 #include "Worlds/FlecsAbstractWorldSubsystem.h"
 

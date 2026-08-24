@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "SolidMacros/Macros.h"
 #include "Types/SolidNotNull.h"
 

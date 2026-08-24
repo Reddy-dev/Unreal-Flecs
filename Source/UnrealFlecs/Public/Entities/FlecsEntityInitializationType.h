@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "EntityRecords/FlecsEntityRecord.h"
 #include "Collections/FlecsCollectionTypes.h"
 

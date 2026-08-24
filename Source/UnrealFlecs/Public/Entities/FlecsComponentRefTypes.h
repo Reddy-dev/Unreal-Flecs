@@ -4,8 +4,6 @@
 
 #include "flecs.h"
 
-#include "CoreMinimal.h"
-
 #include "SolidMacros/Macros.h"
 
 #include "FlecsEntityHandle.h"

@@ -4,8 +4,6 @@
 
 #include "flecs.h"
 
-#include "CoreMinimal.h"
-
 #include "StructUtils/InstancedStruct.h"
 
 #include "Types/SolidNotNull.h"

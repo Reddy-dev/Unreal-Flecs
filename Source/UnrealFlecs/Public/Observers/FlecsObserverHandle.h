@@ -4,8 +4,6 @@
 
 #include "flecs.h"
 
-#include "CoreMinimal.h"
-
 #include "Entities/FlecsEntityHandle.h"
 #include "FlecsObserverDefinition.h"
 
