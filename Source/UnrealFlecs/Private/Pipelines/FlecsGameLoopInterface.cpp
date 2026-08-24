@@ -9,7 +9,7 @@
 
 void IFlecsGameLoopInterface::InitializeGameLoop_Internal(TSolidNotNull<UFlecsWorld*> InWorld)
 {
-	GameLoopEntity = InWorld->CreateEntity("GameLoop")
+	GameLoopEntity = InWorld->CreateEntity()
 		.Add<FFlecsGameLoopTag>();
 
 	InitializeGameLoop(InWorld, GameLoopEntity);
