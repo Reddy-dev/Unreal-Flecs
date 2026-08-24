@@ -9,6 +9,8 @@
 #include "Types/SolidNotNull.h"
 
 #include "FlecsObjectRegistrationNetworkFlags.h"
+#include "FlecsObjectRegistrationStateType.h"
+#include "UnrealFlecsRegistrationScopeType.h"
 
 #include "FlecsObjectRegistrationInterface.generated.h"
 
@@ -31,10 +33,21 @@ public:
 	virtual void UnregisterObject(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld);
 	virtual void FlecsWorldBeginPlay(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld);
 	
+	virtual void SetFlecsObjectState(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld, const EFlecsObjectRegistrationStateType InState);
+	
+	virtual NO_DISCARD EFlecsObjectRegistrationStateType GetObjectRegistrationState() const
+	{
+		return EFlecsObjectRegistrationStateType::Active;
+	}
+	
 	// Impl must be safe to call on the CDO
 	virtual NO_DISCARD bool ShouldAutoRegisterFromCDO() const { return true; }
 	virtual NO_DISCARD bool ShouldAutoRegisterWithWorld(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InFlecsWorld) const { return true; }
-	virtual NO_DISCARD bool ShouldRegisterWithModule() const { return true; }
+	
+	virtual NO_DISCARD EUnrealFlecsRegistrationScopeType GetRegistrationScopeType() const
+	{
+		return EUnrealFlecsRegistrationScopeType::Module;
+	}
 	
 #if WITH_EDITORONLY_DATA
 	virtual NO_DISCARD bool ShouldShowInSettings() const { return false; }
@@ -46,6 +59,6 @@ public:
 	}
 	
 	// Optional, if not defined will use the package name of the UObject implementing this interface
-	virtual NO_DISCARD FName GetModuleName() const { return NAME_None; }
+	virtual NO_DISCARD FName GetScopeName() const { return NAME_None; }
 
 }; // class IFlecsObjectRegistrationInterface

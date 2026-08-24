@@ -9,7 +9,8 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsNativeClassObjectRegistrationProvider)
 
-TArray<TSubclassOf<UObject>> UFlecsNativeClassObjectRegistrationProvider::GetClassesToRegister() const
+// @TODO: use coroutines?
+TArray<TSubclassOf<UObject>> UFlecsNativeClassObjectRegistrationProvider::GetClassesToRegister(const bool bShouldCallAutoRegister) const
 {
 	TArray<TSubclassOf<UObject>> ClassesToRegister;
 	
@@ -38,9 +39,12 @@ TArray<TSubclassOf<UObject>> UFlecsNativeClassObjectRegistrationProvider::GetCla
 			const TSolidNotNull<const IFlecsObjectRegistrationInterface*> RegistrationInterface 
 				= CastChecked<IFlecsObjectRegistrationInterface>(DefaultObject);
 			
-			if (!RegistrationInterface->ShouldAutoRegisterFromCDO())
+			if (bShouldCallAutoRegister)
 			{
-				continue;
+				if (!RegistrationInterface->ShouldAutoRegisterFromCDO())
+				{
+					continue;
+				}
 			}
 				
 			ClassesToRegister.Add(Class);

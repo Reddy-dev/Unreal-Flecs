@@ -2,6 +2,7 @@
 
 #include "General/FlecsEntitySettings.h"
 
+#include "General/FlecsObjectRegistrationProviderBase.h"
 #include "Misc/CoreDelegates.h"
 #include "UObject/UObjectHash.h"
 #include "UObject/UObjectGlobals.h"
@@ -54,40 +55,27 @@ void UFlecsEntitySettings::OnModulePackagesUnloaded(MAYBE_UNUSED TConstArrayView
 void UFlecsEntitySettings::BuildSystemList()
 {
 	CDOs.Reset();
-
-	for (TObjectIterator<UClass> It; It; ++It)
+	
+	UFlecsObjectRegistrationProviderBase::IterateProviders([this](const UFlecsObjectRegistrationProviderBase* Provider)
 	{
-		UClass* ObjectClass = *It;
-
-		if (!IsValid(ObjectClass) ||
-			ObjectClass->HasAnyClassFlags(CLASS_Abstract | CLASS_Deprecated | CLASS_NewerVersionExists))
+		TArray<TSubclassOf<UObject>> ClassesToRegister = Provider->GetClassesToRegister();
+		
+		for (const TSubclassOf<UObject>& ClassToRegister : ClassesToRegister)
 		{
-			continue;
+			const TSolidNotNull<IFlecsObjectRegistrationInterface*> RegistrationInterface
+				= CastChecked<IFlecsObjectRegistrationInterface>(ClassToRegister->GetDefaultObject());
+			
+#if WITH_EDITORONLY_DATA
+			if (!RegistrationInterface->ShouldShowInSettings())
+			{
+				return;
+			}
+#endif // WITH_EDITORONLY_DATA
+			
+			CDOs.Add(CastChecked<UObject>(RegistrationInterface));
 		}
 		
-		if (!ObjectClass->ImplementsInterface(UFlecsObjectRegistrationInterface::StaticClass()))
-		{
-			continue;
-		}
-
-		UObject* CDO = GetMutableDefault<UObject>(ObjectClass);
-
-		if UNLIKELY_IF(!IsValid(CDO))
-		{
-			continue;
-		}
-
-		const IFlecsObjectRegistrationInterface* RegistrationInterface = Cast<IFlecsObjectRegistrationInterface>(CDO);
-
-#if WITH_EDITORONLY_DATA
-		if (!RegistrationInterface->ShouldShowInSettings())
-		{
-			continue;
-		}
-#endif // WITH_EDITORONLY_DATA
-
-		CDOs.Add(CDO);
-	}
+	});
 
 	CDOs.Sort([](const UObject& LHS, const UObject& RHS) -> bool
 	{

@@ -745,6 +745,9 @@ public:
 	FFlecsEntityHandle GetFlecsModule(const FName& InModuleName) const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Flecs")
+	FFlecsEntityHandle GetFlecsPlugin(const FName& InPluginName) const;
+	
+	UFUNCTION()
 	FFlecsId GetMaxId() const;
 	
 protected:

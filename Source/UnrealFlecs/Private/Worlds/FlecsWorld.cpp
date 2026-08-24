@@ -40,6 +40,7 @@
 #include "General/FlecsGameplayTagManagerEntity.h"
 #include "General/FlecsObjectRegistrationInterface.h"
 #include "General/FlecsObjectRegistrationProviderBase.h"
+#include "Interfaces/IPluginManager.h"
 
 #include "Worlds/FlecsStage.h"
 
@@ -305,41 +306,18 @@ void UFlecsWorld::InitializeFlecsRegistrationObjects()
 {
 	TSet<TSubclassOf<UObject>> RegisteredObjectClasses;
 	
-	for (TObjectIterator<UClass> It; It; ++It)
+	UFlecsObjectRegistrationProviderBase::IterateProviders([&RegisteredObjectClasses]
+		(const UFlecsObjectRegistrationProviderBase* Provider)
 	{
-		UClass* Class = *It;
-
-		if UNLIKELY_IF(!IsValid(Class))
+		if UNLIKELY_IF(!IsValid(Provider))
 		{
-			continue;
+			return;
 		}
 
-		if (!Class->IsChildOf(UFlecsObjectRegistrationProviderBase::StaticClass()))
-		{
-			continue;
-		}
-
-		if (Class == UFlecsObjectRegistrationProviderBase::StaticClass())
-		{
-			continue;
-		}
-
-		if (Class->HasAnyClassFlags(CLASS_Abstract | CLASS_Deprecated | CLASS_NewerVersionExists))
-		{
-			continue;
-		}
-
-		const UFlecsObjectRegistrationProviderBase* ProviderCDO = Class->GetDefaultObject<UFlecsObjectRegistrationProviderBase>();
-
-		if UNLIKELY_IF(!IsValid(ProviderCDO))
-		{
-			continue;
-		}
-
-		const TArray<TSubclassOf<UObject>> ProviderRegisteredObjectClasses = ProviderCDO->GetClassesToRegister();
+		const TArray<TSubclassOf<UObject>> ProviderRegisteredObjectClasses = Provider->GetClassesToRegister();
 
 		RegisteredObjectClasses.Append(ProviderRegisteredObjectClasses);
-	}
+	});
 	
 	for (const TSubclassOf<UObject>& RegisteredClass : RegisteredObjectClasses)
 	{
@@ -366,41 +344,72 @@ void UFlecsWorld::CallBeginPlayForRegisteredObjects()
 {
 	for (const TScriptInterface<IFlecsObjectRegistrationInterface>& RegisteredObject : RegisteredObjects)
 	{
-		const bool bRegisterWithModule = RegisteredObject->ShouldRegisterWithModule();
-		FName ModuleName = NAME_None;
+		const EUnrealFlecsRegistrationScopeType RegistrationScopeType = RegisteredObject->GetRegistrationScopeType();
+		const bool bShouldRegisterWithScope = RegistrationScopeType != EUnrealFlecsRegistrationScopeType::None;
 		
-		if (bRegisterWithModule)
+		FFlecsEntityHandle ScopeEntity;
+		
+		if (bShouldRegisterWithScope)
 		{
-			ModuleName = RegisteredObject->GetModuleName();
+			FName ScopeName = RegisteredObject->GetScopeName();
+			const FString PackageName = RegisteredObject.GetObject()->GetClass()->GetOuterUPackage()->GetName();
 			
-			if (ModuleName.IsNone())
+			if (RegistrationScopeType == EUnrealFlecsRegistrationScopeType::Module)
 			{
-				const FString PackageName = RegisteredObject.GetObject()->GetClass()->GetOuterUPackage()->GetName();
-				ModuleName = FName(*FPackageName::GetShortName(PackageName));			
-			}
-		}
-		
-		FFlecsEntityHandle ModuleEntity;
-		
-		if (bRegisterWithModule)
-		{
-			ModuleEntity = GetFlecsModule(ModuleName);
+				if (ScopeName.IsNone())
+				{
+					ScopeName = FName(*FPackageName::GetShortName(PackageName));			
+				}
+				
+				ScopeEntity = GetFlecsModule(ScopeName);
 			
-			if UNLIKELY_IF(!ModuleEntity.IsValid() || !ModuleEntity.Has(flecs::Module))
+				if UNLIKELY_IF(!ScopeEntity.IsValid())
+				{
+					UE_LOGFMT(LogFlecsWorld, Warning,
+						"Module {ModuleName} does not exist or is not a valid flecs entity, registered object {ObjectName} will not be registered with the module",
+						*ScopeName.ToString(), *RegisteredObject.GetObject()->GetName());
+			
+					ScopeEntity = FFlecsEntityHandle::GetNullHandle();
+				}
+			}
+			else if (RegistrationScopeType == EUnrealFlecsRegistrationScopeType::Plugin)
 			{
-				UE_LOGFMT(LogFlecsWorld, Warning,
-					"Module {ModuleName} does not exist or is not a valid flecs module, registered object {ObjectName} will not be registered with the module",
-					*ModuleName.ToString(), *RegisteredObject.GetObject()->GetName());
-			
-				ModuleEntity = FFlecsEntityHandle::GetNullHandle();
+				IPluginManager& PluginManager = IPluginManager::Get();
+				
+				if (ScopeName.IsNone())
+				{
+					ScopeName = FName(PluginManager.GetModuleOwnerPlugin(FName(*FPackageName::GetShortName(PackageName)))->GetName());
+				}
+				
+				ScopeEntity = GetFlecsPlugin(ScopeName);
 			}
+			else if (RegistrationScopeType == EUnrealFlecsRegistrationScopeType::CustomNameIdentifier)
+			{
+				if LIKELY_IF(ensure(!ScopeName.IsNone()))
+				{
+					ScopeEntity = LookupEntity(ScopeName.ToString());
+				}
+			}
+			else if (RegistrationScopeType == EUnrealFlecsRegistrationScopeType::CustomSymbolIdentifier)
+			{
+				if LIKELY_IF(ensure(!ScopeName.IsNone()))
+				{
+					ScopeEntity = LookupEntityBySymbol_Internal(ScopeName.ToString());
+				}
+			}
+			else
+			{
+				// should be unreachable
+				solid_cassume(false);
+			}
+			
 		}
 		
 		FFlecsId OldScope = FFlecsId::Null();
 		
-		if (bRegisterWithModule && ModuleEntity.IsValid())
+		if (bShouldRegisterWithScope && ScopeEntity.IsValid())
 		{
-			OldScope = SetScope(ModuleEntity);
+			OldScope = SetScope(ScopeEntity);
 		}
 		
 		RegisteredObject->FlecsWorldBeginPlay(this);
@@ -947,7 +956,7 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 	FName ModuleName = NAME_None;
 	if (bRegisterWithFlecsModule)
 	{
-		ModuleName = FlecsObjectInterface->GetModuleName();
+		ModuleName = FlecsObjectInterface->GetScopeName();
 		
 		if (ModuleName.IsNone())
 		{
@@ -993,6 +1002,30 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 	SetScope(OldScope);
 	
 	return FlecsObject;
+}
+
+bool UFlecsWorld::UnregisterFlecsObject(const TSubclassOf<UObject> InClass)
+{
+	for (int32 Index = RegisteredObjects.Num() - 1; Index >= 0; --Index)
+	{
+		const TScriptInterface<IFlecsObjectRegistrationInterface> RegisteredObject = RegisteredObjects[Index];
+		
+		if UNLIKELY_IF(!RegisteredObject)
+		{
+			continue;
+		}
+		
+		if (RegisteredObject.GetObject()->GetClass() == InClass)
+		{
+			RegisteredObject->UnregisterObject(this);
+			
+			RegisteredObjects.RemoveAt(Index);
+			RegisteredObjectTypes.Remove(InClass);
+			return true;
+		}
+	}
+	
+	return false;
 }
 
 UFlecsStage* UFlecsWorld::GetStage(const int32 InStageId) const

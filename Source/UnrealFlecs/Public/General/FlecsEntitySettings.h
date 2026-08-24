@@ -29,7 +29,7 @@ public:
 	void BuildSystemList();
 
 	UPROPERTY(VisibleAnywhere, Category = "Flecs", Transient, Instanced, EditFixedSize, meta = (EditInline))
-	TArray<TObjectPtr<UObject>> CDOs;
+	TArray<TObjectPtr<const UObject>> CDOs;
 
 protected:
 	void OnPostEngineInit();

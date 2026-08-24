@@ -5,6 +5,7 @@
 #include "SolidMacros/Macros.h"
 
 #include "Components/UnrealFlecsModuleTag.h"
+#include "Components/UnrealFlecsPluginTag.h"
 #include "Worlds/FlecsWorld.h"
 
 UE::Flecs::FFlecsModuleRegistry& UE::Flecs::FFlecsModuleRegistry::Get()
@@ -35,6 +36,16 @@ void UE::Flecs::FFlecsModuleRegistry::InitializeRegisteredModules(const TSolidNo
 {
 	InFlecsWorld->RegisterComponentType<FUnrealFlecsModuleTag>()
 		.AddPair(flecs::With, flecs::Module);
+	
+	InFlecsWorld->RegisterComponentType<FUnrealFlecsPluginTag>()
+		.AddPair(flecs::With, flecs::Module);
+	
+	for (const FName& PluginName : RegisteredPlugins)
+	{
+		InFlecsWorld->CreateEntity(PluginName.ToString())
+			.Add(flecs::Module)
+			.Add<FUnrealFlecsPluginTag>();
+	}
 	
 	for (const FName& ModuleName : RegisteredModules)
 	{

@@ -320,6 +320,15 @@ public:
 	}
 	
 	UFUNCTION(BlueprintCallable, Category = "Flecs")
+	bool UnregisterFlecsObject(const TSubclassOf<UObject> InClass);
+	
+	template <Solid::TStaticClassConcept T>
+	FORCEINLINE bool UnregisterFlecsObject()
+	{
+		return UnregisterFlecsObject(T::StaticClass());
+	}
+	
+	UFUNCTION(BlueprintCallable, Category = "Flecs")
 	UFlecsStage* GetStage(const int32 InStageId) const;
 	
 	NO_DISCARD UFlecsStage* GetStage(const flecs::world& InStageWorld) const;

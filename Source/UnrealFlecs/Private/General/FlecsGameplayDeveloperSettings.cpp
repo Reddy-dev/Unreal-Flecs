@@ -12,7 +12,7 @@ void UFlecsGameplayDeveloperSettings::RegisterModuleSettings(const TSolidNotNull
 {
 	solid_checkf(InModuleSettings->HasAnyFlags(RF_ClassDefaultObject), TEXT("Registered ModuleSettings need to be its class's CDO"));
 	
-	// we should consider a replacement in case we're hot-reloading
+	// @TODO: we should consider a replacement in case we're hot-reloading
 	FName EntryName = InModuleSettings->GetClass()->GetFName();
 
 #if WITH_EDITOR

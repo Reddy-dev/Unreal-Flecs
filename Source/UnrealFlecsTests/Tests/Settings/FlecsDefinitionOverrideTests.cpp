@@ -201,12 +201,12 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsDefinitionOverrideTests,
 		const UObject* ObserverCDO = GetDefault<UFlecsObserverDefinitionOverrideTestObject>();
 
 		const bool bHasSystemCDO = EntitySettings->CDOs.ContainsByPredicate(
-			[SystemCDO](const TObjectPtr<UObject>& InCDO)
+			[SystemCDO](const TObjectPtr<const UObject>& InCDO)
 			{
 				return InCDO.Get() == SystemCDO;
 			});
 		const bool bHasObserverCDO = EntitySettings->CDOs.ContainsByPredicate(
-			[ObserverCDO](const TObjectPtr<UObject>& InCDO)
+			[ObserverCDO](const TObjectPtr<const UObject>& InCDO)
 			{
 				return InCDO.Get() == ObserverCDO;
 			});

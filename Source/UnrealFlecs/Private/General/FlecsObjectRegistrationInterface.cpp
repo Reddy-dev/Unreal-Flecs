@@ -17,3 +17,8 @@ void IFlecsObjectRegistrationInterface::UnregisterObject(const TSolidNotNull<UFl
 void IFlecsObjectRegistrationInterface::FlecsWorldBeginPlay(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld)
 {
 }
+
+void IFlecsObjectRegistrationInterface::SetFlecsObjectState(
+	const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld, const EFlecsObjectRegistrationStateType InState)
+{
+}
