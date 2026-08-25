@@ -177,7 +177,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsDefinitionOverrideTests,
 		UFlecsObserverDefinitionOverrideTestObject* CDO =
 			GetMutableDefault<UFlecsObserverDefinitionOverrideTestObject>();
 		const FFlecsObserverDefinitionOverrides PreviousOverrides = CDO->GetDefinitionOverrides();
-		TGuardValue<FFlecsObserverDefinitionOverrides> RestoreOverrides(CDO->GetDefinitionOverrides(), PreviousOverrides);
+		TGuardValue RestoreOverrides(CDO->GetDefinitionOverrides(), PreviousOverrides);
 
 		FFlecsObserverDefinitionOverrides CDOOverrides;
 		CDOOverrides.bOverrideObserverEvents = true;
@@ -205,6 +205,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsDefinitionOverrideTests,
 			{
 				return InCDO.Get() == SystemCDO;
 			});
+		
 		const bool bHasObserverCDO = EntitySettings->CDOs.ContainsByPredicate(
 			[ObserverCDO](const TObjectPtr<const UObject>& InCDO)
 			{

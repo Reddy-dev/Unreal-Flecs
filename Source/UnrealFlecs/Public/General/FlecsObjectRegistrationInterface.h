@@ -3,6 +3,7 @@
 #pragma once
 
 #include "UObject/Interface.h"
+#include "Misc/AutomationTest.h"
 
 #include "Types/SolidNotNull.h"
 
@@ -41,6 +42,10 @@ public:
 	// Impl must be safe to call on the CDO
 	virtual NO_DISCARD bool ShouldAutoRegisterFromCDO() const { return true; }
 	virtual NO_DISCARD bool ShouldAutoRegisterWithWorld(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InFlecsWorld) const { return true; }
+	
+#if WITH_AUTOMATION_TESTS
+	virtual NO_DISCARD bool ShouldAutoRegisterOnlyForTest() const { return false; }
+#endif // WITH_AUTOMATION_TEST
 	
 	virtual NO_DISCARD EUnrealFlecsRegistrationScopeType GetRegistrationScopeType() const
 	{

@@ -2,6 +2,7 @@
 
 #include "Pipelines/FlecsDefaultGameLoop.h"
 
+#include "Components/UnrealFlecsPluginTag.h"
 #include "Logs/FlecsCategories.h"
 
 #include "Pipelines/FlecsOutsideMainLoopTag.h"

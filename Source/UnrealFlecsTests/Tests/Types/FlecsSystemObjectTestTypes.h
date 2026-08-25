@@ -40,8 +40,15 @@ public:
 
 	virtual bool ShouldAutoRegisterFromCDO() const override
 	{
-		return false;
+		return true;
 	}
+
+#if WITH_AUTOMATION_TESTS
+	virtual bool ShouldAutoRegisterOnlyForTest() const override
+	{
+		return true;
+	}
+#endif // WITH_AUTOMATION_TESTS
 
 	virtual EUnrealFlecsRegistrationScopeType GetRegistrationScopeType() const override
 	{

@@ -6,7 +6,7 @@ public class UnrealFlecsEditor : ModuleRules
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
         
-        CppStandard = CppStandardVersion.Cpp20;
+        CppStandard = CppStandardVersion.Cpp23;
         
         IWYUSupport = IWYUSupport.Full;
 

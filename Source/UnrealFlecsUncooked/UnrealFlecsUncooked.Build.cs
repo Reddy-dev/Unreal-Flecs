@@ -6,6 +6,8 @@ public class UnrealFlecsUncooked : ModuleRules
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
+        CppStandard = CppStandardVersion.Cpp23;
+
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
