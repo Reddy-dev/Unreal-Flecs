@@ -45,6 +45,13 @@ public:
 		return true;
 	}
 #endif // WITH_AUTOMATION_TESTS
+	
+#if WITH_EDITORONLY_DATA
+	virtual bool ShouldShowInSettings() const override
+	{
+		return false;
+	}
+#endif // 
 
 	virtual EUnrealFlecsRegistrationScopeType GetRegistrationScopeType() const override
 	{
@@ -83,6 +90,13 @@ public:
 	{
 		return false;
 	}
+	
+#if WITH_EDITORONLY_DATA
+	virtual bool ShouldShowInSettings() const override
+	{
+		return false;
+	}
+#endif // 
 
 	virtual EUnrealFlecsRegistrationScopeType GetRegistrationScopeType() const override
 	{

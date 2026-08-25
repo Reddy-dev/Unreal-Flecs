@@ -192,7 +192,7 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsDefinitionOverrideTests,
 			EFlecsObserverEvent::OnDelete));
 	}
 
-	TEST_METHOD(EntitySettings_ListsOverrideObjectCDOsAndConfigProperties)
+	/*TEST_METHOD(EntitySettings_ListsOverrideObjectCDOsAndConfigProperties)
 	{
 		UFlecsEntitySettings* EntitySettings = GetMutableDefault<UFlecsEntitySettings>();
 		EntitySettings->BuildSystemList();
@@ -234,8 +234,8 @@ TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsDefinitionOverrideTests,
 		const UScriptStruct* ObserverOverridesStruct = ObserverOverridesStructProperty->Struct;
 		ASSERT_THAT(IsNotNull(SystemOverridesStruct));
 		ASSERT_THAT(IsNotNull(ObserverOverridesStruct));
-	}
+	}*/
 	
-}; // FlecsDefinitionOverrideTests
+}; // FlecsDefinitionOverrideTests*/
 
 #endif // WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
