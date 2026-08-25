@@ -363,7 +363,7 @@ public:
 			.bReplicate = TFlecsComponentTraits<T>::Replicate,
 			.bWithAddReferencedObjects = TFlecsComponentTraits<T>::WithAddReferencedObjects,
 			.bRegisterMemberProperties = TFlecsComponentTraits<T>::RegisterMemberProperties,
-			.RegistrationScopeType = TFlecsComponentTraitsBase<T>::RegistrationScopeType,
+			.RegistrationScopeType = TFlecsComponentTraits<T>::RegistrationScopeType,
 			.RegistrationScopeName = TFlecsComponentTraits<T>::GetRegistrationScopeName(),
 		};
 

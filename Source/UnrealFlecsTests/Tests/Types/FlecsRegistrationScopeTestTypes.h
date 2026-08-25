@@ -54,6 +54,7 @@ struct TFlecsComponentTraits<FFlecsRegistrationScopePluginComponent>
 	{
 		return UE::Flecs::Tests::RegistrationScope::PluginScopeName;
 	}
+	
 }; // struct TFlecsComponentTraits<FFlecsRegistrationScopePluginComponent>
 
 UCLASS(Abstract)
@@ -109,6 +110,12 @@ public:
 	{
 		return UE::Flecs::Tests::RegistrationScope::ModuleScopeName;
 	}
+	
+	virtual bool ShouldAutoRegisterFromCDO() const override
+	{
+		return false;
+	}
+	
 }; // class UFlecsExplicitModuleRegistrationScopeTestObject
 
 UCLASS()

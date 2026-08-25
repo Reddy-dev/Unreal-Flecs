@@ -64,62 +64,64 @@ public:
 	
 	FFlecsEntityHandle() = default;
 	
-	template <UE::Flecs::TFlecsEntityFunctionInputTypeConcept T>
-	SOLID_INLINE const FSelfType& Add(const T& InValue) const
+	template <UE::Flecs::TFlecsEntityFunctionInputTypeConcept T, typename TSelf>
+	SOLID_INLINE const TSelf& Add(this const TSelf& InSelf, const T& InValue)
 	{
-		GetEntity().add(FFlecsCommonHandle::GetInputId(*this, InValue));
-		return *this;
+		InSelf.GetEntity().add(FFlecsCommonHandle::GetInputId(InSelf, InValue));
+		return InSelf;
 	}
 	
-	SOLID_INLINE const FSelfType& Add(const UEnum* EnumType, const uint64 InValue) const
+	template <typename TSelf>
+	SOLID_INLINE const TSelf& Add(this const TSelf& InSelf, const UEnum* EnumType, const uint64 InValue)
 	{
-		const FFlecsEntityHandle EnumEntity = ObtainComponentTypeEnum<FFlecsEntityHandle>(EnumType);
+		const FFlecsEntityHandle EnumEntity = InSelf.template ObtainComponentTypeEnum<FFlecsEntityHandle>(EnumType);
 
-		const FFlecsId ValueEntity = GetEnumConstant<FFlecsId>(EnumType, InValue);
+		const FFlecsId ValueEntity = InSelf. template GetEnumConstant<FFlecsId>(EnumType, InValue);
 		solid_check(ValueEntity.IsValid());
 		
-		AddPair(EnumEntity, ValueEntity);
-		return *this;
+		InSelf.AddPair(EnumEntity, ValueEntity);
+		return InSelf;
 	}
 
-	SOLID_INLINE const FSelfType& Add(const FGameplayTagContainer& InTags) const
+	template <typename TSelf>
+	SOLID_INLINE const TSelf& Add(this const TSelf& InSelf, const FGameplayTagContainer& InTags)
 	{
 		for (const FGameplayTag& Tag : InTags)
 		{
-			Add(Tag);
+			InSelf.Add(Tag);
 		}
 
-		return *this;
+		return InSelf;
 	}
 	
-	template <typename T>
-	SOLID_INLINE const FSelfType& Add() const
+	template <typename T, typename TSelf>
+	SOLID_INLINE const TSelf& Add(this const TSelf& InSelf)
 	{
-		GetEntity().add<T>();
-		return *this;
+		InSelf.GetEntity().template add<T>();
+		return InSelf;
 	}
 
-	template <typename T>
+	template <typename T, typename TSelf>
 	requires (std::is_enum<T>::value)
-	SOLID_INLINE const FSelfType& Add(const T InValue) const
+	SOLID_INLINE const TSelf& Add(this const TSelf& InSelf, const T InValue)
 	{
-		GetEntity().add<T>(InValue);
-		return *this;
+		InSelf.GetEntity().template add<T>(InValue);
+		return InSelf;
 	}
 	
-	template <typename T>
-	SOLID_INLINE const FSelfType& Remove() const
+	template <typename T, typename TSelf>
+	SOLID_INLINE const TSelf& Remove(this const TSelf& InSelf)
 	{
-		GetEntity().remove<T>();
-		return *this;
+		InSelf.GetEntity().template remove<T>();
+		return InSelf;
 	}
 
-	template <typename T>
-	requires (std::is_enum<T>::value)
-	SOLID_INLINE const FSelfType& Remove() const
+	template <typename T, typename TSelf>
+	requires (std::is_enum_v<T>)
+	SOLID_INLINE const TSelf& Remove(this const TSelf& InSelf)
 	{
-		RemovePair<T>(flecs::Wildcard);
-		return *this;
+		InSelf.template RemovePair<T>(flecs::Wildcard);
+		return InSelf;
 	}
 	
 	template <UE::Flecs::TFlecsEntityFunctionInputTypeConcept T>

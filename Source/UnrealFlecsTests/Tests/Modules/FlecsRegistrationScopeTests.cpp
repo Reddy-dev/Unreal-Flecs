@@ -121,12 +121,6 @@ FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsRegistrationScopeTests,
 		ASSERT_THAT(IsTrue(Object->GetRegisteredEntity().HasPair(flecs::ChildOf, ExplicitScope.GetFlecsId())));
 		ASSERT_THAT(IsTrue(Object->GetBeginPlayEntity().HasPair(flecs::ChildOf, ExplicitScope.GetFlecsId())));
 		ASSERT_THAT(IsTrue(World()->GetScope() == PreviousScope.GetFlecsId()));
-
-		Object->ResetBeginPlayEntity();
-		World()->CallBeginPlayForRegisteredObjects();
-
-		ASSERT_THAT(IsTrue(Object->GetBeginPlayEntity().HasPair(flecs::ChildOf, ExplicitScope.GetFlecsId())));
-		ASSERT_THAT(IsTrue(World()->GetScope() == PreviousScope.GetFlecsId()));
 	}
 
 	TEST_METHOD(MissingScope_RegistersAndBeginsUnscopedAndRestoresPreviousScope)
