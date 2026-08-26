@@ -770,7 +770,7 @@ struct untyped_component : entity {
      * @param world The world.
      * @param name The component name.
      */
-    explicit untyped_component(flecs::world_t *world, const char *name, const bool bUseLowId = true)
+    explicit untyped_component(flecs::world_t *world, const char *name, const bool bUseLowId = true) // bUseLowId added Elie
     {
         world_ = world;
 
