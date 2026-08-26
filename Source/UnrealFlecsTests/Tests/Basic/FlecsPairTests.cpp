@@ -128,6 +128,13 @@ public:
 		ASSERT_THAT(IsTrue(ValuePair.IsValid()));
 		ASSERT_THAT(AreEqual(PairIsTagComponentHandle.GetFlecsId(), ValuePair.GetRelation()));
 		ASSERT_THAT(IsTrue(ValuePair.GetSecondValue() == Value));
+		
+		const FFlecsId ValuePairFromConstructor = FFlecsId(FlecsValuePair, PairIsTagComponentHandle.GetFlecsId(), Value);
+		ASSERT_THAT(IsTrue(ValuePairFromConstructor.IsPair()));
+		ASSERT_THAT(IsTrue(ValuePairFromConstructor.IsValuePair()));
+		ASSERT_THAT(IsTrue(ValuePairFromConstructor.IsValid()));
+		ASSERT_THAT(AreEqual(PairIsTagComponentHandle.GetFlecsId(), ValuePairFromConstructor.GetRelation()));
+		ASSERT_THAT(IsTrue(ValuePairFromConstructor.GetSecondValue() == Value));
 	}
 
 	TEST_METHOD(BasicValuePairAddRemove_EntityAPI)
@@ -145,6 +152,20 @@ public:
 
 		TestEntity.Remove(ValuePairB);
 		ASSERT_THAT(IsFalse(TestEntity.Has(ValuePairB)));
+	}
+
+	TEST_METHOD(BasicValuePairQuery_EntityAPI)
+	{
+		const FFlecsId MatchingValuePair = FFlecsId::MakeValuePair(PairIsTagComponentHandle.GetFlecsId(), 10);
+		const FFlecsId NonMatchingValuePair = FFlecsId::MakeValuePair(PairIsTagComponentHandle.GetFlecsId(), 20);
+		const flecs::query<> Query = World()->GetNativeFlecsWorld().query_builder<>()
+			.with(MatchingValuePair.GetId())
+			.build();
+
+		TestEntity.Add(MatchingValuePair);
+		World()->CreateEntity().Add(NonMatchingValuePair);
+
+		ASSERT_THAT(IsTrue(Query.count() == 1));
 	}
 
 }; // UnrealFlecsBasicPairTests

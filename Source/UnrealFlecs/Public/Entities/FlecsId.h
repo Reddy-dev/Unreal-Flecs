@@ -14,6 +14,16 @@
 
 class UFlecsWorldInterfaceObject;
 
+enum EFlecsPair
+{
+    FlecsPair
+}; // enum EFlecsPair
+
+enum EFlecsValuePair
+{
+    FlecsValuePair
+}; // enum EFlecsValuePair
+
 /**
  * @brief A Flecs Id equivalent to flecs::entity_t / flecs::id_t, has the same memory layout as uint64/flecs::id_t/flecs::entity_t
  */
@@ -23,14 +33,6 @@ USTRUCT(BlueprintType, meta = (DisableSplitPin,
 struct UNREALFLECS_API FFlecsId
 {
     GENERATED_BODY()
-    
-    struct FValuePair
-    {
-    };
-
-    struct FPair
-    {
-    };
 
     NO_DISCARD FORCEINLINE friend uint32 GetTypeHash(const FFlecsId& InId)
     {
@@ -84,12 +86,12 @@ public:
     {
     }
     
-    FORCEINLINE explicit constexpr FFlecsId(const FPair, const FFlecsId InFirst, const FFlecsId InSecond)
+    FORCEINLINE explicit constexpr FFlecsId(const EFlecsPair, const FFlecsId InFirst, const FFlecsId InSecond)
         : FFlecsId(ecs_pair(InFirst, InSecond))
     {
     }
     
-    FORCEINLINE explicit constexpr FFlecsId(const FValuePair, const FFlecsId InFirst, const uint32 InSecond)
+    FORCEINLINE explicit constexpr FFlecsId(const EFlecsValuePair, const FFlecsId InFirst, const uint32 InSecond)
         : FFlecsId(ecs_value_pair(InFirst, InSecond))
     {
     }
