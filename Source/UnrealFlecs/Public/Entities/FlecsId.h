@@ -194,7 +194,7 @@ public:
     NO_DISCARD FORCEINLINE THandle ToHandle(const flecs::world& World) const
     {
         solid_checkf(IsValid(), TEXT("Id is not valid."));
-        return World.get_alive(GetId());
+        return THandle(World.get_alive(GetId()));
     }
 
     NO_DISCARD FString ToString() const;

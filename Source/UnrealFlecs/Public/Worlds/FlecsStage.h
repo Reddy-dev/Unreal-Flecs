@@ -40,7 +40,7 @@ public:
 	void Merge() const;
 	
 protected:
-	virtual flecs::world* GetNativeFlecsWorld_Internal() const override
+	virtual NO_DISCARD flecs::world* GetNativeFlecsWorld_Internal() const override
 	{
 		return const_cast<flecs::world*>(&StageWorld);
 	}

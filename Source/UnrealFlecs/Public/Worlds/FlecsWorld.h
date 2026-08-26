@@ -5,10 +5,10 @@
 // ReSharper disable CppMemberFunctionMayBeStatic
 #pragma once
 
+#include <generator>
 #include <utility>
 
 #include "flecs.h"
-
 
 #include "SolidMacros/Macros.h"
 #include "Types/SolidNotNull.h"
@@ -191,6 +191,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
 	TArray<UFlecsEntityRange*> GetEntityRanges() const;
+	
+	std::generator<UFlecsEntityRange*> GetEntityRangesGenerator() const;
 
 	// @TODO: Re-implement bitmask registration
 	/*

@@ -828,6 +828,17 @@ TArray<UFlecsEntityRange*> UFlecsWorld::GetEntityRanges() const
 	return Ranges;
 }
 
+std::generator<UFlecsEntityRange*> UFlecsWorld::GetEntityRangesGenerator() const
+{
+	for (const TTuple<FName, TObjectPtr<UFlecsEntityRange>>& EntityRangePair : EntityRanges)
+	{
+		if (UFlecsEntityRange* EntityRange = EntityRangePair.Value)
+		{
+			co_yield EntityRange;
+		}
+	}
+}
+
 void UFlecsWorld::RunPipeline(const FFlecsId InPipeline, const double DeltaTime) const
 {
 	solid_checkf(InPipeline.IsValid(), TEXT("Pipeline is not valid"));
