@@ -28,9 +28,10 @@ public:
 	{
 	}
 	
-	FORCEINLINE void SetContext(void* InContext) const
+	FORCEINLINE const FFlecsSystemHandle& SetContext(void* InContext) const
 	{
 		GetSystem().ctx(InContext);
+		return *this;
 	}
 	
 	NO_DISCARD FORCEINLINE void* GetContext() const

@@ -23,6 +23,14 @@ USTRUCT(BlueprintType, meta = (DisableSplitPin,
 struct UNREALFLECS_API FFlecsId
 {
     GENERATED_BODY()
+    
+    struct FValuePair
+    {
+    };
+
+    struct FPair
+    {
+    };
 
     NO_DISCARD FORCEINLINE friend uint32 GetTypeHash(const FFlecsId& InId)
     {
@@ -43,6 +51,11 @@ struct UNREALFLECS_API FFlecsId
     NO_DISCARD FORCEINLINE constexpr static FFlecsId MakePair(const FFlecsId InFirst, const FFlecsId InSecond)
     {
         return FFlecsId(ecs_pair(InFirst, InSecond));
+    }
+    
+    NO_DISCARD FORCEINLINE constexpr static FFlecsId MakeValuePair(const FFlecsId InFirst, const uint32 InSecond)
+    {
+        return FFlecsId(ecs_value_pair(InFirst, InSecond));
     }
 
     /**
@@ -70,6 +83,16 @@ public:
         : FFlecsId(ecs_entity_t_comb(InIndex, InGeneration))
     {
     }
+    
+    FORCEINLINE explicit constexpr FFlecsId(const FPair, const FFlecsId InFirst, const FFlecsId InSecond)
+        : FFlecsId(ecs_pair(InFirst, InSecond))
+    {
+    }
+    
+    FORCEINLINE explicit constexpr FFlecsId(const FValuePair, const FFlecsId InFirst, const uint32 InSecond)
+        : FFlecsId(ecs_value_pair(InFirst, InSecond))
+    {
+    }
 
     NO_DISCARD FORCEINLINE bool IsValid() const
     {
@@ -81,6 +104,10 @@ public:
         if (IsPair())
         {
             return GetFirst().IsValid() && GetSecond().IsValid();
+        }
+        else if (IsValuePair())
+        {
+            return GetFirst().IsValid();
         }
 
         return true;
@@ -121,21 +148,14 @@ public:
         return ECS_IS_PAIR(GetId());
     }
     
-    NO_DISCARD FORCEINLINE bool HasRelation(const FFlecsId InRelation) const
+    NO_DISCARD FORCEINLINE bool IsValuePair() const
     {
-        solid_checkf(IsPair(), TEXT("Id is not a pair."));
-        return ECS_HAS_RELATION(GetId(), InRelation);
-    }
-
-    NO_DISCARD FORCEINLINE bool HasTarget(const FFlecsId InTarget) const
-    {
-        solid_checkf(IsPair(), TEXT("Id is not a pair."));
-        return ECS_HAS_RELATION(GetId(), InTarget);
+        return ECS_IS_VALUE_PAIR(GetId());
     }
 
     NO_DISCARD FORCEINLINE FFlecsId GetFirst() const
     {
-        solid_checkf(IsPair(), TEXT("Id is not a pair."));
+        solid_checkf(IsPair() || IsValuePair(), TEXT("Id is not a pair."));
         return FFlecsId(ECS_PAIR_FIRST(GetId()));
     }
 
@@ -143,6 +163,12 @@ public:
     {
         solid_checkf(IsPair(), TEXT("Id is not a pair."));
         return FFlecsId(ECS_PAIR_SECOND(GetId()));
+    }
+    
+    NO_DISCARD FORCEINLINE uint32 GetSecondValue() const
+    {
+        solid_checkf(IsValuePair(), TEXT("Id is not a value pair."));
+        return ECS_PAIR_SECOND(GetId());
     }
 
     NO_DISCARD FORCEINLINE FFlecsId GetRelation() const

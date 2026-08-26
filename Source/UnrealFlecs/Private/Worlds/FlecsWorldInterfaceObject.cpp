@@ -491,7 +491,9 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterScriptStruct(const UScrip
 		const char* StructNameCStr = StringCast<char>(*StructName).Get(); // NOLINT(clang-diagnostic-dangling)
 
 		// Register Member properties can't be deferred
-		DeferEndLambda([this, ScriptStruct, &ScriptStructComponent, StructNameCStr, bComponent, &StructName, bRegisterMemberProperties]()
+		DeferEndLambda([
+			this, ScriptStruct, &ScriptStructComponent, StructNameCStr, bComponent,
+			&StructName, bRegisterMemberProperties]()
 		{
 			ScriptStructComponent = GetNativeFlecsWorld_Internal()->component(StructNameCStr);
 			solid_check(ScriptStructComponent.IsValid());

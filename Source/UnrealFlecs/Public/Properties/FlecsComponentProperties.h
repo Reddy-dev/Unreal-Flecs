@@ -193,6 +193,8 @@ public:
 	static constexpr bool WithAddReferencedObjects = false;
 	static constexpr bool RegisterMemberProperties = true;
 	
+	//static constexpr bool UseLowId = true;
+	
 	static constexpr EUnrealFlecsRegistrationScopeType RegistrationScopeType = EUnrealFlecsRegistrationScopeType::Module;
 
 	static FName GetRegistrationScopeName()
@@ -306,6 +308,9 @@ public:
 	// Only matters if the component is a UScriptStruct Type
 	UPROPERTY()
 	uint32 bRegisterMemberProperties : 1 = false;
+	
+	/*UPROPERTY()
+	uint32 bUseLowId : 1 = true;*/
 
 	UPROPERTY()
 	TArray<FFlecsQueryGeneratorInput> WithTypes;
@@ -363,6 +368,7 @@ public:
 			.bReplicate = TFlecsComponentTraits<T>::Replicate,
 			.bWithAddReferencedObjects = TFlecsComponentTraits<T>::WithAddReferencedObjects,
 			.bRegisterMemberProperties = TFlecsComponentTraits<T>::RegisterMemberProperties,
+			//.bUseLowId = TFlecsComponentTraits<T>::UseLowId,
 			.RegistrationScopeType = TFlecsComponentTraits<T>::RegistrationScopeType,
 			.RegistrationScopeName = TFlecsComponentTraits<T>::GetRegistrationScopeName(),
 		};
