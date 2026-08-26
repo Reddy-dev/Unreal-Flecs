@@ -4,6 +4,10 @@
 #ifndef SOLID_FOR_H
 #define SOLID_FOR_H
 
+#include <utility>
+
+#include "CoreTypes.h"
+
 
 namespace Solid
 {
