@@ -101,13 +101,13 @@ public:
             return false;
         }
         
-        if (IsPair())
-        {
-            return GetFirst().IsValid() && GetSecond().IsValid();
-        }
-        else if (IsValuePair())
+        if (IsValuePair())
         {
             return GetFirst().IsValid();
+        }
+        else if (IsPair())
+        {
+            return GetFirst().IsValid() && GetSecond().IsValid();
         }
 
         return true;

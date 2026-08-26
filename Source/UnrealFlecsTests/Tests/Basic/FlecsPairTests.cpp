@@ -118,6 +118,35 @@ public:
 		ASSERT_THAT(IsFalse(TestEntity.HasPair(FUSTRUCTPairTestComponent::StaticStruct(), PairTestComponentHandle2)));
 	}
 
+	TEST_METHOD(BasicValuePair_Construction_API)
+	{
+		constexpr uint32 Value = 42;
+		const FFlecsId ValuePair = FFlecsId::MakeValuePair(PairIsTagComponentHandle.GetFlecsId(), Value);
+
+		ASSERT_THAT(IsTrue(ValuePair.IsPair()));
+		ASSERT_THAT(IsTrue(ValuePair.IsValuePair()));
+		ASSERT_THAT(IsTrue(ValuePair.IsValid()));
+		ASSERT_THAT(AreEqual(PairIsTagComponentHandle.GetFlecsId(), ValuePair.GetRelation()));
+		ASSERT_THAT(IsTrue(ValuePair.GetSecondValue() == Value));
+	}
+
+	TEST_METHOD(BasicValuePairAddRemove_EntityAPI)
+	{
+		const FFlecsId ValuePairA = FFlecsId::MakeValuePair(PairIsTagComponentHandle.GetFlecsId(), 10);
+		const FFlecsId ValuePairB = FFlecsId::MakeValuePair(PairIsTagComponentHandle.GetFlecsId(), 20);
+
+		TestEntity.Add(ValuePairA).Add(ValuePairB);
+		ASSERT_THAT(IsTrue(TestEntity.Has(ValuePairA)));
+		ASSERT_THAT(IsTrue(TestEntity.Has(ValuePairB)));
+
+		TestEntity.Remove(ValuePairA);
+		ASSERT_THAT(IsFalse(TestEntity.Has(ValuePairA)));
+		ASSERT_THAT(IsTrue(TestEntity.Has(ValuePairB)));
+
+		TestEntity.Remove(ValuePairB);
+		ASSERT_THAT(IsFalse(TestEntity.Has(ValuePairB)));
+	}
+
 }; // UnrealFlecsBasicPairTests
 
 #endif // #if WITH_AUTOMATION_TESTS
