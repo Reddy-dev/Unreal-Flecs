@@ -2658,6 +2658,7 @@ void Prefab_delete_component_used_by_prefab(void);
 void Prefab_prefab_child_auto_override_pair_low_rel_id(void);
 void Prefab_reparent_to_prefab_is_prefab(void);
 void Prefab_add_same_childof_to_prefab_parent_w_name(void);
+void Prefab_override_exclusive_pair_w_value(void);
 
 // Testsuite 'World'
 void World_setup(void);
@@ -2695,6 +2696,7 @@ void World_range_exhausted(void);
 void World_range_delete_recycled_to_correct_range(void);
 void World_range_create_small_range_from_1(void);
 void World_range_create_large_range_from_1(void);
+void World_range_prefab_spawn_deferred_after_range_switch(void);
 void World_phases(void);
 void World_phases_w_merging(void);
 void World_phases_match_in_create(void);
@@ -13760,6 +13762,10 @@ bake_test_case Prefab_testcases[] = {
     {
         "add_same_childof_to_prefab_parent_w_name",
         Prefab_add_same_childof_to_prefab_parent_w_name
+    },
+    {
+        "override_exclusive_pair_w_value",
+        Prefab_override_exclusive_pair_w_value
     }
 };
 
@@ -13899,6 +13905,10 @@ bake_test_case World_testcases[] = {
     {
         "range_create_large_range_from_1",
         World_range_create_large_range_from_1
+    },
+    {
+        "range_prefab_spawn_deferred_after_range_switch",
+        World_range_prefab_spawn_deferred_after_range_switch
     },
     {
         "phases",
@@ -16789,14 +16799,14 @@ static bake_test_suite suites[] = {
         "Prefab",
         Prefab_setup,
         NULL,
-        190,
+        191,
         Prefab_testcases
     },
     {
         "World",
         World_setup,
         NULL,
-        176,
+        177,
         World_testcases
     },
     {

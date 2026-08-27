@@ -254,6 +254,9 @@ void Entity_owns_wildcard_id(void);
 void Entity_owns_wildcard_pair(void);
 void Entity_id_from_world(void);
 void Entity_id_pair_from_world(void);
+void Entity_id_value_pair_is_pair(void);
+void Entity_id_value_pair_is_pair_no_world(void);
+void Entity_id_value_pair_from_world(void);
 void Entity_id_default_from_world(void);
 void Entity_is_a(void);
 void Entity_is_a_w_type(void);
@@ -1057,6 +1060,7 @@ void QueryBuilder_query_w_this_second(void);
 void QueryBuilder_pred_eq(void);
 void QueryBuilder_pred_eq_name(void);
 void QueryBuilder_pred_match(void);
+void QueryBuilder_value_pair_w_0_value(void);
 
 // Testsuite 'SystemBuilder'
 void SystemBuilder_builder_assign_same_type(void);
@@ -1332,6 +1336,8 @@ void Module_component_name_w_module_name(void);
 void Module_delete_module_w_implicit_component_and_system(void);
 void Module_delete_module_w_explicit_component_and_system(void);
 void Module_module_has_singleton(void);
+void Module_rename_w_existing_entity_in_old_parent(void);
+void Module_rename_to_ancestor_w_existing_entity_in_old_parent(void);
 
 // Testsuite 'ImplicitComponents'
 void ImplicitComponents_add(void);
@@ -2687,6 +2693,18 @@ bake_test_case Entity_testcases[] = {
     {
         "id_pair_from_world",
         Entity_id_pair_from_world
+    },
+    {
+        "id_value_pair_is_pair",
+        Entity_id_value_pair_is_pair
+    },
+    {
+        "id_value_pair_is_pair_no_world",
+        Entity_id_value_pair_is_pair_no_world
+    },
+    {
+        "id_value_pair_from_world",
+        Entity_id_value_pair_from_world
     },
     {
         "id_default_from_world",
@@ -5845,6 +5863,10 @@ bake_test_case QueryBuilder_testcases[] = {
     {
         "pred_match",
         QueryBuilder_pred_match
+    },
+    {
+        "value_pair_w_0_value",
+        QueryBuilder_value_pair_w_0_value
     }
 };
 
@@ -6920,6 +6942,14 @@ bake_test_case Module_testcases[] = {
     {
         "module_has_singleton",
         Module_module_has_singleton
+    },
+    {
+        "rename_w_existing_entity_in_old_parent",
+        Module_rename_w_existing_entity_in_old_parent
+    },
+    {
+        "rename_to_ancestor_w_existing_entity_in_old_parent",
+        Module_rename_to_ancestor_w_existing_entity_in_old_parent
     }
 };
 
@@ -8421,7 +8451,7 @@ static bake_test_suite suites[] = {
         "Entity",
         NULL,
         NULL,
-        396,
+        399,
         Entity_testcases
     },
     {
@@ -8491,7 +8521,7 @@ static bake_test_suite suites[] = {
         "QueryBuilder",
         QueryBuilder_setup,
         NULL,
-        189,
+        190,
         QueryBuilder_testcases,
         1,
         QueryBuilder_params
@@ -8528,7 +8558,7 @@ static bake_test_suite suites[] = {
         "Module",
         NULL,
         NULL,
-        27,
+        29,
         Module_testcases
     },
     {

@@ -265,6 +265,9 @@
                 "owns_wildcard_pair",
                 "id_from_world",
                 "id_pair_from_world",
+                "id_value_pair_is_pair",
+                "id_value_pair_is_pair_no_world",
+                "id_value_pair_from_world",
                 "id_default_from_world",
                 "is_a",
                 "is_a_w_type",
@@ -1090,7 +1093,8 @@
                 "query_w_this_second",
                 "pred_eq",
                 "pred_eq_name",
-                "pred_match"
+                "pred_match",
+                "value_pair_w_0_value"
             ]
         }, {
             "id": "SystemBuilder",
@@ -1375,7 +1379,9 @@
                 "component_name_w_module_name",
                 "delete_module_w_implicit_component_and_system",
                 "delete_module_w_explicit_component_and_system",
-                "module_has_singleton"
+                "module_has_singleton",
+                "rename_w_existing_entity_in_old_parent",
+                "rename_to_ancestor_w_existing_entity_in_old_parent"
             ]
         }, {
             "id": "ImplicitComponents",

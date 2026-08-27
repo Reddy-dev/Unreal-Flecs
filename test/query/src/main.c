@@ -741,6 +741,7 @@ void Basic_query_has_and_optional_and(void);
 void Basic_recycled_pair(void);
 void Basic_recycled_component_id(void);
 void Basic_update_query_replaces_existing(void);
+void Basic_this_value_pair_w_0_value(void);
 
 // Testsuite 'Combinations'
 void Combinations_setup(void);
@@ -1684,6 +1685,7 @@ void Traversal_this_or_w_self_up_childof_w_tag(void);
 void Traversal_this_written_or_w_self_up_childof(void);
 void Traversal_up_w_isa_component_recycled(void);
 void Traversal_up_after_pair_target_delete(void);
+void Traversal_this_up_isa_inherited_value_pair(void);
 
 // Testsuite 'Cascade'
 void Cascade_parent_cascade(void);
@@ -5800,6 +5802,10 @@ bake_test_case Basic_testcases[] = {
     {
         "update_query_replaces_existing",
         Basic_update_query_replaces_existing
+    },
+    {
+        "this_value_pair_w_0_value",
+        Basic_this_value_pair_w_0_value
     }
 };
 
@@ -9503,6 +9509,10 @@ bake_test_case Traversal_testcases[] = {
     {
         "up_after_pair_target_delete",
         Traversal_up_after_pair_target_delete
+    },
+    {
+        "this_up_isa_inherited_value_pair",
+        Traversal_this_up_isa_inherited_value_pair
     }
 };
 
@@ -14358,7 +14368,7 @@ static bake_test_suite suites[] = {
         "Basic",
         Basic_setup,
         NULL,
-        240,
+        241,
         Basic_testcases,
         1,
         Basic_params
@@ -14433,7 +14443,7 @@ static bake_test_suite suites[] = {
         "Traversal",
         Traversal_setup,
         NULL,
-        185,
+        186,
         Traversal_testcases,
         1,
         Traversal_params
