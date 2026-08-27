@@ -11,6 +11,8 @@ public class SolidMacros : ModuleRules
 		CppStandard = CppStandardVersion.Cpp23;
 		
 		IWYUSupport = IWYUSupport.Full;
+
+		bMinimizeGeneratedIncludes = true;
 		
 		PublicIncludePaths.AddRange(
 			new string[] {

@@ -6,9 +6,11 @@ public class SolidMacrosEditor : ModuleRules
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
         
-        CppStandard = CppStandardVersion.Cpp20;
+        CppStandard = CppStandardVersion.Cpp23;
         
         IWYUSupport = IWYUSupport.Full;
+        
+        bMinimizeGeneratedIncludes = true;
 
         PublicDependencyModuleNames.AddRange(
             new string[]

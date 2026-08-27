@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "UObject/ObjectPtr.h"
 
 #include "SolidMacros/Macros.h"
 #include "Concepts/SolidConcepts.h"
