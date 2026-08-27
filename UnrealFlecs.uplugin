@@ -41,11 +41,6 @@
 			"LoadingPhase": "Default"
 		},
 		{
-			"Name": "UnrealFlecsGameFramework",
-			"Type": "Runtime",
-			"LoadingPhase": "Default"
-		},
-		{
 			"Name": "UnrealFlecsEditor",
 			"Type": "Editor",
 			"LoadingPhase": "Default"
