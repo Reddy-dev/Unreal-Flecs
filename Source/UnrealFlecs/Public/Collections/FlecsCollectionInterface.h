@@ -31,7 +31,7 @@ public:
 	// @TODO: Currently unused
 	virtual void InstantiateParameters(const FFlecsEntityHandle& InEntityHandle, const FInstancedStruct& InParameters) const {}
 
-	// Currently unused
+	// @TODO: Currently unused
 	// Defaults to an invalid FInstancedStruct (this is optional)
 	virtual FInstancedStruct GetParametersType() const;
 	
