@@ -5,6 +5,8 @@
 
 #include "Misc/CoreDelegates.h"
 
+#include "UObject/Class.h"
+
 #include "SolidMacros.h"
 #include "SolidNotNull.h"
 #include "Concepts/SolidConcepts.h"

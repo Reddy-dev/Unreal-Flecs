@@ -6,6 +6,7 @@
 
 #include <type_traits>
 
+#include "Misc/NotNull.h"
 
 #include "SolidMacros/Macros.h"
 

@@ -3,6 +3,8 @@
 #include "Versioning/SolidVersioningTypes.h"
 
 #include "Logging/StructuredLog.h"
+#include "UObject/Class.h"
+#include "UObject/UnrealType.h"
 
 bool Solid::FPropertyMatchesCDO(const TSolidNotNull<const UObject*> Object,
                                 const TSolidNotNull<const FProperty*> Property)

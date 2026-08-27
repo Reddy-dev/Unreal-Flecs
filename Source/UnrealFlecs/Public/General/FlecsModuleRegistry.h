@@ -2,6 +2,9 @@
 
 #pragma once
 
+#include "Containers/Set.h"
+#include "UObject/NameTypes.h"
+
 #include "Types/SolidNotNull.h"
 
 class UFlecsWorld;

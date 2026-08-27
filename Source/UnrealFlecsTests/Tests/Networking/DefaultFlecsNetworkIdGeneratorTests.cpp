@@ -3,6 +3,8 @@
 #include "CQTest.h"
 #include "Misc/AutomationTest.h"
 
+#include "UnrealFlecsConfigMacros.h"
+
 #if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
 
 #include "Networking/DefaultFlecsNetworkIdGenerator.h"

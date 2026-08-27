@@ -9,6 +9,7 @@
 
 #include "SolidMacros/Macros.h"
 #include "Concepts/BaseStructureProvider.h"
+#include "Misc/Optional.h"
 
 namespace Solid
 {

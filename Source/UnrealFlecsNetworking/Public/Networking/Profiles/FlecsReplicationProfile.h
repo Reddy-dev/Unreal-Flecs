@@ -2,12 +2,13 @@
 
 #pragma once
 
+#include "StructUtils/InstancedStruct.h"
 
 #include "Properties/FlecsComponentProperties.h"
 
-#include "FlecsReplicationProfile.generated.h"
+#include "FlecsReplicationProfileParamsBase.h"
 
-struct FFlecsReplicationProfileParamsBase;
+#include "FlecsReplicationProfile.generated.h"
 
 /** Flecs-owned policy values inherited by replicated entities through IsA. */
 USTRUCT(BlueprintType)

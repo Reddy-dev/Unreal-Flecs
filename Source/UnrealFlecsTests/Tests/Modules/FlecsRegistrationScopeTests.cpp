@@ -5,6 +5,8 @@
 #include "UnrealFlecsTests/Fixtures/FlecsWorldFixture.h"
 #include "UnrealFlecsTests/Tests/Types/FlecsRegistrationScopeTestTypes.h"
 
+#include "UnrealFlecsConfigMacros.h"
+
 #if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
 
 #include "Components/UnrealFlecsPluginTag.h"

@@ -4,6 +4,8 @@
 #include "UnrealFlecsTests/Fixtures/FlecsTestCase.h"
 #include "UnrealFlecsTests/Fixtures/FlecsWorldFixture.h"
 
+#include "UnrealFlecsConfigMacros.h"
+
 #if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
 
 FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsFixtureFrameworkTests,

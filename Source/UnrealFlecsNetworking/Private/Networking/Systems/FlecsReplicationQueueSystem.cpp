@@ -2,8 +2,6 @@
 
 #include "Networking/Systems/FlecsReplicationQueueSystem.h"
 
-#include <devicetopology.h>
-
 #include "Networking/Subsystem/FlecsNetworkSubsystemSingleton.h"
 #include "Networking/Subsystem/FlecsNetworkWorldSubsystem.h"
 

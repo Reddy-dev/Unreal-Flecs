@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "UObject/Class.h"
+
 #include "FlecsEntityHandleTypes.h"
 #include "FlecsId.h"
 
