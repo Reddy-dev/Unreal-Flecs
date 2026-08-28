@@ -42,12 +42,12 @@ public:
 		return *this;
 	}
 
-	FORCEINLINE FFlecsQueryBase(FFlecsQueryBase&& Other) NOEXCEPT
+	FORCEINLINE FFlecsQueryBase(FFlecsQueryBase&& Other) noexcept
 		: QueryBase(MoveTemp(Other.QueryBase))
 	{
 	}
 	
-	FORCEINLINE FFlecsQueryBase& operator=(FFlecsQueryBase&& Other) NOEXCEPT
+	FORCEINLINE FFlecsQueryBase& operator=(FFlecsQueryBase&& Other) noexcept
 	{
 		if (this != &Other)
 		{

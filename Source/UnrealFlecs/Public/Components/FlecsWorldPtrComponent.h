@@ -48,7 +48,7 @@ public:
 		return *this;
 	}
 
-	FORCEINLINE FFlecsWorldPtrComponent& operator=(const FFlecsWorldPtrComponent&& InComponent) NOEXCEPT
+	FORCEINLINE FFlecsWorldPtrComponent& operator=(const FFlecsWorldPtrComponent&& InComponent) noexcept
 	{
 		World = InComponent.World;
 		return *this;
