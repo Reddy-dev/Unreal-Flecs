@@ -47,8 +47,12 @@ void UFlecsWorldSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	Super::Initialize(Collection);
 	
 	solid_check(IsValid(GetWorld()->GetWorldSettings()));
-	solid_checkf(GetWorld()->GetWorldSettings()->IsA<AFlecsWorldSettings>(),
-	             TEXT("World settings must be of type AFlecsWorldSettings"));
+	
+	if (!ensureMsgf(GetWorld()->GetWorldSettings()->IsA<AFlecsWorldSettings>(), 
+		TEXT("World settings must be of type  or inherit from it.")))
+	{
+		return;
+	}
 
 	const TSolidNotNull<const AFlecsWorldSettings*> SettingsActor
 		= CastChecked<AFlecsWorldSettings>(GetWorld()->GetWorldSettings());
