@@ -14,32 +14,6 @@
 
 #include "SolidMacros/Macros.h"
 
-namespace Solid
-{
-	/**
-	 * Combines two or more already-computed hash values using Unreal's stable
-	 * HashCombine implementation.
-	 */
-	template <typename... THashTypes>
-	requires (sizeof...(THashTypes) >= 2 && (std::is_convertible_v<THashTypes, uint32> && ...))
-	NO_DISCARD SOLID_INLINE constexpr uint32 HashCombine(THashTypes... InHashes)
-	{
-		return ::HashCombine(static_cast<uint32>(InHashes)...);
-	}
-	
-	/**
-	 * Combines two or more already-computed hash values using Unreal's fast,
-	 * process-local HashCombineFast implementation.
-	 */
-	template <typename... THashTypes>
-	requires (sizeof...(THashTypes) >= 2 && (std::is_convertible_v<THashTypes, uint32> && ...))
-	NO_DISCARD SOLID_INLINE constexpr uint32 HashCombineFast(THashTypes... InHashes)
-	{
-		return ::HashCombineFast(static_cast<uint32>(InHashes)...);
-	}
-
-} // namespace Solid
-
 #define DEFINE_STD_HASH(x) \
 	template <> \
 	struct std::hash<x> \
