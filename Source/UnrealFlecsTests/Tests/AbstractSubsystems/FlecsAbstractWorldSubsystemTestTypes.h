@@ -23,9 +23,6 @@ public:
 	bool bWasFlecsWorldInitialized = false;
 
 	UPROPERTY()
-	bool bWasNetworkSubsystemSingletonAvailable = false;
-
-	UPROPERTY()
 	mutable uint32 TimesChecked = 0;
 	
 }; // class UTestFlecsWorldSubsystem

@@ -3,7 +3,6 @@
 #include "FlecsAbstractWorldSubsystemTestTypes.h"
 
 #include "Engine/World.h"
-#include "Networking/Subsystem/FlecsNetworkSubsystemSingleton.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsAbstractWorldSubsystemTestTypes)
 
@@ -25,5 +24,4 @@ void UTestFlecsWorldSubsystem_Initialization::OnFlecsWorldInitialized(const TSol
 	Super::OnFlecsWorldInitialized(InWorld);
 
 	bWasFlecsWorldInitialized = true;
-	bWasNetworkSubsystemSingletonAvailable = InWorld->Has<FFlecsNetworkSubsystemSingleton>();
 }
