@@ -37,9 +37,10 @@ public class UnrealFlecsTests : ModuleRules
                 "FunctionalTesting",
                 "CQTest",
                 "SolidMacros",
-                "FlecsLibrary",
+				"FlecsLibrary",
 				"UnrealFlecs",
-            }
+				"UnrealFlecsNetworking",
+			}
         );
 
         if (Target.bBuildEditor)
