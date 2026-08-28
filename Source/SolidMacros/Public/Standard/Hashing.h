@@ -5,8 +5,10 @@
 
 #include <vector>
 #include <functional>
+#include <type_traits>
 
 
+#include "Templates/TypeHash.h"
 #include "UObject/ObjectKey.h"
 #include "GameplayTagsManager.h"
 
@@ -14,20 +16,28 @@
 
 namespace Solid
 {
-	template <uint32 Count = 2>
-	static NO_DISCARD uint32 HashCombine(const uint32 (&Hashes)[Count])
+	/**
+	 * Combines two or more already-computed hash values using Unreal's stable
+	 * HashCombine implementation.
+	 */
+	template <typename... THashTypes>
+	requires (sizeof...(THashTypes) >= 2 && (std::is_convertible_v<THashTypes, uint32> && ...))
+	NO_DISCARD SOLID_INLINE constexpr uint32 HashCombine(THashTypes... InHashes)
 	{
-		uint32 Hash = 2166136261U;
-		
-		for (uint32 Index = 0; Index < Count; ++Index)
-		{
-			Hash ^= Hashes[Index];
-			Hash *= 16777619U;
-		}
-
-		return Hash;
+		return ::HashCombine(static_cast<uint32>(InHashes)...);
 	}
 	
+	/**
+	 * Combines two or more already-computed hash values using Unreal's fast,
+	 * process-local HashCombineFast implementation.
+	 */
+	template <typename... THashTypes>
+	requires (sizeof...(THashTypes) >= 2 && (std::is_convertible_v<THashTypes, uint32> && ...))
+	NO_DISCARD SOLID_INLINE constexpr uint32 HashCombineFast(THashTypes... InHashes)
+	{
+		return ::HashCombineFast(static_cast<uint32>(InHashes)...);
+	}
+
 } // namespace Solid
 
 #define DEFINE_STD_HASH(x) \
@@ -35,7 +45,7 @@ namespace Solid
 	struct std::hash<x> \
 	{ \
 	public: \
-		SOLID_INLINE std::size_t operator()(const x& Value) const NOEXCEPT \
+		SOLID_INLINE std::size_t operator()(const x& Value) const noexcept \
 		{ \
 			return GetTypeHash(Value); \
 		} \
@@ -47,7 +57,7 @@ namespace Solid
 	struct std::hash<x> \
 	{ \
 	public: \
-		SOLID_INLINE std::size_t operator()(const x& Value) const NOEXCEPT \
+		SOLID_INLINE std::size_t operator()(const x& Value) const noexcept \
 		{ \
 			return FUNC(Value); \
 		} \
@@ -59,7 +69,7 @@ namespace Solid
 	struct std::hash<x<##__VA_ARGS__>> \
 	{ \
 	public: \
-		SOLID_INLINE std::size_t operator()(const x<T>& Value) const NOEXCEPT \
+		SOLID_INLINE std::size_t operator()(const x<T>& Value) const noexcept \
 		{ \
 			return GetTypeHash(Value); \
 		} \
@@ -71,7 +81,7 @@ namespace Solid
 	struct std::hash<x<__VA_ARGS__>> \
 	{ \
 	public: \
-		SOLID_INLINE std::size_t operator()(const x<T>& Value) const NOEXCEPT \
+		SOLID_INLINE std::size_t operator()(const x<T>& Value) const noexcept \
 		{ \
 			return FUNC(Value); \
 		} \
@@ -85,10 +95,10 @@ DEFINE_STD_HASH(FGameplayTag);
 
 
 template <typename T>
-struct std::hash<TObjectKey<typename T>>
+struct std::hash<TObjectKey<T>>
 {
 public:
-	SOLID_INLINE std::size_t operator()(const TObjectKey<T>& Value) const NOEXCEPT
+	SOLID_INLINE std::size_t operator()(const TObjectKey<T>& Value) const noexcept
 	{
 		return GetTypeHash(Value);
 	}
@@ -99,7 +109,7 @@ public:
 struct std::hash<TObjectKey<typename T>>
 {
 public:
-	SOLID_INLINE std::size_t operator()(const TObjectKey<T>& Value) const NOEXCEPT
+	SOLID_INLINE std::size_t operator()(const TObjectKey<T>& Value) const
 	{
 		return GetTypeHash(Value);
 	}
