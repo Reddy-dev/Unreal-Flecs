@@ -36,11 +36,6 @@
 			"LoadingPhase": "Default"
 		},
 		{
-			"Name": "UnrealFlecsNetworking",
-			"Type": "Runtime",
-			"LoadingPhase": "Default"
-		},
-		{
 			"Name": "UnrealFlecsEditor",
 			"Type": "Editor",
 			"LoadingPhase": "Default"
@@ -54,20 +49,6 @@
 			"Name": "UnrealFlecsUncooked",
 			"Type": "UncookedOnly",
 			"LoadingPhase": "Default"
-		}
-	],
-	"Plugins": [
-		{
-			"Name": "ModularGameplay",
-			"Enabled": true
-		},
-		{
-			"Name": "GameFeatures",
-			"Enabled": true
-		},
-		{
-			"Name": "Iris",
-			"Enabled": true
 		}
 	],
 	"SupportURL": ""
