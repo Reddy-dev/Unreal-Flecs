@@ -460,14 +460,6 @@ namespace Solid
 	#endif // HAS_CPP_ATTRIBUTE(no_sanitize)
 #endif // NO_SANITIZE
 
-#ifndef NOEXCEPT
-#define NOEXCEPT noexcept
-#endif // NOEXCEPT
-
-#ifndef NO_EXCEPT
-#define NO_EXCEPT NOEXCEPT
-#endif // NO_EXCEPT
-
 #ifndef nameof
 #define nameof(x) Solid::type_name<x>()
 #endif // nameof
