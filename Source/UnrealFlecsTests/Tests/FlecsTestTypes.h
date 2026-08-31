@@ -318,6 +318,13 @@ struct FFlecsTestStruct_NoRegistrationLambda
 	GENERATED_BODY()
 }; // struct FFlecsTestStruct_NoRegistrationLambda
 
+template <>
+struct TFlecsComponentTraits<FFlecsTestStruct_NoRegistrationLambda> : public TFlecsComponentTraitsBase<FFlecsTestStruct_NoRegistrationLambda>
+{
+	static constexpr bool AutoRegister = false;
+	
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
+
 enum class ETestEnum : uint8
 {
 	None,
