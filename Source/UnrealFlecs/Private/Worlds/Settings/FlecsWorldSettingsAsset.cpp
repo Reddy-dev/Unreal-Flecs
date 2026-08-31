@@ -128,14 +128,16 @@ EDataValidationResult UFlecsWorldSettingsAsset::IsDataValid(FDataValidationConte
 				
 				Result = EDataValidationResult::Invalid;
 			}
+			
+			const TSolidNotNull<IFlecsGameLoopInterface*> GameLoopInterface = CastChecked<IFlecsGameLoopInterface>(GameLoop);
 
-			if (Cast<IFlecsGameLoopInterface>(GameLoop)->IsMainLoop())
+			if (GameLoopInterface->IsMainLoop())
 			{
 				bHasMainLoop = true;
 				MainLoops.AddUnique(GameLoop);
 			}
 
-			const TArray<FGameplayTag> GameLoopTickTypeTags = Cast<IFlecsGameLoopInterface>(GameLoop)->GetTickTypeTags();
+			const TArray<FGameplayTag> GameLoopTickTypeTags = GameLoopInterface->GetTickTypeTags();
 			if (GameLoopTickTypeTags.IsEmpty())
 			{
 				Context.AddError(FText::Format(
