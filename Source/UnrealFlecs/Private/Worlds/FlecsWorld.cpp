@@ -918,6 +918,7 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 
 	RegisteredObjects.Add(FlecsObject);
 	RegisteredObjectTypes.Add(InClass, FlecsObject);
+	
 	ExecuteInRegistrationScope(FlecsObject, FlecsObjectInterface,
 		[this, FlecsObjectInterface]()
 		{
