@@ -232,9 +232,9 @@ namespace Solid
 #define NAKED SOLID_DECLSPEC(naked)
 #endif // NAKED
 
-#ifndef FORCEINLINE_CALLS
-#define FORCEINLINE_CALLS [[msvc::forceinline_calls]]
-#endif // FORCEINLINE_CALLS
+#ifndef MSVC_FORCEINLINE_CALLS
+#define MSVC_FORCEINLINE_CALLS [[msvc::forceinline_calls]]
+#endif // MSVC_FORCEINLINE_CALLS
 
 #ifndef FORCEINLINE_ATTRIBUTE
 
