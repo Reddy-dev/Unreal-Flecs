@@ -5,7 +5,6 @@
 #include "Components/UnrealFlecsPluginTag.h"
 #include "Logs/FlecsCategories.h"
 
-#include "Pipelines/FlecsOutsideMainLoopTag.h"
 #include "Pipelines/FlecsTickTypeNativeTags.h"
 
 #include "Worlds/FlecsWorld.h"
