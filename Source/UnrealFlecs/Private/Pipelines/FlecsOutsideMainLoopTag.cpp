@@ -1,7 +1,0 @@
-﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
-
-#include "Pipelines/FlecsOutsideMainLoopTag.h"
-
-#include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsOutsideMainLoopTag)
-
-REGISTER_FLECS_COMPONENT(FFlecsOutsideMainLoopTag);

@@ -47,7 +47,6 @@
 #include "Properties/FlecsTypeRegistryEngineSubsystem.h"
 
 #include "Queries/FlecsQueryBuilder.h"
-#include "Queries/FlecsQueryBuilderView.h"
 
 #include "Pipelines/FlecsGameLoopInterface.h"
 #include "Pipelines/FlecsGameLoopTag.h"

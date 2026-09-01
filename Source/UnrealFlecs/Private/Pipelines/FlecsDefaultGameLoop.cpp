@@ -32,9 +32,6 @@ void UFlecsDefaultGameLoop::InitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWor
 		.With(flecs::Phase).Cascade(flecs::DependsOn)
 		.Without(flecs::Disabled).Up(flecs::DependsOn)
 		.Without(flecs::Disabled).Up(flecs::ChildOf)
-		.Without<FFlecsOutsideMainLoopTag>()
-		.Without<FFlecsOutsideMainLoopTag>().Up(flecs::DependsOn)
-		.Without<FFlecsOutsideMainLoopTag>().Up(flecs::ChildOf)
 		//.order_by(flecs_entity_compare)
 		// @TODO: .with(InWorld->GetTagEntity(FlecsTickType_MainLoop))
 		.Without(FlecsTickType_PrePhysics)
@@ -108,10 +105,7 @@ FFlecsPipelineHandle UFlecsDefaultGameLoop::CreatePipelineForTickType(const FGam
 		TFlecsPipelineBuilder<> PipelineBuilder = InWorld->CreatePipeline(InPipelineName)
 			.With(flecs::System)
 			.Without(flecs::Disabled).Up(flecs::DependsOn)
-			.Without(flecs::Disabled).Up(flecs::ChildOf)
-			.Without<FFlecsOutsideMainLoopTag>()
-			.Without<FFlecsOutsideMainLoopTag>().Up(flecs::DependsOn)
-			.Without<FFlecsOutsideMainLoopTag>().Up(flecs::ChildOf);
+			.Without(flecs::Disabled).Up(flecs::ChildOf);
 		
 		if (bUsePhasesInUnrealTickGroups)
 		{

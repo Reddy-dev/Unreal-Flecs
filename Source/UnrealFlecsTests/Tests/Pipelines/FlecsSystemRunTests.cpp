@@ -7,7 +7,6 @@
 
 #if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
 
-#include "Pipelines/FlecsOutsideMainLoopTag.h"
 #include "Systems/FlecsPhasesType.h"
 #include "Systems/FlecsSystemHandle.h"
 #include "UObject/UObjectGlobals.h"
@@ -59,7 +58,7 @@ public:
 		ASSERT_THAT(IsTrue(FMath::IsNearlyEqual(LastDeltaTime, ManualDeltaTime)));
 	}
 
-	TEST_METHOD(SystemOutsideMainLoop_RunsOnlyWhenRunManually)
+	/*TEST_METHOD(SystemOutsideMainLoop_RunsOnlyWhenRunManually)
 	{
 		static constexpr double ManualDeltaTime = 1.0 / 30.0;
 
@@ -89,7 +88,7 @@ public:
 		TickWorld();
 
 		ASSERT_THAT(AreEqual(1, RunCount));
-	}
+	}*/
 
 	TEST_METHOD(DisabledSystem_RunsOnlyWhenRunManually)
 	{
