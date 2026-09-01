@@ -6,5 +6,5 @@
 
 FPrimaryAssetId UFlecsThreadAllocationPolicyBaseAsset::GetPrimaryAssetId() const
 {
-	return FPrimaryAssetId(TEXT("FlecsThreadAllocationPolicy"), GetFName());
+	return FPrimaryAssetId("FlecsThreadAllocationPolicy", GetFName());
 }
