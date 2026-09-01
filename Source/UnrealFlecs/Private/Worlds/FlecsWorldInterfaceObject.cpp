@@ -237,12 +237,12 @@ bool UFlecsWorldInterfaceObject::DoesExist(const FFlecsId InId) const
 
 bool UFlecsWorldInterfaceObject::IsAlive(const FFlecsId InId) const
 {
-	return GetNativeFlecsWorld_Internal()->is_alive(InId);
+	return InId.IsValid() && GetNativeFlecsWorld_Internal()->is_alive(InId);
 }
 
 bool UFlecsWorldInterfaceObject::IsValidId(const FFlecsId InId) const
 {
-	return GetNativeFlecsWorld_Internal()->is_valid(InId);
+	return InId.IsValid() && GetNativeFlecsWorld_Internal()->is_valid(InId);
 }
 
 FFlecsEntityHandle UFlecsWorldInterfaceObject::GetAlive(const FFlecsId InId) const

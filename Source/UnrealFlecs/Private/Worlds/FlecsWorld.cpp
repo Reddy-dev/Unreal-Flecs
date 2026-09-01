@@ -841,7 +841,6 @@ std::generator<UFlecsEntityRange*> UFlecsWorld::GetEntityRangesGenerator() const
 
 void UFlecsWorld::RunPipeline(const FFlecsId InPipeline, const double DeltaTime) const
 {
-	solid_checkf(InPipeline.IsValid(), TEXT("Pipeline is not valid"));
 	solid_checkf(IsAlive(InPipeline), TEXT("Pipeline entity is not alive"));
 	
 	GetNativeFlecsWorld().run_pipeline(InPipeline, DeltaTime);
