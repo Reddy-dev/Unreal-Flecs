@@ -47,6 +47,19 @@ FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsComponentEnumRegistrationTests,
 		ASSERT_THAT(IsTrue(StaticEnumEntity == EnumEntity));
 	}
 
+	TEST_METHOD(EnumComponentRegistration_CPPUENUM_MapsUnderlyingType)
+	{
+		const UEnum* ScriptEnum = StaticEnum<EFlecsTestEnum_UENUM_Int32>();
+		ASSERT_THAT(IsTrue(IsValid(ScriptEnum)));
+		ASSERT_THAT(IsTrue(ScriptEnum->GetUnderlyingType() == UEnum::EUnderlyingType::int32));
+
+		const FFlecsEntityHandle EnumEntity = World()->RegisterComponentType(ScriptEnum);
+		ASSERT_THAT(IsTrue(EnumEntity.IsValid()));
+		ASSERT_THAT(IsTrue(EnumEntity.IsComponent()));
+		ASSERT_THAT(IsTrue(EnumEntity.IsEnum()));
+		ASSERT_THAT(AreEqual(EnumEntity.Get<flecs::Enum>().underlying_type, flecs::I32));
+	}
+
 	TEST_METHOD(SparseEnumComponentRegistration_CPPAPI)
 	{
 		const FFlecsEntityHandle SparseEnumEntity = World()->RegisterComponentType<EFlecsTestEnum_UENUM>();

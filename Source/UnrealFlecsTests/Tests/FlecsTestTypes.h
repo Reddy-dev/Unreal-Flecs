@@ -356,6 +356,19 @@ struct TFlecsComponentTraits<EFlecsTestEnum_UENUM> : public TFlecsComponentTrait
 }; // struct TFlecsComponentTraits<FFlecsTest_CPPStruct_Traits>
 
 UENUM()
+enum class EFlecsTestEnum_UENUM_Int32 : int32
+{
+	None,
+	One,
+}; // enum class EFlecsTestEnum_UENUM_Int32
+
+template <>
+struct TFlecsComponentTraits<EFlecsTestEnum_UENUM_Int32> : public TFlecsComponentTraitsBase<EFlecsTestEnum_UENUM_Int32>
+{
+	static constexpr bool AutoRegister = false;
+}; // struct TFlecsComponentTraits<EFlecsTestEnum_UENUM_Int32>
+
+UENUM()
 enum class EFlecsTestEnum_SparseUENUM : uint8
 {
 	None,
