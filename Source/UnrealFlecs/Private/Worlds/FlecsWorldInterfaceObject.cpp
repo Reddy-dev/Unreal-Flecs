@@ -696,57 +696,86 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterComponentEnumType(TSolidN
 			solid_check(ScriptEnumComponent.IsValid());
 			
 			ScriptEnumComponent.GetEntity().set_symbol(EnumNameCStr);
-
-			ScriptEnumComponent.Set<flecs::Component>({
-				.size = sizeof(uint8),
-				.alignment = alignof(uint8)
-			});
 			
-			ScriptEnumComponent.GetLambda([ScriptEnum](flecs::Enum& InEnumComponent)
-			{
-				switch (ScriptEnum->GetUnderlyingType())
+			ecs_size_t EnumUnderlyingSize = 0;
+			ecs_size_t EnumUnderlyingAlignment = 0;
+			FFlecsId UnderlyingTypeId = FFlecsId::Null();
+			
+			switch (ScriptEnum->GetUnderlyingType())
 				{
 					case UEnum::EUnderlyingType::int8:
 						{
-							InEnumComponent.underlying_type = flecs::I8;
+							EnumUnderlyingSize = sizeof(int8);
+							EnumUnderlyingAlignment = alignof(int8);
+							
+							UnderlyingTypeId = flecs::I8;
 							break;
 						}
 					case UEnum::EUnderlyingType::int16:
 						{
-							InEnumComponent.underlying_type = flecs::I16;
+							EnumUnderlyingSize = sizeof(int16);
+							EnumUnderlyingAlignment = alignof(int16);
+							
+							UnderlyingTypeId = flecs::I16;
 							break;
 						}
 					case UEnum::EUnderlyingType::int32:
 						{
-							InEnumComponent.underlying_type = flecs::I32;
+							EnumUnderlyingSize = sizeof(int32);
+							EnumUnderlyingAlignment = alignof(int32);
+							
+							UnderlyingTypeId = flecs::I32;
 							break;
 						}
 					case UEnum::EUnderlyingType::int64:
 						{
-							InEnumComponent.underlying_type = flecs::I64;
+							EnumUnderlyingSize = sizeof(int64);
+							EnumUnderlyingAlignment = alignof(int64);
+							
+							UnderlyingTypeId = flecs::I64;
 							break;
 						}
 					case UEnum::EUnderlyingType::uint8:
 						{
-							InEnumComponent.underlying_type = flecs::U8;
+							EnumUnderlyingSize = sizeof(uint8);
+							EnumUnderlyingAlignment = alignof(uint8);
+							
+							UnderlyingTypeId = flecs::U8;
 							break;
 						}
 					case UEnum::EUnderlyingType::uint16:
 						{
-							InEnumComponent.underlying_type = flecs::U16;
+							EnumUnderlyingSize = sizeof(uint16);
+							EnumUnderlyingAlignment = alignof(uint16);
+							
+							UnderlyingTypeId = flecs::U16;
 							break;
 						}
 					case UEnum::EUnderlyingType::uint32:
 						{
-							InEnumComponent.underlying_type = flecs::U32;
+							EnumUnderlyingSize = sizeof(uint32);
+							EnumUnderlyingAlignment = alignof(uint32);
+							
+							UnderlyingTypeId = flecs::U32;
 							break;
 						}
 					case UEnum::EUnderlyingType::uint64:
 						{
-							InEnumComponent.underlying_type = flecs::U64;
+							EnumUnderlyingSize = sizeof(uint64);
+							EnumUnderlyingAlignment = alignof(uint64);
+							
+							UnderlyingTypeId = flecs::U64;
 							break;
 						}
 				};
+			
+			ScriptEnumComponent.Set<flecs::Component>({
+				.size = EnumUnderlyingSize,
+				.alignment = EnumUnderlyingAlignment
+			});
+			
+			ScriptEnumComponent.Set<flecs::Enum>({
+				.underlying_type = UnderlyingTypeId
 			});
 
 			const int32 EnumCount = ScriptEnum->NumEnums();
@@ -782,8 +811,8 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterComponentEnumType(TSolidN
 				flecs::_::type_impl_data NewData{};
 				NewData.s_set_values = true;
 				NewData.s_index = flecs_component_ids_index_get();
-				NewData.s_size = sizeof(uint8);
-				NewData.s_alignment = alignof(uint8);
+				NewData.s_size = EnumUnderlyingSize;
+				NewData.s_alignment = EnumUnderlyingAlignment;
 				NewData.s_allow_tag = false;
 				NewData.s_enum_registered = false;
 				
