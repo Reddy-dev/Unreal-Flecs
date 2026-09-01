@@ -685,7 +685,6 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterComponentEnumType(TSolidN
 
 		solid_checkf(!GetTypeMapComponent()->ScriptEnumMap.contains(FFlecsScriptEnumComponent(ScriptEnum)),
 			TEXT("Script enum %s is already registered"), *ScriptEnum->GetName());
-
 		FFlecsComponentHandle ScriptEnumComponent;
 
 		const FString EnumName = ScriptEnum->GetName();
@@ -703,9 +702,51 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterComponentEnumType(TSolidN
 				.alignment = alignof(uint8)
 			});
 			
-			ScriptEnumComponent.GetLambda([](flecs::Enum& InEnumComponent)
+			ScriptEnumComponent.GetLambda([ScriptEnum](flecs::Enum& InEnumComponent)
 			{
-				InEnumComponent.underlying_type = flecs::U8;
+				switch (ScriptEnum->GetUnderlyingType())
+				{
+					case UEnum::EUnderlyingType::int8:
+						{
+							InEnumComponent.underlying_type = flecs::I8;
+							break;
+						}
+					case UEnum::EUnderlyingType::int16:
+						{
+							InEnumComponent.underlying_type = flecs::I16;
+							break;
+						}
+					case UEnum::EUnderlyingType::int32:
+						{
+							InEnumComponent.underlying_type = flecs::I32;
+							break;
+						}
+					case UEnum::EUnderlyingType::int64:
+						{
+							InEnumComponent.underlying_type = flecs::I64;
+							break;
+						}
+					case UEnum::EUnderlyingType::uint8:
+						{
+							InEnumComponent.underlying_type = flecs::U8;
+							break;
+						}
+					case UEnum::EUnderlyingType::uint16:
+						{
+							InEnumComponent.underlying_type = flecs::U16;
+							break;
+						}
+					case UEnum::EUnderlyingType::uint32:
+						{
+							InEnumComponent.underlying_type = flecs::U32;
+							break;
+						}
+					case UEnum::EUnderlyingType::uint64:
+						{
+							InEnumComponent.underlying_type = flecs::U64;
+							break;
+						}
+				};
 			});
 
 			const int32 EnumCount = ScriptEnum->NumEnums();

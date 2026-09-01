@@ -81,6 +81,51 @@ FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsComponentEnumRegistrationTests,
 		ASSERT_THAT(IsTrue(StaticSparseEnumEntity == SparseEnumEntity));
 	}
 
+	TEST_METHOD(EnumComponentRegistration_MapsUnderlyingType)
+	{
+		struct FUnderlyingTypeTestCase
+		{
+			UEnum::EUnderlyingType UnrealType;
+			flecs::entity_t FlecsType;
+		}; // struct FUnderlyingTypeTestCase
+
+		const TArray<FUnderlyingTypeTestCase> TestCases =
+		{
+			{ UEnum::EUnderlyingType::int8, flecs::I8 },
+			{ UEnum::EUnderlyingType::int16, flecs::I16 },
+			{ UEnum::EUnderlyingType::int32, flecs::I32 },
+			{ UEnum::EUnderlyingType::int64, flecs::I64 },
+			{ UEnum::EUnderlyingType::uint8, flecs::U8 },
+			{ UEnum::EUnderlyingType::uint16, flecs::U16 },
+			{ UEnum::EUnderlyingType::uint32, flecs::U32 },
+			{ UEnum::EUnderlyingType::uint64, flecs::U64 },
+		};
+
+		for (int32 TestCaseIndex = 0; TestCaseIndex < TestCases.Num(); ++TestCaseIndex)
+		{
+			const FUnderlyingTypeTestCase& TestCase = TestCases[TestCaseIndex];
+			const FName EnumName(*FString::Printf(TEXT("FlecsTestUnderlyingEnum_%d"), TestCaseIndex));
+			UEnum* TestEnum = NewObject<UEnum>(GetTransientPackage(), EnumName, RF_Transient);
+			ASSERT_THAT(IsTrue(IsValid(TestEnum)));
+
+			TArray<TPair<FName, int64>> EnumValues =
+			{
+				{ FName(TEXT("None")), 0 },
+				{ FName(TEXT("Value")), 1 },
+			};
+			ASSERT_THAT(IsTrue(TestEnum->SetEnums(EnumValues,
+				UEnum::ECppForm::EnumClass,
+				TestCase.UnrealType,
+				EEnumFlags::None,
+				UEnum::EAddMaxKeyIfMissing::No)));
+
+			const FFlecsEntityHandle EnumEntity = World()->RegisterComponentType(TestEnum);
+			ASSERT_THAT(IsTrue(EnumEntity.IsValid()));
+			ASSERT_THAT(IsTrue(EnumEntity.IsEnum()));
+			ASSERT_THAT(AreEqual(EnumEntity.Get<flecs::Enum>().underlying_type, TestCase.FlecsType));
+		}
+	}
+
 }; // FlecsComponentEnumRegistrationTests
 
 
