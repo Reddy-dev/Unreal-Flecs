@@ -193,7 +193,7 @@ public:
 	static constexpr bool WithAddReferencedObjects = false;
 	static constexpr bool RegisterMemberProperties = true;
 	
-	//static constexpr bool UseLowId = true;
+	static constexpr bool UseLowId = true;
 	
 	static constexpr EUnrealFlecsRegistrationScopeType RegistrationScopeType = EUnrealFlecsRegistrationScopeType::Module;
 
