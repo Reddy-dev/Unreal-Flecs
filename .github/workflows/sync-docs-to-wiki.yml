@@ -1,0 +1,33 @@
+name: Sync Docs to Wiki
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Docs/**'
+      - '.github/workflows/sync-docs-to-wiki.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: docs-to-wiki
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  publish-wiki:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Unreal-Flecs
+        uses: actions/checkout@v4
+
+      - name: Publish Docs to wiki
+        uses: Andrew-Chen-Wang/github-wiki-action@v5
+        with:
+          repository: Reddy-dev/Unreal-Flecs
+          path: Docs
+          token: ${{ github.token }}
+          commit-message: "Sync Docs from Unreal-Flecs"
+          disable-empty-commits: true
