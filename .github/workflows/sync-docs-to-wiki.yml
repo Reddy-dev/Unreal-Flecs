@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Publish Docs to wiki
-        uses: Andrew-Chen-Wang/github-wiki-action@v5
+        uses: Reddy-dev/github-wiki-action@v5
         with:
           repository: Reddy-dev/Unreal-Flecs
           path: Docs
