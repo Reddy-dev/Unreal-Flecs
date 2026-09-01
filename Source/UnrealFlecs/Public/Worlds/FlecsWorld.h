@@ -253,14 +253,6 @@ public:
 		return ScriptEnumComponent;
 	}
 	*/
-
-	template <typename T>
-	FFlecsComponentHandle ObtainComponentTypeStruct() const
-	{
-		solid_checkf(World.is_valid(flecs::_::type<T>::id(World)),
-			TEXT("Component %hs is not registered"), nameof(T).data());
-		return World.component<T>();
-	}
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
 	void SetPipeline(const FFlecsPipelineHandle& InPipeline) const;

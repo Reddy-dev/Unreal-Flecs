@@ -536,7 +536,8 @@ struct type_impl {
         bool allow_tag = true,
         bool is_component = true,
         bool explicit_registration = false,
-        flecs::id_t id = 0)
+        flecs::id_t id = 0,
+        bool bUseLowId = false) // bUseLowId - Added by Elie
     {
         if UNLIKELY_IF(!s_set_values)
         {
@@ -564,7 +565,8 @@ struct type_impl {
             enum_action<T>(),
             post_register_action<T>(),
             is_component,
-            explicit_registration
+            explicit_registration,
+            bUseLowId
         };
 
         flecs::entity_t c = ecs_cpp_component_register(world, &desc);
@@ -612,7 +614,7 @@ struct type_impl {
         flecs::entity_t c = flecs_component_ids_get_alive(world, in_s_index);
         
         #ifndef FLECS_CPP_NO_AUTO_REGISTRATION
-        
+#error "Not Supported in Unreal Engine"
         if (!c) {
             c = register_id(world);
             
@@ -885,10 +887,11 @@ struct component : untyped_component {
         flecs::world_t *world,
         const char *name = nullptr,
         bool allow_tag = true,
-        flecs::id_t id = 0)
+        flecs::id_t id = 0,
+        bool bUseLowId = true) // bUseLowId added Elie
     {
         world_ = world;
-        id_ = _::type<T>::register_id(world, name, allow_tag, true, true, id);
+        id_ = _::type<T>::register_id(world, name, allow_tag, true, true, id, bUseLowId);
     }
 
     /** Register on_add hook.

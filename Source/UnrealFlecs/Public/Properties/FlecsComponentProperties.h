@@ -309,8 +309,8 @@ public:
 	UPROPERTY()
 	uint32 bRegisterMemberProperties : 1 = false;
 	
-	/*UPROPERTY()
-	uint32 bUseLowId : 1 = true;*/
+	UPROPERTY()
+	uint32 bUseLowId : 1 = true;
 
 	UPROPERTY()
 	TArray<FFlecsQueryGeneratorInput> WithTypes;
@@ -368,7 +368,7 @@ public:
 			.bReplicate = TFlecsComponentTraits<T>::Replicate,
 			.bWithAddReferencedObjects = TFlecsComponentTraits<T>::WithAddReferencedObjects,
 			.bRegisterMemberProperties = TFlecsComponentTraits<T>::RegisterMemberProperties,
-			//.bUseLowId = TFlecsComponentTraits<T>::UseLowId,
+			.bUseLowId = TFlecsComponentTraits<T>::UseLowId,
 			.RegistrationScopeType = TFlecsComponentTraits<T>::RegistrationScopeType,
 			.RegistrationScopeName = TFlecsComponentTraits<T>::GetRegistrationScopeName(),
 		};
@@ -639,11 +639,11 @@ public:
 
 				if constexpr (Solid::IsScriptStruct<T>())
 				{
-					RegisteredComponentHandle = InFlecsWorld->RegisterComponentType<T>(ComponentProperties.bRegisterMemberProperties);
+					RegisteredComponentHandle = InFlecsWorld->RegisterComponentType<T>(ComponentProperties.bRegisterMemberProperties, ComponentProperties.bUseLowId);
 				}
 				else
 				{
-					RegisteredComponentHandle = InFlecsWorld->RegisterComponentType<T>();
+					RegisteredComponentHandle = InFlecsWorld->RegisterComponentType<T>(ComponentProperties.bUseLowId);
 				}
 
 				if LIKELY_IF(ScopeId.IsValid())

@@ -475,7 +475,7 @@ void UFlecsWorldInterfaceObject::RegisterMemberProperties(const TSolidNotNull<co
 }
 
 FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterScriptStruct(const UScriptStruct* ScriptStruct,
-                                                                    const bool bComponent, const bool bRegisterMemberProperties) const
+                                                                    const bool bComponent, const bool bRegisterMemberProperties, const bool bUseLowId) const
 {
 	solid_cassume(ScriptStruct);
 	solid_checkf(!IsDeferred(), TEXT("Registering script structs while deferred is not allowed"));
@@ -493,9 +493,9 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterScriptStruct(const UScrip
 		// Register Member properties can't be deferred
 		DeferEndLambda([
 			this, ScriptStruct, &ScriptStructComponent, StructNameCStr, bComponent,
-			&StructName, bRegisterMemberProperties]()
+			&StructName, bRegisterMemberProperties, bUseLowId]()
 		{
-			ScriptStructComponent = GetNativeFlecsWorld_Internal()->component(StructNameCStr);
+			ScriptStructComponent = GetNativeFlecsWorld_Internal()->component(StructNameCStr, bUseLowId);
 			solid_check(ScriptStructComponent.IsValid());
 			
 			ScriptStructComponent.GetEntity().set_symbol(StructNameCStr);
@@ -648,7 +648,7 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterScriptStruct(const UScrip
 		return ScriptStructComponent;
 }
 
-FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterScriptEnum(const UEnum* ScriptEnum) const
+FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterScriptEnum(const UEnum* ScriptEnum, const bool bUseLowId) const
 {
 	solid_cassume(ScriptEnum);
 	solid_check(IsValid(ScriptEnum));
@@ -675,10 +675,10 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterScriptEnum(const UEnum* S
 	// 	return RegisterComponentEnumType(ScriptEnum);
 	// }
 		
-	return RegisterComponentEnumType(ScriptEnum);
+	return RegisterComponentEnumType(ScriptEnum, bUseLowId);
 }
 
-FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterComponentEnumType(TSolidNotNull<const UEnum*> ScriptEnum) const
+FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterComponentEnumType(TSolidNotNull<const UEnum*> ScriptEnum, const bool bUseLowId) const
 {
 	solid_checkf(!IsDeferred(), TEXT("Registering script enums while deferred is not allowed"));
 	const FFlecsId OldScope = ClearScope();
@@ -690,9 +690,9 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterComponentEnumType(TSolidN
 		const FString EnumName = ScriptEnum->GetName();
 		const char* EnumNameCStr = StringCast<char>(*EnumName).Get();  // NOLINT(clang-diagnostic-dangling)
 
-		DeferEndLambda([this, ScriptEnum, &ScriptEnumComponent, &EnumNameCStr, &EnumName]()
+		DeferEndLambda([this, ScriptEnum, &ScriptEnumComponent, &EnumNameCStr, &EnumName, bUseLowId]()
 		{
-			ScriptEnumComponent = GetNativeFlecsWorld_Internal()->component(EnumNameCStr);
+			ScriptEnumComponent = GetNativeFlecsWorld_Internal()->component(EnumNameCStr, bUseLowId);
 			solid_check(ScriptEnumComponent.IsValid());
 			
 			ScriptEnumComponent.GetEntity().set_symbol(EnumNameCStr);
@@ -912,7 +912,9 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterScriptClassType(TSolidNot
 }
 
 FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterComponentType(
-	const TSolidNotNull<const UScriptStruct*> ScriptStruct, const bool bRegisterMemberProperties) const
+	const TSolidNotNull<const UScriptStruct*> ScriptStruct,
+	const bool bRegisterMemberProperties, 
+	const bool bUseLowId) const
 {
 	solid_checkf(!IsDeferred(), TEXT("Cannot register component while deferred"));
 	
@@ -921,10 +923,10 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterComponentType(
 		return GetScriptStructEntity(ScriptStruct);
 	}
 
-	return RegisterScriptStruct(ScriptStruct, true, bRegisterMemberProperties);
+	return RegisterScriptStruct(ScriptStruct, true, bRegisterMemberProperties, bUseLowId);
 }
 
-FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterComponentType(const TSolidNotNull<const UEnum*> ScriptEnum) const
+FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterComponentType(const TSolidNotNull<const UEnum*> ScriptEnum, const bool bUseLowId) const
 {
 	solid_checkf(!IsDeferred(), TEXT("Cannot register component while deferred"));
 	
@@ -933,7 +935,7 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterComponentType(const TSoli
 		return GetScriptEnumEntity(ScriptEnum);
 	}
 
-	return RegisterScriptEnum(ScriptEnum);
+	return RegisterScriptEnum(ScriptEnum, bUseLowId);
 }
 
 FFlecsEntityHandle UFlecsWorldInterfaceObject::GetScriptStructEntity(const UScriptStruct* ScriptStruct) const

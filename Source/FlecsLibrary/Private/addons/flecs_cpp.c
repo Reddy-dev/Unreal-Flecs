@@ -409,7 +409,7 @@ ecs_entity_t ecs_cpp_component_register(
             .sep = "::",
             .root_sep = "::",
             .symbol = symbol,
-            .use_low_id = true
+            .use_low_id = desc->bUseLowId
         });
 
         ecs_assert(c != 0, ECS_INVALID_OPERATION, 
@@ -430,7 +430,7 @@ ecs_entity_t ecs_cpp_component_register(
             .sep = "::",
             .root_sep = "::",
             .symbol = symbol,
-            .use_low_id = true
+            .use_low_id = desc->bUseLowId
         });
     }
 
