@@ -781,7 +781,6 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterComponentEnumType(TSolidN
 			const int32 EnumCount = ScriptEnum->NumEnums();
 
 			const uint64 MaxEnumValue = ScriptEnum->GetMaxEnumValue();
-			const bool bUint8 = MaxEnumValue < std::numeric_limits<uint8>::max();
 			
 			for (int32 EnumIndex = 0; EnumIndex < EnumCount; ++EnumIndex)
 			{
@@ -795,13 +794,32 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterComponentEnumType(TSolidN
 					continue;
 				}
 
-				if (bUint8)
+				switch (ScriptEnum->GetUnderlyingType())
 				{
-					ScriptEnumComponent.AddConstant<uint8>(EnumValueName, static_cast<uint8>(EnumValue));
-				}
-				else
-				{
-					ScriptEnumComponent.AddConstant<uint64>(EnumValueName, static_cast<uint64>(EnumValue));
+					case UEnum::EUnderlyingType::int8:
+						ScriptEnumComponent.AddConstant<int8>(EnumValueName, static_cast<int8>(EnumValue));
+						break;
+					case UEnum::EUnderlyingType::int16:
+						ScriptEnumComponent.AddConstant<int16>(EnumValueName, static_cast<int16>(EnumValue));
+						break;
+					case UEnum::EUnderlyingType::int32:
+						ScriptEnumComponent.AddConstant<int32>(EnumValueName, static_cast<int32>(EnumValue));
+						break;
+					case UEnum::EUnderlyingType::int64:
+						ScriptEnumComponent.AddConstant<int64>(EnumValueName, static_cast<int64>(EnumValue));
+						break;
+					case UEnum::EUnderlyingType::uint8:
+						ScriptEnumComponent.AddConstant<uint8>(EnumValueName, static_cast<uint8>(EnumValue));
+						break;
+					case UEnum::EUnderlyingType::uint16:
+						ScriptEnumComponent.AddConstant<uint16>(EnumValueName, static_cast<uint16>(EnumValue));
+						break;
+					case UEnum::EUnderlyingType::uint32:
+						ScriptEnumComponent.AddConstant<uint32>(EnumValueName, static_cast<uint32>(EnumValue));
+						break;
+					case UEnum::EUnderlyingType::uint64:
+						ScriptEnumComponent.AddConstant<uint64>(EnumValueName, static_cast<uint64>(EnumValue));
+						break;
 				}
 			}
 
