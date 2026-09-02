@@ -17,8 +17,6 @@ struct alignas(8) UNREALFLECS_API FFlecsComponentHandle : public FFlecsEntityHan
 {
 	GENERATED_BODY()
 
-	using FSelfType = FFlecsComponentHandle;
-
 public:
 	FFlecsComponentHandle() = default;
 
@@ -91,18 +89,20 @@ public:
 		return Get<flecs::Component>();
 	}
 
-	SOLID_INLINE const FSelfType& SetComponentData(const flecs::Component& InComponentData) const
+	template <typename TSelf>
+	SOLID_INLINE const TSelf& SetComponentData(this const TSelf& InSelf, const flecs::Component& InComponentData)
 	{
-		Set<flecs::Component>(InComponentData);
-		return *this;
+		InSelf.template Set<flecs::Component>(InComponentData);
+		return InSelf;
 	}
 
-	SOLID_INLINE const FSelfType& SetComponentData(const int32 InSize, const int32 InAlignment) const
+	template <typename TSelf>
+	SOLID_INLINE const TSelf& SetComponentData(this const TSelf& InSelf, const int32 InSize, const int32 InAlignment)
 	{
-		solid_check(InSize > 0 && InAlignment > 0);
+		solid_cassume(InSize > 0 && InAlignment > 0);
 		
-		SetComponentData(flecs::Component{ .size = InSize, .alignment = InAlignment });
-		return *this;
+		InSelf.SetComponentData(flecs::Component{ .size = InSize, .alignment = InAlignment });
+		return InSelf;
 	}
 
 	SOLID_INLINE void SetHooks(flecs::type_hooks_t& InHooks) const
@@ -122,64 +122,70 @@ public:
 		return GetUntypedComponent().get_hooks();
 	}
 	
-	SOLID_INLINE const FSelfType& SetConstructor(const ecs_xtor_t& InConstructor) const
+	template <typename TSelf>
+	SOLID_INLINE const FSelfType& SetConstructor(this const TSelf& InSelf, const ecs_xtor_t& InConstructor)
 	{
-		ModifyHooksLambda([InConstructor](flecs::type_hooks_t& Hooks)
+		InSelf.ModifyHooksLambda([InConstructor](flecs::type_hooks_t& Hooks)
 		{
 			Hooks.ctor = InConstructor;
 		});
 		
-		return *this;
+		return InSelf;
 	}
 
-	SOLID_INLINE const FSelfType& SetDestructor(const ecs_xtor_t& InDestructor) const
+	template <typename TSelf>
+	SOLID_INLINE const TSelf& SetDestructor(this const TSelf& InSelf, const ecs_xtor_t& InDestructor)
 	{
-		ModifyHooksLambda([InDestructor](flecs::type_hooks_t& Hooks)
+		InSelf.ModifyHooksLambda([InDestructor](flecs::type_hooks_t& Hooks)
 		{
 			Hooks.dtor = InDestructor;
 		});
 		
-		return *this;
+		return InSelf;
 	}
 
-	SOLID_INLINE const FSelfType& SetCopy(const ecs_copy_t& InCopy) const
+	template <typename TSelf>
+	SOLID_INLINE const TSelf& SetCopy(this const TSelf& InSelf, const ecs_copy_t& InCopy)
 	{
-		ModifyHooksLambda([InCopy](flecs::type_hooks_t& Hooks)
+		InSelf.ModifyHooksLambda([InCopy](flecs::type_hooks_t& Hooks)
 		{
 			Hooks.copy = InCopy;
 		});
 		
-		return *this;
+		return InSelf;
 	}
 
-	SOLID_INLINE const FSelfType& SetMove(const ecs_move_t& InMove) const
+	template <typename TSelf>
+	SOLID_INLINE const TSelf& SetMove(this const TSelf& InSelf, const ecs_move_t& InMove)
 	{
-		ModifyHooksLambda([InMove](flecs::type_hooks_t& Hooks)
+		InSelf.ModifyHooksLambda([InMove](flecs::type_hooks_t& Hooks)
 		{
 			Hooks.move = InMove;
 		});
 		
-		return *this;
+		return InSelf;
 	}
 
-	SOLID_INLINE const FSelfType& SetCompare(const ecs_cmp_t& InCompare) const
+	template <typename TSelf>
+	SOLID_INLINE const TSelf& SetCompare(this const TSelf& InSelf, const ecs_cmp_t& InCompare)
 	{
-		ModifyHooksLambda([InCompare](flecs::type_hooks_t& Hooks)
+		InSelf.ModifyHooksLambda([InCompare](flecs::type_hooks_t& Hooks)
 		{
 			Hooks.cmp = InCompare;
 		});
 		
-		return *this;
+		return InSelf;
 	}
-
-	SOLID_INLINE const FSelfType& SetEquals(const ecs_equals_t& InEquals) const
+	
+	template <typename TSelf>
+	SOLID_INLINE const TSelf& SetEquals(this const TSelf& InSelf, const ecs_equals_t& InEquals)
 	{
-		ModifyHooksLambda([InEquals](flecs::type_hooks_t& Hooks)
+		InSelf.ModifyHooksLambda([InEquals](flecs::type_hooks_t& Hooks)
 		{
 			Hooks.equals = InEquals;
 		});
 		
-		return *this;
+		return InSelf;
 	}
 	
 	/*SOLID_INLINE const FSelfType& OnAdd(const ecs_iter_action_t& InOnAdd) const
@@ -195,23 +201,23 @@ public:
 		return *this;
 	}*/
 
-	template <typename TFunc>
-	SOLID_INLINE const FSelfType& OnAdd(TFunc&& InOnAddFunction) const
+	template <typename TFunc, typename TSelf>
+	SOLID_INLINE const TSelf& OnAdd(this const TSelf& InSelf, TFunc&& InOnAddFunction)
 	{
 		using FDelegateType = flecs::_::each_delegate<TFunc>;
-		ModifyHooksLambda([this, InOnAddFunction = Forward(InOnAddFunction)](flecs::type_hooks_t& Hooks)
+		InSelf.ModifyHooksLambda([InSelf, InOnAddFunction = Forward(InOnAddFunction)](flecs::type_hooks_t& Hooks)
 		{
 			solid_checkf(Hooks.on_add == nullptr, 
 				TEXT("OnAdd hook is already set for this component. Only one OnAdd hook can be set per component."));
 			
-			const TSolidNotNull<FBindingContextType*> BindingContext = GetBindingContext(Hooks);
+			const TSolidNotNull<FBindingContextType*> BindingContext = InSelf.GetBindingContext(Hooks);
 			
 			Hooks.on_add = FDelegateType::run_add;
 			BindingContext->on_add = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnAddFunction));
 			BindingContext->free_on_add = flecs::_::free_obj<FDelegateType>;
 		});
 		
-		return *this;
+		return InSelf;
 	}
 	
 	/*SOLID_INLINE const FSelfType& OnRemove(const ecs_iter_action_t& InOnRemove) const
@@ -227,23 +233,23 @@ public:
 		return *this;
 	}*/
 
-	template <typename TFunc>
-	SOLID_INLINE const FSelfType& OnRemove(TFunc&& InOnRemoveFunction) const
+	template <typename TFunc, typename TSelf>
+	SOLID_INLINE const TSelf& OnRemove(this const TSelf& InSelf, TFunc&& InOnRemoveFunction)
 	{
 		using FDelegateType = flecs::_::each_delegate<TFunc>;
-		ModifyHooksLambda([this, InOnRemoveFunction = Forward(InOnRemoveFunction)](flecs::type_hooks_t& Hooks)
+		InSelf.ModifyHooksLambda([InSelf, InOnRemoveFunction = Forward(InOnRemoveFunction)](flecs::type_hooks_t& Hooks)
 		{
 			solid_checkf(Hooks.on_remove == nullptr, 
 				TEXT("OnRemove hook is already set for this component. Only one OnRemove hook can be set per component."));
 			
-			const TSolidNotNull<FBindingContextType*> BindingContext = GetBindingContext(Hooks);
+			const TSolidNotNull<FBindingContextType*> BindingContext = InSelf.GetBindingContext(Hooks);
 			
 			Hooks.on_remove = FDelegateType::run_remove;
 			BindingContext->on_remove = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnRemoveFunction));
 			BindingContext->free_on_remove = flecs::_::free_obj<FDelegateType>;
 		});
 		
-		return *this;
+		return InSelf;
 	}
 	
 	/*SOLID_INLINE const FSelfType& OnSet(const ecs_iter_action_t& InOnSet) const
@@ -259,44 +265,44 @@ public:
 		return *this;
 	}*/
 
-	template <typename TFunc>
-	SOLID_INLINE const FSelfType& OnSet(TFunc&& InOnSetFunction) const
+	template <typename TFunc, typename TSelf>
+	SOLID_INLINE const TSelf& OnSet(this const TSelf& InSelf, TFunc&& InOnSetFunction)
 	{
 		using FDelegateType = flecs::_::each_delegate<TFunc>;
 		
-		ModifyHooksLambda([this, InOnSetFunction = Forward(InOnSetFunction)](flecs::type_hooks_t& Hooks)
+		InSelf.ModifyHooksLambda([InSelf, InOnSetFunction = Forward(InOnSetFunction)](flecs::type_hooks_t& Hooks)
 		{
 			solid_checkf(Hooks.on_set == nullptr, 
 				TEXT("OnSet hook is already set for this component. Only one OnSet hook can be set per component."));
 			
-			const TSolidNotNull<FBindingContextType*> BindingContext = GetBindingContext(Hooks);
+			const TSolidNotNull<FBindingContextType*> BindingContext = InSelf.GetBindingContext(Hooks);
 			
 			Hooks.on_set = FDelegateType::run_set;
 			BindingContext->on_set = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnSetFunction));
 			BindingContext->free_on_set = flecs::_::free_obj<FDelegateType>;
 		});
 		
-		return *this;
+		return InSelf;
 	}
 
-	template <typename TFunc>
-	SOLID_INLINE const FSelfType& OnReplace(TFunc&& InOnReplaceFunction) const
+	template <typename TFunc, typename TSelf>
+	SOLID_INLINE const TSelf& OnReplace(this const TSelf& InSelf, TFunc&& InOnReplaceFunction)
 	{
 		using FDelegateType = flecs::_::each_delegate<TFunc>;
 		
-		ModifyHooksLambda([this, InOnReplaceFunction = Forward(InOnReplaceFunction)](flecs::type_hooks_t& Hooks)
+		InSelf.ModifyHooksLambda([InSelf, InOnReplaceFunction = Forward(InOnReplaceFunction)](flecs::type_hooks_t& Hooks)
 		{
 			solid_checkf(Hooks.on_replace == nullptr, 
 				TEXT("OnReplace hook is already set for this component. Only one OnReplace hook can be set per component."));
 			
-			const TSolidNotNull<FBindingContextType*> BindingContext = GetBindingContext(Hooks);
+			const TSolidNotNull<FBindingContextType*> BindingContext = InSelf.GetBindingContext(Hooks);
 			
 			Hooks.on_replace = FDelegateType::run_replace;
 			BindingContext->on_replace = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnReplaceFunction));
 			BindingContext->free_on_replace = flecs::_::free_obj<FDelegateType>;
 		});
 		
-		return *this;
+		return InSelf;
 	}
 
 	NO_DISCARD SOLID_INLINE uint32 GetSize() const
@@ -317,31 +323,33 @@ public:
 		return FFlecsMemberHandle(ecs_cpp_last_member(GetNativeFlecsWorld(), GetEntity()));
 	}
 	
-	SOLID_INLINE const FSelfType& AddMember(const FFlecsId InTypeId,
+	template <typename TSelf>
+	SOLID_INLINE const TSelf& AddMember(this const TSelf& InSelf, const FFlecsId InTypeId,
 								const FFlecsId InUnitId,
 								const FString& InName,
-	                            const uint32 InCount = 0) const
+	                            const uint32 InCount = 0)
 	{
-		solid_checkf(!GetNativeFlecsWorld().is_deferred(),
+		solid_checkf(!InSelf.GetNativeFlecsWorld().is_deferred(),
 					 TEXT("Cannot add member to component while in deferred mode."));
 		
-		GetUntypedComponent().member(InTypeId,
+		InSelf.GetUntypedComponent().member(InTypeId,
 		                             InUnitId,
 		                             StringCast<char>(*InName).Get(),
 		                             InCount);
-		return *this;
+		return InSelf;
 	}
 	
-	SOLID_INLINE const FSelfType& AddMember(const FFlecsId InTypeId,
+	template <typename TSelf>
+	SOLID_INLINE const TSelf& AddMember(this const TSelf& InSelf, const FFlecsId InTypeId,
 								const FFlecsId InUnitId,
 								const FString& InName,
 								const uint32 InCount,
-								const uint64 InSizeOffset) const
+								const uint64 InSizeOffset)
 	{
-		solid_checkf(!GetNativeFlecsWorld().is_deferred(),
+		solid_checkf(!InSelf.GetNativeFlecsWorld().is_deferred(),
 					 TEXT("Cannot add member to component while in deferred mode."));
 		
-		GetUntypedComponent().member(InTypeId,
+		InSelf.GetUntypedComponent().member(InTypeId,
 									 InUnitId,
 									 StringCast<char>(*InName).Get(),
 									 InCount,
@@ -349,108 +357,110 @@ public:
 		return *this;
 	}
 
-	SOLID_INLINE const FSelfType& AddMember(const FFlecsId InTypeId, const FString& InName, const uint32 InCount = 0) const
+	template <typename TSelf>
+	SOLID_INLINE const TSelf& AddMember(this const TSelf& InSelf, const FFlecsId InTypeId, const FString& InName, const uint32 InCount = 0)
 	{
-		solid_checkf(!GetNativeFlecsWorld().is_deferred(),
+		solid_checkf(!InSelf.GetNativeFlecsWorld().is_deferred(),
 					 TEXT("Cannot add member to component while in deferred mode."));
 		
-		GetUntypedComponent().member(InTypeId, StringCast<char>(*InName).Get(), InCount);
-		return *this;
+		InSelf.GetUntypedComponent().member(InTypeId, StringCast<char>(*InName).Get(), InCount);
+		return InSelf;
 	}
 
-	SOLID_INLINE const FSelfType& AddMember(const FFlecsId InTypeId,
-	                                          const FString& InName,
-	                                          const uint32 InCount,
-	                                          const uint64 InSizeOffset) const
+	template <typename TSelf>
+	SOLID_INLINE const TSelf& AddMember(this const TSelf& InSelf, const FFlecsId InTypeId,
+	                                     const FString& InName,
+	                                     const uint32 InCount,
+	                                     const uint64 InSizeOffset)
 	{
-		solid_checkf(!GetNativeFlecsWorld().is_deferred(),
+		solid_checkf(!InSelf.GetNativeFlecsWorld().is_deferred(),
 		             TEXT("Cannot add member to component while in deferred mode."));
 			
-		GetUntypedComponent().member(InTypeId,
-		                             StringCast<char>(*InName).Get(),
-		                             InCount,
-		                             InSizeOffset);
-		return *this;
+		InSelf.GetUntypedComponent().member(InTypeId,
+		                                    StringCast<char>(*InName).Get(),
+		                                    InCount,
+		                                    InSizeOffset);
+		return InSelf;
 	}
 
-	template <typename T>
-	SOLID_INLINE const FSelfType& AddMember(const FString& InName, const uint32 InCount = 0) const
+	template <typename T, typename TSelf>
+	SOLID_INLINE const TSelf& AddMember(this const TSelf& InSelf, const FString& InName, const uint32 InCount = 0)
 	{
-		solid_checkf(!GetNativeFlecsWorld().is_deferred(),
+		solid_checkf(!InSelf.GetNativeFlecsWorld().is_deferred(),
 					 TEXT("Cannot add member to component while in deferred mode."));
 		
-		GetUntypedComponent().member<T>(StringCast<char>(*InName).Get(), InCount);
-		return *this;
+		InSelf.GetUntypedComponent().template member<T>(StringCast<char>(*InName).Get(), InCount);
+		return InSelf;
 	}
 
-	template <typename T>
-	SOLID_INLINE const FSelfType& AddMember(const FString& InName, const uint32 InCount, const uint64 InSizeOffset) const
+	template <typename T, typename TSelf>
+	SOLID_INLINE const TSelf& AddMember(this const TSelf& InSelf, const FString& InName, const uint32 InCount, const uint64 InSizeOffset)
 	{
-		solid_checkf(!GetNativeFlecsWorld().is_deferred(),
+		solid_checkf(!InSelf.GetNativeFlecsWorld().is_deferred(),
 					 TEXT("Cannot add member to component while in deferred mode."));
 		
-		GetUntypedComponent().member<T>(StringCast<char>(*InName).Get(), InCount, InSizeOffset);
-		return *this;
+		InSelf.GetUntypedComponent().template member<T>(StringCast<char>(*InName).Get(), InCount, InSizeOffset);
+		return InSelf;
 	}
 
-	template <typename T>
-	SOLID_INLINE const FSelfType& AddMember(const FFlecsId InUnitId, const FString& InName, const uint32 InCount = 0) const
+	template <typename T, typename TSelf>
+	SOLID_INLINE const FSelfType& AddMember(this const TSelf& InSelf, const FFlecsId InUnitId, const FString& InName, const uint32 InCount = 0)
 	{
-		solid_checkf(!GetNativeFlecsWorld().is_deferred(),
+		solid_checkf(!InSelf.GetNativeFlecsWorld().is_deferred(),
 					 TEXT("Cannot add member to component while in deferred mode."));
 		
-		GetUntypedComponent().member<T>(InUnitId, StringCast<char>(*InName).Get(), InCount);
-		return *this;
+		InSelf.GetUntypedComponent().template member<T>(InUnitId, StringCast<char>(*InName).Get(), InCount);
+		return InSelf;
 	}
 
-	template <typename TMember, typename TUnit>
-	SOLID_INLINE const FSelfType& AddMember(const FString& InName, const uint32 InCount = 0) const
+	template <typename TMember, typename TUnit, typename TSelf>
+	SOLID_INLINE const TSelf& AddMember(this const TSelf& InSelf, const FString& InName, const uint32 InCount = 0)
 	{
-		solid_checkf(!GetNativeFlecsWorld().is_deferred(),
+		solid_checkf(!InSelf.GetNativeFlecsWorld().is_deferred(),
 					 TEXT("Cannot add member to component while in deferred mode."));
 		
-		GetUntypedComponent().member<TMember, TUnit>(StringCast<char>(*InName).Get(), InCount);
-		return *this;
+		InSelf.GetUntypedComponent().template member<TMember, TUnit>(StringCast<char>(*InName).Get(), InCount);
+		return InSelf;
 	}
 
-	template <typename TMember, typename TUnit>
-	SOLID_INLINE const FSelfType& AddMember(const FString& InName, const uint32 InCount, const uint64 InSizeOffset) const
+	template <typename TMember, typename TUnit, typename TSelf>
+	SOLID_INLINE const TSelf& AddMember(this const TSelf& InSelf, const FString& InName, const uint32 InCount, const uint64 InSizeOffset)
 	{
-		solid_checkf(!GetNativeFlecsWorld().is_deferred(),
+		solid_checkf(!InSelf.GetNativeFlecsWorld().is_deferred(),
 					 TEXT("Cannot add member to component while in deferred mode."));
 		
-		GetUntypedComponent().member<TMember, TUnit>(StringCast<char>(*InName), InCount, InSizeOffset);
-		return *this;
+		InSelf.GetUntypedComponent().template member<TMember, TUnit>(StringCast<char>(*InName).Get(), InCount, InSizeOffset);
+		return InSelf;
 	}
 
-	template <typename TMember, typename TComponent>
-	SOLID_INLINE const FSelfType& AddMember(const FString& InName, const TMember TComponent::*MemberPtr) const
+	template <typename TMember, typename TComponent, typename TSelf>
+	SOLID_INLINE const TSelf& AddMember(this const TSelf& InSelf, const FString& InName, const TMember TComponent::*MemberPtr)
 	{
-		solid_checkf(!GetNativeFlecsWorld().is_deferred(),
+		solid_checkf(!InSelf.GetNativeFlecsWorld().is_deferred(),
 					 TEXT("Cannot add member to component while in deferred mode."));
 		
-		GetUntypedComponent().member<TMember, TComponent>(StringCast<char>(*InName).Get(), MemberPtr);
-		return *this;
+		InSelf.GetUntypedComponent().template member<TMember, TComponent>(StringCast<char>(*InName).Get(), MemberPtr);
+		return InSelf;
 	}
 
-	template <typename TUnit, typename TMember, typename TComponent>
-	SOLID_INLINE const FSelfType& AddMember(const FString& InName, const TMember TComponent::*MemberPtr) const
+	template <typename TUnit, typename TMember, typename TComponent, typename TSelf>
+	SOLID_INLINE const TSelf& AddMember(this const TSelf& InSelf, const FString& InName, const TMember TComponent::*MemberPtr)
 	{
-		solid_checkf(!GetNativeFlecsWorld().is_deferred(),
+		solid_checkf(!InSelf.GetNativeFlecsWorld().is_deferred(),
 					 TEXT("Cannot add member to component while in deferred mode."));
 		
-		GetUntypedComponent().member<TUnit, TMember, TComponent>(StringCast<char>(*InName).Get(), MemberPtr);
-		return *this;
+		InSelf.GetUntypedComponent().template member<TUnit, TMember, TComponent>(StringCast<char>(*InName).Get(), MemberPtr);
+		return InSelf;
 	}
 
-	template <typename TConstant = uint32>
-	SOLID_INLINE const FSelfType& AddConstant(const FString& InName, const TConstant& InValue) const
+	template <typename TConstant = uint32, typename TSelf>
+	SOLID_INLINE const TSelf& AddConstant(this const TSelf& InSelf, const FString& InName, const TConstant& InValue)
 	{
-		solid_checkf(!GetNativeFlecsWorld().is_deferred(),
+		solid_checkf(!InSelf.GetNativeFlecsWorld().is_deferred(),
 					 TEXT("Cannot add constant to component while in deferred mode."));
 		
-		GetUntypedComponent().constant<TConstant>(StringCast<char>(*InName).Get(), InValue);
-		return *this;
+		InSelf.GetUntypedComponent().template constant<TConstant>(StringCast<char>(*InName).Get(), InValue);
+		return InSelf;
 	}
 
 private:
