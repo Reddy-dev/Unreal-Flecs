@@ -301,8 +301,6 @@ struct UNREALFLECS_API FFlecsComponentTypeInfo final
 	
 }; // struct FFlecsComponentTypeInfo
 
-// @TODO: utilize C++23 'explicit this' feature when available
-
 USTRUCT(BlueprintInternalUseOnly)
 struct UNREALFLECS_API FFlecsEntityRecordFragment
 {
@@ -610,7 +608,7 @@ public:
 	template <UE::Flecs::CNonStructUtilScriptStructType TFragmentType>
 	using TFragmentBuilderType = FBuilder::TFragmentBuilderBase<TFragmentType>;
 	
-	FORCEINLINE FBuilder Builder()
+	NO_DISCARD FORCEINLINE FBuilder Builder()
 	{
 		return FBuilder(*this);
 	}
