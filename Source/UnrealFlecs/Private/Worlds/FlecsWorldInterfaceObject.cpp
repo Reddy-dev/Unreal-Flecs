@@ -881,7 +881,7 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterScriptClassType(TSolidNot
 
 		ScriptClassEntity.Set<FFlecsScriptClassComponent>(FFlecsScriptClassComponent(ScriptClass));
 
-		//RegisterMemberProperties(ScriptClass, ScriptClassComponent);
+		//@TODO: Should we RegisterMemberProperties(ScriptClass, ScriptClassComponent);
 
 		std::string ClassNameStdString(ClassNameCStr, ClassName.Len());
 
