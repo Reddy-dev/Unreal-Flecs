@@ -11,11 +11,11 @@
 
 #include "flecs/os_api.h"
 
-#include "Concepts/SolidConcepts.h"
-#include "flecs/Unreal/FlecsScriptClassComponent.h"
-#include "flecs/Unreal/FlecsScriptStructComponent.h"
-#include "flecs/Unreal/FlecsTypeMapComponent.h"
-#include "flecs/Unreal/FlecsTypeRegisteredDelegate.h"
+#include <Concepts/SolidConcepts.h>
+#include <flecs/Unreal/FlecsScriptClassComponent.h>
+#include <flecs/Unreal/FlecsScriptStructComponent.h>
+#include <flecs/Unreal/FlecsTypeMapComponent.h>
+#include <flecs/Unreal/FlecsTypeRegisteredDelegate.h>
 
 /**
  * @defgroup cpp_components Components

@@ -38,7 +38,14 @@ SUPPORTED_ASSERTIONS = {
     "test_not_null": 1,
     "test_ptr": 2,
 }
-HARNESS_HEADERS = {"test.h", "test.hpp", "flecs_test.h", "flecs_test_utils.h", "flecstestutils.h"}
+PRESERVED_MACRO_EXCLUSIONS = set(SUPPORTED_ASSERTIONS) | {"flecs_static_assert"}
+# `cpp.h` is the upstream Bake C++ harness. Its shared component/test types
+# are provided to generated Unreal tests by Bake/FlecsTestTypes.h instead.
+HARNESS_HEADERS = {"cpp.h", "test.h", "test.hpp", "flecs_test.h", "flecs_test_utils.h", "flecstestutils.h"}
+# UE's global headers define a template alias named TString. Keep upstream
+# test type spelling in the source while giving the generated translation unit
+# a non-conflicting token name.
+UE_TYPE_ALIASES = {"TString": "FlecsGeneratedTString"}
 UNSUPPORTED_TOKENS = {
     "EXPECT_DEATH": "death_test_requires_expected_failure_backend",
     "ASSERT_DEATH": "death_test_requires_expected_failure_backend",
@@ -250,6 +257,10 @@ class ParsedSource:
     required_headers: list[str]
     macro_tests: list[tuple[str, str, Location]]
     diagnostics: list[str]
+    global_reset_expressions: list[str] = field(default_factory=list)
+    global_type_names: set[str] = field(default_factory=set)
+    global_enum_constants: set[str] = field(default_factory=set)
+    uses_shared_test_header: bool = False
 
 
 def sanitize_identifier(value: str, fallback: str = "Generated") -> str:
@@ -262,8 +273,55 @@ def sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def engine_include_roots(project_root: Path) -> list[Path]:
+    """Resolve the installed engine from the project's EngineAssociation."""
+    project_files = sorted(project_root.glob("*.uproject"))
+    if not project_files:
+        return []
+    try:
+        descriptor = json.loads(project_files[0].read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    association = descriptor.get("EngineAssociation")
+    if not isinstance(association, str) or not association:
+        return []
+
+    candidates: list[Path] = []
+    association_path = Path(association)
+    if association_path.is_absolute():
+        candidates.append(association_path)
+    engine_name = association if association.startswith("UE_") else f"UE_{association}"
+    for variable in ("ProgramFiles", "ProgramW6432"):
+        value = os.environ.get(variable)
+        if value:
+            candidates.append(Path(value) / "Epic Games" / engine_name)
+
+    for engine_root in candidates:
+        core_public = engine_root / "Engine" / "Source" / "Runtime" / "Core" / "Public"
+        if (core_public / "Misc" / "Build.h").is_file():
+            return [
+                core_public,
+                engine_root / "Engine" / "Source" / "Runtime" / "CoreUObject" / "Public",
+            ]
+    return []
+
+
 def normalize_newlines(text: str) -> str:
     return text.replace("\r\n", "\n").replace("\r", "\n")
+
+
+def parser_compatibility_text(text: str) -> str:
+    """Apply same-length C++ member renames to libclang's in-memory source."""
+    replacements = {"ensure": "obtain", "ensure_second": "obtain_second"}
+
+    def replace(match: re.Match[str]) -> str:
+        return f"{match.group('access')}{match.group('whitespace')}{replacements[match.group('name')]}"
+
+    return re.sub(
+        r"(?P<access>\.|->)(?P<whitespace>\s*)(?P<name>ensure_second|ensure)\b",
+        replace,
+        text,
+    )
 
 
 def display_path(path: Path | None, project_root: Path) -> str | None:
@@ -547,14 +605,23 @@ def walk(cursor: Any) -> Iterator[Any]:
         yield from walk(child)
 
 
+def walk_source(cursor: Any, path: Path) -> Iterator[Any]:
+    """Walk only declarations spelled in one source file, pruning includes."""
+    for child in cursor.get_children():
+        if not same_source(child, path):
+            continue
+        yield child
+        yield from walk_source(child, path)
+
+
 def same_source(cursor: Any, path: Path) -> bool:
     file = getattr(getattr(cursor, "location", None), "file", None)
     if file is None or not getattr(file, "name", None):
         return False
-    try:
-        return Path(file.name).resolve() == path.resolve()
-    except OSError:
-        return str(file.name).lower() == str(path).lower()
+    # This predicate is called for every declaration exposed by libclang.
+    # Path.resolve() performs filesystem work and turns a single large test
+    # source into minutes of path lookups on Windows.
+    return os.path.normcase(os.path.normpath(str(file.name))) == os.path.normcase(os.path.normpath(str(path)))
 
 
 def cursor_offset(location: Any, model: SourceModel) -> int:
@@ -606,10 +673,10 @@ def metadata_for(model: SourceModel, function: str, line: int, external: Sequenc
     return None
 
 
-def likely_test_name(name: str) -> bool:
+def likely_test_name(name: str, source_stem: str) -> bool:
     if name in {"main", "Define"} or name in SUPPORTED_ASSERTIONS or name.startswith("operator"):
         return False
-    return name.startswith("test_") or ("_" in name and name[0].isupper())
+    return name.startswith("test_") or name.startswith(f"{source_stem}_")
 
 
 def expected_for(function: str, inventory: Sequence[ExpectedCase]) -> ExpectedCase | None:
@@ -715,6 +782,10 @@ def split_template_arguments(tokens: Sequence[Any], start: int) -> tuple[list[st
 
 def clean_type(value: str) -> str:
     value = re.sub(r"\b(?:const|volatile|typename|class|struct)\b", "", value)
+    # libclang token spellings can omit whitespace when a qualifier is the
+    # first token in a template argument (for example ``const Velocity`` may
+    # arrive as ``constVelocity``). Do not turn that into a new type name.
+    value = re.sub(r"^(?:const|volatile)(?=[A-Za-z_])", "", value)
     return value.replace("&", "").replace("*", "").strip()
 
 
@@ -798,22 +869,22 @@ def unsupported_constructs(tokens: Sequence[Any]) -> list[str]:
     return list(dict.fromkeys(reasons))
 
 
-def reflected_type(candidate: Candidate, model: SourceModel, type_name: str) -> bool:
-    short_name = type_name.split("::")[-1]
-    for cursor in walk(candidate.translation_unit.cursor):
-        if kind(cursor) not in {"STRUCT_DECL", "CLASS_DECL", "ENUM_DECL"} or getattr(cursor, "spelling", "") != short_name:
-            continue
-        if not same_source(cursor, model.path):
+def source_reflected_types(tu: Any, model: SourceModel) -> set[str]:
+    result: set[str] = set()
+    for cursor in walk_source(tu.cursor, model.path):
+        if kind(cursor) not in {"STRUCT_DECL", "CLASS_DECL", "ENUM_DECL"}:
             continue
         start, _ = cursor_range(cursor, model)
         if re.search(r"\b(?:USTRUCT|UCLASS|UENUM)\s*\(", model.text[max(0, start - 160):start]):
-            return True
-    return False
+            result.add(getattr(cursor, "spelling", ""))
+    return result
 
 
-def has_global_mutable_state(tu: Any, model: SourceModel) -> bool:
-    for cursor in walk(tu.cursor):
-        if kind(cursor) != "VAR_DECL" or not same_source(cursor, model.path):
+def global_mutable_state_expressions(tu: Any, model: SourceModel) -> list[str]:
+    """Return assignable names for mutable variables with file lifetime."""
+    result: list[str] = []
+    for cursor in walk_source(tu.cursor, model.path):
+        if kind(cursor) != "VAR_DECL":
             continue
         if kind(getattr(cursor, "semantic_parent", None)) not in {"TRANSLATION_UNIT", "NAMESPACE"}:
             continue
@@ -821,9 +892,21 @@ def has_global_mutable_state(tu: Any, model: SourceModel) -> bool:
         declaration = model.text[start:end]
         if "constexpr" in declaration or "const " in declaration or "consteval" in declaration:
             continue
-        if "static" in declaration or kind(getattr(cursor, "semantic_parent", None)) == "TRANSLATION_UNIT":
-            return True
-    return False
+        if "static" not in declaration and kind(getattr(cursor, "semantic_parent", None)) != "TRANSLATION_UNIT":
+            continue
+        name = getattr(cursor, "spelling", "")
+        if not name:
+            continue
+        # Use the written qualified name (for example Pod::ctor_invoked), not
+        # Cursor.spelling, which drops the enclosing type for static members.
+        match = re.search(rf"(?P<name>(?:\b[A-Za-z_]\w*::)*\b{re.escape(name)})\s*(?:=|;|\{{)", declaration)
+        expression = match.group("name") if match else name
+        namespace = namespace_name(cursor)
+        if namespace and "::" not in expression:
+            expression = f"::{namespace}::{expression}"
+        if expression not in result:
+            result.append(expression)
+    return result
 
 
 def has_static_local_state(candidate: Candidate, model: SourceModel) -> bool:
@@ -852,7 +935,7 @@ def has_world_pointer(candidate: Candidate, model: SourceModel) -> bool:
     return False
 
 
-def analyze(candidate: Candidate, model: SourceModel, has_global_state: bool) -> None:
+def analyze(candidate: Candidate, model: SourceModel, reflected_types: set[str]) -> None:
     tokens = list(candidate.translation_unit.get_tokens(extent=candidate.body_cursor.extent))
     candidate.assertions = scan_assertions(tokens, model)
     candidate.reasons.extend(item.reason for item in candidate.assertions if item.reason)
@@ -879,8 +962,6 @@ def analyze(candidate: Candidate, model: SourceModel, has_global_state: bool) ->
             candidate.reasons.append("ordered_global_setup_requires_ordered_fixture")
         if candidate.metadata.fixture != "raw_world":
             candidate.reasons.append(f"unsupported_fixture:{candidate.metadata.fixture}")
-    if has_global_state and not candidate.reset_hook:
-        candidate.reasons.append("global_mutable_state_requires_reset_hook")
     if has_static_local_state(candidate, model) and not candidate.reset_hook:
         candidate.reasons.append("static_local_state_requires_reset_hook")
     if has_world_pointer(candidate, model):
@@ -892,7 +973,7 @@ def analyze(candidate: Candidate, model: SourceModel, has_global_state: bool) ->
             candidate.reasons.append(f"unsupported_registration_kind:{registration.kind}")
         if registration.kind in {"unreal", "uobject", "ustruct", "uclass", "fork"} and not registration.hook:
             candidate.reasons.append(f"registration_hook_missing:{registration.type_name}")
-        if reflected_type(candidate, model, registration.type_name) and not registration.hook:
+        if registration.type_name.split("::")[-1] in reflected_types and not registration.hook:
             candidate.reasons.append(f"reflected_type_requires_registration_hook:{registration.type_name}")
     candidate.reasons = list(dict.fromkeys(candidate.reasons))
 
@@ -918,9 +999,184 @@ def macro_tests(model: SourceModel) -> list[tuple[str, str, Location]]:
     return result
 
 
-def preserved_declarations(tu: Any, model: SourceModel, candidates: Sequence[Candidate]) -> str:
+def shared_test_type_names(shared_header: str | None, translation_unit: Any | None = None) -> set[str]:
+    if not shared_header:
+        return set()
+    header = Path(__file__).resolve().parent.parent / "Source" / "FlecsLibrary" / "Tests" / shared_header
+    headers = [header]
+    if shared_header == "Bake/FlecsTestTypes.h":
+        # Generated tests get converter-only aliases from the compatibility
+        # layer. Treat those aliases as shared types when deciding whether a
+        # registration helper is required and which declarations to emit.
+        headers.append(header.parent / "FlecsGeneratedTestCompatibility.h")
+    try:
+        text = "\n".join(path.read_text(encoding="utf-8", errors="replace") for path in headers)
+    except OSError:
+        return set()
+    # These headers are parsed for every upstream source. Keep this operation
+    # lexical and bounded; walking every included UE/Flecs cursor for every
+    # source makes conversion needlessly quadratic. Named namespace/type
+    # braces are enough for the compatibility headers and preserve nested
+    # names such as Pod::Child without treating a source-local Foo as global.
+    text = re.sub(r"//[^\n]*|/\*.*?\*/", "", text, flags=re.DOTALL)
+    declaration_pattern = re.compile(r"\b(namespace|class|struct|enum)(?:\s+(?:class|struct))?\s+([A-Za-z_]\w*)")
+    alias_pattern = re.compile(r"\b(?:using|typedef)\s+([A-Za-z_]\w*)\s*(?:=|;)")
+    events: dict[int, tuple[str, str]] = {}
+    for match in declaration_pattern.finditer(text):
+        opening = text.find("{", match.end())
+        if opening != -1:
+            events[opening] = (match.group(1), match.group(2))
+    names: set[str] = set()
+    scopes: list[str | None] = []
+    pending_aliases: list[tuple[int, str]] = []
+    for match in alias_pattern.finditer(text):
+        pending_aliases.append((match.start(), match.group(1)))
+    alias_index = 0
+    for position, character in enumerate(text):
+        while alias_index < len(pending_aliases) and pending_aliases[alias_index][0] <= position:
+            alias_name = pending_aliases[alias_index][1]
+            prefix = [item for item in scopes if item]
+            names.add("::".join(prefix + [alias_name]))
+            alias_index += 1
+        if character == "{":
+            declaration = events.get(position)
+            scopes.append(declaration[1] if declaration else None)
+            if declaration:
+                prefix = [item for item in scopes[:-1] if item]
+                names.add("::".join(prefix + [declaration[1]]))
+        elif character == "}" and scopes:
+            scopes.pop()
+    return names
+
+
+def qualified_type_name(cursor: Any) -> str:
+    name = getattr(cursor, "spelling", "")
+    if not name or name.startswith("<"):
+        return ""
+    parts = [name]
+    parent = getattr(cursor, "semantic_parent", None)
+    while parent is not None:
+        if kind(parent) in {"NAMESPACE", "STRUCT_DECL", "CLASS_DECL", "CLASS_TEMPLATE"}:
+            spelling = getattr(parent, "spelling", "")
+            if spelling and not spelling.startswith("<"):
+                parts.append(spelling)
+        parent = getattr(parent, "semantic_parent", None)
+    return "::".join(reversed(parts))
+
+
+def source_global_type_names(tu: Any, model: SourceModel, shared_types: set[str]) -> set[str]:
+    """Return source/header types that are visible outside a test function."""
+    result = set(shared_types)
+    declaration_kinds = {
+        "STRUCT_DECL",
+        "CLASS_DECL",
+        "CLASS_TEMPLATE",
+        "ENUM_DECL",
+        "TYPEDEF_DECL",
+        "TYPE_ALIAS_DECL",
+    }
+    for cursor in walk_source(tu.cursor, model.path):
+        if kind(cursor) not in declaration_kinds:
+            continue
+        parent = getattr(cursor, "semantic_parent", None)
+        local = False
+        while parent is not None:
+            if kind(parent) in {"FUNCTION_DECL", "FUNCTION_TEMPLATE", "CXX_METHOD", "CONSTRUCTOR", "DESTRUCTOR"}:
+                local = True
+                break
+            parent = getattr(parent, "semantic_parent", None)
+        if not local:
+            name = qualified_type_name(cursor)
+            if name:
+                result.add(name)
+                if "::" not in name:
+                    result.add(name)
+    return result
+
+
+def source_global_enum_constants(tu: Any, model: SourceModel) -> set[str]:
+    """Return unscoped enum values declared at file/namespace scope.
+
+    Generated tests are compiled by Unreal's unity build. Unscoped enum values
+    therefore share a preprocessor/translation-unit namespace even when their
+    original tests lived in separate upstream files. The renderer gives these
+    values source-unique aliases before preserving the declarations.
+    """
+    result: set[str] = set()
+    for cursor in walk_source(tu.cursor, model.path):
+        if kind(cursor) != "ENUM_CONSTANT_DECL":
+            continue
+        enum_cursor = getattr(cursor, "semantic_parent", None)
+        if enum_cursor is None or kind(enum_cursor) != "ENUM_DECL":
+            continue
+        parent = getattr(enum_cursor, "semantic_parent", None)
+        local_or_class_scope = False
+        while parent is not None:
+            parent_kind_name = kind(parent)
+            if parent_kind_name in {"FUNCTION_DECL", "FUNCTION_TEMPLATE", "CXX_METHOD", "CONSTRUCTOR", "DESTRUCTOR"}:
+                local_or_class_scope = True
+                break
+            if parent_kind_name in {"STRUCT_DECL", "CLASS_DECL", "CLASS_TEMPLATE"}:
+                local_or_class_scope = True
+                break
+            parent = getattr(parent, "semantic_parent", None)
+        if local_or_class_scope:
+            continue
+        scoped = getattr(enum_cursor, "is_scoped_enum", None)
+        if callable(scoped):
+            try:
+                if scoped():
+                    continue
+            except Exception:
+                pass
+        enum_start, enum_end = cursor_range(enum_cursor, model)
+        enum_prefix = model.text[enum_start:min(enum_end, enum_start + 96)]
+        if re.search(r"\benum\s+(?:class|struct)\b", enum_prefix):
+            continue
+        name = getattr(cursor, "spelling", "")
+        if name:
+            result.add(name)
+    return result
+
+
+def registration_type_is_global(type_name: str, global_types: set[str]) -> bool:
+    """Check that every user type in a registration is file-visible."""
+    normalized = clean_type(type_name)
+    if not normalized or normalized.startswith("flecs::") or normalized.startswith("std::"):
+        return False
+    scalar_types = {
+        "bool", "char", "signed char", "unsigned char", "short", "unsigned short",
+        "int", "unsigned int", "long", "unsigned long", "long long", "unsigned long long",
+        "int8_t", "uint8_t", "int16_t", "uint16_t", "int32_t", "uint32_t",
+        "int64_t", "uint64_t", "intptr_t", "uintptr_t", "size_t", "float", "double",
+    }
+    if normalized in scalar_types:
+        return True
+    if normalized in global_types:
+        return True
+    identifiers = re.findall(r"(?:[A-Za-z_]\w*::)*[A-Za-z_]\w*", normalized)
+    if not identifiers:
+        return False
+    for identifier in identifiers:
+        if identifier in {"const", "volatile", "typename"}:
+            continue
+        if identifier not in global_types and identifier.split("::")[-1] not in global_types:
+            return False
+    return True
+
+
+def preserved_declarations(tu: Any, model: SourceModel, candidates: Sequence[Candidate], shared_types: set[str]) -> str:
     excluded = [candidate.function_range for candidate in candidates]
+    semicolon_terminated = {"STRUCT_DECL", "CLASS_DECL", "CLASS_TEMPLATE", "ENUM_DECL", "TYPEDEF_DECL", "TYPE_ALIAS_DECL", "VAR_DECL"}
     pieces: list[str] = []
+    seen_source_ranges: set[tuple[int, int]] = set()
+    typedef_ranges: list[tuple[int, int]] = []
+    for declaration_cursor in tu.cursor.get_children():
+        if not same_source(declaration_cursor, model.path) or kind(declaration_cursor) != "TYPEDEF_DECL":
+            continue
+        typedef_start, typedef_end = cursor_range(declaration_cursor, model)
+        if re.search(r"\b(?:struct|class|enum)\b", model.text[typedef_start:typedef_end]):
+            typedef_ranges.append((typedef_start, typedef_end))
     for cursor in tu.cursor.get_children():
         if not same_source(cursor, model.path) or kind(cursor) in {"INCLUSION_DIRECTIVE", "MACRO_DEFINITION"}:
             continue
@@ -931,6 +1187,32 @@ def preserved_declarations(tu: Any, model: SourceModel, candidates: Sequence[Can
             continue
         if kind(cursor) not in {"NAMESPACE", "STRUCT_DECL", "CLASS_DECL", "CLASS_TEMPLATE", "ENUM_DECL", "TYPEDEF_DECL", "TYPE_ALIAS_DECL", "VAR_DECL", "FUNCTION_DECL", "FUNCTION_TEMPLATE", "UNEXPOSED_DECL"}:
             continue
+        source_range = (start, end)
+        if source_range in seen_source_ranges:
+            continue
+        if kind(cursor) in {"STRUCT_DECL", "CLASS_DECL", "CLASS_TEMPLATE", "ENUM_DECL"} and any(
+            typedef_start <= start and end <= typedef_end for typedef_start, typedef_end in typedef_ranges
+        ):
+            continue
+        if kind(cursor) in {"STRUCT_DECL", "CLASS_DECL", "CLASS_TEMPLATE", "ENUM_DECL", "TYPEDEF_DECL", "TYPE_ALIAS_DECL"}:
+            # FlecsTestTypes.h supplies the shared upstream harness records.
+            # Do not copy a second definition into the unity-built generated
+            # source when an upstream file repeats one of those records.
+            declaration_name = qualified_type_name(cursor)
+            if declaration_name in shared_types:
+                continue
+        if kind(cursor) == "VAR_DECL":
+            declaration = model.text[start:end]
+            owner = re.match(r"\s*[^;=]+?\b([A-Za-z_]\w*)::[A-Za-z_]\w*\s*(?:=|;|$)", declaration)
+            if owner and owner.group(1) in shared_types:
+                continue
+        is_meta_type_macro = re.match(r"\s*ECS_(?:STRUCT|ENUM|BITMASK)\s*\(", model.text[start:end]) is not None
+        if kind(cursor) in semicolon_terminated or is_meta_type_macro:
+            semicolon = end
+            while semicolon < len(model.text) and model.text[semicolon].isspace():
+                semicolon += 1
+            if semicolon < len(model.text) and model.text[semicolon] == ";":
+                end = semicolon + 1
         text = model.text[start:end]
         cuts = sorted((max(0, left - start), min(end - start, right - start)) for left, right in excluded if left < end and right > start)
         if cuts:
@@ -943,6 +1225,7 @@ def preserved_declarations(tu: Any, model: SourceModel, candidates: Sequence[Can
             text = "".join(chunks)
         if text.strip():
             pieces.append(text.strip("\n"))
+            seen_source_ranges.add(source_range)
     return "\n\n".join(pieces)
 
 
@@ -963,10 +1246,11 @@ class Frontend:
         except Exception as error:
             raise ClangUnavailable(f"Could not load libclang: {error}") from error
 
-    def parse(self, path: Path, arguments: Sequence[str]) -> Any:
+    def parse(self, path: Path, arguments: Sequence[str], source_text: str | None = None) -> Any:
         options = getattr(self.cindex.TranslationUnit, "PARSE_DETAILED_PROCESSING_RECORD", 0)
         options |= getattr(self.cindex.TranslationUnit, "PARSE_INCOMPLETE", 0)
-        return self.index.parse(str(path), args=list(arguments), options=options)
+        unsaved_files = [(str(path), source_text)] if source_text is not None else None
+        return self.index.parse(str(path), args=list(arguments), unsaved_files=unsaved_files, options=options)
 
 
 class SourceParser:
@@ -983,16 +1267,33 @@ class SourceParser:
         with self.path.open("r", encoding="utf-8", errors="replace", newline="") as source_file:
             text = source_file.read()
         model = build_model(self.path, text)
-        tu = self.frontend.parse(self.path, self.arguments)
+        tu = self.frontend.parse(self.path, self.arguments, parser_compatibility_text(text))
         diagnostics = [str(item) for item in tu.diagnostics]
-        fatal_diagnostics = [str(item) for item in tu.diagnostics if int(getattr(item, "severity", 0)) >= 3]
+        fatal_diagnostics = [
+            str(item)
+            for item in tu.diagnostics
+            if int(getattr(item, "severity", 0)) >= 4
+            and "too many errors emitted" not in str(item)
+        ]
         if fatal_diagnostics:
             raise ConverterError("clang_parse_error:" + " | ".join(fatal_diagnostics))
-        global_state = has_global_mutable_state(tu, model)
+        source_diagnostics: list[tuple[int, str]] = []
+        for diagnostic in tu.diagnostics:
+            if int(getattr(diagnostic, "severity", 0)) < 3:
+                continue
+            location = getattr(diagnostic, "location", None)
+            diagnostic_file = getattr(location, "file", None)
+            if diagnostic_file is None or Path(str(diagnostic_file)).resolve() != self.path.resolve():
+                continue
+            line = int(getattr(location, "line", 0))
+            if line:
+                source_diagnostics.append((line, f"clang_error:{getattr(diagnostic, 'spelling', str(diagnostic))}"))
+        global_reset_expressions = global_mutable_state_expressions(tu, model)
+        reflected_types = source_reflected_types(tu, model)
         macro_locations = {location.line: case_id for case_id, _, location in macro_tests(model)}
         candidates: list[Candidate] = []
-        for cursor in walk(tu.cursor):
-            if kind(cursor) != "FUNCTION_DECL" or not same_source(cursor, self.path) or not getattr(cursor, "is_definition", lambda: True)():
+        for cursor in walk_source(tu.cursor, self.path):
+            if kind(cursor) != "FUNCTION_DECL" or not getattr(cursor, "is_definition", lambda: True)():
                 continue
             if parent_kind(cursor) in {"STRUCT_DECL", "CLASS_DECL", "CLASS_TEMPLATE"}:
                 continue
@@ -1005,7 +1306,12 @@ class SourceParser:
             expected = expected_for(name, self.inventory)
             body_tokens = list(tu.get_tokens(extent=body.extent))
             has_test_assertion = any(token.spelling.startswith("test_") for token in body_tokens)
-            if not metadata and not expected and not likely_test_name(name) and not has_test_assertion:
+            assertion_test = (
+                has_test_assertion
+                and world_parameter(cursor) != "__invalid__"
+                and "STATIC" not in str(getattr(cursor, "storage_class", "")).upper()
+            )
+            if not metadata and not expected and not likely_test_name(name, self.path.stem) and not assertion_test:
                 continue
             macro_case = macro_locations.get(location.line)
             case_id = metadata.case_id if metadata else expected.case_id if expected else macro_case or name
@@ -1016,7 +1322,19 @@ class SourceParser:
             candidate.return_type = getattr(getattr(cursor, "result_type", None), "spelling", "void")
             candidate.world_variables = world_variables(candidate, model)
             candidate.macro_generated = bool(metadata and metadata.macro_generated) or macro_case is not None
-            analyze(candidate, model, global_state)
+            analyze(candidate, model, reflected_types)
+            rewritten_ensure_lines = fork_cpp_api_rewrite_lines(candidate, model)
+            end_line = int(getattr(body.extent.end, "line", location.line))
+            candidate.reasons.extend(
+                message
+                for line, message in source_diagnostics
+                if location.line <= line <= end_line
+                and not (
+                    line in rewritten_ensure_lines
+                    and "no member named" in message
+                    and ("ensure" in message or "ensure_second" in message)
+                )
+            )
             if self.roots and len(self.roots) > 1 and self.roots[1].resolve() in self.path.resolve().parents and metadata is None:
                 candidate.reasons.append("fork_test_missing_explicit_metadata")
             candidate.reasons = list(dict.fromkeys(candidate.reasons))
@@ -1034,7 +1352,21 @@ class SourceParser:
                 required_headers.extend(candidate.metadata.required_headers)
                 required_headers.extend(registration.header for registration in candidate.metadata.registrations if registration.header)
         required_headers = list(dict.fromkeys(required_headers))
-        return ParsedSource(model, tu, candidates, preserved_declarations(tu, model, candidates), direct_includes, required_headers, macro_tests(model), diagnostics)
+        shared_types = shared_test_type_names(self.shared_header, tu)
+        return ParsedSource(
+            model=model,
+            translation_unit=tu,
+            candidates=candidates,
+            declarations=preserved_declarations(tu, model, candidates, shared_types),
+            direct_includes=direct_includes,
+            required_headers=required_headers,
+            macro_tests=macro_tests(model),
+            diagnostics=diagnostics,
+            global_reset_expressions=global_reset_expressions,
+            global_type_names=source_global_type_names(tu, model, shared_types),
+            global_enum_constants=source_global_enum_constants(tu, model),
+            uses_shared_test_header=bool(self.shared_header and self.shared_header in required_headers),
+        )
 
 
 def nearest_semicolon(tokens: Sequence[Any], end: int, model: SourceModel) -> int | None:
@@ -1044,8 +1376,21 @@ def nearest_semicolon(tokens: Sequence[Any], end: int, model: SourceModel) -> in
     return None
 
 
-def inject_registration(candidate: Candidate, model: SourceModel, body_text: str) -> tuple[str, list[str]]:
-    needs = bool(candidate.registrations or candidate.metadata and candidate.metadata.registration_hooks)
+def registration_is_file_visible(item: Registration, global_type_names: set[str]) -> bool:
+    if item.kind in {"native", "raw_world"}:
+        return registration_type_is_global(item.type_name, global_type_names)
+    return True
+
+
+def candidate_uses_registration_helper(candidate: Candidate, global_type_names: set[str]) -> bool:
+    return bool(
+        (candidate.metadata and candidate.metadata.registration_hooks)
+        or any(registration_is_file_visible(item, global_type_names) for item in candidate.registrations)
+    )
+
+
+def inject_registration(candidate: Candidate, model: SourceModel, body_text: str, registration_function_name: str, global_type_names: set[str]) -> tuple[str, list[str]]:
+    needs = candidate_uses_registration_helper(candidate, global_type_names)
     if not needs or not candidate.world_variables:
         return body_text, []
     tokens = list(candidate.translation_unit.get_tokens(extent=candidate.body_cursor.extent))
@@ -1058,7 +1403,7 @@ def inject_registration(candidate: Candidate, model: SourceModel, body_text: str
             continue
         semicolon = nearest_semicolon(tokens, end, model)
         if semicolon is not None:
-            insertions.append((semicolon - candidate.body_range[0], f"\n\tRegisterFlecsGeneratedTestTypes({child.spelling});"))
+            insertions.append((semicolon - candidate.body_range[0], f"\n\t{registration_function_name}({child.spelling});"))
     if not insertions:
         return body_text, ["required_registration_injection_range_not_found"]
     for offset, value in sorted(set(insertions), reverse=True):
@@ -1075,14 +1420,44 @@ def class_name(source: str, case_id: str) -> str:
     return f"FFlecsGenerated_{sanitize_identifier(case_id)}_{digest}Test"
 
 
-def registration_function(registrations: Sequence[Registration], hooks: Sequence[str]) -> list[str]:
-    if not registrations and not hooks:
+def source_support_name(prefix: str, source: str) -> str:
+    return f"{prefix}_{hashlib.sha1(source.encode()).hexdigest()[:10]}"
+
+
+def registration_function(
+    registrations: Sequence[Registration],
+    hooks: Sequence[str],
+    name: str,
+    type_aliases: set[str] | None = None,
+    shared_type_names: set[str] | None = None,
+    register_shared_types: bool = False,
+) -> list[str]:
+    if not registrations and not hooks and not register_shared_types:
         return []
-    lines = ["static void RegisterFlecsGeneratedTestTypes(flecs::world& World)", "{", "\t// Explicit registrations; no automatic registration is assumed."]
+    lines = [f"static void {name}(flecs::world& World)", "{", "\t// Explicit registrations; no automatic registration is assumed."]
     emitted_hooks: set[str] = set()
+    type_aliases = type_aliases or set()
+    shared_type_names = shared_type_names or set()
+    if register_shared_types:
+        lines.append("\tFlecsGeneratedTest::RegisterSharedTypes(World);")
     for item in registrations:
         if item.kind in {"native", "raw_world"}:
-            lines.append(f"\tWorld.component<{item.type_name}>();")
+            normalized_type = clean_type(item.type_name)
+            if register_shared_types and (
+                normalized_type in shared_type_names
+                or normalized_type.split("::")[-1] in shared_type_names
+            ):
+                continue
+            # Check each component of a qualified name.  A source-local alias
+            # can rename the owning namespace/type token (for example
+            # ``Parent::Child``), so matching only the complete qualified
+            # spelling would miss the alias and lose the explicit upstream
+            # registration name.
+            identifiers = set(re.findall(r"[A-Za-z_]\w*", item.type_name))
+            if identifiers & type_aliases:
+                lines.append(f'\tWorld.component<{item.type_name}>("{cpp_string(item.type_name)}");')
+            else:
+                lines.append(f"\tWorld.component<{item.type_name}>();")
         elif item.hook:
             lines.append(f"\t{item.hook}(World);")
             emitted_hooks.add(item.hook)
@@ -1094,10 +1469,61 @@ def registration_function(registrations: Sequence[Registration], hooks: Sequence
     return lines
 
 
-def render_case(candidate: Candidate, parsed: ParsedSource, project_root: Path, source_display: str) -> list[str]:
-    source_text = normalize_newlines(parsed.model.text[candidate.body_range[0]:candidate.body_range[1]])
+def fork_cpp_api_rewrites(candidate: Candidate, model: SourceModel) -> list[tuple[int, int, str, int]]:
+    """Map fork-renamed C++ members without changing raw ecs_* C API calls."""
+    tokens = list(candidate.translation_unit.get_tokens(extent=candidate.body_cursor.extent))
+    rewrites: list[tuple[int, int, str, int]] = []
+    for index, token in enumerate(tokens):
+        start = cursor_offset(token.extent.start, model)
+        end = cursor_offset(token.extent.end, model)
+        original_spelling = model.text[start:end]
+        replacement = {"ensure": "obtain", "ensure_second": "obtain_second"}.get(original_spelling)
+        if replacement is None or index == 0 or index + 1 >= len(tokens):
+            continue
+        if tokens[index - 1].spelling not in {".", "->"} or tokens[index + 1].spelling not in {"(", "<"}:
+            continue
+        if candidate.body_range[0] <= start < end <= candidate.body_range[1]:
+            rewrites.append((start, end, replacement, int(getattr(token.extent.start, "line", 0))))
+    return rewrites
+
+
+def fork_cpp_api_rewrite_lines(candidate: Candidate, model: SourceModel) -> set[int]:
+    return {line for _, _, _, line in fork_cpp_api_rewrites(candidate, model) if line}
+
+
+def apply_fork_cpp_api_rewrites(candidate: Candidate, model: SourceModel, body_text: str) -> str:
+    rewrites = fork_cpp_api_rewrites(candidate, model)
+    for start, end, replacement, _ in reversed(rewrites):
+        relative_start = start - candidate.body_range[0]
+        relative_end = end - candidate.body_range[0]
+        body_text = body_text[:relative_start] + replacement + body_text[relative_end:]
+    return body_text
+
+
+def apply_harness_rewrites(body_text: str) -> str:
+    # `install_test_abort` belongs to the upstream process-wide test harness.
+    # Converted death tests are reported unsupported, while supported tests
+    # must not retain a call to a helper that is not part of the Unreal test
+    # module.
+    body_text = re.sub(r"(?m)^[ \t]*install_test_abort\(\);[ \t]*(?:\r?\n|$)", "", body_text)
+    # MSVC diagnoses comparisons between Flecs' integral id_t and bool as an
+    # unsafe mixed-type operation (C4805). These upstream assertions rely on
+    # the ordinary bool-to-integer conversion, so spell the equivalent values
+    # explicitly in generated bodies.
+    body_text = re.sub(
+        r"(?P<value>\b[A-Za-z_]\w*)\s*(?P<operator>==|!=)\s*(?P<boolean>true|false)\b",
+        lambda match: f"{match.group('value')} {match.group('operator')} {'1' if match.group('boolean') == 'true' else '0'}",
+        body_text,
+    )
+    return body_text
+
+
+def render_case(candidate: Candidate, parsed: ParsedSource, project_root: Path, source_display: str, registration_function_name: str, reset_function_name: str) -> list[str]:
+    source_text = parsed.model.text[candidate.body_range[0]:candidate.body_range[1]]
+    source_text = normalize_newlines(apply_fork_cpp_api_rewrites(candidate, parsed.model, source_text))
+    source_text = apply_harness_rewrites(source_text)
     if not candidate.reasons and not candidate.skipped:
-        source_text, reasons = inject_registration(candidate, parsed.model, source_text)
+        source_text, reasons = inject_registration(candidate, parsed.model, source_text, registration_function_name, parsed.global_type_names)
         candidate.reasons.extend(reasons)
         candidate.reasons = list(dict.fromkeys(candidate.reasons))
     status = candidate.status
@@ -1124,12 +1550,16 @@ def render_case(candidate: Candidate, parsed: ParsedSource, project_root: Path, 
     elif status == "skipped":
         lines.append(f"\tFlecsGeneratedTest::Skip(TEXT(\"{cpp_string(candidate.metadata.skip_reason if candidate.metadata else 'skipped')}\"));")
     else:
-        if candidate.registrations or candidate.metadata and candidate.metadata.registration_hooks:
-            lines.append("\tRegisterFlecsGeneratedTestTypes(GeneratedWorld);")
+        if candidate_uses_registration_helper(candidate, parsed.global_type_names):
+            lines.append(f"\t{registration_function_name}(GeneratedWorld);")
         if candidate.setup_hook:
             lines.append(f"\t{candidate.setup_hook}();")
-        if candidate.reset_hook:
-            lines.append(f"\t{candidate.reset_hook}();")
+        reset_hooks = list(dict.fromkeys(
+            ([reset_function_name] if parsed.global_reset_expressions else [])
+            + ([candidate.reset_hook] if candidate.reset_hook else [])
+        ))
+        for hook in reset_hooks:
+            lines.append(f"\t{hook}();")
         body_call = f"{candidate.namespace}::{body_id}" if candidate.namespace and "(" not in candidate.namespace else body_id
         if candidate.world_parameter:
             lines.append(f"\t{body_call}(GeneratedWorld);")
@@ -1137,8 +1567,8 @@ def render_case(candidate: Candidate, parsed: ParsedSource, project_root: Path, 
             lines.append(f"\t{body_call}();")
         if candidate.teardown_hook:
             lines.append(f"\t{candidate.teardown_hook}();")
-        if candidate.reset_hook:
-            lines.append(f"\t{candidate.reset_hook}();")
+        for hook in reversed(reset_hooks):
+            lines.append(f"\t{hook}();")
     lines.extend(["\treturn FlecsGeneratedTest::End();", "}", ""])
     return lines
 
@@ -1161,8 +1591,13 @@ def render_macro_stub(case_id: str, macro: str, location: Location, source_displ
 
 def render_source(parsed: ParsedSource, project_root: Path, shared_header: str | None) -> str:
     source_display = display_path(parsed.model.path, project_root) or parsed.model.path.name
+    registration_function_name = source_support_name("RegisterFlecsGeneratedTestTypes", source_display)
+    reset_function_name = source_support_name("ResetFlecsGeneratedFileState", source_display)
+    use_builtin_compatibility_header = parsed.uses_shared_test_header and shared_header == "Bake/FlecsTestTypes.h"
     lines = [GENERATED_HEADER, f"// Source: {source_display}", "// Generated by the libclang Flecs converter.", "", "#if WITH_AUTOMATION_TESTS", "", '#include "Misc/AutomationTest.h"']
     seen: set[str] = {"Misc/AutomationTest.h"}
+    if use_builtin_compatibility_header and shared_header:
+        seen.add(shared_header)
     for delimiter, header in parsed.direct_includes:
         if header not in seen:
             lines.append(f"#include {delimiter}{header}{'>' if delimiter == '<' else chr(34)}")
@@ -1173,20 +1608,52 @@ def render_source(parsed: ParsedSource, project_root: Path, shared_header: str |
             seen.add(header)
     if "flecs.h" not in seen:
         lines.append('#include "flecs.h"')
-    lines.append('#include "Bake/FlecsGeneratedTestUtils.h"')
+    if use_builtin_compatibility_header:
+        lines.append('#include "Bake/FlecsGeneratedTestCompatibility.h"')
+    else:
+        lines.append('#include "Bake/FlecsGeneratedTestUtils.h"')
     lines.append("")
+    renamed_aliases = {
+        name: replacement
+        for name, replacement in UE_TYPE_ALIASES.items()
+        if name in parsed.global_type_names
+    }
+    for name, replacement in sorted(renamed_aliases.items()):
+        lines.append(f"#define {name} {replacement}")
+    shared_type_names = shared_test_type_names(shared_header)
+    type_aliases = {
+        name: f"{source_support_name('FlecsGeneratedType', source_display)}_{sanitize_identifier(name)}"
+        for name in sorted(parsed.global_type_names - shared_type_names - set(UE_TYPE_ALIASES) - parsed.global_enum_constants)
+        if "::" not in name
+    }
+    for name, replacement in type_aliases.items():
+        lines.append(f"#define {name} {replacement}")
+    enum_aliases = {
+        name: f"{source_support_name('FlecsGeneratedEnum', source_display)}_{sanitize_identifier(name)}"
+        for name in sorted(parsed.global_enum_constants)
+    }
+    for name, replacement in enum_aliases.items():
+        lines.append(f"#define {name} {replacement}")
+    if renamed_aliases or type_aliases or enum_aliases:
+        lines.append("")
     for macro in parsed.model.macros:
         match = re.match(r"\s*#define\s+([A-Za-z_]\w*)", macro)
-        if match and match.group(1) not in SUPPORTED_ASSERTIONS:
+        if match and match.group(1) not in PRESERVED_MACRO_EXCLUSIONS:
             lines.extend([normalize_newlines(macro), ""])
     if parsed.declarations and any(candidate.status == "converted" for candidate in parsed.candidates):
         lines.extend([normalize_newlines(parsed.declarations), ""])
+    if parsed.global_reset_expressions and any(candidate.status == "converted" for candidate in parsed.candidates):
+        lines.extend([f"static void {reset_function_name}()", "{"])
+        lines.extend(f"\t{expression} = {{}};" for expression in parsed.global_reset_expressions)
+        lines.extend(["}", ""])
     registrations: list[Registration] = []
     hooks: list[str] = []
     for candidate in parsed.candidates:
         if candidate.status != "converted":
             continue
         for item in candidate.registrations:
+            if not registration_is_file_visible(item, parsed.global_type_names):
+                continue
             if item not in registrations:
                 registrations.append(item)
             if item.hook and item.hook not in hooks:
@@ -1195,12 +1662,27 @@ def render_source(parsed: ParsedSource, project_root: Path, shared_header: str |
             for hook in candidate.metadata.registration_hooks:
                 if hook not in hooks:
                     hooks.append(hook)
-    lines.extend(registration_function(registrations, hooks))
+    lines.extend(registration_function(
+        registrations,
+        hooks,
+        registration_function_name,
+        set(type_aliases),
+        shared_type_names,
+        parsed.uses_shared_test_header,
+    ))
     for candidate in parsed.candidates:
-        lines.extend(render_case(candidate, parsed, project_root, source_display))
+        lines.extend(render_case(candidate, parsed, project_root, source_display, registration_function_name, reset_function_name))
     for case_id, macro, location in parsed.macro_tests:
         if not any(candidate.location.line == location.line for candidate in parsed.candidates):
             lines.extend(render_macro_stub(case_id, macro, location, source_display))
+    if renamed_aliases or type_aliases or enum_aliases:
+        lines.append("")
+        for name in sorted(renamed_aliases):
+            lines.append(f"#undef {name}")
+        for name in sorted(type_aliases):
+            lines.append(f"#undef {name}")
+        for name in sorted(enum_aliases):
+            lines.append(f"#undef {name}")
     lines.extend(["#endif // WITH_AUTOMATION_TESTS", ""])
     return "\n".join(lines)
 
@@ -1246,12 +1728,70 @@ class Converter:
         self.frontend = Frontend(libclang)
 
     def clang_arguments(self) -> list[str]:
-        args = ["-x", "c++", "-std=c++20", "-fparse-all-comments", "-Wno-everything", f"-I{self.project_root}", f"-I{self.upstream}"]
-        args.extend(f"-I{item}" for item in self.include_dirs)
+        args = [
+            "-x",
+            "c++",
+            "-std=c++20",
+            "-fparse-all-comments",
+            "-Wno-everything",
+            "-DUE_BUILD_DEBUG=0",
+            "-DUE_BUILD_DEVELOPMENT=1",
+            "-DUE_BUILD_TEST=0",
+            "-DUE_BUILD_SHIPPING=0",
+            "-DWITH_EDITOR=1",
+            "-DWITH_EDITORONLY_DATA=1",
+            "-DWITH_ENGINE=1",
+            "-DWITH_UNREAL_DEVELOPER_TOOLS=1",
+            "-DWITH_PLUGIN_SUPPORT=1",
+            "-DIS_MONOLITHIC=0",
+            "-DIS_PROGRAM=0",
+            "-DUBT_COMPILED_PLATFORM=Windows",
+            "-DPLATFORM_WINDOWS=1",
+            "-DPLATFORM_64BITS=1",
+            "-DFLECSLIBRARY_API=",
+            "-DFLECS_CPP",
+            "-DFLECS_MODULE",
+            "-DFLECS_SCRIPT",
+            "-DFLECS_PARSER",
+            "-DFLECS_QUERY_DSL",
+            "-DFLECS_SYSTEM",
+            "-DFLECS_PIPELINE",
+            "-DFLECS_TIMER",
+            "-DFLECS_META",
+            "-DFLECS_JSON",
+            "-DFLECS_SCRIPT_MATH",
+        ]
         source = self.project_root / "Plugins" / "Unreal-Flecs" / "Source" / "FlecsLibrary"
-        for include in [source / "Public", source / "Private", source / "Tests"]:
-            if include.exists():
-                args.append(f"-I{include}")
+        compatibility = Path(__file__).resolve().parent / "FlecsTestConversionIncludes"
+        candidates = [
+            compatibility,
+            *engine_include_roots(self.project_root),
+            self.project_root,
+            self.upstream,
+            self.upstream.parent / "include",
+            *self.include_dirs,
+            source / "Public",
+            source / "Private",
+            source / "Tests",
+            self.project_root / "Plugins" / "Unreal-Flecs" / "Source" / "SolidMacros" / "Public",
+        ]
+        seen: set[Path] = set()
+        for include in candidates:
+            if not include.exists():
+                continue
+            resolved = include.resolve()
+            if resolved in seen:
+                continue
+            seen.add(resolved)
+            # Keep the option and its value distinct: libclang receives an argv
+            # array, and a Windows path with spaces is not reliably handled as
+            # one combined -I<path> argument.
+            if resolved == compatibility:
+                # The converter owns parser-only shadows for quoted Unreal
+                # includes. -iquote gives those shadows precedence over the
+                # production include root without affecting angle includes.
+                args.extend(["-iquote", str(resolved)])
+            args.extend(["-I", str(resolved)])
         args.extend(self.clang_args)
         return args
 
@@ -1259,7 +1799,14 @@ class Converter:
     def sources(root: Path | None) -> list[Path]:
         if root is None or not root.exists():
             return []
-        return sorted(path for path in root.rglob("*") if path.is_file() and path.suffix.lower() in {".c", ".cc", ".cpp", ".cxx"} and "generated" not in {part.lower() for part in path.parts})
+        return sorted(
+            path
+            for path in root.rglob("*")
+            if path.is_file()
+            and path.name.lower() != "main.cpp"
+            and path.suffix.lower() in {".c", ".cc", ".cpp", ".cxx"}
+            and "generated" not in {part.lower() for part in path.parts}
+        )
 
     def generated_path(self, root: Path, source: Path, origin: str) -> Path:
         try:
