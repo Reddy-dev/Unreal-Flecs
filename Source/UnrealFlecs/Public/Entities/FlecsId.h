@@ -155,6 +155,8 @@ public:
         return ECS_IS_VALUE_PAIR(GetId());
     }
 
+    // @TODO: C++26 contracts?
+    
     NO_DISCARD FORCEINLINE FFlecsId GetFirst() const
     {
         solid_checkf(IsPair() || IsValuePair(), TEXT("Id is not a pair."));

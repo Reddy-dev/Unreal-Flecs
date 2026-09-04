@@ -18,6 +18,7 @@ namespace
 		static FReplicationHooks Hooks;
 		return Hooks;
 	}
+	
 } // namespace
 
 void UE::Flecs::FFlecsComponentRegistrationHooks::InstallReplicationHooks(
