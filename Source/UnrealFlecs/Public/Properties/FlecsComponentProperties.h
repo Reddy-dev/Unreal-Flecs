@@ -550,14 +550,16 @@ public:
 			{
 				const FFlecsReplicationComponentDefinition ReplicationDefinition =
 					UE::Flecs::Replication::MakeComponentDefinition<T>(ComponentHandle);
-				FString ReplicationRegistrationError;
 
-				if UNLIKELY_IF(!UE::Flecs::FFlecsComponentRegistrationHooks::RegisterReplicatedComponent(
-					InFlecsWorld, ReplicationDefinition, &ReplicationRegistrationError))
+				
+				const TValueOrError<void, FString> RegistrationResult 
+					= UE::Flecs::FFlecsComponentRegistrationHooks::RegisterReplicatedComponent(InFlecsWorld, ReplicationDefinition);
+
+				if UNLIKELY_IF(RegistrationResult.HasError())
 				{
 					UE_LOG(LogFlecsCore, Error,
 						TEXT("Failed to register replicated component '%s': %s"),
-						*ComponentProperties.Name, *ReplicationRegistrationError);
+						*ComponentProperties.Name, *RegistrationResult.GetError());
 					return;
 				}
 

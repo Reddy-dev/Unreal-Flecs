@@ -56,24 +56,18 @@ void UE::Flecs::FFlecsComponentRegistrationHooks::UninstallReplicationHooks(cons
 	Hooks = {};
 }
 
-bool UE::Flecs::FFlecsComponentRegistrationHooks::RegisterReplicatedComponent(
+TValueOrError<void, FString> UE::Flecs::FFlecsComponentRegistrationHooks::RegisterReplicatedComponent(
 	const TSolidNotNull<const UFlecsWorld*> InWorld,
-	const FFlecsReplicationComponentDefinition& InDefinition,
-	OUT FString* OutError)
+	const FFlecsReplicationComponentDefinition& InDefinition)
 {
 	const FReplicationHooks& Hooks = GetReplicationHooks();
 	
 	if (!Hooks.Register)
 	{
-		if UNLIKELY_IF(OutError)
-		{
-			*OutError = TEXT("No Networking Module loaded");
-		}
-
-		return false;
+		return MakeError(TEXT("No Networking Module loaded"));
 	}
 
-	return Hooks.Register(InWorld, InDefinition, OutError);
+	return Hooks.Register(InWorld, InDefinition);
 }
 
 void UE::Flecs::FFlecsComponentRegistrationHooks::MarkReplicatedComponent(

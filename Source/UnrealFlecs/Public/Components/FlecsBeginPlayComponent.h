@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "Properties/FlecsComponentProperties.h"
+
 #include "FlecsBeginPlayComponent.generated.h"
 
 /**
@@ -13,3 +15,9 @@ struct UNREALFLECS_API FFlecsBeginPlayComponent
 {
 	GENERATED_BODY()
 }; // struct FFlecsBeginPlayComponent
+
+template <>
+struct TFlecsComponentTraits<FFlecsBeginPlayComponent> : public TFlecsComponentTraitsBase<FFlecsBeginPlayComponent>
+{
+	static constexpr bool UseLowId = false;
+}; // struct TFlecsComponentTraits<FFlecsBeginPlayComponent>

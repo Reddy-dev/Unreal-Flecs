@@ -313,7 +313,7 @@ private:
 	
 public:
 	
-	// @TODO: Handle Pairs
+	// Also handles pairs
 	FORCEINLINE_DEBUGGABLE FInheritedType& With(const FFlecsId InId)
 	{
 		FFlecsQueryTermExpression Expr;

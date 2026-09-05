@@ -9,10 +9,9 @@ class UFlecsWorld;
 
 namespace UE::Flecs
 {
-	using FFlecsReplicationComponentRegistrationFunction = bool(*)(
+	using FFlecsReplicationComponentRegistrationFunction = TValueOrError<void, FString>(*)(
 		const TSolidNotNull<const UFlecsWorld*> InWorld,
-		const FFlecsReplicationComponentDefinition& InDefinition,
-		OUT FString* OutError);
+		const FFlecsReplicationComponentDefinition& InDefinition);
 
 	using FFlecsReplicationComponentMarkerFunction = void(*)(const FFlecsComponentHandle& InComponent);
 
@@ -26,10 +25,9 @@ namespace UE::Flecs
 
 		static void UninstallReplicationHooks(const void* InOwner);
 
-		static bool RegisterReplicatedComponent(
+		static TValueOrError<void, FString> RegisterReplicatedComponent(
 			const TSolidNotNull<const UFlecsWorld*> InWorld,
-			const FFlecsReplicationComponentDefinition& InDefinition,
-			OUT FString* OutError = nullptr);
+			const FFlecsReplicationComponentDefinition& InDefinition);
 
 		static void MarkReplicatedComponent(const FFlecsComponentHandle& InComponent);
 	}; // struct FFlecsComponentRegistrationHooks

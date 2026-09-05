@@ -27,4 +27,6 @@ struct TFlecsComponentTraits<FFlecsSubEntityRecordNameComponent> : public TFlecs
 	
 	static constexpr bool DontFragment = true;
 	
+	static constexpr bool UseLowId = false;
+	
 }; // struct TFlecsComponentTraits<FFlecsSubEntityRecordNameComponent>

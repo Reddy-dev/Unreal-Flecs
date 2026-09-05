@@ -291,7 +291,7 @@ void UFlecsWorld::InitializeDefaultComponents() const
 	
 	Scope(GetFlecsModule(FName("UnrealFlecs")), [this]()
 	{
-		RegisterComponentType<FFlecsAddReferencedObjectsTrait>()
+		RegisterComponentType<FFlecsAddReferencedObjectsTrait>(true, false)
 			.Add(flecs::Trait);
 	});
 	

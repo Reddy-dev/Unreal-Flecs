@@ -159,7 +159,7 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	
 	DefaultWorld->Scope(DefaultWorld->GetFlecsModule("UnrealFlecs"), [this]()
 	{
-		DefaultWorld->RegisterComponentType<FUnrealFlecsWorldTag>()
+		DefaultWorld->RegisterComponentType<FUnrealFlecsWorldTag>(true, false)
 				.Add(flecs::Singleton);
 		
 		DefaultWorld->RegisterComponentType<FFlecsWorldPtrComponent>()

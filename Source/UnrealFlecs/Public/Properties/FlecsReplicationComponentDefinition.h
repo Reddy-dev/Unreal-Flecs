@@ -24,7 +24,8 @@ struct UNREALFLECS_API FFlecsReplicationComponentDefinition
 	uint32 Size = 0;
 	uint16 Alignment = 0;
 
-	bool bIsTag = false;
+	uint8 bIsTag : 1 = false;
+	uint8 bDontFragment : 1 = false;
 
 	TObjectPtr<UScriptStruct> ScriptStruct = nullptr;
 
@@ -68,8 +69,7 @@ struct TFlecsReplicationTraits
 namespace UE::Flecs::Replication
 {
 	template <typename T>
-	NO_DISCARD FFlecsReplicationComponentDefinition MakeComponentDefinition(
-		const FFlecsComponentHandle& InComponent)
+	NO_DISCARD FFlecsReplicationComponentDefinition MakeComponentDefinition(const FFlecsComponentHandle& InComponent)
 	{
 		FFlecsReplicationComponentDefinition Definition;
 		if constexpr (requires { TFlecsReplicationTraits<T>::StableSymbolName(); })
@@ -85,6 +85,7 @@ namespace UE::Flecs::Replication
 		Definition.Size = sizeof(T);
 		Definition.Alignment = alignof(T);
 		Definition.bIsTag = std::is_empty_v<T>;
+		Definition.bDontFragment = InComponent.Has(flecs::DontFragment);
 
 		if constexpr (Solid::IsScriptStruct<T>())
 		{
