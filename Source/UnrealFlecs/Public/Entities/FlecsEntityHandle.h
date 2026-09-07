@@ -101,6 +101,50 @@ public:
 		return InSelf;
 	}
 
+	template <UE::Flecs::TFlecsEntityFunctionInputTypeConcept T, typename TSelf>
+	SOLID_INLINE const TSelf& AutoOverride(this const TSelf& InSelf, const T& InValue)
+	{
+		InSelf.GetEntity().auto_override(FFlecsEntityHandle::GetInputId(InSelf, InValue));
+		return InSelf;
+	}
+
+	template <typename T, typename TSelf>
+	SOLID_INLINE const TSelf& AutoOverride(this const TSelf& InSelf)
+	{
+		InSelf.GetEntity().template auto_override<T>();
+		return InSelf;
+	}
+
+	template <typename TFirst, typename TSecond, typename TSelf>
+	SOLID_INLINE const TSelf& AutoOverridePair(this const TSelf& InSelf)
+	{
+		InSelf.GetEntity().template auto_override<TFirst, TSecond>();
+		return InSelf;
+	}
+
+	template <typename TFirst, UE::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond, typename TSelf>
+	SOLID_INLINE const TSelf& AutoOverridePair(this const TSelf& InSelf, const TSecond& InSecond)
+	{
+		InSelf.GetEntity().template auto_override<TFirst>(FFlecsEntityHandle::GetInputId(InSelf, InSecond));
+		return InSelf;
+	}
+
+	template <UE::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst,
+		UE::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond, typename TSelf>
+	SOLID_INLINE const TSelf& AutoOverridePair(this const TSelf& InSelf, const TFirst& InFirst, const TSecond& InSecond)
+	{
+		InSelf.GetEntity().auto_override(FFlecsEntityHandle::GetInputId(InSelf, InFirst),
+			FFlecsEntityHandle::GetInputId(InSelf, InSecond));
+		return InSelf;
+	}
+
+	template <typename TSecond, UE::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst, typename TSelf>
+	SOLID_INLINE const TSelf& AutoOverridePairSecond(this const TSelf& InSelf, const TFirst& InFirst)
+	{
+		InSelf.GetEntity().template auto_override_second<TSecond>(FFlecsEntityHandle::GetInputId(InSelf, InFirst));
+		return InSelf;
+	}
+
 	template <typename T, typename TSelf>
 	requires (std::is_enum<T>::value)
 	SOLID_INLINE const TSelf& Add(this const TSelf& InSelf, const T InValue)

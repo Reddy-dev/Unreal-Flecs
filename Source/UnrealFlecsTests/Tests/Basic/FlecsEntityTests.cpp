@@ -108,6 +108,25 @@ FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(UnrealFlecsEntityTests,
 		ASSERT_THAT(IsTrue(CPPStructValue.Value == 42));
 		ASSERT_THAT(IsTrue(UStructValue.Value == 100));
 	}
+
+	TEST_METHOD(AutoOverride_Component_CPPAndEntityAPI)
+	{
+		const FFlecsEntityHandle Component = World()->RegisterComponentType<FFlecsTest_CPPStructValue>();
+		const FFlecsEntityHandle CPPPrefab = World()->CreatePrefab("CPPPrefab")
+			.Set<FFlecsTest_CPPStructValue>({ 42 })
+			.AutoOverride<FFlecsTest_CPPStructValue>();
+		const FFlecsEntityHandle EntityPrefab = World()->CreatePrefab("EntityPrefab")
+			.Set<FFlecsTest_CPPStructValue>({ 100 })
+			.AutoOverride(Component);
+
+		const FFlecsEntityHandle CPPInstance = World()->CreateEntity().SetIsA(CPPPrefab);
+		const FFlecsEntityHandle EntityInstance = World()->CreateEntity().SetIsA(EntityPrefab);
+
+		ASSERT_THAT(IsTrue(CPPInstance.Owns<FFlecsTest_CPPStructValue>()));
+		ASSERT_THAT(IsTrue(EntityInstance.Owns(Component)));
+		ASSERT_THAT(AreEqual(42, CPPInstance.Get<FFlecsTest_CPPStructValue>().Value));
+		ASSERT_THAT(AreEqual(100, EntityInstance.Get<FFlecsTest_CPPStructValue>().Value));
+	}
 	
 	TEST_METHOD(SpawnEntityWithChildrenInOrder_SetChildOrder_C_API)
 	{

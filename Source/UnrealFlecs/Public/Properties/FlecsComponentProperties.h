@@ -680,6 +680,8 @@ namespace UE::Flecs::Private
 	template <typename T>
 	struct TFlecsComponentPropertiesRegistrar
 	{
+		UE_STATIC_ASSERT_WARN(!std::is_enum<T>::value && (flecs::dont_fragment<T>::value != TFlecsComponentTraits<T>::DontFragment), 
+			"Mismatch between flecs::dont_fragment trait and TFlecsComponentTraits::DontFragment, you should have a static constexpr bool DontFragment = true; in your Component's struct definition to match the flecs::dont_fragment trait.");
 	public:
 		TFlecsComponentPropertiesRegistrar(const FString& InModuleName = {}, const FString& InPluginName = {})
 		{

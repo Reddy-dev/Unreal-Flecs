@@ -43,7 +43,7 @@ public:
 		return !(*this == Other);
 	}
 
-	UPROPERTY(EditAnywhere, Category = "Flecs")
+	UPROPERTY(EditAnywhere)
 	FString NameId;
 	
 }; // struct FFlecsCollectionId

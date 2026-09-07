@@ -37,6 +37,38 @@ private:
 	FFlecsComponentHandle PairTestComponentHandle2;
 
 public:
+	TEST_METHOD(AutoOverridePair_CPPAndEntityAPI)
+	{
+		const FFlecsEntityHandle CPPPrefab = World()->CreatePrefab("CPPPrefab")
+			.AddPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>()
+			.AutoOverridePair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>();
+		const FFlecsEntityHandle EntityPrefab = World()->CreatePrefab("EntityPrefab")
+			.AddPair(PairEntity1, PairEntity2)
+			.AutoOverridePair(PairEntity1, PairEntity2);
+
+		const FFlecsEntityHandle CPPInstance = World()->CreateEntity().SetIsA(CPPPrefab);
+		const FFlecsEntityHandle EntityInstance = World()->CreateEntity().SetIsA(EntityPrefab);
+
+		ASSERT_THAT(IsTrue(CPPInstance.OwnsPair<FUSTRUCTPairTestComponent, FUSTRUCTPairTestComponent_Second>()));
+		ASSERT_THAT(IsTrue(EntityInstance.OwnsPair(PairEntity1, PairEntity2)));
+	}
+
+	TEST_METHOD(AutoOverridePair_MixedAPI)
+	{
+		const FFlecsEntityHandle FirstTypedPrefab = World()->CreatePrefab("FirstTypedPrefab")
+			.AddPair<FUSTRUCTPairTestComponent>(PairEntity2)
+			.AutoOverridePair<FUSTRUCTPairTestComponent>(PairEntity2);
+		const FFlecsEntityHandle SecondTypedPrefab = World()->CreatePrefab("SecondTypedPrefab")
+			.AddPairSecond<FUSTRUCTPairTestComponent_Second>(PairEntity1)
+			.AutoOverridePairSecond<FUSTRUCTPairTestComponent_Second>(PairEntity1);
+
+		const FFlecsEntityHandle FirstTypedInstance = World()->CreateEntity().SetIsA(FirstTypedPrefab);
+		const FFlecsEntityHandle SecondTypedInstance = World()->CreateEntity().SetIsA(SecondTypedPrefab);
+
+		ASSERT_THAT(IsTrue(FirstTypedInstance.OwnsPair<FUSTRUCTPairTestComponent>(PairEntity2)));
+		ASSERT_THAT(IsTrue(SecondTypedInstance.OwnsPairSecond<FUSTRUCTPairTestComponent_Second>(PairEntity1)));
+	}
+
 	TEST_METHOD(BasicPairAddRemove_Add_EntityAPI_Remove_EntityAPI)
 	{
 		TestEntity.AddPair(PairEntity1, PairEntity2);

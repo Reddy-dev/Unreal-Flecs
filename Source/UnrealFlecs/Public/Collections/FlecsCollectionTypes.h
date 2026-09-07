@@ -57,19 +57,19 @@ public:
 		return FromId(FFlecsCollectionId(InIdString));
 	}
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flecs")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	EFlecsCollectionReferenceMode Mode = EFlecsCollectionReferenceMode::Asset;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flecs",
+	UPROPERTY(EditAnywhere, BlueprintReadOnly,
 		meta = (EditCondition = "Mode == EFlecsCollectionReferenceMode::Asset", EditConditionHides))
 	TObjectPtr<const UFlecsCollectionDataAsset> Asset;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flecs",
+	UPROPERTY(EditAnywhere, BlueprintReadOnly,
 		meta = (EditCondition = "Mode == EFlecsCollectionReferenceMode::UClass", EditConditionHides,
 			MustImplement = "/Script/UnrealFlecs.FlecsCollectionInterface"))
 	TSubclassOf<UObject> Class;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flecs",
+	UPROPERTY(EditAnywhere, BlueprintReadOnly,
 		meta = (EditCondition = "Mode == EFlecsCollectionReferenceMode::Id", EditConditionHides))
 	FFlecsCollectionId Id;
 	
