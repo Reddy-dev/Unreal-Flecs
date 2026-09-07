@@ -9,11 +9,11 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(UnrealFlecsRegistrationScopeType)
 
-FName UE::Flecs::Registration::ResolveScopeTypeName(
+FString UE::Flecs::Registration::ResolveScopeTypeName(
 	const TSolidNotNull<const UObject*> InObject, 
 	const EUnrealFlecsRegistrationScopeType InScopeType)
 {
-	const FName ModuleName(*FPackageName::GetShortName(InObject->GetClass()->GetOuterUPackage()->GetName()));
+	const FString ModuleName = FPackageName::GetShortName(InObject->GetClass()->GetOuterUPackage()->GetName());
 
 	switch (InScopeType)
 	{
@@ -41,10 +41,10 @@ FName UE::Flecs::Registration::ResolveScopeTypeName(
 					UE_LOGFMT(LogFlecsCore, Warning,
 						"Could not infer a plugin scope for registered object {ObjectName}: native module {ModuleName} has no owning plugin. Set an explicit scope name or use another scope type.",
 						InObject->GetFName(), ModuleName);
-					return NAME_None;
+					return "";
 				}
 
-				return FName((*OwningPlugin)->GetName());
+				return (*OwningPlugin)->GetName();
 			}
 
 		case EUnrealFlecsRegistrationScopeType::CustomNameIdentifier:
@@ -53,20 +53,20 @@ FName UE::Flecs::Registration::ResolveScopeTypeName(
 				"Registered object {ObjectName} uses scope type {ScopeType}, which requires an explicit scope name.",
 				InObject->GetFName(), StaticEnum<EUnrealFlecsRegistrationScopeType>()->GetNameStringByValue(static_cast<int64>(InScopeType)));
 				
-			return NAME_None;
+			return "";
 
 		case EUnrealFlecsRegistrationScopeType::None:
-			return NAME_None;
+			return "";
 	}
 	
 	
 	// @TODO: error?
-	return NAME_None;
+	return "";
 }
 
 FFlecsId UE::Flecs::Registration::ResolveRegistrationScopeToId(
 	const TSolidNotNull<const UFlecsWorld*> InFlecsWorld,
-	const FName& ScopeName, 
+	const FString& ScopeName, 
 	const EUnrealFlecsRegistrationScopeType InScopeType)
 {
 	if UNLIKELY_IF(InScopeType == EUnrealFlecsRegistrationScopeType::None)
@@ -74,7 +74,7 @@ FFlecsId UE::Flecs::Registration::ResolveRegistrationScopeToId(
 		return FFlecsId::Null();
 	}
 	
-	if UNLIKELY_IF(ScopeName.IsNone())
+	if UNLIKELY_IF(ScopeName.IsEmpty())
 	{
 		return FFlecsId::Null();
 	}
@@ -82,13 +82,13 @@ FFlecsId UE::Flecs::Registration::ResolveRegistrationScopeToId(
 	switch (InScopeType)
 	{
 		case EUnrealFlecsRegistrationScopeType::Module:
-			return InFlecsWorld->GetFlecsModule(ScopeName);
+			return InFlecsWorld->GetFlecsModule(FName(*ScopeName));
 		case EUnrealFlecsRegistrationScopeType::Plugin:
-			return InFlecsWorld->GetFlecsPlugin(ScopeName);
+			return InFlecsWorld->GetFlecsPlugin(FName(*ScopeName));
 		case EUnrealFlecsRegistrationScopeType::CustomNameIdentifier:
-			return InFlecsWorld->LookupEntity(ScopeName.ToString());
+			return InFlecsWorld->LookupEntity(ScopeName);
 		case EUnrealFlecsRegistrationScopeType::CustomSymbolIdentifier:
-			return InFlecsWorld->LookupEntityBySymbol_Internal(ScopeName.ToString());
+			return InFlecsWorld->LookupEntityBySymbol_Internal(ScopeName);
 		case EUnrealFlecsRegistrationScopeType::None: 
 		default:
 			return FFlecsId::Null();

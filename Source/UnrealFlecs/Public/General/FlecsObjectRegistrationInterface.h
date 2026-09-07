@@ -65,6 +65,6 @@ public:
 	 * Optional for Module and Plugin scopes. A Module scope defaults to this object's native module;
 	 * a Plugin scope defaults to that module's owning Unreal plugin. Custom identifier scopes require a name.
 	 */
-	virtual NO_DISCARD FName GetScopeName() const { return NAME_None; }
+	virtual NO_DISCARD FString GetScopeName() const { return ""; }
 
 }; // class IFlecsObjectRegistrationInterface

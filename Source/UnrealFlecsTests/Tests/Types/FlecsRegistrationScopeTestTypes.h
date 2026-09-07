@@ -12,10 +12,10 @@
 
 namespace UE::Flecs::Tests::RegistrationScope
 {
-	inline const FName ModuleScopeName = FName(TEXT("RegistrationScopeModule"));
-	inline const FName PluginScopeName = FName(TEXT("RegistrationScopePlugin"));
-	inline const FName CustomNameScopeName = FName(TEXT("RegistrationScopeCustomName"));
-	inline const FName MissingCustomNameScopeName = FName(TEXT("RegistrationScopeMissingCustomName"));
+	inline const FString ModuleScopeName = TEXT("RegistrationScopeModule");
+	inline const FString PluginScopeName = TEXT("RegistrationScopePlugin");
+	inline const FString CustomNameScopeName = TEXT("RegistrationScopeCustomName");
+	inline const FString MissingCustomNameScopeName = TEXT("RegistrationScopeMissingCustomName");
 
 } // namespace UE::Flecs::Tests::RegistrationScope
 
@@ -31,7 +31,7 @@ struct TFlecsComponentTraits<FFlecsRegistrationScopeModuleComponent>
 {
 	static constexpr EUnrealFlecsRegistrationScopeType RegistrationScopeType = EUnrealFlecsRegistrationScopeType::Module;
 
-	static FName GetRegistrationScopeName()
+	static FString GetRegistrationScopeName()
 	{
 		return UE::Flecs::Tests::RegistrationScope::ModuleScopeName;
 	}
@@ -50,7 +50,7 @@ struct TFlecsComponentTraits<FFlecsRegistrationScopePluginComponent>
 {
 	static constexpr EUnrealFlecsRegistrationScopeType RegistrationScopeType = EUnrealFlecsRegistrationScopeType::Plugin;
 
-	static FName GetRegistrationScopeName()
+	static FString GetRegistrationScopeName()
 	{
 		return UE::Flecs::Tests::RegistrationScope::PluginScopeName;
 	}
@@ -106,7 +106,7 @@ public:
 		return EUnrealFlecsRegistrationScopeType::Module;
 	}
 
-	virtual FName GetScopeName() const override
+	virtual FString GetScopeName() const override
 	{
 		return UE::Flecs::Tests::RegistrationScope::ModuleScopeName;
 	}
@@ -130,7 +130,7 @@ public:
 		return EUnrealFlecsRegistrationScopeType::CustomNameIdentifier;
 	}
 
-	virtual FName GetScopeName() const override
+	virtual FString GetScopeName() const override
 	{
 		return UE::Flecs::Tests::RegistrationScope::MissingCustomNameScopeName;
 	}

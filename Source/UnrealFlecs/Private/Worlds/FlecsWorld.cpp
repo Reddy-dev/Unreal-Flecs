@@ -354,8 +354,8 @@ void UFlecsWorld::ExecuteInRegistrationScope(
 {
 	const EUnrealFlecsRegistrationScopeType ScopeType = InObjectRegistrationInterface->GetRegistrationScopeType();
 	
-	FName ResolvedName = InObjectRegistrationInterface->GetScopeName();
-	if (ResolvedName.IsNone())
+	FString ResolvedName = InObjectRegistrationInterface->GetScopeName();
+	if (ResolvedName.IsEmpty())
 	{
 		ResolvedName = UE::Flecs::Registration::ResolveScopeTypeName(InObject, ScopeType);
 	}

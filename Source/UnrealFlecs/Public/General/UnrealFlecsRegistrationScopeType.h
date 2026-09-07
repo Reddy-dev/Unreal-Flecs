@@ -23,10 +23,10 @@ enum class EUnrealFlecsRegistrationScopeType : uint8
 
 namespace UE::Flecs::Registration
 {
-	UNREALFLECS_API NO_DISCARD FName ResolveScopeTypeName(const TSolidNotNull<const UObject*> InObject, 
+	UNREALFLECS_API NO_DISCARD FString ResolveScopeTypeName(const TSolidNotNull<const UObject*> InObject, 
 		const EUnrealFlecsRegistrationScopeType InScopeType);
 	
 	UNREALFLECS_API NO_DISCARD FFlecsId ResolveRegistrationScopeToId(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld,
-		const FName& ScopeName, const EUnrealFlecsRegistrationScopeType InScopeType);
+		const FString& ScopeName, const EUnrealFlecsRegistrationScopeType InScopeType);
 	
 } // namespace UE::Flecs::Registration

@@ -197,9 +197,9 @@ public:
 	
 	static constexpr EUnrealFlecsRegistrationScopeType RegistrationScopeType = EUnrealFlecsRegistrationScopeType::Module;
 
-	static FName GetRegistrationScopeName()
+	static FString GetRegistrationScopeName()
 	{
-		return NAME_None;
+		return "";
 	}
 
 	static const TArray<FString>& CustomTypeDependencies()
@@ -331,7 +331,7 @@ public:
 	EUnrealFlecsRegistrationScopeType RegistrationScopeType;
 
 	UPROPERTY()
-	FName RegistrationScopeName;
+	FString RegistrationScopeName;
 
 	UE::Flecs::FFlecsComponentRegistrationFunction RegistrationFunction;
 	UE::Flecs::FFlecsComponentPropertiesFunction PropertiesFunction;
@@ -630,7 +630,7 @@ public:
 				FFlecsId ScopeId = FFlecsId::Null();
 				
 				if (ComponentProperties.RegistrationScopeType != EUnrealFlecsRegistrationScopeType::None 
-					&& !ComponentProperties.RegistrationScopeName.IsNone())
+					&& !ComponentProperties.RegistrationScopeName.IsEmpty())
 				{
 					ScopeId = UE::Flecs::Registration::ResolveRegistrationScopeToId(InFlecsWorld,
 						ComponentProperties.RegistrationScopeName, 
@@ -680,14 +680,13 @@ namespace UE::Flecs::Private
 	template <typename T>
 	struct TFlecsComponentPropertiesRegistrar
 	{
-		UE_STATIC_ASSERT_WARN(!std::is_enum<T>::value && (flecs::dont_fragment<T>::value != TFlecsComponentTraits<T>::DontFragment), 
+		UE_STATIC_ASSERT_WARN(std::is_enum<T>::value || (flecs::dont_fragment<T>::value == TFlecsComponentTraits<T>::DontFragment), 
 			"Mismatch between flecs::dont_fragment trait and TFlecsComponentTraits::DontFragment, you should have a static constexpr bool DontFragment = true; in your Component's struct definition to match the flecs::dont_fragment trait.");
 	public:
 		TFlecsComponentPropertiesRegistrar(const FString& InModuleName = {}, const FString& InPluginName = {})
 		{
 			// @TODO: make safe
-			FCoreDelegates::GetOnPostEngineInit().AddLambda(
-				[InModuleName, InPluginName]
+			FCoreDelegates::GetOnPostEngineInit().AddLambda([InModuleName, InPluginName]
 			{
 				FFlecsComponentPropertiesDefinition Definition = FFlecsComponentPropertiesDefinition::Make<T>();
 				
@@ -697,15 +696,15 @@ namespace UE::Flecs::Private
 				{
 					if (Definition.RegistrationScopeType == EUnrealFlecsRegistrationScopeType::Module && !InModuleName.IsEmpty())
 					{
-						Definition.RegistrationScopeName = FName(InModuleName);
+						Definition.RegistrationScopeName = InModuleName;
 					}
 					else if (Definition.RegistrationScopeType == EUnrealFlecsRegistrationScopeType::Plugin && !InPluginName.IsEmpty())
 					{
-						Definition.RegistrationScopeName = FName(InPluginName);
+						Definition.RegistrationScopeName = InPluginName;
 					}
 				}
 
-				if (!bIsScopeTypeNone && Definition.RegistrationScopeName.IsNone())
+				if (!bIsScopeTypeNone && Definition.RegistrationScopeName.IsEmpty())
 				{
 					if (const UField* FieldObject = UE::Flecs::internal::GetMetaTypeIf<T>())
 					{

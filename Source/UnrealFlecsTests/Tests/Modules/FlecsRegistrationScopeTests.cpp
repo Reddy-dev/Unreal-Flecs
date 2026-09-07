@@ -47,30 +47,30 @@ FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsRegistrationScopeTests,
 		const UFlecsExplicitModuleRegistrationScopeTestObject* Object
 			= GetDefault<UFlecsExplicitModuleRegistrationScopeTestObject>();
 
-		const FName ModuleName = UE::Flecs::Registration::ResolveScopeTypeName(Object,
+		const FString ModuleName = UE::Flecs::Registration::ResolveScopeTypeName(Object,
 			EUnrealFlecsRegistrationScopeType::Module);
-		const FName PluginName = UE::Flecs::Registration::ResolveScopeTypeName(Object,
+		const FString PluginName = UE::Flecs::Registration::ResolveScopeTypeName(Object,
 			EUnrealFlecsRegistrationScopeType::Plugin);
 
-		ASSERT_THAT(IsTrue(ModuleName == FName(TEXT("UnrealFlecsTests"))));
-		ASSERT_THAT(IsTrue(PluginName == FName(TEXT("UnrealFlecs"))));
+		ASSERT_THAT(IsTrue(ModuleName == TEXT("UnrealFlecsTests")));
+		ASSERT_THAT(IsTrue(PluginName == TEXT("UnrealFlecs")));
 		ASSERT_THAT(IsTrue(UE::Flecs::Registration::ResolveScopeTypeName(Object,
-			EUnrealFlecsRegistrationScopeType::None).IsNone()));
+			EUnrealFlecsRegistrationScopeType::None).IsEmpty()));
 	}
 
 	TEST_METHOD(ResolveRegistrationScopeToId_ResolvesEveryIdentifierKind)
 	{
 		const FFlecsEntityHandle ModuleScope = UE::Flecs::Tests::RegistrationScope::CreateModuleScope(
-			World(), UE::Flecs::Tests::RegistrationScope::ModuleScopeName);
+			World(), FName(UE::Flecs::Tests::RegistrationScope::ModuleScopeName));
 
 		World()->RegisterComponentType<FUnrealFlecsPluginTag>();
 		const FFlecsEntityHandle PluginScope = World()->CreateEntity(
-			UE::Flecs::Tests::RegistrationScope::PluginScopeName.ToString())
+			UE::Flecs::Tests::RegistrationScope::PluginScopeName)
 			.Add(flecs::Module)
 			.Add<FUnrealFlecsPluginTag>();
 
 		const FFlecsEntityHandle CustomNameScope = World()->CreateEntity(
-			UE::Flecs::Tests::RegistrationScope::CustomNameScopeName.ToString());
+			UE::Flecs::Tests::RegistrationScope::CustomNameScopeName);
 		const FFlecsEntityHandle CustomSymbolScope = World()->CreateEntity(TEXT("RegistrationScopeCustomSymbol"));
 		CustomSymbolScope.GetEntity().set_symbol("RegistrationScopeCustomSymbolIdentifier");
 
@@ -82,7 +82,7 @@ FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsRegistrationScopeTests,
 			UE::Flecs::Tests::RegistrationScope::CustomNameScopeName,
 			EUnrealFlecsRegistrationScopeType::CustomNameIdentifier);
 		const FFlecsId CustomSymbolScopeId = UE::Flecs::Registration::ResolveRegistrationScopeToId(World(),
-			FName(TEXT("RegistrationScopeCustomSymbolIdentifier")),
+			TEXT("RegistrationScopeCustomSymbolIdentifier"),
 			EUnrealFlecsRegistrationScopeType::CustomSymbolIdentifier);
 		const FFlecsId NoneScopeId = UE::Flecs::Registration::ResolveRegistrationScopeToId(World(),
 			UE::Flecs::Tests::RegistrationScope::ModuleScopeName, EUnrealFlecsRegistrationScopeType::None);
@@ -97,7 +97,7 @@ FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsRegistrationScopeTests,
 	TEST_METHOD(ComponentRegistration_AttachesComponentToResolvedScope)
 	{
 		const FFlecsEntityHandle ModuleScope = UE::Flecs::Tests::RegistrationScope::CreateModuleScope(
-			World(), UE::Flecs::Tests::RegistrationScope::ModuleScopeName);
+			World(), FName(UE::Flecs::Tests::RegistrationScope::ModuleScopeName));
 
 		const FFlecsComponentPropertiesDefinition ComponentProperties
 			= FFlecsComponentPropertiesDefinition::Make<FFlecsRegistrationScopeModuleComponent>();
@@ -112,7 +112,7 @@ FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsRegistrationScopeTests,
 	TEST_METHOD(ExplicitScopeName_ScopesRegistrationAndBeginPlayAndRestoresPreviousScope)
 	{
 		const FFlecsEntityHandle ExplicitScope = UE::Flecs::Tests::RegistrationScope::CreateModuleScope(
-			World(), UE::Flecs::Tests::RegistrationScope::ModuleScopeName);
+			World(), FName(UE::Flecs::Tests::RegistrationScope::ModuleScopeName));
 		
 		const FFlecsEntityHandle PreviousScope = World()->CreateEntity(TEXT("RegistrationScopePrevious"));
 		World()->SetScope(PreviousScope);
