@@ -682,6 +682,15 @@ namespace UE::Flecs::Private
 	{
 		UE_STATIC_ASSERT_WARN(std::is_enum<T>::value || (flecs::dont_fragment<T>::value == TFlecsComponentTraits<T>::DontFragment), 
 			"Mismatch between flecs::dont_fragment trait and TFlecsComponentTraits::DontFragment, you should have a static constexpr bool DontFragment = true; in your Component's struct definition to match the flecs::dont_fragment trait.");
+		
+		UE_STATIC_ASSERT_WARN(std::is_enum<T>::value || (flecs::sparse<T>::value == TFlecsComponentTraits<T>::Sparse),
+			"Mismatch between flecs::sparse trait and TFlecsComponentTraits::Sparse, you should have a static constexpr bool Sparse = true; in your Component's struct definition to match the flecs::sparse trait.");
+		
+		UE_STATIC_ASSERT_WARN(std::is_enum<T>::value
+			|| (TFlecsComponentTraits<T>::OnInstantiate == EFlecsOnInstantiate::Override || flecs::on_instantiate_trait<T>::declared),
+			"Mismatch between flecs::on_instantiate trait and TFlecsComponentTraits::OnInstantiate, you should have a static constexpr EFlecsOnInstantiate OnInstantiate = ...; in your Component's struct definition to match the flecs::on_instantiate trait.");
+		
+		
 	public:
 		TFlecsComponentPropertiesRegistrar(const FString& InModuleName = {}, const FString& InPluginName = {})
 		{
