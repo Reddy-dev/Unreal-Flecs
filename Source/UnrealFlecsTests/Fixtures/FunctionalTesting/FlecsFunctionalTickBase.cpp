@@ -2,7 +2,6 @@
 
 #include "FlecsFunctionalTickBase.h"
 
-#include "Pipelines/FlecsTickTypeNativeTags.h"
 #include "Worlds/FlecsWorld.h"
 #include "Worlds/FlecsWorldSubsystem.h"
 
@@ -50,7 +49,7 @@ void AFlecsFunctionalTickBase::StartTest()
 				});
 	//.add(FlecsWorld->GetTagEntity(FlecsTickType_MainLoop).GetFlecsId());
 	
-	PrePhysicsSystem = FlecsWorld->GetNativeFlecsWorld().system<>()
+	/*PrePhysicsSystem = FlecsWorld->GetNativeFlecsWorld().system<>()
 		.kind(flecs::OnUpdate)
 		.each([this](flecs::iter& Iter, size_t Index)
 		{
@@ -100,7 +99,7 @@ void AFlecsFunctionalTickBase::StartTest()
 			
 			PostUpdateWorkCounter++;
 		})
-		.add(FlecsWorld->GetTagEntity(FlecsTickType_PostUpdateWork).GetFlecsId());
+		.add(FlecsWorld->GetTagEntity(FlecsTickType_PostUpdateWork).GetFlecsId());*/
 }
 
 void AFlecsFunctionalTickBase::FinishTest(EFunctionalTestResult TestResult, const FString& Message)

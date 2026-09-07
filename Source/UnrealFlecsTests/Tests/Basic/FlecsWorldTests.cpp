@@ -5,8 +5,6 @@
 
 #if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
 
-#include "Pipelines/FlecsTickTypeNativeTags.h"
-
 #include "Worlds/FlecsWorld.h"
 #include "Worlds/FlecsWorldConverter.h"
 #include "Worlds/UnrealFlecsWorldTag.h"

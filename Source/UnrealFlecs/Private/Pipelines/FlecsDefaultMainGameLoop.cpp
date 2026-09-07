@@ -5,8 +5,6 @@
 #include "Components/UnrealFlecsPluginTag.h"
 #include "Logs/FlecsCategories.h"
 
-#include "Pipelines/FlecsTickTypeNativeTags.h"
-
 #include "Worlds/FlecsWorld.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsDefaultMainGameLoop)
@@ -22,7 +20,7 @@ static NO_DISCARD FORCEINLINE int flecs_entity_compare(
 
 UFlecsDefaultMainGameLoop::UFlecsDefaultMainGameLoop()
 {
-	
+	TickFunctionSettings.bTickEvenWhenPaused = true;
 }
 
 void UFlecsDefaultMainGameLoop::InitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsEntityHandle& InGameLoopEntity)
@@ -34,10 +32,6 @@ void UFlecsDefaultMainGameLoop::InitializeGameLoop(TSolidNotNull<UFlecsWorld*> I
 		.Without(flecs::Disabled).Up(flecs::ChildOf)
 		//.order_by(flecs_entity_compare)
 		// @TODO: .with(InWorld->GetTagEntity(FlecsTickType_MainLoop))
-		.Without(FlecsTickType_PrePhysics)
-		.Without(FlecsTickType_DuringPhysics)
-		.Without(FlecsTickType_PostPhysics)
-		.Without(FlecsTickType_PostUpdateWork)
 		.Build();
 
 	InWorld->SetPipeline(MainLoopPipeline);

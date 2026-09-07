@@ -5,7 +5,6 @@
 #include "Logging/StructuredLog.h"
 
 #include "Pipelines/TickFunctions/FlecsTickFunction.h"
-#include "Pipelines/FlecsTickTypeNativeTags.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsWorldInfoSettings)
 

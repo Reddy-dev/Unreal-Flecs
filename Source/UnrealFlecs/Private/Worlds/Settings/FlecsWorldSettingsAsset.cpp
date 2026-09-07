@@ -59,7 +59,7 @@ EDataValidationResult UFlecsWorldSettingsAsset::IsDataValid(FDataValidationConte
 		bool bHasMainLoop = false;
 		TArray<TObjectPtr<UObject>> MainLoops;
 		
-		/*for (const TObjectPtr<UObject> GameLoop : WorldSettings.GameLoops)
+		for (const TObjectPtr<UObject> GameLoop : WorldSettings.GameLoops)
 		{
 			if (!IsValid(GameLoop))
 			{
@@ -89,37 +89,7 @@ EDataValidationResult UFlecsWorldSettingsAsset::IsDataValid(FDataValidationConte
 				bHasMainLoop = true;
 				MainLoops.AddUnique(GameLoop);
 			}
-
-			const TArray<FGameplayTag> GameLoopTickTypeTags = GameLoopInterface->GetTickTypeTags();
-			if (GameLoopTickTypeTags.IsEmpty())
-			{
-				Context.AddError(FText::Format(
-					LOCTEXT("NoTickTypeTags",
-						"WorldSettings {0} has a GameLoop {1} in its GameLoops array that has no TickTypeTags assigned."),
-					FText::FromString(GetPathName()),
-					FText::FromString(GameLoop->GetClass()->GetClassPathName().ToString())));
-			}
-
-			bool bHasValidTickTypeTag = false;
-
-			for (const FGameplayTag& TickTypeTag : GameLoopTickTypeTags)
-			{
-				if (AssignedTickFunctionTags.Contains(TickTypeTag))
-				{
-					bHasValidTickTypeTag = true;
-					break;
-				}
-			}
-
-			if (!bHasValidTickTypeTag)
-			{
-				Context.AddWarning(FText::Format(
-					LOCTEXT("NoValidTickTypeTag",
-						"WorldSettings {0} has a GameLoop {1} in its GameLoops array that has no TickTypeTags matching any TickFunction's TickTypeTag."),
-					FText::FromString(GetPathName()),
-					FText::FromString(GameLoop->GetClass()->GetClassPathName().ToString())));
-			}
-		}*/
+		}
 
 		if (!bHasMainLoop)
 		{

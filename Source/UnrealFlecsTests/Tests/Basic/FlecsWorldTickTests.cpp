@@ -5,7 +5,6 @@
 
 #if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
 
-#include "Pipelines/FlecsTickTypeNativeTags.h"
 #include "Worlds/FlecsWorld.h"
 
 FLECS_TEST_CLASS_WITH_FLAGS(UnrealFlecsWorldTickTests,
@@ -76,7 +75,7 @@ public:
 		// @TODO: use FFlecsSystem instead of FFlecsEntityHandle
 
 		int32 MainLoopCounter = 0;
-		FFlecsEntityHandle MainLoopSystem = World()->GetNativeFlecsWorld().system<>()
+		FFlecsSystemHandle MainLoopSystem = World()->GetNativeFlecsWorld().system<>()
 			.kind(flecs::OnUpdate)
 			.each([&MainLoopCounter](flecs::iter& Iter, size_t Index)
 			{
@@ -84,7 +83,7 @@ public:
 			});
 			//.add(World()->GetTagEntity(FlecsTickType_MainLoop).GetFlecsId());
 		
-		int32 PrePhysicsCounter = 0;
+		/*int32 PrePhysicsCounter = 0;
 		FFlecsEntityHandle PrePhysicsSystem = World()->GetNativeFlecsWorld().system<>()
 			.kind(flecs::OnUpdate)
 			.each([&PrePhysicsCounter](flecs::iter& Iter, size_t Index)
@@ -118,35 +117,35 @@ public:
 			{
 				PostUpdateWorkCounter++;
 			})
-			.add(World()->GetTagEntity(FlecsTickType_PostUpdateWork).GetFlecsId());
+			.add(World()->GetTagEntity(FlecsTickType_PostUpdateWork).GetFlecsId());*/
 
 		ASSERT_THAT(IsTrue(MainLoopSystem.IsValid()));
-		ASSERT_THAT(IsTrue(PrePhysicsSystem.IsValid()));
+		/*ASSERT_THAT(IsTrue(PrePhysicsSystem.IsValid()));
 		ASSERT_THAT(IsTrue(DuringPhysicsSystem.IsValid()));
 		ASSERT_THAT(IsTrue(PostPhysicsSystem.IsValid()));
-		ASSERT_THAT(IsTrue(PostUpdateWorkSystem.IsValid()));
+		ASSERT_THAT(IsTrue(PostUpdateWorkSystem.IsValid()));*/
 
 		ASSERT_THAT(AreEqual(0, MainLoopCounter));
-		ASSERT_THAT(AreEqual(0, PrePhysicsCounter));
+		/*ASSERT_THAT(AreEqual(0, PrePhysicsCounter));
 		ASSERT_THAT(AreEqual(0, DuringPhysicsCounter));
 		ASSERT_THAT(AreEqual(0, PostPhysicsCounter));
-		ASSERT_THAT(AreEqual(0, PostUpdateWorkCounter));
+		ASSERT_THAT(AreEqual(0, PostUpdateWorkCounter));*/
 
 		TickWorld();
 
 		ASSERT_THAT(AreEqual(1, MainLoopCounter));
-		ASSERT_THAT(AreEqual(1, PrePhysicsCounter));
+		/*ASSERT_THAT(AreEqual(1, PrePhysicsCounter));
 		ASSERT_THAT(AreEqual(1, DuringPhysicsCounter));
 		ASSERT_THAT(AreEqual(1, PostPhysicsCounter));
-		ASSERT_THAT(AreEqual(1, PostUpdateWorkCounter));
+		ASSERT_THAT(AreEqual(1, PostUpdateWorkCounter));*/
 
 		TickWorld();
 
 		ASSERT_THAT(AreEqual(2, MainLoopCounter));
-		ASSERT_THAT(AreEqual(2, PrePhysicsCounter));
+		/*ASSERT_THAT(AreEqual(2, PrePhysicsCounter));
 		ASSERT_THAT(AreEqual(2, DuringPhysicsCounter));
 		ASSERT_THAT(AreEqual(2, PostPhysicsCounter));
-		ASSERT_THAT(AreEqual(2, PostUpdateWorkCounter));
+		ASSERT_THAT(AreEqual(2, PostUpdateWorkCounter));*/
 	}
 
 	TEST_METHOD(TickWorldWithDeltaTime)

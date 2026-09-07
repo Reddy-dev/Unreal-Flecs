@@ -18,19 +18,8 @@ struct UNREALFLECS_API FFlecsTickFunctionSettingsInfo
 {
     GENERATED_BODY()
 
-    NO_DISCARD FORCEINLINE friend uint32 GetTypeHash(const FFlecsTickFunctionSettingsInfo& InTickFunctionSettings)
-    {
-        return GetTypeHash(InTickFunctionSettings.TickTypeTag);
-    }
-
 public:
     FFlecsTickFunctionSettingsInfo();
-    
-    UPROPERTY(EditAnywhere)
-    FString TickFunctionName;
-
-    UPROPERTY(EditAnywhere)
-    FGameplayTag TickTypeTag;
 
     UPROPERTY(EditAnywhere)
     TEnumAsByte<ETickingGroup> TickGroup = ETickingGroup::TG_PrePhysics;

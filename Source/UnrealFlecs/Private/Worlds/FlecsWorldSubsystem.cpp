@@ -142,7 +142,7 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 		
 			DuplicatedGameLoops.Add(DuplicatedGameLoop);
 			const TSolidNotNull<IFlecsGameLoopInterface*> GameLoopInterface = CastChecked<IFlecsGameLoopInterface>(DuplicatedGameLoop);
-			GameLoopInterface->InitializeTickFunction(DefaultWorld);
+			TSharedStruct<FFlecsTickFunction> TickFunction = GameLoopInterface->InitializeTickFunction(DefaultWorld);
 			
 		}
 		
