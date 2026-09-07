@@ -7,6 +7,7 @@
 #include "Versioning/SolidVersioningTypes.h"
 
 #include "FlecsGameLoopInterface.h"
+#include "Worlds/Settings/FlecsWorldInfoSettings.h"
 
 #include "FlecsGameLoopObject.generated.h"
 
@@ -23,4 +24,17 @@ public:
 	UFlecsGameLoopObject();
 	UFlecsGameLoopObject(const FObjectInitializer& ObjectInitializer);
 	
+	virtual void DeinitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsEntityHandle& InGameLoopEntity) override;
+	
+	UPROPERTY(EditAnywhere, Category = "Flecs | GameLoop")
+	FFlecsTickFunctionSettingsInfo TickFunctionSettings;
+	
+	virtual TSharedStruct<FFlecsTickFunction> InitializeTickFunction(TSolidNotNull<UFlecsWorld*> InWorld) override;
+	
+	virtual NO_DISCARD TSharedStruct<FFlecsTickFunction> GetTickFunction() const override;
+	
+protected:
+	TSharedStruct<FFlecsTickFunction> TickFunction;
+
+
 }; // class UFlecsGameLoopObject

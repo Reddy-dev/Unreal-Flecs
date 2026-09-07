@@ -17,7 +17,7 @@
 #include "Worlds/Settings/FlecsWorldInfoSettings.h"
 #include "Worlds/FlecsWorldSubsystem.h"
 #include "Worlds/FlecsWorld.h"
-#include "Pipelines/FlecsDefaultGameLoop.h"
+#include "Pipelines/FlecsDefaultMainGameLoop.h"
 
 class UNREALFLECSTESTS_API FFlecsTestFixture
 {
@@ -70,12 +70,7 @@ public:
 		}
 		else if (bInUseDefaultGameLoop)
 		{
-			WorldSettings.GameLoops.AddUnique(NewObject<UFlecsDefaultGameLoop>(WorldSubsystem));
-		}
-
-		if (!InTickFunctions.IsEmpty())
-		{
-			WorldSettings.TickFunctions = InTickFunctions;
+			WorldSettings.GameLoops.AddUnique(NewObject<UFlecsDefaultMainGameLoop>(WorldSubsystem));
 		}
 
 		FlecsWorld = WorldSubsystem->CreateWorld("TestWorld", WorldSettings);

@@ -19,8 +19,3 @@ bool IFlecsGameLoopInterface::IsMainLoop() const
 {
 	return false;
 }
-
-TArray<FGameplayTag> IFlecsGameLoopInterface::GetTickTypeTags() const
-{
-	return { FlecsTickType_MainLoop };
-}

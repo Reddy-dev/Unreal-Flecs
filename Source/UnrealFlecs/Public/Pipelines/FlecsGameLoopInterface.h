@@ -2,9 +2,12 @@
 
 #pragma once
 
+#include "Engine/EngineBaseTypes.h"
+
 #include "Types/SolidNotNull.h"
 
 #include "Entities/FlecsEntityInterface.h"
+#include "TickFunctions/FlecsTickFunction.h"
 
 #include "FlecsGameLoopInterface.generated.h"
 
@@ -26,18 +29,31 @@ public:
 	void InitializeGameLoop_Internal(TSolidNotNull<UFlecsWorld*> InWorld);
 	
 	virtual void InitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsEntityHandle& InGameLoopEntity) {}
+	virtual void DeinitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsEntityHandle& InGameLoopEntity) {}
 	
-	virtual bool Progress(double DeltaTime, const FGameplayTag& InTickType, TSolidNotNull<UFlecsWorld*> InWorld)
+	virtual bool Progress(double DeltaTime, 
+		TSolidNotNull<UFlecsWorld*> InWorld, 
+		ELevelTick InTickType,
+		ENamedThreads::Type InCurrentThread,
+		const FGraphEventRef& InCompletionGraphEvent)
 		PURE_VIRTUAL(IFlecsGameLoopInterface::Progress, return false;)
 
 	virtual bool IsMainLoop() const;
 	
-	virtual NO_DISCARD FFlecsEntityHandle GetEntityHandle() const override final
+	virtual TSharedStruct<FFlecsTickFunction> InitializeTickFunction(TSolidNotNull<UFlecsWorld*> InWorld)
+	{
+		return TSharedStruct<FFlecsTickFunction>();
+	}
+	
+	virtual NO_DISCARD TSharedStruct<FFlecsTickFunction> GetTickFunction() const
+	{
+		return TSharedStruct<FFlecsTickFunction>();
+	}
+	
+	virtual NO_DISCARD FFlecsEntityHandle GetEntityHandle() const override
 	{
 		return GameLoopEntity;
 	}
-
-	virtual TArray<FGameplayTag> GetTickTypeTags() const;
 	
 	FFlecsEntityHandle GameLoopEntity;
 	

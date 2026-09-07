@@ -2,7 +2,6 @@
 
 #pragma once
 
-
 #include "UnrealFlecsWorldTag.generated.h"
 
 /*

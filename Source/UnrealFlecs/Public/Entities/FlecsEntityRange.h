@@ -54,7 +54,7 @@ public:
 	}
 	
 private:
-	void SetNativeEntityRange(const ecs_entity_range_t* InRange, const FName& InRangeName);
+	void SetNativeEntityRange(const TSolidNotNull<const ecs_entity_range_t*> InRange, const FName& InRangeName);
 	
 private:
 	// @TODO: stuff -Elie

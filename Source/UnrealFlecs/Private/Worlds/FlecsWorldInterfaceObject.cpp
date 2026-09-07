@@ -1237,6 +1237,21 @@ UObject* UFlecsWorldInterfaceObject::GetGameLoop(const TSubclassOf<UObject> InGa
 	return nullptr;
 }
 
+std::generator<const TSolidNotNull<UObject*>> UFlecsWorldInterfaceObject::GetGameLoops() const
+{
+	for (const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface : GetFlecsWorld()->GameLoopInterfaces)
+	{
+		if LIKELY_IF(GameLoopInterface.GetObject())
+		{
+			co_yield GameLoopInterface.GetObject();
+		}
+		else
+		{
+			// @TODO: Error?
+		}
+	}
+}
+
 int32 UFlecsWorldInterfaceObject::GetThreads() const
 {
 	return GetNativeFlecsWorld_Internal()->get_threads();

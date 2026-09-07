@@ -1,4 +1,6 @@
-﻿#pragma once
+﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
+
+#pragma once
 
 #include "Modules/ModuleManager.h"
 

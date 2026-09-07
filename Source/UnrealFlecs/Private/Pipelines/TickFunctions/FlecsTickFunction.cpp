@@ -3,6 +3,7 @@
 #include "Pipelines/TickFunctions/FlecsTickFunction.h"
 
 #include "Logs/FlecsCategories.h"
+#include "Pipelines/FlecsGameLoopInterface.h"
 
 #include "Worlds/FlecsWorld.h"
 
@@ -11,18 +12,19 @@
 void FFlecsTickFunction::ExecuteTick(float DeltaTime, ELevelTick TickType, ENamedThreads::Type CurrentThread,
 	const FGraphEventRef& MyCompletionGraphEvent)
 {
-	if UNLIKELY_IF(!OwningWorld)
+	if UNLIKELY_IF(!IsValid(OwningGameLoop))
 	{
-		UE_LOGFMT(LogFlecsWorld, Error,
-			"Flecs Tick Function executed but OwningWorld is null for Tick Type Tag: {TickTypeTag}",
-			TickTypeTag.ToString());
+		UE_LOGFMT(LogFlecsCore, Error, 
+			"Flecs Tick Function for Tick Type Tag: has no valid OwningGameLoop!");
 		return;
 	}
 	
-	OwningWorld->ProgressGameLoops(TickTypeTag, DeltaTime);
+	const TSolidNotNull<IFlecsGameLoopInterface*> GameLoop = CastChecked<IFlecsGameLoopInterface>(OwningGameLoop);
+	GameLoop->Progress(DeltaTime, OwningWorld, 
+		TickType, CurrentThread, MyCompletionGraphEvent);
 }
 
 FString FFlecsTickFunction::DiagnosticMessage()
 {
-	return FString::Printf(TEXT("Flecs Tick Function for Tick Type Tag: %s"), *TickTypeTag.ToString());
+	return FString::Format(TEXT("Flecs Tick Function for Tick Type Tag: {0}"), { *OwningGameLoop->GetName() } );
 }

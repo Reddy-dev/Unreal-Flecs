@@ -8,7 +8,7 @@
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "GameFramework/GameModeBase.h"
-#include "Pipelines/FlecsDefaultGameLoop.h"
+#include "Pipelines/FlecsDefaultMainGameLoop.h"
 #include "Systems/FlecsPhasesType.h"
 #include "Systems/FlecsSystemHandle.h"
 #include "UObject/UObjectGlobals.h"
@@ -25,7 +25,7 @@ namespace UE::Flecs::Tests
 
 		FFlecsWorldSettingsInfo Settings;
 		Settings.WorldName = TEXT("FlecsSystemRunPIE");
-		Settings.GameLoops.AddUnique(NewObject<UFlecsDefaultGameLoop>(WorldSubsystem));
+		Settings.GameLoops.AddUnique(NewObject<UFlecsDefaultMainGameLoop>(WorldSubsystem));
 
 		return WorldSubsystem->CreateWorld(TEXT("FlecsSystemRunPIE"), Settings);
 	}

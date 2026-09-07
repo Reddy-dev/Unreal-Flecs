@@ -9,9 +9,8 @@ UFlecsEntityRange::UFlecsEntityRange(const FObjectInitializer& ObjectInitializer
 {
 }
 
-void UFlecsEntityRange::SetNativeEntityRange(const ecs_entity_range_t* InRange, const FName& InRangeName)
+void UFlecsEntityRange::SetNativeEntityRange(const TSolidNotNull<const ecs_entity_range_t*> InRange, const FName& InRangeName)
 {
-	solid_cassume(InRange);
 	NativeRange = InRange;
 	RangeName = InRangeName;
 }

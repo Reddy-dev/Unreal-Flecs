@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <generator>
+
 #include "flecs.h"
 
 
@@ -21,6 +23,7 @@
 
 #include "FlecsWorldInterfaceObject.generated.h"
 
+class IFlecsGameLoopInterface;
 class UFlecsStage;
 class UFlecsWorld;
 
@@ -659,8 +662,7 @@ public:
 	}
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	FFlecsPipelineHandle CreatePipeline(const FFlecsPipelineDefinition& InPipelineDefinition, 
-		const FString& InPipelineName = FString()) const;
+	FFlecsPipelineHandle CreatePipeline(const FFlecsPipelineDefinition& InPipelineDefinition, const FString& InPipelineName = FString()) const;
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
 	FFlecsTimerHandle CreateTimer(const FString& Name) const;
@@ -703,6 +705,21 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
 	UObject* GetGameLoop(const TSubclassOf<UObject> InGameLoop, const bool bAllowChildren = false) const;
+	
+	std::generator<const TSolidNotNull<UObject*>> GetGameLoops() const;
+	
+	template <Solid::TStaticClassConcept T>
+	requires (std::is_base_of<IFlecsGameLoopInterface, T>::value)
+	NO_DISCARD FORCEINLINE std::generator<const TSolidNotNull<T*>> GetGameLoops() const
+	{
+		for (const TSolidNotNull<UObject*> GameLoop : GetGameLoops())
+		{
+			if (T* CastedGameLoop = Cast<T>(GameLoop))
+			{
+				co_yield CastedGameLoop;
+			}
+		}
+	}
 	
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
 	int32 GetThreads() const;

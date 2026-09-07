@@ -37,35 +37,35 @@ public:
 
     UPROPERTY(EditAnywhere)
     TEnumAsByte<ETickingGroup> EndTickGroup = TickGroup;
+    
+    UPROPERTY(EditAnywhere)
+    uint8 bCanEverTick : 1 = true;
 
     UPROPERTY(EditAnywhere)
-    bool bStartWithTickEnabled = true;
+    uint8 bStartWithTickEnabled : 1 = true;
 
     UPROPERTY(EditAnywhere)
-    bool bAllowTickOnDedicatedServer = true;
+    uint8 bAllowTickOnDedicatedServer : 1 = true;
 
     UPROPERTY(EditAnywhere)
-    bool bTickEvenWhenPaused = false;
+    uint8 bTickEvenWhenPaused : 1 = false;
 
+    UPROPERTY()
+    uint8 bHighPriority : 1 = true;
+
+    UPROPERTY()
+    uint8 bAllowTickBatching : 1 = false;
+
+    UPROPERTY()
+    uint8 bRunTransactionally : 1 = true;
+    
     UPROPERTY(EditAnywhere)
     float TickInterval = 0.0f;
 
-    UPROPERTY()
-    bool bHighPriority = true;
-
-    UPROPERTY()
-    bool bAllowTickBatching = false;
-
-    UPROPERTY()
-    bool bRunTransactionally = true;
-
     UPROPERTY(EditAnywhere, AdvancedDisplay, meta = (NoElementDuplicate))
     TArray<FGameplayTag> TickFunctionPrerequisiteTags;
-
-    static NO_DISCARD FFlecsTickFunctionSettingsInfo GetTickFunctionSettingsDefault(const FGameplayTag& InTickTypeTag);
-
-    static NO_DISCARD TSharedStruct<FFlecsTickFunction> CreateTickFunctionInstance(
-        const FFlecsTickFunctionSettingsInfo& InTickFunctionSettings);
+    
+    NO_DISCARD static TSharedStruct<FFlecsTickFunction> CreateTickFunctionInstance(const FFlecsTickFunctionSettingsInfo& InTickFunctionSettings);
     
 }; // struct FFlecsTickFunctionSettingsInfo
 
@@ -112,9 +112,6 @@ public:
     UPROPERTY(EditAnywhere, Instanced, Category = "Game Loop",
         meta = (ObjectMustImplement = "/Script/UnrealFlecs.FlecsGameLoopInterface", NoElementDuplicate))
     TArray<TObjectPtr<UObject>> GameLoops;
-
-    UPROPERTY(EditAnywhere, Category = "World", AdvancedDisplay)
-    TArray<FFlecsTickFunctionSettingsInfo> TickFunctions;
     
 }; // struct FFlecsWorldSettingsInfo
 

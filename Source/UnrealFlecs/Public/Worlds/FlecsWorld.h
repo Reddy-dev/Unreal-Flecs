@@ -26,7 +26,6 @@
 #include "FlecsWorld.generated.h"
 
 struct FFlecsTableHandle;
-struct FFlecsTickFunction;
 struct FFlecsEntityRecord;
 struct FFlecsUObjectComponent;
 
@@ -150,9 +149,6 @@ public:
 	void SetContext(void* InContext) const;
 
 	void HandleWorldPause();
-
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	bool ProgressGameLoops(const FGameplayTag& TickTypeTag, const double DeltaTime = 0.0);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
 	bool Progress(const double DeltaTime = 0.0);
@@ -299,8 +295,6 @@ public:
 	UFUNCTION()
 	int32 DeleteEmptyTables(const double TimeBudgetSeconds, const uint16 ClearGeneration = 1,
 	                        const uint16 DeleteGeneration = 1) const;
-
-	NO_DISCARD FFlecsEntityHandle GetFlecsTickFunctionByType(const FGameplayTag& InTickType) const;
 	
 	// CAN RETURN NULL
 	UFUNCTION(BlueprintCallable, Category = "Flecs")
@@ -314,7 +308,7 @@ public:
 	}
 	
 	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	bool UnregisterFlecsObject(const TSubclassOf<UObject> InClass);
+	bool UnregisterFlecsObject(const TSubclassOf<UObject>& InClass);
 	
 	template <Solid::TStaticClassConcept T>
 	FORCEINLINE bool UnregisterFlecsObject()
@@ -345,8 +339,6 @@ public:
 
 	UPROPERTY(Transient)
 	TArray<TScriptInterface<IFlecsGameLoopInterface>> GameLoopInterfaces;
-
-	TSortedMap<FGameplayTag, TArray<TScriptInterface<IFlecsGameLoopInterface>>> GameLoopTickTypes;
 	
 	TMap<const UClass*, TScriptInterface<IFlecsObjectRegistrationInterface>> RegisteredObjectTypes;
 
@@ -354,8 +346,6 @@ public:
 	TArray<TScriptInterface<IFlecsObjectRegistrationInterface>> RegisteredObjects;
 
 	TTypedFlecsQuery<FFlecsUObjectComponent> ObjectComponentQuery;
-
-	FFlecsQuery TickFunctionQuery;
 
 	TTypedFlecsQuery<const FFlecsScriptStructComponent> AddReferencedObjectsQuery;
 
@@ -393,7 +383,7 @@ private:
 
 	NO_DISCARD UFlecsEntityRange* FindTrackedEntityRange(const TSolidNotNull<const ecs_entity_range_t*> InNativeEntityRange) const;
 	NO_DISCARD UFlecsEntityRange* FindTrackedEntityRange(const FName& InRangeName) const;
-	UFlecsEntityRange* TrackEntityRange(const ecs_entity_range_t* InNativeEntityRange, const FName& InRangeName);
+	UFlecsEntityRange* TrackEntityRange(const TSolidNotNull<const ecs_entity_range_t*> InNativeEntityRange, const FName& InRangeName);
 	
 	/**
 	 * @brief Get this world as a non-const pointer

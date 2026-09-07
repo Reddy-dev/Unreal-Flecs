@@ -16,9 +16,10 @@ struct UNREALFLECS_API FFlecsTickFunction : public FTickFunction
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditDefaultsOnly, Category = "Flecs")
-	FGameplayTag TickTypeTag;
-
+	
+	UPROPERTY(Transient)
+	TObjectPtr<UObject> OwningGameLoop;
+	
 	UPROPERTY(Transient)
 	TObjectPtr<UFlecsWorld> OwningWorld;
 

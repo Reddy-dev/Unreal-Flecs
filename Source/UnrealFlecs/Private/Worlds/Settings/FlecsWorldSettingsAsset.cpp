@@ -5,7 +5,7 @@
 #include "Logging/StructuredLog.h"
 #include "Misc/DataValidation.h"
 
-#include "Pipelines/FlecsDefaultGameLoop.h"
+#include "Pipelines/FlecsDefaultMainGameLoop.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsWorldSettingsAsset)
 
@@ -56,57 +56,10 @@ EDataValidationResult UFlecsWorldSettingsAsset::IsDataValid(FDataValidationConte
 	}
 	else
 	{
-
-		if (WorldSettings.TickFunctions.IsEmpty())
-		{
-			Context.AddError(FText::Format(
-				LOCTEXT("NoTickFunctions",
-					"WorldSettings {0} has no TickFunctions assigned, at least one TickFunction is required."),
-				FText::FromString(GetPathName())));
-			
-			Result = EDataValidationResult::Invalid;
-		}
-
-		TSet<FGameplayTag> AssignedTickFunctionTags;
-
-		for (const FFlecsTickFunctionSettingsInfo& TickFunction : WorldSettings.TickFunctions)
-		{
-			if (AssignedTickFunctionTags.Contains(TickFunction.TickTypeTag))
-			{
-				Context.AddError(FText::Format(
-					LOCTEXT("DuplicateTickFunctionTag",
-						"WorldSettings {0} has multiple TickFunctions assigned with the same TickTypeTag {1}."),
-					FText::FromString(GetPathName()),
-					FText::FromName(TickFunction.TickTypeTag.GetTagName())));
-				
-				Result = EDataValidationResult::Invalid;
-			}
-			else
-			{
-				AssignedTickFunctionTags.Add(TickFunction.TickTypeTag);
-			}
-		}
-
-		for (const FFlecsTickFunctionSettingsInfo& TickFunction : WorldSettings.TickFunctions)
-		{
-			for (const FGameplayTag& PrerequisiteTag : TickFunction.TickFunctionPrerequisiteTags)
-			{
-				if (!AssignedTickFunctionTags.Contains(PrerequisiteTag))
-				{
-					Context.AddError(FText::Format(
-						LOCTEXT("MissingPrerequisiteTickFunctionTag",
-							"WorldSettings {0} has a TickFunction with TickTypeTag {1} that has a prerequisite TickTypeTag {2} which does not match any assigned TickFunction."),
-						FText::FromString(GetPathName()),
-						FText::FromName(TickFunction.TickTypeTag.GetTagName()),
-						FText::FromName(PrerequisiteTag.GetTagName())));
-				}
-			}
-		}
-		
 		bool bHasMainLoop = false;
 		TArray<TObjectPtr<UObject>> MainLoops;
 		
-		for (const TObjectPtr<UObject> GameLoop : WorldSettings.GameLoops)
+		/*for (const TObjectPtr<UObject> GameLoop : WorldSettings.GameLoops)
 		{
 			if (!IsValid(GameLoop))
 			{
@@ -166,7 +119,7 @@ EDataValidationResult UFlecsWorldSettingsAsset::IsDataValid(FDataValidationConte
 					FText::FromString(GetPathName()),
 					FText::FromString(GameLoop->GetClass()->GetClassPathName().ToString())));
 			}
-		}
+		}*/
 
 		if (!bHasMainLoop)
 		{

@@ -50,9 +50,6 @@
 
 #include "Pipelines/FlecsGameLoopInterface.h"
 #include "Pipelines/FlecsGameLoopTag.h"
-#include "Pipelines/TickFunctions/FlecsTickFunction.h"
-#include "Pipelines/TickFunctions/FlecsTickFunctionComponent.h"
-#include "Pipelines/TickFunctions/FlecsTickTypeRelationship.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsWorld)
 
@@ -532,12 +529,7 @@ void UFlecsWorld::InitializeSystems()
 		ObjectComponentQuery = CreateQueryBuilder<FFlecsUObjectComponent>("ObjectComponentQuery")
 			.TermAt(0).Second(flecs::Wildcard) // FFlecsUObjectComponent
 			.Build();
-
-		TickFunctionQuery = CreateQueryBuilder("TickFunctionQuery")
-			.With<FFlecsTickFunctionComponent>().InOutNone() // 0
-			.WithPair<FFlecsTickTypeRelationship>("$TickTypeTag") // 1
-			.Build();
-
+	
 		AddReferencedObjectsQuery = CreateQueryBuilder<const FFlecsScriptStructComponent>("AddReferencedObjectsQuery") // 0 (FFlecsScriptStructComponent)
 			.TermAt(0).Src("$Component") // 0
 			.With<FFlecsAddReferencedObjectsTrait>().Src("$Component") //  1
@@ -639,49 +631,6 @@ void UFlecsWorld::HandleWorldPause()
 	}
 }
 
-bool UFlecsWorld::ProgressGameLoops(const FGameplayTag& TickTypeTag, const double DeltaTime)
-{
-	SCOPE_CYCLE_COUNTER(STAT_FlecsWorldProgress);
-
-	if UNLIKELY_IF(ShouldQuit())
-	{
-		UE_LOGFMT(LogFlecsWorld, Warning, "World is quitting, cannot progress: {WorldObjectName}", *GetName());
-		return false;
-	}
-
-	if (!GameLoopTickTypes.Contains(TickTypeTag))
-	{
-		return false;
-	}
-
-	HandleWorldPause();
-
-	const TConstArrayView<TScriptInterface<IFlecsGameLoopInterface>> GameLoopsToTick = GameLoopTickTypes[TickTypeTag];
-
-	for (const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface : GameLoopsToTick)
-	{
-		solid_checkf(GameLoopInterface,
-			TEXT("Game loop interface is nullptr for tick type %s in world %s"),
-			*TickTypeTag.ToString(),
-			*GetName());
-
-		const bool bGameLoopResult = GameLoopInterface->Progress(DeltaTime, TickTypeTag, this);
-
-		if UNLIKELY_IF(!bGameLoopResult)
-		{
-			UE_LOGFMT(LogFlecsWorld, Error,
-				"Game loop {GameLoopName} failed to progress for tick type {TickType} in world {WorldName}",
-				GameLoopInterface.GetObject()->GetName(),
-				TickTypeTag.ToString(),
-				GetName());
-			
-			return false;
-		}
-	}
-
-	return true;
-}
-
 bool UFlecsWorld::Progress(const double DeltaTime)
 {
 	return GetNativeFlecsWorld().progress(DeltaTime);
@@ -706,16 +655,6 @@ void UFlecsWorld::DestroyWorld()
 	ObjectComponentQuery.Destroy();
 	AddReferencedObjectsQuery.Destroy();
 
-	TickFunctionQuery.Destroy();
-	
-	for (const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface : GameLoopInterfaces)
-	{
-		if (GameLoopInterface)
-		{
-			GameLoopInterface->GetEntityHandle().Remove<FFlecsGameLoopTag>();
-		}
-	}
-	
 	CallUnregisterOnRegisteredObjects();
 
 	for (TTuple<FName, TObjectPtr<UFlecsEntityRange>> EntityRange : EntityRanges)
@@ -786,13 +725,7 @@ UFlecsEntityRange* UFlecsWorld::CreateEntityRange(const FName& InRangeName, cons
 	}
 	
 	UFlecsEntityRange* EntityRange = TrackEntityRange(NativeEntityRange, InRangeName);
-	
-	/*const ecs_entity_range_t* ActiveNativeEntityRange = ecs_entity_range_get(GetNativeFlecsWorld());
-	if (ActiveNativeEntityRange)
-	{
-		TrackEntityRange(ActiveNativeEntityRange, FName(TEXT("ActiveEntityRange")));
-	}*/
-	
+
 	return EntityRange;
 }
 
@@ -872,12 +805,6 @@ int32 UFlecsWorld::DeleteEmptyTables(const double TimeBudgetSeconds,
 	return ecs_delete_empty_tables(GetNativeFlecsWorld(), &Desc);
 }
 
-FFlecsEntityHandle UFlecsWorld::GetFlecsTickFunctionByType(const FGameplayTag& InTickType) const
-{
-	TickFunctionQuery.set_var("TickTypeTag", GetTagEntity(InTickType));
-	return TickFunctionQuery.first();
-}
-
 UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 {
 	solid_check(InClass);
@@ -931,7 +858,7 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 	return FlecsObject;
 }
 
-bool UFlecsWorld::UnregisterFlecsObject(const TSubclassOf<UObject> InClass)
+bool UFlecsWorld::UnregisterFlecsObject(const TSubclassOf<UObject>& InClass)
 {
 	for (int32 Index = RegisteredObjects.Num() - 1; Index >= 0; --Index)
 	{
@@ -1041,10 +968,8 @@ TSolidNotNull<UFlecsStage*> UFlecsWorld::CreateAsyncStage()
 	return NewStage;
 }
 
-UFlecsEntityRange* UFlecsWorld::TrackEntityRange(const ecs_entity_range_t* InNativeEntityRange, const FName& InRangeName)
+UFlecsEntityRange* UFlecsWorld::TrackEntityRange(const TSolidNotNull<const ecs_entity_range_t*> InNativeEntityRange, const FName& InRangeName)
 {
-	solid_cassume(InNativeEntityRange);
-	
 	if (UFlecsEntityRange* ExistingEntityRange = FindTrackedEntityRange(InRangeName))
 	{
 		return ExistingEntityRange;

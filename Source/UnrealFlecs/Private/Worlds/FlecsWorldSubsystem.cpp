@@ -29,9 +29,7 @@
 
 #include "Pipelines/FlecsGameLoopInterface.h"
 #include "Pipelines/TickFunctions/FlecsTickFunction.h"
-#include "Pipelines/TickFunctions/FlecsTickFunctionComponent.h"
 #include "Pipelines/TickFunctions/FlecsTickFunctionPrerequisite.h"
-#include "Pipelines/TickFunctions/FlecsTickTypeRelationship.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsWorldSubsystem)
 
@@ -122,29 +120,38 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	TArray<TScriptInterface<IFlecsGameLoopInterface>>  DuplicatedGameLoops;
 	DuplicatedGameLoops.Reserve(InGameLoops.Num());
 
-	for (TObjectPtr<UObject> GameLoop : InGameLoops)
 	{
-		solid_checkf(GameLoop,
-		             TEXT("GameLoop is nullptr in world %s"), *DefaultWorld->GetName());
+		FFlecsScopedDeferWindow ScopedDeferWindow(DefaultWorld.Get());
 		
-		solid_checkf(GameLoop->GetClass()->ImplementsInterface(UFlecsGameLoopInterface::StaticClass()),
-		             TEXT("GameLoop %s does not implement UFlecsGameLoopInterface"), *GameLoop->GetName());
+		for (TObjectPtr<UObject> GameLoop : InGameLoops)
+		{
+			solid_checkf(GameLoop,
+						 TEXT("GameLoop is nullptr in world %s"), *DefaultWorld->GetName());
+		
+			solid_checkf(GameLoop->GetClass()->ImplementsInterface(UFlecsGameLoopInterface::StaticClass()),
+						 TEXT("GameLoop %s does not implement UFlecsGameLoopInterface"), *GameLoop->GetName());
 			
-		UObject* DuplicatedGameLoop = DuplicateObject<UObject>(GameLoop, DefaultWorld);
+			UObject* DuplicatedGameLoop = DuplicateObject<UObject>(GameLoop, DefaultWorld);
 		
-		solid_cassumef(DuplicatedGameLoop, TEXT("Failed to duplicate GameLoop %s for world %s"),
-		              *GameLoop->GetName(), *DefaultWorld->GetName());
+			solid_cassumef(DuplicatedGameLoop, TEXT("Failed to duplicate GameLoop %s for world %s"),
+						  *GameLoop->GetName(), *DefaultWorld->GetName());
 		
-		solid_checkf(IsValid(DuplicatedGameLoop),
-		                TEXT("Failed to duplicate GameLoop %s for world %s"),
-		                *GameLoop->GetName(), *DefaultWorld->GetName());
+			solid_checkf(IsValid(DuplicatedGameLoop),
+							TEXT("Failed to duplicate GameLoop %s for world %s"),
+							*GameLoop->GetName(), *DefaultWorld->GetName());
 		
-		DuplicatedGameLoops.Add(DuplicatedGameLoop);
+			DuplicatedGameLoops.Add(DuplicatedGameLoop);
+			const TSolidNotNull<IFlecsGameLoopInterface*> GameLoopInterface = CastChecked<IFlecsGameLoopInterface>(DuplicatedGameLoop);
+			GameLoopInterface->InitializeTickFunction(DefaultWorld);
+			
+		}
+		
+		
 	}
 	
 	DefaultWorld->GameLoopInterfaces = DuplicatedGameLoops;
 
-	for (const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface : DefaultWorld->GameLoopInterfaces)
+	/*for (const TScriptInterface<IFlecsGameLoopInterface>& GameLoopInterface : DefaultWorld->GameLoopInterfaces)
 	{
 		const TArray<FGameplayTag> TickTypes = GameLoopInterface->GetTickTypeTags();
 
@@ -152,7 +159,7 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 		{
 			DefaultWorld->GameLoopTickTypes.FindOrAdd(TickType).Add(GameLoopInterface);
 		}
-	}
+	}*/
 
 	DefaultWorld->InitializeComponentPropertyObserver();
 	DefaultWorld->InitializeDefaultComponents();
@@ -183,9 +190,7 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 
 	DefaultWorld->Defer([this, &Settings]()
 	{
-		TSortedMap<FGameplayTag, TTuple<TSharedStruct<FFlecsTickFunction>, FFlecsTickFunctionSettingsInfo>> TickFunctionInstances;
-
-		for (const FFlecsTickFunctionSettingsInfo& TickFunctionStruct : Settings.TickFunctions)
+		/*for (const FFlecsTickFunctionSettingsInfo& TickFunctionStruct : Settings.)
 		{
 			solid_checkf(!TickFunctionStruct.TickFunctionName.IsEmpty(),
 			             TEXT("Tick function name cannot be empty"));
@@ -210,11 +215,6 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 
 				TickFunctionEntity.AddPair<FFlecsTickFunctionPrerequisite>(PrerequisiteTickType);
 			}
-
-			TickFunctionInstances.Add(TickFunctionStruct.TickTypeTag,
-				TTuple<TSharedStruct<FFlecsTickFunction>, FFlecsTickFunctionSettingsInfo>(
-					TickFunction,
-					TickFunctionStruct));
 		}
 
 		for (const auto& [TickTypeTag, TickFunctionTuple] : TickFunctionInstances)
@@ -234,7 +234,7 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 				
 				TickFunction.Get().AddPrerequisite(DefaultWorld, PrerequisiteTickFunctionPtr);
 			}
-		}
+		}*/
 	});
 
 	for (const FFlecsDefaultMetaEntity& DefaultEntity : DefaultEntities)
@@ -247,7 +247,8 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 		          DefaultEntity.EntityName, NewDefaultEntity.id());
 	}
 
-	const UFlecsThreadAllocationPolicyBaseAsset* ThreadAllocationPolicy = GetDefault<UFlecsDeveloperSettings>()->ThreadAllocationPolicy.LoadSynchronous();
+	const UFlecsThreadAllocationPolicyBaseAsset* ThreadAllocationPolicy 
+		= GetDefault<UFlecsDeveloperSettings>()->ThreadAllocationPolicy.LoadSynchronous();
 	solid_checkf(IsValid(ThreadAllocationPolicy), TEXT("Thread allocation policy cannot be null"));
 
 	auto [ThreadAllocType, ThreadAllocCount] 
