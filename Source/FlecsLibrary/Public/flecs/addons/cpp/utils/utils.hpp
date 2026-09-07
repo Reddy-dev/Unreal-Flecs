@@ -222,6 +222,14 @@ struct on_instantiate_trait<T, enable_if_t<is_same<flecs::on_instantiate,
     static constexpr bool declared = true;
     static constexpr flecs::on_instantiate value = T::on_instantiate;
 };
+    
+template <typename T>
+struct on_instantiate_trait<T, enable_if_t<is_same<flecs::on_instantiate,
+    typename std::remove_cv<decltype(T::OnInstantiate)>::type>::value>>
+{
+    static constexpr bool declared = true;
+    static constexpr flecs::on_instantiate value = T::OnInstantiate;
+};
 
 namespace _
 {

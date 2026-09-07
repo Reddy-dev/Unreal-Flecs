@@ -49,6 +49,8 @@ void UFlecsDefaultMainGameLoop::DeinitializeGameLoop(TSolidNotNull<UFlecsWorld*>
 bool UFlecsDefaultMainGameLoop::Progress(double DeltaTime, TSolidNotNull<UFlecsWorld*> InWorld, ELevelTick InTickType,
                                          ENamedThreads::Type InCurrentThread, const FGraphEventRef& InCompletionGraphEvent)
 {
+	InWorld->HandleWorldPause();
+	
 	return InWorld->Progress(DeltaTime);
 }
 

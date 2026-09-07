@@ -37,17 +37,6 @@ void UFlecsCollectionWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull
 	InWorld->RegisterComponentType<FFlecsCollectionSubsystemSingleton>();
 
 	InWorld->Set<FFlecsCollectionSubsystemSingleton>({ .WorldSubsystem = this });
-
-	FlecsWorld->RegisterComponentType<FFlecsCollectionDefinition>();
-	FlecsWorld->RegisterComponentType<FFlecsCollectionDefinitionComponent>();
-	
-	FlecsWorld->RegisterComponentType<FFlecsCollectionPrefabTag>();
-
-	FlecsWorld->RegisterComponentType<FFlecsCollectionReference>();
-	FlecsWorld->RegisterComponentType<FFlecsCollectionReferenceComponent>();
-	
-	//FlecsWorld->RegisterComponentType<FFlecsCollectionSlotTag>();
-	FlecsWorld->RegisterComponentType<FFlecsCollectionParametersComponent>();
 	
 	UE_LOG(LogFlecsCollections, Verbose, TEXT("UCollectionsModule registered"));
 }

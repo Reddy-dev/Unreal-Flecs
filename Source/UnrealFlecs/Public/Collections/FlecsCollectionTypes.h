@@ -104,6 +104,7 @@ struct UNREALFLECS_API FFlecsCollectionReferenceComponent
 	GENERATED_BODY()
 	
 	static constexpr bool Sparse = true;
+	static constexpr flecs::on_instantiate OnInstantiate = flecs::on_instantiate::dont_inherit;
 
 public:
 
@@ -126,6 +127,9 @@ USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsCollectionPrefabTag
 {
 	GENERATED_BODY()
+	
+	static constexpr flecs::on_instantiate OnInstantiate = flecs::on_instantiate::dont_inherit;
+	
 }; // struct FFlecsCollectionPrefabTag
 
 template <>
@@ -177,6 +181,8 @@ struct UNREALFLECS_API FFlecsCollectionParametersComponent
 	GENERATED_BODY()
 
 	using FApplyParametersFunction = std::function<void(const FFlecsEntityHandle&, const FInstancedStruct&)>;
+	
+	static constexpr flecs::on_instantiate OnInstantiate = flecs::on_instantiate::dont_inherit;
 
 public:
 	UPROPERTY()

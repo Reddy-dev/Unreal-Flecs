@@ -28,6 +28,8 @@ struct alignas(8) UNREALFLECS_API FFlecsUObjectComponent
     {
         return GetTypeHash(InComponent.Object);
     }
+    
+    static constexpr flecs::on_instantiate OnInstantiate = flecs::on_instantiate::dont_inherit;
 
 public:
     FORCEINLINE FFlecsUObjectComponent() = default;
@@ -138,18 +140,5 @@ struct TFlecsComponentTraits<FFlecsUObjectComponent> : public TFlecsComponentTra
     static constexpr bool Acyclic = true;
     
 }; // struct TFlecsComponentTraits<FFlecsUObjectComponent>
-
-// @TODO: Currently not used
-USTRUCT(BlueprintType)
-struct UNREALFLECS_API FFlecsNoDeleteUObject
-{
-    GENERATED_BODY()
-}; // struct FFlecsNoDeleteUObject
-
-template <>
-struct TFlecsComponentTraits<FFlecsNoDeleteUObject> : public TFlecsComponentTraitsBase<FFlecsNoDeleteUObject>
-{
-    static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::DontInherit;
-}; // struct TFlecsComponentTraits<FFlecsNoDeleteUObject>
 
 

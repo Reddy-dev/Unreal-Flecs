@@ -45,6 +45,8 @@ USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsCollectionDefinitionComponent
 {
 	GENERATED_BODY()
+	
+	static constexpr flecs::on_instantiate OnInstantiate = flecs::on_instantiate::dont_inherit;
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flecs")
