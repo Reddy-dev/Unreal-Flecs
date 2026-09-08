@@ -2,8 +2,7 @@
 
 #include "Pipelines/FlecsDefaultMainGameLoop.h"
 
-#include "Components/UnrealFlecsPluginTag.h"
-#include "Logs/FlecsCategories.h"
+#include "Pipelines/FlecsOutsideOfMainLoopTag.h"
 
 #include "Worlds/FlecsWorld.h"
 
@@ -30,6 +29,7 @@ void UFlecsDefaultMainGameLoop::InitializeGameLoop(TSolidNotNull<UFlecsWorld*> I
 		.With(flecs::Phase).Cascade(flecs::DependsOn)
 		.Without(flecs::Disabled).Up(flecs::DependsOn)
 		.Without(flecs::Disabled).Up(flecs::ChildOf)
+		.Without<FFlecsOutsideOfMainLoopTag>()
 		//.order_by(flecs_entity_compare)
 		// @TODO: .with(InWorld->GetTagEntity(FlecsTickType_MainLoop))
 		.Build();

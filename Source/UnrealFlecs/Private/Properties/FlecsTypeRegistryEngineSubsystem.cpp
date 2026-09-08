@@ -29,7 +29,7 @@ TArray<FString> UFlecsTypeRegistryEngineSubsystem::SortComponentsByDependencies(
 
         TArray<FString> Dependencies;
     	
-        auto AddInputDependencies = [&](const TArray<FFlecsQueryGeneratorInput>& Inputs)
+        auto AddInputDependencies = [&](const TConstArrayView<FFlecsQueryGeneratorInput> Inputs)
         {
             for (const FFlecsQueryGeneratorInput& Input : Inputs)
             {

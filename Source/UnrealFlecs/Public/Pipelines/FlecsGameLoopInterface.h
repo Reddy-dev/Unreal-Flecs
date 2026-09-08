@@ -29,6 +29,8 @@ public:
 	void InitializeGameLoop_Internal(TSolidNotNull<UFlecsWorld*> InWorld);
 	
 	virtual void InitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsEntityHandle& InGameLoopEntity) {}
+	
+	// @TODO: Currently unused
 	virtual void DeinitializeGameLoop(TSolidNotNull<UFlecsWorld*> InWorld, const FFlecsEntityHandle& InGameLoopEntity) {}
 	
 	virtual bool Progress(double DeltaTime, 
