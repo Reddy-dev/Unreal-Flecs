@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "flecs/Unreal/FlecsTypeMapComponent.h"
+#include <flecs/Unreal/FlecsTypeMapComponent.h>
 
 namespace flecs
 {
@@ -55,7 +55,6 @@ inline void world::init_builtin_components() {
     flecs::entity ScriptClassEntity = this->component<FFlecsScriptClassComponent>()
         .add(flecs::OnInstantiate, flecs::DontInherit)
         .add(flecs::Trait);
-
 #   ifdef FLECS_SYSTEM
     _::system_init(*this);
 #   endif

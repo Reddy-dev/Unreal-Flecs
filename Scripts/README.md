@@ -7,6 +7,13 @@ Unreal Automation sources, a generated test inventory, and
 `Source/FlecsLibrary/Tests/Generated`. The generated directory is disposable;
 fork sources and this metadata remain in `Plugins/Unreal-Flecs/Scripts`.
 
+Generated tests that use the upstream Bake harness include
+`Bake/FlecsGeneratedTestCompatibility.h`. That header owns the assertion
+adapter, shared Bake type aliases, and shared explicit registration. The
+converter's parser-only Unreal shadows are isolated under
+`Scripts/FlecsTestConversionIncludes`; production Flecs headers no longer
+contain converter-only conditional branches.
+
 The tool requires the Python `clang` bindings and a matching libclang runtime
 (`python -m pip install clang`; pass `--libclang` when it is not discoverable).
 
