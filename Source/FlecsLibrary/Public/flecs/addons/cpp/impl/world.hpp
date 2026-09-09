@@ -212,9 +212,9 @@ inline flecs::entity enum_data<E>::entity() const {
 }
 
 /** Get the entity for an enum constant by underlying_type value. */
-template <typename E>
-inline flecs::entity enum_data<E>::entity(underlying_type_t<E> value) const {
-    int index = index_by_value(value);
+    template <typename E>
+    inline flecs::entity enum_data<E>::entity(underlying_type_t<E> value) const { // mpdofoed by Elie
+    /*int index = index_by_value(value);
     if (index >= 0) {
 #ifdef FLECS_MULTI_WORLD
         int32_t constant_i = impl_.constants[index].index;
@@ -223,13 +223,22 @@ inline flecs::entity enum_data<E>::entity(underlying_type_t<E> value) const {
         flecs::entity_t entity = impl_.constants[index].id;
 #endif
         return flecs::entity(world_, entity);
-    }
-#ifdef FLECS_META
-    return flecs::entity(world_, ecs_constant_to_entity_id(
-        world_, _::type<E>::id(world_), static_cast<int64_t>(value)));
-#else
+    }*/
+    #ifdef FLECS_META
+    // Reflection data lookup failed. Try a value lookup among flecs::Constant relationships.
+    flecs::world world = flecs::world(world_);
+    return world.query_builder()
+        .with(flecs::ChildOf, world.id<E>())
+        .with(flecs::Constant, world.id<underlying_type_t<E>>())
+        .build()
+        .find([value](flecs::entity constant) {
+            const int32_t& constant_value = constant.get_second<underlying_type_t<E>>(flecs::Constant);
+            return value == static_cast<underlying_type_t<E>>(constant_value);
+        });
+    #else
+    #error "FLECS_META must be defined to use enum_data::entity(value)"
     return flecs::entity::null(world_);
-#endif
+    #endif
 }
 
 /** Get the entity for an enum constant. */
