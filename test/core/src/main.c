@@ -2417,6 +2417,15 @@ void Observer_propagate_custom_rel_add_to_target(void);
 void Observer_propagate_custom_rel_remove_from_target(void);
 void Observer_propagate_custom_rel_masked_add(void);
 void Observer_propagate_add_to_grandparent_w_parent_inherited(void);
+void Observer_single_term_observer_w_var_get_var_pair_second_on_add(void);
+void Observer_single_term_observer_w_var_get_var_pair_second_on_remove(void);
+void Observer_single_term_observer_w_var_get_var_pair_first_on_add(void);
+void Observer_single_term_observer_w_var_get_var_pair_both_vars_on_add(void);
+void Observer_single_term_observer_w_var_get_var_pair_second_on_set(void);
+void Observer_single_term_observer_w_var_get_var_pair_second_w_generation(void);
+void Observer_single_term_observer_w_var_get_var_nested_invoke(void);
+void Observer_single_term_observer_w_var_get_var_pair_second_on_delete_target(void);
+void Observer_single_term_observer_wo_var_invoked_once_per_event(void);
 
 // Testsuite 'ObserverOnSet'
 void ObserverOnSet_set_1_of_1(void);
@@ -2723,6 +2732,22 @@ void Prefab_prefab_child_auto_override_pair_low_rel_id(void);
 void Prefab_reparent_to_prefab_is_prefab(void);
 void Prefab_add_same_childof_to_prefab_parent_w_name(void);
 void Prefab_override_exclusive_pair_w_value(void);
+void Prefab_add_component_to_prefab_after_instantiate(void);
+void Prefab_add_tag_to_prefab_after_instantiate(void);
+void Prefab_set_new_component_on_prefab_after_instantiate(void);
+void Prefab_remove_component_from_prefab_after_instantiate(void);
+void Prefab_add_component_to_prefab_after_instantiate_from_non_empty_table(void);
+void Prefab_add_component_to_nested_prefab_after_instantiate(void);
+void Prefab_add_component_to_nested_prefab_child_after_instantiate(void);
+void Prefab_add_component_to_prefab_after_instances_deleted(void);
+void Prefab_add_component_to_prefab_after_instances_deleted_and_table_cleanup(void);
+void Prefab_set_existing_component_on_prefab_after_instantiate(void);
+void Prefab_add_component_to_prefab_before_instantiate(void);
+void Prefab_fini_w_instantiated_prefab(void);
+void Prefab_add_inherit_component_to_prefab_after_instantiate(void);
+void Prefab_remove_inherit_component_from_prefab_after_instantiate(void);
+void Prefab_add_dont_inherit_component_to_prefab_after_instantiate(void);
+void Prefab_add_override_trait_component_to_prefab_after_instantiate(void);
 
 // Testsuite 'World'
 void World_setup(void);
@@ -2860,6 +2885,12 @@ void World_clear_builtin(void);
 void World_delete_builtin(void);
 void World_rename_builtin(void);
 void World_remove_name_builtin(void);
+void World_fini_w_scoped_component_added_to_builtin(void);
+void World_fini_w_root_component_added_to_builtin(void);
+void World_fini_w_scoped_tag_added_to_builtin(void);
+void World_fini_w_scoped_component_set_on_builtin(void);
+void World_delete_scoped_component_added_to_builtin(void);
+void World_delete_scope_of_component_added_to_builtin(void);
 void World_delete_flecs(void);
 void World_delete_flecs_core(void);
 void World_remove_name_from_flecs(void);
@@ -3384,6 +3415,7 @@ void Internals_no_double_system_table_after_merge(void);
 void Internals_recreate_deleted_table(void);
 void Internals_no_duplicate_root_table_id(void);
 void Internals_override_os_api_w_addon(void);
+void Internals_override_os_api_strdup_not_called_w_null(void);
 void Internals_records_resize_on_override(void);
 void Internals_table_observed_after_add(void);
 void Internals_table_observed_after_remove(void);
@@ -12901,6 +12933,42 @@ bake_test_case Observer_testcases[] = {
     {
         "propagate_add_to_grandparent_w_parent_inherited",
         Observer_propagate_add_to_grandparent_w_parent_inherited
+    },
+    {
+        "single_term_observer_w_var_get_var_pair_second_on_add",
+        Observer_single_term_observer_w_var_get_var_pair_second_on_add
+    },
+    {
+        "single_term_observer_w_var_get_var_pair_second_on_remove",
+        Observer_single_term_observer_w_var_get_var_pair_second_on_remove
+    },
+    {
+        "single_term_observer_w_var_get_var_pair_first_on_add",
+        Observer_single_term_observer_w_var_get_var_pair_first_on_add
+    },
+    {
+        "single_term_observer_w_var_get_var_pair_both_vars_on_add",
+        Observer_single_term_observer_w_var_get_var_pair_both_vars_on_add
+    },
+    {
+        "single_term_observer_w_var_get_var_pair_second_on_set",
+        Observer_single_term_observer_w_var_get_var_pair_second_on_set
+    },
+    {
+        "single_term_observer_w_var_get_var_pair_second_w_generation",
+        Observer_single_term_observer_w_var_get_var_pair_second_w_generation
+    },
+    {
+        "single_term_observer_w_var_get_var_nested_invoke",
+        Observer_single_term_observer_w_var_get_var_nested_invoke
+    },
+    {
+        "single_term_observer_w_var_get_var_pair_second_on_delete_target",
+        Observer_single_term_observer_w_var_get_var_pair_second_on_delete_target
+    },
+    {
+        "single_term_observer_wo_var_invoked_once_per_event",
+        Observer_single_term_observer_wo_var_invoked_once_per_event
     }
 };
 
@@ -14087,6 +14155,70 @@ bake_test_case Prefab_testcases[] = {
     {
         "override_exclusive_pair_w_value",
         Prefab_override_exclusive_pair_w_value
+    },
+    {
+        "add_component_to_prefab_after_instantiate",
+        Prefab_add_component_to_prefab_after_instantiate
+    },
+    {
+        "add_tag_to_prefab_after_instantiate",
+        Prefab_add_tag_to_prefab_after_instantiate
+    },
+    {
+        "set_new_component_on_prefab_after_instantiate",
+        Prefab_set_new_component_on_prefab_after_instantiate
+    },
+    {
+        "remove_component_from_prefab_after_instantiate",
+        Prefab_remove_component_from_prefab_after_instantiate
+    },
+    {
+        "add_component_to_prefab_after_instantiate_from_non_empty_table",
+        Prefab_add_component_to_prefab_after_instantiate_from_non_empty_table
+    },
+    {
+        "add_component_to_nested_prefab_after_instantiate",
+        Prefab_add_component_to_nested_prefab_after_instantiate
+    },
+    {
+        "add_component_to_nested_prefab_child_after_instantiate",
+        Prefab_add_component_to_nested_prefab_child_after_instantiate
+    },
+    {
+        "add_component_to_prefab_after_instances_deleted",
+        Prefab_add_component_to_prefab_after_instances_deleted
+    },
+    {
+        "add_component_to_prefab_after_instances_deleted_and_table_cleanup",
+        Prefab_add_component_to_prefab_after_instances_deleted_and_table_cleanup
+    },
+    {
+        "set_existing_component_on_prefab_after_instantiate",
+        Prefab_set_existing_component_on_prefab_after_instantiate
+    },
+    {
+        "add_component_to_prefab_before_instantiate",
+        Prefab_add_component_to_prefab_before_instantiate
+    },
+    {
+        "fini_w_instantiated_prefab",
+        Prefab_fini_w_instantiated_prefab
+    },
+    {
+        "add_inherit_component_to_prefab_after_instantiate",
+        Prefab_add_inherit_component_to_prefab_after_instantiate
+    },
+    {
+        "remove_inherit_component_from_prefab_after_instantiate",
+        Prefab_remove_inherit_component_from_prefab_after_instantiate
+    },
+    {
+        "add_dont_inherit_component_to_prefab_after_instantiate",
+        Prefab_add_dont_inherit_component_to_prefab_after_instantiate
+    },
+    {
+        "add_override_trait_component_to_prefab_after_instantiate",
+        Prefab_add_override_trait_component_to_prefab_after_instantiate
     }
 };
 
@@ -14626,6 +14758,30 @@ bake_test_case World_testcases[] = {
     {
         "remove_name_builtin",
         World_remove_name_builtin
+    },
+    {
+        "fini_w_scoped_component_added_to_builtin",
+        World_fini_w_scoped_component_added_to_builtin
+    },
+    {
+        "fini_w_root_component_added_to_builtin",
+        World_fini_w_root_component_added_to_builtin
+    },
+    {
+        "fini_w_scoped_tag_added_to_builtin",
+        World_fini_w_scoped_tag_added_to_builtin
+    },
+    {
+        "fini_w_scoped_component_set_on_builtin",
+        World_fini_w_scoped_component_set_on_builtin
+    },
+    {
+        "delete_scoped_component_added_to_builtin",
+        World_delete_scoped_component_added_to_builtin
+    },
+    {
+        "delete_scope_of_component_added_to_builtin",
+        World_delete_scope_of_component_added_to_builtin
     },
     {
         "delete_flecs",
@@ -16663,6 +16819,10 @@ bake_test_case Internals_testcases[] = {
         Internals_override_os_api_w_addon
     },
     {
+        "override_os_api_strdup_not_called_w_null",
+        Internals_override_os_api_strdup_not_called_w_null
+    },
+    {
         "records_resize_on_override",
         Internals_records_resize_on_override
     },
@@ -17082,7 +17242,7 @@ static bake_test_suite suites[] = {
         "Observer",
         NULL,
         NULL,
-        400,
+        409,
         Observer_testcases
     },
     {
@@ -17124,14 +17284,14 @@ static bake_test_suite suites[] = {
         "Prefab",
         Prefab_setup,
         NULL,
-        191,
+        207,
         Prefab_testcases
     },
     {
         "World",
         World_setup,
         NULL,
-        177,
+        183,
         World_testcases
     },
     {
@@ -17194,7 +17354,7 @@ static bake_test_suite suites[] = {
         "Internals",
         Internals_setup,
         NULL,
-        45,
+        46,
         Internals_testcases
     },
     {

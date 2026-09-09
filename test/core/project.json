@@ -2481,7 +2481,16 @@
                 "propagate_custom_rel_add_to_target",
                 "propagate_custom_rel_remove_from_target",
                 "propagate_custom_rel_masked_add",
-                "propagate_add_to_grandparent_w_parent_inherited"
+                "propagate_add_to_grandparent_w_parent_inherited",
+                "single_term_observer_w_var_get_var_pair_second_on_add",
+                "single_term_observer_w_var_get_var_pair_second_on_remove",
+                "single_term_observer_w_var_get_var_pair_first_on_add",
+                "single_term_observer_w_var_get_var_pair_both_vars_on_add",
+                "single_term_observer_w_var_get_var_pair_second_on_set",
+                "single_term_observer_w_var_get_var_pair_second_w_generation",
+                "single_term_observer_w_var_get_var_nested_invoke",
+                "single_term_observer_w_var_get_var_pair_second_on_delete_target",
+                "single_term_observer_wo_var_invoked_once_per_event"
             ]
         }, {
             "id": "ObserverOnSet",
@@ -2799,7 +2808,23 @@
                 "prefab_child_auto_override_pair_low_rel_id",
                 "reparent_to_prefab_is_prefab",
                 "add_same_childof_to_prefab_parent_w_name",
-                "override_exclusive_pair_w_value"
+                "override_exclusive_pair_w_value",
+                "add_component_to_prefab_after_instantiate",
+                "add_tag_to_prefab_after_instantiate",
+                "set_new_component_on_prefab_after_instantiate",
+                "remove_component_from_prefab_after_instantiate",
+                "add_component_to_prefab_after_instantiate_from_non_empty_table",
+                "add_component_to_nested_prefab_after_instantiate",
+                "add_component_to_nested_prefab_child_after_instantiate",
+                "add_component_to_prefab_after_instances_deleted",
+                "add_component_to_prefab_after_instances_deleted_and_table_cleanup",
+                "set_existing_component_on_prefab_after_instantiate",
+                "add_component_to_prefab_before_instantiate",
+                "fini_w_instantiated_prefab",
+                "add_inherit_component_to_prefab_after_instantiate",
+                "remove_inherit_component_from_prefab_after_instantiate",
+                "add_dont_inherit_component_to_prefab_after_instantiate",
+                "add_override_trait_component_to_prefab_after_instantiate"
             ]
         }, {
             "id": "World",
@@ -2939,6 +2964,12 @@
                 "delete_builtin",
                 "rename_builtin",
                 "remove_name_builtin",
+                "fini_w_scoped_component_added_to_builtin",
+                "fini_w_root_component_added_to_builtin",
+                "fini_w_scoped_tag_added_to_builtin",
+                "fini_w_scoped_component_set_on_builtin",
+                "delete_scoped_component_added_to_builtin",
+                "delete_scope_of_component_added_to_builtin",
                 "delete_flecs",
                 "delete_flecs_core",
                 "remove_name_from_flecs",
@@ -3481,6 +3512,7 @@
                 "recreate_deleted_table",
                 "no_duplicate_root_table_id",
                 "override_os_api_w_addon",
+                "override_os_api_strdup_not_called_w_null",
                 "records_resize_on_override",
                 "table_observed_after_add",
                 "table_observed_after_remove",

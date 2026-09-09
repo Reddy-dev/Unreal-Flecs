@@ -8,6 +8,20 @@
 
 #include <cpp.h>
 
+void Script_function(void);
+void Script_function_scope_and_ctx(void);
+void Script_method(void);
+void Script_vector_function(void);
+void Script_const_var(void);
+void Script_vars_scope(void);
+void Script_mut_var_reactive(void);
+void Script_set_mut_var_invalid(void);
+void Script_parse_eval(void);
+void Script_parse_error(void);
+void Script_eval_error(void);
+void Script_parse_move(void);
+void Script_update(void);
+
 // Testsuite 'PrettyFunction'
 void PrettyFunction_component(void);
 void PrettyFunction_enum(void);
@@ -800,6 +814,9 @@ void Query_get_first(void);
 void Query_get_count_direct(void);
 void Query_get_is_true_direct(void);
 void Query_get_first_direct(void);
+void Query_get_first_w_non_this_src(void);
+void Query_get_first_direct_w_non_this_src(void);
+void Query_get_first_skips_empty_results(void);
 void Query_each_w_no_this(void);
 void Query_named_query(void);
 void Query_named_scoped_query(void);
@@ -1168,6 +1185,8 @@ void Observer_fixed_src_w_each(void);
 void Observer_fixed_src_w_run(void);
 void Observer_untyped_field(void);
 void Observer_reuse_observer_builder(void);
+void Observer_single_term_observer_w_var_get_var_pair_second(void);
+void Observer_single_term_observer_w_var_get_var_pair_first(void);
 
 // Testsuite 'ComponentLifecycle'
 void ComponentLifecycle_ctor_on_add(void);
@@ -1338,6 +1357,11 @@ void Module_delete_module_w_explicit_component_and_system(void);
 void Module_module_has_singleton(void);
 void Module_rename_w_existing_entity_in_old_parent(void);
 void Module_rename_to_ancestor_w_existing_entity_in_old_parent(void);
+void Module_nested_import_changes_scope_before_module_rename(void);
+void Module_nested_import_changes_scope_after_module_rename(void);
+void Module_scope_restored_after_import_w_nested_scope_change(void);
+void Module_nested_import_changes_scope_no_rename(void);
+void Module_rename_w_existing_component_in_old_parent(void);
 
 // Testsuite 'ImplicitComponents'
 void ImplicitComponents_add(void);
@@ -1472,6 +1496,12 @@ void World_set_lookup_path(void);
 void World_run_post_frame(void);
 void World_component_w_low_id(void);
 void World_get_set_log_level(void);
+void World_log_warn_caller_file_line(void);
+void World_log_err_caller_file_line(void);
+void World_log_trace_caller_file_line(void);
+void World_log_dbg_caller_file_line(void);
+void World_log_push_caller_file_line(void);
+void World_log_w_std_string_fmt(void);
 void World_reset_world(void);
 void World_id_from_pair_type(void);
 void World_scope_w_name(void);
@@ -1506,6 +1536,8 @@ void World_get_type_info_T_tag(void);
 void World_get_type_info_r_t_tag(void);
 void World_get_type_info_R_t_tag(void);
 void World_get_type_info_R_T_tag(void);
+void World_fini_w_scoped_component_added_to_builtin(void);
+void World_fini_w_scoped_tag_added_to_builtin(void);
 
 // Testsuite 'Singleton'
 void Singleton_set_get_singleton(void);
@@ -1717,6 +1749,61 @@ void ComponentTraits_static_inherit_sparse_owned(void);
 void ComponentTraits_static_inherit_sparse_inherited(void);
 void ComponentTraits_static_inherit_dont_fragment_owned(void);
 void ComponentTraits_static_inherit_dont_fragment_inherited(void);
+
+bake_test_case Script_testcases[] = {
+    {
+        "function",
+        Script_function
+    },
+    {
+        "function_scope_and_ctx",
+        Script_function_scope_and_ctx
+    },
+    {
+        "method",
+        Script_method
+    },
+    {
+        "vector_function",
+        Script_vector_function
+    },
+    {
+        "const_var",
+        Script_const_var
+    },
+    {
+        "vars_scope",
+        Script_vars_scope
+    },
+    {
+        "mut_var_reactive",
+        Script_mut_var_reactive
+    },
+    {
+        "set_mut_var_invalid",
+        Script_set_mut_var_invalid
+    },
+    {
+        "parse_eval",
+        Script_parse_eval
+    },
+    {
+        "parse_error",
+        Script_parse_error
+    },
+    {
+        "eval_error",
+        Script_eval_error
+    },
+    {
+        "parse_move",
+        Script_parse_move
+    },
+    {
+        "update",
+        Script_update
+    }
+};
 
 bake_test_case PrettyFunction_testcases[] = {
     {
@@ -4834,6 +4921,18 @@ bake_test_case Query_testcases[] = {
         Query_get_first_direct
     },
     {
+        "get_first_w_non_this_src",
+        Query_get_first_w_non_this_src
+    },
+    {
+        "get_first_direct_w_non_this_src",
+        Query_get_first_direct_w_non_this_src
+    },
+    {
+        "get_first_skips_empty_results",
+        Query_get_first_skips_empty_results
+    },
+    {
         "each_w_no_this",
         Query_each_w_no_this
     },
@@ -6285,6 +6384,14 @@ bake_test_case Observer_testcases[] = {
     {
         "reuse_observer_builder",
         Observer_reuse_observer_builder
+    },
+    {
+        "single_term_observer_w_var_get_var_pair_second",
+        Observer_single_term_observer_w_var_get_var_pair_second
+    },
+    {
+        "single_term_observer_w_var_get_var_pair_first",
+        Observer_single_term_observer_w_var_get_var_pair_first
     }
 };
 
@@ -6950,6 +7057,26 @@ bake_test_case Module_testcases[] = {
     {
         "rename_to_ancestor_w_existing_entity_in_old_parent",
         Module_rename_to_ancestor_w_existing_entity_in_old_parent
+    },
+    {
+        "nested_import_changes_scope_before_module_rename",
+        Module_nested_import_changes_scope_before_module_rename
+    },
+    {
+        "nested_import_changes_scope_after_module_rename",
+        Module_nested_import_changes_scope_after_module_rename
+    },
+    {
+        "scope_restored_after_import_w_nested_scope_change",
+        Module_scope_restored_after_import_w_nested_scope_change
+    },
+    {
+        "nested_import_changes_scope_no_rename",
+        Module_nested_import_changes_scope_no_rename
+    },
+    {
+        "rename_w_existing_component_in_old_parent",
+        Module_rename_w_existing_component_in_old_parent
     }
 };
 
@@ -7473,6 +7600,30 @@ bake_test_case World_testcases[] = {
         World_get_set_log_level
     },
     {
+        "log_warn_caller_file_line",
+        World_log_warn_caller_file_line
+    },
+    {
+        "log_err_caller_file_line",
+        World_log_err_caller_file_line
+    },
+    {
+        "log_trace_caller_file_line",
+        World_log_trace_caller_file_line
+    },
+    {
+        "log_dbg_caller_file_line",
+        World_log_dbg_caller_file_line
+    },
+    {
+        "log_push_caller_file_line",
+        World_log_push_caller_file_line
+    },
+    {
+        "log_w_std_string_fmt",
+        World_log_w_std_string_fmt
+    },
+    {
         "reset_world",
         World_reset_world
     },
@@ -7607,6 +7758,14 @@ bake_test_case World_testcases[] = {
     {
         "get_type_info_R_T_tag",
         World_get_type_info_R_T_tag
+    },
+    {
+        "fini_w_scoped_component_added_to_builtin",
+        World_fini_w_scoped_component_added_to_builtin
+    },
+    {
+        "fini_w_scoped_tag_added_to_builtin",
+        World_fini_w_scoped_tag_added_to_builtin
     }
 };
 
@@ -8441,6 +8600,13 @@ bake_test_param QueryBuilder_params[] = {
 
 static bake_test_suite suites[] = {
     {
+        "Script",
+        NULL,
+        NULL,
+        13,
+        Script_testcases
+    },
+    {
         "PrettyFunction",
         NULL,
         NULL,
@@ -8514,7 +8680,7 @@ static bake_test_suite suites[] = {
         "Query",
         NULL,
         NULL,
-        165,
+        168,
         Query_testcases
     },
     {
@@ -8537,7 +8703,7 @@ static bake_test_suite suites[] = {
         "Observer",
         NULL,
         NULL,
-        73,
+        75,
         Observer_testcases
     },
     {
@@ -8558,7 +8724,7 @@ static bake_test_suite suites[] = {
         "Module",
         NULL,
         NULL,
-        29,
+        34,
         Module_testcases
     },
     {
@@ -8579,7 +8745,7 @@ static bake_test_suite suites[] = {
         "World",
         NULL,
         NULL,
-        122,
+        130,
         World_testcases
     },
     {
@@ -8613,5 +8779,5 @@ static bake_test_suite suites[] = {
 };
 
 int main(int argc, char *argv[]) {
-    return bake_test_run("cpp", argc, argv, suites, 24);
+    return bake_test_run("cpp", argc, argv, suites, 25);
 }

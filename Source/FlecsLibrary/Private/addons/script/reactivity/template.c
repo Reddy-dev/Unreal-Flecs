@@ -73,13 +73,7 @@ static void flecs_script_template_root_init(
     ecs_script_impl_t *impl)
 {
     if (ecs_vec_count(&root->state.computed) != template->computed_count) {
-        flecs_script_state_clear_computed(&root->state);
-        ecs_vec_set_count_t(NULL, &root->state.computed,
-            ecs_script_computed_t, template->computed_count);
-        if (template->computed_count) {
-            ecs_os_memset(ecs_vec_first(&root->state.computed), 0,
-                template->computed_count * ECS_SIZEOF(ecs_script_computed_t));
-        }
+        flecs_script_state_resize_computed(&root->state, template->computed_count);
     }
     if (ecs_vec_count(&root->state.symbol_slots) == template->symbol_count) {
         return;
@@ -162,24 +156,6 @@ static void flecs_script_template_root_remove(
     for (i = 0; i < it->count; i ++) {
         flecs_script_template_root_clear(world, template, impl, &roots[i]);
     }
-}
-
-static void flecs_script_template_on_add(
-    ecs_iter_t *it)
-{
-    ecs_world_t *world = it->world;
-    ecs_entity_t template_entity = ecs_field_id(it, 0);
-
-    if (!ecs_is_alive(world, template_entity)) {
-        return;
-    }
-
-    const EcsScript *script = ecs_get(world, template_entity, EcsScript);
-    if (!script || !script->template_) {
-        return;
-    }
-
-    script->template_->refcount += it->count;
 }
 
 /* Template component ctor to initialize prop or mut default values */
@@ -1036,6 +1012,28 @@ static void flecs_script_template_on_set(
         flecs_script_template_instantiate(
             world, template_entity, component,
             it->entities[i], ECS_OFFSET(data, ti->size * i), input);
+    }
+}
+
+static void flecs_script_template_on_add(
+    ecs_iter_t *it)
+{
+    ecs_world_t *world = it->world;
+    ecs_entity_t template_entity = ecs_field_id(it, 0);
+
+    if (!ecs_is_alive(world, template_entity)) {
+        return;
+    }
+
+    const EcsScript *script = ecs_get(world, template_entity, EcsScript);
+    if (!script || !script->template_) {
+        return;
+    }
+
+    script->template_->refcount += it->count;
+
+    if (!ecs_vec_count(&script->template_->props.defaults)) {
+        flecs_script_template_on_set(it, template_entity);
     }
 }
 
@@ -1919,7 +1917,9 @@ int flecs_script_template_update_vars(
             &template->capture_input);
         int32_t capture_count = ecs_vec_count(&template->capture_input);
         for (int32_t i = 0; i < capture_count; i ++) {
-            if (captures[i].outer_input & v->input) {
+            if ((captures[i].outer_input & v->input) ||
+                (captures[i].outer_internal & v->internal))
+            {
                 input |= captures[i].input;
             }
         }

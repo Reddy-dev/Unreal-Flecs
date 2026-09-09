@@ -145,7 +145,7 @@ The value after the `:` is an expression. For components that hold a single valu
 my_entity {
   Mass: 100
   Mass: 50 + 50
-  Mass: $weight
+  Mass: weight
 }
 ```
 
@@ -179,15 +179,6 @@ Sun {
 }
 ```
 
-Paths can only be used to refer to existing entities. The name of an entity that's created by a script cannot be a path:
-
-```cpp
-// Invalid, entity names cannot be paths
-Sun.Earth {
-  solarsystem.Planet
-}
-```
-
 To avoid having to repeatedly type the same paths, use the `using` statement (see below).
 
 ### Singletons
@@ -206,7 +197,6 @@ $ {
   TimeOfDay: { t: 0.5 }
   Player: { name: "bob" }
 }
-
 ```
 
 ### Entity kinds
@@ -256,6 +246,21 @@ CheckBox my_checkbox
 my_checkbox {
   CheckBox: {}
 }
+```
+
+### Newlines
+Newlines function as statement separators. Multiple statements can be combined on a single line with the semicolon (`;`) operator:
+
+```cpp
+e {
+  Position: {10, 20}; Velocity: {1, 2}
+}
+```
+
+Newlines after opening a scope (`{`) or before closing a scope (`}`) are not mandatory:
+
+```cpp
+e { Position: {10, 20}; Velocity: {1, 2} }
 ```
 
 #### Builtin kinds
@@ -310,8 +315,8 @@ Scripts can contain expressions, which allow for computing values from inputs su
 ```cpp
 const x = 10 + 20 * 30
 const x = 10 * (20 + 30)
-const x = $var * 10
-const x = pow($var, 2)
+const x = var * 10
+const x = pow(var, 2)
 const x = e.parent().name()
 const x: Position = {10, 20}
 const x: Position = {x: 10, y: 20}
@@ -407,8 +412,7 @@ When assigning variables to elements in a composite initializer, applications ca
 
 ```cpp
 // Normal notation
-Tree: {color: $color, height: $height}
-
+Tree: {color: color, height: height}
 
 // Shorthand notation
 Tree: {color: $, height: $}
@@ -490,6 +494,25 @@ const y = match x { 1: 10; 2: 20; 3: 30 }
 ```
 
 The type of a match expression is derived from the case values. When the case statements in a match contain values of multiple types, the most expressive type is selected. The algorithm for determining the most expressive type is the same as the one used to determine the type for binary expressions. When a match expression contains values with conflicting types, script execution will fail.
+
+### Component values
+An expression can use the value of a component that is looked up on a specific entity. The following example fetches the `width` and `depth` members from the `Level` component, that is fetched from the `Game` entity:
+
+```cpp
+grid {
+  Grid: { Game[Level].width, Game[Level].depth }
+}
+```
+
+To reduce the number of component lookups in a script, the component value can be stored in a variable:
+
+```cpp
+const level = Game[Level]
+
+tiles {
+  Grid: { width: level.width, level.depth, prefab: Tile }
+}
+```
 
 ### New expressions
 A new expression is the `new` keyword followed by an entity statement. New expressions can be used to create entities inside of expressions. The following are examples of valid new expressions:
@@ -623,8 +646,7 @@ const x = "The value of variable \$x is $x"
 ```
 
 #### Formatting interpolated numbers
-Interpolated `f32` and `f64` values can include a format specifier after the
-expression, separated by a colon:
+Interpolated `f32` and `f64` values can include a format specifier after the expression, separated by a colon:
 
 ```cpp
 const value = 12.3456
@@ -662,8 +684,7 @@ const sign = "{value:+}"    // +12.500000
 const exp = "{value:.2e}"  // 1.25e+01
 ```
 
-Width and precision can be integer literals, variables, or parenthesized
-expressions. Variable names can be written with or without `$`:
+Width and precision can be integer literals, variables, or parenthesized expressions.
 
 ```cpp
 const value = 12.3456
@@ -671,15 +692,12 @@ const width = 10
 const precision = 2
 
 const a = "{value:width}"
-const b = "{value:$width}"
 const c = "{value:(width + 2)}"
 const d = "{value:.precision}"
-const e = "{value:.$precision}"
 const f = "{value:.(precision + 1)}"
 ```
 
-Width and precision values must be between `0` and `1024`, inclusive. Values
-outside this range produce an error.
+Width and precision values must be between `0` and `1024`, inclusive. Values outside this range produce an error.
 
 ### Types
 The type of an expression is determined by the kind of expression, its operands and the context in which the expression is evaluated. The words "type" and "component" can be used interchangeably, as every type in Flecs is a component, and every component is a type. For component types to be used with scripts, they have to be described using the meta reflection addon.
@@ -880,7 +898,11 @@ Functions can be defined in scripts or by using the C/C++ API. Flecs also comes 
 
 A function can be created in code by doing:
 
-```cpp
+<div class="flecs-snippet-tabs">
+<ul>
+<li><b class="tab-title">C</b>
+
+```c
 ecs_function(world, {
     .name = "sum",
     .return_type = ecs_id(ecs_i64_t),
@@ -891,8 +913,41 @@ ecs_function(world, {
     .callback = sum
 });
 ```
+</li>
+<li><b class="tab-title">C++</b>
 
-Function implementations looks like this:
+```cpp
+world.function("sum")
+  .return_type<int64_t>()
+  .param<int64_t>("a")
+  .param<int64_t>("b")
+  .callback(sum)
+  .build();
+```
+</li>
+</ul>
+</div>
+
+Define the callback before registering the function:
+
+<div class="flecs-snippet-tabs">
+<ul>
+<li><b class="tab-title">C</b>
+
+```c
+void sum(
+    const ecs_function_ctx_t *ctx,
+    int32_t argc,
+    const ecs_value_t *argv,
+    ecs_value_t *result)
+{
+    const int64_t *a = argv[0].ptr;
+    const int64_t *b = argv[1].ptr;
+    *(int64_t*)result->ptr = *a + *b;
+}
+```
+</li>
+<li><b class="tab-title">C++</b>
 
 ```cpp
 void sum(
@@ -901,11 +956,14 @@ void sum(
     const ecs_value_t *argv,
     ecs_value_t *result)
 {
-    int64_t *a = argv[0].ptr;
-    int64_t *b = argv[1].ptr;
-    *(int64_t*)result->ptr = *a + *b;
+    const int64_t *a = static_cast<const int64_t*>(argv[0].ptr);
+    const int64_t *b = static_cast<const int64_t*>(argv[1].ptr);
+    *static_cast<int64_t*>(result->ptr) = *a + *b;
 }
 ```
+</li>
+</ul>
+</div>
 
 The following syntax can be used to define a function in a script:
 
@@ -948,14 +1006,18 @@ const x = v.length()
 const x = v1.add(v2)
 ```
 
-Just like functions, methods can currently only be defined outside of scripts by using the Flecs Script API.
+Methods are defined outside of scripts by using the Flecs Script API.
 
 A method can be created in code by doing:
 
-```cpp
+<div class="flecs-snippet-tabs">
+<ul>
+<li><b class="tab-title">C</b>
+
+```c
 ecs_method(world, {
     .name = "add",
-    .parent = ecs_id(ecs_i64_t), // Add method to i64
+    .parent = ecs_id(ecs_i64_t),
     .return_type = ecs_id(ecs_i64_t),
     .params = {
         { .name = "a", .type = ecs_id(ecs_i64_t) }
@@ -963,6 +1025,19 @@ ecs_method(world, {
     .callback = sum
 });
 ```
+</li>
+<li><b class="tab-title">C++</b>
+
+```cpp
+world.method<int64_t>("add")
+  .return_type<int64_t>()
+  .param<int64_t>("a")
+  .callback(sum)
+  .build();
+```
+</li>
+</ul>
+</div>
 
 ### Vector functions
 Vector functions are functions that accept arguments of a builtin `ScriptVectorType` type. This allows these functions to accept any type that is a valid vector type (see Vector operations).
@@ -985,14 +1060,18 @@ const red_p = lerp(red, p, 0.5) // Illegal: red and p are of different types
 
 Vector functions are registered like normal functions, but instead of specifying a `callback`, the application sets `vector_callbacks`. An example:
 
-```cpp
+<div class="flecs-snippet-tabs">
+<ul>
+<li><b class="tab-title">C</b>
+
+```c
 ecs_function(world, {
     .name = "lerp",
     .return_type = EcsScriptVectorType,
     .params = {
         { "a", EcsScriptVectorType },
         { "b", EcsScriptVectorType },
-        { "t", ecs_id(ecs_f64_t) },
+        { "t", ecs_id(ecs_f64_t) }
     },
     .vector_callbacks = {
         [EcsF32] = lerp_f32,
@@ -1000,8 +1079,48 @@ ecs_function(world, {
     }
 });
 ```
+</li>
+<li><b class="tab-title">C++</b>
 
-The signature for vector functions accepts an additional argument for the number of elements in the vector type:
+```cpp
+world.function("lerp")
+  .return_type(EcsScriptVectorType)
+  .param("a", EcsScriptVectorType)
+  .param("b", EcsScriptVectorType)
+  .param<double>("t")
+  .vector_callback(flecs::F32, lerp_f32)
+  .vector_callback(flecs::F64, lerp_f64)
+  .build();
+```
+</li>
+</ul>
+</div>
+
+The signature for vector functions accepts an additional argument for the number of elements in the vector type. Define these callbacks before registering the function. The `f32` implementation is shown below; use `double` for the vector elements in `lerp_f64`:
+
+<div class="flecs-snippet-tabs">
+<ul>
+<li><b class="tab-title">C</b>
+
+```c
+void lerp_f32(
+    const ecs_function_ctx_t *ctx,
+    int32_t argc,
+    const ecs_value_t *argv,
+    ecs_value_t *result,
+    int32_t elem_count)
+{
+    const float *a = argv[0].ptr;
+    const float *b = argv[1].ptr;
+    double t = *(double*)argv[2].ptr;
+    float *r = result->ptr;
+    for (int i = 0; i < elem_count; i ++) {
+        r[i] = a[i] + t * (b[i] - a[i]);
+    }
+}
+```
+</li>
+<li><b class="tab-title">C++</b>
 
 ```cpp
 void lerp_f32(
@@ -1011,15 +1130,18 @@ void lerp_f32(
     ecs_value_t *result,
     int32_t elem_count)
 {
-    float *a = argv[0].ptr;
-    float *b = argv[1].ptr;
-    double t = *(double*)argv[2].ptr;
-    float *r = result->ptr;
+    const float *a = static_cast<const float*>(argv[0].ptr);
+    const float *b = static_cast<const float*>(argv[1].ptr);
+    double t = *static_cast<const double*>(argv[2].ptr);
+    float *r = static_cast<float*>(result->ptr);
     for (int i = 0; i < elem_count; i ++) {
         r[i] = a[i] + t * (b[i] - a[i]);
     }
 }
 ```
+</li>
+</ul>
+</div>
 
 In the function documentation below the type of vector parameters is written as `[]`.
 
@@ -1111,7 +1233,7 @@ The random number generator can be used like this:
 
 ```cpp
 const rng: flecs.script.math.Rng = {}
-const x = $rng.f(1.0)
+const x = rng.f(1.0)
 ```
 
 To use the math functions, make sure to use a Flecs build compiled with the `FLECS_SCRIPT_MATH` addon (disabled by default) and that the module is imported:
@@ -1162,8 +1284,708 @@ To use the platform constants, make sure to use a Flecs build compiled with the 
 ECS_IMPORT(world, FlecsScriptPlatform);
 ```
 
-## Templates
-Templates are parameterized scripts that can be used to create procedural assets. Templates can be created with the `template` keyword. Example:
+## Variables
+Scripts can contain variables, which are useful for often repeated values. Variables are created with the `const` keyword. Example:
+
+```cpp
+const pi = 3.1415926
+
+my_entity {
+  Rotation: {angle: pi}
+}
+```
+
+Variables can be combined with expressions:
+
+```cpp
+const pi = 3.1415926
+const pi_2 = pi * 2
+
+my_entity {
+  Rotation: {angle: pi / 2}
+}
+```
+
+In the above examples, the type of the variable is inferred. Variables can also be provided with an explicit type:
+
+```cpp
+const wood: Color = {38, 25, 13}
+```
+
+When the name of a variable clashes with an entity, it can be disambiguated by prefixing the variable name with a `$`:
+
+```cpp
+const pi = 3.1415926
+const pi_2 = pi * 2
+
+pi {
+  Rotation: {angle: $pi / 2}
+}
+```
+
+Variables can be used in component values as shown in the previous examples. To assign a variable to a component, use the variable as the component expression. Example:
+
+```cpp
+const wood: Color = {38, 25, 13}
+
+my_entity {
+  Color: wood
+}
+
+// is equivalent to
+
+my_entity {
+  Color: {38, 25, 13}
+}
+```
+
+### Exported variables
+Variables can be exported by prefixing a variable declaration with the `export` keyword. Exported variables can be accessed by the application and from other scripts. The following example shows an exported variable:
+
+```cpp
+// Script 1
+export const pi = 3.1415926
+```
+
+This variable can now be accessed from another script:
+
+```cpp
+// Script 2
+const pi_2 = pi * 2
+```
+
+Exported variables are created as children of the scope in which they are defined:
+
+```cpp
+math {
+  export const pi = 3.1415926
+}
+```
+
+This will make the variable available to other scripts as `math.pi`.
+
+The `ecs_const_var_init` function is used to create exported variables. The following example shows how the same variable can be created from native code:
+
+<div class="flecs-snippet-tabs">
+<ul>
+<li><b class="tab-title">C</b>
+
+```c
+double pi_value = 3.1415926;
+
+ecs_const_var(world, {
+  .name = "pi",
+  .parent = ecs_lookup(world, "math"),
+  .type = ecs_id(ecs_f64_t),
+  .value = &pi_value
+});
+```
+</li>
+<li><b class="tab-title">C++</b>
+
+```cpp
+world.const_var("pi", 3.1415926, world.lookup("math"));
+```
+</li>
+</ul>
+</div>
+
+Exported variables can be used as configuration that is loaded into an application from a script. The following example shows how to load an exported variable from native code after it has been defined in a script or has been created with `ecs_const_var_init`:
+
+<div class="flecs-snippet-tabs">
+<ul>
+<li><b class="tab-title">C</b>
+
+```c
+ecs_entity_t pi = ecs_lookup(world, "math.pi");
+ecs_value_t v = ecs_const_var_get(world, pi);
+const double *value = v.ptr;
+if (value) {
+  printf("pi = %f\n", *value);
+}
+```
+</li>
+<li><b class="tab-title">C++</b>
+
+```cpp
+double pi = world.get_const_var<double>("math::pi");
+printf("pi = %f\n", pi);
+```
+</li>
+</ul>
+</div>
+
+The following example loads `math.flecs` from a native module. The file defines `export const pi = 3.1415926` in the module scope:
+
+<div class="flecs-snippet-tabs">
+<ul>
+<li><b class="tab-title">C</b>
+
+```c
+double math_pi;
+
+void MathImport(ecs_world_t *world) {
+  ECS_MODULE(world, Math);
+
+  ecs_script(world, { .filename = "math.flecs" });
+
+  ecs_entity_t pi = ecs_lookup(world, "math.pi");
+  ecs_value_t v = ecs_const_var_get(world, pi);
+  math_pi = *(double*)v.ptr;
+}
+
+int main(void) {
+  ecs_world_t *world = ecs_init();
+  ECS_IMPORT(world, Math);
+  double pi_2 = math_pi * 2;
+  printf("2 * pi = %f\n", pi_2);
+  return ecs_fini(world);
+}
+```
+</li>
+<li><b class="tab-title">C++</b>
+
+```cpp
+struct math {
+  inline static double pi;
+
+  math(flecs::world& world) {
+    world.module<math>();
+    world.script()
+      .filename("math.flecs")
+      .run();
+
+    pi = world.get_const_var<double>("::math::pi");
+  }
+};
+
+int main() {
+  flecs::world world;
+  world.import<math>();
+  double pi_2 = math::pi * 2;
+  printf("2 * pi = %f\n", pi_2);
+}
+```
+</li>
+</ul>
+</div>
+
+An `export const` variable may not be modified over its lifetime. To create a variable that is allowed to be changed, use `export mut`:
+
+```cpp
+export mut speed = 10
+```
+
+The `ecs_mut_var_init` function is used to create mutable exported variables from
+native code:
+
+<div class="flecs-snippet-tabs">
+<ul>
+<li><b class="tab-title">C</b>
+
+```c
+float difficulty_value = 1.0;
+
+ecs_entity_t difficulty = ecs_mut_var(world, {
+  .name = "difficulty",
+  .type = ecs_id(ecs_f32_t),
+  .value = &difficulty_value
+});
+```
+</li>
+<li><b class="tab-title">C++</b>
+
+```cpp
+flecs::entity difficulty = world.mut_var("difficulty", 1.0f);
+```
+</li>
+</ul>
+</div>
+
+Updating a mut variable notifies reactive scripts that depend on it:
+
+<div class="flecs-snippet-tabs">
+<ul>
+<li><b class="tab-title">C</b>
+
+```c
+ecs_entity_t difficulty = ecs_lookup(world, "difficulty");
+ecs_value_t v = ecs_mut_var_get(world, difficulty);
+*(float*)v.ptr = 2.0;
+ecs_mut_var_modified(world, difficulty);
+```
+</li>
+<li><b class="tab-title">C++</b>
+
+```cpp
+world.set_mut_var("difficulty", 2.0f);
+```
+</li>
+</ul>
+</div>
+
+## Control flow
+
+### If statement
+Parts of a script can be conditionally executed with an if statement. Example:
+
+```cpp
+const daytime: bool = false
+
+lantern {
+  Color: {210, 255, 200}
+
+  if daytime {
+    Emissive: { value: 0 }
+  } else {
+    Emissive: { value: 1 }
+  }
+}
+```
+
+If statements can be chained with `else if`:
+
+```cpp
+const state = 0
+
+traffic_light {
+  if state == 0 {
+    Color: {0, 1, 0}
+  } else if state == 1 {
+    Color: {0.5, 0.5, 0}
+  } else if state == 1 {
+    Color: {1, 0, 0}
+  }
+}
+```
+
+### For statement
+Parts of a script can be repeated with a for loop. Example:
+
+```cpp
+for i in 0..10 {
+  Lantern() {
+    Position: {x: i * 5}
+  }
+}
+```
+
+The values specified in the range can be an expression:
+
+```cpp
+for i in 0..count {
+  // ...
+}
+```
+
+When creating entities in a for loop, ensure that they are unique or the for loop will overwrite the same entity:
+
+```cpp
+for i in 0..10 {
+  // overwrites entity "e" 10 times
+  e: { Position: {x: i * 5} }
+}
+```
+
+To avoid this, scripts can either create anonymous entities:
+
+```cpp
+for i in 0..10 {
+  // creates 10 anonymous entities
+  { Position: {x: i * 5} }
+}
+```
+
+Or use a unique string expression for the entity name:
+
+```cpp
+for i in 0..10 {
+  // creates entities with names e_0, e_1, ... e_9
+  "e_$i" { Position: {x: i * 5} }
+}
+```
+
+Ranges can also be enclosed in brackets:
+
+```cpp
+for i in [0..10] {
+  // ...
+}
+```
+
+A range loop can be given a second loop variable, in which case the first variable is the zero-based iteration index and the second variable is the range value:
+
+```cpp
+for (index, value) in [5..10] {
+  // (0, 5), (1, 6), ... (4, 9)
+}
+```
+
+For loops can also iterate the elements of arrays, vectors and maps:
+
+```cpp
+for elem in arrayExpr {
+  { Position: {elem, elem * 2} }
+}
+```
+
+Maps can be iterated with up to three loop variables. With a single variable the loop iterates the map values. When two variables are specified, the first variable contains the key of the current element. A third variable can be added in the middle, which contains the zero-based iteration index:
+
+```cpp
+for elem in mapExpr {
+  { Position: {elem, elem * 2} }
+}
+
+for (key, elem) in mapExpr {
+  "e_{key}" { Position: {elem, elem * 2} }
+}
+
+for (key, index, elem) in mapExpr {
+  "e_{key}" { Position: {index, elem * 2} }
+}
+```
+
+A `continue` statement skips the remaining statements of the current iteration and moves the loop to the next iteration:
+
+```cpp
+for i in 0..5 {
+  if i == 2 {
+    continue
+  }
+
+  // creates entities e_0, e_1, e_3 and e_4
+  "e_{i}" {}
+}
+```
+
+## Script header
+The header of a script may contain `module`, `include` and `using` statements. After the first non-header statement, no more header statements may occur. Header statements must always be created in the root scope.
+
+### Module statement
+The module statement will create a module entity with the specified name, and create all script contents in that module. A script may only contain a single module statement. Example:
+
+```cpp
+module game
+
+spaceship { // game.spaceship
+  Ftl: {true}
+}
+```
+
+The `game` module will be created with the `flecs.core.Module` tag.
+
+Module statements may be specified as paths:
+
+```cpp
+module game.infinity_and_beyond
+
+spaceship { // game.infinity_and_beyond.spaceship
+  Ftl: {true}
+}
+```
+
+### Include statement
+The `include` statement loads another script file. Example:
+
+```cpp
+include components
+include scenes/level_1.flecs
+```
+
+The path is resolved relative to the directory of the current script. Paths containing `..` and absolute paths are not allowed.
+
+If the included path does not end in `.flecs`, the extension is appended automatically.
+
+When `include` is used from a managed script (see [Managed script](#managed-script)), the included script is also loaded as a managed script. If a managed script at that path already exists, it is not loaded again. When used from a non-managed script, the included script is executed in place and no script entity is created.
+
+If a script contains a `module` statement, `include` statements must appear after the `module` statement.
+
+### Using statement
+The `using` keyword imports a namespace into the current namespace. Example:
+
+```cpp
+// Without using
+my_engine {
+  game.engines.FtlEngine: {active: true}
+}
+```
+```cpp
+// With using
+using game.engines
+
+my_engine {
+  FtlEngine: {active: true}
+}
+```
+
+If a script contains `module` or `include` statements, `using` statements must be placed after both.
+
+A `using` statement may end with a wildcard (`*`). This will import all namespaces matching the path. Example:
+
+```cpp
+using game.*
+
+my_engine {
+  FtlEngine: {active: true}
+}
+```
+
+## Reactivity
+Managed scripts are reactive, which means they will be reevaluated when the data that they depend on changes. A managed script is one that uses the following API:
+
+<div class="flecs-snippet-tabs">
+<ul>
+<li><b class="tab-title">C</b>
+
+```c
+ecs_entity_t s = ecs_script(world, {
+  .code = "e {}"
+});
+```
+</li>
+<li><b class="tab-title">C++</b>
+
+```cpp
+flecs::entity s = world.script()
+  .code("e {}")
+  .run();
+```
+</li>
+</ul>
+</div>
+
+See "Managed scripts" for more details. The following sections go over the reactivity features of flecs script.
+
+### Reactivity basics
+The following example illustrates a simple reactive script:
+
+```cpp
+const t = game[TimeOfDay]
+
+light {
+  Position: {10, 20}
+
+  if t.daylight < 0.5{
+    Emissive: {1}
+  } else {
+    Emissive: {0}
+  }
+}
+```
+
+The value of the `Emissive` component depends on whether `game[TimeOfDay].daylight` is smaller than 0.5. This condition is not just evaluated when the script runs. It will be treated as an invariant, meaning that if `game[TimeOfDay].daylight` changes, the value of `Emissive` must change as well.
+
+The script runtime implements "fine grained reactivity". In short this means that flecs tracks which parts of a script depend on which inputs, and that when an input changes, only the code that depends on that input is ran. For this example that means it will only set `Emissive` and not `Position`.
+
+Value dependencies are tracked recursively. An input can be assigned, modified and stored through many indirections. The script runtime will still pick it up as dependency. For example, in the following code example `Emmissive` will still change when `TimeOfDay` changes:
+
+```cpp
+const t = game[TimeOfDay]
+const isDay = t.daylight > 0.5
+
+light {
+  Position: {10, 20}
+
+  if !isDay {
+    Emissive: {1}
+  } else {
+    Emissive: {0}
+  }
+}
+```
+
+Reactive updates are non-destructive. This means that entity handles remain valid before and after the update. For this example it means that `light` will still be the same entity before and after `TimeOfDay` changes. This is useful, as it means that we can safely add components to entities defined in scripts.
+
+Scripts responds to the following reactive inputs:
+- Component values (e.g. `game[TimeOfDay]`)
+- Component presence (e.g. `game?[TimeOfDay]`)
+- Mutable variable changes (e.g. `export mut speed = 10`)
+- Template properties (`prop height: i32 = 3`, see below)
+- Components resolved on variables (e.g. `$var[TimeOfDay]`)
+
+Scripts additionally respond to entities or components not yet existing by deferring their execution. For example, when a script refers to `game[TimeOfDay]` but the `game` entity doesn't exist yet, or it doesn't have `TimeOfDay` yet, the script will monitor the world for those entities to become available.
+
+Scripts subscribe to `OnSet` events to get notified of component changes. This works out of the box with operations such as `set()` or `assign()`, but if a component reference returned by `ensure()` or `get_mut()` is assigned, it needs a separate call to `modified()` for the script to see it. Additionally, if a system modifies a component directly, it will also have to call `modified()` on the component:
+
+```cpp
+game.set(TimeOfDay{0.6}); // Emits OnSet, will get picked up by script
+
+TimeOfDay& t = game.ensure<TimeOfDay>();
+t.daylight = 0.6; // Script can't see this yet
+game.modified<TimeOfDay>(); // Script can see update
+```
+
+### Conditional entities
+Scripts can have entities whose existence depends on a reactive value. For example:
+
+```cpp
+if game[TimeOfDay].daylight < 0.5 {
+  light {
+    Position: {10, 20}
+    Emissive: {1}
+  }
+}
+```
+
+This script has a different kind of invariant: the `light` entity must only exist when `daylight` is lower than 0.5. When `TimeOfDay` is modified with a `daylight` value higher or equal to 0.5, the script will delete the `light` entity.
+
+### Conditional components
+Scripts can have components whose existence depends on a reactive value. For example:
+
+```cpp
+light {
+  Position: {10, 20}
+
+  if game[TimeOfDay].daylight < 0.5 {
+    Emissive: {1}
+  }
+}
+```
+
+The invariant in this script is that the `light` entity must only have the `Emissive` component when the value of `daylight` is below 0.5. If the value is higher or equal to 0.5, the script will remove the `Emissive` component from the `light` entity.
+
+A challenge with deciding whether a component has to be removed is that it could be defined in more than one scope, for example:
+
+```cpp
+light {
+  Position: {10, 20}
+
+  Emissive: {0}
+
+  if game[TimeOfDay].daylight < 0.5 {
+    Emissive: {1}
+  }
+}
+```
+
+To satisfy this script, when the value of `daylight` becomes lower than 0.5, `Emissive` should not be removed. Its value should instead be changed to `{0}`. This turns a local decision ("branch not taken, remove component") into a global decision ("was there any other scope that assigned `Emissive`"). Things get more complex with multiple conditional assignments:
+
+```cpp
+light {
+  Position: {10, 20}
+
+  if game?[Lights] {
+    Emissive: {game[Lights].value}
+  }
+
+  if game[TimeOfDay].daylight < 0.5 {
+    Emissive: {1}
+  }
+}
+```
+
+To handle these cases correctly, a script would have to build a table of all conditions affecting a component, and assign an action based on which conditions are true. To avoid this complexity, scripts enforce a simple rule that sidesteps this problem: **components must be owned by a single scope**. This means that the above two examples will throw an error.
+
+A component may be assigned in two mutually exclusive scopes:
+
+```cpp
+light {
+  Position: {10, 20}
+
+  if game[TimeOfDay].daylight < 0.5 {
+    Emissive: {1}
+  } else {
+    Emissive: {0}
+  }
+}
+```
+
+Scopes are currently only considered mutually exclusive when they are in the `if`, `else` or `else if` branches of a single if chain. The following example will not parse, even though strictly speaking the scopes are mutually exclusive:
+
+```cpp
+light {
+  Position: {10, 20}
+
+  if game[TimeOfDay].daylight < 0.5 {
+    Emissive: {1}
+  }
+  if game[TimeOfDay].daylight >= 0.5 {
+    Emissive: {0}
+  }
+}
+```
+
+Additionally, components may be _partially_ assigned in multiple scopes, as long as there is one scope that owns the component:
+
+```cpp
+light {
+  Position: {10, 20}
+
+  Emissive: {0} // scope that owns the component
+
+  if game?[Lights] {
+    Emissive: {daylight: game[Lights].value} // partial assignment
+  }
+
+  if game[TimeOfDay].daylight < 0.5 {
+    Emissive: {daylight: 1} // partial assignment
+  }
+}
+```
+
+### Loops
+Entities created in a loop do not survive a reactive update, unless they are named. For example, here is an example of a loop that creates `count` anonymous entities:
+
+```cpp
+const count = game[Count].value
+
+for i in 0..count {
+  { Position: {i, i * 2 } }
+}
+```
+
+When `count` changes, all previous anonymous entities will be deleted before the for loop is reevaluated. To prevent this from happening, entities in a loop must be named:
+
+```cpp
+for i in 0..count {
+  "e_{i}" { Position: {i, i * 2} }
+}
+```
+
+This will create a named slot for each entity that is tracked across reactive updates, which prevents deleting the entities on each update.
+
+While somewhat wasteful, this following example also work as expected:
+
+```cpp
+for i in 0..count {
+  e { Position: {i, i * 2} }
+}
+```
+
+This will create a single entity named `e` with `Position: {count, count * 2}`. When `count` is 0, `e` will be deleted. Similarly, this also works:
+
+```cpp
+e {
+  for i in 0..count {
+    Position: {i, i * 2}
+  }
+}
+```
+
+This also creates a single entity named `e` with `Position: {count, count * 2}`. When `count` is 0, `Position` will be removed.
+
+### Computed values
+Consider the following script:
+
+```cpp
+const t = game[TimeOfDay]
+const isDay = t.daylight > 0.5
+
+if !isDay {
+  for i in 0..lightCount {
+    "light_{i}" {
+      Emissive: {1}
+    }
+  }
+}
+```
+
+Now imagine that `TimeOfDay` is assigned many times, from 0.1 to 0.11, 0.12, 0.13, 0.14, ... We would be doing a lot of redundant work, essentially assigning the `Emissive` component to the same value on each update, unless the value changes to above 0.5, at which point `Emissive` changes value.
+
+To avoid this kind of overhead, `isDay` is treated as a _computed value_. Computed values are cached between updates, so that subsequent updates can tell whether code actually needs to be reran. This happens automatically to significantly reduce the amount of redundant work that reactive updates do.
+
+### Templates
+Templates are reactive parameterized scripts that can be used to create procedural assets. Templates can be created with the `template` keyword. A simple example:
 
 ```cpp
 template Square {
@@ -1193,36 +2015,251 @@ Templates are commonly used in combination with the kind syntax:
 Square my_entity
 ```
 
-Templates can be parameterized with properties. Properties are variables that are exposed as component members. When the component is updated with a new value, the template is reevaluated. To create a property, use the `prop` keyword. Example:
+#### Prop variables
+Templates can be parameterized with prop variables. To create a prop variable, use the `prop` keyword. Example:
 
 ```cpp
 template Square {
   prop size = 10
   prop color: Color = {255, 0, 0}
 
-  Color: $color
+  Color: color
   Rectangle: {width: size, height: size}
 }
 
 Square my_entity(size: 20, color: {38, 25, 13})
 ```
 
-Just like `const` variables, `prop` variables can explicitly specify a type or implicitly derive their type from the assigned (default) value.
+Prop variables are reactive, just like how a component value (`game[TimeOfDay]`) is reactive. This means that when the value of a prop changes, the template is reevaluated, following the same rules as described above.
 
-An explicitly typed property can omit its default value, as in `prop color: Color`. The property is then initialized with the type's default constructor. This is only supported for properties; `const` and `mut` variables require an initializer.
-
-In addition to property variables, templates can also contain mutables. Mutables that are exposed as component members on a `TemplateComponent::mut` component. To create a mutable, use the `mut` keyword. For example the `hover` mutable variable ends up on a `Button::mut` component:
+#### Mut variables
+Templates can have `mut` variables. A `mut` variable is reactive state that is not exposed as a `prop`. For example, a button may have a `hover` `mut` variable. Changes to the `mut` variable will cause the template to update (just like with props), but unlike props, `hover` is not passed to the template.
 
 ```cpp
 template Button {
   prop text = "Howdy"
   mut hover = false
 
+  if hover {
+    BackgroundColor: {255, 0, 0}
+  } else {
+    BackgroundColor: {128, 0, 0}
+  }
+
   // ...
 }
 ```
 
-Template scripts can do anything a regular script can do, including creating child entities. The following example shows how to create an template that uses a nested template to create children:
+Code outside of a template can access mut variables:
+
+```cpp
+Button b("So long")
+
+if (b[Button.mut].hover) {
+  // ...
+}
+```
+
+#### This variable
+Templates can use the `this` variable to refer to the current instance. For example, the following code:
+
+```cpp
+template LikesSelf {
+  (Likes, this)
+}
+
+Bob {
+  LikesSelf
+}
+```
+
+will cause `Bob` to end up with `(Likes, Bob)`.
+
+The `this` variable can be used to read other components of the template instance:
+
+```cpp
+template Building {
+  Rgb: {100, 50, 10}
+
+  if this?[Damaged] {
+    Tint: {0, 0, 0, 0.5}
+  }
+}
+```
+
+#### Inheritance
+Templates can inherit from each other. This can be used to create templates that accept and instantiate other templates. For example, consider we want to create a `Building` template with a customizable facade. We could build a template like this, but we would have no way to instantiate the facade because we do not know its type:
+
+```cpp
+template Building {
+  prop facade: entity = 0
+  prop floors: i32
+  prop floorHeight: f32
+
+  for i in 0..floors {
+    // ??
+  }
+}
+```
+
+Instead, what we can do is define a `Facade` base type and have a template inherit from it:
+
+```cpp
+struct Facade(height: f32)
+
+template VictorianFacade : Facade {
+  prop height: f32
+
+  Rgb: {120, 170, 120}
+  Box: {1, height, 1}
+}
+```
+
+We can then use the `Facade` type in the prop definition, and instantiate the template-specific facade:
+
+```cpp
+template Building {
+  prop facade: template Facade
+  prop floors: i32
+  prop floorHeight: f32
+
+  for i in 0..floors {
+    facade: {floorHeight} // provide value of type FAcade
+  }
+}
+```
+
+This makes it possible to use templates as primitive for procedural generation templates, where a generic template specifies the "grammar" of an object (for example a building), with a set of derived templates that implement the style and/or content.
+
+#### Setting props from native code
+To update template props from native code, mirror the template type with a native type that has the same name, namespace and members. An example:
+
+```cpp
+// script.flecs
+template Tree {
+  prop width: i32 = 1
+  prop height: i32 = 3
+  
+  trunk {
+    Box: {1, 1, 1}
+  }
+  canopy {
+    Box: {width, height - 1, width}
+  }
+}
+```
+<div class="flecs-snippet-tabs">
+<ul>
+<li><b class="tab-title">C</b>
+
+```c
+typedef struct Tree {
+  int32_t width;
+  int32_t height;
+} Tree;
+
+ecs_script(world, { .filename = "script.flecs" });
+ECS_COMPONENT(world, Tree);
+
+ecs_entity_t tree = ecs_new(world);
+ecs_set(world, tree, Tree, {5, 10});
+```
+</li>
+<li><b class="tab-title">C++</b>
+
+```cpp
+struct Tree {
+  int32_t width;
+  int32_t height;
+};
+
+world.script()
+  .filename("script.flecs")
+  .run();
+
+world.entity()
+  .set(Tree{5, 10});
+```
+</li>
+</ul>
+</div>
+
+Setting `mut` variables works in a similar way, but with a type called `mut` that is in the scope of the template:
+
+```cpp
+// script.flecs
+template Button {
+  prop text = "Hello World"
+  mut hover = false
+  mut active = false
+
+  Panel(text) {
+    if hover {
+      BackgroundColor: {255, 0, 0}
+    }
+    if active {
+      BorderColor: {0, 255, 0}
+    }
+  }
+}
+```
+
+<div class="flecs-snippet-tabs">
+<ul>
+<li><b class="tab-title">C</b>
+
+```c
+typedef struct Button {
+  char *text;
+} Button;
+
+typedef struct ButtonMut {
+  bool hover;
+  bool active;
+} ButtonMut;
+
+ecs_script(world, { .filename = "script.flecs" });
+ECS_COMPONENT(world, Button);
+
+ecs_entity_t ecs_id(ButtonMut) = ecs_component(world, {
+  .entity = ecs_entity(world, { .name = "Button.mut" }),
+  .type = { .size = sizeof(ButtonMut), .alignment = ECS_ALIGNOF(ButtonMut) }
+});
+
+ecs_entity_t button = ecs_new(world);
+ecs_set(world, button, Button, {"Howdy"});
+ecs_set(world, button, ButtonMut, {true, false});
+```
+</li>
+<li><b class="tab-title">C++</b>
+
+```cpp
+struct Button {
+  char *text;
+
+  struct mut {
+    bool hover;
+    bool active;
+  };
+};
+
+world.script()
+  .filename("script.flecs")
+  .run();
+
+flecs::entity button = world.entity()
+  .set(Button{ecs_os_strdup("Howdy")});
+
+button.set(Button::mut{true, false});
+```
+</li>
+</ul>
+</div>
+
+The C++ example allocates the string because setting an rvalue transfers its ownership to the reflected component.
+
+#### Example
+The following code shows a  more complex example with templates that create children and uses nested templates:
 
 ```cpp
 template Tree {
@@ -1232,21 +2269,21 @@ template Tree {
   const leaves_color: Color = {51, 76, 38}
 
   const canopy_height = 2
-  const trunk_height = $height - $canopy_height
+  const trunk_height = height - canopy_height
   const trunk_width = 2
 
   Trunk {
-    Position: {0, ($height / 2), 0}
-    Rectangle: {$trunk_width, $trunk_height}
-    Color: $wood_color
+    Position: {0, (height / 2), 0}
+    Rectangle: {trunk_width, trunk_height}
+    Color: wood_color
   }
 
   Canopy {
-    const canopy_y = $trunk_height + ($canopy_height / 2)
+    const canopy_y = trunk_height + (canopy_height / 2)
 
-    Position3: {0, $canopy_y, 0}
-    Box: {$canopy_width, $canopy_height}
-    Color: $leaves_color
+    Position3: {0, canopy_y, 0}
+    Box: {canopy_width, canopy_height}
+    Color: leaves_color
   }
 }
 
@@ -1265,176 +2302,6 @@ template Forest {
 }
 
 Forest my_forest
-```
-
-### Template inheritance
-Templates are structs, where each property is a struct member. This means that a template can inherit from a struct or from another template by specifying a base type after the template name:
-
-```cpp
-template Shape {
-  prop color: Color = {255, 0, 0}
-}
-
-template Square : Shape {
-  prop size = 10
-
-  Color: $color
-  Rectangle: {width: size, height: size}
-}
-
-Square my_square(color: {0, 255, 0}, size: 20)
-```
-
-A derived template inherits the properties of its base, including their default values. Inherited properties can be used in the template body just like the template's own properties. Only the properties are inherited: the script contents of the base template are not evaluated when the derived template is instantiated.
-
-The base must be defined before the derived template, and a derived template cannot redefine an inherited property.
-
-### Template properties
-A property can be declared with the type of another template by using the `template` keyword. This makes it possible to configure a template with the properties of another template:
-
-```cpp
-template Leaf {
-  prop color: Color = {51, 76, 38}
-  prop size = 1
-
-  Color: $color
-  Rectangle: {width: size, height: size}
-}
-
-template Tree {
-  prop leaf : template Leaf
-
-  Leaf1 { leaf }
-  Leaf2 { leaf: {size: 2} }
-}
-
-Tree my_tree(leaf: {color: {255, 0, 0}, size: 3})
-```
-
-Inside the template body the property can be used as if it is the template component itself, with or without the `$` prefix. When the property is used without an initializer, the component is set to the value of the property. When the property is used with an initializer, members that are not specified in the initializer keep the value of the property. In the above example `Leaf2` gets a red leaf of size 2.
-
-A template property can also be used in `with` statements:
-
-```cpp
-template Tree {
-  prop leaf : template Leaf
-
-  with leaf {
-    Leaf1 {}
-    Leaf2 {}
-  }
-
-  with leaf(size: 2) {
-    Leaf3 {}
-  }
-}
-```
-
-A template property without a default value is initialized with the default values of the properties of its template. Like other properties, template properties are exposed as struct members, which means they can be accessed in expressions (`$leaf.size`) and can be set when the template is instantiated.
-
-
-### Interface-typed template properties
-A template property can also be declared with the type of a struct instead of a template. Such a property holds a *template*: any template that derives from the struct can be passed in, and using the property as a component instantiates the template that was passed:
-
-```cpp
-struct StreetLight(on_off: bool)
-
-template MyStreetLight : StreetLight {
-  prop color: Rgba = {100, 100, 100, 255}
-  if $on_off {
-    Emissive: {strength: 1, color: $color}
-  }
-}
-
-template Road {
-  prop street_light : template StreetLight
-
-  lamp {
-    street_light: {on_off: true}
-    Position3: {0, 6, 1.5}
-  }
-}
-
-Road my_road(street_light: MyStreetLight)
-```
-
-Here `my_road.lamp` gets a `MyStreetLight` component with `on_off` set to `true` and `color` at its default, and MyStreetLight's body runs for it. The struct acts as the interface between the template that uses the property and the template that fills it in: the initializer may only set members of the struct, and the value passed must be a template that derives from it - passing an unrelated template, a plain struct or no value at all is an error. In the template's component the property is stored as an entity, so it can be set from C with the template's id. A property of this kind can have a default (`prop street_light : template StreetLight = MyStreetLight`). When the property is used as a tag (`lamp { street_light }`), the id it holds is added without instantiating the template body, consistent with using a template as a tag.
-
-## Module statement
-The `module` statement puts all contents of a script in a module. Example:
-
-```cpp
-module components.transform
-
-// Creates components.transform.Position
-struct Position(x: f32, y: f32)
-```
-
-The `components.transform` entity will be created with the `Module` tag.
-
-The `module` statement must be the first statement of a script.
-
-## Include statement
-The `include` statement loads another script file. Example:
-
-```cpp
-include components
-include scenes/level_1.flecs
-```
-
-The path is resolved relative to the directory of the current script. Paths containing `..` and absolute paths are not allowed.
-
-If the included path does not end in `.flecs`, the extension is appended automatically.
-
-When `include` is used from a managed script (see [Managed script](#managed-script)), the included script is also loaded as a managed script. If a managed script at that path already exists, it is not loaded again. When used from a non-managed script, the included script is executed in place and no script entity is created.
-
-The `include` statement is only allowed at the root scope of a script, and cannot appear inside a template. It must appear before any statement other than `module` and other `include` statements.
-
-## Using statement
-The `using` keyword imports a namespace into the current namespace. Example:
-
-```cpp
-// Without using
-my_engine {
-  game.engines.FtlEngine: {active: true}
-}
-```
-```cpp
-// With using
-using game.engines
-
-my_engine {
-  FtlEngine: {active: true}
-}
-```
-
-A `using` statement must appear at the top of a script, after any `module` and `include` statements, and before any other statement. It is not allowed inside scopes or templates. Example:
-
-```cpp
-// OK
-using game.engines
-
-my_spaceship {
-  FtlEngine: {active: true}
-}
-```
-```cpp
-// Not OK: using may not appear inside a scope
-my_spaceship {
-  using game.engines
-
-  FtlEngine: {active: true}
-}
-```
-
-A `using` statement may end with a wildcard (`*`). This will import all namespaces matching the path. Example:
-
-```cpp
-using game.*
-
-my_engine {
-  FtlEngine: {active: true}
-}
 ```
 
 ## With statement
@@ -1490,368 +2357,6 @@ with Color(38, 25, 13) {
 }
 ```
 
-## Variables
-Scripts can contain variables, which are useful for often repeated values. Variables are created with the `const` keyword. Example:
-
-```cpp
-const pi = 3.1415926
-
-my_entity {
-  Rotation: {angle: pi}
-}
-```
-
-Variables can be combined with expressions:
-
-```cpp
-const pi = 3.1415926
-const pi_2 = $pi * 2
-
-my_entity {
-  Rotation: {angle: pi / 2}
-}
-```
-
-In the above examples, the type of the variable is inferred. Variables can also be provided with an explicit type:
-
-```cpp
-const wood: Color = {38, 25, 13}
-```
-
-When the name of a variable clashes with an entity, it can be disambiguated by prefixing the variable name with a `$`:
-
-```cpp
-const pi = 3.1415926
-const pi_2 = $pi * 2
-
-pi {
-  Rotation: {angle: $pi / 2}
-}
-```
-
-Variables can be used in component values as shown in the previous examples. To assign a variable to a component, use the variable as the component expression. The variable name must be prefixed with a `$`. Example:
-
-```cpp
-const wood: Color = {38, 25, 13}
-
-my_entity {
-  Color: $wood
-}
-
-// is equivalent to
-
-my_entity {
-  Color: {38, 25, 13}
-}
-```
-
-#### Exported variables
-Variables can be exported by prefixing a variable declaration with the `export` keyword. Exported variables can be accessed by the application and from other scripts. The following example shows an exported variable:
-
-```cpp
-// Script 1
-export const pi = 3.1415926
-```
-
-This variable can now be accessed from another script:
-
-```cpp
-// Script 2
-const pi_2 = pi * 2
-```
-
-Exported variables are created as children of the scope in which they are defined:
-
-```cpp
-math {
-  export const pi = 3.1415926
-}
-```
-
-This will make the variable available to other scripts as `math.pi`.
-
-The `ecs_const_var_init` function is used to create exported variables. The following example shows how the same variable can be created from C code:
-
-```cpp
-double pi_value = 3.1415926;
-
-ecs_const_var(world, {
-  .name = "pi",
-  .parent = ecs_lookup(world, "math"),
-  .type = ecs_id(ecs_f64_t),
-  .value = &pi_value
-});
-```
-
-Exported variables can be used as configuration that is loaded into an application from a script. The following example shows how to load an exported variable from C after it has been defined in a script or has been created with `ecs_const_var_init`:
-
-```cpp
-ecs_entity_t pi = ecs_lookup(world, "math.pi");
-ecs_value_t v = ecs_const_var_get(world, pi);
-double *value = v.ptr;
-if (value) {
-  // Use value
-}
-```
-
-The following example shows how exported variables can be used in combination with modules in C++:
-
-```cpp
-struct math {
-  inline static double pi;
-
-  math(flecs::world& world) {
-    world.script()
-      .filename("math.flecs")
-      .run();
-
-    world.const_var("pi", pi);
-  }
-}
-
-// Import module
-world.import<math>();
-
-
-// Use value
-double pi_2 = math::pi * 2;
-```
-
-#### Mutable exported variables
-An exported variable declared with `const` is a compile time constant. Its value
-is folded into every expression that uses it, which means that changing the value
-afterwards does not affect scripts that already ran.
-
-When a value has to change after a script ran, declare it with `mut` instead of
-`const`. The value of a `mut` variable is never folded, and scripts that use it
-are reevaluated when it changes:
-
-```cpp
-// Script 1
-export mut difficulty: f32 = 1.0
-```
-
-```cpp
-// Script 2
-enemy {
-  Health: {100 * difficulty}
-}
-```
-
-The `ecs_mut_var_init` function is used to create mutable exported variables from
-C code:
-
-```cpp
-float difficulty_value = 1.0;
-
-ecs_entity_t difficulty = ecs_mut_var(world, {
-  .name = "difficulty",
-  .type = ecs_id(ecs_f32_t),
-  .value = &difficulty_value
-});
-```
-
-To change the value of a mut variable, obtain a pointer to it with
-`ecs_mut_var_get`, and signal the change with `ecs_mut_var_modified`. Scripts
-that use the variable are reevaluated:
-
-```cpp
-ecs_value_t v = ecs_mut_var_get(world, difficulty);
-*(float*)v.ptr = 2.0;
-ecs_mut_var_modified(world, difficulty);
-```
-
-A script is also reevaluated by a change to a mut variable that it declares
-itself:
-
-```cpp
-export mut difficulty: f32 = 1.0
-
-enemy {
-  Health: {100 * difficulty}
-}
-```
-
-An `export mut` statement never has data dependencies, not even when its
-expression uses another mut variable. This means the statement is never
-reevaluated by a reactive event, and the variable keeps the value it was
-assigned after the script ran.
-
-## Component values
-A script can use the value of a component that is looked up on a specific entity. The following example fetches the `width` and `depth` members from the `Level` component, that is fetched from the `Game` entity:
-
-```cpp
-grid {
-  Grid: { Game[Level].width, Game[Level].depth }
-}
-```
-
-To reduce the number of component lookups in a script, the component value can be stored in a variable:
-
-```cpp
-const level = Game[Level]
-
-tiles {
-  Grid: { width: $level.width, $level.depth, prefab: Tile }
-}
-```
-
-The requested component is stored by value, not by reference. Adding or removing components to the entity will not invalidate the component data. If the requested component does not exist on the entity, script execution will fail.
-
-## If statement
-Parts of a script can be conditionally executed with an if statement. Example:
-
-```cpp
-const daytime: bool = false
-
-lantern {
-  Color: {210, 255, 200}
-
-  if $daytime {
-    Emissive: { value: 0 }
-  } else {
-    Emissive: { value: 1 }
-  }
-}
-```
-
-If statements can be chained with `else if`:
-
-```cpp
-const state = 0
-
-traffic_light {
-  if $state == 0 {
-    Color: {0, 1, 0}
-  } else if $state == 1 {
-    Color: {0.5, 0.5, 0}
-  } else if $state == 1 {
-    Color: {1, 0, 0}
-  }
-}
-```
-
-## For statement
-Parts of a script can be repeated with a for loop. Example:
-
-```cpp
-for i in 0..10 {
-  Lantern() {
-    Position: {x: $i * 5}
-  }
-}
-```
-
-The values specified in the range can be an expression:
-
-```cpp
-for i in 0..$count {
-  // ...
-}
-```
-
-When creating entities in a for loop, ensure that they are unique or the for loop will overwrite the same entity:
-
-```cpp
-for i in 0..10 {
-  // overwrites entity "e" 10 times
-  e: { Position: {x: $i * 5} }
-}
-```
-
-To avoid this, scripts can either create anonymous entities:
-
-```cpp
-for i in 0..10 {
-  // creates 10 anonymous entities
-  _ { Position: {x: $i * 5} }
-}
-```
-
-Or use a unique string expression for the entity name:
-
-```cpp
-for i in 0..10 {
-  // creates entities with names e_0, e_1, ... e_9
-  "e_$i" { Position: {x: $i * 5} }
-}
-```
-
-Ranges can also be enclosed in brackets:
-
-```cpp
-for i in [0..10] {
-  // ...
-}
-```
-
-A range loop can be given a second loop variable, in which case the first
-variable is the zero-based iteration index and the second variable is the range
-value:
-
-```cpp
-for (index, value) in [5..10] {
-  // (0, 5), (1, 6), ... (4, 9)
-}
-```
-
-### Collection iteration
-For loops can also iterate the elements of arrays, vectors and maps:
-
-```cpp
-for elem in arrayExpr {
-  _ { Position: {elem, elem * 2} }
-}
-```
-
-Arrays and vectors can be iterated with an additional index variable, which
-contains the zero-based index of the current element:
-
-```cpp
-for (index, elem) in arrayExpr {
-  "e_{index}" { Position: {elem, elem * 2} }
-}
-```
-
-Maps can be iterated with up to three loop variables. With a single variable
-the loop iterates the map values. When two variables are specified, the first
-variable contains the key of the current element. A third variable can be added
-in the middle, which contains the zero-based iteration index:
-
-```cpp
-for elem in mapExpr {
-  _ { Position: {elem, elem * 2} }
-}
-
-for (key, elem) in mapExpr {
-  "e_{key}" { Position: {elem, elem * 2} }
-}
-
-for (key, index, elem) in mapExpr {
-  "e_{key}" { Position: {index, elem * 2} }
-}
-```
-
-Note that the iteration order of maps is undefined.
-
-### Continue statement
-The `continue` statement skips the remaining statements of the current iteration and moves the loop to the next iteration:
-
-```cpp
-for i in 0..5 {
-  if i == 2 {
-    continue
-  }
-
-  // creates entities e_0, e_1, e_3 and e_4
-  "e_{i}" {}
-}
-```
-
-Entities and components that are not created because an iteration was skipped are deleted from the entities of a managed script, just like entities that are no longer created after a script is updated.
-
-A `continue` statement must appear inside the scope of a for loop. It is not allowed in the root scope of a script, in a template that is declared inside a for loop, or in a function body.
-
 ## Type definitions
 Scripts can define component types by using the type entities from the `flecs.meta` module (`struct`, `enum`, `bitmask`) as entity kind, followed by an initializer list that describes the type.
 
@@ -1886,47 +2391,15 @@ struct Points(values: {type: f32, count: 3})
 struct Car(speed: {f32, unit: flecs.units.Speed.KiloMetersPerHour})
 ```
 
-Since members are regular entities, a struct can also be defined by explicitly creating the member entities in the struct scope. The following example is equivalent to `struct Position(x: f32, y: f32)`:
-
-```cpp
-struct Position {
-  x { member: {type: f32} }
-  y { member: {type: f32} }
-}
-```
-
 #### Struct inheritance
 A struct can inherit the members of another struct by specifying a base struct after the struct name. The derived struct has all members of the base struct, followed by its own members:
 
 ```cpp
 struct Point(x: f32, y: f32)
 struct Point3D : Point(z: f32)
-
-// Same as
-struct Point3D(x: f32, y: f32, z: f32)
 ```
 
-Inheritance also works with the scope-based syntax:
-
-```cpp
-struct Point3D : Point {
-  z { member: {type: f32} }
-}
-```
-
-Under the hood inheritance adds an `(IsA, Point)` pair to the `Point3D` entity, which is picked up by the reflection framework. The members of the derived struct are laid out after the base struct, which matches the memory layout of a C struct that embeds the base struct as its first member.
-
-The base struct must be defined before the derived struct, a struct can only have one base struct, and a derived struct cannot redefine a member of its base.
-
-A value of a derived struct can be assigned to a variable, property, mutable or (nested) component member of the base struct type. The assignment copies the members of the base struct:
-
-```cpp
-const p: Point3D = {1, 2, 3}
-const q: Point = $p // {1, 2}
-
-my_entity { Point: $p }
-```
-
+In this example `Point3D` values will have `x`, `y` and `z` members. The `Point3D` type will have an `(IsA, Point)` relationship.
 
 ### Enums
 An enum is defined by listing its constants in the initializer list:
@@ -1974,71 +2447,118 @@ bitmask Flags(A: 1, B: 2, Both: 3)
 
 Bitmask constants are stored as `u32`, which cannot be overridden.
 
-## Semicolon operator
-Multiple statements can be combined on a single line when using the semicolon operator. Example:
-
-```cpp
-my_spaceship {
-  SpaceShip; HasFtl
-}
-```
-
 ## API
 This section goes over how to run scripts in an application.
 
 ### Run once
-To run a script once, use the `ecs_script_run` function. Example:
+To run a script once, use `ecs_script_run` in C or `world.script_run` in C++:
+
+<div class="flecs-snippet-tabs">
+<ul>
+<li><b class="tab-title">C</b>
+
+```c
+const char *code = "my_spaceship {}";
+
+if (ecs_script_run(world, "my_script_name", code, NULL)) {
+  ecs_err("script failed");
+}
+```
+</li>
+<li><b class="tab-title">C++</b>
 
 ```cpp
 const char *code = "my_spaceship {}";
 
-if (ecs_script_run(world, "my_script_name", code)) {
-  // error
+if (world.script_run("my_script_name", code)) {
+  ecs_err("script failed");
 }
 ```
+</li>
+</ul>
+</div>
 
-Alternatively a script can be ran directly from a file:
+Alternatively a script can be run directly from a file:
+
+<div class="flecs-snippet-tabs">
+<ul>
+<li><b class="tab-title">C</b>
+
+```c
+if (ecs_script_run_file(world, "my_script.flecs")) {
+  ecs_err("script failed");
+}
+```
+</li>
+<li><b class="tab-title">C++</b>
 
 ```cpp
-if (ecs_script_run_file(world, "my_script.flecs")) {
-  // error
+if (world.script_run_file("my_script.flecs")) {
+  ecs_err("script failed");
 }
 ```
+</li>
+</ul>
+</div>
 
 If a script fails, the entities created by the script will not be automatically deleted. When a script contains templates, script resources will not get cleaned up until the entities associated with the templates are deleted.
 
 ### Run multiple times
-A script can be ran multiple times by using the `ecs_script_parse` and `ecs_script_eval` functions. Example:
+A script can be run multiple times by parsing it once and evaluating it repeatedly. In C++, the returned `flecs::parsed_script` owns the parsed script and frees it when it goes out of scope. It can be moved, and must be destroyed before its world.
+
+<div class="flecs-snippet-tabs">
+<ul>
+<li><b class="tab-title">C</b>
+
+```c
+const char *code = "my_spaceship {}";
+
+ecs_script_t *script = ecs_script_parse(
+  world, "my_script_name", code, NULL, NULL);
+if (script) {
+  if (ecs_script_eval(script, NULL, NULL)) {
+    ecs_err("script failed");
+  }
+  if (ecs_script_eval(script, NULL, NULL)) {
+    ecs_err("script failed");
+  }
+  ecs_script_free(script);
+} else {
+  ecs_err("script parsing failed");
+}
+```
+</li>
+<li><b class="tab-title">C++</b>
 
 ```cpp
 const char *code = "my_spaceship {}";
 
-ecs_script_t *script = ecs_script_parse(
-  world, "my_script_name", code); 
-if (!script) {
-  // error
+auto script = world.script_parse("my_script_name", code);
+if (script) {
+  if (script.eval()) {
+    ecs_err("script failed");
+  }
+  if (script.eval()) {
+    ecs_err("script failed");
+  }
+} else {
+  ecs_err("script parsing failed");
 }
-
-if (ecs_script_eval(script)) {
-  // error
-}
-
-// Run again
-if (ecs_script_eval(script)) {
-}
-
-// Free script resources
-ecs_script_free(script);
 ```
+</li>
+</ul>
+</div>
 
 If a script fails, the entities created by the script will not be automatically deleted. When a script contains templates, script resources will not get cleaned up until the entities associated with the templates are deleted.
 
 ### Managed script
-Managed scripts are scripts that are associated with an entity, and can be ran multiple times. Entities created by a managed script are tagged with the script. When script execution fails, the entities associated with the script will be deleted. Additionally, if after executing the script again an entity is no longer created by the script, it will also be deleted.
+Managed scripts are scripts that are discoverable and modifiable in the world. A managed script is associated with an entity. To create a managed script, do:
 
-To run a managed script, do:
+<div class="flecs-snippet-tabs">
+<ul>
+<li><b class="tab-title">C</b>
 
-```cpp
+```c
 const char *code = "my_spaceship {}";
 
 ecs_entity_t s = ecs_script(world, {
@@ -2046,127 +2566,73 @@ ecs_entity_t s = ecs_script(world, {
 });
 
 if (!s) {
-  // the script entity could not be created, for example because the file
-  // provided in the filename member could not be opened
+  ecs_err("could not create script entity");
 }
 ```
-
-The `ecs_script` function only returns `0` when no script entity could be created at all. When the script code itself fails to parse or evaluate, the script entity is still returned, just like the script entity is kept when `ecs_script_update` fails. To find out whether the script code was evaluated successfully, test for the `EcsScriptError` tag, which is added to the script entity when parsing or evaluation failed and removed when the script evaluates successfully:
+</li>
+<li><b class="tab-title">C++</b>
 
 ```cpp
-ecs_entity_t s = ecs_script(world, {
-  .filename = "my_script.flecs"
-});
+const char *code = "my_spaceship {}";
 
-if (!s || ecs_has_id(world, s, EcsScriptError)) {
-  // error
+flecs::entity s = world.script()
+  .code(code)
+  .run();
+
+if (!s) {
+  ecs_err("could not create script entity");
 }
 ```
+</li>
+</ul>
+</div>
 
-The error message is stored in the `error` member of the `EcsScript` component:
+To load a managed script from a file, set `.filename = "game.flecs"` in C or use `.filename("game.flecs")` in C++ instead of setting the code. A missing file can prevent the script entity from being created.
 
-```cpp
-const EcsScript *script = ecs_get(world, s, EcsScript);
-if (script->error) {
-  printf("script failed: %s\n", script->error);
-}
-```
+To update the code of a managed script, use `ecs_script_update` in C or `world.script_update` in C++:
 
-To update the code of a managed script, use the `ecs_script_update` function:
-
-```cpp
-if (ecs_script_update(world, s, 0, new_code)) {
-  // error
-}
-```
-
-Just like `ecs_script`, a failed `ecs_script_update` keeps the script entity, adds the `EcsScriptError` tag to it, stores the error message in `EcsScript::error` and deletes the entities that were created by the script.
-
-When a script contains templates, script resources will not get cleaned up until the entities associated with the templates are deleted.
-
-Because a managed script keeps track of which statement created which component, a component may only be created for an entity from a single scope, or from scopes that are mutually exclusive. The following script is valid, as the two scopes are branches of the same `if` statement:
-
-```cpp
-if a {
-  item { Position: {10, 20} }
-} else {
-  item { Position: {30, 40} }
-}
-```
-
-The following script is not valid, as both scopes can be evaluated in the same run:
-
-```cpp
-if a {
-  item { Position: {10, 20} }
-}
-if b {
-  item { Position: {30, 40} }
-}
-```
-
-This only applies to statements that create a component. Declaring the same entity from two scopes is always valid, and so is assigning individual members of a component, which does not create the component:
-
-```cpp
-item {
-  Position: {1, 2}
-}
-if a {
-  item { Position: {x: 10} }
-}
-if b {
-  item { Position: {y: 20} }
-}
-```
-
-### Lenient loading
-By default a script fails when it uses a component, tag, member or function that is not registered in the world. This makes it hard for generic tooling (asset browsers, editors, viewers) to load the scripts of an application without also loading the application code that registers its components.
-
-Lenient loading relaxes this. It can be enabled for a world with `ecs_script_set_lenient`:
-
-```cpp
-ecs_script_set_lenient(world, true);
-
-if (ecs_script_run_file(world, "my_script.flecs")) {
-  // error
-}
-```
-
-It can also be enabled for a single script with the `lenient` member of `ecs_script_eval_desc_t`:
-
-```cpp
-ecs_script_eval_desc_t desc = { .lenient = true };
-ecs_script_t *script = ecs_script_parse(
-  world, "my_script_name", code, &desc, NULL);
-```
-
-and for a managed script with the `lenient` member of `ecs_script_desc_t`:
-
-```cpp
-ecs_entity_t s = ecs_script(world, {
-  .filename = "my_script.flecs",
-  .lenient = true
-});
-```
-
-In lenient mode the following applies:
-
-- A statement that adds an unresolved component or tag to an entity is parsed and discarded. Nothing is created in the world for the unknown name, so a later registration of the real component is unaffected.
-- A value assigned to an unresolved component, or to a component without reflection data, is parsed and discarded, including nested `{}` and `[]` blocks.
-- An unknown member in the value of a known component is parsed and discarded. The members that are known are still assigned.
-- An expression that uses an unresolved function, method, identifier or variable is discarded. When the expression belongs to a statement (such as the collection of a `for` statement) the statement is skipped, which means a `for` over an unresolvable collection iterates zero times.
-- A `prop`, `mut` or `const` declaration with an unresolved type is discarded, with or without a default value. The variable is not declared, which means later uses of it inside the template are treated as unresolved identifiers and are skipped like any other unresolved expression. A template `prop` that is dropped is not a member of the template, so assigning it when the template is instantiated is skipped as an unknown member.
-- References that are structural still cause an error. This includes `IsA` (inheritance) references, so `my_entity : MyPrefab {}` still fails when `MyPrefab` cannot be resolved.
-
-Every name that is skipped is reported once per script with `ecs_warn`, no matter how many times it occurs in the script.
-
-The entities in a script are still created in lenient mode, which means that hierarchies, template instances and the values of components that _are_ registered are loaded as usual:
+<div class="flecs-snippet-tabs">
+<ul>
+<li><b class="tab-title">C</b>
 
 ```c
-// Loaded without the game module, with lenient loading enabled
-my_lamppost {
-  Position: {x: 10, y: 20} // registered, assigned
-  Nightlight: {intensity: 3} // not registered, skipped
-  HoloCycle // not registered, skipped
+if (ecs_script_update(world, s, 0, new_code)) {
+  ecs_err("script update failed");
 }
 ```
+</li>
+<li><b class="tab-title">C++</b>
+
+```cpp
+if (world.script_update(s, new_code)) {
+  ecs_err("script update failed");
+}
+```
+</li>
+</ul>
+</div>
+
+When a managed script contains code that has errors, the managed script will still exist in the world. To discover whether a managed script has errors, use the following code:
+
+<div class="flecs-snippet-tabs">
+<ul>
+<li><b class="tab-title">C</b>
+
+```c
+const EcsScript *script = ecs_get(world, s, EcsScript);
+if (script->error) {
+  ecs_err("error: %s", script->error);
+}
+```
+</li>
+<li><b class="tab-title">C++</b>
+
+```cpp
+const flecs::Script& script = s.get<flecs::Script>();
+if (script.error) {
+  ecs_err("error: %s", script.error);
+}
+```
+</li>
+</ul>
+</div>

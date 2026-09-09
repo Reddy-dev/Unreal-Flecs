@@ -16,6 +16,23 @@
     },
     "test": {
         "testsuites": [{
+            "id": "Script",
+            "testcases": [
+                "function",
+                "function_scope_and_ctx",
+                "method",
+                "vector_function",
+                "const_var",
+                "vars_scope",
+                "mut_var_reactive",
+                "set_mut_var_invalid",
+                "parse_eval",
+                "parse_error",
+                "eval_error",
+                "parse_move",
+                "update"
+            ]
+        }, {
             "id": "PrettyFunction",
             "testcases": [
                 "component",
@@ -829,6 +846,9 @@
                 "get_count_direct",
                 "get_is_true_direct",
                 "get_first_direct",
+                "get_first_w_non_this_src",
+                "get_first_direct_w_non_this_src",
+                "get_first_skips_empty_results",
                 "each_w_no_this",
                 "named_query",
                 "named_scoped_query",
@@ -1205,7 +1225,9 @@
                 "fixed_src_w_each",
                 "fixed_src_w_run",
                 "untyped_field",
-                "reuse_observer_builder"
+                "reuse_observer_builder",
+                "single_term_observer_w_var_get_var_pair_second",
+                "single_term_observer_w_var_get_var_pair_first"
             ]
         }, {
             "id": "ComponentLifecycle",
@@ -1381,7 +1403,12 @@
                 "delete_module_w_explicit_component_and_system",
                 "module_has_singleton",
                 "rename_w_existing_entity_in_old_parent",
-                "rename_to_ancestor_w_existing_entity_in_old_parent"
+                "rename_to_ancestor_w_existing_entity_in_old_parent",
+                "nested_import_changes_scope_before_module_rename",
+                "nested_import_changes_scope_after_module_rename",
+                "scope_restored_after_import_w_nested_scope_change",
+                "nested_import_changes_scope_no_rename",
+                "rename_w_existing_component_in_old_parent"
             ]
         }, {
             "id": "ImplicitComponents",
@@ -1522,6 +1549,12 @@
                 "run_post_frame",
                 "component_w_low_id",
                 "get_set_log_level",
+                "log_warn_caller_file_line",
+                "log_err_caller_file_line",
+                "log_trace_caller_file_line",
+                "log_dbg_caller_file_line",
+                "log_push_caller_file_line",
+                "log_w_std_string_fmt",
                 "reset_world",
                 "id_from_pair_type",
                 "scope_w_name",
@@ -1555,7 +1588,9 @@
                 "get_type_info_T_tag",
                 "get_type_info_r_t_tag",
                 "get_type_info_R_t_tag",
-                "get_type_info_R_T_tag"
+                "get_type_info_R_T_tag",
+                "fini_w_scoped_component_added_to_builtin",
+                "fini_w_scoped_tag_added_to_builtin"
             ]
         }, {
             "id": "Singleton",
