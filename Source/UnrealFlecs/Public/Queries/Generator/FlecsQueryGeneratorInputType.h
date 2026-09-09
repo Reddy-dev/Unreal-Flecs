@@ -41,7 +41,8 @@ public:
 	
 	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const
 	{
-		solid_checkf(false, TEXT("FFlecsQueryGeneratorInputType::GetFlecsIdOutput: Pure virtual function called on base class! Did you forget to override it?"));
+		solid_checkf(false, 
+			TEXT("FFlecsQueryGeneratorInputType::GetFlecsIdOutput: Pure virtual function called on base class! Did you forget to override it?"));
 		return FFlecsId();
 	}
 	

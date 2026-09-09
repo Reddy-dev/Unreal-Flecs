@@ -150,10 +150,10 @@ namespace Solid
 			{ \
 				break; \
 			} \
-			 \
+			\
 			const int32 FromVersion = GetLinkerCustomVersion(F##ObjectType##CustomVersion::GUID); \
 			const int32 ToVersion = F##ObjectType##CustomVersion::LatestVersion; \
-			 \
+			\
 			if (Solid::FAssetMigrationRegistry::Get().Migrate(TSolidNotNull<UObject*>(this), FromVersion, ToVersion)) \
 			{ \
 				MarkPackageDirty(); \
