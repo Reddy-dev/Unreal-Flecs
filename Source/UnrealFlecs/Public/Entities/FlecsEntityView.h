@@ -602,7 +602,7 @@ public:
 	template <typename TSecond, UE::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst>
 	NO_DISCARD SOLID_INLINE bool IsEnabledPairSecond(const TFirst& InFirst) const
 	{
-		return GetEntityView().enabled_second<TSecond>(FFlecsEntityView::GetInputId(*this, InFirst));
+		return GetEntityView().enabled<TSecond>(FFlecsEntityView::GetInputId(*this, InFirst));
 	}
 
 	NO_DISCARD SOLID_INLINE FString GetName() const

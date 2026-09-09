@@ -28,36 +28,36 @@
 namespace flecs {
 
 namespace _ {
-    
-    template <Solid::TVariantStructConcept T>
-    inline const char* type_name() {
-        static const std::string cached = []{
-            return std::string(
-                StringCast<char>(*TBaseStructure<T>::Get()->GetStructCPPName()).Get()
-            );
-        }();
-        return cached.c_str();
-    }
-    
-    template <>
-    inline const char* type_name<FBox>() {
-        return "FBox";
-    }
-    
-    template <>
-    inline const char* type_name<FBoxSphereBounds>() {
-        return "FBoxSphereBounds";
-    }
-    
-    template <>
-    inline const char* type_name<FCapsuleShape>() {
-        return "FCapsuleShape";
-    }
-    
-    template <>
-    inline const char* type_name<FIntRect>() {
-        return "FIntRect";
-    }
+
+template <Solid::TVariantStructConcept T>
+inline const char* type_name() {
+    static const std::string cached = []{
+        return std::string(
+            StringCast<char>(*TBaseStructure<T>::Get()->GetStructCPPName()).Get()
+        );
+    }();
+    return cached.c_str();
+}
+
+template <>
+inline const char* type_name<FBox>() {
+    return "FBox";
+}
+
+template <>
+inline const char* type_name<FBoxSphereBounds>() {
+    return "FBoxSphereBounds";
+}
+
+template <>
+inline const char* type_name<FCapsuleShape>() {
+    return "FCapsuleShape";
+}
+
+template <>
+inline const char* type_name<FIntRect>() {
+    return "FIntRect";
+}
 
 template <typename T>
 inline const char* component_symbol_name() {
@@ -106,21 +106,21 @@ void register_lifecycle_actions(
 {
     (void)world; (void)component;
     if constexpr (!(std::is_trivially_default_constructible<T>::value &&
-            std::is_trivially_copyable<T>::value)) 
+        std::is_trivially_copyable<T>::value))
     {
         // If the component is non-trivial, register component lifecycle actions.
         // Depending on the type, not all callbacks may be available.
         ecs_type_hooks_t cl{};
-        cl.ctor = ctor<T>(cl.flags);
-        cl.dtor = dtor<T>(cl.flags);
+        cl.ctor = xtor<T, false>(cl.flags);
+        cl.dtor = xtor<T, true>(cl.flags);
 
-        cl.copy = copy<T>(cl.flags);
-        cl.copy_ctor = copy_ctor<T>(cl.flags);
-        cl.move = move<T>(cl.flags);
-        cl.move_ctor = move_ctor<T>(cl.flags);
+        cl.copy = transfer<T, false, false>(cl.flags);
+        cl.copy_ctor = transfer<T, false, true>(cl.flags);
+        cl.move = transfer<T, true, false>(cl.flags);
+        cl.move_ctor = transfer<T, true, true>(cl.flags);
 
-        cl.ctor_move_dtor = ctor_move_dtor<T>(cl.flags);
-        cl.move_dtor = move_dtor<T>(cl.flags);
+        cl.ctor_move_dtor = transfer<T, true, true, true>(cl.flags);
+        cl.move_dtor = transfer<T, true, false, true>(cl.flags);
 
         cl.flags &= ECS_TYPE_HOOKS_ILLEGAL;
         ecs_set_hooks_id(world, component, &cl);
@@ -138,63 +138,62 @@ inline ecs_cpp_type_action_t lifecycle_action() {
         std::is_trivially_copyable<T>::value)
     {
         return nullptr;
-    }
-    else {
+    } else {
         return &register_lifecycle_actions<T>;
     }
 }
-    
-    #ifdef FLECS_META
-    template <typename T, typename = void>
-    struct has_cpp_meta_desc : std::false_type {};
 
-    template <typename T>
-    struct has_cpp_meta_desc<T, decltype(void(
-        flecs_meta_cpp_desc(static_cast<T*>(nullptr))))> : std::true_type {};
-    #endif
+#ifdef FLECS_META
+template <typename T, typename = void>
+struct has_cpp_meta_desc : std::false_type {};
 
-    template <typename T>
-    inline ecs_cpp_type_action_t enum_action() {
-        #if FLECS_CPP_ENUM_REFLECTION_SUPPORT
-        #ifdef FLECS_META
-        if constexpr (has_cpp_meta_desc<T>::value) {
-            return nullptr;
-        } else
-        #endif
-        if constexpr (is_enum_v<T>) {
-            return &_::init_enum<T>;
-        } else {
-            return nullptr;
-        }
-        #else
+template <typename T>
+struct has_cpp_meta_desc<T, decltype(void(
+    flecs_meta_cpp_desc(static_cast<T*>(nullptr))))> : std::true_type {};
+#endif
+
+template <typename T>
+inline ecs_cpp_type_action_t enum_action() {
+#if FLECS_CPP_ENUM_REFLECTION_SUPPORT
+#ifdef FLECS_META
+    if constexpr (has_cpp_meta_desc<T>::value) {
         return nullptr;
-        #endif
+    } else
+#endif
+    if constexpr (is_enum_v<T>) {
+        return &_::init_enum<T>;
+    } else {
+        return nullptr;
     }
-    
-    #ifdef FLECS_META
+#else
+    return nullptr;
+#endif
+}
 
-    template <typename T>
-    inline void register_cpp_meta(ecs_world_t *world, ecs_entity_t component) {
-        (void)world; (void)component;
-        if constexpr (has_cpp_meta_desc<T>::value) {
-            ecs_type_kind_t kind = flecs_meta_cpp_kind(static_cast<T*>(nullptr));
-            if (kind == EcsStructType && ecs_has_id(world, component,
-                    ecs_id(EcsStruct))) {
-                return;
-                    }
-            if (kind == EcsEnumType && ecs_has_id(world, component,
-                    ecs_id(EcsEnum))) {
-                return;
-                    }
-            if (kind == EcsBitmaskType && ecs_has_id(world, component,
-                    ecs_id(EcsBitmask))) {
-                return;
-                    }
-            ecs_meta_from_desc(world, component, kind,
-                flecs_meta_cpp_desc(static_cast<T*>(nullptr)));
+#ifdef FLECS_META
+
+template <typename T>
+inline void register_cpp_meta(ecs_world_t *world, ecs_entity_t component) {
+    (void)world; (void)component;
+    if constexpr (has_cpp_meta_desc<T>::value) {
+        ecs_type_kind_t kind = flecs_meta_cpp_kind(static_cast<T*>(nullptr));
+        if (kind == EcsStructType && ecs_has_id(world, component,
+                ecs_id(EcsStruct))) {
+            return;
         }
+        if (kind == EcsEnumType && ecs_has_id(world, component,
+                ecs_id(EcsEnum))) {
+            return;
+        }
+        if (kind == EcsBitmaskType && ecs_has_id(world, component,
+                ecs_id(EcsBitmask))) {
+            return;
+        }
+        ecs_meta_from_desc(world, component, kind,
+            flecs_meta_cpp_desc(static_cast<T*>(nullptr)));
     }
-    #endif
+}
+#endif
 
 struct FLECS_API type_impl_data {
     bool s_set_values;
@@ -721,10 +720,10 @@ struct type_impl {
     template <typename T> bool     type_impl<T>::s_allow_tag( true );
     template <typename T> bool     type_impl<T>::s_enum_registered( false );
 
-// Front facing class for implicitly registering a component & obtaining
-// static component data
+// Front-facing class for implicitly registering a component and obtaining
+// static component data.
 
-// Regular type
+// Regular type.
 template <typename T>
 struct type<T, if_not_t< is_pair<T>::value >>
     : type_impl<base_type_t<T>> { };
@@ -772,7 +771,10 @@ struct untyped_component : entity {
      * @param world The world.
      * @param name The component name.
      */
-    explicit untyped_component(flecs::world_t *world, const char *name, const bool bUseLowId = true) // bUseLowId added Elie
+    explicit untyped_component(
+        flecs::world_t *world,
+        const char *name,
+        const bool bUseLowId = true)
     {
         world_ = world;
 
@@ -803,6 +805,10 @@ struct untyped_component : entity {
         id_ = ecs_entity_init(world, &desc);
     }
 
+    /** Get the type hooks for this component.
+     *
+     * @return The type hooks, or empty hooks if none are set.
+     */
     flecs::type_hooks_t get_hooks() const {
         const flecs::type_hooks_t* h = ecs_get_hooks_id(world_, id_);
         if (h) {
@@ -888,10 +894,11 @@ struct component : untyped_component {
         const char *name = nullptr,
         bool allow_tag = true,
         flecs::id_t id = 0,
-        bool bUseLowId = true) // bUseLowId added Elie
+        bool bUseLowId = true)
     {
         world_ = world;
-        id_ = _::type<T>::register_id(world, name, allow_tag, true, true, id, bUseLowId);
+        id_ = _::type<T>::register_id(
+            world, name, allow_tag, true, true, id, bUseLowId);
     }
 
     /** Register on_add hook.
@@ -901,16 +908,9 @@ struct component : untyped_component {
      */
     template <typename Func>
     component<T>& on_add(Func&& func) {
-        using Delegate = typename _::each_delegate<typename std::decay<Func>::type, T>;
-        flecs::type_hooks_t h = get_hooks();
-        ecs_assert(h.on_add == nullptr, ECS_INVALID_OPERATION,
-            "on_add hook is already set");
-        BindingCtx *ctx = get_binding_ctx(h);
-        h.on_add = Delegate::run_add;
-        ctx->on_add = FLECS_NEW(Delegate)(FLECS_FWD(func));
-        ctx->free_on_add = _::free_obj<Delegate>;
-        set_hooks(h);
-        return *this;
+        using Delegate = _::each_delegate<decay_t<Func>, T>;
+        return set_hook<Delegate, &flecs::type_hooks_t::on_add,
+            BindingCtx::OnAdd>(FLECS_FWD(func));
     }
 
     /** Register on_remove hook.
@@ -920,17 +920,9 @@ struct component : untyped_component {
      */
     template <typename Func>
     component<T>& on_remove(Func&& func) {
-        using Delegate = typename _::each_delegate<
-            typename std::decay<Func>::type, T>;
-        flecs::type_hooks_t h = get_hooks();
-        ecs_assert(h.on_remove == nullptr, ECS_INVALID_OPERATION,
-            "on_remove hook is already set");
-        BindingCtx *ctx = get_binding_ctx(h);
-        h.on_remove = Delegate::run_remove;
-        ctx->on_remove = FLECS_NEW(Delegate)(FLECS_FWD(func));
-        ctx->free_on_remove = _::free_obj<Delegate>;
-        set_hooks(h);
-        return *this;
+        using Delegate = _::each_delegate<decay_t<Func>, T>;
+        return set_hook<Delegate, &flecs::type_hooks_t::on_remove,
+            BindingCtx::OnRemove>(FLECS_FWD(func));
     }
 
     /** Register on_set hook.
@@ -940,17 +932,9 @@ struct component : untyped_component {
      */
     template <typename Func>
     component<T>& on_set(Func&& func) {
-        using Delegate = typename _::each_delegate<
-            typename std::decay<Func>::type, T>;
-        flecs::type_hooks_t h = get_hooks();
-        ecs_assert(h.on_set == nullptr, ECS_INVALID_OPERATION,
-            "on_set hook is already set");
-        BindingCtx *ctx = get_binding_ctx(h);
-        h.on_set = Delegate::run_set;
-        ctx->on_set = FLECS_NEW(Delegate)(FLECS_FWD(func));
-        ctx->free_on_set = _::free_obj<Delegate>;
-        set_hooks(h);
-        return *this;
+        using Delegate = _::each_delegate<decay_t<Func>, T>;
+        return set_hook<Delegate, &flecs::type_hooks_t::on_set,
+            BindingCtx::OnSet>(FLECS_FWD(func));
     }
 
     /** Register on_replace hook.
@@ -960,19 +944,11 @@ struct component : untyped_component {
      */
     template <typename Func>
     component<T>& on_replace(Func&& func) {
-        using Delegate = typename _::each_delegate<
-            typename std::decay<Func>::type, T, T>;
-        flecs::type_hooks_t h = get_hooks();
-        ecs_assert(h.on_replace == nullptr, ECS_INVALID_OPERATION,
-            "on_replace hook is already set");
-        BindingCtx *ctx = get_binding_ctx(h);
-        h.on_replace = Delegate::run_replace;
-        ctx->on_replace = FLECS_NEW(Delegate)(FLECS_FWD(func));
-        ctx->free_on_replace = _::free_obj<Delegate>;
-        set_hooks(h);
-        return *this;
+        using Delegate = _::each_delegate<decay_t<Func>, T, T>;
+        return set_hook<Delegate, &flecs::type_hooks_t::on_replace,
+            BindingCtx::OnReplace>(FLECS_FWD(func));
     }
-    
+
     /** Register on_validate hook.
      * The hook is invoked with signature bool(flecs::entity, T&) before the
      * on_set hook and OnSet observers are invoked. When the hook returns
@@ -984,17 +960,9 @@ struct component : untyped_component {
      */
     template <typename Func>
     component<T>& on_validate(Func&& func) {
-        using Delegate = _::validate_delegate<
-            typename std::decay<Func>::type, T>;
-        flecs::type_hooks_t h = get_hooks();
-        ecs_assert(h.on_validate == nullptr, ECS_INVALID_OPERATION,
-            "on_validate hook is already set");
-        BindingCtx *ctx = get_binding_ctx(h);
-        h.on_validate = Delegate::run;
-        ctx->on_validate = FLECS_NEW(Delegate)(FLECS_FWD(func));
-        ctx->free_on_validate = _::free_obj<Delegate>;
-        set_hooks(h);
-        return *this;
+        using Delegate = _::validate_delegate<decay_t<Func>, T>;
+        return set_hook<Delegate, &flecs::type_hooks_t::on_validate,
+            BindingCtx::OnValidate>(FLECS_FWD(func));
     }
 
     using untyped_component::on_compare;
@@ -1055,6 +1023,25 @@ struct component : untyped_component {
 
 private:
     using BindingCtx = _::component_binding_ctx;
+
+    template <typename Delegate, auto Hook, BindingCtx::Hook Slot, typename Func>
+    component<T>& set_hook(Func&& func) {
+        flecs::type_hooks_t h = get_hooks();
+        ecs_assert(h.*Hook == nullptr, ECS_INVALID_OPERATION,
+            "component hook is already set");
+        if constexpr (std::is_same_v<Delegate,
+            _::validate_delegate<decay_t<Func>, T>>)
+        {
+            h.*Hook = Delegate::run;
+        } else {
+            h.*Hook = Delegate::template run_hook<Slot>;
+        }
+        BindingCtx *ctx = get_binding_ctx(h);
+        ctx->callbacks[Slot] = FLECS_NEW(Delegate)(FLECS_FWD(func));
+        ctx->free[Slot] = _::free_obj<Delegate>;
+        set_hooks(h);
+        return *this;
+    }
 
     BindingCtx* get_binding_ctx(flecs::type_hooks_t& h){
         BindingCtx *result = static_cast<BindingCtx*>(h.binding_ctx);

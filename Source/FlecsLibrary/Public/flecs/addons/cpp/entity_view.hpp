@@ -488,6 +488,11 @@ struct entity_view : public id {
     bool enabled(Args... args) const {
         return ecs_is_enabled_id(world_, id_, _::make_id<T...>(world_, args...).id);
     }
+    
+    template <typename... T, typename... Args>
+    bool enabled_second(flecs::entity_t first, Args... args) const {
+        return enabled(first, _::type<T...>(world_, args...).id);
+    }
 
     /** Clone an entity.
      * Create a copy of the current entity with all of its components.

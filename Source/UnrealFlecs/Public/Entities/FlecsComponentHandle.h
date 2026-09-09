@@ -213,8 +213,8 @@ public:
 			const TSolidNotNull<FBindingContextType*> BindingContext = InSelf.GetBindingContext(Hooks);
 			
 			Hooks.on_add = FDelegateType::run_add;
-			BindingContext->on_add = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnAddFunction));
-			BindingContext->free_on_add = flecs::_::free_obj<FDelegateType>;
+			BindingContext->callbacks[FBindingContextType::OnAdd] = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnAddFunction));
+			BindingContext->free[FBindingContextType::OnAdd] = flecs::_::free_obj<FDelegateType>;
 		});
 		
 		return InSelf;
@@ -245,8 +245,8 @@ public:
 			const TSolidNotNull<FBindingContextType*> BindingContext = InSelf.GetBindingContext(Hooks);
 			
 			Hooks.on_remove = FDelegateType::run_remove;
-			BindingContext->on_remove = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnRemoveFunction));
-			BindingContext->free_on_remove = flecs::_::free_obj<FDelegateType>;
+			BindingContext->callbacks[FBindingContextType::OnRemove] = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnRemoveFunction));
+			BindingContext->free[FBindingContextType::OnRemove] = flecs::_::free_obj<FDelegateType>;
 		});
 		
 		return InSelf;
@@ -278,8 +278,8 @@ public:
 			const TSolidNotNull<FBindingContextType*> BindingContext = InSelf.GetBindingContext(Hooks);
 			
 			Hooks.on_set = FDelegateType::run_set;
-			BindingContext->on_set = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnSetFunction));
-			BindingContext->free_on_set = flecs::_::free_obj<FDelegateType>;
+			BindingContext->callbacks[FBindingContextType::OnSet] = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnSetFunction));
+			BindingContext->free[FBindingContextType::OnSet] = flecs::_::free_obj<FDelegateType>;
 		});
 		
 		return InSelf;
@@ -298,8 +298,8 @@ public:
 			const TSolidNotNull<FBindingContextType*> BindingContext = InSelf.GetBindingContext(Hooks);
 			
 			Hooks.on_replace = FDelegateType::run_replace;
-			BindingContext->on_replace = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnReplaceFunction));
-			BindingContext->free_on_replace = flecs::_::free_obj<FDelegateType>;
+			BindingContext->callbacks[FBindingContextType::OnReplace] = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnReplaceFunction));
+			BindingContext->free[FBindingContextType::OnReplace] = flecs::_::free_obj<FDelegateType>;
 		});
 		
 		return InSelf;
@@ -584,8 +584,8 @@ public:
 			const TSolidNotNull<FBindingContextType*> BindingContext = GetBindingContext(Hooks);
 			
 			Hooks.on_add = FDelegateType::run_add;
-			BindingContext->on_add = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnAddFunction));
-			BindingContext->free_on_add = flecs::_::free_obj<FDelegateType>;
+			BindingContext->callbacks[FBindingContextType::OnAdd] = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnAddFunction));
+			BindingContext->free[FBindingContextType::OnAdd] = flecs::_::free_obj<FDelegateType>;
 		});
 		
 		return *this;
@@ -604,8 +604,8 @@ public:
 			const TSolidNotNull<FBindingContextType*> BindingContext = GetBindingContext(Hooks);
 			
 			Hooks.on_remove = FDelegateType::run_remove;
-			BindingContext->on_remove = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnRemoveFunction));
-			BindingContext->free_on_remove = flecs::_::free_obj<FDelegateType>;
+			BindingContext->callbacks[FBindingContextType::OnRemove] = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnRemoveFunction));
+			BindingContext->free[FBindingContextType::OnRemove] = flecs::_::free_obj<FDelegateType>;
 		});
 		
 		return *this;
@@ -624,8 +624,8 @@ public:
 			const TSolidNotNull<FBindingContextType*> BindingContext = GetBindingContext(Hooks);
 			
 			Hooks.on_set = FDelegateType::run_set;
-			BindingContext->on_set = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnSetFunction));
-			BindingContext->free_on_set = flecs::_::free_obj<FDelegateType>;
+			BindingContext->callbacks[FBindingContextType::OnSet] = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnSetFunction));
+			BindingContext->free[FBindingContextType::OnSet] = flecs::_::free_obj<FDelegateType>;
 		});
 		
 		return *this;
@@ -644,8 +644,8 @@ public:
 			const TSolidNotNull<FBindingContextType*> BindingContext = GetBindingContext(Hooks);
 			
 			Hooks.on_replace = FDelegateType::run_replace;
-			BindingContext->on_replace = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnReplaceFunction));
-			BindingContext->free_on_replace = flecs::_::free_obj<FDelegateType>;
+			BindingContext->callbacks[FBindingContextType::OnReplace] = FLECS_NEW(FDelegateType)(FLECS_FWD(InOnReplaceFunction));
+			BindingContext->free[FBindingContextType::OnReplace] = flecs::_::free_obj<FDelegateType>;
 		});
 		
 		return *this;
