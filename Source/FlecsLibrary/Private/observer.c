@@ -556,8 +556,6 @@ static void flecs_multi_observer_invoke(
         return;
     }
 
-    ecs_os_perf_trace_push("flecs.multi_observer.invoke");
-
     ecs_table_t *table = it->table;
     ecs_table_t *prev_table = it->other_table;
 
@@ -696,7 +694,6 @@ static void flecs_multi_observer_invoke(
     }
 
 done:
-    ecs_os_perf_trace_pop("flecs.multi_observer.invoke");
     return;
 }
 
