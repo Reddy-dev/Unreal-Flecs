@@ -32,6 +32,8 @@ typedef struct ecs_stack_t {
     ecs_stack_cursor_t *tail_cursor; /**< Current tail cursor. */
 #ifdef FLECS_DEBUG
     int32_t cursor_count; /**< Number of active cursors (debug only). */
+    int32_t oversized_count; /**< Number of outstanding allocations that are
+                              *   too large for a page (debug only). */
 #endif
 } ecs_stack_t;
 
@@ -58,6 +60,9 @@ void flecs_stack_fini(
     ecs_stack_t *stack);
 
 /** Allocate memory from the stack.
+ *
+ * An allocation that may exceed FLECS_STACK_PAGE_SIZE must be paired with a
+ * call to flecs_stack_free. Restoring a cursor does not reclaim it.
  *
  * @param stack The stack allocator.
  * @param size The allocation size.
@@ -100,6 +105,9 @@ void* flecs_stack_calloc(
     flecs_stack_calloc(stack, ECS_SIZEOF(T) * count, ECS_ALIGNOF(T))
 
 /** Free memory allocated from the stack.
+ *
+ * This is a no-op for allocations that do not exceed FLECS_STACK_PAGE_SIZE, so
+ * it is always safe to call.
  *
  * @param ptr The pointer to free.
  * @param size The size of the allocation.

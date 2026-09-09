@@ -8,6 +8,8 @@
 
 #ifdef FLECS_META
 
+ecs_entity_t FlecsMeta = 0;
+
 void flecs_type_serializer_dtor(
     EcsTypeSerializer *ptr) 
 {
@@ -211,6 +213,7 @@ int flecs_init_type(
         if (meta_type->existing) {
             if(!ti->hooks.ctor) {
                 ti->hooks.ctor = flecs_default_ctor;
+                ti->hooks.flags |= ECS_TYPE_HOOK_CTOR;
             }
 
             if(kind == EcsEnumType) {
@@ -284,9 +287,13 @@ void FlecsMetaImport(
 {
     ECS_MODULE(world, FlecsMeta);
 
+    FlecsMeta = ecs_id(FlecsMeta);
+
     ecs_set_name_prefix(world, "Ecs");
 
     flecs_bootstrap_component(world, EcsTypeSerializer);
+    ecs_add_pair(world, ecs_id(EcsTypeSerializer), EcsOnInstantiate,
+        EcsDontInherit);
 
     ecs_entity_t type_component = ecs_entity(world, { .id = ecs_id(EcsType),
         .name = "type", .symbol = "EcsType" });

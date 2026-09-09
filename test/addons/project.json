@@ -517,7 +517,9 @@
                 "teardown_stopped",
                 "stop_start",
                 "decode_plus",
-                "query_params_max"
+                "query_params_max",
+                "headers_and_body",
+                "headers_max_with_body"
             ]
         }, {
             "id": "Rest",
@@ -529,8 +531,12 @@
                 "try_query",
                 "query",
                 "named_query",
+                "query_error_restores_log",
                 "call",
                 "call_string",
+                "call_zero_arguments",
+                "call_invalid_argument_after_string",
+                "call_argument_expression",
                 "call_missing_argument",
                 "call_not_found",
                 "entity_not_found_w_dot_sep",
@@ -549,6 +555,7 @@
                 "script_error_new_script_deferred",
                 "script_update",
                 "script_update_w_body",
+                "script_update_new_script",
                 "import_rest_after_mini",
                 "get_pipeline_stats_after_delete_system",
                 "request_world_summary_before_monitor_sys_run",

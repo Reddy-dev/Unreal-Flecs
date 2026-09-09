@@ -277,6 +277,7 @@ void Iter_page_iter_w_fini(void);
 void Iter_worker_iter_w_fini(void);
 void Iter_rule_page_iter_w_fini(void);
 void Iter_rule_worker_iter_w_fini(void);
+void Iter_uncached_query_w_many_vars_no_leak(void);
 
 // Testsuite 'Search'
 void Search_search(void);
@@ -340,6 +341,7 @@ void Event_enqueue_event_not_deferred_to_async(void);
 void Event_enqueue_custom_implicit_any(void);
 void Event_enqueue_custom_after_large_cmd(void);
 void Event_enqueue_on_readonly_world(void);
+void Event_enqueue_event_w_large_payload_no_leak(void);
 
 // Testsuite 'New'
 void New_setup(void);
@@ -680,6 +682,13 @@ void Sparse_fini_w_dont_fragment_pair_prefab_exclusive_delete_with(void);
 void Sparse_remove_childof_pair_w_dont_fragment_component(void);
 void Sparse_remove_zeroes_storage(void);
 void Sparse_instantiate_prefab_w_tag_on_add_observer(void);
+void Sparse_fini_w_dont_fragment_component_on_prefab_child(void);
+void Sparse_fini_w_dont_fragment_inherit_component_on_prefab_child(void);
+void Sparse_delete_instance_w_dont_fragment_component_on_prefab_child(void);
+void Sparse_fini_w_dont_fragment_component_on_prefab_child_w_up_query(void);
+void Sparse_fini_w_dont_fragment_component_w_isa_in_module(void);
+void Sparse_fini_w_dont_fragment_inherit_component_w_isa_in_module(void);
+void Sparse_fini_w_dont_fragment_component_w_isa_prefab_in_module(void);
 
 // Testsuite 'NonFragmentingChildOf'
 void NonFragmentingChildOf_set_parent_no_ordered_children(void);
@@ -700,6 +709,13 @@ void NonFragmentingChildOf_reparent_2_children(void);
 void NonFragmentingChildOf_delete_parent(void);
 void NonFragmentingChildOf_delete_parent_2_children(void);
 void NonFragmentingChildOf_mixed_childof(void);
+void NonFragmentingChildOf_convert_childof_to_parent_keeps_order(void);
+void NonFragmentingChildOf_set_same_parent_twice_keeps_order(void);
+void NonFragmentingChildOf_add_childof_to_parent_component_keeps_order(void);
+void NonFragmentingChildOf_deferred_set_same_parent_keeps_order(void);
+void NonFragmentingChildOf_deferred_convert_childof_to_parent_keeps_order(void);
+void NonFragmentingChildOf_remove_parent_then_add_childof_appends_last(void);
+void NonFragmentingChildOf_reparent_to_other_parent_appends_last(void);
 void NonFragmentingChildOf_delete_parent_w_mixed_childof(void);
 void NonFragmentingChildOf_delete_nested_parent(void);
 void NonFragmentingChildOf_delete_nested_mixed_parent(void);
@@ -859,11 +875,18 @@ void NonFragmentingChildOf_add_childof_to_parent_child(void);
 void NonFragmentingChildOf_add_parent_to_childof_child_same_parent(void);
 void NonFragmentingChildOf_add_childof_to_parent_child_same_parent(void);
 void NonFragmentingChildOf_new_w_parent_w_same_name_twice(void);
+void NonFragmentingChildOf_new_w_parent_named_after_delete(void);
 void NonFragmentingChildOf_defer_new_w_parent(void);
 void NonFragmentingChildOf_defer_new_w_parent_w_name(void);
 void NonFragmentingChildOf_defer_new_w_parent_w_same_name_twice(void);
 void NonFragmentingChildOf_new_w_parent_from_stage(void);
 void NonFragmentingChildOf_new_w_parent_w_name_from_stage(void);
+void NonFragmentingChildOf_new_w_parent_readonly_new_table(void);
+void NonFragmentingChildOf_new_w_parent_w_name_readonly_new_table(void);
+void NonFragmentingChildOf_delete_named_child_not_last_row(void);
+void NonFragmentingChildOf_delete_parent_w_named_children(void);
+void NonFragmentingChildOf_fini_w_named_children(void);
+void NonFragmentingChildOf_delete_parents_w_named_children(void);
 void NonFragmentingChildOf_prefab_instance_w_dont_fragment_tag(void);
 void NonFragmentingChildOf_prefab_instance_w_dont_fragment_component(void);
 void NonFragmentingChildOf_prefab_instance_w_inherit_dont_fragment_component(void);
@@ -944,6 +967,16 @@ void NonFragmentingChildOf_prefab_get_target_after_delete_instance_child(void);
 void NonFragmentingChildOf_defer_remove_add_batched_w_sibling_in_table(void);
 void NonFragmentingChildOf_instantiate_tree_after_rename_child(void);
 void NonFragmentingChildOf_fini_w_instantiated_prefab_non_fragmenting_child(void);
+void NonFragmentingChildOf_convert_childof_to_parent(void);
+void NonFragmentingChildOf_convert_childof_to_parent_3_children(void);
+void NonFragmentingChildOf_convert_childof_to_parent_3_children_remove_childof_first(void);
+void NonFragmentingChildOf_convert_childof_to_parent_3_children_w_ordered_children(void);
+void NonFragmentingChildOf_convert_childof_to_parent_nested(void);
+void NonFragmentingChildOf_convert_childof_to_parent_w_named_children(void);
+void NonFragmentingChildOf_remove_childof_after_convert_sibling(void);
+void NonFragmentingChildOf_up_not_observer_defer_remove_add_batched(void);
+void NonFragmentingChildOf_multi_term_up_observer_visits_all_siblings(void);
+void NonFragmentingChildOf_multi_term_up_observer_propagates_to_subtree(void);
 
 // Testsuite 'Hierarchies'
 void Hierarchies_setup(void);
@@ -1509,6 +1542,17 @@ void Singleton_trait_add_singleton_to_other(void);
 void Singleton_trait_add_singleton_pair_to_other(void);
 void Singleton_add_trait_after_in_use(void);
 void Singleton_add_trait_after_pair_in_use(void);
+void Singleton_has(void);
+void Singleton_has_component(void);
+void Singleton_add_pair(void);
+void Singleton_remove_pair(void);
+void Singleton_add_pair_exclusive(void);
+void Singleton_remove_pair_exclusive(void);
+void Singleton_set_get_pair(void);
+void Singleton_get_mut_pair(void);
+void Singleton_ensure_pair(void);
+void Singleton_emplace_pair(void);
+void Singleton_modified_pair(void);
 
 // Testsuite 'Clone'
 void Clone_empty(void);
@@ -1702,6 +1746,11 @@ void ComponentLifecycle_on_validate_blocks_modified(void);
 void ComponentLifecycle_on_validate_per_entity_in_bulk(void);
 void ComponentLifecycle_on_validate_false_blocks_on_set_deferred(void);
 void ComponentLifecycle_on_validate_true_invokes_on_set_deferred(void);
+void ComponentLifecycle_fini_w_cached_query_in_component(void);
+void ComponentLifecycle_fini_w_cached_query_in_component_on_entity(void);
+void ComponentLifecycle_fini_w_cached_query_in_component_on_remove_observer(void);
+void ComponentLifecycle_fini_w_uncached_query_in_component(void);
+void ComponentLifecycle_delete_component_w_cached_query_in_component(void);
 
 // Testsuite 'Pairs'
 void Pairs_disable_toggle_component_and_toggle_pair(void);
@@ -1968,6 +2017,21 @@ void Trigger_on_set_superset_after_filter_observer_w_on_add_isa_after_set(void);
 void Trigger_on_set_superset_after_filter_observer_w_on_add_2(void);
 
 // Testsuite 'Observer'
+void Observer_on_set_no_propagate_w_self_only_observer_on_child(void);
+void Observer_on_set_propagate_w_up_observer_on_child(void);
+void Observer_on_set_propagate_isa_w_up_observer_on_instance(void);
+void Observer_on_set_propagate_w_up_observer_created_after_entities(void);
+void Observer_on_set_no_propagate_after_up_observer_deleted(void);
+void Observer_nomatch_table_memo_alternating_tables(void);
+void Observer_up_isa_term_no_match_then_base_gains_component(void);
+void Observer_up_isa_term_alternating_match_and_no_match(void);
+void Observer_up_isa_not_term_base_gains_component(void);
+void Observer_nomatch_table_memo_after_table_delete(void);
+void Observer_multi_term_inheritable_component_owned(void);
+void Observer_multi_term_inheritable_component_w_not_term(void);
+void Observer_multi_term_inheritable_component_w_prefab_term(void);
+void Observer_multi_term_inheritable_component_from_base(void);
+void Observer_multi_term_inheritable_component_not_matched(void);
 void Observer_on_add_before_edge(void);
 void Observer_on_add_after_edge(void);
 void Observer_on_add_wildcard_before_edge(void);
@@ -3310,6 +3374,7 @@ void Poly_on_set_poly_system(void);
 
 // Testsuite 'Internals'
 void Internals_setup(void);
+void Internals_os_memset_n_w_expression_count(void);
 void Internals_deactivate_table(void);
 void Internals_activate_table(void);
 void Internals_activate_deactivate_table(void);
@@ -4433,6 +4498,10 @@ bake_test_case Iter_testcases[] = {
     {
         "rule_worker_iter_w_fini",
         Iter_rule_worker_iter_w_fini
+    },
+    {
+        "uncached_query_w_many_vars_no_leak",
+        Iter_uncached_query_w_many_vars_no_leak
     }
 };
 
@@ -4675,6 +4744,10 @@ bake_test_case Event_testcases[] = {
     {
         "enqueue_on_readonly_world",
         Event_enqueue_on_readonly_world
+    },
+    {
+        "enqueue_event_w_large_payload_no_leak",
+        Event_enqueue_event_w_large_payload_no_leak
     }
 };
 
@@ -5997,6 +6070,34 @@ bake_test_case Sparse_testcases[] = {
     {
         "instantiate_prefab_w_tag_on_add_observer",
         Sparse_instantiate_prefab_w_tag_on_add_observer
+    },
+    {
+        "fini_w_dont_fragment_component_on_prefab_child",
+        Sparse_fini_w_dont_fragment_component_on_prefab_child
+    },
+    {
+        "fini_w_dont_fragment_inherit_component_on_prefab_child",
+        Sparse_fini_w_dont_fragment_inherit_component_on_prefab_child
+    },
+    {
+        "delete_instance_w_dont_fragment_component_on_prefab_child",
+        Sparse_delete_instance_w_dont_fragment_component_on_prefab_child
+    },
+    {
+        "fini_w_dont_fragment_component_on_prefab_child_w_up_query",
+        Sparse_fini_w_dont_fragment_component_on_prefab_child_w_up_query
+    },
+    {
+        "fini_w_dont_fragment_component_w_isa_in_module",
+        Sparse_fini_w_dont_fragment_component_w_isa_in_module
+    },
+    {
+        "fini_w_dont_fragment_inherit_component_w_isa_in_module",
+        Sparse_fini_w_dont_fragment_inherit_component_w_isa_in_module
+    },
+    {
+        "fini_w_dont_fragment_component_w_isa_prefab_in_module",
+        Sparse_fini_w_dont_fragment_component_w_isa_prefab_in_module
     }
 };
 
@@ -6072,6 +6173,34 @@ bake_test_case NonFragmentingChildOf_testcases[] = {
     {
         "mixed_childof",
         NonFragmentingChildOf_mixed_childof
+    },
+    {
+        "convert_childof_to_parent_keeps_order",
+        NonFragmentingChildOf_convert_childof_to_parent_keeps_order
+    },
+    {
+        "set_same_parent_twice_keeps_order",
+        NonFragmentingChildOf_set_same_parent_twice_keeps_order
+    },
+    {
+        "add_childof_to_parent_component_keeps_order",
+        NonFragmentingChildOf_add_childof_to_parent_component_keeps_order
+    },
+    {
+        "deferred_set_same_parent_keeps_order",
+        NonFragmentingChildOf_deferred_set_same_parent_keeps_order
+    },
+    {
+        "deferred_convert_childof_to_parent_keeps_order",
+        NonFragmentingChildOf_deferred_convert_childof_to_parent_keeps_order
+    },
+    {
+        "remove_parent_then_add_childof_appends_last",
+        NonFragmentingChildOf_remove_parent_then_add_childof_appends_last
+    },
+    {
+        "reparent_to_other_parent_appends_last",
+        NonFragmentingChildOf_reparent_to_other_parent_appends_last
     },
     {
         "delete_parent_w_mixed_childof",
@@ -6710,6 +6839,10 @@ bake_test_case NonFragmentingChildOf_testcases[] = {
         NonFragmentingChildOf_new_w_parent_w_same_name_twice
     },
     {
+        "new_w_parent_named_after_delete",
+        NonFragmentingChildOf_new_w_parent_named_after_delete
+    },
+    {
         "defer_new_w_parent",
         NonFragmentingChildOf_defer_new_w_parent
     },
@@ -6728,6 +6861,30 @@ bake_test_case NonFragmentingChildOf_testcases[] = {
     {
         "new_w_parent_w_name_from_stage",
         NonFragmentingChildOf_new_w_parent_w_name_from_stage
+    },
+    {
+        "new_w_parent_readonly_new_table",
+        NonFragmentingChildOf_new_w_parent_readonly_new_table
+    },
+    {
+        "new_w_parent_w_name_readonly_new_table",
+        NonFragmentingChildOf_new_w_parent_w_name_readonly_new_table
+    },
+    {
+        "delete_named_child_not_last_row",
+        NonFragmentingChildOf_delete_named_child_not_last_row
+    },
+    {
+        "delete_parent_w_named_children",
+        NonFragmentingChildOf_delete_parent_w_named_children
+    },
+    {
+        "fini_w_named_children",
+        NonFragmentingChildOf_fini_w_named_children
+    },
+    {
+        "delete_parents_w_named_children",
+        NonFragmentingChildOf_delete_parents_w_named_children
     },
     {
         "prefab_instance_w_dont_fragment_tag",
@@ -7048,6 +7205,46 @@ bake_test_case NonFragmentingChildOf_testcases[] = {
     {
         "fini_w_instantiated_prefab_non_fragmenting_child",
         NonFragmentingChildOf_fini_w_instantiated_prefab_non_fragmenting_child
+    },
+    {
+        "convert_childof_to_parent",
+        NonFragmentingChildOf_convert_childof_to_parent
+    },
+    {
+        "convert_childof_to_parent_3_children",
+        NonFragmentingChildOf_convert_childof_to_parent_3_children
+    },
+    {
+        "convert_childof_to_parent_3_children_remove_childof_first",
+        NonFragmentingChildOf_convert_childof_to_parent_3_children_remove_childof_first
+    },
+    {
+        "convert_childof_to_parent_3_children_w_ordered_children",
+        NonFragmentingChildOf_convert_childof_to_parent_3_children_w_ordered_children
+    },
+    {
+        "convert_childof_to_parent_nested",
+        NonFragmentingChildOf_convert_childof_to_parent_nested
+    },
+    {
+        "convert_childof_to_parent_w_named_children",
+        NonFragmentingChildOf_convert_childof_to_parent_w_named_children
+    },
+    {
+        "remove_childof_after_convert_sibling",
+        NonFragmentingChildOf_remove_childof_after_convert_sibling
+    },
+    {
+        "up_not_observer_defer_remove_add_batched",
+        NonFragmentingChildOf_up_not_observer_defer_remove_add_batched
+    },
+    {
+        "multi_term_up_observer_visits_all_siblings",
+        NonFragmentingChildOf_multi_term_up_observer_visits_all_siblings
+    },
+    {
+        "multi_term_up_observer_propagates_to_subtree",
+        NonFragmentingChildOf_multi_term_up_observer_propagates_to_subtree
     }
 };
 
@@ -9233,6 +9430,50 @@ bake_test_case Singleton_testcases[] = {
     {
         "add_trait_after_pair_in_use",
         Singleton_add_trait_after_pair_in_use
+    },
+    {
+        "has",
+        Singleton_has
+    },
+    {
+        "has_component",
+        Singleton_has_component
+    },
+    {
+        "add_pair",
+        Singleton_add_pair
+    },
+    {
+        "remove_pair",
+        Singleton_remove_pair
+    },
+    {
+        "add_pair_exclusive",
+        Singleton_add_pair_exclusive
+    },
+    {
+        "remove_pair_exclusive",
+        Singleton_remove_pair_exclusive
+    },
+    {
+        "set_get_pair",
+        Singleton_set_get_pair
+    },
+    {
+        "get_mut_pair",
+        Singleton_get_mut_pair
+    },
+    {
+        "ensure_pair",
+        Singleton_ensure_pair
+    },
+    {
+        "emplace_pair",
+        Singleton_emplace_pair
+    },
+    {
+        "modified_pair",
+        Singleton_modified_pair
     }
 };
 
@@ -9991,6 +10232,26 @@ bake_test_case ComponentLifecycle_testcases[] = {
     {
         "on_validate_true_invokes_on_set_deferred",
         ComponentLifecycle_on_validate_true_invokes_on_set_deferred
+    },
+    {
+        "fini_w_cached_query_in_component",
+        ComponentLifecycle_fini_w_cached_query_in_component
+    },
+    {
+        "fini_w_cached_query_in_component_on_entity",
+        ComponentLifecycle_fini_w_cached_query_in_component_on_entity
+    },
+    {
+        "fini_w_cached_query_in_component_on_remove_observer",
+        ComponentLifecycle_fini_w_cached_query_in_component_on_remove_observer
+    },
+    {
+        "fini_w_uncached_query_in_component",
+        ComponentLifecycle_fini_w_uncached_query_in_component
+    },
+    {
+        "delete_component_w_cached_query_in_component",
+        ComponentLifecycle_delete_component_w_cached_query_in_component
     }
 };
 
@@ -11041,6 +11302,66 @@ bake_test_case Trigger_testcases[] = {
 };
 
 bake_test_case Observer_testcases[] = {
+    {
+        "on_set_no_propagate_w_self_only_observer_on_child",
+        Observer_on_set_no_propagate_w_self_only_observer_on_child
+    },
+    {
+        "on_set_propagate_w_up_observer_on_child",
+        Observer_on_set_propagate_w_up_observer_on_child
+    },
+    {
+        "on_set_propagate_isa_w_up_observer_on_instance",
+        Observer_on_set_propagate_isa_w_up_observer_on_instance
+    },
+    {
+        "on_set_propagate_w_up_observer_created_after_entities",
+        Observer_on_set_propagate_w_up_observer_created_after_entities
+    },
+    {
+        "on_set_no_propagate_after_up_observer_deleted",
+        Observer_on_set_no_propagate_after_up_observer_deleted
+    },
+    {
+        "nomatch_table_memo_alternating_tables",
+        Observer_nomatch_table_memo_alternating_tables
+    },
+    {
+        "up_isa_term_no_match_then_base_gains_component",
+        Observer_up_isa_term_no_match_then_base_gains_component
+    },
+    {
+        "up_isa_term_alternating_match_and_no_match",
+        Observer_up_isa_term_alternating_match_and_no_match
+    },
+    {
+        "up_isa_not_term_base_gains_component",
+        Observer_up_isa_not_term_base_gains_component
+    },
+    {
+        "nomatch_table_memo_after_table_delete",
+        Observer_nomatch_table_memo_after_table_delete
+    },
+    {
+        "multi_term_inheritable_component_owned",
+        Observer_multi_term_inheritable_component_owned
+    },
+    {
+        "multi_term_inheritable_component_w_not_term",
+        Observer_multi_term_inheritable_component_w_not_term
+    },
+    {
+        "multi_term_inheritable_component_w_prefab_term",
+        Observer_multi_term_inheritable_component_w_prefab_term
+    },
+    {
+        "multi_term_inheritable_component_from_base",
+        Observer_multi_term_inheritable_component_from_base
+    },
+    {
+        "multi_term_inheritable_component_not_matched",
+        Observer_multi_term_inheritable_component_not_matched
+    },
     {
         "on_add_before_edge",
         Observer_on_add_before_edge
@@ -16302,6 +16623,10 @@ bake_test_case Poly_testcases[] = {
 
 bake_test_case Internals_testcases[] = {
     {
+        "os_memset_n_w_expression_count",
+        Internals_os_memset_n_w_expression_count
+    },
+    {
         "deactivate_table",
         Internals_deactivate_table
     },
@@ -16580,7 +16905,7 @@ static bake_test_suite suites[] = {
         "Iter",
         NULL,
         NULL,
-        60,
+        61,
         Iter_testcases
     },
     {
@@ -16594,7 +16919,7 @@ static bake_test_suite suites[] = {
         "Event",
         NULL,
         NULL,
-        39,
+        40,
         Event_testcases
     },
     {
@@ -16636,7 +16961,7 @@ static bake_test_suite suites[] = {
         "Sparse",
         Sparse_setup,
         NULL,
-        232,
+        239,
         Sparse_testcases,
         1,
         Sparse_params
@@ -16645,7 +16970,7 @@ static bake_test_suite suites[] = {
         "NonFragmentingChildOf",
         NULL,
         NULL,
-        262,
+        286,
         NonFragmentingChildOf_testcases
     },
     {
@@ -16722,7 +17047,7 @@ static bake_test_suite suites[] = {
         "Singleton",
         NULL,
         NULL,
-        13,
+        24,
         Singleton_testcases
     },
     {
@@ -16736,7 +17061,7 @@ static bake_test_suite suites[] = {
         "ComponentLifecycle",
         ComponentLifecycle_setup,
         NULL,
-        166,
+        171,
         ComponentLifecycle_testcases
     },
     {
@@ -16757,7 +17082,7 @@ static bake_test_suite suites[] = {
         "Observer",
         NULL,
         NULL,
-        385,
+        400,
         Observer_testcases
     },
     {
@@ -16869,7 +17194,7 @@ static bake_test_suite suites[] = {
         "Internals",
         Internals_setup,
         NULL,
-        44,
+        45,
         Internals_testcases
     },
     {

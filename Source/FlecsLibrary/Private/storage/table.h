@@ -9,20 +9,6 @@
 #include "table_graph.h"
 
 #ifdef FLECS_SANITIZE
-#define ecs_vec_from_column(arg_column, table, arg_elem_size) {\
-    .array = (arg_column)->data,\
-    .count = table->data.count,\
-    .size = table->data.size,\
-    .elem_size = arg_elem_size\
-}
-
-#define ecs_vec_from_column_ext(arg_column, arg_count, arg_size, arg_elem_size) {\
-    .array = (arg_column)->data,\
-    .count = arg_count,\
-    .size = arg_size,\
-    .elem_size = arg_elem_size\
-}
-
 #define ecs_vec_from_entities(table) {\
     .array = table->data.entities,\
     .count = table->data.count,\
@@ -30,18 +16,6 @@
     .elem_size = ECS_SIZEOF(ecs_entity_t)\
 }
 #else
-#define ecs_vec_from_column(arg_column, table, arg_elem_size) {\
-    .array = (arg_column)->data,\
-    .count = table->data.count,\
-    .size = table->data.size,\
-}
-
-#define ecs_vec_from_column_ext(arg_column, arg_count, arg_size, arg_elem_size) {\
-    .array = (arg_column)->data,\
-    .count = arg_count,\
-    .size = arg_size,\
-}
-
 #define ecs_vec_from_entities(table) {\
     .array = table->data.entities,\
     .count = table->data.count,\
@@ -49,50 +23,16 @@
 }
 #endif
 
-#define ecs_vec_from_column_t(arg_column, table, T)\
-    ecs_vec_from_column(arg_column, table, ECS_SIZEOF(T))
-
-/* Table event type for notifying tables of world events */
-typedef enum ecs_table_eventkind_t {
-    EcsTableTriggersForId,
-    EcsTableNoTriggersForId,
-    EcsTableUpNotifyForId,
-} ecs_table_eventkind_t;
-
-typedef struct ecs_table_event_t {
-    ecs_table_eventkind_t kind;
-
-    /* Component info event */
-    ecs_entity_t component;
-
-    /* Event match */
-    ecs_entity_t event;
-
-    /* If the number of fields gets out of hand, this can be turned into a union
-     * but since events are very temporary objects, this works for now and makes
-     * initializing an event a bit simpler. */
-} ecs_table_event_t;
-
-/** Overrides (set if table overrides components) */
-
-/* Override type used for tables with a single IsA pair */
-typedef struct ecs_table_1_override_t {
-    const ecs_pair_record_t *pair;   /* Pair data for (IsA, base) */
-    int32_t generation;              /* Reachable cache generation for IsA pair */
-} ecs_table_1_override_t;
-
-/* Override type used for tables with n IsA pairs (less common) */
-typedef struct ecs_table_n_overrides_t {
-    const ecs_table_record_t *tr;    /* Table record for (IsA, *) */
-    int32_t *generations;            /* Reachable cache generations (one per IsA pair) */
-} ecs_table_n_overrides_t;
+typedef struct ecs_table_override_base_t {
+    const ecs_pair_record_t *pair;
+    int32_t generation;
+} ecs_table_override_base_t;
 
 typedef struct ecs_table_overrides_t {
-    union {
-        ecs_table_1_override_t _1;
-        ecs_table_n_overrides_t _n;
-    } is;
-    ecs_ref_t *refs;                 /* Refs to base components (one for each column) */
+    ecs_ref_t *refs;
+    int32_t count;
+    ecs_size_t size;
+    ecs_table_override_base_t bases[1];
 } ecs_table_overrides_t;
 
 /** Infrequently accessed data not stored inline in ecs_table_t */
@@ -259,12 +199,6 @@ void flecs_table_mark_dirty(
     ecs_world_t *world,
     ecs_table_t *table,
     ecs_entity_t component);
-
-void flecs_table_notify(
-    ecs_world_t *world,
-    ecs_table_t *table,
-    ecs_id_t id,
-    ecs_table_event_t *event);
 
 /* Increase traversable count of table */
 void flecs_table_traversable_add(

@@ -183,10 +183,21 @@ void ecs_vec_set_size(
             elem_count = v->count;
         }
 
-        elem_count = flecs_next_pow_of_2(elem_count);
-        if (elem_count < 2) {
-            elem_count = 2;
+        int32_t max_count = size ? (INT32_MAX / size) : INT32_MAX;
+        ecs_assert(elem_count >= 0 && elem_count <= max_count,
+            ECS_OUT_OF_RANGE,
+            "vector with element size %d cannot hold %d elements",
+            size, elem_count);
+
+        int32_t new_count = flecs_next_pow_of_2(elem_count);
+        if (new_count < 2) {
+            new_count = 2;
         }
+        if (new_count < elem_count || new_count > max_count) {
+            new_count = max_count;
+        }
+        elem_count = new_count;
+
         if (elem_count != v->size) {
             if (allocator) {
 #ifdef FLECS_SANITIZE
@@ -291,65 +302,40 @@ void ecs_vec_set_count_w_type_info(
         return;
     }
 
-    if (!ti->hooks.ctor_move_dtor) {
+    bool has_ctor = ti->hooks.ctor != NULL &&
+        !(ti->hooks.flags & ECS_TYPE_HOOK_CTOR_ILLEGAL);
+    bool has_dtor = ti->hooks.dtor != NULL &&
+        !(ti->hooks.flags & ECS_TYPE_HOOK_DTOR_ILLEGAL);
+
+    if (!ti->hooks.ctor_move_dtor && !has_ctor && !has_dtor) {
         /* Trivial type, use regular set_count */
         ecs_vec_set_count(allocator, v, size, elem_count);
         return;
     }
 
-    /* If array is large enough, we don't need to realloc. */
-    if (v->size > elem_count) {
-        if (elem_count > v->count) {
-            void *ptr = ECS_ELEM(v->array, size, v->count);
-            flecs_type_info_ctor(ptr, elem_count - v->count, ti);
+    int32_t old_count = v->count;
+    if (elem_count < old_count) {
+        flecs_type_info_dtor(ECS_ELEM(v->array, size, elem_count),
+            old_count - elem_count, ti);
+    } else {
+        if (elem_count > v->size) {
+            int32_t new_size = flecs_next_pow_of_2(elem_count);
+#ifdef FLECS_SANITIZE
+            const char *type_name = v->type_name;
+#else
+            const char *type_name = NULL;
+#endif
+            void *array = flecs_vec_alloc(allocator, size, new_size, type_name);
+            if (old_count) {
+                flecs_type_info_ctor_move_dtor(array, v->array, old_count, ti);
+            }
+            flecs_vec_free(allocator, size, v->size, v->array);
+            v->array = array;
+            v->size = new_size;
         }
-
-        if (elem_count < v->count) {
-            void *ptr = ECS_ELEM(v->array, size, elem_count);
-            flecs_type_info_dtor(ptr, v->count - elem_count, ti);
-        }
-
-        v->count = elem_count;
-        return;
+        flecs_type_info_ctor(ECS_ELEM(v->array, size, old_count),
+            elem_count - old_count, ti);
     }
-
-    /* Resize array. We can't use realloc because we need to call the move hook
-     * from the old to the new memory. */
-
-    /* Round up to next power of 2 so we don't allocate for each new element */
-    ecs_size_t new_size = flecs_next_pow_of_2(elem_count);
-
-    void *array = NULL;
-    #ifdef FLECS_SANITIZE
-    array = flecs_vec_alloc(allocator, size, new_size, v->type_name);
-    #else
-    array = flecs_vec_alloc(allocator, size, new_size, NULL);
-    #endif
-
-    int32_t move_count = elem_count;
-    if (move_count > v->count) {
-        move_count = v->count;
-    }
-
-    /* Move elements over to new array */
-    flecs_type_info_ctor_move_dtor(array, v->array, move_count, ti);
-
-    /* Destruct remaining elements in old array, if any */
-    if (move_count < v->count) {
-        void *ptr = ECS_ELEM(v->array, size, move_count);
-        flecs_type_info_dtor(ptr, v->count - move_count, ti);
-    }
-
-    /* Construct new elements, if any */
-    if (move_count < elem_count) {
-        void *ptr = ECS_ELEM(array, size, move_count);
-        flecs_type_info_ctor(ptr, elem_count - move_count, ti);
-    }
-
-    flecs_vec_free(allocator, size, v->size, v->array);
-
-    v->array = array;
-    v->size = new_size;
     v->count = elem_count;
 }
 

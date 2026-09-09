@@ -131,36 +131,6 @@ inline entity world::lookup(const char *name, const char *sep, const char *root_
     return flecs::entity(*this, e);
 }
 
-#ifndef obtain
-    /** Ensure a singleton component exists and return a mutable reference. */
-template <typename T>
-inline T& world::obtain() const {
-    flecs::entity e(world_, _::type<T>::id(world_));
-    return e.obtain<T>();
-}
-#endif
-
-/** Mark a singleton component as modified. */
-template <typename T>
-inline void world::modified() const {
-    flecs::entity e(world_, _::type<T>::id(world_));
-    e.modified<T>();
-}
-
-/** Set a pair component value on a singleton. */
-template <typename First, typename Second>
-inline void world::set(Second second, const First& value) const {
-    flecs::entity e(world_, _::type<First>::id(world_));
-    e.set<First>(second, value);
-}
-
-/** Set a pair component value on a singleton (move). */
-template <typename First, typename Second>
-inline void world::set(Second second, First&& value) const {
-    flecs::entity e(world_, _::type<First>::id(world_));
-    e.set<First>(second, value);
-}
-
 /** Get a ref for a singleton component. */
 template <typename T>
 inline ref<T> world::get_ref() const {
@@ -169,233 +139,6 @@ inline ref<T> world::get_ref() const {
 }
 
 /** Try to get a singleton value by component ID (returns nullptr if not found). */
-inline const void* world::try_get(flecs::id_t id) const {
-    flecs::entity e(world_, id);
-    return e.try_get(id);
-}
-
-/** Try to get a singleton pair value by first and second IDs (returns nullptr if not found). */
-inline const void* world::try_get(flecs::entity_t r, flecs::entity_t t) const {
-    flecs::entity e(world_, r);
-    return e.try_get(r, t);
-}
-
-/** Try to get a singleton component (returns nullptr if not found). */
-template <typename T>
-inline const T* world::try_get() const {
-    flecs::entity e(world_, _::type<T>::id(world_));
-    return e.try_get<T>();
-}
-
-/** Try to get a singleton pair component (returns nullptr if not found). */
-template <typename First, typename Second, typename P, typename A>
-inline const A* world::try_get() const {
-    flecs::entity e(world_, _::type<First>::id(world_));
-    return e.try_get<First, Second>();
-}
-
-/** Try to get a singleton pair component by second entity (returns nullptr if not found). */
-template <typename First, typename Second>
-inline const First* world::try_get(Second second) const {
-    flecs::entity e(world_, _::type<First>::id(world_));
-    return e.try_get<First>(second);
-}
-
-/** Get a singleton component value by component ID. */
-inline const void* world::get(flecs::id_t id) const {
-    flecs::entity e(world_, id);
-    return e.get(id);
-}
-
-/** Get a singleton pair component value by first and second IDs. */
-inline const void* world::get(flecs::entity_t r, flecs::entity_t t) const {
-    flecs::entity e(world_, r);
-    return e.get(r, t);
-}
-
-/** Get a singleton component. */
-template <typename T>
-inline const T& world::get() const {
-    flecs::entity e(world_, _::type<T>::id(world_));
-    return e.get<T>();
-}
-
-/** Get a singleton pair component. */
-template <typename First, typename Second, typename P, typename A>
-inline const A& world::get() const {
-    flecs::entity e(world_, _::type<First>::id(world_));
-    return e.get<First, Second>();
-}
-
-/** Get a singleton pair component by second entity. */
-template <typename First, typename Second>
-const First& world::get(Second second) const {
-    flecs::entity e(world_, _::type<First>::id(world_));
-    return e.get<First>(second);
-}
-
-/** Try to get a mutable singleton component by ID (returns nullptr if not found). */
-inline void* world::try_get_mut(flecs::id_t id) const {
-    flecs::entity e(world_, id);
-    return e.try_get_mut(id);
-}
-
-/** Try to get a mutable singleton pair component by first and second IDs (returns nullptr if not found). */
-inline void* world::try_get_mut(flecs::entity_t r, flecs::entity_t t) const {
-    flecs::entity e(world_, r);
-    return e.try_get_mut(r, t);
-}
-
-/** Try to get a mutable singleton component (returns nullptr if not found). */
-template <typename T>
-inline T* world::try_get_mut() const {
-    flecs::entity e(world_, _::type<T>::id(world_));
-    return e.try_get_mut<T>();
-}
-
-/** Try to get a mutable singleton pair component (returns nullptr if not found). */
-template <typename First, typename Second, typename P, typename A>
-inline A* world::try_get_mut() const {
-    flecs::entity e(world_, _::type<First>::id(world_));
-    return e.try_get_mut<First, Second>();
-}
-
-/** Try to get a mutable singleton pair component by second entity (returns nullptr if not found). */
-template <typename First, typename Second>
-inline First* world::try_get_mut(Second second) const {
-    flecs::entity e(world_, _::type<First>::id(world_));
-    return e.try_get_mut<First>(second);
-}
-
-/** Get a mutable singleton component by ID. */
-inline void* world::get_mut(flecs::id_t id) const {
-    flecs::entity e(world_, id);
-    return e.get_mut(id);
-}
-
-/** Get a mutable singleton pair component by first and second IDs. */
-inline void* world::get_mut(flecs::entity_t r, flecs::entity_t t) const {
-    flecs::entity e(world_, r);
-    return e.get_mut(r, t);
-}
-
-/** Get a mutable singleton component. */
-template <typename T>
-inline T& world::get_mut() const {
-    flecs::entity e(world_, _::type<T>::id(world_));
-    return e.get_mut<T>();
-}
-
-/** Get a mutable singleton pair component. */
-template <typename First, typename Second, typename P, typename A>
-inline A& world::get_mut() const {
-    flecs::entity e(world_, _::type<First>::id(world_));
-    return e.get_mut<First, Second>();
-}
-
-/** Get a mutable singleton pair component by second entity. */
-template <typename First, typename Second>
-inline First& world::get_mut(Second second) const {
-    flecs::entity e(world_, _::type<First>::id(world_));
-    return e.get_mut<First>(second);
-}
-
-/** Check for singleton component. */
-template <typename T>
-inline bool world::has() const {
-    flecs::entity e(world_, _::type<T>::id(world_));
-    return e.has<T>();
-}
-
-/** Check for singleton pair component. */
-template <typename First, typename Second>
-inline bool world::has() const {
-    flecs::entity e(world_, _::type<First>::id(world_));
-    return e.has<First, Second>();
-}
-
-/** Check for singleton pair component. */
-template <typename First>
-inline bool world::has(flecs::id_t second) const {
-    flecs::entity e(world_, _::type<First>::id(world_));
-    return e.has<First>(second);
-}
-
-/** Check for singleton pair by entity IDs. */
-inline bool world::has(flecs::id_t first, flecs::id_t second) const {
-    flecs::entity e(world_, first);
-    return e.has(first, second);
-}
-
-/** Check for singleton enum constant. */
-template <typename E, if_t< is_enum<E>::value > >
-inline bool world::has(E value) const {
-    flecs::entity e(world_, _::type<E>::id(world_));
-    return e.has(value);
-}
-
-/** Add a singleton component. */
-template <typename T>
-inline void world::add() const {
-    flecs::entity e(world_, _::type<T>::id(world_));
-    e.add<T>();
-}
-
-/** Add a singleton pair component. */
-template <typename First, typename Second>
-inline void world::add() const {
-    flecs::entity e(world_, _::type<First>::id(world_));
-    e.add<First, Second>();
-}
-
-/** Add a singleton pair component. */
-template <typename First>
-inline void world::add(flecs::entity_t second) const {
-    flecs::entity e(world_, _::type<First>::id(world_));
-    e.add<First>(second);
-}
-
-/** Add a singleton pair by entity IDs. */
-inline void world::add(flecs::entity_t first, flecs::entity_t second) const {
-    flecs::entity e(world_, first);
-    e.add(first, second);
-}
-
-/** Add a singleton enum constant value. */
-template <typename E, if_t< is_enum<E>::value > >
-inline void world::add(E value) const {
-    flecs::entity e(world_, _::type<E>::id(world_));
-    e.add(value);
-}
-
-/** Remove a singleton component. */
-template <typename T>
-inline void world::remove() const {
-    flecs::entity e(world_, _::type<T>::id(world_));
-    e.remove<T>();
-}
-
-/** Remove a singleton pair component. */
-template <typename First, typename Second>
-inline void world::remove() const {
-    flecs::entity e(world_, _::type<First>::id(world_));
-    e.remove<First, Second>();
-}
-
-/** Remove a singleton pair component by second entity. */
-template <typename First>
-inline void world::remove(flecs::entity_t second) const {
-    flecs::entity e(world_, _::type<First>::id(world_));
-    e.remove<First>(second);
-}
-
-/** Remove a singleton pair by entity IDs. */
-inline void world::remove(flecs::entity_t first, flecs::entity_t second) const {
-    flecs::entity e(world_, first);
-    e.remove(first, second);
-}
-
-/** Iterate over children of the root entity. */
 template <typename Func>
 inline void world::children(Func&& f) const {
     this->entity(0).children(FLECS_FWD(f));
@@ -471,7 +214,7 @@ inline flecs::entity enum_data<E>::entity() const {
 /** Get the entity for an enum constant by underlying_type value. */
 template <typename E>
 inline flecs::entity enum_data<E>::entity(underlying_type_t<E> value) const {
-    /*int index = index_by_value(value);
+    int index = index_by_value(value);
     if (index >= 0) {
 #ifdef FLECS_MULTI_WORLD
         int32_t constant_i = impl_.constants[index].index;
@@ -480,18 +223,10 @@ inline flecs::entity enum_data<E>::entity(underlying_type_t<E> value) const {
         flecs::entity_t entity = impl_.constants[index].id;
 #endif
         return flecs::entity(world_, entity);
-    }*/
+    }
 #ifdef FLECS_META
-    // Reflection data lookup failed. Try a value lookup among flecs::Constant relationships.
-    flecs::world world = flecs::world(world_);
-    return world.query_builder()
-        .with(flecs::ChildOf, world.id<E>())
-        .with(flecs::Constant, world.id<underlying_type_t<E>>())
-        .build()
-        .find([value](flecs::entity constant) {
-            const int32_t& constant_value = constant.get_second<underlying_type_t<E>>(flecs::Constant);
-            return value == static_cast<underlying_type_t<E>>(constant_value);
-        });
+    return flecs::entity(world_, ecs_constant_to_entity_id(
+        world_, _::type<E>::id(world_), static_cast<int64_t>(value)));
 #else
     return flecs::entity::null(world_);
 #endif

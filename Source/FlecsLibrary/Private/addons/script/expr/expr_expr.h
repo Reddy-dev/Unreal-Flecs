@@ -15,11 +15,6 @@ int flecs_value_copy_to(
     ecs_value_t *dst,
     const ecs_expr_value_t *src);
 
-int flecs_value_move_to(
-    ecs_world_t *world,
-    ecs_value_t *dst,
-    ecs_value_t *src);
-
 int flecs_value_binary(
     const ecs_script_t *script,
     const ecs_expr_node_t *node,
@@ -44,17 +39,13 @@ const char* flecs_script_parse_initializer(
     ecs_parser_t *parser,
     const char *pos,
     char until,
-    ecs_expr_initializer_t **node_out);
+    ecs_expr_node_t **node_out);
 
 const char* flecs_expr_format_parse(
     ecs_parser_t *parser,
     const char *pos,
     ecs_expr_format_t *format,
     const ecs_expr_eval_desc_t *desc);
-
-void flecs_expr_format_fini(
-    ecs_script_t *script,
-    ecs_expr_format_t *format);
 
 int flecs_expr_format_value(
     const ecs_script_t *script,
@@ -86,6 +77,18 @@ bool flecs_expr_is_type_integer(
 bool flecs_expr_is_type_number(
     ecs_entity_t type);
 
+bool flecs_expr_is_type_signed_integer(
+    ecs_entity_t type);
+
+bool flecs_expr_is_type_unsigned_integer(
+    ecs_entity_t type);
+
+bool flecs_expr_is_type_float(
+    ecs_entity_t type);
+
+bool flecs_expr_is_type_string(
+    ecs_entity_t type);
+
 ecs_size_t flecs_expr_storage_size(
     ecs_entity_t type);
 
@@ -96,7 +99,7 @@ int flecs_expr_initializer_validate_assign(
     ecs_entity_t type,
     ecs_size_t value_size);
 
-ecs_expr_member_t* flecs_expr_expand_swizzle_get(
+ecs_expr_swizzle_t* flecs_expr_expand_swizzle_get(
     ecs_expr_node_t *node);
 
 #endif

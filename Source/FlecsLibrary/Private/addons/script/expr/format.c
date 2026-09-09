@@ -37,14 +37,12 @@ static bool flecs_expr_format_identifier_exists(
     char ch = end[0];
     end[0] = '\0';
 
-    bool result = flecs_script_find_var(desc->vars, start, NULL) != NULL;
-    if (!result && !is_variable && desc->lookup_action) {
-        ecs_script_t *script = &parser->script->pub;
-        ecs_entity_t entity = desc->lookup_action(
-            script->world, start, desc->lookup_ctx);
-        result = entity && ecs_get(
-            script->world, entity, EcsScriptConstVar) != NULL;
-    }
+    ecs_script_t *script = &parser->script->pub;
+    flecs_script_symbol_t symbol;
+    bool result = !flecs_script_symbol_lookup(script, desc, 0, start,
+        is_variable ? FlecsScriptLookupVariable : FlecsScriptLookupAll,
+        &symbol) && (symbol.kind == FlecsScriptSymbolVariable ||
+            symbol.kind == FlecsScriptSymbolGlobalVariable);
 
     end[0] = ch;
     return result;
@@ -62,15 +60,6 @@ static void flecs_expr_format_parse_error(
     }
     ecs_parser_error(parser->name, parser->code,
         column, "%s", message);
-}
-
-void flecs_expr_format_fini(
-    ecs_script_t *script,
-    ecs_expr_format_t *format)
-{
-    flecs_expr_visit_free(script, format->width);
-    flecs_expr_visit_free(script, format->precision);
-    ecs_os_zeromem(format);
 }
 
 const char* flecs_expr_format_parse(
@@ -257,39 +246,91 @@ int flecs_expr_format_value(
         return -1;
     }
 
-    double number;
-    if (value->type == ecs_id(ecs_f32_t)) {
-        number = (double)*(ecs_f32_t*)value->ptr;
-    } else if (value->type == ecs_id(ecs_f64_t)) {
-        number = *(ecs_f64_t*)value->ptr;
-    } else {
-        flecs_expr_visit_error(script, node,
-            "format specifiers require an f32 or f64 value");
-        return -1;
-    }
+    ecs_entity_t type = value->type;
+    char *str = NULL;
 
-    char printf_fmt[8];
-    char *fmt_ptr = printf_fmt;
-    fmt_ptr[0] = '%';
-    fmt_ptr ++;
-    if (format->sign) {
-        fmt_ptr[0] = '+';
+    if (flecs_expr_is_type_float(type)) {
+        double number;
+        if (type == ecs_id(ecs_f32_t)) {
+            number = (double)*(ecs_f32_t*)value->ptr;
+        } else {
+            number = *(ecs_f64_t*)value->ptr;
+        }
+
+        char printf_fmt[8];
+        char *fmt_ptr = printf_fmt;
+        fmt_ptr[0] = '%';
         fmt_ptr ++;
-    }
-    if (precision >= 0) {
-        fmt_ptr[0] = '.';
-        fmt_ptr[1] = '*';
-        fmt_ptr += 2;
-    }
-    fmt_ptr[0] = format->notation ? format->notation : 'f';
-    fmt_ptr[1] = '\0';
+        if (format->sign) {
+            fmt_ptr[0] = '+';
+            fmt_ptr ++;
+        }
+        if (precision >= 0) {
+            fmt_ptr[0] = '.';
+            fmt_ptr[1] = '*';
+            fmt_ptr += 2;
+        }
+        fmt_ptr[0] = format->notation ? format->notation : 'f';
+        fmt_ptr[1] = '\0';
 
-    char *str;
-    if (precision >= 0) {
-        str = flecs_asprintf(printf_fmt, precision, number);
+        if (precision >= 0) {
+            str = flecs_asprintf(printf_fmt, precision, number);
+        } else {
+            str = flecs_asprintf(printf_fmt, number);
+        }
+    } else if (flecs_expr_is_type_string(type)) {
+        if (format->precision) {
+            flecs_expr_visit_error(script, node,
+                "precision is only supported for f32 and f64 values");
+            return -1;
+        }
+        if (format->notation) {
+            flecs_expr_visit_error(script, node,
+                "scientific notation is only supported for f32 and f64 values");
+            return -1;
+        }
+        char *value_str = *(char**)value->ptr;
+        str = ecs_os_strdup(value_str ? value_str : "null");
     } else {
-        str = flecs_asprintf(printf_fmt, number);
+        if (format->precision) {
+            flecs_expr_visit_error(script, node,
+                "precision is only supported for f32 and f64 values");
+            return -1;
+        }
+        if (format->notation) {
+            flecs_expr_visit_error(script, node,
+                "scientific notation is only supported for f32 and f64 values");
+            return -1;
+        }
+
+        if (type == ecs_id(ecs_bool_t)) {
+            str = ecs_os_strdup(
+                *(ecs_bool_t*)value->ptr ? "true" : "false");
+        } else if (type == ecs_id(ecs_char_t)) {
+            char ch[2] = { *(ecs_char_t*)value->ptr, '\0' };
+            str = ecs_os_strdup(ch);
+        } else {
+            bool is_signed = flecs_expr_is_type_signed_integer(type);
+
+            if (!is_signed && !flecs_expr_is_type_unsigned_integer(type)) {
+                flecs_expr_visit_error(script, node,
+                    "format specifiers require a number or string value");
+                return -1;
+            }
+
+            ecs_meta_cursor_t cur = ecs_meta_cursor(
+                script->world, type, value->ptr);
+
+            if (is_signed) {
+                str = flecs_asprintf(format->sign ? "%+lld" : "%lld",
+                    (long long)ecs_meta_get_int(&cur));
+            } else {
+                str = flecs_asprintf(format->sign ? "+%llu" : "%llu",
+                    (unsigned long long)ecs_meta_get_uint(&cur));
+            }
+        }
     }
+
     if (!str) {
         return -1;
     }

@@ -678,6 +678,12 @@
                 "3_trivial_w_prefab",
                 "2_trivial_w_disabled",
                 "3_trivial_w_disabled",
+                "1_component_w_match_prefab_flag",
+                "1_tag_w_match_prefab_flag",
+                "1_tag_w_match_prefab_flag_uncached",
+                "1_tag_w_match_prefab_flag_cached",
+                "1_tag_w_match_disabled_flag",
+                "2_terms_w_match_prefab_flag",
                 "2_this_w_fixed_src",
                 "2_fixed_src_w_this",
                 "2_this_w_fixed_src_no_match_fixed",
@@ -1129,7 +1135,8 @@
                 "set_var_id_31",
                 "invalid_var_name_in_pair",
                 "invalid_var_name_w_toggle_cascade",
-                "invalid_var_name_w_neq"
+                "invalid_var_name_w_neq",
+                "first_var_w_fixed_tgt_id_matching_var_id"
             ]
         }, {
             "id": "Operators",
@@ -1949,7 +1956,11 @@
                 "match_after_defer_add_to_parent",
                 "unmatch_after_defer_remove_from_parent",
                 "unmatch_after_delete_traversable_target",
-                "unmatch_after_delete_traversable_target_parent"
+                "unmatch_after_delete_traversable_target_parent",
+                "no_rematch_on_instantiate",
+                "no_rematch_on_instantiate_multi_up",
+                "no_rematch_on_instantiate_child",
+            "self_term_w_inheritable_component"
             ]
         }, {
             "id": "ChangeDetection",

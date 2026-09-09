@@ -101,6 +101,7 @@ void EnumTypes_constant_to_entity_w_bitmask(void);
 
 // Testsuite 'BitmaskTypes'
 void BitmaskTypes_bitmask_1_constant(void);
+void BitmaskTypes_update_constant(void);
 void BitmaskTypes_bitmask_2_constants(void);
 void BitmaskTypes_bitmask_3_constants(void);
 void BitmaskTypes_bitmask_4_constants(void);
@@ -164,6 +165,9 @@ void RuntimeTypes_map_lifecycle(void);
 void RuntimeTypes_map_lifecycle_trivial_type(void);
 void RuntimeTypes_map_lifecycle_alloc_values(void);
 void RuntimeTypes_map_cmp_illegal(void);
+void RuntimeTypes_existing_struct_w_vector_member_no_hooks(void);
+void RuntimeTypes_existing_struct_w_vector_member_shallow_copy(void);
+void RuntimeTypes_existing_struct_w_vector_member_not_freed(void);
 
 // Testsuite 'StructTypes'
 void StructTypes_i32(void);
@@ -204,6 +208,8 @@ void StructTypes_direct_cycle(void);
 void StructTypes_indirect_cycle(void);
 void StructTypes_use_before_registering_reflection(void);
 void StructTypes_use_before_registering_reflection_w_hooks(void);
+void StructTypes_redefine_same_members_in_use(void);
+void StructTypes_redefine_member_after_nested_type_changed(void);
 
 // Testsuite 'NestedStructTypes'
 void NestedStructTypes_1_bool(void);
@@ -375,6 +381,15 @@ void Serialized_ops_struct_w_map(void);
 // Testsuite 'Cursor'
 void Cursor_set_value_enum_u8_underlying(void);
 void Cursor_get_char(void);
+void Cursor_set_value_derived_to_base(void);
+void Cursor_set_value_base_to_derived_fails(void);
+void Cursor_set_value_grandparent_to_derived_fails(void);
+void Cursor_set_value_derived_to_grandparent(void);
+void Cursor_set_value_base_to_derived_w_string_fails(void);
+void Cursor_set_value_derived_to_base_w_string(void);
+void Cursor_set_value_unrelated_struct_fails(void);
+void Cursor_set_value_base_to_derived_member_fails(void);
+void Cursor_set_value_derived_to_base_member(void);
 void Cursor_set_bool(void);
 void Cursor_set_byte(void);
 void Cursor_set_char(void);
@@ -481,6 +496,10 @@ void Cursor_vector_i32_1_next(void);
 void Cursor_vector_i32_3(void);
 void Cursor_vector_i32_empty_after_3(void);
 void Cursor_vector_struct_3(void);
+void Cursor_vector_struct_w_string_grow(void);
+void Cursor_vector_struct_w_string_grow_after_shrink(void);
+void Cursor_vector_struct_w_ctor_grow(void);
+void Cursor_vector_struct_w_dtor_grow_shrink(void);
 void Cursor_vector_move_primitive(void);
 void Cursor_vector_move_struct(void);
 void Cursor_struct_w_vector_i32_3(void);
@@ -647,6 +666,7 @@ void Cursor_value_api_move_ctor(void);
 void Cursor_value_component_lifecycle(void);
 
 // Testsuite 'DeserializeFromJson'
+void DeserializeFromJson_restore_removes_trailing_tag_with_observer(void);
 void DeserializeFromJson_string_w_unknown_escape_large(void);
 void DeserializeFromJson_u64_max_roundtrip(void);
 void DeserializeFromJson_f64_nan_roundtrip(void);
@@ -946,6 +966,7 @@ void SerializeToJson_ecs_struct_2_members(void);
 void SerializeToJson_ecs_struct_3_members(void);
 
 // Testsuite 'SerializeEntityToJson'
+void SerializeEntityToJson_serialize_more_than_256_components(void);
 void SerializeEntityToJson_serialize_empty(void);
 void SerializeEntityToJson_serialize_w_name(void);
 void SerializeEntityToJson_serialize_w_name_1_tag(void);
@@ -1048,6 +1069,7 @@ void SerializeEntityToJson_serialize_w_quote_in_parent_name(void);
 void SerializeEntityToJson_serialize_w_quote_in_alert_message(void);
 
 // Testsuite 'SerializeIterToJson'
+void SerializeIterToJson_table_different_dont_fragment_components(void);
 void SerializeIterToJson_serialize_1_comps_empty(void);
 void SerializeIterToJson_serialize_1_comps_2_ents_same_table(void);
 void SerializeIterToJson_serialize_1_tag_2_ents_same_table(void);
@@ -1304,6 +1326,11 @@ void MetaUtils_fwd_decl(void);
 void MetaUtils_struct_w_vec(void);
 void MetaUtils_struct_w_map(void);
 void MetaUtils_struct_w_value(void);
+void MetaUtils_struct_w_non_numeric_array_size(void);
+void MetaUtils_struct_w_overflow_array_size(void);
+void MetaUtils_struct_w_array_size_error_no_leak(void);
+void MetaUtils_struct_w_zero_array_size(void);
+void MetaUtils_struct_w_numeric_array_size(void);
 
 // Testsuite 'OpaqueTypes'
 void OpaqueTypes_ser_i32_type_to_json(void);
@@ -1337,6 +1364,57 @@ void OpaqueTypes_const_string(void);
 void OpaqueTypes_anonymous_opaque_as_type_parent(void);
 void OpaqueTypes_named_opaque_as_type_parent(void);
 void OpaqueTypes_parented_opaque_as_type_parent(void);
+
+// Testsuite 'StructInheritance'
+void StructInheritance_base_1_derived_1(void);
+void StructInheritance_base_2_derived_1(void);
+void StructInheritance_base_1_derived_2(void);
+void StructInheritance_derived_no_members(void);
+void StructInheritance_isa_after_empty_struct_init(void);
+void StructInheritance_isa_after_empty_struct_init_add_member(void);
+void StructInheritance_add_member_to_derived(void);
+void StructInheritance_base_w_padding(void);
+void StructInheritance_derived_alignment_larger_than_base(void);
+void StructInheritance_chain(void);
+void StructInheritance_chain_no_own_members(void);
+void StructInheritance_two_derived_from_same_base(void);
+void StructInheritance_duplicate_member_add_member(void);
+void StructInheritance_duplicate_member_struct_init(void);
+void StructInheritance_isa_after_members_error(void);
+void StructInheritance_non_struct_base(void);
+void StructInheritance_non_struct_base_no_members(void);
+void StructInheritance_isa_non_struct_does_not_add_struct(void);
+void StructInheritance_multiple_isa_one_struct(void);
+void StructInheritance_get_member_inherited(void);
+void StructInheritance_get_nth_member(void);
+void StructInheritance_inherited_member_entities(void);
+void StructInheritance_derived_member_entities(void);
+void StructInheritance_derived_member_entities_duplicate(void);
+void StructInheritance_ptr_to_expr(void);
+void StructInheritance_ptr_from_expr(void);
+void StructInheritance_ptr_from_expr_member_names(void);
+void StructInheritance_cursor(void);
+void StructInheritance_cursor_next(void);
+void StructInheritance_entity_to_json(void);
+void StructInheritance_entity_from_json(void);
+void StructInheritance_type_info(void);
+void StructInheritance_use_as_component(void);
+void StructInheritance_base_string_member(void);
+void StructInheritance_base_array_member(void);
+void StructInheritance_base_unit_member(void);
+void StructInheritance_base_member_ranges(void);
+void StructInheritance_base_existing_c_type(void);
+void StructInheritance_derived_existing_c_type(void);
+void StructInheritance_derived_existing_c_type_w_padding(void);
+void StructInheritance_nested_derived_as_member(void);
+void StructInheritance_derived_from_stage(void);
+void StructInheritance_deferred_isa(void);
+void StructInheritance_serializer_ops(void);
+void StructInheritance_derived_equals(void);
+void StructInheritance_cursor_set_value_derived(void);
+void StructInheritance_cursor_set_value_derived_member(void);
+void StructInheritance_cursor_set_value_base_to_derived_fails(void);
+void StructInheritance_cursor_set_value_unrelated_fails(void);
 
 // Testsuite 'Misc'
 void Misc_primitive_from_stage(void);
@@ -1431,10 +1509,14 @@ void RttCompare_vector_of_arrays_of_strings(void);
 void RttCompare_vector_of_opaque(void);
 void RttCompare_struct_with_vector_of_ints_different_length(void);
 void RttCompare_map_of_ints(void);
+void RttCompare_map_key_order_precedes_values(void);
 void RttCompare_map_of_strings(void);
 void RttCompare_map_of_struct_with_strings(void);
 
 // Testsuite 'SetRttHooks'
+void SetRttHooks_set_cmp_on_in_use_w_copy_illegal(void);
+void SetRttHooks_set_hooks_again_keeps_cmp(void);
+void SetRttHooks_set_cmp_then_equals_in_use(void);
 void SetRttHooks_compare_struct_with_ints(void);
 void SetRttHooks_equals_struct_with_ints(void);
 void SetRttHooks_compare_generates_equals(void);
@@ -1450,6 +1532,10 @@ void SetRttHooks_compare_idempotent(void);
 void SetRttHooks_value_compare(void);
 void SetRttHooks_value_equals(void);
 void SetRttHooks_value_different_types(void);
+void SetRttHooks_compare_struct_in_use(void);
+void SetRttHooks_equals_struct_in_use(void);
+void SetRttHooks_compare_array_of_struct_in_use(void);
+void SetRttHooks_equals_struct_w_inline_array_in_use(void);
 
 bake_test_case PrimitiveTypes_testcases[] = {
     {
@@ -1811,6 +1897,10 @@ bake_test_case BitmaskTypes_testcases[] = {
         BitmaskTypes_bitmask_1_constant
     },
     {
+        "update_constant",
+        BitmaskTypes_update_constant
+    },
+    {
         "bitmask_2_constants",
         BitmaskTypes_bitmask_2_constants
     },
@@ -2056,6 +2146,18 @@ bake_test_case RuntimeTypes_testcases[] = {
     {
         "map_cmp_illegal",
         RuntimeTypes_map_cmp_illegal
+    },
+    {
+        "existing_struct_w_vector_member_no_hooks",
+        RuntimeTypes_existing_struct_w_vector_member_no_hooks
+    },
+    {
+        "existing_struct_w_vector_member_shallow_copy",
+        RuntimeTypes_existing_struct_w_vector_member_shallow_copy
+    },
+    {
+        "existing_struct_w_vector_member_not_freed",
+        RuntimeTypes_existing_struct_w_vector_member_not_freed
     }
 };
 
@@ -2211,6 +2313,14 @@ bake_test_case StructTypes_testcases[] = {
     {
         "use_before_registering_reflection_w_hooks",
         StructTypes_use_before_registering_reflection_w_hooks
+    },
+    {
+        "redefine_same_members_in_use",
+        StructTypes_redefine_same_members_in_use
+    },
+    {
+        "redefine_member_after_nested_type_changed",
+        StructTypes_redefine_member_after_nested_type_changed
     }
 };
 
@@ -2862,6 +2972,42 @@ bake_test_case Cursor_testcases[] = {
         Cursor_get_char
     },
     {
+        "set_value_derived_to_base",
+        Cursor_set_value_derived_to_base
+    },
+    {
+        "set_value_base_to_derived_fails",
+        Cursor_set_value_base_to_derived_fails
+    },
+    {
+        "set_value_grandparent_to_derived_fails",
+        Cursor_set_value_grandparent_to_derived_fails
+    },
+    {
+        "set_value_derived_to_grandparent",
+        Cursor_set_value_derived_to_grandparent
+    },
+    {
+        "set_value_base_to_derived_w_string_fails",
+        Cursor_set_value_base_to_derived_w_string_fails
+    },
+    {
+        "set_value_derived_to_base_w_string",
+        Cursor_set_value_derived_to_base_w_string
+    },
+    {
+        "set_value_unrelated_struct_fails",
+        Cursor_set_value_unrelated_struct_fails
+    },
+    {
+        "set_value_base_to_derived_member_fails",
+        Cursor_set_value_base_to_derived_member_fails
+    },
+    {
+        "set_value_derived_to_base_member",
+        Cursor_set_value_derived_to_base_member
+    },
+    {
         "set_bool",
         Cursor_set_bool
     },
@@ -3284,6 +3430,22 @@ bake_test_case Cursor_testcases[] = {
     {
         "vector_struct_3",
         Cursor_vector_struct_3
+    },
+    {
+        "vector_struct_w_string_grow",
+        Cursor_vector_struct_w_string_grow
+    },
+    {
+        "vector_struct_w_string_grow_after_shrink",
+        Cursor_vector_struct_w_string_grow_after_shrink
+    },
+    {
+        "vector_struct_w_ctor_grow",
+        Cursor_vector_struct_w_ctor_grow
+    },
+    {
+        "vector_struct_w_dtor_grow_shrink",
+        Cursor_vector_struct_w_dtor_grow_shrink
     },
     {
         "vector_move_primitive",
@@ -3944,6 +4106,10 @@ bake_test_case Cursor_testcases[] = {
 };
 
 bake_test_case DeserializeFromJson_testcases[] = {
+    {
+        "restore_removes_trailing_tag_with_observer",
+        DeserializeFromJson_restore_removes_trailing_tag_with_observer
+    },
     {
         "string_w_unknown_escape_large",
         DeserializeFromJson_string_w_unknown_escape_large
@@ -5131,6 +5297,10 @@ bake_test_case SerializeToJson_testcases[] = {
 
 bake_test_case SerializeEntityToJson_testcases[] = {
     {
+        "serialize_more_than_256_components",
+        SerializeEntityToJson_serialize_more_than_256_components
+    },
+    {
         "serialize_empty",
         SerializeEntityToJson_serialize_empty
     },
@@ -5533,6 +5703,10 @@ bake_test_case SerializeEntityToJson_testcases[] = {
 };
 
 bake_test_case SerializeIterToJson_testcases[] = {
+    {
+        "table_different_dont_fragment_components",
+        SerializeIterToJson_table_different_dont_fragment_components
+    },
     {
         "serialize_1_comps_empty",
         SerializeIterToJson_serialize_1_comps_empty
@@ -6536,6 +6710,26 @@ bake_test_case MetaUtils_testcases[] = {
     {
         "struct_w_value",
         MetaUtils_struct_w_value
+    },
+    {
+        "struct_w_non_numeric_array_size",
+        MetaUtils_struct_w_non_numeric_array_size
+    },
+    {
+        "struct_w_overflow_array_size",
+        MetaUtils_struct_w_overflow_array_size
+    },
+    {
+        "struct_w_array_size_error_no_leak",
+        MetaUtils_struct_w_array_size_error_no_leak
+    },
+    {
+        "struct_w_zero_array_size",
+        MetaUtils_struct_w_zero_array_size
+    },
+    {
+        "struct_w_numeric_array_size",
+        MetaUtils_struct_w_numeric_array_size
     }
 };
 
@@ -6663,6 +6857,205 @@ bake_test_case OpaqueTypes_testcases[] = {
     {
         "parented_opaque_as_type_parent",
         OpaqueTypes_parented_opaque_as_type_parent
+    }
+};
+
+bake_test_case StructInheritance_testcases[] = {
+    {
+        "base_1_derived_1",
+        StructInheritance_base_1_derived_1
+    },
+    {
+        "base_2_derived_1",
+        StructInheritance_base_2_derived_1
+    },
+    {
+        "base_1_derived_2",
+        StructInheritance_base_1_derived_2
+    },
+    {
+        "derived_no_members",
+        StructInheritance_derived_no_members
+    },
+    {
+        "isa_after_empty_struct_init",
+        StructInheritance_isa_after_empty_struct_init
+    },
+    {
+        "isa_after_empty_struct_init_add_member",
+        StructInheritance_isa_after_empty_struct_init_add_member
+    },
+    {
+        "add_member_to_derived",
+        StructInheritance_add_member_to_derived
+    },
+    {
+        "base_w_padding",
+        StructInheritance_base_w_padding
+    },
+    {
+        "derived_alignment_larger_than_base",
+        StructInheritance_derived_alignment_larger_than_base
+    },
+    {
+        "chain",
+        StructInheritance_chain
+    },
+    {
+        "chain_no_own_members",
+        StructInheritance_chain_no_own_members
+    },
+    {
+        "two_derived_from_same_base",
+        StructInheritance_two_derived_from_same_base
+    },
+    {
+        "duplicate_member_add_member",
+        StructInheritance_duplicate_member_add_member
+    },
+    {
+        "duplicate_member_struct_init",
+        StructInheritance_duplicate_member_struct_init
+    },
+    {
+        "isa_after_members_error",
+        StructInheritance_isa_after_members_error
+    },
+    {
+        "non_struct_base",
+        StructInheritance_non_struct_base
+    },
+    {
+        "non_struct_base_no_members",
+        StructInheritance_non_struct_base_no_members
+    },
+    {
+        "isa_non_struct_does_not_add_struct",
+        StructInheritance_isa_non_struct_does_not_add_struct
+    },
+    {
+        "multiple_isa_one_struct",
+        StructInheritance_multiple_isa_one_struct
+    },
+    {
+        "get_member_inherited",
+        StructInheritance_get_member_inherited
+    },
+    {
+        "get_nth_member",
+        StructInheritance_get_nth_member
+    },
+    {
+        "inherited_member_entities",
+        StructInheritance_inherited_member_entities
+    },
+    {
+        "derived_member_entities",
+        StructInheritance_derived_member_entities
+    },
+    {
+        "derived_member_entities_duplicate",
+        StructInheritance_derived_member_entities_duplicate
+    },
+    {
+        "ptr_to_expr",
+        StructInheritance_ptr_to_expr
+    },
+    {
+        "ptr_from_expr",
+        StructInheritance_ptr_from_expr
+    },
+    {
+        "ptr_from_expr_member_names",
+        StructInheritance_ptr_from_expr_member_names
+    },
+    {
+        "cursor",
+        StructInheritance_cursor
+    },
+    {
+        "cursor_next",
+        StructInheritance_cursor_next
+    },
+    {
+        "entity_to_json",
+        StructInheritance_entity_to_json
+    },
+    {
+        "entity_from_json",
+        StructInheritance_entity_from_json
+    },
+    {
+        "type_info",
+        StructInheritance_type_info
+    },
+    {
+        "use_as_component",
+        StructInheritance_use_as_component
+    },
+    {
+        "base_string_member",
+        StructInheritance_base_string_member
+    },
+    {
+        "base_array_member",
+        StructInheritance_base_array_member
+    },
+    {
+        "base_unit_member",
+        StructInheritance_base_unit_member
+    },
+    {
+        "base_member_ranges",
+        StructInheritance_base_member_ranges
+    },
+    {
+        "base_existing_c_type",
+        StructInheritance_base_existing_c_type
+    },
+    {
+        "derived_existing_c_type",
+        StructInheritance_derived_existing_c_type
+    },
+    {
+        "derived_existing_c_type_w_padding",
+        StructInheritance_derived_existing_c_type_w_padding
+    },
+    {
+        "nested_derived_as_member",
+        StructInheritance_nested_derived_as_member
+    },
+    {
+        "derived_from_stage",
+        StructInheritance_derived_from_stage
+    },
+    {
+        "deferred_isa",
+        StructInheritance_deferred_isa
+    },
+    {
+        "serializer_ops",
+        StructInheritance_serializer_ops
+    },
+    {
+        "derived_equals",
+        StructInheritance_derived_equals
+    },
+    {
+        "cursor_set_value_derived",
+        StructInheritance_cursor_set_value_derived
+    },
+    {
+        "cursor_set_value_derived_member",
+        StructInheritance_cursor_set_value_derived_member
+    },
+    {
+        "cursor_set_value_base_to_derived_fails",
+        StructInheritance_cursor_set_value_base_to_derived_fails
+    },
+    {
+        "cursor_set_value_unrelated_fails",
+        StructInheritance_cursor_set_value_unrelated_fails
     }
 };
 
@@ -7026,6 +7419,10 @@ bake_test_case RttCompare_testcases[] = {
         RttCompare_map_of_ints
     },
     {
+        "map_key_order_precedes_values",
+        RttCompare_map_key_order_precedes_values
+    },
+    {
         "map_of_strings",
         RttCompare_map_of_strings
     },
@@ -7036,6 +7433,18 @@ bake_test_case RttCompare_testcases[] = {
 };
 
 bake_test_case SetRttHooks_testcases[] = {
+    {
+        "set_cmp_on_in_use_w_copy_illegal",
+        SetRttHooks_set_cmp_on_in_use_w_copy_illegal
+    },
+    {
+        "set_hooks_again_keeps_cmp",
+        SetRttHooks_set_hooks_again_keeps_cmp
+    },
+    {
+        "set_cmp_then_equals_in_use",
+        SetRttHooks_set_cmp_then_equals_in_use
+    },
     {
         "compare_struct_with_ints",
         SetRttHooks_compare_struct_with_ints
@@ -7095,6 +7504,22 @@ bake_test_case SetRttHooks_testcases[] = {
     {
         "value_different_types",
         SetRttHooks_value_different_types
+    },
+    {
+        "compare_struct_in_use",
+        SetRttHooks_compare_struct_in_use
+    },
+    {
+        "equals_struct_in_use",
+        SetRttHooks_equals_struct_in_use
+    },
+    {
+        "compare_array_of_struct_in_use",
+        SetRttHooks_compare_array_of_struct_in_use
+    },
+    {
+        "equals_struct_w_inline_array_in_use",
+        SetRttHooks_equals_struct_w_inline_array_in_use
     }
 };
 
@@ -7117,21 +7542,21 @@ static bake_test_suite suites[] = {
         "BitmaskTypes",
         NULL,
         NULL,
-        7,
+        8,
         BitmaskTypes_testcases
     },
     {
         "RuntimeTypes",
         NULL,
         NULL,
-        55,
+        58,
         RuntimeTypes_testcases
     },
     {
         "StructTypes",
         NULL,
         NULL,
-        38,
+        40,
         StructTypes_testcases
     },
     {
@@ -7180,14 +7605,14 @@ static bake_test_suite suites[] = {
         "Cursor",
         NULL,
         NULL,
-        272,
+        285,
         Cursor_testcases
     },
     {
         "DeserializeFromJson",
         NULL,
         NULL,
-        201,
+        202,
         DeserializeFromJson_testcases
     },
     {
@@ -7201,14 +7626,14 @@ static bake_test_suite suites[] = {
         "SerializeEntityToJson",
         NULL,
         NULL,
-        100,
+        101,
         SerializeEntityToJson_testcases
     },
     {
         "SerializeIterToJson",
         NULL,
         NULL,
-        87,
+        88,
         SerializeIterToJson_testcases
     },
     {
@@ -7236,7 +7661,7 @@ static bake_test_suite suites[] = {
         "MetaUtils",
         NULL,
         NULL,
-        28,
+        33,
         MetaUtils_testcases
     },
     {
@@ -7245,6 +7670,13 @@ static bake_test_suite suites[] = {
         NULL,
         31,
         OpaqueTypes_testcases
+    },
+    {
+        "StructInheritance",
+        NULL,
+        NULL,
+        49,
+        StructInheritance_testcases
     },
     {
         "Misc",
@@ -7264,18 +7696,18 @@ static bake_test_suite suites[] = {
         "RttCompare",
         NULL,
         NULL,
-        31,
+        32,
         RttCompare_testcases
     },
     {
         "SetRttHooks",
         NULL,
         NULL,
-        15,
+        22,
         SetRttHooks_testcases
     }
 };
 
 int main(int argc, char *argv[]) {
-    return bake_test_run("meta", argc, argv, suites, 25);
+    return bake_test_run("meta", argc, argv, suites, 26);
 }

@@ -1276,3 +1276,116 @@ void Rest_world_explicit_false(void) {
 
     ecs_fini(world);
 }
+
+void Rest_script_update_new_script(void) {
+    ecs_world_t *world = ecs_init();
+
+    ECS_COMPONENT(world, Position);
+
+    ecs_http_server_t *srv = ecs_rest_server_init(world, NULL);
+    test_assert(srv != NULL);
+
+    {
+        ecs_http_reply_t reply = ECS_HTTP_REPLY_INIT;
+        test_int(0, ecs_http_server_request(srv, "PUT",
+            "/script/main.flecs?code=e%20%7B%7D",
+            NULL, &reply));
+        test_int(reply.code, 200);
+        char *reply_str = ecs_strbuf_get(&reply.body);
+        test_str(reply_str, "{}");
+        test_assert(ecs_lookup(world, "e") != 0);
+        ecs_os_free(reply_str);
+    }
+
+    ecs_rest_server_fini(srv);
+
+    ecs_fini(world);
+}
+
+void Rest_query_error_restores_log(void) {
+    ecs_world_t *world = ecs_init();
+    ecs_query_t *q = ecs_query(world, {
+        .entity = ecs_entity(world, {.name = "Q"}),
+        .expr = "(ChildOf, $parent)"
+    });
+    test_assert(q != NULL);
+    ecs_http_server_t *srv = ecs_rest_server_init(world, NULL);
+    test_assert(srv != NULL);
+    ecs_os_api_log_t prev_log = ecs_os_api.log_;
+
+    for (int nested = 0; nested < 2; nested ++) {
+        if (nested) {
+            ecs_log_start_capture(true);
+        }
+        ecs_os_api_log_t active_log = ecs_os_api.log_;
+        ecs_http_reply_t reply = ECS_HTTP_REPLY_INIT;
+        ecs_http_server_request(srv, "GET",
+            "/query?name=Q&vars=parent:&try=true", NULL, &reply);
+        test_int(reply.code, 400);
+        test_assert(ecs_os_api.log_ == active_log);
+        char *body = ecs_strbuf_get(&reply.body);
+        test_assert(body != NULL);
+        test_assert(strstr(body, "error") != NULL);
+        ecs_os_free(body);
+        ecs_strbuf_reset(&reply.headers);
+
+        if (nested) {
+            ecs_err("outer capture survived");
+            char *err = ecs_log_stop_capture();
+            test_str(err, "outer capture survived");
+            ecs_os_free(err);
+        }
+        test_assert(ecs_os_api.log_ == prev_log);
+    }
+
+    ecs_rest_server_fini(srv);
+    ecs_query_fini(q);
+    ecs_fini(world);
+}
+
+void Rest_call_zero_arguments(void) {
+    ecs_world_t *world = ecs_init();
+    test_int(ecs_script_run(world, NULL,
+        "fn answer() -> i32 { 42 }", NULL), 0);
+    ecs_http_server_t *srv = ecs_rest_server_init(world, NULL);
+    ecs_http_reply_t reply = ECS_HTTP_REPLY_INIT;
+    test_int(ecs_http_server_request(srv, "GET", "/call/answer", NULL, &reply), 0);
+    test_int(reply.code, 200);
+    char *body = ecs_strbuf_get(&reply.body);
+    test_str(body, "42");
+    ecs_os_free(body);
+    ecs_rest_server_fini(srv);
+    ecs_fini(world);
+}
+
+void Rest_call_invalid_argument_after_string(void) {
+    ecs_world_t *world = ecs_init();
+    test_int(ecs_script_run(world, NULL,
+        "fn echo(value: string, count: i32) -> string { value }", NULL), 0);
+    ecs_http_server_t *srv = ecs_rest_server_init(world, NULL);
+    ecs_http_reply_t reply = ECS_HTTP_REPLY_INIT;
+    test_int(ecs_http_server_request(srv, "GET",
+        "/call/echo?value=hello&count=invalid", NULL, &reply), -1);
+    test_int(reply.code, 400);
+    char *body = ecs_strbuf_get(&reply.body);
+    test_str(body, "{\"error\":\"invalid value for argument 'count'\"}");
+    ecs_os_free(body);
+    ecs_rest_server_fini(srv);
+    ecs_fini(world);
+}
+
+void Rest_call_argument_expression(void) {
+    ecs_world_t *world = ecs_init();
+    test_int(ecs_script_run(world, NULL,
+        "fn square(value: i32) -> i32 { value * value }", NULL), 0);
+    ecs_http_server_t *srv = ecs_rest_server_init(world, NULL);
+    ecs_http_reply_t reply = ECS_HTTP_REPLY_INIT;
+    test_int(ecs_http_server_request(srv, "GET",
+        "/call/square?value=3%2B4", NULL, &reply), 0);
+    test_int(reply.code, 200);
+    char *body = ecs_strbuf_get(&reply.body);
+    test_str(body, "49");
+    ecs_os_free(body);
+    ecs_rest_server_fini(srv);
+    ecs_fini(world);
+}

@@ -126,8 +126,8 @@ void flecs_instantiate_sparse(
                 flecs_type_info_copy(dst_ptr, src_ptr, 1, ti);
             }
 
-            flecs_notify_on_set(
-                world, instance_table, row_offset + j, id, true, dst_ptr);
+            flecs_notify_on_set_w_cr(
+                world, instance_table, row_offset + j, id, cr, true, dst_ptr);
         }
     }
 }
@@ -303,10 +303,14 @@ void flecs_instantiate_dont_fragment(
     ecs_entity_t instance)
 {
     ecs_component_record_t *cur = world->cr_non_fragmenting_head;
+    ecs_record_t *instance_r = flecs_entities_get(world, instance);
+    bool has_isa = ecs_table_get_type_index(
+        world, instance_r->table, ecs_isa(base)) != -1;
 
     while (cur) {
         ecs_assert(cur->flags & EcsIdSparse, ECS_INTERNAL_ERROR, NULL);
-        if (cur->sparse && !(cur->flags & EcsIdOnInstantiateInherit) && 
+        bool inherit = (cur->flags & EcsIdOnInstantiateInherit) != 0;
+        if (cur->sparse && (!has_isa || !inherit) && 
             !ecs_id_is_wildcard(cur->id)) 
         {
             if (flecs_component_sparse_has(cur, base)) {

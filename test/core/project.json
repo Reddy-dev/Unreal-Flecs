@@ -287,7 +287,8 @@
                 "page_iter_w_fini",
                 "worker_iter_w_fini",
                 "rule_page_iter_w_fini",
-                "rule_worker_iter_w_fini"
+                "rule_worker_iter_w_fini",
+                "uncached_query_w_many_vars_no_leak"
             ]
         }, {
             "id": "Search",
@@ -354,7 +355,8 @@
                 "enqueue_event_not_deferred_to_async",
                 "enqueue_custom_implicit_any",
                 "enqueue_custom_after_large_cmd",
-                "enqueue_on_readonly_world"
+                "enqueue_on_readonly_world",
+                "enqueue_event_w_large_payload_no_leak"
             ]
         }, {
             "id": "New",
@@ -709,7 +711,14 @@
                 "fini_w_dont_fragment_pair_prefab_exclusive_delete_with",
                 "remove_childof_pair_w_dont_fragment_component",
                 "remove_zeroes_storage",
-                "instantiate_prefab_w_tag_on_add_observer"
+                "instantiate_prefab_w_tag_on_add_observer",
+                "fini_w_dont_fragment_component_on_prefab_child",
+                "fini_w_dont_fragment_inherit_component_on_prefab_child",
+                "delete_instance_w_dont_fragment_component_on_prefab_child",
+                "fini_w_dont_fragment_component_on_prefab_child_w_up_query",
+                "fini_w_dont_fragment_component_w_isa_in_module",
+                "fini_w_dont_fragment_inherit_component_w_isa_in_module",
+                "fini_w_dont_fragment_component_w_isa_prefab_in_module"
             ]
         }, {
             "id": "NonFragmentingChildOf",
@@ -732,6 +741,13 @@
                 "delete_parent",
                 "delete_parent_2_children",
                 "mixed_childof",
+                "convert_childof_to_parent_keeps_order",
+                "set_same_parent_twice_keeps_order",
+                "add_childof_to_parent_component_keeps_order",
+                "deferred_set_same_parent_keeps_order",
+                "deferred_convert_childof_to_parent_keeps_order",
+                "remove_parent_then_add_childof_appends_last",
+                "reparent_to_other_parent_appends_last",
                 "delete_parent_w_mixed_childof",
                 "delete_nested_parent",
                 "delete_nested_mixed_parent",
@@ -891,11 +907,18 @@
                 "add_parent_to_childof_child_same_parent",
                 "add_childof_to_parent_child_same_parent",
                 "new_w_parent_w_same_name_twice",
+                "new_w_parent_named_after_delete",
                 "defer_new_w_parent",
                 "defer_new_w_parent_w_name",
                 "defer_new_w_parent_w_same_name_twice",
                 "new_w_parent_from_stage",
                 "new_w_parent_w_name_from_stage",
+                "new_w_parent_readonly_new_table",
+                "new_w_parent_w_name_readonly_new_table",
+                "delete_named_child_not_last_row",
+                "delete_parent_w_named_children",
+                "fini_w_named_children",
+                "delete_parents_w_named_children",
                 "prefab_instance_w_dont_fragment_tag",
                 "prefab_instance_w_dont_fragment_component",
                 "prefab_instance_w_inherit_dont_fragment_component",
@@ -975,7 +998,17 @@
                 "prefab_get_target_after_delete_instance_child",
                 "defer_remove_add_batched_w_sibling_in_table",
                 "instantiate_tree_after_rename_child",
-                "fini_w_instantiated_prefab_non_fragmenting_child"
+                "fini_w_instantiated_prefab_non_fragmenting_child",
+                "convert_childof_to_parent",
+                "convert_childof_to_parent_3_children",
+                "convert_childof_to_parent_3_children_remove_childof_first",
+                "convert_childof_to_parent_3_children_w_ordered_children",
+                "convert_childof_to_parent_nested",
+                "convert_childof_to_parent_w_named_children",
+                "remove_childof_after_convert_sibling",
+                "up_not_observer_defer_remove_add_batched",
+                "multi_term_up_observer_visits_all_siblings",
+                "multi_term_up_observer_propagates_to_subtree"
             ]
         }, {
             "id": "Hierarchies",
@@ -1563,7 +1596,18 @@
                 "trait_add_singleton_to_other",
                 "trait_add_singleton_pair_to_other",
                 "add_trait_after_in_use",
-                "add_trait_after_pair_in_use"
+                "add_trait_after_pair_in_use",
+                "has",
+                "has_component",
+                "add_pair",
+                "remove_pair",
+                "add_pair_exclusive",
+                "remove_pair_exclusive",
+                "set_get_pair",
+                "get_mut_pair",
+                "ensure_pair",
+                "emplace_pair",
+                "modified_pair"
             ]
         }, {
             "id": "Clone",
@@ -1760,7 +1804,12 @@
                 "on_validate_blocks_modified",
                 "on_validate_per_entity_in_bulk",
                 "on_validate_false_blocks_on_set_deferred",
-                "on_validate_true_invokes_on_set_deferred"
+                "on_validate_true_invokes_on_set_deferred",
+                "fini_w_cached_query_in_component",
+                "fini_w_cached_query_in_component_on_entity",
+                "fini_w_cached_query_in_component_on_remove_observer",
+                "fini_w_uncached_query_in_component",
+                "delete_component_w_cached_query_in_component"
             ]
         }, {
             "id": "Pairs",
@@ -2033,6 +2082,21 @@
         }, {
             "id": "Observer",
             "testcases": [
+                "on_set_no_propagate_w_self_only_observer_on_child",
+                "on_set_propagate_w_up_observer_on_child",
+                "on_set_propagate_isa_w_up_observer_on_instance",
+                "on_set_propagate_w_up_observer_created_after_entities",
+                "on_set_no_propagate_after_up_observer_deleted",
+                "nomatch_table_memo_alternating_tables",
+                "up_isa_term_no_match_then_base_gains_component",
+                "up_isa_term_alternating_match_and_no_match",
+                "up_isa_not_term_base_gains_component",
+                "nomatch_table_memo_after_table_delete",
+                "multi_term_inheritable_component_owned",
+                "multi_term_inheritable_component_w_not_term",
+                "multi_term_inheritable_component_w_prefab_term",
+                "multi_term_inheritable_component_from_base",
+                "multi_term_inheritable_component_not_matched",
                 "on_add_before_edge",
                 "on_add_after_edge",
                 "on_add_wildcard_before_edge",
@@ -3407,6 +3471,7 @@
             "id": "Internals",
             "setup": true,
             "testcases": [
+                "os_memset_n_w_expression_count",
                 "deactivate_table",
                 "activate_table",
                 "activate_deactivate_table",

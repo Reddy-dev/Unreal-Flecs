@@ -556,7 +556,6 @@ static int flecs_meta_cursor_from_str(
         goto error;
     default:
         ecs_throw(ECS_INVALID_PARAMETER, "invalid operation");
-        break;
     }
 
     return 0;
@@ -1417,46 +1416,7 @@ case kind:\
     case_T_checked(EcsOpI16,  ecs_i16_t,  dst, src, bounds);\
     case_T_checked(EcsOpI32,  ecs_i32_t,  dst, src, bounds);\
     case_T_checked(EcsOpI64,  ecs_i64_t,  dst, src, bounds);\
-    case_T_checked(EcsOpIPtr, ecs_iptr_t, dst, src, bounds);\
-    case EcsOpEnum: {\
-        switch(op->underlying_kind) {\
-        case_T_checked(EcsOpI8,   ecs_i8_t,   dst, src, bounds);\
-        case_T_checked(EcsOpI16,  ecs_i16_t,  dst, src, bounds);\
-        case_T_checked(EcsOpI32,  ecs_i32_t,  dst, src, bounds);\
-        case_T_checked(EcsOpI64,  ecs_i64_t,  dst, src, bounds);\
-        case_T_checked(EcsOpIPtr, ecs_iptr_t, dst, src, bounds);\
-        case_T_checked(EcsOpU8,   ecs_u8_t,   dst, src, bounds);\
-        case_T_checked(EcsOpU16,  ecs_u16_t,  dst, src, bounds);\
-        case_T_checked(EcsOpU32,  ecs_u32_t,  dst, src, bounds);\
-        case_T_checked(EcsOpU64,  ecs_u64_t,  dst, src, bounds);\
-        case_T_checked(EcsOpUPtr, ecs_uptr_t, dst, src, bounds);\
-        case EcsOpPushStruct:\
-        case EcsOpPushArray:\
-        case EcsOpPushVector:\
-        case EcsOpPushMap:\
-        case EcsOpPushValue:\
-        case EcsOpPop:\
-        case EcsOpOpaqueStruct:\
-        case EcsOpOpaqueArray:\
-        case EcsOpOpaqueVector:\
-        case EcsOpForward:\
-        case EcsOpScope:\
-        case EcsOpOpaqueValue:\
-        case EcsOpEnum:\
-        case EcsOpBitmask:\
-        case EcsOpPrimitive:\
-        case EcsOpBool:\
-        case EcsOpChar:\
-        case EcsOpByte:\
-        case EcsOpF32:\
-        case EcsOpF64:\
-        case EcsOpString:\
-        case EcsOpEntity:\
-        case EcsOpId:\
-            break;\
-        }\
-        break;\
-    }\
+    case_T_checked(EcsOpIPtr, ecs_iptr_t, dst, src, bounds);
 
 #define cases_T_unsigned(dst, src, bounds)\
     case_T_checked(EcsOpByte, ecs_byte_t, dst, src, bounds);\
@@ -1489,373 +1449,295 @@ static void flecs_meta_conversion_error(
     }
 }
 
+typedef union flecs_meta_number_t {
+    int64_t i;
+    uint64_t u;
+    double f;
+} flecs_meta_number_t;
+
+static int flecs_meta_assign_opaque_number(
+    ecs_meta_cursor_t *cursor,
+    ecs_meta_op_t *op,
+    void *ptr,
+    ecs_primitive_kind_t kind,
+    flecs_meta_number_t number)
+{
+    const EcsOpaque *opaque = ecs_get(cursor->world, op->type, EcsOpaque);
+    ecs_assert(opaque != NULL, ECS_INTERNAL_ERROR, NULL);
+    switch (kind) {
+    case EcsBool: {
+        bool value = number.i;
+        if (opaque->assign_bool) {
+            opaque->assign_bool(ptr, value);
+            return 0;
+        }
+        break;
+    }
+    case EcsChar: {
+        char value = flecs_ito(char, number.i);
+        if (opaque->assign_char) {
+            opaque->assign_char(ptr, value);
+            return 0;
+        } else if (opaque->assign_uint) {
+            opaque->assign_uint(ptr, (uint64_t)value);
+            return 0;
+        } else if (opaque->assign_int) {
+            opaque->assign_int(ptr, value);
+            return 0;
+        }
+        break;
+    }
+    case EcsI64: {
+        int64_t value = number.i;
+        if (opaque->assign_int) {
+            opaque->assign_int(ptr, value);
+            return 0;
+        } else if (opaque->assign_float) {
+            opaque->assign_float(ptr, (double)value);
+            return 0;
+        } else if (opaque->assign_uint && (value > 0)) {
+            opaque->assign_uint(ptr, flecs_ito(uint64_t, value));
+            return 0;
+        } else if (opaque->assign_char && (value > 0) && (value < 256)) {
+            opaque->assign_char(ptr, flecs_ito(char, value));
+            return 0;
+        }
+        break;
+    }
+    case EcsU64: {
+        uint64_t value = number.u;
+        if (opaque->assign_uint) {
+            opaque->assign_uint(ptr, value);
+            return 0;
+        } else if (opaque->assign_float) {
+            opaque->assign_float(ptr, (double)value);
+            return 0;
+        } else if (opaque->assign_int && (value < INT64_MAX)) {
+            opaque->assign_int(ptr, flecs_uto(int64_t, value));
+            return 0;
+        } else if (opaque->assign_char && (value < 256)) {
+            opaque->assign_char(ptr, flecs_uto(char, value));
+            return 0;
+        }
+        break;
+    }
+    case EcsF64: {
+        double value = number.f;
+        if (opaque->assign_float) {
+            opaque->assign_float(ptr, value);
+            return 0;
+        } else if (opaque->assign_int &&
+            (value <= (double)INT64_MAX) && (value >= (double)INT64_MIN))
+        {
+            opaque->assign_int(ptr, (int64_t)value);
+            return 0;
+        } else if (opaque->assign_uint && (value >= 0)) {
+            opaque->assign_uint(ptr, (uint64_t)value);
+            return 0;
+        } else if (opaque->assign_entity && (value >= 0)) {
+            opaque->assign_entity(
+                ptr, ECS_CONST_CAST(ecs_world_t*, cursor->world),
+                    (ecs_entity_t)value);
+            return 0;
+        }
+        break;
+    }
+    case EcsEntity: {
+        ecs_entity_t value = number.u;
+        if (opaque && opaque->assign_entity) {
+            opaque->assign_entity(ptr,
+                ECS_CONST_CAST(ecs_world_t*, cursor->world), value);
+            return 0;
+        }
+        break;
+    }
+    case EcsId: {
+        ecs_entity_t value = number.u;
+        if (opaque && opaque->assign_id) {
+            opaque->assign_id(ptr,
+                ECS_CONST_CAST(ecs_world_t*, cursor->world), value);
+            return 0;
+        }
+        break;
+    }
+    default:
+        break;
+    }
+    return -1;
+}
+
+static FLECS_ALWAYS_INLINE int flecs_meta_set_number(
+    ecs_meta_cursor_t *cursor,
+    ecs_primitive_kind_t from,
+    flecs_meta_number_t number)
+{
+    static const ecs_entity_t *const types[EcsId + 1] = {
+        [EcsBool] = &ecs_id(ecs_bool_t),
+        [EcsChar] = &ecs_id(ecs_char_t),
+        [EcsI64] = &ecs_id(ecs_i64_t),
+        [EcsU64] = &ecs_id(ecs_u64_t),
+        [EcsF64] = &ecs_id(ecs_f64_t),
+        [EcsEntity] = &ecs_id(ecs_entity_t),
+        [EcsId] = &ecs_id(ecs_id_t)
+    };
+    ecs_meta_scope_t *scope = flecs_cursor_get_scope(cursor);
+    ecs_meta_op_t *op = flecs_cursor_get_op(scope);
+    void *ptr = flecs_meta_cursor_get_ptr(cursor->world, cursor, scope);
+    ecs_meta_op_kind_t kind = op->kind;
+    if (from == EcsI64 || from == EcsU64 || from == EcsF64) {
+        ecs_assert(ptr != NULL, ECS_INVALID_OPERATION, "no object to assign");
+    }
+    if (flecs_meta_op_is_value(op)) {
+        kind = (ecs_meta_op_kind_t)(EcsOpPrimitive + (int)from);
+        ptr = flecs_meta_cursor_value_ensure(cursor, ptr,
+            *types[from]);
+        if (!ptr) {
+            return -1;
+        }
+    } else if (kind == EcsOpEnum) {
+        kind = op->underlying_kind;
+    }
+    if (kind == EcsOpOpaqueValue) {
+        if (!flecs_meta_assign_opaque_number(cursor, op, ptr, from, number)) {
+            return 0;
+        }
+        goto error;
+    }
+    if (kind == EcsOpString) {
+        char *result = NULL;
+        switch (from) {
+        case EcsBool: result = ecs_os_strdup(number.i ? "true" : "false"); break;
+        case EcsChar: result = flecs_asprintf("%c", (char)number.i); break;
+        case EcsI64: result = flecs_asprintf("%"PRId64, number.i); break;
+        case EcsU64: result = flecs_asprintf("%"PRIu64, number.u); break;
+        case EcsF64: result = flecs_asprintf("%f", number.f); break;
+        case EcsEntity: result = ecs_get_path(cursor->world, number.u); break;
+        case EcsId: result = ecs_id_str(cursor->world, number.u); break;
+        default: goto error;
+        }
+        ecs_os_free(*(char**)ptr);
+        *(char**)ptr = result;
+        return 0;
+    }
+    if ((from == EcsEntity && kind != EcsOpEntity &&
+        kind != EcsOpId && kind != EcsOpBool) ||
+        (from == EcsId && kind != EcsOpId))
+    {
+        goto error;
+    }
+    if (from == EcsChar && op->kind != EcsOpEnum &&
+        kind != EcsOpBool && kind != EcsOpChar && kind != EcsOpI8 &&
+        kind != EcsOpI16 && kind != EcsOpI32 && kind != EcsOpI64 &&
+        kind != EcsOpIPtr)
+    {
+        goto error;
+    }
+    switch (from) {
+    case EcsBool:
+    case EcsChar:
+    case EcsI64: {
+        int64_t value = number.i;
+        switch (kind) {
+        cases_T_bool(ptr, value);
+        cases_T_signed(ptr, value, ecs_meta_bounds_signed);
+        cases_T_unsigned(ptr, value, ecs_meta_bounds_signed);
+        cases_T_float(ptr, value);
+        default: goto error;
+        }
+        return 0;
+    }
+    case EcsU64:
+    case EcsEntity:
+    case EcsId: {
+        uint64_t value = number.u;
+        switch (kind) {
+        cases_T_bool(ptr, value);
+        cases_T_signed(ptr, value, ecs_meta_bounds_unsigned);
+        cases_T_unsigned(ptr, value, ecs_meta_bounds_unsigned);
+        cases_T_float(ptr, value);
+        default: goto error;
+        }
+        return 0;
+    }
+    case EcsF64: {
+        double value = number.f;
+        switch (kind) {
+        case EcsOpBool: *(bool*)ptr = !ECS_EQZERO(value); break;
+        cases_T_signed(ptr, value, ecs_meta_bounds_float);
+        cases_T_unsigned(ptr, value, ecs_meta_bounds_float);
+        cases_T_float(ptr, value);
+        default: goto error;
+        }
+        return 0;
+    }
+    default:
+        break;
+    }
+error:
+    if ((from == EcsI64 || from == EcsU64) && !number.u) {
+        return ecs_meta_set_null(cursor);
+    }
+    const char *name = from == EcsI64 ? "int" : from == EcsU64 ? "uint" :
+        from == EcsF64 ? "float" : flecs_meta_op_kind_str(
+            (ecs_meta_op_kind_t)(EcsOpPrimitive + (int)from));
+    flecs_meta_conversion_error(cursor, op, name);
+    return -1;
+}
+
 int ecs_meta_set_bool(
     ecs_meta_cursor_t *cursor,
     bool value)
 {
-    ecs_meta_scope_t *scope = flecs_cursor_get_scope(cursor);
-    ecs_meta_op_t *op = flecs_cursor_get_op(scope);
-    void *ptr = flecs_meta_cursor_get_ptr(cursor->world, cursor, scope);
-
-    if (flecs_meta_op_is_value(op)) {
-        ptr = flecs_meta_cursor_value_ensure(
-            cursor, ptr, ecs_id(ecs_bool_t));
-        if (!ptr) {
-            return -1;
-        }
-        flecs_meta_set_t(ecs_bool_t, ptr, value);
-        return 0;
-    }
-
-    switch(op->kind) {
-    cases_T_bool(ptr, value);
-    cases_T_signed(ptr, value, ecs_meta_bounds_signed);
-    cases_T_unsigned(ptr, value, ecs_meta_bounds_unsigned);
-    case EcsOpString: {
-        char *result;
-        if (value) {
-            result = ecs_os_strdup("true");
-        } else {
-            result = ecs_os_strdup("false");
-        }
-        ecs_os_free(*(ecs_string_t*)ptr);
-        flecs_meta_set_t(ecs_string_t, ptr, result);
-        break;
-    }
-    case EcsOpOpaqueValue: {
-        const EcsOpaque *opaque = ecs_get(cursor->world, op->type, EcsOpaque);
-        ecs_assert(opaque != NULL, ECS_INTERNAL_ERROR, NULL);
-        if (opaque->assign_bool) {
-            opaque->assign_bool(ptr, value);
-            break;
-        }
-    }
-    /* fall through */
-    case EcsOpOpaqueStruct:
-    case EcsOpOpaqueArray:
-    case EcsOpOpaqueVector:
-    case EcsOpPushStruct:
-    case EcsOpPushArray:
-    case EcsOpPushVector:
-    case EcsOpPushMap:
-    case EcsOpPushValue:
-    case EcsOpPop:
-    case EcsOpForward:
-    case EcsOpScope:
-    case EcsOpPrimitive:
-    case EcsOpF32:
-    case EcsOpF64:
-        flecs_meta_conversion_error(cursor, op, "bool");
-        return -1;
-    default:
-        ecs_throw(ECS_INVALID_PARAMETER, "invalid operation");
-    }
-
-    return 0;
-error:
-    return -1;
+    return flecs_meta_set_number(cursor, EcsBool,
+        (flecs_meta_number_t){.i = value});
 }
 
 int ecs_meta_set_char(
     ecs_meta_cursor_t *cursor,
     char value)
 {
-    ecs_meta_scope_t *scope = flecs_cursor_get_scope(cursor);
-    ecs_meta_op_t *op = flecs_cursor_get_op(scope);
-    void *ptr = flecs_meta_cursor_get_ptr(cursor->world, cursor, scope);
-
-    if (flecs_meta_op_is_value(op)) {
-        ptr = flecs_meta_cursor_value_ensure(
-            cursor, ptr, ecs_id(ecs_char_t));
-        if (!ptr) {
-            return -1;
-        }
-        flecs_meta_set_t(ecs_char_t, ptr, value);
-        return 0;
-    }
-
-    switch(op->kind) {
-    cases_T_bool(ptr, value);
-    cases_T_signed(ptr, value, ecs_meta_bounds_signed);
-    case EcsOpString: {
-        char *result = flecs_asprintf("%c", value);
-        ecs_os_free(*(ecs_string_t*)ptr);
-        flecs_meta_set_t(ecs_string_t, ptr, result);
-        break;
-    }
-    case EcsOpOpaqueValue: {
-        const EcsOpaque *opaque = ecs_get(cursor->world, op->type, EcsOpaque);
-        ecs_assert(opaque != NULL, ECS_INTERNAL_ERROR, NULL);
-        if (opaque->assign_char) { /* preferred operation */
-            opaque->assign_char(ptr, value);
-            break;
-        } else if (opaque->assign_uint) {
-            opaque->assign_uint(ptr, (uint64_t)value);
-            break;
-        } else if (opaque->assign_int) {
-            opaque->assign_int(ptr, value);
-            break;
-        }
-    }
-    /* fall through */
-    case EcsOpOpaqueStruct:
-    case EcsOpOpaqueArray:
-    case EcsOpOpaqueVector:
-    case EcsOpPushStruct:
-    case EcsOpPushArray:
-    case EcsOpPushVector:
-    case EcsOpPushMap:
-    case EcsOpPushValue:
-    case EcsOpPop:
-    case EcsOpForward:
-    case EcsOpScope:
-    case EcsOpBitmask:
-    case EcsOpPrimitive:
-    case EcsOpByte:
-    case EcsOpU8:
-    case EcsOpU16:
-    case EcsOpU32:
-    case EcsOpU64:
-    case EcsOpF32:
-    case EcsOpF64:
-    case EcsOpUPtr:
-    case EcsOpEntity:
-    case EcsOpId:
-        flecs_meta_conversion_error(cursor, op, "char");
-        return -1;
-    default:
-        ecs_throw(ECS_INVALID_PARAMETER, "invalid operation");
-    }
-
-    return 0;
-error:
-    return -1;
+    return flecs_meta_set_number(cursor, EcsChar,
+        (flecs_meta_number_t){.i = value});
 }
 
 int ecs_meta_set_int(
     ecs_meta_cursor_t *cursor,
     int64_t value)
 {
-    ecs_meta_scope_t *scope = flecs_cursor_get_scope(cursor);
-    ecs_meta_op_t *op = flecs_cursor_get_op(scope);
-    void *ptr = flecs_meta_cursor_get_ptr(cursor->world, cursor, scope);
-    ecs_assert(ptr != NULL, ECS_INVALID_OPERATION, "no object to assign");
-
-    if (flecs_meta_op_is_value(op)) {
-        ptr = flecs_meta_cursor_value_ensure(
-            cursor, ptr, ecs_id(ecs_i64_t));
-        if (!ptr) {
-            return -1;
-        }
-        flecs_meta_set_t(ecs_i64_t, ptr, value);
-        return 0;
-    }
-
-    switch(op->kind) {
-    cases_T_bool(ptr, value);
-    cases_T_signed(ptr, value, ecs_meta_bounds_signed);
-    cases_T_unsigned(ptr, value, ecs_meta_bounds_signed);
-    cases_T_float(ptr, value);
-    case EcsOpString: {
-        char *result = flecs_asprintf("%"PRId64, value);
-        ecs_os_free(*(ecs_string_t*)ptr);
-        flecs_meta_set_t(ecs_string_t, ptr, result);
-        break;
-    }
-    case EcsOpOpaqueValue: {
-        const EcsOpaque *opaque = ecs_get(cursor->world, op->type, EcsOpaque);
-        ecs_assert(opaque != NULL, ECS_INTERNAL_ERROR, NULL);
-        if (opaque->assign_int) { /* preferred operation */
-            opaque->assign_int(ptr, value);
-            break;
-        } else if (opaque->assign_float) { /* most expressive */
-            opaque->assign_float(ptr, (double)value);
-            break;
-        } else if (opaque->assign_uint && (value > 0)) {
-            opaque->assign_uint(ptr, flecs_ito(uint64_t, value));
-            break;
-        } else if (opaque->assign_char && (value > 0) && (value < 256)) {
-            opaque->assign_char(ptr, flecs_ito(char, value));
-            break;
-        }
-    }
-    /* fall through */
-    case EcsOpOpaqueStruct:
-    case EcsOpOpaqueArray:
-    case EcsOpOpaqueVector:
-    case EcsOpPushStruct:
-    case EcsOpPushArray:
-    case EcsOpPushVector:
-    case EcsOpPushMap:
-    case EcsOpPushValue:
-    case EcsOpPop:
-    case EcsOpForward:
-    case EcsOpScope:
-    case EcsOpPrimitive: {
-        if(!value) return ecs_meta_set_null(cursor);
-        flecs_meta_conversion_error(cursor, op, "int");
-        return -1;
-    }
-    default:
-        ecs_throw(ECS_INVALID_PARAMETER, "invalid operation");
-    }
-
-    return 0;
-error:
-    return -1;
+    return flecs_meta_set_number(cursor, EcsI64,
+        (flecs_meta_number_t){.i = value});
 }
 
 int ecs_meta_set_uint(
     ecs_meta_cursor_t *cursor,
     uint64_t value)
 {
-    ecs_meta_scope_t *scope = flecs_cursor_get_scope(cursor);
-    ecs_meta_op_t *op = flecs_cursor_get_op(scope);
-    void *ptr = flecs_meta_cursor_get_ptr(cursor->world, cursor, scope);
-    ecs_assert(ptr != NULL, ECS_INVALID_OPERATION, "no object to assign");
-
-    if (flecs_meta_op_is_value(op)) {
-        ptr = flecs_meta_cursor_value_ensure(
-            cursor, ptr, ecs_id(ecs_u64_t));
-        if (!ptr) {
-            return -1;
-        }
-        flecs_meta_set_t(ecs_u64_t, ptr, value);
-        return 0;
-    }
-
-    switch(op->kind) {
-    cases_T_bool(ptr, value);
-    cases_T_signed(ptr, value, ecs_meta_bounds_unsigned);
-    cases_T_unsigned(ptr, value, ecs_meta_bounds_unsigned);
-    cases_T_float(ptr, value);
-    case EcsOpString: {
-        char *result = flecs_asprintf("%"PRIu64, value);
-        ecs_os_free(*(ecs_string_t*)ptr);
-        flecs_meta_set_t(ecs_string_t, ptr, result);
-        break;
-    }
-    case EcsOpOpaqueValue: {
-        const EcsOpaque *opaque = ecs_get(cursor->world, op->type, EcsOpaque);
-        ecs_assert(opaque != NULL, ECS_INTERNAL_ERROR, NULL);
-        if (opaque->assign_uint) { /* preferred operation */
-            opaque->assign_uint(ptr, value);
-            break;
-        } else if (opaque->assign_float) { /* most expressive */
-            opaque->assign_float(ptr, (double)value);
-            break;
-        } else if (opaque->assign_int && (value < INT64_MAX)) {
-            opaque->assign_int(ptr, flecs_uto(int64_t, value));
-            break;
-        } else if (opaque->assign_char && (value < 256)) {
-            opaque->assign_char(ptr, flecs_uto(char, value));
-            break;
-        }
-    }
-    /* fall through */
-    case EcsOpOpaqueStruct:
-    case EcsOpOpaqueArray:
-    case EcsOpOpaqueVector:
-    case EcsOpPushStruct:
-    case EcsOpPushArray:
-    case EcsOpPushVector:
-    case EcsOpPushMap:
-    case EcsOpPushValue:
-    case EcsOpPop:
-    case EcsOpForward:
-    case EcsOpScope:
-    case EcsOpPrimitive:
-        if(!value) return ecs_meta_set_null(cursor);
-        flecs_meta_conversion_error(cursor, op, "uint");
-        return -1;
-    default:
-        ecs_throw(ECS_INVALID_PARAMETER, "invalid operation");
-    }
-
-    return 0;
-error:
-    return -1;
+    return flecs_meta_set_number(cursor, EcsU64,
+        (flecs_meta_number_t){.u = value});
 }
 
 int ecs_meta_set_float(
     ecs_meta_cursor_t *cursor,
     double value)
 {
-    ecs_meta_scope_t *scope = flecs_cursor_get_scope(cursor);
-    ecs_meta_op_t *op = flecs_cursor_get_op(scope);
-    void *ptr = flecs_meta_cursor_get_ptr(cursor->world, cursor, scope);
-    ecs_assert(ptr != NULL, ECS_INVALID_OPERATION, "no object to assign");
+    return flecs_meta_set_number(cursor, EcsF64,
+        (flecs_meta_number_t){.f = value});
+}
 
-    if (flecs_meta_op_is_value(op)) {
-        ptr = flecs_meta_cursor_value_ensure(
-            cursor, ptr, ecs_id(ecs_f64_t));
-        if (!ptr) {
-            return -1;
-        }
-        flecs_meta_set_t(ecs_f64_t, ptr, value);
-        return 0;
-    }
+int ecs_meta_set_entity(
+    ecs_meta_cursor_t *cursor,
+    ecs_entity_t value)
+{
+    return flecs_meta_set_number(cursor, EcsEntity,
+        (flecs_meta_number_t){.u = value});
+}
 
-    switch(op->kind) {
-    case EcsOpBool:
-        if (ECS_EQZERO(value)) {
-            flecs_meta_set_t(bool, ptr, false);
-        } else {
-            flecs_meta_set_t(bool, ptr, true);
-        }
-        break;
-    cases_T_signed(ptr, value, ecs_meta_bounds_float);
-    cases_T_unsigned(ptr, value, ecs_meta_bounds_float);
-    cases_T_float(ptr, value);
-    case EcsOpString: {
-        char *result = flecs_asprintf("%f", value);
-        ecs_os_free(*(ecs_string_t*)ptr);
-        flecs_meta_set_t(ecs_string_t, ptr, result);
-        break;
-    }
-    case EcsOpOpaqueValue: {
-        const EcsOpaque *opaque = ecs_get(cursor->world, op->type, EcsOpaque);
-        ecs_assert(opaque != NULL, ECS_INTERNAL_ERROR, NULL);
-        if (opaque->assign_float) { /* preferred operation */
-            opaque->assign_float(ptr, value);
-            break;
-        } else if (opaque->assign_int && /* most expressive */
-            (value <= (double)INT64_MAX) && (value >= (double)INT64_MIN)) 
-        {
-            opaque->assign_int(ptr, (int64_t)value);
-            break;
-        } else if (opaque->assign_uint && (value >= 0)) {
-            opaque->assign_uint(ptr, (uint64_t)value);
-            break;
-        } else if (opaque->assign_entity && (value >= 0)) {
-            opaque->assign_entity(
-                ptr, ECS_CONST_CAST(ecs_world_t*, cursor->world), 
-                    (ecs_entity_t)value);
-            break;
-        }
-    }
-    /* fall through */
-    case EcsOpOpaqueStruct:
-    case EcsOpOpaqueArray:
-    case EcsOpOpaqueVector:
-    case EcsOpPushStruct:
-    case EcsOpPushArray:
-    case EcsOpPushVector:
-    case EcsOpPushMap:
-    case EcsOpPushValue:
-    case EcsOpPop:
-    case EcsOpForward:
-    case EcsOpScope:
-    case EcsOpPrimitive:
-        flecs_meta_conversion_error(cursor, op, "float");
-        return -1;
-    default:
-        ecs_throw(ECS_INVALID_PARAMETER, "invalid operation");
-    }
-
-    return 0;
-error:
-    return -1;
+int ecs_meta_set_id(
+    ecs_meta_cursor_t *cursor,
+    ecs_entity_t value)
+{
+    return flecs_meta_set_number(cursor, EcsId,
+        (flecs_meta_number_t){.u = value});
 }
 
 int ecs_meta_set_value(
@@ -1961,6 +1843,11 @@ int ecs_meta_set_value(
     } else {
         void *ptr = flecs_meta_cursor_get_ptr(cursor->world, cursor, scope);
         if (op->type != value->type) {
+            if (flecs_struct_is_derived_from(
+                cursor->world, value->type, op->type))
+            {
+                return ecs_ptr_copy(cursor->world, op->type, ptr, value->ptr);
+            }
             char *type_str = ecs_get_path(cursor->world, value->type);
             flecs_meta_conversion_error(cursor, op, type_str);
             ecs_os_free(type_str);
@@ -2029,38 +1916,7 @@ int ecs_meta_set_string_literal(
         flecs_meta_set_t(ecs_char_t, ptr, value[1]);
         break;
 
-    case EcsOpPushStruct:
-    case EcsOpPushArray:
-    case EcsOpPushVector:
-    case EcsOpPushMap:
-    case EcsOpPushValue:
-    case EcsOpPop:
-    case EcsOpForward:
-    case EcsOpOpaqueValue:
-    case EcsOpOpaqueStruct:
-    case EcsOpOpaqueArray:
-    case EcsOpOpaqueVector:
-    case EcsOpScope:
-    case EcsOpEnum:
-    case EcsOpBitmask:
-    case EcsOpPrimitive:
-    case EcsOpBool:
-    case EcsOpByte:
-    case EcsOpU8:
-    case EcsOpU16:
-    case EcsOpU32:
-    case EcsOpU64:
-    case EcsOpI8:
-    case EcsOpI16:
-    case EcsOpI32:
-    case EcsOpI64:
-    case EcsOpF32:
-    case EcsOpF64:
-    case EcsOpUPtr:
-    case EcsOpIPtr:
-    case EcsOpString:
-    case EcsOpEntity:
-    case EcsOpId:
+    default:
         len -= 2;
 
         char *result = ecs_os_malloc(len + 1);
@@ -2073,169 +1929,6 @@ int ecs_meta_set_string_literal(
         }
 
         ecs_os_free(result);
-        break;
-    default:
-        ecs_throw(ECS_INVALID_PARAMETER, "invalid operation");
-        break;
-    }
-
-    return 0;
-error:
-    return -1;
-}
-
-int ecs_meta_set_entity(
-    ecs_meta_cursor_t *cursor,
-    ecs_entity_t value)
-{
-    ecs_meta_scope_t *scope = flecs_cursor_get_scope(cursor);
-    ecs_meta_op_t *op = flecs_cursor_get_op(scope);
-    void *ptr = flecs_meta_cursor_get_ptr(cursor->world, cursor, scope);
-
-    if (flecs_meta_op_is_value(op)) {
-        ptr = flecs_meta_cursor_value_ensure(
-            cursor, ptr, ecs_id(ecs_entity_t));
-        if (!ptr) {
-            return -1;
-        }
-        flecs_meta_set_t(ecs_entity_t, ptr, value);
-        return 0;
-    }
-
-    switch(op->kind) {
-    case EcsOpEntity:
-        flecs_meta_set_t(ecs_entity_t, ptr, value);
-        break;
-    case EcsOpId:
-        flecs_meta_set_t(ecs_id_t, ptr, value); /* entities are valid ids */
-        break;
-    case EcsOpString: {
-        char *result = ecs_get_path(cursor->world, value);
-        ecs_os_free(*(ecs_string_t*)ptr);
-        flecs_meta_set_t(ecs_string_t, ptr, result);
-        break;
-    }   
-    case EcsOpOpaqueValue: {
-        const EcsOpaque *opaque = ecs_get(cursor->world, op->type, EcsOpaque);
-        if (opaque && opaque->assign_entity) {
-            opaque->assign_entity(ptr, 
-                ECS_CONST_CAST(ecs_world_t*, cursor->world), value);
-            break;
-        }
-    }
-    /* fall through */
-    case EcsOpPushStruct:
-    case EcsOpPushArray:
-    case EcsOpPushVector:
-    case EcsOpPushMap:
-    case EcsOpPushValue:
-    case EcsOpOpaqueStruct:
-    case EcsOpOpaqueArray:
-    case EcsOpOpaqueVector:
-    case EcsOpPop:
-    case EcsOpForward:
-    case EcsOpScope:
-    case EcsOpEnum:
-    case EcsOpBitmask:
-    case EcsOpPrimitive:
-    case EcsOpBool:
-    case EcsOpChar:
-    case EcsOpByte:
-    case EcsOpU8:
-    case EcsOpU16:
-    case EcsOpU32:
-    case EcsOpU64:
-    case EcsOpI8:
-    case EcsOpI16:
-    case EcsOpI32:
-    case EcsOpI64:
-    case EcsOpF32:
-    case EcsOpF64:
-    case EcsOpUPtr:
-    case EcsOpIPtr:
-        flecs_meta_conversion_error(cursor, op, "entity");
-        goto error;
-    default:
-        ecs_throw(ECS_INVALID_PARAMETER, "invalid operation");
-        break;
-    }
-
-    return 0;
-error:
-    return -1;
-}
-
-int ecs_meta_set_id(
-    ecs_meta_cursor_t *cursor,
-    ecs_entity_t value)
-{
-    ecs_meta_scope_t *scope = flecs_cursor_get_scope(cursor);
-    ecs_meta_op_t *op = flecs_cursor_get_op(scope);
-    void *ptr = flecs_meta_cursor_get_ptr(cursor->world, cursor, scope);
-
-    if (flecs_meta_op_is_value(op)) {
-        ptr = flecs_meta_cursor_value_ensure(
-            cursor, ptr, ecs_id(ecs_id_t));
-        if (!ptr) {
-            return -1;
-        }
-        flecs_meta_set_t(ecs_id_t, ptr, value);
-        return 0;
-    }
-
-    switch(op->kind) {
-    case EcsOpId:
-        flecs_meta_set_t(ecs_id_t, ptr, value);
-        break;
-    case EcsOpString: {
-        char *result = ecs_id_str(cursor->world, value);
-        ecs_os_free(*(ecs_string_t*)ptr);
-        flecs_meta_set_t(ecs_string_t, ptr, result);
-        break;
-    }
-    case EcsOpOpaqueValue: {
-        const EcsOpaque *opaque = ecs_get(cursor->world, op->type, EcsOpaque);
-        if (opaque && opaque->assign_id) {
-            opaque->assign_id(ptr, 
-                ECS_CONST_CAST(ecs_world_t*, cursor->world), value);
-            break;
-        }
-    }
-    /* fall through */
-    case EcsOpPushStruct:
-    case EcsOpPushArray:
-    case EcsOpPushVector:
-    case EcsOpPushMap:
-    case EcsOpPushValue:
-    case EcsOpOpaqueStruct:
-    case EcsOpOpaqueArray:
-    case EcsOpOpaqueVector:
-    case EcsOpPop:
-    case EcsOpForward:
-    case EcsOpScope:
-    case EcsOpEnum:
-    case EcsOpBitmask:
-    case EcsOpPrimitive:
-    case EcsOpBool:
-    case EcsOpChar:
-    case EcsOpByte:
-    case EcsOpU8:
-    case EcsOpU16:
-    case EcsOpU32:
-    case EcsOpU64:
-    case EcsOpI8:
-    case EcsOpI16:
-    case EcsOpI32:
-    case EcsOpI64:
-    case EcsOpF32:
-    case EcsOpF64:
-    case EcsOpUPtr:
-    case EcsOpIPtr:
-    case EcsOpEntity:
-        flecs_meta_conversion_error(cursor, op, "id");
-        goto error;
-    default:
-        ecs_throw(ECS_INVALID_PARAMETER, "invalid operation");
         break;
     }
 
@@ -2258,325 +1951,157 @@ int ecs_meta_set_null(
     case EcsOpString:
         ecs_os_free(*(char**)ptr);
         flecs_meta_set_t(ecs_string_t, ptr, NULL);
-        break;
+        return 0;
     case EcsOpOpaqueValue: {
         const EcsOpaque *ot = ecs_get(cursor->world, op->type, EcsOpaque);
         if (ot && ot->assign_null) {
             ot->assign_null(ptr);
-            break;
+            return 0;
         }
+        break;
     }
-    /* fall through */
-    case EcsOpPushStruct:
-    case EcsOpPushArray:
-    case EcsOpPushVector:
-    case EcsOpPushMap:
-    case EcsOpPushValue:
-    case EcsOpOpaqueStruct:
-    case EcsOpOpaqueArray:
-    case EcsOpOpaqueVector:
-    case EcsOpPop:
-    case EcsOpForward:
-    case EcsOpScope:
-    case EcsOpEnum:
-    case EcsOpBitmask:
-    case EcsOpPrimitive:
-    case EcsOpBool:
-    case EcsOpChar:
-    case EcsOpByte:
-    case EcsOpU8:
-    case EcsOpU16:
-    case EcsOpU32:
-    case EcsOpU64:
-    case EcsOpI8:
-    case EcsOpI16:
-    case EcsOpI32:
-    case EcsOpI64:
-    case EcsOpF32:
-    case EcsOpF64:
-    case EcsOpUPtr:
-    case EcsOpIPtr:
-    case EcsOpEntity:
-    case EcsOpId:
-        flecs_meta_conversion_error(cursor, op, "null");
-        goto error;
     default:
-        ecs_throw(ECS_INVALID_PARAMETER, "invalid operation");
         break;
     }
 
-    return 0;
+    flecs_meta_conversion_error(cursor, op, "null");
 error:
     return -1;
+}
+
+static FLECS_ALWAYS_INLINE flecs_meta_number_t flecs_meta_to_number(
+    ecs_meta_op_kind_t kind,
+    const void *ptr,
+    ecs_primitive_kind_t to)
+{
+    flecs_meta_number_t value = {0};
+    ecs_primitive_kind_t from = EcsI64;
+    const char *name = to == EcsBool ? "bool" : to == EcsI64 ? "int" :
+        to == EcsU64 ? "uint" : to == EcsF64 ? "float" :
+        to == EcsChar ? "char" : "entity";
+    (void)name;
+    if ((to == EcsChar && kind != EcsOpChar) ||
+        (to == EcsEntity && kind != EcsOpEntity) ||
+        (to == EcsId && kind != EcsOpEntity && kind != EcsOpId))
+    {
+        ecs_throw(ECS_INVALID_PARAMETER, "invalid element for %s", name);
+    }
+    if ((kind == EcsOpEntity || kind == EcsOpId) &&
+        (to == EcsI64 || to == EcsF64))
+    {
+        ecs_throw(ECS_INVALID_PARAMETER, "invalid conversion from %s to %s",
+            kind == EcsOpEntity ? "entity" : "id", name);
+    }
+    switch (kind) {
+    case EcsOpBool: value.i = *(const ecs_bool_t*)ptr; break;
+    case EcsOpChar: value.i = *(const ecs_char_t*)ptr; break;
+    case EcsOpI8: value.i = *(const ecs_i8_t*)ptr; break;
+    case EcsOpByte:
+    case EcsOpU8: value.i = *(const ecs_u8_t*)ptr; break;
+    case EcsOpI16: value.i = *(const ecs_i16_t*)ptr; break;
+    case EcsOpU16: value.i = *(const ecs_u16_t*)ptr; break;
+    case EcsOpEnum:
+    case EcsOpI32: value.i = *(const ecs_i32_t*)ptr; break;
+    case EcsOpBitmask:
+    case EcsOpU32: value.i = *(const ecs_u32_t*)ptr; break;
+    case EcsOpI64: value.i = *(const ecs_i64_t*)ptr; break;
+    case EcsOpIPtr: value.i = *(const ecs_iptr_t*)ptr; break;
+    case EcsOpEntity:
+    case EcsOpId:
+    case EcsOpU64:
+        value.u = *(const ecs_u64_t*)ptr;
+        from = EcsU64;
+        break;
+    case EcsOpUPtr:
+        value.u = *(const ecs_uptr_t*)ptr;
+        from = EcsU64;
+        break;
+    case EcsOpF32:
+        value.f = (double)*(const ecs_f32_t*)ptr;
+        from = EcsF64;
+        break;
+    case EcsOpF64:
+        value.f = *(const ecs_f64_t*)ptr;
+        from = EcsF64;
+        break;
+    case EcsOpString:
+        if (to == EcsBool) {
+            value.i = *(const char*const*)ptr != NULL;
+        } else if (to == EcsF64) {
+            value.f = atof(*(const char*const*)ptr);
+            from = EcsF64;
+        } else {
+            value.i = atoi(*(const char*const*)ptr);
+        }
+        break;
+    default:
+        ecs_throw(ECS_INVALID_PARAMETER, "invalid element for %s", name);
+    }
+    switch (to) {
+    case EcsBool:
+        value.i = from == EcsF64 ? ECS_NEQZERO(value.f) : value.u != 0;
+        break;
+    case EcsChar:
+    case EcsI64:
+        value.i = from == EcsF64 ? (int64_t)value.f : from == EcsU64
+            ? flecs_uto(int64_t, value.u) : value.i;
+        break;
+    case EcsEntity:
+    case EcsId:
+    case EcsU64:
+        value.u = from == EcsF64 ? flecs_ito(uint64_t, value.f) : from == EcsI64
+            ? flecs_ito(uint64_t, value.i) : value.u;
+        break;
+    case EcsF64:
+        value.f = from == EcsI64 ? (double)value.i : from == EcsU64
+            ? (double)value.u : value.f;
+        break;
+    default:
+        ecs_abort(ECS_INTERNAL_ERROR, NULL);
+    }
+    return value;
+error:
+    return (flecs_meta_number_t){0};
+}
+
+static FLECS_ALWAYS_INLINE flecs_meta_number_t flecs_meta_get_number(
+    const ecs_meta_cursor_t *cursor,
+    ecs_primitive_kind_t to)
+{
+    ecs_meta_scope_t *scope = flecs_cursor_get_scope(cursor);
+    ecs_meta_op_t *op = flecs_cursor_get_op(scope);
+    const void *ptr = flecs_meta_cursor_get_ptr(cursor->world, cursor, scope);
+    return flecs_meta_to_number(op->kind, ptr, to);
 }
 
 bool ecs_meta_get_bool(
     const ecs_meta_cursor_t *cursor)
 {
-    ecs_meta_scope_t *scope = flecs_cursor_get_scope(cursor);
-    ecs_meta_op_t *op = flecs_cursor_get_op(scope);
-    void *ptr = flecs_meta_cursor_get_ptr(cursor->world, cursor, scope);
-    switch(op->kind) {
-    case EcsOpBool: return *(ecs_bool_t*)ptr;
-    case EcsOpI8:   return *(ecs_i8_t*)ptr != 0;
-    case EcsOpU8:   return *(ecs_u8_t*)ptr != 0;
-    case EcsOpChar: return *(ecs_char_t*)ptr != 0;
-    case EcsOpByte: return *(ecs_u8_t*)ptr != 0;
-    case EcsOpI16:  return *(ecs_i16_t*)ptr != 0;
-    case EcsOpU16:  return *(ecs_u16_t*)ptr != 0;
-    case EcsOpI32:  return *(ecs_i32_t*)ptr != 0;
-    case EcsOpU32:  return *(ecs_u32_t*)ptr != 0;
-    case EcsOpI64:  return *(ecs_i64_t*)ptr != 0;
-    case EcsOpU64:  return *(ecs_u64_t*)ptr != 0;
-    case EcsOpIPtr: return *(ecs_iptr_t*)ptr != 0;
-    case EcsOpUPtr: return *(ecs_uptr_t*)ptr != 0;
-    case EcsOpF32:  return ECS_NEQZERO(*(ecs_f32_t*)ptr);
-    case EcsOpF64:  return ECS_NEQZERO(*(ecs_f64_t*)ptr);
-    case EcsOpString: return *(const char**)ptr != NULL;
-    case EcsOpEnum: return *(ecs_i32_t*)ptr != 0;
-    case EcsOpBitmask: return *(ecs_u32_t*)ptr != 0;
-    case EcsOpEntity: return *(ecs_entity_t*)ptr != 0;
-    case EcsOpId: return *(ecs_id_t*)ptr != 0;
-    case EcsOpPushStruct:
-    case EcsOpPushArray:
-    case EcsOpPushVector:
-    case EcsOpPushMap:
-    case EcsOpPushValue:
-    case EcsOpPop:
-    case EcsOpForward:
-    case EcsOpOpaqueValue:
-    case EcsOpOpaqueStruct:
-    case EcsOpOpaqueArray:
-    case EcsOpOpaqueVector:
-    case EcsOpScope:
-    case EcsOpPrimitive:
-        ecs_throw(ECS_INVALID_PARAMETER, "invalid element for bool");
-        break;
-    default:
-        ecs_throw(ECS_INVALID_PARAMETER, "invalid operation");
-        break;
-    }
-
-error:
-    return 0;
-}
-
-char ecs_meta_get_char(
-    const ecs_meta_cursor_t *cursor)
-{
-    ecs_meta_scope_t *scope = flecs_cursor_get_scope(cursor);
-    ecs_meta_op_t *op = flecs_cursor_get_op(scope);
-    void *ptr = flecs_meta_cursor_get_ptr(cursor->world, cursor, scope);
-    switch(op->kind) {
-    case EcsOpChar:
-        return *(ecs_char_t*)ptr;
-    case EcsOpPushStruct:
-    case EcsOpPushArray:
-    case EcsOpPushVector:
-    case EcsOpPushMap:
-    case EcsOpPushValue:
-    case EcsOpPop:
-    case EcsOpForward:
-    case EcsOpOpaqueValue:
-    case EcsOpOpaqueStruct:
-    case EcsOpOpaqueArray:
-    case EcsOpOpaqueVector:
-    case EcsOpScope:
-    case EcsOpEnum:
-    case EcsOpBitmask:
-    case EcsOpPrimitive:
-    case EcsOpBool:
-    case EcsOpByte:
-    case EcsOpU8:
-    case EcsOpU16:
-    case EcsOpU32:
-    case EcsOpU64:
-    case EcsOpI8:
-    case EcsOpI16:
-    case EcsOpI32:
-    case EcsOpI64:
-    case EcsOpF32:
-    case EcsOpF64:
-    case EcsOpUPtr:
-    case EcsOpIPtr:
-    case EcsOpString:
-    case EcsOpEntity:
-    case EcsOpId:
-        ecs_throw(ECS_INVALID_PARAMETER, "invalid element for char");
-        break;
-    }
-
-error:
-    return 0;
+    return flecs_meta_get_number(cursor, EcsBool).i != 0;
 }
 
 int64_t ecs_meta_get_int(
     const ecs_meta_cursor_t *cursor)
 {
-    ecs_meta_scope_t *scope = flecs_cursor_get_scope(cursor);
-    ecs_meta_op_t *op = flecs_cursor_get_op(scope);
-    void *ptr = flecs_meta_cursor_get_ptr(cursor->world, cursor, scope);
-    switch(op->kind) {
-    case EcsOpBool: return *(const ecs_bool_t*)ptr;
-    case EcsOpI8:   return *(const ecs_i8_t*)ptr;
-    case EcsOpU8:   return *(const ecs_u8_t*)ptr;
-    case EcsOpChar: return *(const ecs_char_t*)ptr;
-    case EcsOpByte: return *(const ecs_u8_t*)ptr;
-    case EcsOpI16:  return *(const ecs_i16_t*)ptr;
-    case EcsOpU16:  return *(const ecs_u16_t*)ptr;
-    case EcsOpI32:  return *(const ecs_i32_t*)ptr;
-    case EcsOpU32:  return *(const ecs_u32_t*)ptr;
-    case EcsOpI64:  return *(const ecs_i64_t*)ptr;
-    case EcsOpU64:  return flecs_uto(int64_t, *(const ecs_u64_t*)ptr);
-    case EcsOpIPtr: return *(const ecs_iptr_t*)ptr;
-    case EcsOpUPtr: return flecs_uto(int64_t, *(const ecs_uptr_t*)ptr);
-    case EcsOpF32:  return (int64_t)*(const ecs_f32_t*)ptr;
-    case EcsOpF64:  return (int64_t)*(const ecs_f64_t*)ptr;
-    case EcsOpString: return atoi(*(const char**)ptr);
-    case EcsOpEnum: return *(const ecs_i32_t*)ptr;
-    case EcsOpBitmask: return *(const ecs_u32_t*)ptr;
-    case EcsOpEntity:
-        ecs_throw(ECS_INVALID_PARAMETER,
-            "invalid conversion from entity to int");
-        break;
-    case EcsOpId:
-        ecs_throw(ECS_INVALID_PARAMETER,
-            "invalid conversion from id to int");
-        break;
-    case EcsOpPushStruct:
-    case EcsOpPushArray:
-    case EcsOpPushVector:
-    case EcsOpPushMap:
-    case EcsOpPushValue:
-    case EcsOpPop:
-    case EcsOpForward:
-    case EcsOpOpaqueValue:
-    case EcsOpOpaqueStruct:
-    case EcsOpOpaqueArray:
-    case EcsOpOpaqueVector:
-    case EcsOpScope:
-    case EcsOpPrimitive:
-        ecs_throw(ECS_INVALID_PARAMETER, "invalid element for int");
-        break;
-    default:
-        ecs_throw(ECS_INVALID_PARAMETER, "invalid operation");
-        break;
-    }
-error:
-    return 0;
+    return flecs_meta_get_number(cursor, EcsI64).i;
 }
 
 uint64_t ecs_meta_get_uint(
     const ecs_meta_cursor_t *cursor)
 {
-    ecs_meta_scope_t *scope = flecs_cursor_get_scope(cursor);
-    ecs_meta_op_t *op = flecs_cursor_get_op(scope);
-    void *ptr = flecs_meta_cursor_get_ptr(cursor->world, cursor, scope);
-    switch(op->kind) {
-    case EcsOpBool: return *(ecs_bool_t*)ptr;
-    case EcsOpI8:   return flecs_ito(uint64_t, *(const ecs_i8_t*)ptr);
-    case EcsOpU8:   return *(ecs_u8_t*)ptr;
-    case EcsOpChar: return flecs_ito(uint64_t, *(const ecs_char_t*)ptr);
-    case EcsOpByte: return flecs_ito(uint64_t, *(const ecs_u8_t*)ptr);
-    case EcsOpI16:  return flecs_ito(uint64_t, *(const ecs_i16_t*)ptr);
-    case EcsOpU16:  return *(ecs_u16_t*)ptr;
-    case EcsOpI32:  return flecs_ito(uint64_t, *(const ecs_i32_t*)ptr);
-    case EcsOpU32:  return *(ecs_u32_t*)ptr;
-    case EcsOpI64:  return flecs_ito(uint64_t, *(const ecs_i64_t*)ptr);
-    case EcsOpU64:  return *(ecs_u64_t*)ptr;
-    case EcsOpIPtr: return flecs_ito(uint64_t, *(const ecs_i64_t*)ptr);
-    case EcsOpUPtr: return *(ecs_uptr_t*)ptr;
-    case EcsOpF32:  return flecs_ito(uint64_t, *(const ecs_f32_t*)ptr);
-    case EcsOpF64:  return flecs_ito(uint64_t, *(const ecs_f64_t*)ptr);
-    case EcsOpString: return flecs_ito(uint64_t, atoi(*(const char**)ptr));
-    case EcsOpEnum: return flecs_ito(uint64_t, *(const ecs_i32_t*)ptr);
-    case EcsOpBitmask: return *(const ecs_u32_t*)ptr;
-    case EcsOpEntity: return *(const ecs_entity_t*)ptr;
-    case EcsOpId: return *(const ecs_id_t*)ptr;
-    case EcsOpPushStruct:
-    case EcsOpPushArray:
-    case EcsOpPushVector:
-    case EcsOpPushMap:
-    case EcsOpPushValue:
-    case EcsOpPop:
-    case EcsOpForward:
-    case EcsOpOpaqueValue:
-    case EcsOpOpaqueStruct:
-    case EcsOpOpaqueArray:
-    case EcsOpOpaqueVector:
-    case EcsOpScope:
-    case EcsOpPrimitive:
-        ecs_throw(ECS_INVALID_PARAMETER, "invalid element for uint");
-        break;
-    default:
-        ecs_throw(ECS_INVALID_PARAMETER, "invalid operation");
-        break;
-    }
-error:
-    return 0;
-}
-
-static double flecs_meta_to_float(
-    ecs_meta_op_kind_t kind,
-    const void *ptr)
-{
-    switch(kind) {
-    case EcsOpBool: return *(const ecs_bool_t*)ptr;
-    case EcsOpI8:   return *(const ecs_i8_t*)ptr;
-    case EcsOpU8:   return *(const ecs_u8_t*)ptr;
-    case EcsOpChar: return *(const ecs_char_t*)ptr;
-    case EcsOpByte: return *(const ecs_u8_t*)ptr;
-    case EcsOpI16:  return *(const ecs_i16_t*)ptr;
-    case EcsOpU16:  return *(const ecs_u16_t*)ptr;
-    case EcsOpI32:  return *(const ecs_i32_t*)ptr;
-    case EcsOpU32:  return *(const ecs_u32_t*)ptr;
-    case EcsOpI64:  return (double)*(const ecs_i64_t*)ptr;
-    case EcsOpU64:  return (double)*(const ecs_u64_t*)ptr;
-    case EcsOpIPtr: return (double)*(const ecs_iptr_t*)ptr;
-    case EcsOpUPtr: return (double)*(const ecs_uptr_t*)ptr;
-    case EcsOpF32:  return (double)*(const ecs_f32_t*)ptr;
-    case EcsOpF64:  return *(const ecs_f64_t*)ptr;
-    case EcsOpString: return atof(*ECS_CONST_CAST(const char**, ptr));
-    case EcsOpEnum: return *(const ecs_i32_t*)ptr;
-    case EcsOpBitmask: return *(const ecs_u32_t*)ptr;
-    case EcsOpEntity:
-        ecs_throw(ECS_INVALID_PARAMETER,
-            "invalid conversion from entity to float");
-        break;
-    case EcsOpId:
-        ecs_throw(ECS_INVALID_PARAMETER,
-            "invalid conversion from id to float");
-        break;
-    case EcsOpPushStruct:
-    case EcsOpPushArray:
-    case EcsOpPushVector:
-    case EcsOpPushMap:
-    case EcsOpPushValue:
-    case EcsOpPop:
-    case EcsOpForward:
-    case EcsOpOpaqueValue:
-    case EcsOpOpaqueStruct:
-    case EcsOpOpaqueArray:
-    case EcsOpOpaqueVector:
-    case EcsOpScope:
-    case EcsOpPrimitive:
-        ecs_throw(ECS_INVALID_PARAMETER, "invalid element for float");
-        break;
-    default:
-        ecs_throw(ECS_INVALID_PARAMETER, "invalid operation");
-        break;
-    }
-error:
-    return 0;
+    return flecs_meta_get_number(cursor, EcsU64).u;
 }
 
 double ecs_meta_get_float(
     const ecs_meta_cursor_t *cursor)
 {
-    ecs_meta_scope_t *scope = flecs_cursor_get_scope(cursor);
-    ecs_meta_op_t *op = flecs_cursor_get_op(scope);
-    void *ptr = flecs_meta_cursor_get_ptr(cursor->world, cursor, scope);
-    return flecs_meta_to_float(op->kind, ptr);
+    return flecs_meta_get_number(cursor, EcsF64).f;
+}
+
+char ecs_meta_get_char(
+    const ecs_meta_cursor_t *cursor)
+{
+    return (char)flecs_meta_get_number(cursor, EcsChar).i;
 }
 
 /* Value handler to get string from opaque (see ecs_meta_get_string below) */
@@ -2630,40 +2155,8 @@ const char* ecs_meta_get_string(
         /* Not a compatible opaque type, so fall through */
     }
     /* fall through */
-    case EcsOpPushStruct:
-    case EcsOpPushArray:
-    case EcsOpPushVector:
-    case EcsOpPushMap:
-    case EcsOpPushValue:
-    case EcsOpOpaqueStruct:
-    case EcsOpOpaqueArray:
-    case EcsOpOpaqueVector:
-    case EcsOpPop:
-    case EcsOpForward:
-    case EcsOpScope:
-    case EcsOpEnum:
-    case EcsOpBitmask:
-    case EcsOpPrimitive:
-    case EcsOpChar:
-    case EcsOpBool:
-    case EcsOpByte:
-    case EcsOpU8:
-    case EcsOpU16:
-    case EcsOpU32:
-    case EcsOpU64:
-    case EcsOpI8:
-    case EcsOpI16:
-    case EcsOpI32:
-    case EcsOpI64:
-    case EcsOpF32:
-    case EcsOpF64:
-    case EcsOpUPtr:
-    case EcsOpIPtr:
-    case EcsOpEntity:
-    case EcsOpId:
     default:
         ecs_throw(ECS_INVALID_PARAMETER, "invalid element for string");
-        break;
     }
 error:
     return 0;
@@ -2672,95 +2165,13 @@ error:
 ecs_entity_t ecs_meta_get_entity(
     const ecs_meta_cursor_t *cursor)
 {
-    ecs_meta_scope_t *scope = flecs_cursor_get_scope(cursor);
-    ecs_meta_op_t *op = flecs_cursor_get_op(scope);
-    void *ptr = flecs_meta_cursor_get_ptr(cursor->world, cursor, scope);
-    switch(op->kind) {
-    case EcsOpEntity: return *(ecs_entity_t*)ptr;
-    case EcsOpPushStruct:
-    case EcsOpPushArray:
-    case EcsOpPushVector:
-    case EcsOpPushMap:
-    case EcsOpPushValue:
-    case EcsOpPop:
-    case EcsOpForward:
-    case EcsOpOpaqueValue:
-    case EcsOpOpaqueStruct:
-    case EcsOpOpaqueArray:
-    case EcsOpOpaqueVector:
-    case EcsOpScope:
-    case EcsOpEnum:
-    case EcsOpBitmask:
-    case EcsOpPrimitive:
-    case EcsOpChar:
-    case EcsOpBool:
-    case EcsOpByte:
-    case EcsOpU8:
-    case EcsOpU16:
-    case EcsOpU32:
-    case EcsOpU64:
-    case EcsOpI8:
-    case EcsOpI16:
-    case EcsOpI32:
-    case EcsOpI64:
-    case EcsOpF32:
-    case EcsOpF64:
-    case EcsOpUPtr:
-    case EcsOpIPtr:
-    case EcsOpString:
-    case EcsOpId:
-        ecs_throw(ECS_INVALID_PARAMETER, "invalid element for entity");
-        break;
-    }
-error:
-    return 0;
+    return flecs_meta_get_number(cursor, EcsEntity).u;
 }
 
 ecs_entity_t ecs_meta_get_id(
     const ecs_meta_cursor_t *cursor)
 {
-    ecs_meta_scope_t *scope = flecs_cursor_get_scope(cursor);
-    ecs_meta_op_t *op = flecs_cursor_get_op(scope);
-    void *ptr = flecs_meta_cursor_get_ptr(cursor->world, cursor, scope);
-    switch(op->kind) {
-    case EcsOpEntity: return *(ecs_id_t*)ptr; /* Entities are valid ids */
-    case EcsOpId: return *(ecs_id_t*)ptr;
-    case EcsOpPushStruct:
-    case EcsOpPushArray:
-    case EcsOpPushVector:
-    case EcsOpPushMap:
-    case EcsOpPushValue:
-    case EcsOpPop:
-    case EcsOpForward:
-    case EcsOpOpaqueValue:
-    case EcsOpOpaqueStruct:
-    case EcsOpOpaqueArray:
-    case EcsOpOpaqueVector:
-    case EcsOpScope:
-    case EcsOpEnum:
-    case EcsOpBitmask:
-    case EcsOpPrimitive:
-    case EcsOpChar:
-    case EcsOpBool:
-    case EcsOpByte:
-    case EcsOpU8:
-    case EcsOpU16:
-    case EcsOpU32:
-    case EcsOpU64:
-    case EcsOpI8:
-    case EcsOpI16:
-    case EcsOpI32:
-    case EcsOpI64:
-    case EcsOpF32:
-    case EcsOpF64:
-    case EcsOpUPtr:
-    case EcsOpIPtr:
-    case EcsOpString:
-        ecs_throw(ECS_INVALID_PARAMETER, "invalid element for entity");
-        break;
-    }
-error:
-    return 0;
+    return flecs_meta_get_number(cursor, EcsId).u;
 }
 
 double ecs_meta_ptr_to_float(
@@ -2768,7 +2179,7 @@ double ecs_meta_ptr_to_float(
     const void *ptr)
 {
     ecs_meta_op_kind_t kind = flecs_meta_primitive_to_op_kind(type_kind);
-    return flecs_meta_to_float(kind, ptr);
+    return flecs_meta_to_number(kind, ptr, EcsF64).f;
 }
 
 #endif

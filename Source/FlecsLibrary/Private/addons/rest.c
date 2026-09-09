@@ -50,61 +50,6 @@ static ECS_DTOR(EcsRest, ptr, {
     ecs_os_free(ptr->ipaddr);
 })
 
-static char *rest_last_err;
-static ecs_os_api_log_t rest_prev_log;
-static ecs_os_api_log_t rest_prev_fatal_log;
-
-static void flecs_rest_set_prev_log(
-    ecs_os_api_log_t prev_log,
-    bool try)
-{
-    rest_prev_log = try ? NULL : prev_log;
-    rest_prev_fatal_log = prev_log;
-}
-
-static void flecs_rest_capture_log(
-    int32_t level, 
-    const char *file,
-    int32_t line, 
-    const char *msg)
-{
-    (void)file; (void)line;
-
-    if (level <= -4) {
-        /* Make sure to always log fatal errors */
-        if (rest_prev_fatal_log) {
-            ecs_log_enable_colors(true);
-            rest_prev_fatal_log(level, file, line, msg);
-            ecs_log_enable_colors(false);
-            return;
-        } else {
-            fprintf(stderr, "%s:%d: %s", file, line, msg);
-        }
-    }
-
-#ifdef FLECS_DEBUG
-    /* In debug mode, log unexpected errors to the console */
-    if (level < 0) {
-        /* Also log to previous log function in debug mode */
-        if (rest_prev_log) {
-            ecs_log_enable_colors(true);
-            rest_prev_log(level, file, line, msg);
-            ecs_log_enable_colors(false);
-        }
-    }
-#endif
-
-    if (!rest_last_err && level <= -3) {
-        rest_last_err = ecs_os_strdup(msg);
-    }
-}
-
-static char* flecs_rest_get_captured_log(void) {
-    char *result = rest_last_err;
-    rest_last_err = NULL;
-    return result;
-}
-
 static void flecs_reply_verror(
     ecs_http_reply_t *reply,
     const char *fmt,
@@ -421,21 +366,34 @@ static bool flecs_rest_put_component(
         return true;
     }
 
-    void *ptr = ecs_ensure_id(world, e, id, flecs_ito(size_t, ti->size));
+    void *ptr = ecs_os_malloc(ti->size);
     if (!ptr) {
         flecs_reply_error(reply, "failed to create component '%s'", component);
         reply->code = 500;
         return true;
     }
 
-    ecs_entity_t type = ti->component;
-    if (!ecs_ptr_from_json(world, type, ptr, data, NULL)) {
-        flecs_reply_error(reply, "invalid value for component '%s'", component);
-        reply->code = 400;
-        return true;
+    const void *cur = ecs_get_id(world, e, id);
+    if (cur) {
+        flecs_type_info_copy_ctor(ptr, cur, 1, ti);
+    } else {
+        ecs_os_memset(ptr, 0, ti->size);
+        flecs_type_info_ctor(ptr, 1, ti);
     }
 
-    ecs_modified_id(world, e, id);
+    ecs_entity_t type = ti->component;
+    bool valid = ecs_ptr_from_json(world, type, ptr, data, NULL) != NULL;
+    if (valid) {
+        ecs_set_id(world, e, id, flecs_ito(size_t, ti->size), ptr);
+    }
+
+    flecs_type_info_dtor(ptr, 1, ti);
+    ecs_os_free(ptr);
+
+    if (!valid) {
+        flecs_reply_error(reply, "invalid value for component '%s'", component);
+        reply->code = 400;
+    }
 
     return true;
 }
@@ -543,7 +501,16 @@ static bool flecs_rest_script(
 #ifdef FLECS_SCRIPT
     ecs_entity_t script = flecs_rest_entity_from_path(world, reply, path);
     if (!script) {
-        script = ecs_entity(world, { .name = path });
+        /* Entity does not exist yet, create it. Reset the reply that was
+         * populated by the failed lookup, as the request itself is valid. */
+        ecs_strbuf_reset(&reply->body);
+        reply->code = 200;
+        script = ecs_entity(world, { .name = path, .sep = "/" });
+        if (!script) {
+            flecs_reply_error(reply, "invalid script name '%s'", path);
+            reply->code = 400;
+            return true;
+        }
     }
 
     /* If true, check if file changed */
@@ -608,7 +575,8 @@ static bool flecs_rest_script(
             ecs_strbuf_appendlit(&reply->body, ", ");
         }
 
-        char *escaped_err = flecs_astresc('"', s->error);
+        char *escaped_err = flecs_astresc('"',
+            s && s->error ? s->error : "failed to update script");
         ecs_strbuf_append(&reply->body, 
             "\"error\": \"%s\"", escaped_err);
         ecs_os_free(escaped_err);
@@ -626,20 +594,9 @@ static bool flecs_rest_script(
 #endif
 }
 
-#ifdef FLECS_SCRIPT
-static ecs_entity_t flecs_rest_call_lookup(
-    const ecs_world_t *world,
-    const char *name,
-    void *ctx)
-{
-    (void)world;
-    (void)name;
-    return *(ecs_entity_t*)ctx;
-}
-#endif
-
-static void flecs_rest_reply_set_captured_log(
-    ecs_http_reply_t *reply);
+static void flecs_rest_reply_capture(
+    ecs_http_reply_t *reply,
+    bool ok);
 
 static bool flecs_rest_call(
     ecs_world_t *world,
@@ -665,12 +622,14 @@ static bool flecs_rest_call(
         return true;
     }
 
-    ecs_script_vars_t *vars = ecs_script_vars_init(world);
-    ecs_strbuf_t expr = ECS_STRBUF_INIT;
-    ecs_strbuf_appendlit(&expr, "rest_call(");
-
+    if (!func->callback || !ecs_get_type_info(world, func->return_type)) {
+        flecs_reply_error(reply, "function '%s' cannot be called synchronously", path);
+        reply->code = 400;
+        return true;
+    }
     int32_t i, param_count = ecs_vec_count(&func->params);
     ecs_script_parameter_t *params = ecs_vec_first(&func->params);
+    ecs_value_t *args = param_count ? ecs_os_calloc_n(ecs_value_t, param_count) : NULL;
     for (i = 0; i < param_count; i ++) {
         const char *value = ecs_http_get_param(req, params[i].name);
         if (!value) {
@@ -679,19 +638,17 @@ static bool flecs_rest_call(
             goto done;
         }
 
-        ecs_script_var_t *var = ecs_script_vars_define_id(
-            vars, params[i].name, params[i].type);
-        if (!var) {
-            flecs_reply_error(reply, "invalid type for argument '%s'",
-                params[i].name);
+        if (!ecs_get_type_info(world, params[i].type)) {
+            flecs_reply_error(reply, "invalid type for argument '%s'", params[i].name);
             reply->code = 500;
             goto done;
         }
+        args[i] = ecs_value_new(world, params[i].type);
 
         const EcsPrimitive *primitive = ecs_get(
             world, params[i].type, EcsPrimitive);
         if (primitive && primitive->kind == EcsString) {
-            *(ecs_string_t*)var->value.ptr = ecs_os_strdup(value);
+            *(ecs_string_t*)args[i].ptr = ecs_os_strdup(value);
         } else if (primitive && primitive->kind == EcsChar) {
             if (value[0] == '\0' || value[1] != '\0') {
                 flecs_reply_error(reply, "invalid value for argument '%s'",
@@ -699,22 +656,15 @@ static bool flecs_rest_call(
                 reply->code = 400;
                 goto done;
             }
-            *(char*)var->value.ptr = value[0];
+            *(char*)args[i].ptr = value[0];
         } else {
-            bool prev_color = ecs_log_enable_colors(false);
-            ecs_os_api_log_t prev_log = ecs_os_api.log_;
-            flecs_rest_set_prev_log(prev_log, true);
-            ecs_os_api.log_ = flecs_rest_capture_log;
+            flecs_log_capture_push(true);
 
             ecs_expr_eval_desc_t desc = { .type = params[i].type };
             const char *ptr = ecs_expr_run(
-                world, value, &var->value, &desc);
+                world, value, &args[i], &desc);
 
-            ecs_os_api.log_ = prev_log;
-            ecs_log_enable_colors(prev_color);
-
-            char *err = flecs_rest_get_captured_log();
-            ecs_os_free(err);
+            ecs_os_free(flecs_log_capture_pop());
             if (!ptr || ptr[0] != '\0') {
                 flecs_reply_error(reply, "invalid value for argument '%s'",
                     params[i].name);
@@ -722,39 +672,13 @@ static bool flecs_rest_call(
                 goto done;
             }
         }
-
-        if (i) {
-            ecs_strbuf_appendlit(&expr, ", ");
-        }
-        ecs_strbuf_append(&expr, "$%s", params[i].name);
     }
-    ecs_strbuf_appendlit(&expr, ")");
 
-    char *expr_str = ecs_strbuf_get(&expr);
-    ecs_value_t result = { .type = func->return_type };
-    ecs_expr_eval_desc_t desc = {
-        .vars = vars,
-        .type = func->return_type,
-        .lookup_action = flecs_rest_call_lookup,
-        .lookup_ctx = &function
-    };
-
-    bool prev_color = ecs_log_enable_colors(false);
-    ecs_os_api_log_t prev_log = ecs_os_api.log_;
-    flecs_rest_set_prev_log(prev_log, true);
-    ecs_os_api.log_ = flecs_rest_capture_log;
-
-    const char *ptr = ecs_expr_run(world, expr_str, &result, &desc);
-
-    ecs_os_api.log_ = prev_log;
-    ecs_log_enable_colors(prev_color);
-    ecs_os_free(expr_str);
-
-    if (!ptr) {
-        flecs_rest_reply_set_captured_log(reply);
-    } else {
-        char *err = flecs_rest_get_captured_log();
-        ecs_os_free(err);
+    ecs_value_t result = {0};
+    flecs_log_capture_push(true);
+    bool ok = ecs_function_call(world, function, param_count, args, &result) == 0;
+    flecs_rest_reply_capture(reply, ok);
+    if (ok) {
         if (ecs_ptr_to_json_buf(
             world, result.type, result.ptr, &reply->body))
         {
@@ -764,13 +688,13 @@ static bool flecs_rest_call(
         }
     }
 
-    if (result.ptr) {
-        ecs_ptr_free(world, result.type, result.ptr);
-    }
+    ecs_value_fini(world, &result);
 
 done:
-    ecs_strbuf_reset(&expr);
-    ecs_script_vars_fini(vars);
+    for (i = 0; i < param_count; i ++) {
+        ecs_value_fini(world, &args[i]);
+    }
+    ecs_os_free(args);
     return true;
 #else
     return false;
@@ -810,21 +734,23 @@ static bool flecs_rest_action(
     return true;
 }
 
-static void flecs_rest_reply_set_captured_log(
-    ecs_http_reply_t *reply)
+static void flecs_rest_reply_capture(
+    ecs_http_reply_t *reply,
+    bool ok)
 {
-    char *err = flecs_rest_get_captured_log();
-    if (err) {
-        char *escaped_err = flecs_astresc('"', err);
-        flecs_reply_error(reply, "%s", escaped_err);
-        ecs_os_free(escaped_err);
-        ecs_os_free(err);
+    char *err = flecs_log_capture_pop();
+    if (!ok) {
+        if (err) {
+            char *escaped_err = flecs_astresc('"', err);
+            flecs_reply_error(reply, "%s", escaped_err);
+            ecs_os_free(escaped_err);
+        }
+        reply->code = 400;
     }
-
-    reply->code = 400;
+    ecs_os_free(err);
 }
 
-static void flecs_rest_iter_to_reply(
+static bool flecs_rest_iter_to_reply(
     const ecs_http_request_t* req,
     ecs_http_reply_t *reply,
     ecs_poly_t *query,
@@ -842,15 +768,11 @@ static void flecs_rest_iter_to_reply(
 
     if (offset < 0 || limit < 0) {
         flecs_reply_error(reply, "invalid offset/limit parameter");
-        return;
+        return true;
     }
 
     ecs_iter_t pit = ecs_page_iter(it, offset, limit);
-    if (ecs_iter_to_json_buf(&pit, &reply->body, &desc)) {
-        flecs_rest_reply_set_captured_log(reply);
-    }
-
-    flecs_rest_int_param(req, "offset", &offset);
+    return ecs_iter_to_json_buf(&pit, &reply->body, &desc) == 0;
 }
 
 static bool flecs_rest_reply_existing_query(
@@ -894,31 +816,28 @@ static bool flecs_rest_reply_existing_query(
     ecs_iter_t it = ecs_query_iter(world, q);
 
     ecs_dbg_2("rest: request query '%s'", name);
-    bool prev_color = ecs_log_enable_colors(false);
-    ecs_os_api_log_t prev_log = ecs_os_api.log_;
-    flecs_rest_set_prev_log(ecs_os_api.log_, try);
-    ecs_os_api.log_ = flecs_rest_capture_log;
+    flecs_log_capture_push(try);
+    bool ok = false;
 
     const char *vars = ecs_http_get_param(req, "vars");
     if (vars) {
     #ifdef FLECS_QUERY_DSL
         if (ecs_query_args_parse(q, &it, vars) == NULL) {
-            flecs_rest_reply_set_captured_log(reply);
-            return true;
+            ecs_iter_fini(&it);
+            goto done;
         }
     #else
         flecs_reply_error(reply,
             "cannot parse query arg expression: script addon required");
         reply->code = 400;
-        return true;
+        ecs_iter_fini(&it);
+        goto done;
     #endif
     }
 
-    flecs_rest_iter_to_reply(req, reply, q, &it);
-
-    ecs_os_api.log_ = prev_log;
-    ecs_log_enable_colors(prev_color);    
-
+    ok = flecs_rest_iter_to_reply(req, reply, q, &it);
+done:
+    flecs_rest_reply_capture(reply, ok);
     return true;
 }
 
@@ -943,26 +862,19 @@ static bool flecs_rest_get_query(
     flecs_rest_bool_param(req, "try", &try);
 
     ecs_dbg_2("rest: request query '%s'", expr);
-    bool prev_color = ecs_log_enable_colors(false);
-    ecs_os_api_log_t prev_log = ecs_os_api.log_;
-    flecs_rest_set_prev_log(ecs_os_api.log_, try);
-    ecs_os_api.log_ = flecs_rest_capture_log;
+    flecs_log_capture_push(try);
 
     ecs_query_t *q = ecs_query(world, { .expr = expr });
-    if (!q) {
-        flecs_rest_reply_set_captured_log(reply);
-        if (try) {
-            /* If client is trying queries, don't spam console with errors */
-            reply->code = 200;
-        }
-    } else {
+    bool ok = q != NULL;
+    if (q) {
         ecs_iter_t it = ecs_query_iter(world, q);
-        flecs_rest_iter_to_reply(req, reply, q, &it);
+        ok = flecs_rest_iter_to_reply(req, reply, q, &it);
         ecs_query_fini(q);
     }
-
-    ecs_os_api.log_ = prev_log;
-    ecs_log_enable_colors(prev_color);
+    flecs_rest_reply_capture(reply, ok);
+    if (!q && try) {
+        reply->code = 200;
+    }
 
     return true;
 }
@@ -1871,21 +1783,6 @@ static bool flecs_rest_cmd_has_id(
     case EcsCmdDisable:
     case EcsCmdPath:
         return false;
-    case EcsCmdBulkNew:
-    case EcsCmdAdd:
-    case EcsCmdRemove:
-    case EcsCmdSet:
-    case EcsCmdSetDontFragment:
-    case EcsCmdEmplace:
-    case EcsCmdEnsure:
-    case EcsCmdEnsureDontFragment:
-    case EcsCmdModified:
-    case EcsCmdModifiedNoHook:
-    case EcsCmdAddModified:
-    case EcsCmdOnDeleteAction:
-    case EcsCmdEnable:
-    case EcsCmdEvent:
-    case EcsCmdSkip:
     default:
         return true;
     }
@@ -2122,7 +2019,35 @@ static bool flecs_rest_get_root(
 {
     reply->content_type = "text/plain";
     ecs_strbuf_appendlit(&reply->body,
-        "You've reached the REST API for Flecs " FLECS_VERSION "!\n");
+        "You've reached the REST API for Flecs " FLECS_VERSION "!\n\n"
+        "# API examples:\n"
+        "Examples are shown without encoding special characters for readability.\n\n"
+        "## Get entity flecs.core.World with component values:\n"
+        "GET /entity/flecs/core/World&values=true\n\n"
+        "## Get entity with id 1234 with component values:\n"
+        "GET /entity/#1234&values=true\n\n"
+        "## Get entities in root\n"
+        "GET /query?expr=!(flecs.core.ChildOf,*)\n\n"
+        "## Get entities for parent flecs.core\n"
+        "GET /query?expr=(flecs.core.ChildOf,flecs.core)\n\n"
+        "## Get all components added to an entity\n"
+        "GET /query?expr=*(_)\n\n"
+        "## Get all relationships added to an entity\n"
+        "GET /query?expr=*(_, _)\n\n"
+        "## Find all instantiated prefabs in the world\n"
+        "GET /query?expr=IsA(_, *)\n\n"
+        "## Get entities for example components transform.Position, movement.Velocity\n"
+        "GET /query?expr=transform.Position,movement.Velocity\n\n"
+        "## Create entity Sun.Earth\n"
+        "PUT /entity/Sun/Earth\n\n"
+        "## Delete entity Sun.Earth\n"
+        "DELETE /entity/Sun/Earth\n\n"
+        "## Get component planets.Mass from entity Sun.Earth\n"
+        "GET /component/Sun/Earth?component=planets.Mass\n\n"
+        "## Set component Position to value {\"x\":10} for entity Sun.Earth\n"
+        "PUT /component/Sun/Earth?component=Position&value={\"x\":10}\n\n"
+        "## Change code of script my_script.flecs (code in request body)\n"
+        "PUT /script/my_script.flecs\n");
     return true;
 }
 

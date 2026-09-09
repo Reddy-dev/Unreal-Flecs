@@ -1,5 +1,283 @@
 #include <meta.h>
 
+typedef struct {
+    int32_t x;
+} CurBaseA;
+
+typedef struct {
+    CurBaseA base;
+    int32_t y;
+} CurDerivedB;
+
+typedef struct {
+    CurDerivedB base;
+    int32_t z;
+} CurDerivedC;
+
+typedef struct {
+    char *name;
+    int32_t v;
+} CurStrBase;
+
+typedef struct {
+    CurStrBase base;
+    int32_t w;
+} CurStrDerived;
+
+static ecs_entity_t cur_create_base(ecs_world_t *world) {
+    return ecs_struct(world, {
+        .entity = ecs_entity(world, { .name = "CurBaseA" }),
+        .members = {
+            {"x", ecs_id(ecs_i32_t)}
+        }
+    });
+}
+
+static ecs_entity_t cur_create_derived(
+    ecs_world_t *world,
+    ecs_entity_t base,
+    const char *name,
+    const char *member)
+{
+    ecs_entity_t e = ecs_entity(world, { .name = name });
+    ecs_add_pair(world, e, EcsIsA, base);
+    return ecs_struct(world, {
+        .entity = e,
+        .members = {
+            {member, ecs_id(ecs_i32_t)}
+        }
+    });
+}
+
+void Cursor_set_value_derived_to_base(void) {
+    ecs_world_t *world = ecs_init();
+
+    ecs_entity_t base = cur_create_base(world);
+    ecs_entity_t derived = cur_create_derived(world, base, "CurDerivedB", "y");
+
+    CurDerivedB src = {{10}, 20};
+    CurBaseA dst = {0};
+
+    ecs_meta_cursor_t cur = ecs_meta_cursor(world, base, &dst);
+    test_int(0, ecs_meta_set_value(&cur, &(ecs_value_t){derived, &src}));
+
+    test_int(dst.x, 10);
+
+    ecs_fini(world);
+}
+
+void Cursor_set_value_base_to_derived_fails(void) {
+    ecs_world_t *world = ecs_init();
+
+    ecs_entity_t base = cur_create_base(world);
+    ecs_entity_t derived = cur_create_derived(world, base, "CurDerivedB", "y");
+
+    CurBaseA src = {10};
+    CurDerivedB dst = {{1}, 2};
+
+    ecs_meta_cursor_t cur = ecs_meta_cursor(world, derived, &dst);
+    ecs_log_set_level(-4);
+    test_assert(ecs_meta_set_value(&cur, &(ecs_value_t){base, &src}) != 0);
+    ecs_log_set_level(-1);
+
+    test_int(dst.base.x, 1);
+    test_int(dst.y, 2);
+
+    ecs_fini(world);
+}
+
+void Cursor_set_value_grandparent_to_derived_fails(void) {
+    ecs_world_t *world = ecs_init();
+
+    ecs_entity_t base = cur_create_base(world);
+    ecs_entity_t derived = cur_create_derived(world, base, "CurDerivedB", "y");
+    ecs_entity_t derived2 = cur_create_derived(
+        world, derived, "CurDerivedC", "z");
+
+    CurBaseA src = {10};
+    CurDerivedC dst = {{{1}, 2}, 3};
+
+    ecs_meta_cursor_t cur = ecs_meta_cursor(world, derived2, &dst);
+    ecs_log_set_level(-4);
+    test_assert(ecs_meta_set_value(&cur, &(ecs_value_t){base, &src}) != 0);
+    ecs_log_set_level(-1);
+
+    test_int(dst.base.base.x, 1);
+    test_int(dst.base.y, 2);
+    test_int(dst.z, 3);
+
+    ecs_fini(world);
+}
+
+void Cursor_set_value_derived_to_grandparent(void) {
+    ecs_world_t *world = ecs_init();
+
+    ecs_entity_t base = cur_create_base(world);
+    ecs_entity_t derived = cur_create_derived(world, base, "CurDerivedB", "y");
+    ecs_entity_t derived2 = cur_create_derived(
+        world, derived, "CurDerivedC", "z");
+
+    CurDerivedC src = {{{10}, 20}, 30};
+    CurBaseA dst = {0};
+
+    ecs_meta_cursor_t cur = ecs_meta_cursor(world, base, &dst);
+    test_int(0, ecs_meta_set_value(&cur, &(ecs_value_t){derived2, &src}));
+
+    test_int(dst.x, 10);
+
+    ecs_fini(world);
+}
+
+void Cursor_set_value_base_to_derived_w_string_fails(void) {
+    ecs_world_t *world = ecs_init();
+
+    ecs_entity_t base = ecs_struct(world, {
+        .entity = ecs_entity(world, { .name = "CurStrBase" }),
+        .members = {
+            {"name", ecs_id(ecs_string_t)},
+            {"v", ecs_id(ecs_i32_t)}
+        }
+    });
+    ecs_entity_t derived = cur_create_derived(
+        world, base, "CurStrDerived", "w");
+
+    CurStrBase src = {(char*)"hello", 10};
+    CurStrDerived dst = {{NULL, 0}, 2};
+
+    ecs_meta_cursor_t cur = ecs_meta_cursor(world, derived, &dst);
+    ecs_log_set_level(-4);
+    test_assert(ecs_meta_set_value(&cur, &(ecs_value_t){base, &src}) != 0);
+    ecs_log_set_level(-1);
+
+    test_assert(dst.base.name == NULL);
+    test_int(dst.base.v, 0);
+    test_int(dst.w, 2);
+
+    ecs_fini(world);
+}
+
+void Cursor_set_value_derived_to_base_w_string(void) {
+    ecs_world_t *world = ecs_init();
+
+    ecs_entity_t base = ecs_struct(world, {
+        .entity = ecs_entity(world, { .name = "CurStrBase" }),
+        .members = {
+            {"name", ecs_id(ecs_string_t)},
+            {"v", ecs_id(ecs_i32_t)}
+        }
+    });
+    ecs_entity_t derived = cur_create_derived(
+        world, base, "CurStrDerived", "w");
+
+    CurStrDerived src = {{(char*)"world", 10}, 20};
+    CurStrBase dst = {NULL, 0};
+
+    ecs_meta_cursor_t cur = ecs_meta_cursor(world, base, &dst);
+    test_int(0, ecs_meta_set_value(&cur, &(ecs_value_t){derived, &src}));
+
+    test_str(dst.name, "world");
+    test_assert(dst.name != src.base.name);
+    test_int(dst.v, 10);
+
+    ecs_os_free(dst.name);
+
+    ecs_fini(world);
+}
+
+void Cursor_set_value_unrelated_struct_fails(void) {
+    ecs_world_t *world = ecs_init();
+
+    ecs_entity_t base = cur_create_base(world);
+    ecs_entity_t other = ecs_struct(world, {
+        .entity = ecs_entity(world, { .name = "CurOther" }),
+        .members = {
+            {"x", ecs_id(ecs_i32_t)}
+        }
+    });
+
+    CurBaseA src = {10};
+    CurBaseA dst = {1};
+
+    ecs_meta_cursor_t cur = ecs_meta_cursor(world, base, &dst);
+    ecs_log_set_level(-4);
+    test_assert(ecs_meta_set_value(&cur, &(ecs_value_t){other, &src}) != 0);
+    ecs_log_set_level(-1);
+
+    test_int(dst.x, 1);
+
+    ecs_fini(world);
+}
+
+void Cursor_set_value_base_to_derived_member_fails(void) {
+    ecs_world_t *world = ecs_init();
+
+    ecs_entity_t base = cur_create_base(world);
+    ecs_entity_t derived = cur_create_derived(world, base, "CurDerivedB", "y");
+
+    typedef struct {
+        int32_t pad;
+        CurDerivedB d;
+    } CurOuter;
+
+    ecs_entity_t outer = ecs_struct(world, {
+        .entity = ecs_entity(world, { .name = "CurOuter" }),
+        .members = {
+            {"pad", ecs_id(ecs_i32_t)},
+            {"d", derived}
+        }
+    });
+
+    CurBaseA src = {10};
+    CurOuter dst = {1, {{2}, 3}};
+
+    ecs_meta_cursor_t cur = ecs_meta_cursor(world, outer, &dst);
+    test_int(0, ecs_meta_push(&cur));
+    test_int(0, ecs_meta_member(&cur, "d"));
+    ecs_log_set_level(-4);
+    test_assert(ecs_meta_set_value(&cur, &(ecs_value_t){base, &src}) != 0);
+    ecs_log_set_level(-1);
+
+    test_int(dst.pad, 1);
+    test_int(dst.d.base.x, 2);
+    test_int(dst.d.y, 3);
+
+    ecs_fini(world);
+}
+
+void Cursor_set_value_derived_to_base_member(void) {
+    ecs_world_t *world = ecs_init();
+
+    ecs_entity_t base = cur_create_base(world);
+    ecs_entity_t derived = cur_create_derived(world, base, "CurDerivedB", "y");
+
+    typedef struct {
+        int32_t pad;
+        CurBaseA b;
+    } CurOuterBase;
+
+    ecs_entity_t outer = ecs_struct(world, {
+        .entity = ecs_entity(world, { .name = "CurOuterBase" }),
+        .members = {
+            {"pad", ecs_id(ecs_i32_t)},
+            {"b", base}
+        }
+    });
+
+    CurDerivedB src = {{10}, 20};
+    CurOuterBase dst = {1, {2}};
+
+    ecs_meta_cursor_t cur = ecs_meta_cursor(world, outer, &dst);
+    test_int(0, ecs_meta_push(&cur));
+    test_int(0, ecs_meta_member(&cur, "b"));
+    test_int(0, ecs_meta_set_value(&cur, &(ecs_value_t){derived, &src}));
+    test_int(0, ecs_meta_pop(&cur));
+
+    test_int(dst.pad, 1);
+    test_int(dst.b.x, 10);
+
+    ecs_fini(world);
+}
+
 void Cursor_set_bool(void) {
     ecs_world_t *world = ecs_init();
 
@@ -3161,6 +3439,215 @@ void Cursor_vector_struct_3(void) {
 
     ecs_fini(world);
 }
+
+typedef struct {
+    char *name;
+    int32_t value;
+} StringElem;
+
+static int string_elem_ctor_count = 0;
+static int string_elem_dtor_count = 0;
+
+static void StringElem_ctor(
+    void *ptr, int32_t count, const ecs_type_info_t *ti)
+{
+    (void)ti;
+    ecs_os_memset(ptr, 0, ECS_SIZEOF(StringElem) * count);
+    string_elem_ctor_count += count;
+}
+
+static void StringElem_dtor(
+    void *ptr, int32_t count, const ecs_type_info_t *ti)
+{
+    (void)ti;
+    StringElem *elems = ptr;
+    int32_t i;
+    for (i = 0; i < count; i ++) {
+        ecs_os_free(elems[i].name);
+        elems[i].name = NULL;
+        string_elem_dtor_count ++;
+    }
+}
+
+static ecs_entity_t define_StringElem(ecs_world_t *world) {
+    ECS_COMPONENT(world, StringElem);
+
+    ecs_struct(world, {
+        .entity = ecs_id(StringElem),
+        .members = {
+            {"name", ecs_id(ecs_string_t)},
+            {"value", ecs_id(ecs_i32_t)}
+        }
+    });
+
+    return ecs_id(StringElem);
+}
+
+static ecs_entity_t define_StringElem_vector(ecs_world_t *world, ecs_entity_t elem) {
+    return ecs_vector(world, {
+        .entity = ecs_entity(world, {.name = "T"}),
+        .type = elem
+    });
+}
+
+static void fill_string_vector(
+    ecs_world_t *world,
+    ecs_entity_t t,
+    ecs_vec_t *value,
+    int32_t count,
+    bool set_value)
+{
+    ecs_meta_cursor_t cur = ecs_meta_cursor(world, t, value);
+    test_int(0, ecs_meta_push(&cur));
+
+    int32_t i;
+    for (i = 0; i < count; i ++) {
+        char name[32];
+        ecs_os_snprintf(name, sizeof(name), "elem_%d", i);
+
+        if (i) {
+            test_int(0, ecs_meta_next(&cur));
+        }
+
+        test_int(0, ecs_meta_push(&cur));
+        test_int(0, ecs_meta_set_string(&cur, name));
+        if (set_value) {
+            test_int(0, ecs_meta_next(&cur));
+            test_int(0, ecs_meta_set_int(&cur, i));
+        }
+        test_int(0, ecs_meta_pop(&cur));
+    }
+
+    test_int(0, ecs_meta_pop(&cur));
+}
+
+static void verify_string_vector(
+    ecs_vec_t *value, int32_t count, bool set_value)
+{
+    test_int(value->count, count);
+    test_assert(value->array != NULL);
+
+    StringElem *elems = value->array;
+    int32_t i;
+    for (i = 0; i < count; i ++) {
+        char name[32];
+        ecs_os_snprintf(name, sizeof(name), "elem_%d", i);
+        test_str(elems[i].name, name);
+        test_int(elems[i].value, set_value ? i : 0);
+    }
+}
+
+static void free_string_vector(ecs_vec_t *value) {
+    StringElem *elems = value->array;
+    int32_t i;
+    for (i = 0; i < value->count; i ++) {
+        ecs_os_free(elems[i].name);
+        elems[i].name = NULL;
+    }
+}
+
+void Cursor_vector_struct_w_string_grow(void) {
+    ecs_world_t *world = ecs_init();
+
+    ecs_entity_t elem = define_StringElem(world);
+    ecs_entity_t t = define_StringElem_vector(world, elem);
+
+    ecs_vec_t value = {0};
+
+    fill_string_vector(world, t, &value, 200, false);
+    verify_string_vector(&value, 200, false);
+
+    free_string_vector(&value);
+    ecs_os_free(value.array);
+
+    ecs_fini(world);
+}
+
+void Cursor_vector_struct_w_string_grow_after_shrink(void) {
+    ecs_world_t *world = ecs_init();
+
+    ecs_entity_t elem = define_StringElem(world);
+    ecs_entity_t t = define_StringElem_vector(world, elem);
+
+    ecs_vec_t value = {0};
+
+    fill_string_vector(world, t, &value, 200, true);
+    verify_string_vector(&value, 200, true);
+    free_string_vector(&value);
+
+    fill_string_vector(world, t, &value, 50, true);
+    verify_string_vector(&value, 50, true);
+    free_string_vector(&value);
+
+    fill_string_vector(world, t, &value, 300, true);
+    verify_string_vector(&value, 300, true);
+    free_string_vector(&value);
+
+    ecs_os_free(value.array);
+
+    ecs_fini(world);
+}
+
+void Cursor_vector_struct_w_ctor_grow(void) {
+    ecs_world_t *world = ecs_init();
+
+    string_elem_ctor_count = 0;
+
+    ecs_entity_t elem = define_StringElem(world);
+
+    ecs_set_hooks_id(world, elem, &(ecs_type_hooks_t){
+        .ctor = StringElem_ctor
+    });
+
+    ecs_entity_t t = define_StringElem_vector(world, elem);
+
+    ecs_vec_t value = {0};
+
+    fill_string_vector(world, t, &value, 200, true);
+    verify_string_vector(&value, 200, true);
+    test_int(string_elem_ctor_count, 200);
+
+    free_string_vector(&value);
+    ecs_os_free(value.array);
+
+    ecs_fini(world);
+}
+
+void Cursor_vector_struct_w_dtor_grow_shrink(void) {
+    ecs_world_t *world = ecs_init();
+
+    string_elem_ctor_count = 0;
+    string_elem_dtor_count = 0;
+
+    ecs_entity_t elem = define_StringElem(world);
+
+    ecs_set_hooks_id(world, elem, &(ecs_type_hooks_t){
+        .ctor = StringElem_ctor,
+        .dtor = StringElem_dtor
+    });
+
+    ecs_entity_t t = define_StringElem_vector(world, elem);
+
+    ecs_vec_t value = {0};
+
+    fill_string_vector(world, t, &value, 200, true);
+    verify_string_vector(&value, 200, true);
+    test_int(string_elem_ctor_count, 200);
+    test_int(string_elem_dtor_count, 0);
+
+    fill_string_vector(world, t, &value, 50, true);
+    verify_string_vector(&value, 50, true);
+    test_int(string_elem_dtor_count, 150);
+
+    const ecs_type_info_t *ti = ecs_get_type_info(world, elem);
+    ti->hooks.dtor(value.array, value.count, ti);
+    test_int(string_elem_dtor_count, 200);
+
+    ecs_os_free(value.array);
+
+    ecs_fini(world);
+}
+
 
 void Cursor_vector_move_primitive(void) {
     ecs_world_t *world = ecs_init();

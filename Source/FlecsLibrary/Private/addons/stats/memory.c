@@ -60,15 +60,14 @@ static ecs_size_t flecs_hashmap_memory_get(
 {
     const ecs_map_t *map = &name_index->impl;
 
-    ecs_size_t key_size = name_index->key_size;
-    ecs_size_t value_size = name_index->value_size;
-    ecs_size_t result = flecs_map_memory_get(map, ECS_SIZEOF(ecs_hm_bucket_t));
+    ecs_size_t result = flecs_map_memory_get(map, 0);
 
     ecs_map_iter_t it = ecs_map_iter(map);
     while (ecs_map_next(&it)) {
         ecs_hm_bucket_t *bucket = ecs_map_ptr(&it);
-        result += ecs_vec_size(&bucket->keys) * key_size;
-        result += ecs_vec_size(&bucket->values) * value_size;
+        for (; bucket; bucket = bucket->next) {
+            result += name_index->bucket_size;
+        }
     }
 
     return result;
@@ -331,7 +330,7 @@ void ecs_query_memory_get(
         
         ecs_size_t cache_elem_size = flecs_query_cache_elem_size(cache);
         ecs_query_cache_group_t *cur = cache->first_group;
-        do {
+        for (; cur; cur = cur->next) {
             result->bytes_cache += ecs_vec_size(&cur->tables) * cache_elem_size;
 
             if (!(cache->query->flags & EcsQueryTrivialCache)) {
@@ -354,9 +353,7 @@ void ecs_query_memory_get(
                     }
                 }
             }
-            
-            cur = cur->next;
-        } while (cur && cur != cache->first_group);
+        }
 
         result->bytes_order_by += 
             ecs_vec_size(&cache->table_slices) * 
@@ -665,7 +662,8 @@ static ecs_size_t flecs_observer_memory_get(
     const ecs_observer_impl_t *o)
 {
     ecs_size_t result = ECS_SIZEOF(ecs_observer_impl_t);
-    result += ecs_vec_size(&o->children) * ECS_SIZEOF(void*);
+    result += ecs_vec_size(&o->subscriptions) *
+        ECS_SIZEOF(ecs_observer_subscription_t);
 
     if (o->pub.query) {
         result += flecs_query_total_memory_get(o->pub.query);
@@ -673,12 +671,6 @@ static ecs_size_t flecs_observer_memory_get(
 
     if (o->not_query) {
         result += flecs_query_total_memory_get(o->not_query);
-    }
-
-    ecs_observer_impl_t **children = ecs_vec_first(&o->children);
-    int32_t i, count = ecs_vec_count(&o->children);
-    for (i = 0; i < count; i ++) {
-        result += flecs_observer_memory_get(children[i]);
     }
 
     return result;
@@ -913,27 +905,19 @@ static void flecs_http_memory_get(
     result->bytes_rest += ECS_SIZEOF(ecs_http_server_t);
 
     result->bytes_rest += flecs_sparse_memory_get(&srv->connections, 
-        ECS_SIZEOF(ecs_http_connection_t));
-
-    result->bytes_rest += flecs_sparse_memory_get(&srv->requests, 
-        ECS_SIZEOF(ecs_http_request_t));
+        ECS_SIZEOF(ecs_http_connection_impl_t));
 
     result->bytes_rest += flecs_hashmap_memory_get(&srv->request_cache);
 
-    ecs_map_iter_t it = ecs_map_iter(&srv->request_cache.impl);
-    while (ecs_map_next(&it)) {
-        ecs_hm_bucket_t *bucket = ecs_map_ptr(&it);
-        int32_t i, count = ecs_vec_count(&bucket->values);
-        ecs_http_request_key_t *keys = ecs_vec_first(&bucket->keys);
-        ecs_http_request_entry_t *entries = ecs_vec_first(&bucket->values);
-        for (i = count - 1; i >= 0; i --) {
-            ecs_http_request_entry_t *entry = &entries[i];
-            ecs_http_request_key_t *key = &keys[i];
-
-            result->bytes_rest += key->count;
-            if (entry->content) {
-                result->bytes_rest += ecs_os_strlen(entry->content);
-            }
+    flecs_hashmap_iter_t it = flecs_hashmap_iter(&srv->request_cache);
+    ecs_http_request_key_t *key;
+    ecs_http_request_entry_t *entry;
+    while ((entry = flecs_hashmap_next_w_key(
+        &it, ecs_http_request_key_t, &key, ecs_http_request_entry_t)))
+    {
+        result->bytes_rest += key->count;
+        if (entry->content) {
+            result->bytes_rest += ecs_os_strlen(entry->content);
         }
     }
 }
@@ -1076,17 +1060,10 @@ ecs_allocator_memory_t ecs_allocator_memory_get(
         &world->allocators.component_record);
     result.bytes_pair_record = flecs_ballocator_memory_get(
         &world->allocators.pair_record);
-    result.bytes_table_diff = flecs_ballocator_memory_get(
-        &world->allocators.table_diff);
     result.bytes_sparse_chunk = flecs_ballocator_memory_get(
         &world->allocators.sparse_chunk);
 
     result.bytes_allocator = flecs_allocator_memory_get(&world->allocator);
-    result.bytes_misc += ecs_vec_size(&world->allocators.diff_builder.added) *
-        ECS_SIZEOF(ecs_id_t);
-
-    result.bytes_misc += ecs_vec_size(&world->allocators.diff_builder.removed) *
-        ECS_SIZEOF(ecs_id_t);
     result.bytes_misc += ecs_vec_size(&world->store.records) *
         ECS_SIZEOF(ecs_table_record_t);
     result.bytes_misc += ecs_vec_size(&world->store.marked_ids) *

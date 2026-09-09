@@ -1,5 +1,5 @@
 /**
- * @file addons/script/enum_visitor.c
+ * @file addons/script/eval/visit_enum.c
  * @brief Visitor that implements the enum Color(Red, Green, Blue) and
  *        bitmask Toppings(Bacon, Lettuce) syntax.
  */
@@ -7,10 +7,33 @@
 #include "flecs.h"
 
 #ifdef FLECS_SCRIPT
-#include "script.h"
+#include "../script.h"
+#include "../../meta/meta.h"
 
-static
-int flecs_script_constants_visit(
+static bool flecs_script_constant_registered(
+    const ecs_world_t *world,
+    ecs_entity_t type,
+    ecs_entity_t constant)
+{
+    const EcsConstants *ptr = ecs_get(world, type, EcsConstants);
+    if (!ptr) {
+        return false;
+    }
+
+    ecs_vec_t *ordered = ECS_CONST_CAST(ecs_vec_t*, &ptr->ordered_constants);
+    const ecs_enum_constant_t *constants = ecs_vec_first_t(
+        ordered, ecs_enum_constant_t);
+    int32_t i, count = ecs_vec_count(ordered);
+    for (i = 0; i < count; i ++) {
+        if (constants[i].constant == constant) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static int flecs_script_constants_visit(
     const ecs_script_visitor_ctx_t *ctx,
     bool is_bitmask)
 {
@@ -89,9 +112,21 @@ int flecs_script_constants_visit(
                 return -1;
             }
 
-            EcsEnum *ptr = ecs_ensure(world, ctx->entity, EcsEnum);
-            ptr->underlying_type = underlying;
-            ecs_modified(world, ctx->entity, EcsEnum);
+            if (!flecs_meta_type_is_integer(world, underlying)) {
+                char *type_str = ecs_get_path(world, underlying);
+                flecs_expr_visit_error(script, elem->value,
+                    "underlying_type '%s' for enum '%s' is not an integer type",
+                        type_str, ecs_get_name(world, ctx->entity));
+                ecs_os_free(type_str);
+                return -1;
+            }
+
+            const EcsEnum *existing = ecs_get(world, ctx->entity, EcsEnum);
+            if (!existing || existing->underlying_type != underlying) {
+                EcsEnum *ptr = ecs_ensure(world, ctx->entity, EcsEnum);
+                ptr->underlying_type = underlying;
+                ecs_modified(world, ctx->entity, EcsEnum);
+            }
         }
     }
 
@@ -128,9 +163,11 @@ int flecs_script_constants_visit(
                 return -1;
             }
 
+            /* Evaluate into temporary storage. Evaluating the expression can
+             * move the constant entity, which would invalidate a pointer into
+             * the component storage. */
             ecs_value_t value = {
-                .ptr = ecs_ensure_id(world, c, ecs_pair(EcsConstant, underlying),
-                    flecs_ito(size_t, ti->size)),
+                .ptr = ecs_os_alloca(ti->size),
                 .type = underlying
             };
 
@@ -140,7 +177,21 @@ int flecs_script_constants_visit(
                 return -1;
             }
 
+            void *dst = ecs_ensure_id(world, c,
+                ecs_pair(EcsConstant, underlying),
+                    flecs_ito(size_t, ti->size));
+            ecs_os_memcpy(dst, value.ptr, ti->size);
+
             ecs_modified_id(world, c, ecs_pair(EcsConstant, underlying));
+
+            if (!ecs_is_deferred(world) && !flecs_script_constant_registered(
+                world, ctx->entity, c))
+            {
+                flecs_expr_visit_error(script, elem->value,
+                    "failed to add constant '%s' to %s '%s'", elem->member,
+                        kind_str, ecs_get_name(world, ctx->entity));
+                return -1;
+            }
         } else {
             if (!elem->value || elem->value->kind != EcsExprIdentifier) {
                 flecs_expr_visit_error(script, elem->value,
@@ -157,6 +208,15 @@ int flecs_script_constants_visit(
             }
 
             ecs_add_id(world, c, EcsConstant);
+
+            if (!ecs_is_deferred(world) && !flecs_script_constant_registered(
+                world, ctx->entity, c))
+            {
+                flecs_expr_visit_error(script, elem->value,
+                    "failed to add constant '%s' to %s '%s'", name,
+                        kind_str, ecs_get_name(world, ctx->entity));
+                return -1;
+            }
         }
     }
 

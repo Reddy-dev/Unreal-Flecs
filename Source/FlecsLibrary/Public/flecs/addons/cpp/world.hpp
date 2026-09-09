@@ -8,184 +8,69 @@
 namespace flecs
 {
 
-/** Static helper functions to assign a component value. */
+namespace _ {
 
-/** Set a component value using move semantics.
- *
- * @tparam T The component type.
- * @param world The world.
- * @param entity The entity.
- * @param value The value to set (rvalue reference).
- * @param id The component ID.
- */
+template <auto Write, typename T>
+void write_component(world_t *world, flecs::entity_t entity, T&& value, flecs::id_t id) {
+    using A = std::remove_const_t<remove_reference_t<T>>;
+    ecs_assert(_::type<A>::size() != 0, ECS_INVALID_PARAMETER,
+        "operation invalid for empty type");
+    auto res = Write(world, entity, id, &value, sizeof(A));
+    A& dst = *static_cast<A*>(res.ptr);
+    if constexpr (std::is_copy_assignable_v<T> || std::is_const_v<remove_reference_t<T>>) {
+        dst = FLECS_FWD(value);
+    } else {
+        dst = FLECS_MOV(value);
+    }
+    if (res.stage) {
+        flecs_defer_end(res.world, res.stage);
+    }
+    if (res.call_modified) {
+        ecs_modified_id(world, entity, id);
+    }
+}
+
+}
+
 template <typename T>
 inline void set(world_t *world, flecs::entity_t entity, T&& value, flecs::id_t id) {
-    ecs_assert(_::type<T>::size() != 0, ECS_INVALID_PARAMETER,
-            "operation invalid for empty type");
-
-    ecs_cpp_get_mut_t res = ecs_cpp_set(world, entity, id, &value, sizeof(T));
-
-    T& dst = *static_cast<remove_reference_t<T>*>(res.ptr);
-    if constexpr (std::is_copy_assignable_v<T>) {
-        dst = FLECS_FWD(value);
-    } else {
-        dst = FLECS_MOV(value);
-    }
-
-    if (res.stage) {
-        flecs_defer_end(res.world, res.stage);
-    }
-
-    if (res.call_modified) {
-        ecs_modified_id(world, entity, id);
-    }
+    _::write_component<ecs_cpp_set>(world, entity, FLECS_FWD(value), id);
 }
 
-/** Set a component value using copy semantics.
- *
- * @tparam T The component type.
- * @param world The world.
- * @param entity The entity.
- * @param value The value to set (const reference).
- * @param id The component ID.
- */
 template <typename T>
 inline void set(world_t *world, flecs::entity_t entity, const T& value, flecs::id_t id) {
-    ecs_assert(_::type<T>::size() != 0, ECS_INVALID_PARAMETER,
-            "operation invalid for empty type");
-
-    ecs_cpp_get_mut_t res = ecs_cpp_set(world, entity, id, &value, sizeof(T));
-
-    T& dst = *static_cast<remove_reference_t<T>*>(res.ptr);
-    dst = value;
-
-    if (res.stage) {
-        flecs_defer_end(res.world, res.stage);
-    }
-
-    if (res.call_modified) {
-        ecs_modified_id(world, entity, id);
-    }
+    _::write_component<ecs_cpp_set>(world, entity, value, id);
 }
 
-/** Set a component value using move semantics, with automatic ID lookup.
- *
- * @tparam T The component type.
- * @tparam A The actual value type.
- * @param world The world.
- * @param entity The entity.
- * @param value The value to set (rvalue reference).
- */
 template <typename T, typename A>
 inline void set(world_t *world, entity_t entity, A&& value) {
-    id_t id = _::type<T>::id(world);
-    flecs::set(world, entity, FLECS_FWD(value), id);
+    flecs::set(world, entity, FLECS_FWD(value), _::type<T>::id(world));
 }
 
-/** Set a component value using copy semantics, with automatic ID lookup.
- *
- * @tparam T The component type.
- * @tparam A The actual value type.
- * @param world The world.
- * @param entity The entity.
- * @param value The value to set (const reference).
- */
 template <typename T, typename A>
 inline void set(world_t *world, entity_t entity, const A& value) {
-    id_t id = _::type<T>::id(world);
-    flecs::set(world, entity, value, id);
+    flecs::set(world, entity, value, _::type<T>::id(world));
 }
 
-/** Assign a component value using move semantics.
- * Similar to set(), but uses ecs_cpp_assign() instead of ecs_cpp_set().
- *
- * @tparam T The component type.
- * @param world The world.
- * @param entity The entity.
- * @param value The value to assign (rvalue reference).
- * @param id The component ID.
- */
 template <typename T>
 inline void assign(world_t *world, flecs::entity_t entity, T&& value, flecs::id_t id) {
-    ecs_assert(_::type<remove_reference_t<T>>::size() != 0, 
-        ECS_INVALID_PARAMETER, "operation invalid for empty type");
-
-    ecs_cpp_get_mut_t res = ecs_cpp_assign(
-        world, entity, id, &value, sizeof(T));
-
-    T& dst = *static_cast<remove_reference_t<T>*>(res.ptr);
-    if constexpr (std::is_copy_assignable_v<T>) {
-        dst = FLECS_FWD(value);
-    } else {
-        dst = FLECS_MOV(value);
-    }
-
-    if (res.stage) {
-        flecs_defer_end(res.world, res.stage);
-    }
-
-    if (res.call_modified) {
-        ecs_modified_id(world, entity, id);
-    }
+    _::write_component<ecs_cpp_assign>(world, entity, FLECS_FWD(value), id);
 }
 
-/** Assign a component value using copy semantics.
- * Similar to set(), but uses ecs_cpp_assign() instead of ecs_cpp_set().
- *
- * @tparam T The component type.
- * @param world The world.
- * @param entity The entity.
- * @param value The value to assign (const reference).
- * @param id The component ID.
- */
 template <typename T>
 inline void assign(world_t *world, flecs::entity_t entity, const T& value, flecs::id_t id) {
-    ecs_assert(_::type<remove_reference_t<T>>::size() != 0, 
-        ECS_INVALID_PARAMETER, "operation invalid for empty type");
-
-    ecs_cpp_get_mut_t res = ecs_cpp_assign(
-        world, entity, id, &value, sizeof(T));
-
-    T& dst = *static_cast<remove_reference_t<T>*>(res.ptr);
-    dst = value;
-
-    if (res.stage) {
-        flecs_defer_end(res.world, res.stage);
-    }
-
-    if (res.call_modified) {
-        ecs_modified_id(world, entity, id);
-    }
+    _::write_component<ecs_cpp_assign>(world, entity, value, id);
 }
 
-/** Assign a component value using move semantics, with automatic ID lookup.
- *
- * @tparam T The component type.
- * @tparam A The actual value type.
- * @param world The world.
- * @param entity The entity.
- * @param value The value to assign (rvalue reference).
- */
 template <typename T, typename A>
 inline void assign(world_t *world, entity_t entity, A&& value) {
-    id_t id = _::type<T>::id(world);
-    flecs::assign(world, entity, FLECS_FWD(value), id);
+    flecs::assign(world, entity, FLECS_FWD(value), _::type<T>::id(world));
 }
 
-/** Assign a component value using copy semantics, with automatic ID lookup.
- *
- * @tparam T The component type.
- * @tparam A The actual value type.
- * @param world The world.
- * @param entity The entity.
- * @param value The value to assign (const reference).
- */
 template <typename T, typename A>
 inline void assign(world_t *world, entity_t entity, const A& value) {
-    id_t id = _::type<T>::id(world);
-    flecs::assign(world, entity, value, id);
+    flecs::assign(world, entity, value, _::type<T>::id(world));
 }
-
 
 /** Emplace a component value, constructing it in place.
  *
@@ -699,46 +584,29 @@ struct world {
      */
     flecs::entity lookup(const char *name, const char *sep = "::", const char *root_sep = "::", bool recursive = true) const;
 
-    /** Set singleton component.
-     */
-    template <typename T, if_t< !is_callable<T>::value > = 0>
-    void set(const T& value) const {
-        flecs::set<T>(world_, _::type<T>::id(world_), value);
-    }
-
-    /** Set singleton component.
-     */
-    template <typename T, if_t< !is_callable<T>::value > = 0>
-    void set(T&& value) const {
-        flecs::set<T>(world_, _::type<T>::id(world_),
-            FLECS_FWD(value));
-    }
-
-    /** Set singleton pair.
-     */
-    template <typename First, typename Second, typename P = flecs::pair<First, Second>,
-        typename A = actual_type_t<P>, if_not_t< flecs::is_pair<First>::value> = 0>
-    void set(const A& value) const {
-        flecs::set<P>(world_, _::type<First>::id(world_), value);
-    }
-
-    /** Set singleton pair.
-     */
-    template <typename First, typename Second, typename P = flecs::pair<First, Second>,
-        typename A = actual_type_t<P>, if_not_t< flecs::is_pair<First>::value> = 0>
+    template <typename... T, typename A = _::value_type_t<T...>, if_not_t<is_callable<A>::value> = 0>
     void set(A&& value) const {
-        flecs::set<P>(world_, _::type<First>::id(world_), FLECS_FWD(value));
+        auto id = _::value_id<T...>(world_, value);
+        flecs::set(world_, id.owner(world_), FLECS_FWD(value), id.id);
     }
 
-    /** Set singleton pair.
-     */
-    template <typename First, typename Second>
-    void set(Second second, const First& value) const;
+    template <typename... T, typename A = _::value_type_t<T...>, if_not_t<is_callable<A>::value> = 0>
+    void set(const A& value) const {
+        auto id = _::value_id<T...>(world_, value);
+        flecs::set(world_, id.owner(world_), value, id.id);
+    }
 
-    /** Set singleton pair.
-     */
     template <typename First, typename Second>
-    void set(Second second, First&& value) const;
+    void set(Second second, First&& value) const {
+        auto id = _::make_id<First>(world_, second);
+        flecs::set(world_, id.owner(world_), value, id.id);
+    }
+
+    template <typename First, typename Second>
+    void set(Second second, const First& value) const {
+        auto id = _::make_id<First>(world_, second);
+        flecs::set(world_, id.owner(world_), value, id.id);
+    }
 
     /** Set singleton component inside a callback.
      */
@@ -751,17 +619,21 @@ struct world {
         flecs::emplace<T>(world_, component_id, component_id, FLECS_FWD(args)...);
     }
 
-    /** Ensure singleton component.
-     */
     #ifndef obtain
-    template <typename T>
-    T& obtain() const;
+    template <typename... T, typename... Args>
+    decltype(auto) obtain(Args... args) const {
+        auto id = _::make_id<T...>(world_, args...);
+        return _::get_component<true, true, true>(world_, id.owner(world_), id);
+    }
     #endif
 
-    /** Mark singleton component as modified.
-     */
     template <typename T>
-    void modified() const;
+    void modified() const {
+        auto id = _::make_id<T>(world_);
+        ecs_assert(_::type<T>::size() != 0, ECS_INVALID_PARAMETER,
+            "operation invalid for empty type");
+        ecs_modified_id(world_, id.owner(world_), id.id);
+    }
 
     /** Get ref singleton component.
      */
@@ -769,219 +641,50 @@ struct world {
     ref<T> get_ref() const;
 
 
-    /* try_get */
-
-    /** Get singleton component.
-     */
-    const void* try_get(flecs::id_t id) const;
-
-    /** Get singleton pair.
-     */
-    const void* try_get(flecs::entity_t r, flecs::entity_t t) const;
-
-    /** Get singleton component.
-     */
-    template <typename T>
-    const T* try_get() const;
-
-    /** Get singleton pair.
-     */
-    template <typename First, typename Second, typename P = flecs::pair<First, Second>,
-        typename A = actual_type_t<P>>
-    const A* try_get() const;
-
-    /** Get singleton pair.
-     */
-    template <typename First, typename Second>
-    const First* try_get(Second second) const;
-
-
-    /* get */
-
-    /** Get singleton component.
-     */
-    const void* get(flecs::id_t id) const;
-
-    /** Get singleton component.
-     */
-    const void* get(flecs::entity_t r, flecs::entity_t t) const;
-
-    template <typename T>
-    const T& get() const;
-
-    /** Get singleton pair.
-     */
-    template <typename First, typename Second, typename P = flecs::pair<First, Second>,
-        typename A = actual_type_t<P>>
-    const A& get() const;
-
-    /** Get singleton pair.
-     */
-    template <typename First, typename Second>
-    const First& get(Second second) const;
-
-    /** Get singleton component inside a callback.
-     */
-    template <typename Func, if_t< is_callable<Func>::value > = 0 >
+    template <typename Func, if_t<is_callable<Func>::value> = 0>
     void get(const Func& func) const;
 
+    template <typename... T, typename... Args>
+    decltype(auto) try_get(Args... args) const {
+        auto id = _::make_id<T...>(world_, args...);
+        return _::get_component<false, false>(world_, id.owner(world_), id);
+    }
 
-    /* try_get_mut */
+    template <typename... T, typename... Args>
+    decltype(auto) get(Args... args) const {
+        auto id = _::make_id<T...>(world_, args...);
+        return _::get_component<false, true>(world_, id.owner(world_), id);
+    }
 
-    /** Get mutable singleton component.
-     */
-    void* try_get_mut(flecs::id_t id) const;
+    template <typename... T, typename... Args>
+    decltype(auto) try_get_mut(Args... args) const {
+        auto id = _::make_id<T...>(world_, args...);
+        return _::get_component<true, false>(world_, id.owner(world_), id);
+    }
 
-    /** Get mutable singleton pair.
-     */
-    void* try_get_mut(flecs::entity_t r, flecs::entity_t t) const;
+    template <typename... T, typename... Args>
+    decltype(auto) get_mut(Args... args) const {
+        auto id = _::make_id<T...>(world_, args...);
+        return _::get_component<true, true>(world_, id.owner(world_), id);
+    }
 
-    template <typename T>
-    T* try_get_mut() const;
+    template <typename... T, typename... Args>
+    bool has(Args... args) const {
+        auto id = _::make_id<T...>(world_, args...);
+        return _::has_component(world_, id.owner(world_), id);
+    }
 
-    /** Get mutable singleton pair.
-     */
-    template <typename First, typename Second, typename P = flecs::pair<First, Second>,
-        typename A = actual_type_t<P>>
-    A* try_get_mut() const;
+    template <typename... T, typename... Args>
+    void add(Args... args) const {
+        auto id = _::make_id<T...>(world_, args...);
+        _::add_component(world_, id.owner(world_), id);
+    }
 
-    /** Get mutable singleton pair.
-     */
-    template <typename First, typename Second>
-    First* try_get_mut(Second second) const;
-
-
-    /* get_mut */
-
-    /** Get mutable singleton component.
-     */
-    void* get_mut(flecs::id_t id) const;
-
-    /** Get mutable singleton pair.
-     */
-    void* get_mut(flecs::entity_t r, flecs::entity_t t) const;
-
-    template <typename T>
-    T& get_mut() const;
-
-    /** Get mutable singleton pair.
-     */
-    template <typename First, typename Second, typename P = flecs::pair<First, Second>,
-        typename A = actual_type_t<P>>
-    A& get_mut() const;
-
-    /** Get mutable singleton pair.
-     */
-    template <typename First, typename Second>
-    First& get_mut(Second second) const;
-
-
-    /** Test if world has singleton component.
-     * 
-     * @tparam T The component to check.
-     * @return Whether the world has the singleton component.
-     */
-    template <typename T>
-    bool has() const;
-
-    /** Test if world has the provided pair.
-     *
-     * @tparam First The first element of the pair.
-     * @tparam Second The second element of the pair.
-     * @return Whether the world has the singleton pair.
-     */
-    template <typename First, typename Second>
-    bool has() const;
-
-    /** Test if world has the provided pair.
-     *
-     * @tparam First The first element of the pair.
-     * @param second The second element of the pair.
-     * @return Whether the world has the singleton pair.
-     */
-    template <typename First>
-    bool has(flecs::id_t second) const;
-
-    /** Test if world has the provided pair.
-     *
-     * @param first The first element of the pair.
-     * @param second The second element of the pair.
-     * @return Whether the world has the singleton pair.
-     */
-    bool has(flecs::id_t first, flecs::id_t second) const;
-
-    /** Check for enum singleton constant.
-     *
-     * @tparam E The enum type.
-     * @param value The enum constant to check.
-     * @return Whether the world has the specified enum constant.
-     */
-    template <typename E, if_t< is_enum<E>::value > = 0>
-    bool has(E value) const;
-
-    /** Add singleton component.
-     */
-    template <typename T>
-    void add() const;
-
-    /** Add a pair to the singleton component.
-     *
-     * @tparam First The first element of the pair.
-     * @tparam Second The second element of the pair.
-     */
-    template <typename First, typename Second>
-    void add() const;
-
-    /** Add a pair to the singleton component.
-     *
-     * @tparam First The first element of the pair.
-     * @param second The second element of the pair.
-     */
-    template <typename First>
-    void add(flecs::entity_t second) const;
-
-    /** Add a pair to the singleton entity.
-     *
-     * @param first The first element of the pair.
-     * @param second The second element of the pair.
-     */
-    void add(flecs::entity_t first, flecs::entity_t second) const;
-
-    /** Add enum singleton constant.
-     *
-     * @tparam E The enum type.
-     * @param value The enum constant.
-     */
-    template <typename E, if_t< is_enum<E>::value > = 0>
-    void add(E value) const;
-
-    /** Remove singleton component.
-     */
-    template <typename T>
-    void remove() const;
-
-    /** Remove the pair singleton component.
-     *
-     * @tparam First The first element of the pair.
-     * @tparam Second The second element of the pair.
-     */
-    template <typename First, typename Second>
-    void remove() const;
-
-    /** Remove the pair singleton component.
-     *
-     * @tparam First The first element of the pair.
-     * @param second The second element of the pair.
-     */
-    template <typename First>
-    void remove(flecs::entity_t second) const;
-
-    /** Remove the pair singleton component.
-     *
-     * @param first The first element of the pair.
-     * @param second The second element of the pair.
-     */
-    void remove(flecs::entity_t first, flecs::entity_t second) const;
+    template <typename... T, typename... Args>
+    void remove(Args... args) const {
+        auto id = _::make_id<T...>(world_, args...);
+        ecs_remove_id(world_, id.owner(world_), id.id);
+    }
 
     /** Iterate entities in root of world.
      * Accepts a callback with the following signature:
@@ -1057,57 +760,9 @@ struct world {
      */
     void use(flecs::entity entity, const char *alias = nullptr) const;
 
-    /** Count entities matching a component.
-     *
-     * @param component_id The component ID.
-     * @return The number of entities matching the component.
-     */
-    int count(flecs::id_t component_id) const {
-        return ecs_count_id(world_, component_id);
-    }
-
-    /** Count entities matching a pair.
-     *
-     * @param first The first element of the pair.
-     * @param second The second element of the pair.
-     * @return The number of entities matching the pair.
-     */
-    int count(flecs::entity_t first, flecs::entity_t second) const {
-        return ecs_count_id(world_, ecs_pair(first, second));
-    }
-
-    /** Count entities matching a component.
-     *
-     * @tparam T The component type.
-     * @return The number of entities matching the component.
-     */
-    template <typename T>
-    int count() const {
-        return count(_::type<T>::id(world_));
-    }
-
-    /** Count entities matching a pair.
-     *
-     * @tparam First The first element of the pair.
-     * @param second The second element of the pair.
-     * @return The number of entities matching the pair.
-     */
-    template <typename First>
-    int count(flecs::entity_t second) const {
-        return count(_::type<First>::id(world_), second);
-    }
-
-    /** Count entities matching a pair.
-     *
-     * @tparam First The first element of the pair.
-     * @tparam Second The second element of the pair.
-     * @return The number of entities matching the pair.
-     */
-    template <typename First, typename Second>
-    int count() const {
-        return count(
-            _::type<First>::id(world_),
-            _::type<Second>::id(world_));
+    template <typename... T, typename... Args>
+    int count(Args... args) const {
+        return ecs_count_id(world_, _::make_id<T...>(world_, args...).id);
     }
 
     /** All entities created in the function are created in the scope. All operations
@@ -1128,60 +783,14 @@ struct world {
         scope(parent, func);
     }
 
-    /** Delete all entities with specified id. */
-    void delete_with(id_t the_id) const {
-        ecs_delete_with(world_, the_id);
+    template <typename... T, typename... Args>
+    void delete_with(Args... args) const {
+        ecs_delete_with(world_, _::make_id<T...>(world_, args...).id);
     }
 
-    /** Delete all entities with specified pair. */
-    void delete_with(entity_t first, entity_t second) const {
-        delete_with(ecs_pair(first, second));
-    }
-
-    /** Delete all entities with specified component. */
-    template <typename T>
-    void delete_with() const {
-        delete_with(_::type<T>::id(world_));
-    }
-
-    /** Delete all entities with specified pair. */
-    template <typename First, typename Second>
-    void delete_with() const {
-        delete_with(_::type<First>::id(world_), _::type<Second>::id(world_));
-    }
-
-    /** Delete all entities with specified pair. */
-    template <typename First>
-    void delete_with(entity_t second) const {
-        delete_with(_::type<First>::id(world_), second);
-    }
-
-    /** Remove all instances of specified id. */
-    void remove_all(id_t the_id) const {
-        ecs_remove_all(world_, the_id);
-    }
-
-    /** Remove all instances of specified pair. */
-    void remove_all(entity_t first, entity_t second) const {
-        remove_all(ecs_pair(first, second));
-    }
-
-    /** Remove all instances of specified component. */
-    template <typename T>
-    void remove_all() const {
-        remove_all(_::type<T>::id(world_));
-    }
-
-    /** Remove all instances of specified pair. */
-    template <typename First, typename Second>
-    void remove_all() const {
-        remove_all(_::type<First>::id(world_), _::type<Second>::id(world_));
-    }
-
-    /** Remove all instances of specified pair. */
-    template <typename First>
-    void remove_all(entity_t second) const {
-        remove_all(_::type<First>::id(world_), second);
+    template <typename... T, typename... Args>
+    void remove_all(Args... args) const {
+        ecs_remove_all(world_, _::make_id<T...>(world_, args...).id);
     }
 
     /** Defer all operations called in function.
@@ -1339,32 +948,9 @@ struct world {
         }
     }
 
-    /** Return the type info. */
-    const flecs::type_info_t* type_info(flecs::id_t component) {
-        return ecs_get_type_info(world_, component);
-    }
-
-    /** Return the type info. */
-    const flecs::type_info_t* type_info(flecs::entity_t r, flecs::entity_t t) {
-        return ecs_get_type_info(world_, ecs_pair(r, t));
-    }
-
-    /** Return the type info. */
-    template <typename T>
-    const flecs::type_info_t* type_info() {
-        return ecs_get_type_info(world_, _::type<T>::id(world_));
-    }
-
-    /** Return the type info. */
-    template <typename R>
-    const flecs::type_info_t* type_info(flecs::entity_t t) {
-        return type_info(_::type<R>::id(world_), t);
-    }
-
-    /** Return the type info. */
-    template <typename R, typename T>
-    const flecs::type_info_t* type_info() {
-        return type_info<R>(_::type<T>::id(world_));
+    template <typename... T, typename... Args>
+    const flecs::type_info_t* type_info(Args... args) {
+        return ecs_get_type_info(world_, _::make_id<T...>(world_, args...).id);
     }
 
 #   include "mixins/id/mixin.inl"

@@ -12,7 +12,7 @@ namespace flecs {
 namespace _ {
     template <typename ... Components>
     using pipeline_builder_base = builder<
-        pipeline, ecs_pipeline_desc_t, pipeline_builder<Components...>, 
+        pipeline<Components...>, ecs_pipeline_desc_t, pipeline_builder<Components...>,
         pipeline_builder_i, Components ...>;
 }
 
@@ -26,7 +26,7 @@ struct pipeline_builder final : _::pipeline_builder_base<Components...> {
     pipeline_builder(flecs::world_t* world, flecs::entity_t id = 0)
         : _::pipeline_builder_base<Components...>(world)
     {
-        _::sig<Components...>(world).populate(this);
+        _::populate_signature<Components...>(world, this);
         this->desc_.entity = id;
     }
 
@@ -34,14 +34,8 @@ struct pipeline_builder final : _::pipeline_builder_base<Components...> {
     pipeline_builder(flecs::world_t* world, const char *name)
         : _::pipeline_builder_base<Components...>(world)
     {
-        _::sig<Components...>(world).populate(this);
-        if (name != nullptr) {
-            ecs_entity_desc_t entity_desc = {};
-            entity_desc.name = name;
-            entity_desc.sep = "::";
-            entity_desc.root_sep = "::";
-            this->desc_.entity = ecs_entity_init(world, &entity_desc);
-        }
+        _::populate_signature<Components...>(world, this);
+        this->set_name(name);
     }
 };
 

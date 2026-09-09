@@ -137,12 +137,16 @@ static void flecs_move_entity(
         ECS_INTERNAL_ERROR, NULL);
     ecs_assert(record->table == src_table, ECS_INTERNAL_ERROR, NULL);
 
-    /* Append new row to destination table */
-    int32_t dst_row = ecs_table_count(dst_table);
-    flecs_table_append(world, dst_table, entity, false, false);
-
     /* Invoke remove actions for removed components */
     flecs_actions_move_remove(world, src_table, dst_table, src_row, 1, diff);
+
+    /* Append new row to destination table. This has to happen after the remove
+     * actions, as the components of the new row are only initialized by the
+     * move below. Appending before the remove actions would expose a row with
+     * uninitialized component values to observers that evaluate a query
+     * against the destination table, such as observers with a Not term. */
+    int32_t dst_row = ecs_table_count(dst_table);
+    flecs_table_append(world, dst_table, entity, false, false);
 
     /* Copy entity & components from src_table to dst_table */
     flecs_table_move(world, entity, entity, dst_table, dst_row,
@@ -754,81 +758,7 @@ static void flecs_copy_id(
         world, table, ECS_RECORD_TO_ROW(r->row), component, true, dst_ptr);
 }
 
-/* If operation is not deferred, add components by finding the target
- * table and moving the entity towards it. */
-static int flecs_traverse_add(
-    ecs_world_t *world,
-    ecs_entity_t result,
-    const char *name,
-    const ecs_entity_desc_t *desc,
-    ecs_entity_t scope,
-    bool new_entity,
-    bool name_assigned)
-{
-    const char *sep = desc->sep;
-    const char *root_sep = desc->root_sep;
-    ecs_table_diff_builder_t diff = ECS_TABLE_DIFF_INIT;
-    flecs_table_diff_builder_init(world, &diff);
-
-    /* Set symbol */
-    if (desc->symbol && desc->symbol[0]) {
-        const char *sym = ecs_get_symbol(world, result);
-        if (sym) {
-            ecs_assert(!ecs_os_strcmp(desc->symbol, sym), ECS_INCONSISTENT_NAME, 
-                "entity symbol inconsistent: %s (provided) vs. %s (existing)",
-                    desc->symbol, sym);
-        } else {
-            ecs_set_symbol(world, result, desc->symbol);
-        }
-    }
-
-    /* If a name is provided but not yet assigned, add the Name component */
-    if (name && !name_assigned) {
-        if (!ecs_add_path_w_sep(world, result, scope, name, sep, root_sep)) {
-            if (name[0] == '#') {
-                /* Numerical ids should always return, unless it's invalid */
-                goto error;
-            }
-        }
-    } else if (new_entity && scope) {
-        ecs_add_pair(world, result, EcsChildOf, scope);
-    }
-
-    /* Find existing table */
-    ecs_table_t *src_table = NULL, *table = NULL;
-    ecs_record_t *r = flecs_entities_get(world, result);
-    table = r->table;
-
-    /* Find destination table */
-    /* If this is a new entity without a name, add the scope. If a name is
-     * provided, the scope will be added by the add_path_w_sep function */
-    if (new_entity) {
-        if (new_entity && scope && !name && !name_assigned) {
-            table = flecs_find_table_add(
-                world, table, ecs_pair(EcsChildOf, scope), &diff);
-        }
-    }
-
-    /* Commit entity to destination table */
-    if (src_table != table) {
-        flecs_defer_begin(world, world->stages[0]);
-        ecs_table_diff_t table_diff;
-        flecs_table_diff_build_noalloc(&diff, &table_diff);
-        flecs_commit(world, result, r, table, &table_diff, 0, 0);
-        flecs_table_diff_builder_fini(world, &diff);
-        flecs_defer_end(world, world->stages[0]);
-    }
-
-    flecs_table_diff_builder_fini(world, &diff);
-    return 0;
-error:
-    flecs_table_diff_builder_fini(world, &diff);
-    return -1;
-}
-
-/* When in deferred mode, we need to add/remove components one by one using
- * the regular operations. */
-static void flecs_deferred_add_remove(
+static int flecs_entity_init_name(
     ecs_world_t *world,
     ecs_entity_t entity,
     const char *name,
@@ -837,38 +767,36 @@ static void flecs_deferred_add_remove(
     bool new_entity,
     bool name_assigned)
 {
-    const char *sep = desc->sep;
-    const char *root_sep = desc->root_sep;
-
-    /* If this is a new entity without a name, add the scope. If a name is
-     * provided, the scope will be added by the add_path_w_sep function */
-    if (new_entity) {
-        if (new_entity && scope && !name && !name_assigned) {
-            ecs_add_id(world, entity, ecs_pair(EcsChildOf, scope));
-        }
-    }
-
-    int32_t thread_count = ecs_get_stage_count(world);
-
-    /* Set symbol */
-    if (desc->symbol) {
-        const char *sym = ecs_get_symbol(world, entity);
-        if (!sym || ecs_os_strcmp(sym, desc->symbol)) {
-            if (thread_count <= 1) { /* See above */
+    bool deferred = ecs_is_deferred(world);
+    const char *symbol = desc->symbol;
+    if (symbol && (deferred || symbol[0])) {
+        const char *existing = ecs_get_symbol(world, entity);
+        if (!deferred && existing) {
+            ecs_assert(!ecs_os_strcmp(symbol, existing), ECS_INCONSISTENT_NAME,
+                "entity symbol inconsistent: %s (provided) vs. %s (existing)",
+                    symbol, existing);
+        } else if (!existing || ecs_os_strcmp(existing, symbol)) {
+            if (deferred && ecs_get_stage_count(world) <= 1) {
                 ecs_suspend_readonly_state_t state;
                 ecs_world_t *real_world = flecs_suspend_readonly(world, &state);
-                ecs_set_symbol(world, entity, desc->symbol);
+                ecs_set_symbol(world, entity, symbol);
                 flecs_resume_readonly(real_world, &state);
             } else {
-                ecs_set_symbol(world, entity, desc->symbol);
+                ecs_set_symbol(world, entity, symbol);
             }
         }
     }
 
-    /* Set name */
     if (name && !name_assigned) {
-        ecs_add_path_w_sep(world, entity, scope, name, sep, root_sep);
+        if (!ecs_add_path_w_sep(world, entity, scope, name,
+            desc->sep, desc->root_sep) && !deferred && name[0] == '#')
+        {
+            return -1;
+        }
+    } else if (new_entity && scope) {
+        ecs_add_pair(world, entity, EcsChildOf, scope);
     }
+    return 0;
 }
 
 ecs_entity_t ecs_entity_init(
@@ -1013,15 +941,10 @@ ecs_entity_t ecs_entity_init(
         world, result, ecs_id(EcsIdentifier), EcsName),
             ECS_INTERNAL_ERROR, NULL);
 
-    if (ecs_is_deferred(world)) {
-        flecs_deferred_add_remove((ecs_world_t*)stage, result, name, desc,
-            scope, new_entity, name_assigned);
-    } else {
-        if (flecs_traverse_add(world, result, name, desc,
-            scope, new_entity, name_assigned))
-        {
-            return 0;
-        }
+    if (flecs_entity_init_name((ecs_world_t*)stage, result, name, desc,
+        scope, new_entity, name_assigned))
+    {
+        return 0;
     }
 
     return result;
@@ -1700,17 +1623,18 @@ void* ecs_ensure_id(
     ecs_check(world != NULL, ECS_INVALID_PARAMETER, NULL);
     flecs_assert_entity_valid(world, entity, "ensure");
     flecs_assert_component_valid(world, entity, component, "ensure");
-    ecs_dbg_assert(!flecs_component_has_on_replace(world, component, "ensure"),
-        ECS_INVALID_PARAMETER,
-        "cannot call ensure() for component '%s' which has an on_replace hook "
-        "(use set()/assign())",
-            flecs_errstr(ecs_id_str(world, component)));
 
     ecs_stage_t *stage = flecs_stage_from_world(&world);
     if (flecs_defer_cmd(stage)) {
         return flecs_defer_ensure(
             world, stage, entity, component, flecs_uto(int32_t, size));
     }
+
+    ecs_dbg_assert(!flecs_component_has_on_replace(world, component, "ensure"),
+        ECS_INVALID_PARAMETER,
+        "cannot call ensure() for component '%s' which has an on_replace hook "
+        "(use set()/assign())",
+            flecs_errstr(ecs_id_str(world, component)));
 
     ecs_record_t *r = flecs_entities_get(world, entity);
     ecs_assert(r != NULL, ECS_INTERNAL_ERROR, NULL);
@@ -2014,6 +1938,7 @@ void ecs_set_id(
     ecs_record_t *r = flecs_entities_get(world, entity);
     flecs_component_ptr_t dst = flecs_ensure(world, entity, component, r, 
         flecs_uto(int32_t, size));
+    ecs_check(dst.ptr != NULL, ECS_INVALID_PARAMETER, NULL);
 
     if (component < FLECS_HI_COMPONENT_ID) {
         if (!world->non_trivial_set[component]) {
@@ -2469,6 +2394,16 @@ ecs_entity_t ecs_new_w_parent(
         }
     }
 
+    if (world->flags & EcsWorldReadonly) {
+        ecs_world_t *stage_world = (ecs_world_t*)stage;
+        entity = ecs_new(stage_world);
+        ecs_set(stage_world, entity, EcsParent, { parent });
+        if (name) {
+            ecs_set_name(stage_world, entity, name);
+        }
+        return entity;
+    }
+
     ecs_id_t type_ids[] = {
         ecs_id(EcsParent), ecs_value_pair(EcsParentDepth, pr->depth)};
 
@@ -2476,6 +2411,13 @@ ecs_entity_t ecs_new_w_parent(
     ecs_table_t *table = flecs_table_find_or_create(world, &type);
 
     ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
+
+    if (name) {
+        ecs_table_diff_t name_diff = ECS_TABLE_DIFF_INIT;
+        ecs_id_t name_id = ecs_pair_t(EcsIdentifier, EcsName);
+        table = flecs_table_traverse_add(world, table, &name_id, &name_diff);
+        ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
+    }
 
     entity = flecs_new_id(world);
     ecs_record_t *r = flecs_entities_get(world, entity);
@@ -2487,11 +2429,13 @@ ecs_entity_t ecs_new_w_parent(
     };
 
     int32_t row = ecs_table_count(table);
-    flecs_table_append(world, table, entity, false, false);
+    flecs_table_append(world, table, entity, true, false);
     r->table = table;
     r->row = (uint32_t)row;
 
-    EcsParent *parent_ptr = table->data.columns[0].data;
+    int32_t parent_column = table->component_map[ecs_id(EcsParent)];
+    ecs_assert(parent_column > 0, ECS_INTERNAL_ERROR, NULL);
+    EcsParent *parent_ptr = table->data.columns[parent_column - 1].data;
     parent_ptr = &parent_ptr[row];
     parent_ptr->value = parent;
 

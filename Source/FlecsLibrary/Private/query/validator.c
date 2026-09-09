@@ -144,10 +144,6 @@ static int flecs_term_ref_lookup(
         }
         return 0;
     } else if (ref->id & EcsIsName) {
-        if (ref->name == NULL) {
-            flecs_query_validator_error(ctx, "IsName flag specified without name");
-            return -1;
-        }
         return 0;
     }
 
@@ -197,7 +193,6 @@ static int flecs_term_ref_lookup(
     }
 
     ref->id = e | ECS_TERM_REF_FLAGS(ref);
-    ref_id = ECS_TERM_REF_ID(ref);
 
     if (!ecs_os_strcmp(name, "*") || !ecs_os_strcmp(name, "_") || 
         !ecs_os_strcmp(name, "$")) 
@@ -206,18 +201,11 @@ static int flecs_term_ref_lookup(
         ref->id |= EcsIsVariable;
     }
 
-    /* Check if looked up id is alive (relevant for numerical ids) */
-    if (!(ref->id & EcsIsName) && ref_id) {
-        if (!ecs_is_alive(world, ref_id)) {
-            flecs_query_validator_error(ctx, "identifier '%s' is not alive", 
-                ref->name);
-            return -1;
-        }
-
-        ref->name = NULL;
-        return 0;
+    if (!ecs_is_alive(world, e)) {
+        flecs_query_validator_error(ctx, "identifier '%s' is not alive", name);
+        return -1;
     }
-
+    ref->name = NULL;
     return 0;
 }
 
@@ -248,17 +236,12 @@ static int flecs_term_refs_finalize(
         src->id |= EcsIsVariable;
     }
 
-    /* Initialize term identifier flags */
-    if (flecs_term_ref_finalize_flags(src, ctx, "src")) {
-        return -1;
-    }
-
-    if (flecs_term_ref_finalize_flags(first, ctx, "first")) {
-        return -1;
-    }
-
-    if (flecs_term_ref_finalize_flags(second, ctx, "second")) {
-        return -1;
+    ecs_term_ref_t *refs[] = { src, first, second };
+    const char *names[] = { "src", "first", "second" };
+    for (int32_t i = 0; i < 3; i ++) {
+        if (flecs_term_ref_finalize_flags(refs[i], ctx, names[i])) {
+            return -1;
+        }
     }
 
     /* Lookup term identifiers by name */
@@ -321,100 +304,66 @@ static ecs_entity_t flecs_term_ref_get_entity(
     }
 }
 
-static int flecs_term_populate_id(
-    ecs_term_t *term)
-{
-    ecs_entity_t first = flecs_term_ref_get_entity(&term->first);
-    ecs_entity_t second = flecs_term_ref_get_entity(&term->second);
-    ecs_id_t flags = term->id & ECS_ID_FLAGS_MASK;
-
-    if (first & ECS_ID_FLAGS_MASK) {
-        return -1;
-    }
-    if (second & ECS_ID_FLAGS_MASK) {
-        return -1;
-    }
-
-    if ((second || (term->second.id & EcsIsEntity))) {
-        flags |= ECS_PAIR;
-    }
-
-    if (!second && !ECS_HAS_ID_FLAG(flags, PAIR)) {
-        term->id = first | flags;
-    } else {
-        term->id = ecs_pair(first, second) | flags;
-    }
-
-    return 0;
-}
-
-static int flecs_term_populate_from_id(
+static int flecs_term_decode_id(
     const ecs_world_t *world,
     ecs_term_t *term,
     ecs_query_validator_ctx_t *ctx)
 {
-    ecs_entity_t first = 0;
-    ecs_entity_t second = 0;
-    bool pair_w_0_tgt = false;
-
-    if (ECS_HAS_ID_FLAG(term->id, PAIR)) {
-        first = ECS_PAIR_FIRST(term->id);
-        second = ECS_PAIR_SECOND(term->id);
-
-        if (!first) {
-            flecs_query_validator_error(ctx, "missing first element in term.id");
-            return -1;
-        }
-        if (!second) {
-            if (first != EcsChildOf && !ECS_IS_VALUE_PAIR(term->id)) {
-                flecs_query_validator_error(ctx, "missing second element in term.id");
+    bool pair = ECS_HAS_ID_FLAG(term->id, PAIR);
+    ecs_entity_t ids[2] = {
+        pair ? ECS_PAIR_FIRST(term->id) : term->id & ECS_COMPONENT_MASK,
+        pair ? ECS_PAIR_SECOND(term->id) : 0
+    };
+    ecs_term_ref_t *refs[2] = { &term->first, &term->second };
+    for (int32_t i = 0; i < 2; i ++) {
+        ecs_term_ref_t *ref = refs[i];
+        ecs_entity_t id = ids[i];
+        ecs_entity_t existing = flecs_term_ref_get_entity(ref);
+        if (existing) {
+            if ((uint32_t)existing != (uint32_t)id) {
+                flecs_query_validator_error(ctx,
+                    "mismatch between term.id and term.%s", i ? "second" : "first");
                 return -1;
-            } else {
-                /* Exception is made for ChildOf so we can use (ChildOf, 0) to match
-                 * all entities in the root */
-                pair_w_0_tgt = true;
             }
+        } else if (id) {
+            ecs_entity_t alive = ecs_get_alive(world, id);
+            ref->id = (alive ? alive : id) | ECS_TERM_REF_FLAGS(ref);
+        } else if (i && pair) {
+            ref->id = EcsIsEntity;
+        }
+    }
+    return 0;
+}
+
+static int flecs_term_encode_id(
+    ecs_term_t *term,
+    ecs_query_validator_ctx_t *ctx)
+{
+    ecs_entity_t first = flecs_term_ref_get_entity(&term->first);
+    ecs_entity_t second = flecs_term_ref_get_entity(&term->second);
+    ecs_id_t flags = term->id & ECS_ID_FLAGS_MASK;
+    bool pair = (flags & ECS_PAIR) || second || (term->second.id & EcsIsEntity);
+    bool predicate = first == EcsPredEq || first == EcsPredMatch ||
+        first == EcsPredLookup;
+    if (!first || (first & ECS_ID_FLAGS_MASK) ||
+        (second & ECS_ID_FLAGS_MASK) || (!predicate &&
+        ((pair && !second && first != EcsChildOf && !ECS_IS_VALUE_PAIR(term->id)) ||
+         (!pair && ecs_term_ref_is_set(&term->second)))))
+    {
+        flecs_query_validator_error(ctx, "invalid component or pair id");
+        return -1;
+    }
+
+    ecs_id_t id = pair ? ecs_pair(first, second) | flags : first | flags;
+    if (term->id & ~ECS_ID_FLAGS_MASK) {
+        ecs_id_t mask = pair ? UINT64_MAX : ~ECS_GENERATION_MASK;
+        if ((id & mask) != (term->id & mask)) {
+            flecs_query_validator_error(ctx, "mismatch between term.id and term references");
+            return -1;
         }
     } else {
-        first = term->id & ECS_COMPONENT_MASK;
-        if (!first) {
-            flecs_query_validator_error(ctx, "missing first element in term.id");
-            return -1;
-        }
+        term->id = id;
     }
-
-    ecs_entity_t term_first = flecs_term_ref_get_entity(&term->first);
-    if (term_first) {
-        if ((uint32_t)term_first != (uint32_t)first) {
-            flecs_query_validator_error(ctx, "mismatch between term.id and term.first");
-            return -1;
-        }
-    } else {
-        ecs_entity_t first_id = ecs_get_alive(world, first);
-        if (!first_id) {
-            term->first.id = first | ECS_TERM_REF_FLAGS(&term->first);
-        } else {
-            term->first.id = first_id | ECS_TERM_REF_FLAGS(&term->first);
-        }
-    }
-
-    ecs_entity_t term_second = flecs_term_ref_get_entity(&term->second);
-    if (term_second) {
-        if ((uint32_t)term_second != second) {
-            flecs_query_validator_error(ctx, "mismatch between term.id and term.second");
-            return -1;
-        }
-    } else if (second) {
-        ecs_entity_t second_id = ecs_get_alive(world, second);
-        if (!second_id) {
-            term->second.id = second | ECS_TERM_REF_FLAGS(&term->second);
-        } else {
-            term->second.id = second_id | ECS_TERM_REF_FLAGS(&term->second);
-        }
-    } else if (pair_w_0_tgt) {
-        term->second.id = EcsIsEntity;
-    }
-
     return 0;
 }
 
@@ -519,8 +468,8 @@ static int flecs_term_verify(
     const ecs_term_ref_t *second = &term->second;
     const ecs_term_ref_t *src = &term->src;
     ecs_entity_t first_id = 0, second_id = 0;
-    ecs_id_t flags = term->id & ECS_ID_FLAGS_MASK;
     ecs_id_t id = term->id;
+    (void)id;
 
     if ((src->id & EcsIsName) && (second->id & EcsIsName)) {
         flecs_query_validator_error(ctx, "mismatch between term.cr_flags & term.id");
@@ -539,105 +488,21 @@ static int flecs_term_verify(
         return flecs_term_verify_eq_pred(term, ctx);
     }
 
-    if (ecs_term_ref_is_set(second) && !ECS_HAS_ID_FLAG(flags, PAIR)) {
-        flecs_query_validator_error(ctx, "expected PAIR flag for term with pair");
-        return -1;
-    } else if (!ecs_term_ref_is_set(second) && ECS_HAS_ID_FLAG(flags, PAIR)) {
-        if (first_id != EcsChildOf && !ECS_IS_VALUE_PAIR(id)) {
-            flecs_query_validator_error(ctx, "unexpected PAIR flag for term without pair");
-            return -1;
-        } else {
-            /* Exception is made for ChildOf so we can use (ChildOf, 0) to match
-             * all entities in the root */
-        }
-    }
-
     if (!ecs_term_ref_is_set(src)) {
         flecs_query_validator_error(ctx, "term.src is not initialized");
         return -1;
     }
 
-    if (!ecs_term_ref_is_set(first)) {
-        flecs_query_validator_error(ctx, "term.first is not initialized");
+#ifdef FLECS_CONSTRAINT_TRAITS
+    if (!ECS_IS_PAIR(id) && !ecs_id_is_wildcard(id) &&
+        ecs_has_id(world, id & ECS_COMPONENT_MASK, EcsRelationship))
+    {
+        flecs_query_validator_error(ctx,
+            "cannot query for relationship '%s' as component",
+            flecs_errstr(ecs_get_path(world, id & ECS_COMPONENT_MASK)));
         return -1;
     }
-
-    if (ECS_HAS_ID_FLAG(flags, PAIR)) {
-        if (!ECS_PAIR_FIRST(id)) {
-            flecs_query_validator_error(ctx, "invalid 0 for first element in pair id");
-            return -1;
-        }
-        if ((ECS_PAIR_FIRST(id) != EcsChildOf) && !ECS_IS_VALUE_PAIR(id) && 
-            !ECS_PAIR_SECOND(id)) 
-        {
-            flecs_query_validator_error(ctx, "invalid 0 for second element in pair id");
-            return -1;
-        }
-
-        if ((first->id & EcsIsEntity) && 
-            (ecs_entity_t_lo(first_id) != ECS_PAIR_FIRST(id))) 
-        {
-            flecs_query_validator_error(ctx, "mismatch between term.id and term.first");
-            return -1;
-        }
-        if ((first->id & EcsIsVariable) && 
-            !ecs_id_is_wildcard(ECS_PAIR_FIRST(id)))
-        {
-            char *id_str = ecs_id_str(world, id);
-            flecs_query_validator_error(ctx, 
-                "expected wildcard for variable term.first (got %s)", id_str);
-            ecs_os_free(id_str);
-            return -1;
-        }
-
-        if ((second->id & EcsIsEntity) && 
-            (ecs_entity_t_lo(second_id) != ECS_PAIR_SECOND(id))) 
-        {
-            flecs_query_validator_error(ctx, "mismatch between term.id and term.second");
-            return -1;
-        }
-        if ((second->id & EcsIsVariable) && 
-            !ecs_id_is_wildcard(ECS_PAIR_SECOND(id))) 
-        {
-            char *id_str = ecs_id_str(world, id);
-            flecs_query_validator_error(ctx, 
-                "expected wildcard for variable term.second (got %s)", id_str);
-            ecs_os_free(id_str);
-            return -1;
-        }
-    } else {
-        ecs_entity_t component = id & ECS_COMPONENT_MASK;
-        if (!component) {
-            flecs_query_validator_error(ctx, "missing component id");
-            return -1;
-        }
-        if ((first->id & EcsIsEntity) && 
-            (ecs_entity_t_lo(first_id) != ecs_entity_t_lo(component))) 
-        {
-            flecs_query_validator_error(ctx, "mismatch between term.id and term.first");
-            return -1;
-        }
-        if ((first->id & EcsIsVariable) && !ecs_id_is_wildcard(component)) {
-            char *id_str = ecs_id_str(world, id);
-            flecs_query_validator_error(ctx,
-                "expected wildcard for variable term.first (got %s)", id_str);
-            ecs_os_free(id_str);
-            return -1;
-        }
-
-#ifdef FLECS_CONSTRAINT_TRAITS
-        if (!ecs_id_is_wildcard(component) &&
-            ecs_has_id(world, component, EcsRelationship))
-        {
-            char *component_str = ecs_get_path(world, component);
-            flecs_query_validator_error(ctx,
-                "cannot query for relationship '%s' as component",
-                    component_str);
-            ecs_os_free(component_str);
-            return -1;
-        }
 #endif
-    }
 
     if (first_id) {
         if (ecs_term_ref_is_set(second)) {
@@ -698,23 +563,15 @@ int flecs_term_finalize(
     ecs_flags64_t first_flags = ECS_TERM_REF_FLAGS(first);
     ecs_flags64_t second_flags = ECS_TERM_REF_FLAGS(second);
 
-    if (first->name && (first->id & ~EcsTermRefFlags)) {
-        flecs_query_validator_error(ctx, 
-            "first.name (%s) and first.id have competing values",
-                first->name);
-        return -1;
-    }
-    if (src->name && (src->id & ~EcsTermRefFlags)) {
-        flecs_query_validator_error(ctx, 
-            "src.name (%s) and src.id have competing values",
-                src->name);
-        return -1;
-    }
-    if (second->name && (second->id & ~EcsTermRefFlags)) {
-        flecs_query_validator_error(ctx, 
-            "second.name (%s) and second.id have competing values", 
-                second->name);
-        return -1;
+    ecs_term_ref_t *refs[] = { src, first, second };
+    const char *names[] = { "src", "first", "second" };
+    for (int32_t i = 0; i < 3; i ++) {
+        if (refs[i]->name && (refs[i]->id & ~EcsTermRefFlags)) {
+            flecs_query_validator_error(ctx,
+                "%s.name (%s) and %s.id have competing values",
+                names[i], refs[i]->name, names[i]);
+            return -1;
+        }
     }
 
     if (ECS_IS_VALUE_PAIR(term->id) && !ecs_term_ref_is_set(second)) {
@@ -722,7 +579,7 @@ int flecs_term_finalize(
     }
 
     if (term->id & ~ECS_ID_FLAGS_MASK) {
-        if (flecs_term_populate_from_id(world, term, ctx)) {
+        if (flecs_term_decode_id(world, term, ctx)) {
             return -1;
         }
     }
@@ -764,10 +621,8 @@ int flecs_term_finalize(
         second->name = first->name;
     }
 
-    if (!(term->id & ~ECS_ID_FLAGS_MASK)) {
-        if (flecs_term_populate_id(term)) {
-            return -1;
-        }
+    if (flecs_term_encode_id(term, ctx)) {
+        return -1;
     }
 
     /* If term queries for !(ChildOf, _), translate it to the builtin 
@@ -824,27 +679,9 @@ int flecs_term_finalize(
             }
         }
 
-        if (term->first.id & EcsCascade) {
-            flecs_query_validator_error(ctx, 
-                "cascade modifier invalid for term.first");
-            return -1;
-        }
-
-        if (term->second.id & EcsCascade) {
-            flecs_query_validator_error(ctx, 
-                "cascade modifier invalid for term.second");
-            return -1;
-        }
-
-        if (term->first.id & EcsDesc) {
-            flecs_query_validator_error(ctx, 
-                "desc modifier invalid for term.first");
-            return -1;
-        }
-
-        if (term->second.id & EcsDesc) {
-            flecs_query_validator_error(ctx, 
-                "desc modifier invalid for term.second");
+        if ((first->id | second->id) & (EcsCascade|EcsDesc)) {
+            flecs_query_validator_error(ctx,
+                "cascade and desc modifiers are only valid for term.src");
             return -1;
         }
 
@@ -977,106 +814,29 @@ int flecs_term_finalize(
         }
     }
 
-    /* Is term trivial/cacheable */
-    bool cacheable_term = true;
-    bool trivial_term = true;
-    if (term->oper != EcsAnd || term->flags_ & EcsTermIsOr) {
-        trivial_term = false;
+    bool childof = ECS_HAS_RELATION(term->id, EcsChildOf);
+    if (childof && term->oper == EcsAnd) {
+        term->flags_ |= EcsTermNonFragmentingChildOf;
     }
 
-    if (ECS_IS_PAIR(term->id) && (ECS_PAIR_FIRST(term->id) == EcsChildOf)) {
-        if (term->oper == EcsAnd) {
-            term->flags_ |= EcsTermNonFragmentingChildOf;
-        }
-
-        if (ECS_PAIR_SECOND(term->id)) {
-            trivial_term = false;
-        }
-    }
+    bool table_match = !(term->flags_ & (EcsTermTransitive|EcsTermIdInherited|
+        EcsTermReflexive|EcsTermIsMember|EcsTermDontFragment)) &&
+        !(first_entity == EcsPredEq || first_entity == EcsPredMatch ||
+            first_entity == EcsPredLookup);
+    bool cacheable_term = table_match && ECS_TERM_REF_ID(src) == EcsThis &&
+        term->id != ecs_childof(0);
+    bool trivial_term = table_match && term->oper == EcsAnd &&
+        !(term->flags_ & (EcsTermIsOr|EcsTermIsToggle)) &&
+        ecs_term_match_this(term) && (src->id & EcsSelf) &&
+        (!term->trav || term->trav == EcsIsA) &&
+        !(childof && ECS_PAIR_SECOND(term->id));
 
     if (ecs_id_is_wildcard(term->id)) {
-        if (ECS_PAIR_FIRST(term->id) == EcsWildcard) {
-            cacheable_term = false;
-            trivial_term = false;
-        }
-
-        if (!(cr_flags & EcsIdExclusive)) {
-            trivial_term = false;
-        }
-
-        if (first->id & EcsIsVariable) {
-            if (!ecs_id_is_wildcard(first_id) || first_id == EcsAny) {
-                trivial_term = false;
-                cacheable_term = false;
-            }
-        }
-
-        if (second->id & EcsIsVariable) {
-            if (!ecs_id_is_wildcard(second_id) || second_id == EcsAny) {
-                trivial_term = false;
-                if (second_id != EcsAny) {
-                    cacheable_term = false;
-                }
-            }
-        }
-    }
-
-    if (!ecs_term_match_this(term)) {
-        trivial_term = false;
-    }
-
-    if (term->flags_ & EcsTermTransitive) {
-        trivial_term = false;
-        cacheable_term = false; 
-    }
-
-    if (term->flags_ & EcsTermIdInherited) {
-        trivial_term = false;
-        cacheable_term = false;
-    }
-
-    if (term->flags_ & EcsTermReflexive) {
-        trivial_term = false;
-        cacheable_term = false;
-    }
-
-    if (term->trav && term->trav != EcsIsA) {
-        trivial_term = false;
-    }
-
-    if (!(src->id & EcsSelf)) {
-        trivial_term = false;
-    }
-
-    if (((ECS_TERM_REF_ID(&term->first) == EcsPredEq) || 
-         (ECS_TERM_REF_ID(&term->first) == EcsPredMatch) || 
-         (ECS_TERM_REF_ID(&term->first) == EcsPredLookup)) && 
-        (term->first.id & EcsIsEntity)) 
-    {
-        trivial_term = false;
-        cacheable_term = false;
-    }
-
-    if (ECS_TERM_REF_ID(src) != EcsThis) {
-        cacheable_term = false;
-    }
-
-    if (term->id == ecs_childof(0)) {
-        cacheable_term = false;
-    }
-
-    if (term->flags_ & EcsTermIsMember) {
-        trivial_term = false;
-        cacheable_term = false;
-    }
-
-    if (term->flags_ & EcsTermIsToggle) {
-        trivial_term = false;
-    }
-
-    if (term->flags_ & EcsTermDontFragment) {
-        trivial_term = false;
-        cacheable_term = false;
+        bool first_variable = (first->id & EcsIsVariable) && first_id != EcsWildcard;
+        bool second_variable = (second->id & EcsIsVariable) && second_id != EcsWildcard;
+        bool dynamic_id = ECS_PAIR_FIRST(term->id) == EcsWildcard || first_variable;
+        cacheable_term &= !dynamic_id && !(second_variable && second_id != EcsAny);
+        trivial_term &= !dynamic_id && !second_variable && (cr_flags & EcsIdExclusive);
     }
 
     ECS_BIT_COND16(term->flags_, EcsTermIsTrivial, trivial_term);
@@ -1157,6 +917,44 @@ static void flecs_normalize_term_name(
     }
 }
 #endif
+
+static void flecs_query_set_self_trivial(
+    ecs_query_t *q)
+{
+    ecs_flags32_t flags = EcsQuerySelfTrivial | EcsQueryIsaTrivial;
+    if (!q->term_count || q->row_fields ||
+        (q->flags & (EcsQueryHasPred|EcsQueryHasScopes|EcsQueryHasRefs|
+            EcsQueryMatchNothing|EcsQueryMatchWildcards)))
+    {
+        flags = 0;
+    }
+
+    for (int32_t i = 0; flags && i < q->term_count; i ++) {
+        const ecs_term_t *term = &q->terms[i];
+        ecs_flags64_t src = term->src.id;
+        if ((term->oper != EcsAnd && term->oper != EcsNot) ||
+            (term->flags_ & (EcsTermIsOr|EcsTermIsToggle|EcsTermDontFragment|
+                EcsTermIsSparse|EcsTermTransitive|EcsTermReflexive|EcsTermIsMember|
+                EcsTermIsScope|EcsTermMatchAny|EcsTermMatchAnySrc)) ||
+            !ecs_term_match_this(term) ||
+            (term->trav && term->trav != EcsIsA) ||
+            ecs_id_is_wildcard(term->id) ||
+            (ECS_HAS_RELATION(term->id, EcsChildOf) && ECS_PAIR_SECOND(term->id)))
+        {
+            flags = 0;
+            break;
+        }
+        if (!(src & EcsSelf)) {
+            flags &= ~EcsQuerySelfTrivial;
+        }
+        if ((src & (EcsCascade|EcsDesc)) || !(src & (EcsSelf|EcsUp)) ||
+            ((src & EcsUp) && term->trav != EcsIsA))
+        {
+            flags &= ~EcsQueryIsaTrivial;
+        }
+    }
+    q->flags = (q->flags & ~(EcsQuerySelfTrivial|EcsQueryIsaTrivial)) | flags;
+}
 
 static int flecs_query_finalize_terms(
     ecs_world_t *world,
@@ -1265,37 +1063,16 @@ static int flecs_query_finalize_terms(
             ECS_BIT_CLEAR16(term->flags_, EcsTermIsCacheable);
         }
 
-        /* If one of the terms in an OR chain isn't cacheable, none are */
         if (term->flags_ & EcsTermIsCacheable) {
-            /* Current term is marked as cacheable. Check if it is part of an OR
-             * chain, and if so, the previous term was also cacheable. */
-            if (prev_is_or) {
-                if (term[-1].flags_ & EcsTermIsCacheable) {
-                    cacheable_terms ++;
-                } else {
-                    ECS_BIT_CLEAR16(term->flags_, EcsTermIsCacheable);
-                }
-            } else {
-                cacheable_terms ++;
+            if (prev_is_or && !(term[-1].flags_ & EcsTermIsCacheable)) {
+                ECS_BIT_CLEAR16(term->flags_, EcsTermIsCacheable);
             }
-
-            /* Toggle terms may be cacheable for fetching the initial component, 
-             * but require an additional toggle instruction for evaluation. */
             if (term->flags_ & EcsTermIsToggle) {
                 cacheable = false;
             }
         } else if (prev_is_or) {
-            /* Current term is not cacheable. If it is part of an OR chain, mark
-             * previous terms in the chain as also not cacheable. */
-            int32_t j;
-            for (j = i - 1; j >= 0; j --) {
-                if (terms[j].oper != EcsOr) {
-                    break;
-                }
-                if (terms[j].flags_ & EcsTermIsCacheable) {
-                    cacheable_terms --;
-                    ECS_BIT_CLEAR16(terms[j].flags_, EcsTermIsCacheable);
-                }
+            for (int32_t j = i - 1; j >= 0 && terms[j].oper == EcsOr; j --) {
+                ECS_BIT_CLEAR16(terms[j].flags_, EcsTermIsCacheable);
             }
         }
 
@@ -1338,30 +1115,23 @@ static int flecs_query_finalize_terms(
             }
         }
 
-        if (term->src.id == EcsIsEntity) {
-            nodata_term = true;
-        } else if (term->inout == EcsInOutNone) {
-            nodata_term = true;
-        } else if (!ecs_get_type_info(world, term->id)) {
-            nodata_term = true;
-        } else if (term->flags_ & EcsTermIsMember) {
-            nodata_term = true;
-        } else if (scope_nesting) {
-            nodata_term = true;
-        } else {
-            if (ecs_id_is_tag(world, term->id)) {
-                nodata_term = true;
-            } else if ((ECS_PAIR_SECOND(term->id) == EcsWildcard) ||
-                       (ECS_PAIR_SECOND(term->id) == EcsAny)) 
-            {
-                /* If the second element of a pair is a wildcard and the first
-                 * element is not a type, we can't know in advance what the
-                 * type of the term is, so it can't provide data. */
-                if (!ecs_get_type_info(world, ecs_pair_first(world, term->id))) {
-                    nodata_term = true;
-                }
-            }
+        const ecs_type_info_t *ti = cr ? cr->type_info : ecs_get_type_info(world, term->id);
+        bool other_type = false;
+#ifdef FLECS_QUERY_PLANS
+        if (term->flags_ & EcsTermIsOr) {
+            other_type = flecs_query_or_other_type(q, i) != NULL;
         }
+#endif
+        int32_t field = term->field_index;
+        q->ids[field] = other_type ? 0 : term->id;
+        if (other_type) {
+            q->sizes[field] = 0;
+        } else if (ti && (!cr || !ECS_HAS_RELATION(cr->id, EcsWildcard))) {
+            q->sizes[field] = ti->size;
+            q->ids[field] = cr ? cr->id : term->id;
+        }
+        nodata_term = term->src.id == EcsIsEntity || term->inout == EcsInOutNone ||
+            !ti || (term->flags_ & EcsTermIsMember) || scope_nesting;
 
         if (!nodata_term && term->inout != EcsIn && term->inout != EcsInOutNone) {
             /* Non-this terms default to EcsIn */
@@ -1376,18 +1146,9 @@ static int flecs_query_finalize_terms(
             }
         }
 
-        if (!nodata_term) {
-            /* If terms in an OR chain do not all return the same type, the 
-             * field will not provide any data */
-            if (term->flags_ & EcsTermIsOr) {
-#ifdef FLECS_QUERY_PLANS
-                ecs_term_t *first = flecs_query_or_other_type(q, i);
-                if (first) {
-                    nodata_term = true;
-                }
-#endif
-                q->data_fields &= (ecs_termset_t)~(1llu << term->field_index);
-            }
+        if (!nodata_term && (term->flags_ & EcsTermIsOr)) {
+            nodata_term = other_type;
+            q->data_fields &= (ecs_termset_t)~(1llu << field);
         }
 
         if (term->flags_ & EcsTermIsMember) {
@@ -1412,10 +1173,7 @@ static int flecs_query_finalize_terms(
 #ifdef FLECS_CONSTRAINT_TRAITS
         if ((cr_flags & EcsIdSingleton) && default_src) {
             ECS_BIT_CLEAR16(term->flags_, EcsTermIsTrivial);
-            if (term->flags_ & EcsTermIsCacheable) {
-                cacheable_terms --;
-                ECS_BIT_CLEAR16(term->flags_, EcsTermIsCacheable);
-            }
+            ECS_BIT_CLEAR16(term->flags_, EcsTermIsCacheable);
         }
 #endif
 
@@ -1462,10 +1220,7 @@ static int flecs_query_finalize_terms(
         if (is_sparse) {
             term->flags_ |= EcsTermIsSparse;
             ECS_BIT_CLEAR16(term->flags_, EcsTermIsTrivial);
-            if (term->flags_ & EcsTermIsCacheable) {
-                cacheable_terms --;
-                ECS_BIT_CLEAR16(term->flags_, EcsTermIsCacheable);
-            }
+            ECS_BIT_CLEAR16(term->flags_, EcsTermIsCacheable);
 
             /* Sparse component fields must be accessed with ecs_field_at */
             if (!nodata_term) {
@@ -1511,10 +1266,7 @@ static int flecs_query_finalize_terms(
         if (scope_nesting) {
             term->flags_ |= EcsTermIsScope;
             ECS_BIT_CLEAR16(term->flags_, EcsTermIsTrivial);
-            if (term->flags_ & EcsTermIsCacheable) {
-                cacheable_terms --;
-                ECS_BIT_CLEAR16(term->flags_, EcsTermIsCacheable);
-            }
+            ECS_BIT_CLEAR16(term->flags_, EcsTermIsCacheable);
         }
 
         if (first_id == EcsScopeClose) {
@@ -1566,88 +1318,40 @@ static int flecs_query_finalize_terms(
 
     q->field_count = flecs_ito(int8_t, field_count);
 
+    bool is_trivial = term_count != 0, match_only_self = true;
     if (field_count) {
         for (i = 0; i < term_count; i ++) {
             ecs_term_t *term = &terms[i];
-            int32_t field = term->field_index;
-            q->ids[field] = term->id;
+            cacheable_terms += (term->flags_ & EcsTermIsCacheable) != 0;
+            match_only_self &= !(term->src.id & EcsUp);
+            is_trivial &= (term->flags_ & EcsTermIsTrivial) != 0;
+            if (ECS_TERM_REF_ID(&term->first) == EcsChildOf &&
+                ECS_TERM_REF_ID(&term->second) != 0)
+            {
+                is_trivial = false;
+            }
+            if ((term->flags_ & EcsTermIsTrivial) &&
+                (term->src.id & EcsTraverseFlags) == EcsSelf &&
+                !ecs_id_is_wildcard(term->id))
+            {
+                q->bloom_filter = flecs_table_bloom_filter_add(
+                    q->bloom_filter, term->id);
+            }
 
             if (!ecs_term_match_0(term)) {
                 flecs_component_lock(world, term->id);
-            }
-
-            if (term->flags_ & EcsTermIsOr) {
-#ifdef FLECS_QUERY_PLANS
-                if (flecs_query_or_other_type(q, i)) {
-                    q->sizes[field] = 0;
-                    q->ids[field] = 0;
-                    continue;
-                }
-#endif
-            }
-
-            ecs_component_record_t *cr = flecs_components_get(world, term->id);
-            if (cr) {
-                if (!ECS_IS_PAIR(cr->id) || ECS_PAIR_FIRST(cr->id) != EcsWildcard) {
-                    if (cr->type_info) {
-                        q->sizes[field] = cr->type_info->size;
-                        q->ids[field] = cr->id;
-                    }
-                }
-            } else {
-                const ecs_type_info_t *ti = ecs_get_type_info(
-                    world, term->id);
-                if (ti) {
-                    q->sizes[field] = ti->size;
-                    q->ids[field] = term->id;
-                }
             }
         }
     }
 
     ECS_BIT_COND(q->flags, EcsQueryHasCondSet, cond_set);
 
-    /* Check if this is a trivial query */
-    if ((q->flags & EcsQueryMatchOnlyThis)) {
-        if (!(q->flags & 
-            (EcsQueryHasPred|EcsQueryMatchDisabled|EcsQueryMatchPrefab))) 
-        {
-            ECS_BIT_SET(q->flags, EcsQueryMatchOnlySelf);
-
-            bool is_trivial = true;
-
-            for (i = 0; i < term_count; i ++) {
-                ecs_term_t *term = &terms[i];
-                ecs_term_ref_t *src = &term->src;
-
-                if (src->id & EcsUp) {
-                    ECS_BIT_CLEAR(q->flags, EcsQueryMatchOnlySelf);
-                }
-
-                if (ECS_TERM_REF_ID(&term->first) == EcsChildOf) {
-                    if (ECS_TERM_REF_ID(&term->second) != 0) {
-                        is_trivial = false;
-                        continue;
-                    }
-                }
-
-                if (!(term->flags_ & EcsTermIsTrivial)) {
-                    is_trivial = false;
-                    continue;
-                }
-
-                if ((term->src.id & EcsTraverseFlags) == EcsSelf) {
-                    if (!ecs_id_is_wildcard(term->id)) {
-                        
-                        q->bloom_filter = flecs_table_bloom_filter_add(
-                            q->bloom_filter, term->id);
-                    }
-                }
-            }
-
-            if (term_count && is_trivial) {
-                ECS_BIT_SET(q->flags, EcsQueryIsTrivial);
-            }
+    if ((q->flags & EcsQueryMatchOnlyThis) && !(q->flags &
+        (EcsQueryHasPred|EcsQueryMatchDisabled|EcsQueryMatchPrefab)))
+    {
+        ECS_BIT_COND(q->flags, EcsQueryMatchOnlySelf, match_only_self);
+        if (is_trivial) {
+            q->flags |= EcsQueryIsTrivial;
         }
     }
 
@@ -1667,6 +1371,8 @@ static int flecs_query_finalize_terms(
 
     /* If none of the terms match a source, the query matches nothing */
     ECS_BIT_COND(q->flags, EcsQueryMatchNothing, match_nothing);
+
+    flecs_query_set_self_trivial(q);
 
 #ifdef FLECS_QUERY_PLANS
     for (i = 0; i < q->term_count; i ++) {
@@ -1828,7 +1534,7 @@ bool flecs_query_finalize_simple(
     ecs_os_memcpy_n(q->terms, desc->terms, ecs_term_t, term_count);
 
     /* All fields are InOut */
-    q->write_fields = (1u << term_count) - 1;
+    q->write_fields = UINT32_MAX >> (32 - term_count);
 
     /* Simple query that only queries for component ids */
 
@@ -1847,7 +1553,7 @@ bool flecs_query_finalize_simple(
             term->second.id = second | EcsIsEntity | EcsSelf;
         }
 
-        bool is_self = term->src.id == EcsSelf;
+        bool is_self = (term->src.id & EcsSelf) != 0;
 #ifdef FLECS_CONSTRAINT_TRAITS
         bool default_src = term->src.id == 0;
 #endif
@@ -2002,6 +1708,8 @@ bool flecs_query_finalize_simple(
         q->flags |= EcsQueryMatchOnlySelf;
     }
 
+    flecs_query_set_self_trivial(q);
+
     return true;
 }
 
@@ -2110,8 +1818,10 @@ int flecs_query_finalize_query(
      * slow path. This in combination with the test suite ensures that the
      * result of the fast & slow code is the same. */
     #ifndef FLECS_SANITIZE
-    if (flecs_query_finalize_simple(world, q, desc)) {
-        goto done;
+    if (!(q->flags & (EcsQueryMatchPrefab|EcsQueryMatchDisabled))) {
+        if (flecs_query_finalize_simple(world, q, desc)) {
+            goto done;
+        }
     }
     #endif
 

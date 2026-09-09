@@ -683,3 +683,97 @@ void MetaUtils_struct_w_value(void) {
 
     ecs_fini(world);
 }
+
+typedef struct {
+    int32_t x;
+    int32_t values[3];
+} Struct_w_array_size_expr;
+
+void MetaUtils_struct_w_non_numeric_array_size(void) {
+    ecs_world_t *world = ecs_init();
+
+    ECS_COMPONENT(world, Struct_w_array_size_expr);
+
+    ecs_log_set_level(-4);
+
+    test_assert(ecs_meta_from_desc(world, ecs_id(Struct_w_array_size_expr),
+        EcsStructType, "{int32_t x;\nint32_t values[ARRAY_SIZE];}") != 0);
+
+    ecs_fini(world);
+}
+
+void MetaUtils_struct_w_zero_array_size(void) {
+    ecs_world_t *world = ecs_init();
+
+    ECS_COMPONENT(world, Struct_w_array_size_expr);
+
+    ecs_log_set_level(-4);
+
+    test_assert(ecs_meta_from_desc(world, ecs_id(Struct_w_array_size_expr),
+        EcsStructType, "{int32_t x;\nint32_t values[0];}") != 0);
+
+    ecs_fini(world);
+}
+
+void MetaUtils_struct_w_overflow_array_size(void) {
+    ecs_world_t *world = ecs_init();
+
+    ECS_COMPONENT(world, Struct_w_array_size_expr);
+
+    ecs_log_set_level(-4);
+
+    test_assert(ecs_meta_from_desc(world, ecs_id(Struct_w_array_size_expr),
+        EcsStructType, "{int32_t x;\nint32_t values[4294967297];}") != 0);
+
+    test_assert(ecs_meta_from_desc(world, ecs_id(Struct_w_array_size_expr),
+        EcsStructType, "{int32_t x;\nint32_t values[10000000001];}") != 0);
+
+    ecs_fini(world);
+}
+
+void MetaUtils_struct_w_array_size_error_no_leak(void) {
+    ecs_world_t *world = ecs_init();
+
+    ECS_COMPONENT(world, Struct_w_array_size_expr);
+
+    ecs_log_set_level(-4);
+
+    test_assert(ecs_meta_from_desc(world, ecs_id(Struct_w_array_size_expr),
+        EcsStructType, "{int32_t x;\nint32_t y;\nint32_t values[0];}") != 0);
+
+    int64_t balance_before = (ecs_os_api_malloc_count +
+        ecs_os_api_calloc_count) - ecs_os_api_free_count;
+
+    int32_t i;
+    for (i = 0; i < 10; i ++) {
+        test_assert(ecs_meta_from_desc(world, 
+            ecs_id(Struct_w_array_size_expr), EcsStructType, 
+            "{int32_t x;\nint32_t y;\nint32_t values[0];}") != 0);
+    }
+
+    int64_t balance_after = (ecs_os_api_malloc_count +
+        ecs_os_api_calloc_count) - ecs_os_api_free_count;
+    test_int(0, balance_after - balance_before);
+
+    ecs_fini(world);
+}
+
+void MetaUtils_struct_w_numeric_array_size(void) {
+    ecs_world_t *world = ecs_init();
+
+    ECS_COMPONENT(world, Struct_w_array_size_expr);
+
+    test_int(ecs_meta_from_desc(world, ecs_id(Struct_w_array_size_expr),
+        EcsStructType, "{int32_t x;\nint32_t values[3];}"), 0);
+
+    const EcsStruct *st = ecs_get(
+        world, ecs_id(Struct_w_array_size_expr), EcsStruct);
+    test_assert(st != NULL);
+    test_int(ecs_vec_count(&st->members), 2);
+
+    ecs_member_t *m = ecs_vec_get_t(&st->members, ecs_member_t, 1);
+    test_str(m->name, "values");
+    test_int(m->count, 3);
+
+    ecs_fini(world);
+}

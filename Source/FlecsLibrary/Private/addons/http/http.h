@@ -105,7 +105,6 @@ struct ecs_http_server_t {
     double cache_purge_timeout;
 
     ecs_sparse_t connections; /* sparse<http_connection_t> */
-    ecs_sparse_t requests; /* sparse<http_request_t> */
 
     bool initialized;
 
@@ -125,47 +124,26 @@ struct ecs_http_server_t {
     ecs_hashmap_t request_cache;
 };
 
-/** Fragment state, used by HTTP request parser */
-typedef enum  {
-    HttpFragStateBegin,
-    HttpFragStateMethod,
-    HttpFragStatePath,
-    HttpFragStateVersion,
-    HttpFragStateHeaderStart,
-    HttpFragStateHeaderName,
-    HttpFragStateHeaderValueStart,
-    HttpFragStateHeaderValue,
-    HttpFragStateCR,
-    HttpFragStateCRLF,
-    HttpFragStateCRLFCR,
-    HttpFragStateBody,
-    HttpFragStateDone
-} HttpFragState;
-
-/** A fragment is a partially received HTTP request */
 typedef struct {
-    HttpFragState state;
     ecs_strbuf_t buf;
     ecs_http_method_t method;
     int32_t body_offset;
-    int32_t query_offset;
-    int32_t header_offsets[ECS_HTTP_HEADER_COUNT_MAX];
-    int32_t header_value_offsets[ECS_HTTP_HEADER_COUNT_MAX];
-    int32_t header_count;
-    int32_t param_offsets[ECS_HTTP_QUERY_PARAM_COUNT_MAX];
-    int32_t param_value_offsets[ECS_HTTP_QUERY_PARAM_COUNT_MAX];
-    int32_t param_count;
+    int32_t line_offset;
+    int32_t scan;
     int32_t content_length;
-    char *header_buf_ptr;
-    char header_buf[32];
-    bool parse_content_length;
     bool invalid;
 } ecs_http_fragment_t;
 
-/** Extend public connection type with fragment data */
+typedef struct {
+    ecs_http_request_t pub;
+    char *res;
+    int32_t req_len;
+} ecs_http_request_impl_t;
+
 typedef struct {
     ecs_http_connection_t pub;
     ecs_http_socket_t sock;
+    ecs_http_request_impl_t request;
 
     /* Connection is purged after both the timeout expires and the connection has
      * exceeded the retry count. This ensures that a connection does not
@@ -173,12 +151,5 @@ typedef struct {
     double dequeue_timeout;
     int32_t dequeue_retries;    
 } ecs_http_connection_impl_t;
-
-typedef struct {
-    ecs_http_request_t pub;
-    uint64_t conn_id; /* for sanity check */
-    char *res;
-    int32_t req_len;
-} ecs_http_request_impl_t;
 
 #endif

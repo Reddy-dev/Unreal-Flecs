@@ -10,8 +10,6 @@ typedef enum ecs_script_node_kind_t {
     EcsAstScope,
     EcsAstTag,
     EcsAstComponent,
-    EcsAstVarComponent,
-    EcsAstWithVar,
     EcsAstWithTag,
     EcsAstWithComponent,
     EcsAstWith,
@@ -23,23 +21,41 @@ typedef enum ecs_script_node_kind_t {
     EcsAstMut,
     EcsAstConst,
     EcsAstExportConst,
+    EcsAstExportMut,
     EcsAstEntity,
     EcsAstPairScope,
     EcsAstIf,
     EcsAstFor,
     EcsAstInclude,
-    EcsAstFunction
+    EcsAstFunction,
+    EcsAstAwait,
+    EcsAstTry,
+    EcsAstContinue
 } ecs_script_node_kind_t;
 
 typedef struct ecs_script_node_t {
     ecs_script_node_kind_t kind;
+    ecs_size_t alloc_size;
     const char *pos;
+    const char *end;
+    uint64_t input;
+    uint64_t direct_input;
+
+    /* Dependencies on computed template consts (secondary bitset) */
+    uint64_t internal;
+    uint64_t direct_internal;
+
+    bool skip;
+    int32_t region;
 } ecs_script_node_t;
 
 struct ecs_script_scope_t {
     ecs_script_node_t node;
     ecs_vec_t stmts;
     ecs_script_scope_t *parent;
+    ecs_script_scope_t *alternative;
+    const char *open;
+    int32_t scope_slot;
 
     /* Array with component ids that are added in scope. Used to limit
      * archetype moves. */
@@ -51,11 +67,20 @@ typedef struct ecs_script_id_t {
     const char *second;
     ecs_id_t flag;
     ecs_id_t eval;
+    ecs_entity_t first_eval;
+    ecs_entity_t second_eval;
 
     /* If first or second refer to a variable, these are the cached variable 
      * stack pointers so we don't have to lookup variables by name. */
     int32_t first_sp; 
     int32_t second_sp;
+    int32_t value_sp;
+    int32_t first_symbol;
+    int32_t second_symbol;
+
+    /* If first is a template prop typed by an interface struct, this is the
+     * struct the resolved template must derive from. */
+    ecs_entity_t interface;
 
     /* In case first/second are specified as interpolated strings. */
     ecs_expr_node_t *first_expr;
@@ -70,36 +95,37 @@ typedef struct ecs_script_id_t {
 typedef struct ecs_script_tag_t {
     ecs_script_node_t node;
     ecs_script_id_t id;
+    int32_t component_slot;
 } ecs_script_tag_t;
 
 typedef struct ecs_script_component_t {
     ecs_script_node_t node;
     ecs_script_id_t id;
     ecs_expr_node_t *expr;
-    ecs_value_t eval;
+    const char *value_pos;
+    const char *value_end;
+    int32_t component_slot;
     bool is_collection;
 } ecs_script_component_t;
 
-typedef struct ecs_script_var_component_t {
-    ecs_script_node_t node;
-    const char *name;
-    int32_t sp;
-} ecs_script_var_component_t;
-
 struct ecs_script_entity_t {
     ecs_script_node_t node;
+    ecs_script_entity_t *parent;
     const char *kind;
     const char *name;
     bool name_is_var;
     bool kind_w_expr;
     bool non_fragmenting_parent;
+    int32_t type_index;
     ecs_script_scope_t *scope;
     ecs_expr_node_t *name_expr;
 
-    /* Populated during eval */
-    ecs_script_entity_t *parent;
     ecs_entity_t eval;
     ecs_entity_t eval_kind;
+    int32_t kind_symbol;
+    int32_t kind_sp;
+    int32_t symbol;
+    bool is_type;
 };
 
 typedef struct ecs_script_with_t {
@@ -107,11 +133,6 @@ typedef struct ecs_script_with_t {
     ecs_script_scope_t *expressions;
     ecs_script_scope_t *scope;
 } ecs_script_with_t;
-
-typedef struct ecs_script_inherit_t {
-    ecs_script_node_t node;
-    ecs_script_scope_t *base_list;
-} ecs_script_inherit_t;
 
 typedef struct ecs_script_pair_scope_t {
     ecs_script_node_t node;
@@ -122,11 +143,14 @@ typedef struct ecs_script_pair_scope_t {
 typedef struct ecs_script_using_t {
     ecs_script_node_t node;
     const char *name;
+    ecs_entity_t eval;
 } ecs_script_using_t;
 
 typedef struct ecs_script_module_t {
     ecs_script_node_t node;
     const char *name;
+    ecs_entity_t eval;
+    int32_t symbol;
 } ecs_script_module_t;
 
 typedef struct ecs_script_annot_t {
@@ -138,15 +162,51 @@ typedef struct ecs_script_annot_t {
 typedef struct ecs_script_template_node_t {
     ecs_script_node_t node;
     const char *name;
+    const char *base;
+    ecs_entity_t eval_base;
     ecs_script_scope_t* scope;
+    int32_t symbol;
+    int32_t symbol_offset;
+    int32_t symbol_count;
+    int32_t root_symbol;
 } ecs_script_template_node_t;
 
 typedef struct ecs_script_var_node_t {
     ecs_script_node_t node;
     const char *name;
     const char *type;
+    bool type_is_template;
     ecs_expr_node_t *expr;
+    ecs_entity_t eval_type;
+    ecs_entity_t eval_interface;
+    int32_t sp;
+    int32_t symbol;
+    /* 0 if not cached, otherwise computed slot index + 1 */
+    int32_t computed;
+    bool is_await;
 } ecs_script_var_node_t;
+
+typedef struct ecs_script_await_t {
+    ecs_script_node_t node;
+    ecs_expr_node_t *expr;
+} ecs_script_await_t;
+
+typedef struct ecs_script_continue_t {
+    ecs_script_node_t node;
+} ecs_script_continue_t;
+
+typedef struct ecs_script_catch_t {
+    const char *error; /* Error entity to catch. NULL for catch-all clause. */
+    ecs_script_scope_t *scope;
+    ecs_entity_t eval_error;
+    int32_t error_symbol;
+} ecs_script_catch_t;
+
+typedef struct ecs_script_try_t {
+    ecs_script_node_t node;
+    ecs_script_scope_t *try_scope;
+    ecs_vec_t catches; /* vec<ecs_script_catch_t> */
+} ecs_script_try_t;
 
 typedef struct ecs_script_if_t {
     ecs_script_node_t node;
@@ -155,13 +215,17 @@ typedef struct ecs_script_if_t {
     ecs_expr_node_t *expr;
 } ecs_script_if_t;
 
-typedef struct ecs_script_for_range_t {
+typedef struct ecs_script_for_t {
     ecs_script_node_t node;
-    const char *loop_var;
+    const char *loop_vars[3];
+    int32_t loop_var_sp[3];
+    int32_t loop_var_count;
     ecs_expr_node_t *from;
     ecs_expr_node_t *to;
+    ecs_expr_node_t *expr;
     ecs_script_scope_t *scope;
-} ecs_script_for_range_t;
+    int32_t for_slot;
+} ecs_script_for_t;
 
 typedef struct ecs_script_include_t {
     ecs_script_node_t node;
@@ -172,6 +236,8 @@ typedef struct ecs_script_fn_param_t {
     ecs_script_node_t node;
     const char *name;
     const char *type;
+    ecs_entity_t eval_type;
+    int32_t sp;
 } ecs_script_fn_param_t;
 
 typedef struct ecs_script_function_node_t {
@@ -182,7 +248,8 @@ typedef struct ecs_script_function_node_t {
     ecs_vec_t params;
     ecs_script_scope_t *body;
     ecs_expr_node_t *return_expr;
-    ecs_entity_t eval;
+    ecs_entity_t eval_return_type;
+    int32_t symbol;
 } ecs_script_function_node_t;
 
 #define ecs_script_node(kind, node)\
@@ -224,6 +291,19 @@ ecs_script_var_node_t* flecs_script_insert_var(
     ecs_parser_t *parser,
     const char *name);
 
+ecs_script_await_t* flecs_script_insert_await(
+    ecs_parser_t *parser);
+
+ecs_script_continue_t* flecs_script_insert_continue(
+    ecs_parser_t *parser);
+
+ecs_script_try_t* flecs_script_insert_try(
+    ecs_parser_t *parser);
+
+ecs_script_catch_t* flecs_script_try_add_catch(
+    ecs_parser_t *parser,
+    ecs_script_try_t *stmt);
+
 ecs_script_tag_t* flecs_script_insert_tag(
     ecs_parser_t *parser,
     const char *name);
@@ -242,14 +322,10 @@ ecs_script_component_t* flecs_script_insert_pair_component(
     const char *first,
     const char *second);
 
-ecs_script_var_component_t* flecs_script_insert_var_component(
-    ecs_parser_t *parser,
-    const char *name);
-
 ecs_script_if_t* flecs_script_insert_if(
     ecs_parser_t *parser);
 
-ecs_script_for_range_t* flecs_script_insert_for_range(
+ecs_script_for_t* flecs_script_insert_for(
     ecs_parser_t *parser);
 
 ecs_script_include_t* flecs_script_insert_include(

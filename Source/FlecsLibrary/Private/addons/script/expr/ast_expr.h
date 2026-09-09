@@ -21,19 +21,25 @@ typedef enum ecs_expr_node_kind_t {
     EcsExprFunction,
     EcsExprMethod,
     EcsExprMember,
+    EcsExprSwizzle,
     EcsExprElement,
     EcsExprComponent,
+    EcsExprHas,
     EcsExprCast,
     EcsExprCastNumber,
     EcsExprMatch,
-    EcsExprNew
+    EcsExprRange,
+    EcsExprNew,
+    EcsExprScript
 } ecs_expr_node_kind_t;
 
 struct ecs_expr_node_t {
     ecs_expr_node_kind_t kind;
+    ecs_size_t alloc_size;
     ecs_entity_t type;
     const ecs_type_info_t *type_info;
     const char *pos;
+    const char *end;
 };
 
 typedef struct ecs_expr_value_node_t {
@@ -54,14 +60,18 @@ typedef struct ecs_expr_format_t {
     bool is_present;
 } ecs_expr_format_t;
 
+typedef struct ecs_expr_fragment_t {
+    char *text;
+    ecs_expr_node_t *expr;
+    ecs_expr_format_t format;
+} ecs_expr_fragment_t;
+
 typedef struct ecs_expr_interpolated_string_t {
     ecs_expr_node_t node;
     char *value;              /* modified by parser */
     char *buffer;             /* for storing expr tokens */
     ecs_size_t buffer_size;
-    ecs_vec_t fragments;      /* vec<char*> */
-    ecs_vec_t expressions;    /* vec<ecs_expr_node_t*> */
-    ecs_vec_t formats;        /* vec<ecs_expr_format_t> */
+    ecs_vec_t fragments;
 } ecs_expr_interpolated_string_t;
 
 typedef struct ecs_expr_initializer_element_t {
@@ -84,16 +94,18 @@ typedef struct ecs_expr_initializer_t {
 typedef struct ecs_expr_variable_t {
     ecs_expr_node_t node;
     const char *name;
-    ecs_value_t global_value; /* Only set for global variables */
     ecs_entity_t global; /* Entity of the global variable, if any */
+    ecs_id_t global_component; /* Component that stores the global value. Is
+                                * EcsScriptConstVar or EcsScriptMutVar. */
     int32_t sp; /* For fast variable lookups */
+    bool owns_name; /* Whether name is allocated with script allocator */
 } ecs_expr_variable_t;
 
 typedef struct ecs_expr_identifier_t {
     ecs_expr_node_t node;
     const char *value;
     ecs_expr_node_t *expr;
-    bool swizzle_expand_allowed;
+    int32_t symbol;
 } ecs_expr_identifier_t;
 
 typedef struct ecs_expr_unary_t {
@@ -118,14 +130,18 @@ typedef struct ecs_expr_member_t {
     ecs_expr_node_t *left;
     const char *member_name;
     uintptr_t offset;
-    int32_t swizzle_count;
-    ecs_size_t swizzle_size;
-    uint16_t swizzle[FLECS_EXPR_SWIZZLE_MAX];
-    uint16_t swizzle_dst[FLECS_EXPR_SWIZZLE_MAX];
-    bool swizzle_expand_allowed;
-    bool swizzle_can_expand;
-    bool swizzle_expand;
 } ecs_expr_member_t;
+
+typedef struct ecs_expr_swizzle_t {
+    ecs_expr_node_t node;
+    ecs_expr_node_t *left;
+    const char *name;
+    int32_t count;
+    ecs_size_t elem_size;
+    uint16_t src[FLECS_EXPR_SWIZZLE_MAX];
+    uint16_t dst[FLECS_EXPR_SWIZZLE_MAX];
+    bool expand;
+} ecs_expr_swizzle_t;
 
 typedef struct ecs_expr_function_t {
     ecs_expr_node_t node;
@@ -139,15 +155,19 @@ typedef struct ecs_expr_element_t {
     ecs_expr_node_t node;
     ecs_expr_node_t *left;
     ecs_expr_node_t *index;
+    uint64_t dyn_input;
     ecs_size_t elem_size;
     int32_t elem_count;
 } ecs_expr_element_t;
 
-typedef struct ecs_expr_component_t {
+typedef struct ecs_expr_has_t {
     ecs_expr_node_t node;
-    ecs_expr_node_t *expr;
-    ecs_id_t component;
-} ecs_expr_component_t;
+    ecs_expr_node_t *left;
+    ecs_expr_node_t *first;
+    ecs_expr_node_t *second;
+    ecs_id_t id;
+    uint64_t dyn_input;
+} ecs_expr_has_t;
 
 typedef struct ecs_expr_cast_t {
     ecs_expr_node_t node;
@@ -166,10 +186,21 @@ typedef struct ecs_expr_match_t {
     ecs_expr_match_element_t any;
 } ecs_expr_match_t;
 
+typedef struct ecs_expr_range_t {
+    ecs_expr_node_t node;
+    ecs_expr_node_t *from;
+    ecs_expr_node_t *to;
+} ecs_expr_range_t;
+
 typedef struct ecs_expr_new_t {
     ecs_expr_node_t node;
     ecs_script_entity_t *entity;
 } ecs_expr_new_t;
+
+typedef struct ecs_expr_script_t {
+    ecs_expr_node_t node;
+    ecs_script_t *script;
+} ecs_expr_script_t;
 
 ecs_expr_value_node_t* flecs_expr_value_from(
     ecs_script_t *script,
@@ -184,6 +215,12 @@ ecs_expr_variable_t* flecs_expr_variable_from(
 ecs_expr_member_t* flecs_expr_member_from(
     ecs_script_t *script,
     ecs_expr_node_t *node,
+    const char *name);
+
+ecs_expr_swizzle_t* flecs_expr_swizzle_from(
+    ecs_script_t *script,
+    ecs_expr_node_t *node,
+    ecs_expr_node_t *left,
     const char *name);
 
 ecs_expr_value_node_t* flecs_expr_bool(
@@ -240,11 +277,25 @@ ecs_expr_function_t* flecs_expr_function(
 ecs_expr_element_t* flecs_expr_element(
     ecs_parser_t *parser);
 
+ecs_expr_has_t* flecs_expr_has(
+    ecs_parser_t *parser);
+
 ecs_expr_match_t* flecs_expr_match(
+    ecs_parser_t *parser);
+
+ecs_expr_range_t* flecs_expr_range(
     ecs_parser_t *parser);
 
 ecs_expr_new_t* flecs_expr_new(
     ecs_parser_t *parser);
+
+ecs_expr_script_t* flecs_expr_script(
+    ecs_parser_t *parser);
+
+bool flecs_expr_explicit_cast_allowed(
+    ecs_world_t *world,
+    ecs_entity_t from,
+    ecs_entity_t to);
 
 ecs_expr_cast_t* flecs_expr_cast(
     ecs_script_t *script,

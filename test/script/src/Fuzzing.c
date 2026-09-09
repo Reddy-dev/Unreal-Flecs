@@ -1,5 +1,14 @@
 #include <script.h>
 
+static bool ir_enabled = false;
+static ecs_script_eval_desc_t ir_desc = {0};
+
+void Fuzzing_setup(void) {
+    const char *ir_param = test_param("ir");
+    ir_enabled = ir_param && !strcmp(ir_param, "enabled");
+    ir_desc = (ecs_script_eval_desc_t){ .ir = ir_enabled };
+}
+
 static void fuzz(const char *expr) {
     ecs_world_t *world = ecs_init();
 
@@ -7,7 +16,7 @@ static void fuzz(const char *expr) {
     ECS_IMPORT(world, FlecsScriptMath);
 #endif
     ecs_log_set_level(-5);
-    ecs_script_run(world, "test", expr, NULL);
+    ecs_script_run_w_desc(world, "test", expr, &ir_desc, NULL);
     test_assert(true);
     ecs_fini(world);
 }
@@ -635,8 +644,6 @@ void Fuzzing_20(void) {
     LINE ""
         ;
 
-    install_test_abort();
-    test_expect_abort();
     fuzz(expr);
 }
 
@@ -2115,8 +2122,6 @@ void Fuzzing_47(void) {
     LINE ""
         ;
 
-    install_test_abort();
-    test_expect_abort();
     fuzz(expr);
 }
 
@@ -6954,7 +6959,6 @@ void Fuzzing_116(void) {
     // This crash is caused by the script creating a type with a generated dtor,
     // then creating a value for that type, and then overwriting the type.
     // Should be handled more gracefully, but not a realistic scenario.
-    test_quarantine("25 Feb 2026");
 
     const char *expr =
     HEAD "using flecs.meta"
@@ -7497,12 +7501,10 @@ void Fuzzing_122(void) {
  *     #11 0x000100775248 in flecs_entities_update_childof_depth flecs/src/storage/component_index.c:1167:13
  */
 void Fuzzing_123(void) {
-    install_test_abort();
     const char *expr =
     HEAD "dd,#1111110,#1111111d,#111111#1111111mpkat5 OJ"
         ;
 
-    test_expect_abort();
     fuzz(expr);
 }
 
@@ -7518,12 +7520,10 @@ void Fuzzing_123(void) {
  *     #7 0x00018302eb94  (<unknown module>)
  */
 void Fuzzing_124(void) {
-    install_test_abort();
     const char *expr =
     HEAD "dd,#1111110,#1111111d,#111111#1111111mpkat5 O\\"
         ;
 
-    test_expect_abort();
     fuzz(expr);
 }
 
@@ -7538,12 +7538,10 @@ void Fuzzing_124(void) {
  *     #6 0x00018302eb94  (<unknown module>)
  */
 void Fuzzing_125(void) {
-    install_test_abort();
     const char *expr =
     HEAD "dd,#1111111,#1111112d,#111111#1111111m#1111112d,#111111#1111111mpkat5 pkat5 O\\"
         ;
 
-    test_expect_abort();
     fuzz(expr);
 }
 
@@ -8670,8 +8668,6 @@ void Fuzzing_147(void) {
     LINE "const subgv = $to. o.5\\"
         ;
 
-    install_test_abort();
-    test_expect_abort();
     fuzz(expr);
 }
 

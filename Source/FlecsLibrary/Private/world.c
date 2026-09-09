@@ -585,9 +585,7 @@ static void flecs_world_allocators_init(
     flecs_ballocator_init_t(&a->graph_edge, ecs_graph_edge_t);
     flecs_ballocator_init_t(&a->component_record, ecs_component_record_t);
     flecs_ballocator_init_t(&a->pair_record, ecs_pair_record_t);
-    flecs_ballocator_init_t(&a->table_diff, ecs_table_diff_t);
     flecs_ballocator_init_n(&a->sparse_chunk, int32_t, FLECS_SPARSE_PAGE_SIZE);
-    flecs_table_diff_builder_init(world, &world->allocators.diff_builder);
     ecs_vec_init_t(&world->allocator, 
         &world->allocators.tree_spawner, ecs_entity_t, 0);
 }
@@ -601,9 +599,7 @@ static void flecs_world_allocators_fini(
     flecs_ballocator_fini(&a->graph_edge);
     flecs_ballocator_fini(&a->component_record);
     flecs_ballocator_fini(&a->pair_record);
-    flecs_ballocator_fini(&a->table_diff);
     flecs_ballocator_fini(&a->sparse_chunk);
-    flecs_table_diff_builder_fini(world, &world->allocators.diff_builder);
     ecs_vec_fini_t(
         &world->allocator, &world->allocators.tree_spawner, ecs_entity_t);
 
@@ -704,6 +700,9 @@ static const char *flecs_addons_info[] = {
 #endif
 #ifdef FLECS_SCRIPT
     "FLECS_SCRIPT",
+#endif
+#ifdef FLECS_SCRIPT_ASYNC
+    "FLECS_SCRIPT_ASYNC",
 #endif
 #ifdef FLECS_HTTP
     "FLECS_HTTP",
@@ -1021,43 +1020,6 @@ ecs_world_t* ecs_init_w_args(
 #endif
 
     return world;
-}
-
-void flecs_notify_tables(
-    ecs_world_t *world,
-    ecs_id_t id,
-    ecs_table_event_t *event)
-{
-    flecs_poly_assert(world, ecs_world_t);
-
-    if (world->flags & EcsWorldFini) {
-        return;
-    }
-
-    /* If no id is specified, broadcast to all tables */
-    if (!id || id == EcsAny) {
-        ecs_sparse_t *tables = &world->store.tables;
-        int32_t i, count = flecs_sparse_count(tables);
-        for (i = 0; i < count; i ++) {
-            ecs_table_t *table = flecs_sparse_get_dense_t(tables, ecs_table_t, i);
-            flecs_table_notify(world, table, id, event);
-        }
-
-    /* If id is specified, only broadcast to tables with id */
-    } else {
-        ecs_component_record_t *cr = flecs_components_get(world, id);
-        if (!cr) {
-            return;
-        }
-
-        ecs_table_cache_iter_t it;
-        const ecs_table_cache_elem_t *elem;
-
-        flecs_table_cache_iter(&cr->cache, &it, EcsTableEmpty|EcsTableNotEmpty);
-        while ((elem = flecs_table_cache_next(&it))) {
-            flecs_table_notify(world, elem->table, id, event);
-        }
-    }
 }
 
 void ecs_atfini(

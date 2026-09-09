@@ -661,6 +661,12 @@ void Basic_2_trivial_w_prefab(void);
 void Basic_3_trivial_w_prefab(void);
 void Basic_2_trivial_w_disabled(void);
 void Basic_3_trivial_w_disabled(void);
+void Basic_1_component_w_match_prefab_flag(void);
+void Basic_1_tag_w_match_prefab_flag(void);
+void Basic_1_tag_w_match_prefab_flag_uncached(void);
+void Basic_1_tag_w_match_prefab_flag_cached(void);
+void Basic_1_tag_w_match_disabled_flag(void);
+void Basic_2_terms_w_match_prefab_flag(void);
 void Basic_2_this_w_fixed_src(void);
 void Basic_2_fixed_src_w_this(void);
 void Basic_2_this_w_fixed_src_no_match_fixed(void);
@@ -1100,6 +1106,7 @@ void Variables_set_var_id_31(void);
 void Variables_invalid_var_name_in_pair(void);
 void Variables_invalid_var_name_w_toggle_cascade(void);
 void Variables_invalid_var_name_w_neq(void);
+void Variables_first_var_w_fixed_tgt_id_matching_var_id(void);
 
 // Testsuite 'Operators'
 void Operators_setup(void);
@@ -1891,6 +1898,10 @@ void Cached_match_after_defer_add_to_parent(void);
 void Cached_unmatch_after_defer_remove_from_parent(void);
 void Cached_unmatch_after_delete_traversable_target(void);
 void Cached_unmatch_after_delete_traversable_target_parent(void);
+void Cached_no_rematch_on_instantiate(void);
+void Cached_no_rematch_on_instantiate_multi_up(void);
+void Cached_no_rematch_on_instantiate_child(void);
+void Cached_self_term_w_inheritable_component(void);
 
 // Testsuite 'ChangeDetection'
 void ChangeDetection_query_changed_after_new(void);
@@ -5484,6 +5495,30 @@ bake_test_case Basic_testcases[] = {
         Basic_3_trivial_w_disabled
     },
     {
+        "1_component_w_match_prefab_flag",
+        Basic_1_component_w_match_prefab_flag
+    },
+    {
+        "1_tag_w_match_prefab_flag",
+        Basic_1_tag_w_match_prefab_flag
+    },
+    {
+        "1_tag_w_match_prefab_flag_uncached",
+        Basic_1_tag_w_match_prefab_flag_uncached
+    },
+    {
+        "1_tag_w_match_prefab_flag_cached",
+        Basic_1_tag_w_match_prefab_flag_cached
+    },
+    {
+        "1_tag_w_match_disabled_flag",
+        Basic_1_tag_w_match_disabled_flag
+    },
+    {
+        "2_terms_w_match_prefab_flag",
+        Basic_2_terms_w_match_prefab_flag
+    },
+    {
         "2_this_w_fixed_src",
         Basic_2_this_w_fixed_src
     },
@@ -7215,6 +7250,10 @@ bake_test_case Variables_testcases[] = {
     {
         "invalid_var_name_w_neq",
         Variables_invalid_var_name_w_neq
+    },
+    {
+        "first_var_w_fixed_tgt_id_matching_var_id",
+        Variables_first_var_w_fixed_tgt_id_matching_var_id
     }
 };
 
@@ -10323,6 +10362,22 @@ bake_test_case Cached_testcases[] = {
     {
         "unmatch_after_delete_traversable_target_parent",
         Cached_unmatch_after_delete_traversable_target_parent
+    },
+    {
+        "no_rematch_on_instantiate",
+        Cached_no_rematch_on_instantiate
+    },
+    {
+        "no_rematch_on_instantiate_multi_up",
+        Cached_no_rematch_on_instantiate_multi_up
+    },
+    {
+        "no_rematch_on_instantiate_child",
+        Cached_no_rematch_on_instantiate_child
+    },
+    {
+        "self_term_w_inheritable_component",
+        Cached_self_term_w_inheritable_component
     }
 };
 
@@ -14368,7 +14423,7 @@ static bake_test_suite suites[] = {
         "Basic",
         Basic_setup,
         NULL,
-        241,
+        247,
         Basic_testcases,
         1,
         Basic_params
@@ -14393,7 +14448,7 @@ static bake_test_suite suites[] = {
         "Variables",
         Variables_setup,
         NULL,
-        227,
+        228,
         Variables_testcases,
         1,
         Variables_params
@@ -14459,7 +14514,7 @@ static bake_test_suite suites[] = {
         "Cached",
         NULL,
         NULL,
-        161,
+        165,
         Cached_testcases
     },
     {

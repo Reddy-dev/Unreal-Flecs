@@ -9,6 +9,13 @@
 #include <script.h>
 
 // Testsuite 'Eval'
+void Eval_setup(void);
+void Eval_2_components_same_line_w_semicolon(void);
+void Eval_2_entities_same_line_w_semicolon(void);
+void Eval_semicolon_after_scope_close(void);
+void Eval_semicolon_after_scope_close_in_scope(void);
+void Eval_semicolon_after_if_scope(void);
+void Eval_semicolon_after_with_scope(void);
 void Eval_null(void);
 void Eval_empty(void);
 void Eval_space(void);
@@ -63,8 +70,6 @@ void Eval_multi_line_comment_multiple_lines(void);
 void Eval_hierarchy_1_child(void);
 void Eval_hierarchy_2_children(void);
 void Eval_hierarchy_1_child_same_line(void);
-void Eval_hierarchy_2_children_same_line(void);
-void Eval_hierarchy_2_children_same_line_no_trailing_comma(void);
 void Eval_entity_after_hierarchy(void);
 void Eval_newline_before_scope_open(void);
 void Eval_newline_w_whitespace_before_scope_open(void);
@@ -83,8 +88,6 @@ void Eval_entity_after_hierarchy_custom_relation_2_levels(void);
 void Eval_with_tag(void);
 void Eval_with_tag_2_entities(void);
 void Eval_with_tag_same_line(void);
-void Eval_with_tag_2_entities_same_line(void);
-void Eval_with_tag_2_entities_same_line_no_trailing_comma(void);
 void Eval_with_tag_2_levels(void);
 void Eval_with_tag_2_levels_2_subtrees(void);
 void Eval_with_n_tags(void);
@@ -186,6 +189,8 @@ void Eval_anonymous_declaration(void);
 void Eval_const_var_int(void);
 void Eval_const_var_float(void);
 void Eval_const_var_bool(void);
+void Eval_const_bool_w_entity_true(void);
+void Eval_const_bool_w_entity_false(void);
 void Eval_const_var_string(void);
 void Eval_const_var_struct(void);
 void Eval_const_var_scoped(void);
@@ -204,21 +209,48 @@ void Eval_parse_with_2_nested_values(void);
 void Eval_parse_with_value_multiline_scope_open(void);
 void Eval_parse_with_value_multiline_comment_after_paren(void);
 void Eval_parse_with_value_multiline_comment_after_scope_open(void);
-void Eval_parse_with_var(void);
-void Eval_parse_with_2_vars(void);
-void Eval_parse_with_2_nested_vars(void);
-void Eval_parse_with_var_in_scope(void);
 void Eval_assign_const_w_expr(void);
 void Eval_const_w_type(void);
+void Eval_assign_narrowing_f64_expr_to_typed_const_w_i32(void);
 void Eval_typed_const_w_composite_type(void);
 void Eval_assign_var_to_typed_const_w_composite_type(void);
+void Eval_assign_typed_var_to_typed_const_w_composite_type(void);
+void Eval_assign_match_to_typed_const_w_composite_type(void);
+void Eval_assign_match_w_var_cases_to_typed_const_w_composite_type(void);
+void Eval_assign_match_to_typed_const_w_bool(void);
+void Eval_assign_match_to_typed_const_w_char(void);
+void Eval_assign_match_to_typed_const_w_byte(void);
+void Eval_assign_match_to_typed_const_w_u8(void);
+void Eval_assign_match_to_typed_const_w_u16(void);
+void Eval_assign_match_to_typed_const_w_u32(void);
+void Eval_assign_match_to_typed_const_w_u64(void);
+void Eval_assign_match_to_typed_const_w_uptr(void);
+void Eval_assign_match_to_typed_const_w_i8(void);
+void Eval_assign_match_to_typed_const_w_i16(void);
+void Eval_assign_match_to_typed_const_w_i32(void);
+void Eval_assign_match_to_typed_const_w_i64(void);
+void Eval_assign_match_to_typed_const_w_iptr(void);
+void Eval_assign_match_to_typed_const_w_f32(void);
+void Eval_assign_match_to_typed_const_w_f64(void);
+void Eval_assign_match_to_typed_const_w_string(void);
+void Eval_assign_match_to_typed_const_w_entity(void);
+void Eval_assign_match_to_typed_const_w_id(void);
+void Eval_assign_match_to_typed_const_w_enum(void);
+void Eval_assign_match_to_typed_const_w_bitmask(void);
+void Eval_assign_match_to_typed_const_w_array(void);
+void Eval_assign_match_to_typed_const_w_vector(void);
+void Eval_assign_match_to_typed_const_w_map(void);
 void Eval_using_wildcard(void);
+void Eval_module_scope_takes_precedence_over_using(void);
+void Eval_module_scope_takes_precedence_over_using_same_script(void);
 void Eval_single_line_comment_in_value(void);
 void Eval_single_line_comment_in_value_after_scope(void);
 void Eval_multi_line_comment_in_value(void);
 void Eval_multi_line_comment_in_value_after_scope(void);
 void Eval_module_stmt(void);
 void Eval_nested_module_stmt(void);
+void Eval_module_stmt_w_component_from_parent_module(void);
+void Eval_module_stmt_w_component_from_parent_module_managed(void);
 void Eval_module_stmt_w_scope(void);
 void Eval_module_stmt_w_nested_scope(void);
 void Eval_assign_singleton_tag(void);
@@ -254,16 +286,42 @@ void Eval_if_true_var(void);
 void Eval_if_false_var(void);
 void Eval_if_10(void);
 void Eval_if_0(void);
+void Eval_if_entity_var_true(void);
+void Eval_if_entity_var_false(void);
+void Eval_if_entity_var_and_has_true(void);
+void Eval_if_entity_var_and_has_false(void);
+void Eval_if_entity_var_and_has_short_circuit(void);
+void Eval_if_entity_var_or_has_short_circuit(void);
+void Eval_if_and_short_circuit_div_by_zero(void);
+void Eval_if_or_short_circuit_div_by_zero(void);
+void Eval_if_and_rhs_evaluated(void);
+void Eval_if_or_rhs_evaluated(void);
+void Eval_if_chained_and_short_circuit(void);
+void Eval_if_chained_or_short_circuit(void);
+void Eval_if_and_or_precedence_short_circuit(void);
+void Eval_if_parens_and_short_circuit(void);
+void Eval_if_not_and_short_circuit(void);
+void Eval_const_bool_and_short_circuit(void);
+void Eval_const_bool_or_short_circuit(void);
 void Eval_if_true_in_scope(void);
 void Eval_if_false_in_scope(void);
 void Eval_if_lt(void);
 void Eval_if_lt_const(void);
+void Eval_if_f64_eq_f64(void);
+void Eval_if_f64_eq_flt_literal(void);
+void Eval_if_f32_eq_flt_literal(void);
+void Eval_if_f32_eq_inexact_flt_literal(void);
+void Eval_if_flt_literal_eq_flt_literal_fails(void);
 void Eval_if_enum_eq_and_var(void);
 void Eval_if_enum_eq_or_var(void);
 void Eval_if_enum_eq_and_member(void);
 void Eval_if_tab_after_keyword(void);
 void Eval_if_else_if(void);
 void Eval_if_else_if_else(void);
+void Eval_if_else_if_and_short_circuit(void);
+void Eval_if_else_if_or_short_circuit(void);
+void Eval_if_else_if_div_by_zero_short_circuit(void);
+void Eval_if_else_if_chain_short_circuit(void);
 void Eval_if_else_if_else_if(void);
 void Eval_if_else_newline_if(void);
 void Eval_if_else_space_newline_if(void);
@@ -304,8 +362,11 @@ void Eval_const_w_component_and_entity_in_scope_expr_in_scope(void);
 void Eval_const_w_component_and_entity_in_scope_expr_in_module(void);
 void Eval_path_tag_in_scope(void);
 void Eval_path_tag_in_module(void);
+void Eval_path_tag_in_module_w_module_name(void);
 void Eval_path_tag_in_nested_scope(void);
 void Eval_path_tag_in_nested_module(void);
+void Eval_expr_path_to_local_entity(void);
+void Eval_expr_path_to_nested_local_entity(void);
 void Eval_dont_inherit_script_pair(void);
 void Eval_update_script_w_prefab_child(void);
 void Eval_update_script_w_anonymous(void);
@@ -334,20 +395,24 @@ void Eval_partial_assign_to_existing_pair(void);
 void Eval_partial_assign_nested_to_existing(void);
 void Eval_partial_assign_to_inherited(void);
 void Eval_non_trivial_var_component(void);
-void Eval_non_trivial_var_with(void);
 void Eval_update_template_w_tag(void);
 void Eval_assign_call_func(void);
 void Eval_assign_call_scoped_func(void);
 void Eval_assign_call_scoped_func_w_using(void);
-void Eval_eval_w_vars(void);
 void Eval_eval_twice_w_failed_method_call(void);
+void Eval_eval_twice_w_failed_method_call_on_var(void);
+void Eval_eval_twice_w_failed_method_call_on_call_result(void);
+void Eval_eval_twice_w_failed_method_call_on_var_call_result(void);
+void Eval_eval_twice_w_failed_expr_after_method_call(void);
+void Eval_eval_twice_w_failed_expr_after_component_expr(void);
+void Eval_eval_twice_w_failed_expr_in_if_stmt(void);
+void Eval_eval_twice_w_failed_expr_in_for_stmt(void);
+void Eval_eval_twice_w_failed_expr_in_entity_scope(void);
+void Eval_eval_twice_w_failed_expr_in_initializer(void);
+void Eval_eval_twice_w_failed_expr_in_match(void);
+void Eval_eval_twice_w_failed_expr_in_interpolated_string(void);
+void Eval_const_var_w_identifier_value_wo_newline(void);
 void Eval_eval_w_runtime(void);
-void Eval_eval_w_other_vars(void);
-void Eval_eval_w_vars_different_order(void);
-void Eval_eval_w_vars_different_order_var_component(void);
-void Eval_eval_w_vars_different_order_with_var(void);
-void Eval_eval_w_vars_different_order_pair_w_var(void);
-void Eval_eval_w_vars_different_order_pair_scope_w_var(void);
 void Eval_component_in_entity_in_with_scope(void);
 void Eval_entity_w_string_name(void);
 void Eval_entity_w_interpolated_name(void);
@@ -365,6 +430,14 @@ void Eval_for_range_vars_no_dollar(void);
 void Eval_for_range_1_4(void);
 void Eval_for_range_min_1_2(void);
 void Eval_for_range_newline_before_scope(void);
+void Eval_for_continue(void);
+void Eval_for_continue_same_line(void);
+void Eval_for_continue_nested_scope(void);
+void Eval_for_continue_nested_for(void);
+void Eval_for_continue_in_template(void);
+void Eval_for_continue_updates_managed_script(void);
+void Eval_for_continue_outside_for_fails(void);
+void Eval_for_continue_in_template_in_for_fails(void);
 void Eval_variable_assign_self(void);
 void Eval_func_w_entity_arg(void);
 void Eval_func_w_entity_arg_w_using(void);
@@ -376,13 +449,7 @@ void Eval_const_assign_empty_initializer(void);
 void Eval_const_assign_empty_collection_initializer(void);
 void Eval_const_i32_assign_empty_initializer(void);
 void Eval_const_i32_assign_empty_collection_initializer(void);
-void Eval_component_w_match(void);
-void Eval_component_w_match_invalid(void);
-void Eval_pair_component_w_match(void);
-void Eval_component_assign_w_match(void);
-void Eval_component_assign_w_match_matched_case(void);
 void Eval_unknown_annotation(void);
-void Eval_const_w_match(void);
 void Eval_component_w_assign_add(void);
 void Eval_component_w_assign_mul(void);
 void Eval_opaque_struct_component(void);
@@ -431,16 +498,32 @@ void Eval_implicit_var_as_tag(void);
 void Eval_implicit_var_as_relationship(void);
 void Eval_implicit_var_as_target(void);
 void Eval_export_const_var(void);
+void Eval_export_mut_var(void);
 void Eval_export_const_var_w_type(void);
+void Eval_export_mut_var_w_type(void);
 void Eval_export_const_var_w_struct(void);
+void Eval_export_mut_var_w_struct(void);
 void Eval_export_const_var_redeclared(void);
+void Eval_export_mut_var_redeclared(void);
+void Eval_export_const_var_redeclared_w_export_mut_var(void);
+void Eval_export_mut_var_redeclared_w_export_const_var(void);
 void Eval_export_const_var_redeclared_w_local_var(void);
+void Eval_export_mut_var_redeclared_w_local_var(void);
 void Eval_local_const_var_redeclared_w_export_var(void);
+void Eval_local_const_var_redeclared_w_export_mut_var(void);
 void Eval_export_const_var_used_by_other_script(void);
+void Eval_export_mut_var_used_by_other_script(void);
 void Eval_export_const_var_as_component(void);
+void Eval_export_mut_var_as_component(void);
 void Eval_export_scoped_const_var_as_component(void);
+void Eval_export_scoped_mut_var_as_component(void);
 void Eval_export_const_var_in_scope(void);
+void Eval_export_mut_var_in_scope(void);
+void Eval_export_mut_var_modified_from_c(void);
+void Eval_export_const_var_is_not_mut_var(void);
+void Eval_export_mut_var_is_not_const_var(void);
 void Eval_export_scoped_const_var_used_by_other_script(void);
+void Eval_export_scoped_mut_var_used_by_other_script(void);
 void Eval_run_script_w_module_from_scope(void);
 void Eval_run_script_w_nested_module_from_scope(void);
 void Eval_run_script_w_nested_module_from_named_scope(void);
@@ -487,6 +570,7 @@ void Eval_template_stmt_w_comment(void);
 void Eval_const_var_expr_w_comment(void);
 void Eval_const_var_initializer_w_comment(void);
 void Eval_export_const_var_w_comment(void);
+void Eval_export_mut_var_w_comment(void);
 void Eval_auto_override_tag_w_comment(void);
 void Eval_pair_tag_w_comment(void);
 void Eval_negative_hex_and_binary_literals(void);
@@ -520,6 +604,8 @@ void Eval_component_expr_swizzle_initializer_r(void);
 void Eval_component_expr_swizzle_initializer_rg(void);
 void Eval_component_expr_swizzle_initializer_rgb(void);
 void Eval_component_expr_swizzle_initializer_rgba(void);
+void Eval_component_expr_swizzle_initializer_add_assign(void);
+void Eval_component_expr_swizzle_initializer_mul_assign(void);
 void Eval_component_expr_member_no_var(void);
 void Eval_map_i64_i32_component(void);
 void Eval_map_i64_string_component(void);
@@ -549,8 +635,275 @@ void Eval_opaque_vector_member_at_offset(void);
 void Eval_opaque_vector_of_structs_member_at_offset(void);
 void Eval_opaque_vector_of_structs_member_at_offset_zero(void);
 void Eval_opaque_struct_member_at_offset(void);
+void Eval_script_expr(void);
+void Eval_script_expr_empty(void);
+void Eval_script_expr_multiline(void);
+void Eval_script_expr_nested(void);
+void Eval_script_expr_hoist_using(void);
+void Eval_script_expr_hoist_wildcard_using(void);
+void Eval_script_expr_followed_by_stmt(void);
+void Eval_script_expr_invalid_body(void);
+void Eval_script_expr_unterminated(void);
+void Eval_using_cleared_after_script(void);
+void Eval_pair_scope_new_target_eval_twice(void);
+void Eval_for_loop_named_child_in_interpolated_parent(void);
+void Eval_entity_scope_after_export_const_same_name(void);
+void Eval_existing_child_of_reopened_parent(void);
+void Eval_pair_scope_target_shadowed_by_root_entity(void);
+void Eval_pair_scope_predeclared_entity_export_const(void);
+void Eval_has_expr_pair_w_enum_constant(void);
+void Eval_has_expr_in_if(void);
+void Eval_const_bool_from_optional_component(void);
+void Eval_component_initializer_w_function_that_moves_entity(void);
+void Eval_component_initializer_w_function_that_moves_entity_w_on_replace(void);
+void Eval_struct_member_initializer_w_function_that_moves_member(void);
+void Eval_enum_constant_w_function_that_moves_constant(void);
+void Eval_script_update_w_on_remove_observer_that_moves_script_entity(void);
+void Eval_struct_member_w_forward_declared_type(void);
+void Eval_enum_constant_w_forward_declared_value(void);
+void Eval_const_var_large_struct_no_leak(void);
+void Eval_delete_managed_script_shared_table_no_leak(void);
+void Eval_stmt_after_comment_w_comment_open(void);
+void Eval_stmt_after_newline_w_vertical_tab(void);
+void Eval_assign_inline_array_member_from_array_expr(void);
+void Eval_component_expr_w_type_from_same_script(void);
+void Eval_const_var_from_large_component_no_leak(void);
+void Eval_const_var_from_large_component_member_no_leak(void);
+void Eval_const_var_from_large_array_element_no_leak(void);
+void Eval_update_script_that_declares_script_entity(void);
+void Eval_update_script_that_declares_parent_of_script_entity(void);
+void Eval_script_refers_to_script_entity(void);
+void Eval_vector_of_struct_w_array_member(void);
+void Eval_rerun_script_w_enum_type_w_underlying_type_in_use(void);
+void Eval_enum_w_float_underlying_type(void);
+void Eval_enum_w_struct_underlying_type(void);
+void Eval_struct_w_member_of_own_type(void);
+void Eval_struct_w_inline_array_member_of_own_type(void);
+void Eval_enum_w_duplicate_constant_values(void);
+void Eval_bitmask_w_duplicate_constant_values(void);
+void Eval_kind_entity_before_scope_close_same_line(void);
+void Eval_kind_entity_w_base_before_scope_close_same_line(void);
+void Eval_auto_override_before_scope_close_same_line(void);
+void Eval_auto_override_pair_before_scope_close_same_line(void);
+void Eval_module_stmt_w_semicolon(void);
+void Eval_module_stmt_at_end_of_script(void);
+void Eval_ir_managed_script_desc(void);
+void Eval_ir_eval_desc(void);
+void Eval_ir_to_str(void);
+void Eval_ir_managed_script_update_keeps_runtime(void);
+void Eval_string_interpolation_of_scalar_types(void);
+
+// Testsuite 'Collection'
+void Collection_setup(void);
+void Collection_range_bracketed(void);
+void Collection_range_bare(void);
+void Collection_range_bracketed_index_value(void);
+void Collection_range_bare_index_value(void);
+void Collection_range_w_expr_endpoints(void);
+void Collection_range_w_vars(void);
+void Collection_range_empty(void);
+void Collection_range_reverse_empty(void);
+void Collection_range_negative(void);
+void Collection_range_single(void);
+void Collection_range_nested(void);
+void Collection_range_too_many_vars(void);
+void Collection_array_elem(void);
+void Collection_array_index_elem(void);
+void Collection_array_struct_elem(void);
+void Collection_array_string_elem(void);
+void Collection_array_entity_elem(void);
+void Collection_array_member_of_struct(void);
+void Collection_array_const_var_from_c(void);
+void Collection_array_nested(void);
+void Collection_array_in_entity_scope(void);
+void Collection_array_elem_in_if(void);
+void Collection_array_anonymous_entities(void);
+void Collection_array_too_many_vars(void);
+void Collection_vector_elem(void);
+void Collection_vector_index_elem(void);
+void Collection_vector_struct_elem(void);
+void Collection_vector_member_elem_w_member_index(void);
+void Collection_vector_string_elem(void);
+void Collection_vector_member_w_string_elems(void);
+void Collection_vector_empty(void);
+void Collection_vector_nested(void);
+void Collection_vector_too_many_vars(void);
+void Collection_map_elem(void);
+void Collection_map_key_elem(void);
+void Collection_map_key_index_elem(void);
+void Collection_map_key_index_elem_w_var_in_body(void);
+void Collection_map_single_entry(void);
+void Collection_map_entity_key(void);
+void Collection_map_u8_key(void);
+void Collection_map_struct_value(void);
+void Collection_map_string_value(void);
+void Collection_map_empty(void);
+void Collection_map_too_many_vars(void);
+void Collection_nested_struct_arrays(void);
+void Collection_template_w_for_array(void);
+void Collection_template_w_for_vector(void);
+void Collection_template_w_for_map(void);
+void Collection_template_w_for_range_bracketed(void);
+void Collection_iterate_int_literal(void);
+void Collection_iterate_int_var(void);
+void Collection_iterate_entity(void);
+void Collection_iterate_undefined_var(void);
+void Collection_duplicate_loop_vars(void);
+void Collection_duplicate_loop_vars_map(void);
+void Collection_collection_literal_not_supported(void);
+void Collection_missing_in_keyword(void);
+void Collection_vector_literal_bool(void);
+void Collection_vector_literal_char(void);
+void Collection_vector_literal_u8(void);
+void Collection_vector_literal_u16(void);
+void Collection_vector_literal_u32(void);
+void Collection_vector_literal_u64(void);
+void Collection_vector_literal_uptr(void);
+void Collection_vector_literal_i8(void);
+void Collection_vector_literal_i16(void);
+void Collection_vector_literal_i32(void);
+void Collection_vector_literal_i64(void);
+void Collection_vector_literal_iptr(void);
+void Collection_vector_literal_f32(void);
+void Collection_vector_literal_f64(void);
+void Collection_vector_literal_int(void);
+void Collection_vector_literal_string(void);
+void Collection_vector_literal_entity(void);
+void Collection_vector_literal_entity_mut(void);
+void Collection_for_inline_array_member_of_component(void);
+void Collection_for_inline_array_member_of_const_var(void);
+void Collection_vector_literal_int_float(void);
+void Collection_vector_literal_float_int(void);
+void Collection_vector_literal_mixed_int(void);
+void Collection_vector_literal_int_string(void);
+void Collection_vector_literal_string_int(void);
+void Collection_vector_literal_float_string(void);
+void Collection_vector_literal_string_float(void);
+void Collection_vector_literal_entity_string(void);
+void Collection_vector_literal_string_entity(void);
+void Collection_vector_literal_bool_int(void);
+void Collection_vector_literal_nested(void);
+void Collection_vector_literal_iterate(void);
+void Collection_vector_literal_typecache_name(void);
+void Collection_vector_literal_typecache_reuse(void);
+void Collection_range_literal(void);
+void Collection_range_literal_no_spaces(void);
+void Collection_range_literal_empty(void);
+void Collection_range_literal_reverse_empty(void);
+void Collection_range_literal_negative(void);
+void Collection_range_literal_w_vars(void);
+void Collection_range_literal_w_exprs(void);
+void Collection_range_literal_iterate(void);
+void Collection_range_literal_typed_vector(void);
+void Collection_range_literal_typed_float_vector(void);
+void Collection_range_literal_non_vector_type(void);
+
+// Testsuite 'Await'
+void Await_setup(void);
+void Await_task_new_w_deleted_entity(void);
+void Await_delete_scope_parent_while_suspended(void);
+void Await_fini_w_alive_task(void);
+void Await_free_script_w_alive_task(void);
+void Await_parse_await_const(void);
+void Await_parse_await_stmt(void);
+void Await_register_async(void);
+void Await_register_async_publishes_complete_function(void);
+void Await_replace_async_function_with_sync(void);
+void Await_await_const_suspend_resume(void);
+void Await_await_stmt_sequence(void);
+void Await_reject(void);
+void Await_cancel(void);
+void Await_preserve_const_and_using(void);
+void Await_await_in_if(void);
+void Await_await_in_for(void);
+void Await_await_in_with(void);
+void Await_await_in_entity(void);
+void Await_await_in_pair_scope(void);
+void Await_preserve_string_const(void);
+void Await_owner_context(void);
+void Await_qualified_call(void);
+void Await_haul_single(void);
+void Await_haul_loop_3(void);
+void Await_haul_loop_count(void);
+void Await_haul_loop_forever(void);
+void Await_haul_multiple_owners(void);
+void Await_loop_once(void);
+void Await_loop_count_multiple_owners(void);
+void Await_loop_count_resets_state(void);
+void Await_loop_count_invalid(void);
+void Await_loop_error_is_terminal(void);
+void Await_loop_sync_yields(void);
+void Await_entity_enter_error_restores_state(void);
+void Await_with_enter_error_restores_state(void);
+void Await_cancel_nested_frames(void);
+void Await_reject_nested_frames(void);
+void Await_cancel_is_terminal(void);
+void Await_immediate_resolve(void);
+void Await_await_export_const(void);
+void Await_await_export_mut(void);
+void Await_interleaved_tasks(void);
+void Await_await_method_receiver(void);
+void Await_task_component_added_on_task_new(void);
+void Await_task_component_not_added_without_entity(void);
+void Await_task_component_two_tasks(void);
+void Await_task_component_entity_delete_cancels_task(void);
+void Await_task_component_serialize(void);
+void Await_task_component_deferred_one_task(void);
+void Await_task_component_deferred_three_tasks(void);
+void Await_task_component_deferred_w_existing_task(void);
+void Await_second_task_same_script_while_suspended(void);
+void Await_loop_forever_recreate_deleted_entity(void);
+void Await_task_component_deferred_new_then_free(void);
+void Await_loop_forever_counts_iterations(void);
+void Await_cancel_task_from_async_callback(void);
+void Await_resume_from_async_callback(void);
+void Await_free_task_from_async_callback(void);
+void Await_await_in_template_body_fails_task(void);
+void Await_deep_scope_resume(void);
+void Await_deep_scope_cancel(void);
+void Await_many_live_strings_resume_and_cancel(void);
+
+// Testsuite 'TryCatch'
+void TryCatch_setup(void);
+void TryCatch_parse_try_catch_all(void);
+void TryCatch_parse_try_catch_typed(void);
+void TryCatch_parse_try_multiple_catch(void);
+void TryCatch_parse_try_missing_catch(void);
+void TryCatch_parse_try_missing_scope(void);
+void TryCatch_parse_catch_missing_scope(void);
+void TryCatch_parse_catch_unclosed_paren(void);
+void TryCatch_parse_catch_var_error(void);
+void TryCatch_try_in_plain_eval(void);
+void TryCatch_catch_all_reject(void);
+void TryCatch_catch_typed_match(void);
+void TryCatch_catch_typed_no_match_propagates(void);
+void TryCatch_catch_typed_falls_through_to_catch_all(void);
+void TryCatch_catch_first_match_wins(void);
+void TryCatch_plain_reject_not_caught_by_typed(void);
+void TryCatch_runtime_error_not_caught(void);
+void TryCatch_runtime_error_is_terminal(void);
+void TryCatch_await_in_catch(void);
+void TryCatch_reject_in_catch_propagates(void);
+void TryCatch_nested_try_inner_catches(void);
+void TryCatch_nested_try_outer_catches(void);
+void TryCatch_try_in_entity_scope(void);
+void TryCatch_error_in_with_scope_unwinds(void);
+void TryCatch_error_in_for_unwinds(void);
+void TryCatch_loop_forever_catch_resets(void);
+void TryCatch_loop_count_catch(void);
+void TryCatch_loop_uncaught_error_is_terminal(void);
+void TryCatch_cancel_not_caught(void);
+void TryCatch_resolve_skips_catch(void);
+void TryCatch_catch_error_from_using_scope(void);
+void TryCatch_reject_id_twice_fails(void);
+void TryCatch_reject_id_null_msg(void);
+void TryCatch_vars_preserved_across_catch(void);
+void TryCatch_free_while_pending_in_try(void);
+void TryCatch_free_while_pending_in_catch(void);
+void TryCatch_this_var_in_catch(void);
 
 // Testsuite 'Function'
+void Function_setup(void);
 void Function_simple(void);
 void Function_newline_before_scope(void);
 void Function_newline_before_return_type_operator(void);
@@ -612,7 +965,6 @@ void Function_call_in_arithmetic(void);
 void Function_call_in_match_value(void);
 void Function_call_in_if_condition(void);
 void Function_call_in_for_body(void);
-void Function_call_in_with(void);
 void Function_call_in_const_rhs(void);
 void Function_call_via_expr_run(void);
 void Function_call(void);
@@ -629,13 +981,27 @@ void Function_arrow_no_spaces(void);
 void Function_arrow_split_dash_gt(void);
 void Function_nested_runtime_error(void);
 void Function_const_runtime_error(void);
+void Function_fn_w_hoisted_var(void);
+void Function_memoized_against_args_ignores_hidden_state(void);
+void Function_fn_w_large_struct_param_no_leak(void);
+void Function_entity_lookup_w_null_path(void);
+void Function_redeclare_function_no_leak(void);
+void Function_redeclare_method_no_leak(void);
+void Function_repeated_nested_calls_with_strings(void);
+void Function_repeated_calls_after_error(void);
 
 // Testsuite 'Template'
+void Template_setup(void);
+void Template_manual_instantiation(void);
+void Template_manual_update_and_remove(void);
+void Template_manual_managed_script_clear(void);
+void Template_instantiate_w_string_prop_no_leak(void);
 void Template_template_no_scope(void);
 void Template_template_no_props(void);
 void Template_template_newline_before_scope(void);
 void Template_template_prop(void);
 void Template_template_prop_space_colon(void);
+void Template_template_props_no_member_entities(void);
 void Template_template_2_props(void);
 void Template_template_w_using(void);
 void Template_template_instance_w_default_values(void);
@@ -678,7 +1044,14 @@ void Template_template_w_pair_w_unresolved_var_second(void);
 void Template_template_w_pair_scope_w_unresolved_var_first(void);
 void Template_template_w_pair_scope_w_unresolved_var_second(void);
 void Template_prop_without_using_meta(void);
+void Template_hoisted_var_from_outer_scope(void);
+void Template_hoisted_var_from_outer_scopes(void);
+void Template_hoisted_masked_var_from_outer_scope(void);
+void Template_hoisted_var_instantiate_after_run(void);
+void Template_hoisted_var_w_script_entity(void);
 void Template_hoist_var(void);
+void Template_hoist_non_folded_var(void);
+void Template_hoist_component_var(void);
 void Template_hoist_vars_nested(void);
 void Template_hoist_vars_nested_w_masked(void);
 void Template_anonymous_template_instance(void);
@@ -692,8 +1065,6 @@ void Template_template_in_scope(void);
 void Template_nested_templates_in_prefab(void);
 void Template_entity_w_2_template_instances(void);
 void Template_template_w_prefab_and_instance(void);
-void Template_template_w_with_var(void);
-void Template_template_w_with_prop(void);
 void Template_template_w_child_w_var(void);
 void Template_template_w_child_w_prop(void);
 void Template_fold_const(void);
@@ -726,10 +1097,78 @@ void Template_pair_component_w_entity_prop_target(void);
 void Template_child_name_from_string_prop(void);
 void Template_template_w_new_expr_in_const(void);
 void Template_template_w_existing_observer(void);
+void Template_computed_const_skips_dependents_when_unchanged(void);
+void Template_computed_const_prop_change(void);
+void Template_computed_const_in_entity_scope(void);
+void Template_computed_const_not_cached_in_branch(void);
+void Template_computed_const_string(void);
+void Template_computed_const_instance_deleted(void);
+void Template_deferred_updates_batched(void);
+void Template_deferred_update_nested_template(void);
+void Template_deferred_update_from_system(void);
+void Template_pair_on_set_observer_exact(void);
+void Template_pair_on_set_observer_rel_wildcard(void);
+void Template_pair_on_set_observer_tgt_wildcard(void);
+void Template_pair_on_set_observer_wildcard_pair(void);
+void Template_component_on_set_observer_any(void);
 void Template_template_w_prop_w_value_name(void);
 void Template_template_w_var_w_value_name(void);
+void Template_eval_twice_w_failed_method_call_in_body(void);
+void Template_eval_twice_w_failed_method_call_in_prop_default(void);
+void Template_singleton_scope_w_template(void);
+void Template_annotation_in_template(void);
+void Template_annotation_in_for_in_template(void);
+void Template_annotation_in_if_in_template(void);
+void Template_multiple_templates_dont_leak_child_names(void);
+void Template_template_w_module_qualified_entity_ref(void);
+void Template_injected_child_order_w_ordered_children(void);
+void Template_template_prop_default_from_const(void);
+void Template_template_root_component_w_string_mut(void);
+void Template_template_root_component_after_component_w_mut(void);
+void Template_template_root_component_w_string_mut_in_nested_if(void);
+void Template_template_root_component_w_string_mut_in_match_in_if(void);
+void Template_template_props_set_on_multiple_entities_w_bulk_init(void);
+void Template_template_in_singleton_scope(void);
+void Template_template_instantiated_on_itself(void);
+void Template_template_prop_large_struct_no_leak(void);
+void Template_many_templates_w_props_in_script(void);
+void Template_tree_parent_prefab_before_template(void);
+void Template_template_prop_struct_assign_whole_component(void);
+void Template_template_prop_struct_assign_whole_component_no_dollar(void);
+void Template_template_prop_struct_assign_whole_component_default(void);
+void Template_template_prop_struct_in_nested_struct_literal(void);
+void Template_template_prop_struct_in_nested_struct_literal_default(void);
+void Template_template_prop_struct_in_nested_struct_literal_partial_args(void);
+void Template_template_prop_struct_f32_members_in_nested_struct_literal(void);
+void Template_template_prop_struct_in_struct_literal_same_scope(void);
+void Template_template_prop_struct_in_deeply_nested_child(void);
+void Template_template_prop_struct_forwarded_to_nested_template(void);
+void Template_template_prop_struct_no_default(void);
+void Template_template_prop_typed_no_default_ctor(void);
+void Template_template_prop_typed_no_default_override(void);
+void Template_template_prop_no_default_missing_type(void);
+void Template_template_prop_struct_in_nested_struct_literal_w_using(void);
+void Template_template_prop_struct_member_expr_in_struct_literal(void);
+void Template_template_prop_w_component_type_in_use(void);
+void Template_template_prop_w_array_of_component_type_in_use(void);
+void Template_template_prop_w_inline_array_member_in_use(void);
+void Template_template_base_w_inline_array_member_elem_in_if(void);
+void Template_template_base_w_inline_array_member_elem_in_for(void);
+void Template_template_base_w_inline_array_member_reassign(void);
+void Template_template_base_w_inline_array_member_reassign_no_index(void);
+void Template_template_instantiates_itself(void);
+void Template_template_instantiates_itself_w_stop_condition(void);
+void Template_prop_as_isa_pair_target(void);
+void Template_prop_as_pair_target(void);
+void Template_prop_as_pair_target_update(void);
+void Template_prop_as_component(void);
+void Template_instance_w_props_scope_same_line(void);
+void Template_instance_w_props_scope_newline(void);
+void Template_instance_wo_props_scope_newline(void);
+void Template_anonymous_instance_w_props_scope_newline(void);
 
 // Testsuite 'Mut'
+void Mut_setup(void);
 void Mut_declaration(void);
 void Mut_two_members(void);
 void Mut_implicit_type(void);
@@ -751,7 +1190,6 @@ void Mut_not_exposed_as_prop(void);
 void Mut_using(void);
 void Mut_type_without_using_meta(void);
 void Mut_composite(void);
-void Mut_with_mut(void);
 void Mut_entity_pair(void);
 void Mut_entity_pair_scope(void);
 void Mut_pair_component_entity_target(void);
@@ -769,6 +1207,7 @@ void Mut_tree_parent(void);
 void Mut_child_name_from_string(void);
 void Mut_value_name(void);
 void Mut_const_value_name(void);
+void Mut_hoisted_var_from_outer_scope(void);
 void Mut_hoist_var(void);
 void Mut_nested_template(void);
 void Mut_redeclare_mut_as_mut(void);
@@ -780,8 +1219,41 @@ void Mut_outside_template(void);
 void Mut_after_const(void);
 void Mut_redeclare_prop_as_mut(void);
 void Mut_redeclare_mut_as_prop(void);
+void Mut_get_i32(void);
+void Mut_get_string(void);
+void Mut_get_string_is_owned(void);
+void Mut_get_struct(void);
+void Mut_get_from_script(void);
+void Mut_get_not_found(void);
+void Mut_get_not_a_mut_var(void);
+void Mut_get_w_invalid_size(void);
+void Mut_get_w_invalid_type(void);
+void Mut_get_i32_as_i64(void);
+void Mut_set_i32(void);
+void Mut_set_string(void);
+void Mut_set_string_is_copied(void);
+void Mut_set_struct(void);
+void Mut_set_not_found(void);
+void Mut_set_not_a_mut_var(void);
+void Mut_set_w_invalid_size(void);
+void Mut_set_w_invalid_type(void);
+void Mut_set_i32_w_i64(void);
+void Mut_set_reevaluates_script(void);
+void Mut_get_from_stage(void);
+void Mut_get_struct_from_stage(void);
+void Mut_set_from_stage(void);
+void Mut_set_struct_from_stage(void);
+void Mut_modified_from_stage(void);
 
 // Testsuite 'Error'
+void Error_setup(void);
+void Error_missing_separator_between_components(void);
+void Error_missing_separator_between_component_and_tag(void);
+void Error_missing_separator_between_component_and_pair(void);
+void Error_missing_separator_after_scope(void);
+void Error_missing_separator_between_const(void);
+void Error_long_binary_expression(void);
+void Error_deeply_chained_else_if(void);
 void Error_multi_line_comment_after_newline_before_newline_scope_open(void);
 void Error_unterminated_multi_line_comment_after_line_comment(void);
 void Error_missing_end_of_scope(void);
@@ -855,7 +1327,6 @@ void Error_component_in_with_scope_4(void);
 void Error_component_in_with_scope_5(void);
 void Error_component_in_with_scope_nested(void);
 void Error_component_in_with_scope_after_entity(void);
-void Error_component_in_with_var_scope(void);
 void Error_component_in_with_in_template(void);
 void Error_reload_script_w_component_w_error(void);
 void Error_reload_script_w_component_w_error_again(void);
@@ -867,11 +1338,14 @@ void Error_invalid_binary_number_prefix(void);
 void Error_unterminated_multiline_string_capture_error(void);
 void Error_invalid_char_literal_two_chars(void);
 void Error_const_w_old_typed_syntax(void);
+void Error_struct_member_negative_count(void);
+void Error_struct_member_huge_count(void);
 void Error_struct_wo_members(void);
 void Error_struct_member_wo_name(void);
 void Error_enum_constant_w_invalid_expr(void);
 void Error_const_w_old_untyped_syntax(void);
 void Error_assign_component_to_entity_syntax(void);
+void Error_typed_const_w_await(void);
 void Error_match_operator_without_equals_capture_error(void);
 void Error_eval_root_var_component_capture_error(void);
 void Error_string_tag_with_gt_capture_error(void);
@@ -908,11 +1382,104 @@ void Error_function_unresolved_const_type_error_line(void);
 void Error_function_duplicate_param_error_line(void);
 void Error_function_unresolved_param_type_error_line(void);
 void Error_function_unresolved_return_type_error_line(void);
+void Error_multiple_unresolved_refs(void);
+void Error_multiple_unresolved_refs_w_unresolved_const_type(void);
+void Error_unresolved_component_ref(void);
+void Error_no_unresolved_component_ref_when_component_exists(void);
+void Error_multiple_unresolved_component_refs(void);
+void Error_unresolved_component_ref_w_unresolved_component(void);
+void Error_unresolved_component_ref_w_unresolved_entity(void);
+void Error_unresolved_component_ref_w_unresolved_entity_and_component(void);
 void Error_no_error_line_column(void);
 void Error_script_parse_line_column(void);
 void Error_script_eval_line_column(void);
+void Error_using_in_scope(void);
+void Error_using_after_other_stmt(void);
+void Error_using_script_defined_entity(void);
+void Error_using_wildcard_script_defined_entity(void);
+void Error_module_after_other_stmt(void);
+void Error_module_in_scope(void);
+void Error_module_after_using(void);
+void Error_include_after_using(void);
+void Error_include_after_other_stmt(void);
+void Error_using_unresolved_path(void);
+void Error_entity_path_w_scope(void);
+void Error_entity_path_w_kind_w_scope(void);
+void Error_entity_path_w_scope_on_newline(void);
+void Error_entity_path_w_inherit_w_scope(void);
+void Error_entity_path_w_kind(void);
+void Error_entity_path_w_inherit(void);
+void Error_entity_path_w_comma(void);
+void Error_entity_path_after_comma(void);
+void Error_entity_path_w_string_name(void);
+void Error_entity_comma_list(void);
+void Error_entity_comma_list_in_scope(void);
+void Error_entity_comma_list_w_trailing_comma(void);
+void Error_oneof_pair_target_shadowed_by_script_entity(void);
+void Error_any_as_pair_first(void);
+void Error_any_as_pair_second(void);
+void Error_any_as_pair_first_from_template_prop(void);
+void Error_any_as_tag_from_template_prop(void);
+void Error_any_as_with_tag_from_template_prop(void);
+void Error_any_from_interpolated_pair_first(void);
+void Error_zero_entity_var_as_pair_second(void);
+void Error_zero_entity_var_as_pair_first_from_template_prop(void);
+void Error_zero_entity_var_as_with_tag_from_template_prop(void);
+void Error_unresolved_interpolated_pair_first(void);
+void Error_any_from_interpolated_pair_component(void);
+void Error_runtime_any_as_with_tag_from_template_prop(void);
+void Error_runtime_any_as_with_component_from_template_prop(void);
+void Error_runtime_any_as_pair_scope_target(void);
+void Error_has_question_space_bracket(void);
+void Error_has_unresolved_component(void);
+void Error_has_unresolved_pair_first(void);
+void Error_has_unresolved_pair_second(void);
+void Error_has_on_non_entity_type(void);
+void Error_has_unterminated(void);
+void Error_has_pair_missing_paren_close(void);
+void Error_has_pair_missing_second(void);
+void Error_script_update_failure_is_reported(void);
+void Error_script_init_eval_error_adds_error_tag(void);
+void Error_script_init_parse_error_adds_error_tag(void);
+void Error_script_init_from_missing_file_returns_0(void);
+void Error_script_update_clears_error_tag(void);
+void Error_script_init_success_has_no_error_tag(void);
+void Error_script_declares_entity_named_after_script(void);
+void Error_if_component_presence_check_on_non_singleton(void);
+void Error_this_at_plain_scope_kills_file(void);
+void Error_doc_detail_not_readable_from_script(void);
+void Error_script_declares_entity_named_after_script_w_child(void);
+void Error_component_ref_via_var_entity_zero(void);
+void Error_component_ref_via_var_entity_deleted(void);
+void Error_failing_script_does_not_delete_shared_module(void);
+void Error_failing_script_update_does_not_delete_shared_module(void);
+void Error_deleted_script_does_not_delete_shared_module(void);
+void Error_failing_script_does_not_delete_shared_scope(void);
+void Error_parse_error_in_large_script_reports_position(void);
+void Error_interpolated_string_w_struct_value(void);
+void Error_function_w_too_many_params(void);
+void Error_struct_member_count_size_overflow(void);
+void Error_member_of_tag_component_in_function(void);
+void Error_collection_literal_for_struct_type_reports_type_name(void);
+void Error_template_instantiated_on_own_entity_as_kind(void);
+void Error_template_instantiated_on_own_entity_as_bare_kind(void);
+void Error_unary_not_on_struct_value(void);
+void Error_binary_left_operand_struct_vs_entity(void);
+void Error_binary_right_operand_struct_vs_entity(void);
+void Error_collection_literal_enum_element_vs_entity(void);
+void Error_function_argument_struct_value(void);
+void Error_match_case_enum_vs_entity(void);
+void Error_match_case_value_struct_vs_entity(void);
+void Error_range_from_struct_value(void);
+void Error_range_to_struct_value(void);
+void Error_component_member_on_missing_entity(void);
+void Error_component_on_missing_entity(void);
+void Error_component_member_on_entity_without_component(void);
+void Error_component_member_on_var_w_missing_entity(void);
+void Error_component_member_on_missing_entity_in_template(void);
 
 // Testsuite 'Format'
+void Format_setup(void);
 void Format_precision_f32_literal(void);
 void Format_precision_f32_variable(void);
 void Format_precision_f32_expression(void);
@@ -1047,6 +1614,20 @@ void Format_boundary_width_negative_literal_value(void);
 void Format_boundary_width_large_literal_value(void);
 void Format_boundary_precision_max_literal_value(void);
 void Format_boundary_width_max_literal_value(void);
+void Format_component_member_expression_value_precision(void);
+void Format_component_member_ratio_value_precision(void);
+void Format_leading_zeros_i32_variable(void);
+void Format_min_width_i32_variable(void);
+void Format_min_width_i64_variable(void);
+void Format_min_width_u32_variable(void);
+void Format_align_left_string_variable(void);
+void Format_align_left_string_member(void);
+void Format_min_width_i32_component_member(void);
+void Format_precision_i32_variable_fails(void);
+void Format_scientific_i32_variable_fails(void);
+void Format_always_sign_i32_variable(void);
+void Format_min_width_bool_variable(void);
+void Format_min_width_char_variable(void);
 
 // Testsuite 'Expr'
 void Expr_setup(void);
@@ -1129,8 +1710,10 @@ void Expr_add_to_var(void);
 void Expr_add_var_to(void);
 void Expr_var_member(void);
 void Expr_var_member_member(void);
+void Expr_var_member_w_dtor_member(void);
 void Expr_var_element(void);
 void Expr_var_element_out_of_range(void);
+void Expr_element_on_non_collection(void);
 void Expr_var_element_w_var_index(void);
 void Expr_var_element_w_i64_var_index(void);
 void Expr_var_member_element_w_var_member_index(void);
@@ -1155,6 +1738,10 @@ void Expr_bool_cond_and_int(void);
 void Expr_int_cond_and_bool(void);
 void Expr_bool_cond_or_int(void);
 void Expr_int_cond_or_bool(void);
+void Expr_cond_and_short_circuit(void);
+void Expr_cond_or_short_circuit(void);
+void Expr_cond_chained_short_circuit(void);
+void Expr_cond_no_short_circuit_error(void);
 void Expr_cond_eq_bool(void);
 void Expr_cond_eq_int(void);
 void Expr_cond_eq_enum(void);
@@ -1192,6 +1779,9 @@ void Expr_cond_lteq_int(void);
 void Expr_cond_lteq_flt(void);
 void Expr_cond_lteq_enum(void);
 void Expr_cond_lteq_enum_literal(void);
+void Expr_cond_gt_entity(void);
+void Expr_cond_gt_string(void);
+void Expr_cond_gt_large_uint_bool(void);
 void Expr_min_lparen_int_rparen(void);
 void Expr_min_lparen_int_add_int_rparen(void);
 void Expr_min_number_hex(void);
@@ -1282,9 +1872,13 @@ void Expr_vector_add_struct_i64(void);
 void Expr_vector_add_struct_f32(void);
 void Expr_vector_add_struct_f64(void);
 void Expr_vector_add_struct_struct(void);
+void Expr_vector_add_struct_struct_const_vars(void);
+void Expr_vector_shift_struct_int(void);
 void Expr_vector_add_struct_incompatible_struct(void);
 void Expr_interpolate_string_w_i32_var(void);
 void Expr_interpolate_string_w_string_var(void);
+void Expr_interpolate_string_w_null_string_var(void);
+void Expr_interpolate_string_w_null_string_member(void);
 void Expr_interpolate_string_w_entity_var(void);
 void Expr_interpolate_string_w_id_var(void);
 void Expr_interpolate_string_w_var_not_found(void);
@@ -1324,6 +1918,10 @@ void Expr_component_expr_string(void);
 void Expr_component_member_expr_string(void);
 void Expr_component_elem_expr_string(void);
 void Expr_component_inline_elem_expr_string(void);
+void Expr_component_member_inline_elem_member_expr(void);
+void Expr_component_member_inline_elem_member_expr_string(void);
+void Expr_component_member_inline_elem_member_elem_member_expr(void);
+void Expr_var_member_inline_elem_member_expr(void);
 void Expr_component_expr_in_object(void);
 void Expr_component_member_expr_in_object(void);
 void Expr_var_expr(void);
@@ -1353,7 +1951,9 @@ void Expr_space_at_start(void);
 void Expr_newline_at_start(void);
 void Expr_crlf_at_start(void);
 void Expr_global_const_var(void);
+void Expr_global_mut_var(void);
 void Expr_scoped_global_const_var(void);
+void Expr_scoped_global_mut_var(void);
 void Expr_escape_newline(void);
 void Expr_match_i32_1_i_case(void);
 void Expr_match_i32_2_i_cases(void);
@@ -1384,11 +1984,17 @@ void Expr_match_w_any_not_last(void);
 void Expr_match_w_any_first(void);
 void Expr_match_w_any_mismatching_type(void);
 void Expr_match_i_w_any_f(void);
+void Expr_match_case_expr_runtime_error(void);
+void Expr_match_f64_i_cases(void);
+void Expr_match_f32_i_cases(void);
+void Expr_match_f64_i_cases_no_match(void);
+void Expr_match_f64_literal_i_cases(void);
 void Expr_identifier_as_var(void);
 void Expr_member_w_identifier_as_var(void);
 void Expr_member_w_identifier_as_var_and_entity(void);
 void Expr_nested_member_w_identifier_as_var_and_entity(void);
 void Expr_identifier_as_const_var(void);
+void Expr_identifier_as_mut_var(void);
 void Expr_expr_w_identifier_as_var(void);
 void Expr_initializer_w_identifier_as_var(void);
 void Expr_new_entity(void);
@@ -1404,8 +2010,39 @@ void Expr_new_name_expr_entity(void);
 void Expr_new_name_expr_entity_w_component(void);
 void Expr_new_name_expr_entity_w_kind(void);
 void Expr_new_entity_w_unterminated_scope(void);
+void Expr_has_component(void);
+void Expr_has_tag(void);
+void Expr_has_pair(void);
+void Expr_has_singleton(void);
+void Expr_has_singleton_pair(void);
+void Expr_has_not(void);
+void Expr_has_w_space_before(void);
+void Expr_has_question_space_bracket_not_has(void);
+void Expr_has_pair_w_enum_constant_target(void);
+void Expr_has_w_entity_var(void);
+void Expr_has_in_binary_expr(void);
+void Expr_member_of_large_struct_var_no_leak(void);
+void Expr_match_i32_1_i_case_one_line(void);
+void Expr_match_i32_2_i_cases_one_line(void);
+void Expr_platform_consts(void);
+void Expr_match_bool_enum_const_var(void);
+void Expr_match_bool_enum_const_var_to_mut_var(void);
+void Expr_enum_const_var_to_mut_var(void);
+void Expr_bool_mul_flt(void);
+void Expr_flt_mul_bool(void);
+void Expr_bool_add_flt(void);
+void Expr_bool_sub_flt(void);
+void Expr_bool_div_flt(void);
+void Expr_flt_div_bool(void);
+void Expr_bool_mul_int(void);
+void Expr_bool_mul_bool(void);
+void Expr_bool_var_mul_flt(void);
+void Expr_bool_var_mul_flt_lvalue(void);
+void Expr_iptr_var_mul_flt(void);
+void Expr_uptr_var_mul_flt(void);
 
 // Testsuite 'ExprAst'
+void ExprAst_setup(void);
 void ExprAst_binary_f32_var_add_f32_var(void);
 void ExprAst_binary_f32_var_add_int(void);
 void ExprAst_binary_f32_var_div_int(void);
@@ -1432,6 +2069,7 @@ void Vars_nested_struct_expr_w_struct_var(void);
 void Vars_redeclare_in_scope(void);
 void Vars_init_fini_vars(void);
 void Vars_from_iter_17_fields(void);
+void Vars_define_large_type_no_leak(void);
 
 // Testsuite 'Serialize'
 void Serialize_bool(void);
@@ -1525,6 +2163,8 @@ void Serialize_value_entity(void);
 void Serialize_value_struct(void);
 void Serialize_struct_w_value(void);
 void Serialize_value_roundtrip(void);
+void Serialize_string_w_interpolation_not_escaped(void);
+void Serialize_string_w_curly_brace_not_escaped(void);
 
 // Testsuite 'Deserialize'
 void Deserialize_setup(void);
@@ -1692,7 +2332,9 @@ void Deserialize_struct_w_value_string(void);
 void Deserialize_value_unknown_type(void);
 
 // Testsuite 'Include'
+void Include_setup(void);
 void Include_include_simple(void);
+void Include_include_cycle(void);
 void Include_include_subdir(void);
 void Include_include_missing_file(void);
 void Include_include_parent_dir_not_allowed(void);
@@ -1718,8 +2360,38 @@ void Include_include_auto_appends_extension_managed(void);
 void Include_fopen_override_remaps_filename(void);
 void Include_include_managed_eval_error_logged(void);
 void Include_include_managed_eval_error_set_on_script(void);
+void Include_include_using_not_visible_in_parent(void);
+void Include_include_managed_using_not_visible_in_parent(void);
+void Include_include_managed_keeps_implicit_meta_in_parent(void);
+void Include_include_keeps_implicit_meta_in_parent(void);
+void Include_include_forward_ref_to_later_include_is_retried(void);
+void Include_const_does_not_cross_include(void);
+void Include_export_const_in_scope_crosses_include(void);
+void Include_include_forward_ref_to_later_include_inline(void);
+void Include_include_forward_ref_to_nested_later_include(void);
+void Include_include_forward_ref_from_nested_include(void);
+void Include_include_forward_ref_chain_requires_multiple_passes(void);
+void Include_include_forward_ref_never_resolved_reports_error(void);
+void Include_include_forward_ref_never_resolved_inline_reports_error(void);
+void Include_include_diamond_evaluates_shared_once(void);
+void Include_include_diamond_forward_ref_is_retried(void);
+void Include_include_forward_ref_to_struct_in_later_include(void);
+void Include_include_forward_ref_to_const_in_later_include(void);
+void Include_include_forward_ref_to_entity_in_later_include(void);
+void Include_include_retried_script_keeps_scope_and_components(void);
+void Include_include_error_reports_failing_file(void);
+void Include_include_parse_error_sets_error_on_parent(void);
+void Include_include_parse_error_logs_error(void);
+void Include_include_eval_error_sets_error_on_parent(void);
+void Include_include_nested_parse_error_sets_error_on_parent(void);
+void Include_include_parse_error_run_file_fails(void);
+void Include_include_nested_index_parse_error_sets_error_on_parent(void);
+void Include_include_nested_error_reports_position(void);
+void Include_include_error_in_large_file_reports_position(void);
+void Include_include_missing_file_managed_sets_error_on_parent(void);
 
 // Testsuite 'Fuzzing'
+void Fuzzing_setup(void);
 void Fuzzing_1(void);
 void Fuzzing_2(void);
 void Fuzzing_3(void);
@@ -1868,6 +2540,7 @@ void Fuzzing_149(void);
 void Fuzzing_150(void);
 
 // Testsuite 'Refs'
+void Refs_setup(void);
 void Refs_ref_in_component_initializer(void);
 void Refs_ref_in_const_var(void);
 void Refs_ref_in_with_initializer(void);
@@ -1876,24 +2549,25 @@ void Refs_ref_in_if_expr(void);
 void Refs_ref_in_for_expr(void);
 void Refs_non_managed_script_no_update(void);
 void Refs_set_after_managed_script_deleted(void);
-void Refs_global_const_var_in_component_initializer(void);
-void Refs_global_const_var_in_with_initializer(void);
-void Refs_global_const_var_in_match_expr(void);
-void Refs_global_const_var_in_if_expr(void);
-void Refs_global_const_var_in_for_expr(void);
+void Refs_global_mut_var_in_component_initializer(void);
+void Refs_global_mut_var_in_with_initializer(void);
+void Refs_global_mut_var_in_match_expr(void);
+void Refs_global_mut_var_in_if_expr(void);
+void Refs_global_mut_var_in_for_expr(void);
 void Refs_global_const_var_non_managed_script_no_update(void);
-void Refs_global_const_var_set_after_managed_script_deleted(void);
-void Refs_global_const_var_modified(void);
+void Refs_global_mut_var_non_managed_script_no_update(void);
+void Refs_global_mut_var_set_after_managed_script_deleted(void);
+void Refs_global_mut_var_modified(void);
 void Refs_ref_in_function(void);
-void Refs_global_const_var_in_function(void);
+void Refs_global_mut_var_in_function(void);
 void Refs_ref_in_new_expr(void);
-void Refs_global_const_var_in_new_expr(void);
+void Refs_global_mut_var_in_new_expr(void);
 void Refs_ref_in_function_in_new_expr(void);
-void Refs_global_const_var_in_function_in_new_expr(void);
+void Refs_global_mut_var_in_function_in_new_expr(void);
 void Refs_ref_in_script_function_body(void);
-void Refs_global_const_var_in_script_function_body(void);
+void Refs_global_mut_var_in_script_function_body(void);
 void Refs_ref_assigned_to_component(void);
-void Refs_global_const_var_assigned_to_component(void);
+void Refs_global_mut_var_assigned_to_component(void);
 void Refs_reeval_hierarchy(void);
 void Refs_reeval_prefab_in_branch(void);
 void Refs_progress_reeval_prefab_w_isa_observer(void);
@@ -1915,15 +2589,24 @@ void Refs_ref_in_template_function_in_new_expr(void);
 void Refs_ref_in_template_script_function_body(void);
 void Refs_ref_in_template_assigned_to_component(void);
 void Refs_global_const_var_in_template_component_initializer(void);
+void Refs_global_mut_var_in_template_component_initializer(void);
 void Refs_global_const_var_in_template_with_initializer(void);
+void Refs_global_mut_var_in_template_with_initializer(void);
 void Refs_global_const_var_in_template_match_expr(void);
+void Refs_global_mut_var_in_template_match_expr(void);
 void Refs_global_const_var_in_template_if_expr(void);
+void Refs_global_mut_var_in_template_if_expr(void);
 void Refs_global_const_var_in_template_for_expr(void);
+void Refs_global_mut_var_in_template_for_expr(void);
 void Refs_global_const_var_in_template_function(void);
+void Refs_global_mut_var_in_template_function(void);
 void Refs_global_const_var_in_template_new_expr(void);
+void Refs_global_mut_var_in_template_new_expr(void);
 void Refs_global_const_var_in_template_function_in_new_expr(void);
-void Refs_global_const_var_in_template_script_function_body(void);
+void Refs_global_mut_var_in_template_function_in_new_expr(void);
+void Refs_global_mut_var_in_template_script_function_body(void);
 void Refs_global_const_var_in_template_assigned_to_component(void);
+void Refs_global_mut_var_in_template_assigned_to_component(void);
 void Refs_this_ref_in_template_component_initializer(void);
 void Refs_this_ref_in_template_with_initializer(void);
 void Refs_this_ref_in_template_match_expr(void);
@@ -1946,18 +2629,196 @@ void Refs_prop_ref_in_template_assigned_to_component(void);
 void Refs_template_prop_ref_observer_lifecycle(void);
 void Refs_template_prop_ref_retarget(void);
 void Refs_global_const_var_declared_in_same_script(void);
+void Refs_global_mut_var_declared_in_same_script(void);
 void Refs_global_const_var_declared_in_same_script_w_fn(void);
-void Refs_global_const_var_declared_in_same_script_w_fn_other_script(void);
-void Refs_global_const_var_declared_in_same_script_w_fn_other_scripts(void);
-void Refs_global_const_var_in_scoped_function_other_script(void);
+void Refs_global_mut_var_declared_in_same_script_w_fn(void);
+void Refs_global_mut_var_declared_in_same_script_w_fn_other_script(void);
+void Refs_global_mut_var_declared_in_same_script_w_fn_other_script_w_implicit_var(void);
+void Refs_global_mut_var_declared_in_same_script_w_fn_other_scripts(void);
+void Refs_global_mut_var_declared_in_same_script_w_fn_other_scripts_w_implicit_var(void);
+void Refs_global_mut_var_in_scoped_function_other_script(void);
 void Refs_ref_declared_in_same_script(void);
 void Refs_ref_declared_in_same_script_w_fn(void);
 void Refs_ref_declared_in_same_script_w_fn_other_script(void);
 void Refs_ref_declared_in_same_script_w_fn_other_scripts(void);
 void Refs_global_const_var_declared_in_same_script_w_template(void);
-void Refs_reeval_instantiates_template_w_global_const_var_ref(void);
+void Refs_global_mut_var_declared_in_same_script_w_template(void);
+void Refs_reeval_instantiates_template_w_global_mut_var_ref(void);
+void Refs_global_mut_var_modified_twice(void);
+void Refs_global_const_var_and_mut_var_in_same_expr(void);
+void Refs_global_mut_var_declared_in_same_script_modified(void);
+void Refs_global_mut_var_declared_in_same_script_reacts(void);
+void Refs_two_global_mut_vars_declared_in_same_script(void);
+void Refs_global_mut_var_declared_in_same_script_modified_deferred(void);
+void Refs_global_mut_var_declared_in_same_script_modified_in_system(void);
+void Refs_global_mut_var_modified_in_system_other_script(void);
+void Refs_reeval_during_script_preserves_using(void);
+void Refs_has_component_ref(void);
+void Refs_has_tag_ref(void);
+void Refs_has_pair_ref(void);
+void Refs_has_singleton_ref(void);
+void Refs_has_singleton_pair_ref(void);
+void Refs_has_ref_in_const_var(void);
+void Refs_has_ref_in_template_component_initializer(void);
+void Refs_has_ref_and_value_ref_same_component(void);
+void Refs_wait_for_unresolved_tag(void);
+void Refs_wait_for_unresolved_component(void);
+void Refs_wait_for_component_on_entity(void);
+void Refs_wait_for_unresolved_entity_then_component(void);
+void Refs_wait_for_unresolved_entity_w_component_set_before_name(void);
+void Refs_wait_for_unresolved_const_type(void);
+void Refs_wait_for_multiple_unresolved_refs(void);
+void Refs_wait_for_unresolved_component_entity_named_first(void);
+void Refs_delete_script_while_waiting(void);
+void Refs_wait_for_has_unresolved_component(void);
+void Refs_wait_for_has_unresolved_entity(void);
+void Refs_has_ref_resolve_observer_on_add(void);
+
+// Testsuite 'Reactivity'
+void Reactivity_setup(void);
+void Reactivity_external_inputs_are_isolated(void);
+void Reactivity_script_update_recreates_observers(void);
+void Reactivity_annotation_follows_dependent_statement(void);
+void Reactivity_reentrant_input_change_is_reevaluated(void);
+void Reactivity_failed_update_is_atomic(void);
+void Reactivity_extern_variables_are_isolated(void);
+void Reactivity_const_dependency_is_transitive(void);
+void Reactivity_if_inherits_branch_dependencies(void);
+void Reactivity_if_cleans_up_entities(void);
+void Reactivity_if_branch_flip_same_entity(void);
+void Reactivity_mutual_component_refs_converge(void);
+void Reactivity_cross_referencing_templates_resolve(void);
+void Reactivity_if_cleans_up_components(void);
+void Reactivity_if_cleans_up_singleton_component(void);
+void Reactivity_mutually_exclusive_component_owner(void);
+void Reactivity_mutually_exclusive_component_owner_three_branches(void);
+void Reactivity_non_exclusive_component_owner_fails(void);
+void Reactivity_template_non_exclusive_component_owner_fails(void);
+void Reactivity_component_in_static_and_interpolated_named_children(void);
+void Reactivity_component_in_two_interpolated_named_children(void);
+void Reactivity_component_in_matching_interpolated_named_children_fails(void);
+void Reactivity_partial_assignment_does_not_own_component(void);
+void Reactivity_same_entity_in_two_non_exclusive_scopes(void);
+void Reactivity_partial_component_in_two_non_exclusive_scopes(void);
+void Reactivity_for_preserves_named_entities(void);
+void Reactivity_nested_for_clears_previous_entities(void);
+void Reactivity_inactive_for_cleans_up_entities(void);
+void Reactivity_new_entity_survives_reevaluation(void);
+void Reactivity_new_entity_not_duplicated_on_reevaluation(void);
+void Reactivity_new_entity_child_reclaimed_on_reevaluation(void);
+void Reactivity_new_entity_survives_skipped_statement(void);
+void Reactivity_with_scope_is_reactive(void);
+void Reactivity_with_expression_is_reactive(void);
+void Reactivity_pair_scope_is_reactive(void);
+void Reactivity_nested_template_is_reactive(void);
+void Reactivity_template_with_scope_is_reactive(void);
+void Reactivity_try_in_managed_script_fails(void);
+void Reactivity_try_catch_scope_dependencies(void);
+void Reactivity_await_expression_dependencies(void);
+void Reactivity_element_expr_is_reactive(void);
+void Reactivity_range_expr_is_reactive(void);
+void Reactivity_swizzle_expr_is_reactive(void);
+void Reactivity_has_expr_is_reactive(void);
+void Reactivity_method_expr_is_reactive(void);
+void Reactivity_interpolated_string_width_is_reactive(void);
+void Reactivity_interpolated_string_precision_is_reactive(void);
+void Reactivity_parse_failure_clears_observers(void);
+void Reactivity_script_deleted_while_evaluating(void);
+void Reactivity_template_props_are_isolated(void);
+void Reactivity_template_same_prop_value_skips(void);
+void Reactivity_template_muts_are_isolated(void);
+void Reactivity_template_const_dependency_is_transitive(void);
+void Reactivity_template_if_cleans_up_entities(void);
+void Reactivity_template_if_cleans_up_components(void);
+void Reactivity_template_owner_cleans_up_instance_state(void);
+void Reactivity_template_entity_delete_cleans_up_instance_state(void);
+void Reactivity_template_for_preserves_named_entities(void);
+void Reactivity_template_inactive_for_cleans_up_entities(void);
+void Reactivity_template_instances_have_private_slots(void);
+void Reactivity_template_capture_is_reactive(void);
+void Reactivity_sixty_four_inputs(void);
+void Reactivity_sixty_five_inputs_fail(void);
+void Reactivity_new_entity_survives_skipped_statement_in_nested_initializer(void);
+void Reactivity_new_entity_survives_skipped_statement_in_function_arg(void);
+void Reactivity_new_entity_survives_skipped_statement_in_interpolated_string(void);
+void Reactivity_new_entity_survives_skipped_statement_in_component_expr(void);
+void Reactivity_new_entity_survives_skipped_statement_in_template_prop(void);
+void Reactivity_new_entity_survives_skipped_statement_in_entity_name(void);
+void Reactivity_new_entity_survives_skipped_statement_in_if_condition(void);
+void Reactivity_for_preserves_unchanged_entities(void);
+void Reactivity_for_keyed_entity_survives_collection_change(void);
+void Reactivity_for_keyed_external_component_survives(void);
+void Reactivity_for_keyed_removed_key_is_deleted(void);
+void Reactivity_for_keyed_new_key_is_added(void);
+void Reactivity_for_keyed_reorder_preserves_identity(void);
+void Reactivity_for_keyed_unkeyed_entity_is_recreated(void);
+void Reactivity_for_keyed_mixed_external_components(void);
+void Reactivity_for_keyed_multiple_keys_per_iteration(void);
+void Reactivity_for_keyed_multiple_keys_removed_together(void);
+void Reactivity_for_unkeyed_only_entities_are_recreated(void);
+void Reactivity_for_keyed_outer_condition_toggles_rows(void);
+void Reactivity_for_keyed_per_item_condition_toggles_row(void);
+void Reactivity_conditional_component_on_named_entity(void);
+void Reactivity_conditional_component_on_keyed_for_entity(void);
+void Reactivity_conditional_component_on_template_instance(void);
+void Reactivity_two_conditional_components_toggle_independently(void);
+void Reactivity_conditional_component_on_child_entity(void);
+void Reactivity_interpolated_name_w_indexed_expr(void);
+void Reactivity_interpolated_name_w_indexed_expr_in_for(void);
+void Reactivity_template_for_keyed_entity_survives_collection_change(void);
+void Reactivity_template_for_keyed_external_component_survives(void);
+void Reactivity_template_for_keyed_removed_key_is_deleted(void);
+void Reactivity_template_for_keyed_new_key_is_added(void);
+void Reactivity_template_for_keyed_reorder_preserves_identity(void);
+void Reactivity_template_for_keyed_unkeyed_entity_is_recreated(void);
+void Reactivity_template_for_keyed_mixed_external_components(void);
+void Reactivity_template_for_keyed_multiple_keys_per_iteration(void);
+void Reactivity_template_for_keyed_multiple_keys_removed_together(void);
+void Reactivity_template_for_unkeyed_only_entities_are_recreated(void);
+void Reactivity_template_for_keyed_outer_condition_toggles_rows(void);
+void Reactivity_template_for_keyed_per_item_condition_toggles_row(void);
+void Reactivity_template_conditional_component_on_keyed_for_entity(void);
+void Reactivity_component_ref_via_loop_var_entity_is_reactive(void);
+void Reactivity_component_ref_via_var_entity_is_reactive(void);
+void Reactivity_component_ref_via_for_elem_var_entity_is_reactive(void);
+void Reactivity_component_presence_via_var_entity_is_reactive(void);
+void Reactivity_component_ref_via_var_entity_in_if_is_reactive(void);
+void Reactivity_for_keyed_does_not_reorder_children(void);
+void Reactivity_base_component_w_conditional_override(void);
+void Reactivity_two_dyn_refs_alternating_updates(void);
+void Reactivity_three_dyn_refs_alternating_updates(void);
+void Reactivity_static_ref_and_dyn_ref_in_same_script(void);
+void Reactivity_dyn_ref_in_nested_scope_is_independent(void);
+void Reactivity_dyn_ref_var_retargeting(void);
+void Reactivity_dyn_ref_in_if_condition_flips_both_ways(void);
+void Reactivity_dyn_ref_guarded_by_static_if(void);
+void Reactivity_dyn_ref_in_for_rows_are_independent(void);
+void Reactivity_dyn_ref_in_nested_for(void);
+void Reactivity_dyn_ref_in_template_instance_and_script(void);
+void Reactivity_dyn_ref_presence_two_independent_refs(void);
+void Reactivity_dyn_ref_recovers_after_invalid_entity(void);
+void Reactivity_template_prop_change_keeps_for_entities(void);
+void Reactivity_template_i32_prop_change_keeps_for_entities(void);
+void Reactivity_template_prop_change_keeps_for_entities_in_child_scope(void);
+void Reactivity_template_for_range_change_keeps_named_recreates_anonymous(void);
+void Reactivity_for_keyed_template_instance_survives_collection_change(void);
+void Reactivity_component_ref_set_from_system_reevaluates(void);
+void Reactivity_template_prop_ensure_modified_from_system_reevaluates(void);
+void Reactivity_template_prop_set_from_system_reevaluates(void);
+void Reactivity_template_first_stmt_conditional_component_on_child(void);
+void Reactivity_template_first_stmt_conditional_pair_on_child(void);
+void Reactivity_template_first_stmt_conditional_tag_on_child(void);
+void Reactivity_template_first_stmt_conditional_component_on_root(void);
+void Reactivity_template_after_stmt_conditional_component_on_child(void);
+void Reactivity_conditional_component_w_named_initializer_toggles(void);
+void Reactivity_conditional_pair_w_named_initializer_toggles(void);
+void Reactivity_conditional_component_w_named_initializer_on_entity(void);
+void Reactivity_branch_cleanup_deletes_entity_w_child(void);
+void Reactivity_sparse_blocks_preserve_ownership(void);
+void Reactivity_sparse_blocks_restore_cached_constants(void);
 
 // Testsuite 'ConstVar'
+void ConstVar_setup(void);
 void ConstVar_get_bool(void);
 void ConstVar_get_char(void);
 void ConstVar_get_byte(void);
@@ -1997,8 +2858,461 @@ void ConstVar_get_string_as_i32(void);
 void ConstVar_get_struct_as_i32(void);
 void ConstVar_get_i32_as_struct(void);
 void ConstVar_get_struct_as_other_struct(void);
+void ConstVar_nested_const_shadows_export_const(void);
+void ConstVar_get_from_stage(void);
+void ConstVar_get_struct_from_stage(void);
+
+// Testsuite 'Lenient'
+void Lenient_setup(void);
+void Lenient_unknown_tag(void);
+void Lenient_unknown_component_w_value(void);
+void Lenient_unknown_component_w_nested_value(void);
+void Lenient_unknown_component_in_scope(void);
+void Lenient_unknown_pair(void);
+void Lenient_unknown_member_on_known_component(void);
+void Lenient_unknown_nested_member_on_known_component(void);
+void Lenient_unknown_function_in_expr(void);
+void Lenient_unknown_vector_in_for(void);
+void Lenient_unknown_function_in_for(void);
+void Lenient_warn_once_per_name(void);
+void Lenient_warn_per_distinct_name(void);
+void Lenient_strict_unknown_tag_errors(void);
+void Lenient_strict_unknown_member_errors(void);
+void Lenient_lenient_disabled_after_enable(void);
+void Lenient_no_placeholder_then_strict_load(void);
+void Lenient_template_w_unknown_component(void);
+void Lenient_template_child_w_unknown_component(void);
+void Lenient_isa_unresolved_errors(void);
+void Lenient_eval_desc(void);
+void Lenient_managed_script_desc(void);
+void Lenient_managed_script_strict_errors(void);
+void Lenient_unknown_with_tag(void);
+void Lenient_template_w_unknown_prop_type_w_default(void);
+void Lenient_template_w_unknown_prop_type_no_default(void);
+void Lenient_template_w_unknown_prop_type_in_for(void);
+void Lenient_template_w_unknown_prop_type_in_expr(void);
+void Lenient_template_w_unknown_prop_type_set_at_instantiate(void);
+void Lenient_template_w_unknown_const_type(void);
+void Lenient_const_w_unresolved_function_initializer(void);
+void Lenient_strict_unknown_prop_type_errors(void);
+void Lenient_managed_script_lenient_after_table_change(void);
+void Lenient_unknown_using(void);
+void Lenient_strict_unknown_using_errors(void);
+void Lenient_unknown_fn_param_type(void);
+void Lenient_unknown_fn_return_type(void);
+void Lenient_strict_unknown_fn_param_type_errors(void);
+void Lenient_unknown_component_read_member_in_expr(void);
+void Lenient_unknown_component_read_member_in_interpolated_string(void);
+void Lenient_unknown_component_read_member_in_binary_expr(void);
+void Lenient_unknown_component_read_member_in_fn_arg(void);
+void Lenient_unknown_component_read_member_in_if(void);
+void Lenient_unknown_component_read_member_in_for(void);
+void Lenient_unknown_component_read_member_in_template(void);
+void Lenient_template_w_unknown_prop_type_member_in_interpolated_string(void);
+void Lenient_unknown_component_on_known_entity_member(void);
+void Lenient_unknown_component_on_known_entity_member_in_string(void);
+void Lenient_unknown_member_on_known_component_read(void);
+void Lenient_unknown_member_on_known_component_read_in_string(void);
+void Lenient_known_component_read_member_in_string(void);
+void Lenient_strict_unknown_member_on_known_component_read_errors(void);
+void Lenient_template_unresolved_base_errors(void);
+void Lenient_warn_once_for_unknown_using(void);
+
+// Testsuite 'StructInheritance'
+void StructInheritance_setup(void);
+void StructInheritance_block_syntax(void);
+void StructInheritance_paren_syntax(void);
+void StructInheritance_paren_syntax_space_before_paren(void);
+void StructInheritance_mixed_syntax(void);
+void StructInheritance_mixed_syntax_block_base(void);
+void StructInheritance_no_own_members(void);
+void StructInheritance_no_own_members_newline_before_scope(void);
+void StructInheritance_chain(void);
+void StructInheritance_chain_w_padding(void);
+void StructInheritance_two_derived(void);
+void StructInheritance_base_w_padding(void);
+void StructInheritance_set_component(void);
+void StructInheritance_set_component_partial(void);
+void StructInheritance_set_component_positional(void);
+void StructInheritance_set_base_and_derived(void);
+void StructInheritance_entity_to_json(void);
+void StructInheritance_expr_run(void);
+void StructInheritance_add_member_to_base_w_derived(void);
+void StructInheritance_base_defined_in_c(void);
+void StructInheritance_derived_defined_in_c(void);
+void StructInheritance_base_in_module(void);
+void StructInheritance_base_w_using(void);
+void StructInheritance_derived_as_member(void);
+void StructInheritance_base_w_string_member(void);
+void StructInheritance_base_w_array_member(void);
+void StructInheritance_duplicate_member_paren(void);
+void StructInheritance_duplicate_member_block(void);
+void StructInheritance_base_not_a_struct(void);
+void StructInheritance_self_inherit(void);
+void StructInheritance_inheritance_cycle(void);
+void StructInheritance_base_is_prefab(void);
+void StructInheritance_base_is_enum(void);
+void StructInheritance_base_is_primitive(void);
+void StructInheritance_base_unresolved(void);
+void StructInheritance_base_declared_after_derived(void);
+void StructInheritance_run_script_twice(void);
+void StructInheritance_managed_script_update(void);
+void StructInheritance_managed_script_update_add_member(void);
+void StructInheritance_query_derived(void);
+void StructInheritance_derived_in_nested_scope(void);
+void StructInheritance_derived_member_access_in_expr(void);
+void StructInheritance_multiple_bases(void);
+void StructInheritance_assign_derived_to_base_const(void);
+void StructInheritance_assign_derived_to_base_const_member_access(void);
+void StructInheritance_assign_derived_to_base_const_chain(void);
+void StructInheritance_assign_derived_to_base_const_w_string(void);
+void StructInheritance_assign_derived_to_base_prop(void);
+void StructInheritance_assign_derived_to_base_prop_at_instantiate(void);
+void StructInheritance_assign_derived_to_base_mut(void);
+void StructInheritance_assign_derived_to_base_component(void);
+void StructInheritance_assign_derived_to_base_component_in_template(void);
+void StructInheritance_assign_derived_to_base_nested_member(void);
+void StructInheritance_assign_derived_to_base_nested_member_const(void);
+void StructInheritance_assign_derived_to_base_with(void);
+void StructInheritance_assign_derived_to_base_expr_run(void);
+void StructInheritance_assign_base_to_derived_fails(void);
+void StructInheritance_assign_base_to_derived_component_fails(void);
+void StructInheritance_assign_unrelated_struct_fails(void);
+void StructInheritance_assign_unrelated_struct_prop_fails(void);
+
+// Testsuite 'TemplateInheritance'
+void TemplateInheritance_setup(void);
+void TemplateInheritance_base_template_prop(void);
+void TemplateInheritance_base_template_two_props(void);
+void TemplateInheritance_base_template_no_own_props(void);
+void TemplateInheritance_base_template_prop_default(void);
+void TemplateInheritance_base_template_prop_default_in_body(void);
+void TemplateInheritance_base_template_prop_set_at_instantiate(void);
+void TemplateInheritance_base_template_prop_w_expr_default(void);
+void TemplateInheritance_base_template_body_not_inherited(void);
+void TemplateInheritance_base_template_string_prop(void);
+void TemplateInheritance_base_template_entity_prop(void);
+void TemplateInheritance_base_struct(void);
+void TemplateInheritance_base_component_defined_in_c(void);
+void TemplateInheritance_chain(void);
+void TemplateInheritance_chain_props_in_body(void);
+void TemplateInheritance_chain_partial_defaults(void);
+void TemplateInheritance_chain_defaults_in_body(void);
+void TemplateInheritance_two_derived(void);
+void TemplateInheritance_base_prop_change_updates_instance(void);
+void TemplateInheritance_base_prop_used_by_derived_prop_default(void);
+void TemplateInheritance_base_w_mut(void);
+void TemplateInheritance_derived_w_mut(void);
+void TemplateInheritance_derived_prop_same_name_as_base(void);
+void TemplateInheritance_base_not_a_struct(void);
+void TemplateInheritance_delete_base_template(void);
+void TemplateInheritance_mut_shadows_base_prop(void);
+void TemplateInheritance_base_w_anonymous_array_member(void);
+void TemplateInheritance_base_w_count_one_array_member(void);
+void TemplateInheritance_base_is_prefab(void);
+void TemplateInheritance_base_is_enum(void);
+void TemplateInheritance_base_unresolved(void);
+void TemplateInheritance_base_declared_after_derived(void);
+void TemplateInheritance_self_inherit(void);
+void TemplateInheritance_missing_base_name(void);
+void TemplateInheritance_newline_before_scope(void);
+void TemplateInheritance_no_space_around_colon(void);
+void TemplateInheritance_base_in_module(void);
+void TemplateInheritance_base_in_module_path(void);
+void TemplateInheritance_base_in_separate_script(void);
+void TemplateInheritance_run_script_twice(void);
+void TemplateInheritance_managed_script_update(void);
+void TemplateInheritance_managed_script_update_base_default(void);
+void TemplateInheritance_ast_to_str(void);
+void TemplateInheritance_derived_instance_json(void);
+void TemplateInheritance_derived_instance_set_from_c(void);
+void TemplateInheritance_const_before_prop_in_derived(void);
+void TemplateInheritance_const_after_prop_in_derived(void);
+void TemplateInheritance_derived_from_template_w_captured_const(void);
+
+// Testsuite 'TemplateProp'
+void TemplateProp_setup(void);
+void TemplateProp_prop_template_type(void);
+void TemplateProp_prop_template_type_default(void);
+void TemplateProp_prop_template_type_default_initializer(void);
+void TemplateProp_prop_template_type_partial_default_initializer(void);
+void TemplateProp_use_as_tag(void);
+void TemplateProp_use_as_tag_dollar(void);
+void TemplateProp_use_as_tag_default(void);
+void TemplateProp_use_as_tag_on_instance(void);
+void TemplateProp_use_w_initializer_partial(void);
+void TemplateProp_use_w_initializer_partial_dollar(void);
+void TemplateProp_use_w_initializer_full(void);
+void TemplateProp_use_w_initializer_positional(void);
+void TemplateProp_use_w_initializer_expr(void);
+void TemplateProp_use_w_empty_initializer(void);
+void TemplateProp_use_in_with(void);
+void TemplateProp_use_in_with_dollar(void);
+void TemplateProp_use_in_with_w_initializer(void);
+void TemplateProp_use_in_with_w_positional_initializer(void);
+void TemplateProp_member_access_in_expr(void);
+void TemplateProp_prop_change_updates_children(void);
+void TemplateProp_prop_change_from_c_updates_children(void);
+void TemplateProp_multiple_template_props(void);
+void TemplateProp_template_prop_w_other_props(void);
+void TemplateProp_template_prop_w_string_member(void);
+void TemplateProp_inherited_template_prop(void);
+void TemplateProp_inherited_template_prop_dollar(void);
+void TemplateProp_inherited_template_prop_chain(void);
+void TemplateProp_prop_of_derived_template_type(void);
+void TemplateProp_nested_template_instantiation(void);
+void TemplateProp_template_prop_in_for_loop(void);
+void TemplateProp_template_prop_in_if(void);
+void TemplateProp_use_wo_template_keyword(void);
+void TemplateProp_prop_wo_template_keyword_as_value(void);
+void TemplateProp_type_not_a_template(void);
+void TemplateProp_type_is_primitive(void);
+void TemplateProp_type_unresolved(void);
+void TemplateProp_type_is_self(void);
+void TemplateProp_mut_template_type(void);
+void TemplateProp_const_template_type(void);
+void TemplateProp_missing_type_name(void);
+void TemplateProp_use_as_pair_first(void);
+void TemplateProp_use_as_pair_second(void);
+void TemplateProp_use_as_pair_first_dollar(void);
+void TemplateProp_use_as_entity_kind(void);
+void TemplateProp_use_w_wrong_member(void);
+void TemplateProp_prop_template_type_wo_default_required(void);
+void TemplateProp_run_script_twice(void);
+void TemplateProp_managed_script_update(void);
+void TemplateProp_ast_to_str(void);
+void TemplateProp_instance_to_json(void);
+void TemplateProp_pass_to_child_template_same_type(void);
+void TemplateProp_pass_to_child_template_same_type_dollar(void);
+void TemplateProp_pass_to_child_template_positional(void);
+void TemplateProp_pass_to_child_template_w_expr(void);
+void TemplateProp_pass_to_child_template_w_with(void);
+void TemplateProp_pass_to_child_template_default(void);
+void TemplateProp_pass_to_child_template_update(void);
+void TemplateProp_pass_to_child_template_from_c(void);
+void TemplateProp_pass_to_child_template_two_levels(void);
+void TemplateProp_pass_to_child_template_and_use_in_outer(void);
+void TemplateProp_pass_derived_to_child_template_base(void);
+void TemplateProp_pass_derived_to_child_template_base_positional(void);
+void TemplateProp_pass_derived_to_child_template_base_w_with(void);
+void TemplateProp_pass_derived_to_child_template_base_update(void);
+void TemplateProp_pass_derived_to_child_template_derived(void);
+void TemplateProp_pass_derived_to_child_template_base_two_levels(void);
+void TemplateProp_pass_base_to_child_template_derived_fails(void);
+void TemplateProp_pass_unrelated_to_child_template_fails(void);
+void TemplateProp_interface_prop_invalid_value(void);
+void TemplateProp_interface_prop_unrelated_template(void);
+void TemplateProp_interface_prop_missing_value(void);
+void TemplateProp_interface_prop_empty_initializer_fails(void);
+void TemplateProp_interface_prop_in_with_w_initializer_fails(void);
+void TemplateProp_interface_prop_dollar_initializer(void);
+void TemplateProp_interface_prop_self_template(void);
+void TemplateProp_interface_prop_instantiates_passed_template(void);
+void TemplateProp_interface_prop_paren_syntax(void);
+void TemplateProp_interface_prop_false_branch(void);
+void TemplateProp_interface_prop_with_other_components(void);
+void TemplateProp_interface_prop_default_template(void);
+void TemplateProp_interface_prop_default_overridden(void);
+void TemplateProp_interface_prop_default_overridden_from_c(void);
+void TemplateProp_interface_prop_as_tag(void);
+void TemplateProp_interface_prop_from_c(void);
+void TemplateProp_interface_prop_change_template(void);
+void TemplateProp_interface_prop_not_derived_fails(void);
+void TemplateProp_interface_prop_not_template_fails(void);
+void TemplateProp_interface_prop_unset_fails(void);
+void TemplateProp_interface_prop_unknown_member_fails(void);
+void TemplateProp_bool_prop_mul_flt_member(void);
+void TemplateProp_bool_prop_in_flt_member_initializer(void);
+void TemplateProp_bool_prop_mul_flt_member_const(void);
+
+// Testsuite 'Scenario'
+void Scenario_setup(void);
+void Scenario_rocket_instantiate(void);
+void Scenario_rocket_partial_loaded(void);
+void Scenario_rocket_partial_fuel(void);
+void Scenario_rocket_partial_engines(void);
+void Scenario_rocket_partial_valid_toggle_twice(void);
+void Scenario_rocket_many_instances_independent(void);
+void Scenario_bunny_partial_value(void);
+void Scenario_bunny_partial_branch(void);
+void Scenario_gauge_partial_text_and_frac(void);
+void Scenario_nested_template_reeval_keeps_children(void);
+void Scenario_template_tree_annotation_applies_to_instances(void);
+void Scenario_ir_and_ast_instances_coexist(void);
+void Scenario_traffic_car_blinkers(void);
+void Scenario_traffic_streetlamp_daylight(void);
+
+// Testsuite 'Edit'
+void Edit_setup(void);
+void Edit_source_entity(void);
+void Edit_source_entity_w_scope(void);
+void Edit_source_entity_w_kind(void);
+void Edit_source_entity_w_kind_scope(void);
+void Edit_source_entity_w_base(void);
+void Edit_source_entity_w_base_scope(void);
+void Edit_source_entity_w_paren(void);
+void Edit_source_entity_w_paren_scope(void);
+void Edit_source_anonymous_entity(void);
+void Edit_source_child_entity(void);
+void Edit_source_entity_w_trailing_comment(void);
+void Edit_source_entity_in_with_scope(void);
+void Edit_source_template_instance(void);
+void Edit_source_template_body_entity(void);
+void Edit_source_for_loop_entity(void);
+void Edit_source_foreign_entity(void);
+void Edit_source_unknown_entity(void);
+void Edit_source_entity_declared_twice(void);
+void Edit_source_include_entity(void);
+void Edit_source_managed_script(void);
+void Edit_source_line_column(void);
+void Edit_source_component_stmt_ends(void);
+void Edit_set_named_initializer(void);
+void Edit_set_positional_initializer(void);
+void Edit_set_positional_enum_map(void);
+void Edit_set_empty_initializer(void);
+void Edit_set_partial_initializer(void);
+void Edit_set_multi_line_initializer(void);
+void Edit_set_value_form(void);
+void Edit_set_collection_form(void);
+void Edit_set_paren_initializer(void);
+void Edit_set_preserves_comments(void);
+void Edit_set_preserves_blank_lines_and_indent(void);
+void Edit_set_tabs_indent(void);
+void Edit_set_append_to_existing_scope(void);
+void Edit_set_append_to_empty_scope(void);
+void Edit_set_append_no_scope(void);
+void Edit_set_append_w_using(void);
+void Edit_set_append_w_module(void);
+void Edit_set_expr(void);
+void Edit_set_expr_append(void);
+void Edit_set_nested_child(void);
+void Edit_set_anonymous_entity(void);
+void Edit_set_in_with_scope(void);
+void Edit_set_float_roundtrip(void);
+void Edit_set_template_body_entity(void);
+void Edit_set_for_loop_entity_fails(void);
+void Edit_set_foreign_entity_fails(void);
+void Edit_set_twice_same_component(void);
+void Edit_remove_component(void);
+void Edit_remove_component_multi_line(void);
+void Edit_remove_missing_component(void);
+void Edit_remove_tag(void);
+void Edit_delete_first(void);
+void Edit_delete_middle(void);
+void Edit_delete_last(void);
+void Edit_delete_nested_child(void);
+void Edit_delete_entity_w_edits_inside(void);
+void Edit_delete_w_trailing_comment(void);
+void Edit_delete_preserves_preceding_comment(void);
+void Edit_multiple_edits_one_apply(void);
+void Edit_apply_twice_same_result(void);
+void Edit_apply_result_runs(void);
+void Edit_apply_deleted_entity_gone(void);
+void Edit_apply_no_edits(void);
+void Edit_set_in_module_script(void);
+void Edit_set_replaces_tag_stmt(void);
+void Edit_set_f32_shortest_repr(void);
+void Edit_set_f32_integral_no_fraction(void);
+void Edit_set_f32_negative_zero(void);
+void Edit_set_f32_third(void);
+void Edit_set_f32_small_exponent(void);
+void Edit_set_f32_roundtrips_in_script(void);
+void Edit_set_f64_shortest_repr(void);
+void Edit_delete_blank_line_before_and_after(void);
+void Edit_delete_blank_line_first_in_file(void);
+void Edit_delete_blank_line_last_in_file(void);
+void Edit_delete_blank_line_first_in_scope(void);
+void Edit_delete_blank_line_last_in_scope(void);
+void Edit_delete_blank_line_middle_in_scope(void);
+void Edit_delete_blank_line_only_after(void);
+void Edit_delete_blank_line_only_before(void);
+void Edit_source_two_managed_code_scripts(void);
+void Edit_edit_two_managed_code_scripts(void);
+void Edit_source_two_managed_file_scripts(void);
+void Edit_include_creates_managed_script(void);
+void Edit_include_resolves_relative_to_script_dir(void);
+void Edit_include_edit_applies_to_included_file(void);
+void Edit_include_parent_update_keeps_included_script(void);
+void Edit_include_update_included_script(void);
+void Edit_include_clear_parent_keeps_included_script(void);
+void Edit_entity_owner_plain(void);
+void Edit_entity_owner_no_script(void);
+void Edit_entity_owner_unmanaged_script(void);
+void Edit_entity_owner_for_loop_entity(void);
+void Edit_delete_recorded_before_entity_deleted(void);
+void Edit_clear_delete_after_entity_deleted(void);
+void Edit_clear_set(void);
+void Edit_clear_unknown_edit(void);
+void Edit_set_after_clear(void);
+void Edit_count_edits(void);
+void Edit_set_for_recreated_entity_after_clear(void);
+
+// Testsuite 'EditTemplate'
+void EditTemplate_setup(void);
+void EditTemplate_source_body_entity(void);
+void EditTemplate_source_body_entity_no_scope(void);
+void EditTemplate_source_body_entity_nested(void);
+void EditTemplate_source_body_entity_anonymous(void);
+void EditTemplate_source_body_entity_in_with_scope(void);
+void EditTemplate_source_body_entity_in_if_scope(void);
+void EditTemplate_source_body_for_loop_entity(void);
+void EditTemplate_source_body_entity_computed_name(void);
+void EditTemplate_source_instance_stmt_has_no_template(void);
+void EditTemplate_source_body_entity_two_instances(void);
+void EditTemplate_source_nested_template_instance(void);
+void EditTemplate_source_body_entity_other_script(void);
+void EditTemplate_set_body_entity(void);
+void EditTemplate_set_body_entity_replaces_prop_expr(void);
+void EditTemplate_set_body_entity_empty_scope(void);
+void EditTemplate_set_body_entity_via_either_instance(void);
+void EditTemplate_delete_body_entity(void);
+void EditTemplate_remove_body_entity_component(void);
+void EditTemplate_edit_body_for_loop_entity_fails(void);
+void EditTemplate_apply_update_all_instances(void);
+void EditTemplate_apply_update_instance_override_wins(void);
+void EditTemplate_apply_update_delete_removes_from_all(void);
+void EditTemplate_entity_owner_body_entity(void);
+void EditTemplate_entity_owner_body_entity_unmanaged(void);
+void EditTemplate_source_template_in_included_file(void);
+void EditTemplate_edit_template_in_included_file(void);
+void EditTemplate_body_entity_template_pair_in_nested_scopes(void);
+void EditTemplate_source_body_entity_nested_in_if_scope(void);
+void EditTemplate_source_body_entity_in_else_scope(void);
+void EditTemplate_source_body_entity_in_with_scope_nested(void);
+void EditTemplate_entity_owner_nested_template_component_assignment(void);
+void EditTemplate_entity_owner_body_entity_in_for_loop_rows(void);
+void EditTemplate_source_body_entity_not_in_scene_script(void);
+void EditTemplate_apply_update_body_entity_in_if_scope(void);
+void EditTemplate_delete_body_entity_recorded_before_delete(void);
+void EditTemplate_clear_delete_body_entity(void);
+void EditTemplate_clear_set_body_entity(void);
+void EditTemplate_apply_update_delete_body_entity_recorded_before_delete(void);
 
 bake_test_case Eval_testcases[] = {
+    {
+        "2_components_same_line_w_semicolon",
+        Eval_2_components_same_line_w_semicolon
+    },
+    {
+        "2_entities_same_line_w_semicolon",
+        Eval_2_entities_same_line_w_semicolon
+    },
+    {
+        "semicolon_after_scope_close",
+        Eval_semicolon_after_scope_close
+    },
+    {
+        "semicolon_after_scope_close_in_scope",
+        Eval_semicolon_after_scope_close_in_scope
+    },
+    {
+        "semicolon_after_if_scope",
+        Eval_semicolon_after_if_scope
+    },
+    {
+        "semicolon_after_with_scope",
+        Eval_semicolon_after_with_scope
+    },
     {
         "null",
         Eval_null
@@ -2216,14 +3530,6 @@ bake_test_case Eval_testcases[] = {
         Eval_hierarchy_1_child_same_line
     },
     {
-        "hierarchy_2_children_same_line",
-        Eval_hierarchy_2_children_same_line
-    },
-    {
-        "hierarchy_2_children_same_line_no_trailing_comma",
-        Eval_hierarchy_2_children_same_line_no_trailing_comma
-    },
-    {
         "entity_after_hierarchy",
         Eval_entity_after_hierarchy
     },
@@ -2294,14 +3600,6 @@ bake_test_case Eval_testcases[] = {
     {
         "with_tag_same_line",
         Eval_with_tag_same_line
-    },
-    {
-        "with_tag_2_entities_same_line",
-        Eval_with_tag_2_entities_same_line
-    },
-    {
-        "with_tag_2_entities_same_line_no_trailing_comma",
-        Eval_with_tag_2_entities_same_line_no_trailing_comma
     },
     {
         "with_tag_2_levels",
@@ -2708,6 +4006,14 @@ bake_test_case Eval_testcases[] = {
         Eval_const_var_bool
     },
     {
+        "const_bool_w_entity_true",
+        Eval_const_bool_w_entity_true
+    },
+    {
+        "const_bool_w_entity_false",
+        Eval_const_bool_w_entity_false
+    },
+    {
         "const_var_string",
         Eval_const_var_string
     },
@@ -2780,28 +4086,16 @@ bake_test_case Eval_testcases[] = {
         Eval_parse_with_value_multiline_comment_after_scope_open
     },
     {
-        "parse_with_var",
-        Eval_parse_with_var
-    },
-    {
-        "parse_with_2_vars",
-        Eval_parse_with_2_vars
-    },
-    {
-        "parse_with_2_nested_vars",
-        Eval_parse_with_2_nested_vars
-    },
-    {
-        "parse_with_var_in_scope",
-        Eval_parse_with_var_in_scope
-    },
-    {
         "assign_const_w_expr",
         Eval_assign_const_w_expr
     },
     {
         "const_w_type",
         Eval_const_w_type
+    },
+    {
+        "assign_narrowing_f64_expr_to_typed_const_w_i32",
+        Eval_assign_narrowing_f64_expr_to_typed_const_w_i32
     },
     {
         "typed_const_w_composite_type",
@@ -2812,8 +4106,120 @@ bake_test_case Eval_testcases[] = {
         Eval_assign_var_to_typed_const_w_composite_type
     },
     {
+        "assign_typed_var_to_typed_const_w_composite_type",
+        Eval_assign_typed_var_to_typed_const_w_composite_type
+    },
+    {
+        "assign_match_to_typed_const_w_composite_type",
+        Eval_assign_match_to_typed_const_w_composite_type
+    },
+    {
+        "assign_match_w_var_cases_to_typed_const_w_composite_type",
+        Eval_assign_match_w_var_cases_to_typed_const_w_composite_type
+    },
+    {
+        "assign_match_to_typed_const_w_bool",
+        Eval_assign_match_to_typed_const_w_bool
+    },
+    {
+        "assign_match_to_typed_const_w_char",
+        Eval_assign_match_to_typed_const_w_char
+    },
+    {
+        "assign_match_to_typed_const_w_byte",
+        Eval_assign_match_to_typed_const_w_byte
+    },
+    {
+        "assign_match_to_typed_const_w_u8",
+        Eval_assign_match_to_typed_const_w_u8
+    },
+    {
+        "assign_match_to_typed_const_w_u16",
+        Eval_assign_match_to_typed_const_w_u16
+    },
+    {
+        "assign_match_to_typed_const_w_u32",
+        Eval_assign_match_to_typed_const_w_u32
+    },
+    {
+        "assign_match_to_typed_const_w_u64",
+        Eval_assign_match_to_typed_const_w_u64
+    },
+    {
+        "assign_match_to_typed_const_w_uptr",
+        Eval_assign_match_to_typed_const_w_uptr
+    },
+    {
+        "assign_match_to_typed_const_w_i8",
+        Eval_assign_match_to_typed_const_w_i8
+    },
+    {
+        "assign_match_to_typed_const_w_i16",
+        Eval_assign_match_to_typed_const_w_i16
+    },
+    {
+        "assign_match_to_typed_const_w_i32",
+        Eval_assign_match_to_typed_const_w_i32
+    },
+    {
+        "assign_match_to_typed_const_w_i64",
+        Eval_assign_match_to_typed_const_w_i64
+    },
+    {
+        "assign_match_to_typed_const_w_iptr",
+        Eval_assign_match_to_typed_const_w_iptr
+    },
+    {
+        "assign_match_to_typed_const_w_f32",
+        Eval_assign_match_to_typed_const_w_f32
+    },
+    {
+        "assign_match_to_typed_const_w_f64",
+        Eval_assign_match_to_typed_const_w_f64
+    },
+    {
+        "assign_match_to_typed_const_w_string",
+        Eval_assign_match_to_typed_const_w_string
+    },
+    {
+        "assign_match_to_typed_const_w_entity",
+        Eval_assign_match_to_typed_const_w_entity
+    },
+    {
+        "assign_match_to_typed_const_w_id",
+        Eval_assign_match_to_typed_const_w_id
+    },
+    {
+        "assign_match_to_typed_const_w_enum",
+        Eval_assign_match_to_typed_const_w_enum
+    },
+    {
+        "assign_match_to_typed_const_w_bitmask",
+        Eval_assign_match_to_typed_const_w_bitmask
+    },
+    {
+        "assign_match_to_typed_const_w_array",
+        Eval_assign_match_to_typed_const_w_array
+    },
+    {
+        "assign_match_to_typed_const_w_vector",
+        Eval_assign_match_to_typed_const_w_vector
+    },
+    {
+        "assign_match_to_typed_const_w_map",
+        Eval_assign_match_to_typed_const_w_map
+    },
+    {
         "using_wildcard",
         Eval_using_wildcard
+    },
+    {
+        "module_scope_takes_precedence_over_using",
+        Eval_module_scope_takes_precedence_over_using
+    },
+    {
+        "module_scope_takes_precedence_over_using_same_script",
+        Eval_module_scope_takes_precedence_over_using_same_script
     },
     {
         "single_line_comment_in_value",
@@ -2838,6 +4244,14 @@ bake_test_case Eval_testcases[] = {
     {
         "nested_module_stmt",
         Eval_nested_module_stmt
+    },
+    {
+        "module_stmt_w_component_from_parent_module",
+        Eval_module_stmt_w_component_from_parent_module
+    },
+    {
+        "module_stmt_w_component_from_parent_module_managed",
+        Eval_module_stmt_w_component_from_parent_module_managed
     },
     {
         "module_stmt_w_scope",
@@ -2980,6 +4394,74 @@ bake_test_case Eval_testcases[] = {
         Eval_if_0
     },
     {
+        "if_entity_var_true",
+        Eval_if_entity_var_true
+    },
+    {
+        "if_entity_var_false",
+        Eval_if_entity_var_false
+    },
+    {
+        "if_entity_var_and_has_true",
+        Eval_if_entity_var_and_has_true
+    },
+    {
+        "if_entity_var_and_has_false",
+        Eval_if_entity_var_and_has_false
+    },
+    {
+        "if_entity_var_and_has_short_circuit",
+        Eval_if_entity_var_and_has_short_circuit
+    },
+    {
+        "if_entity_var_or_has_short_circuit",
+        Eval_if_entity_var_or_has_short_circuit
+    },
+    {
+        "if_and_short_circuit_div_by_zero",
+        Eval_if_and_short_circuit_div_by_zero
+    },
+    {
+        "if_or_short_circuit_div_by_zero",
+        Eval_if_or_short_circuit_div_by_zero
+    },
+    {
+        "if_and_rhs_evaluated",
+        Eval_if_and_rhs_evaluated
+    },
+    {
+        "if_or_rhs_evaluated",
+        Eval_if_or_rhs_evaluated
+    },
+    {
+        "if_chained_and_short_circuit",
+        Eval_if_chained_and_short_circuit
+    },
+    {
+        "if_chained_or_short_circuit",
+        Eval_if_chained_or_short_circuit
+    },
+    {
+        "if_and_or_precedence_short_circuit",
+        Eval_if_and_or_precedence_short_circuit
+    },
+    {
+        "if_parens_and_short_circuit",
+        Eval_if_parens_and_short_circuit
+    },
+    {
+        "if_not_and_short_circuit",
+        Eval_if_not_and_short_circuit
+    },
+    {
+        "const_bool_and_short_circuit",
+        Eval_const_bool_and_short_circuit
+    },
+    {
+        "const_bool_or_short_circuit",
+        Eval_const_bool_or_short_circuit
+    },
+    {
         "if_true_in_scope",
         Eval_if_true_in_scope
     },
@@ -2994,6 +4476,26 @@ bake_test_case Eval_testcases[] = {
     {
         "if_lt_const",
         Eval_if_lt_const
+    },
+    {
+        "if_f64_eq_f64",
+        Eval_if_f64_eq_f64
+    },
+    {
+        "if_f64_eq_flt_literal",
+        Eval_if_f64_eq_flt_literal
+    },
+    {
+        "if_f32_eq_flt_literal",
+        Eval_if_f32_eq_flt_literal
+    },
+    {
+        "if_f32_eq_inexact_flt_literal",
+        Eval_if_f32_eq_inexact_flt_literal
+    },
+    {
+        "if_flt_literal_eq_flt_literal_fails",
+        Eval_if_flt_literal_eq_flt_literal_fails
     },
     {
         "if_enum_eq_and_var",
@@ -3018,6 +4520,22 @@ bake_test_case Eval_testcases[] = {
     {
         "if_else_if_else",
         Eval_if_else_if_else
+    },
+    {
+        "if_else_if_and_short_circuit",
+        Eval_if_else_if_and_short_circuit
+    },
+    {
+        "if_else_if_or_short_circuit",
+        Eval_if_else_if_or_short_circuit
+    },
+    {
+        "if_else_if_div_by_zero_short_circuit",
+        Eval_if_else_if_div_by_zero_short_circuit
+    },
+    {
+        "if_else_if_chain_short_circuit",
+        Eval_if_else_if_chain_short_circuit
     },
     {
         "if_else_if_else_if",
@@ -3180,12 +4698,24 @@ bake_test_case Eval_testcases[] = {
         Eval_path_tag_in_module
     },
     {
+        "path_tag_in_module_w_module_name",
+        Eval_path_tag_in_module_w_module_name
+    },
+    {
         "path_tag_in_nested_scope",
         Eval_path_tag_in_nested_scope
     },
     {
         "path_tag_in_nested_module",
         Eval_path_tag_in_nested_module
+    },
+    {
+        "expr_path_to_local_entity",
+        Eval_expr_path_to_local_entity
+    },
+    {
+        "expr_path_to_nested_local_entity",
+        Eval_expr_path_to_nested_local_entity
     },
     {
         "dont_inherit_script_pair",
@@ -3300,10 +4830,6 @@ bake_test_case Eval_testcases[] = {
         Eval_non_trivial_var_component
     },
     {
-        "non_trivial_var_with",
-        Eval_non_trivial_var_with
-    },
-    {
         "update_template_w_tag",
         Eval_update_template_w_tag
     },
@@ -3320,40 +4846,60 @@ bake_test_case Eval_testcases[] = {
         Eval_assign_call_scoped_func_w_using
     },
     {
-        "eval_w_vars",
-        Eval_eval_w_vars
-    },
-    {
         "eval_twice_w_failed_method_call",
         Eval_eval_twice_w_failed_method_call
     },
     {
+        "eval_twice_w_failed_method_call_on_var",
+        Eval_eval_twice_w_failed_method_call_on_var
+    },
+    {
+        "eval_twice_w_failed_method_call_on_call_result",
+        Eval_eval_twice_w_failed_method_call_on_call_result
+    },
+    {
+        "eval_twice_w_failed_method_call_on_var_call_result",
+        Eval_eval_twice_w_failed_method_call_on_var_call_result
+    },
+    {
+        "eval_twice_w_failed_expr_after_method_call",
+        Eval_eval_twice_w_failed_expr_after_method_call
+    },
+    {
+        "eval_twice_w_failed_expr_after_component_expr",
+        Eval_eval_twice_w_failed_expr_after_component_expr
+    },
+    {
+        "eval_twice_w_failed_expr_in_if_stmt",
+        Eval_eval_twice_w_failed_expr_in_if_stmt
+    },
+    {
+        "eval_twice_w_failed_expr_in_for_stmt",
+        Eval_eval_twice_w_failed_expr_in_for_stmt
+    },
+    {
+        "eval_twice_w_failed_expr_in_entity_scope",
+        Eval_eval_twice_w_failed_expr_in_entity_scope
+    },
+    {
+        "eval_twice_w_failed_expr_in_initializer",
+        Eval_eval_twice_w_failed_expr_in_initializer
+    },
+    {
+        "eval_twice_w_failed_expr_in_match",
+        Eval_eval_twice_w_failed_expr_in_match
+    },
+    {
+        "eval_twice_w_failed_expr_in_interpolated_string",
+        Eval_eval_twice_w_failed_expr_in_interpolated_string
+    },
+    {
+        "const_var_w_identifier_value_wo_newline",
+        Eval_const_var_w_identifier_value_wo_newline
+    },
+    {
         "eval_w_runtime",
         Eval_eval_w_runtime
-    },
-    {
-        "eval_w_other_vars",
-        Eval_eval_w_other_vars
-    },
-    {
-        "eval_w_vars_different_order",
-        Eval_eval_w_vars_different_order
-    },
-    {
-        "eval_w_vars_different_order_var_component",
-        Eval_eval_w_vars_different_order_var_component
-    },
-    {
-        "eval_w_vars_different_order_with_var",
-        Eval_eval_w_vars_different_order_with_var
-    },
-    {
-        "eval_w_vars_different_order_pair_w_var",
-        Eval_eval_w_vars_different_order_pair_w_var
-    },
-    {
-        "eval_w_vars_different_order_pair_scope_w_var",
-        Eval_eval_w_vars_different_order_pair_scope_w_var
     },
     {
         "component_in_entity_in_with_scope",
@@ -3424,6 +4970,38 @@ bake_test_case Eval_testcases[] = {
         Eval_for_range_newline_before_scope
     },
     {
+        "for_continue",
+        Eval_for_continue
+    },
+    {
+        "for_continue_same_line",
+        Eval_for_continue_same_line
+    },
+    {
+        "for_continue_nested_scope",
+        Eval_for_continue_nested_scope
+    },
+    {
+        "for_continue_nested_for",
+        Eval_for_continue_nested_for
+    },
+    {
+        "for_continue_in_template",
+        Eval_for_continue_in_template
+    },
+    {
+        "for_continue_updates_managed_script",
+        Eval_for_continue_updates_managed_script
+    },
+    {
+        "for_continue_outside_for_fails",
+        Eval_for_continue_outside_for_fails
+    },
+    {
+        "for_continue_in_template_in_for_fails",
+        Eval_for_continue_in_template_in_for_fails
+    },
+    {
         "variable_assign_self",
         Eval_variable_assign_self
     },
@@ -3468,32 +5046,8 @@ bake_test_case Eval_testcases[] = {
         Eval_const_i32_assign_empty_collection_initializer
     },
     {
-        "component_w_match",
-        Eval_component_w_match
-    },
-    {
-        "component_w_match_invalid",
-        Eval_component_w_match_invalid
-    },
-    {
-        "pair_component_w_match",
-        Eval_pair_component_w_match
-    },
-    {
-        "component_assign_w_match",
-        Eval_component_assign_w_match
-    },
-    {
-        "component_assign_w_match_matched_case",
-        Eval_component_assign_w_match_matched_case
-    },
-    {
         "unknown_annotation",
         Eval_unknown_annotation
-    },
-    {
-        "const_w_match",
-        Eval_const_w_match
     },
     {
         "component_w_assign_add",
@@ -3688,44 +5242,108 @@ bake_test_case Eval_testcases[] = {
         Eval_export_const_var
     },
     {
+        "export_mut_var",
+        Eval_export_mut_var
+    },
+    {
         "export_const_var_w_type",
         Eval_export_const_var_w_type
+    },
+    {
+        "export_mut_var_w_type",
+        Eval_export_mut_var_w_type
     },
     {
         "export_const_var_w_struct",
         Eval_export_const_var_w_struct
     },
     {
+        "export_mut_var_w_struct",
+        Eval_export_mut_var_w_struct
+    },
+    {
         "export_const_var_redeclared",
         Eval_export_const_var_redeclared
+    },
+    {
+        "export_mut_var_redeclared",
+        Eval_export_mut_var_redeclared
+    },
+    {
+        "export_const_var_redeclared_w_export_mut_var",
+        Eval_export_const_var_redeclared_w_export_mut_var
+    },
+    {
+        "export_mut_var_redeclared_w_export_const_var",
+        Eval_export_mut_var_redeclared_w_export_const_var
     },
     {
         "export_const_var_redeclared_w_local_var",
         Eval_export_const_var_redeclared_w_local_var
     },
     {
+        "export_mut_var_redeclared_w_local_var",
+        Eval_export_mut_var_redeclared_w_local_var
+    },
+    {
         "local_const_var_redeclared_w_export_var",
         Eval_local_const_var_redeclared_w_export_var
+    },
+    {
+        "local_const_var_redeclared_w_export_mut_var",
+        Eval_local_const_var_redeclared_w_export_mut_var
     },
     {
         "export_const_var_used_by_other_script",
         Eval_export_const_var_used_by_other_script
     },
     {
+        "export_mut_var_used_by_other_script",
+        Eval_export_mut_var_used_by_other_script
+    },
+    {
         "export_const_var_as_component",
         Eval_export_const_var_as_component
+    },
+    {
+        "export_mut_var_as_component",
+        Eval_export_mut_var_as_component
     },
     {
         "export_scoped_const_var_as_component",
         Eval_export_scoped_const_var_as_component
     },
     {
+        "export_scoped_mut_var_as_component",
+        Eval_export_scoped_mut_var_as_component
+    },
+    {
         "export_const_var_in_scope",
         Eval_export_const_var_in_scope
     },
     {
+        "export_mut_var_in_scope",
+        Eval_export_mut_var_in_scope
+    },
+    {
+        "export_mut_var_modified_from_c",
+        Eval_export_mut_var_modified_from_c
+    },
+    {
+        "export_const_var_is_not_mut_var",
+        Eval_export_const_var_is_not_mut_var
+    },
+    {
+        "export_mut_var_is_not_const_var",
+        Eval_export_mut_var_is_not_const_var
+    },
+    {
         "export_scoped_const_var_used_by_other_script",
         Eval_export_scoped_const_var_used_by_other_script
+    },
+    {
+        "export_scoped_mut_var_used_by_other_script",
+        Eval_export_scoped_mut_var_used_by_other_script
     },
     {
         "run_script_w_module_from_scope",
@@ -3912,6 +5530,10 @@ bake_test_case Eval_testcases[] = {
         Eval_export_const_var_w_comment
     },
     {
+        "export_mut_var_w_comment",
+        Eval_export_mut_var_w_comment
+    },
+    {
         "auto_override_tag_w_comment",
         Eval_auto_override_tag_w_comment
     },
@@ -4044,6 +5666,14 @@ bake_test_case Eval_testcases[] = {
         Eval_component_expr_swizzle_initializer_rgba
     },
     {
+        "component_expr_swizzle_initializer_add_assign",
+        Eval_component_expr_swizzle_initializer_add_assign
+    },
+    {
+        "component_expr_swizzle_initializer_mul_assign",
+        Eval_component_expr_swizzle_initializer_mul_assign
+    },
+    {
         "component_expr_member_no_var",
         Eval_component_expr_member_no_var
     },
@@ -4158,6 +5788,1043 @@ bake_test_case Eval_testcases[] = {
     {
         "opaque_struct_member_at_offset",
         Eval_opaque_struct_member_at_offset
+    },
+    {
+        "script_expr",
+        Eval_script_expr
+    },
+    {
+        "script_expr_empty",
+        Eval_script_expr_empty
+    },
+    {
+        "script_expr_multiline",
+        Eval_script_expr_multiline
+    },
+    {
+        "script_expr_nested",
+        Eval_script_expr_nested
+    },
+    {
+        "script_expr_hoist_using",
+        Eval_script_expr_hoist_using
+    },
+    {
+        "script_expr_hoist_wildcard_using",
+        Eval_script_expr_hoist_wildcard_using
+    },
+    {
+        "script_expr_followed_by_stmt",
+        Eval_script_expr_followed_by_stmt
+    },
+    {
+        "script_expr_invalid_body",
+        Eval_script_expr_invalid_body
+    },
+    {
+        "script_expr_unterminated",
+        Eval_script_expr_unterminated
+    },
+    {
+        "using_cleared_after_script",
+        Eval_using_cleared_after_script
+    },
+    {
+        "pair_scope_new_target_eval_twice",
+        Eval_pair_scope_new_target_eval_twice
+    },
+    {
+        "for_loop_named_child_in_interpolated_parent",
+        Eval_for_loop_named_child_in_interpolated_parent
+    },
+    {
+        "entity_scope_after_export_const_same_name",
+        Eval_entity_scope_after_export_const_same_name
+    },
+    {
+        "existing_child_of_reopened_parent",
+        Eval_existing_child_of_reopened_parent
+    },
+    {
+        "pair_scope_target_shadowed_by_root_entity",
+        Eval_pair_scope_target_shadowed_by_root_entity
+    },
+    {
+        "pair_scope_predeclared_entity_export_const",
+        Eval_pair_scope_predeclared_entity_export_const
+    },
+    {
+        "has_expr_pair_w_enum_constant",
+        Eval_has_expr_pair_w_enum_constant
+    },
+    {
+        "has_expr_in_if",
+        Eval_has_expr_in_if
+    },
+    {
+        "const_bool_from_optional_component",
+        Eval_const_bool_from_optional_component
+    },
+    {
+        "component_initializer_w_function_that_moves_entity",
+        Eval_component_initializer_w_function_that_moves_entity
+    },
+    {
+        "component_initializer_w_function_that_moves_entity_w_on_replace",
+        Eval_component_initializer_w_function_that_moves_entity_w_on_replace
+    },
+    {
+        "struct_member_initializer_w_function_that_moves_member",
+        Eval_struct_member_initializer_w_function_that_moves_member
+    },
+    {
+        "enum_constant_w_function_that_moves_constant",
+        Eval_enum_constant_w_function_that_moves_constant
+    },
+    {
+        "script_update_w_on_remove_observer_that_moves_script_entity",
+        Eval_script_update_w_on_remove_observer_that_moves_script_entity
+    },
+    {
+        "struct_member_w_forward_declared_type",
+        Eval_struct_member_w_forward_declared_type
+    },
+    {
+        "enum_constant_w_forward_declared_value",
+        Eval_enum_constant_w_forward_declared_value
+    },
+    {
+        "const_var_large_struct_no_leak",
+        Eval_const_var_large_struct_no_leak
+    },
+    {
+        "delete_managed_script_shared_table_no_leak",
+        Eval_delete_managed_script_shared_table_no_leak
+    },
+    {
+        "stmt_after_comment_w_comment_open",
+        Eval_stmt_after_comment_w_comment_open
+    },
+    {
+        "stmt_after_newline_w_vertical_tab",
+        Eval_stmt_after_newline_w_vertical_tab
+    },
+    {
+        "assign_inline_array_member_from_array_expr",
+        Eval_assign_inline_array_member_from_array_expr
+    },
+    {
+        "component_expr_w_type_from_same_script",
+        Eval_component_expr_w_type_from_same_script
+    },
+    {
+        "const_var_from_large_component_no_leak",
+        Eval_const_var_from_large_component_no_leak
+    },
+    {
+        "const_var_from_large_component_member_no_leak",
+        Eval_const_var_from_large_component_member_no_leak
+    },
+    {
+        "const_var_from_large_array_element_no_leak",
+        Eval_const_var_from_large_array_element_no_leak
+    },
+    {
+        "update_script_that_declares_script_entity",
+        Eval_update_script_that_declares_script_entity
+    },
+    {
+        "update_script_that_declares_parent_of_script_entity",
+        Eval_update_script_that_declares_parent_of_script_entity
+    },
+    {
+        "script_refers_to_script_entity",
+        Eval_script_refers_to_script_entity
+    },
+    {
+        "vector_of_struct_w_array_member",
+        Eval_vector_of_struct_w_array_member
+    },
+    {
+        "rerun_script_w_enum_type_w_underlying_type_in_use",
+        Eval_rerun_script_w_enum_type_w_underlying_type_in_use
+    },
+    {
+        "enum_w_float_underlying_type",
+        Eval_enum_w_float_underlying_type
+    },
+    {
+        "enum_w_struct_underlying_type",
+        Eval_enum_w_struct_underlying_type
+    },
+    {
+        "struct_w_member_of_own_type",
+        Eval_struct_w_member_of_own_type
+    },
+    {
+        "struct_w_inline_array_member_of_own_type",
+        Eval_struct_w_inline_array_member_of_own_type
+    },
+    {
+        "enum_w_duplicate_constant_values",
+        Eval_enum_w_duplicate_constant_values
+    },
+    {
+        "bitmask_w_duplicate_constant_values",
+        Eval_bitmask_w_duplicate_constant_values
+    },
+    {
+        "kind_entity_before_scope_close_same_line",
+        Eval_kind_entity_before_scope_close_same_line
+    },
+    {
+        "kind_entity_w_base_before_scope_close_same_line",
+        Eval_kind_entity_w_base_before_scope_close_same_line
+    },
+    {
+        "auto_override_before_scope_close_same_line",
+        Eval_auto_override_before_scope_close_same_line
+    },
+    {
+        "auto_override_pair_before_scope_close_same_line",
+        Eval_auto_override_pair_before_scope_close_same_line
+    },
+    {
+        "module_stmt_w_semicolon",
+        Eval_module_stmt_w_semicolon
+    },
+    {
+        "module_stmt_at_end_of_script",
+        Eval_module_stmt_at_end_of_script
+    },
+    {
+        "ir_managed_script_desc",
+        Eval_ir_managed_script_desc
+    },
+    {
+        "ir_eval_desc",
+        Eval_ir_eval_desc
+    },
+    {
+        "ir_to_str",
+        Eval_ir_to_str
+    },
+    {
+        "ir_managed_script_update_keeps_runtime",
+        Eval_ir_managed_script_update_keeps_runtime
+    },
+    {
+        "string_interpolation_of_scalar_types",
+        Eval_string_interpolation_of_scalar_types
+    }
+};
+
+bake_test_case Collection_testcases[] = {
+    {
+        "range_bracketed",
+        Collection_range_bracketed
+    },
+    {
+        "range_bare",
+        Collection_range_bare
+    },
+    {
+        "range_bracketed_index_value",
+        Collection_range_bracketed_index_value
+    },
+    {
+        "range_bare_index_value",
+        Collection_range_bare_index_value
+    },
+    {
+        "range_w_expr_endpoints",
+        Collection_range_w_expr_endpoints
+    },
+    {
+        "range_w_vars",
+        Collection_range_w_vars
+    },
+    {
+        "range_empty",
+        Collection_range_empty
+    },
+    {
+        "range_reverse_empty",
+        Collection_range_reverse_empty
+    },
+    {
+        "range_negative",
+        Collection_range_negative
+    },
+    {
+        "range_single",
+        Collection_range_single
+    },
+    {
+        "range_nested",
+        Collection_range_nested
+    },
+    {
+        "range_too_many_vars",
+        Collection_range_too_many_vars
+    },
+    {
+        "array_elem",
+        Collection_array_elem
+    },
+    {
+        "array_index_elem",
+        Collection_array_index_elem
+    },
+    {
+        "array_struct_elem",
+        Collection_array_struct_elem
+    },
+    {
+        "array_string_elem",
+        Collection_array_string_elem
+    },
+    {
+        "array_entity_elem",
+        Collection_array_entity_elem
+    },
+    {
+        "array_member_of_struct",
+        Collection_array_member_of_struct
+    },
+    {
+        "array_const_var_from_c",
+        Collection_array_const_var_from_c
+    },
+    {
+        "array_nested",
+        Collection_array_nested
+    },
+    {
+        "array_in_entity_scope",
+        Collection_array_in_entity_scope
+    },
+    {
+        "array_elem_in_if",
+        Collection_array_elem_in_if
+    },
+    {
+        "array_anonymous_entities",
+        Collection_array_anonymous_entities
+    },
+    {
+        "array_too_many_vars",
+        Collection_array_too_many_vars
+    },
+    {
+        "vector_elem",
+        Collection_vector_elem
+    },
+    {
+        "vector_index_elem",
+        Collection_vector_index_elem
+    },
+    {
+        "vector_struct_elem",
+        Collection_vector_struct_elem
+    },
+    {
+        "vector_member_elem_w_member_index",
+        Collection_vector_member_elem_w_member_index
+    },
+    {
+        "vector_string_elem",
+        Collection_vector_string_elem
+    },
+    {
+        "vector_member_w_string_elems",
+        Collection_vector_member_w_string_elems
+    },
+    {
+        "vector_empty",
+        Collection_vector_empty
+    },
+    {
+        "vector_nested",
+        Collection_vector_nested
+    },
+    {
+        "vector_too_many_vars",
+        Collection_vector_too_many_vars
+    },
+    {
+        "map_elem",
+        Collection_map_elem
+    },
+    {
+        "map_key_elem",
+        Collection_map_key_elem
+    },
+    {
+        "map_key_index_elem",
+        Collection_map_key_index_elem
+    },
+    {
+        "map_key_index_elem_w_var_in_body",
+        Collection_map_key_index_elem_w_var_in_body
+    },
+    {
+        "map_single_entry",
+        Collection_map_single_entry
+    },
+    {
+        "map_entity_key",
+        Collection_map_entity_key
+    },
+    {
+        "map_u8_key",
+        Collection_map_u8_key
+    },
+    {
+        "map_struct_value",
+        Collection_map_struct_value
+    },
+    {
+        "map_string_value",
+        Collection_map_string_value
+    },
+    {
+        "map_empty",
+        Collection_map_empty
+    },
+    {
+        "map_too_many_vars",
+        Collection_map_too_many_vars
+    },
+    {
+        "nested_struct_arrays",
+        Collection_nested_struct_arrays
+    },
+    {
+        "template_w_for_array",
+        Collection_template_w_for_array
+    },
+    {
+        "template_w_for_vector",
+        Collection_template_w_for_vector
+    },
+    {
+        "template_w_for_map",
+        Collection_template_w_for_map
+    },
+    {
+        "template_w_for_range_bracketed",
+        Collection_template_w_for_range_bracketed
+    },
+    {
+        "iterate_int_literal",
+        Collection_iterate_int_literal
+    },
+    {
+        "iterate_int_var",
+        Collection_iterate_int_var
+    },
+    {
+        "iterate_entity",
+        Collection_iterate_entity
+    },
+    {
+        "iterate_undefined_var",
+        Collection_iterate_undefined_var
+    },
+    {
+        "duplicate_loop_vars",
+        Collection_duplicate_loop_vars
+    },
+    {
+        "duplicate_loop_vars_map",
+        Collection_duplicate_loop_vars_map
+    },
+    {
+        "collection_literal_not_supported",
+        Collection_collection_literal_not_supported
+    },
+    {
+        "missing_in_keyword",
+        Collection_missing_in_keyword
+    },
+    {
+        "vector_literal_bool",
+        Collection_vector_literal_bool
+    },
+    {
+        "vector_literal_char",
+        Collection_vector_literal_char
+    },
+    {
+        "vector_literal_u8",
+        Collection_vector_literal_u8
+    },
+    {
+        "vector_literal_u16",
+        Collection_vector_literal_u16
+    },
+    {
+        "vector_literal_u32",
+        Collection_vector_literal_u32
+    },
+    {
+        "vector_literal_u64",
+        Collection_vector_literal_u64
+    },
+    {
+        "vector_literal_uptr",
+        Collection_vector_literal_uptr
+    },
+    {
+        "vector_literal_i8",
+        Collection_vector_literal_i8
+    },
+    {
+        "vector_literal_i16",
+        Collection_vector_literal_i16
+    },
+    {
+        "vector_literal_i32",
+        Collection_vector_literal_i32
+    },
+    {
+        "vector_literal_i64",
+        Collection_vector_literal_i64
+    },
+    {
+        "vector_literal_iptr",
+        Collection_vector_literal_iptr
+    },
+    {
+        "vector_literal_f32",
+        Collection_vector_literal_f32
+    },
+    {
+        "vector_literal_f64",
+        Collection_vector_literal_f64
+    },
+    {
+        "vector_literal_int",
+        Collection_vector_literal_int
+    },
+    {
+        "vector_literal_string",
+        Collection_vector_literal_string
+    },
+    {
+        "vector_literal_entity",
+        Collection_vector_literal_entity
+    },
+    {
+        "vector_literal_entity_mut",
+        Collection_vector_literal_entity_mut
+    },
+    {
+        "for_inline_array_member_of_component",
+        Collection_for_inline_array_member_of_component
+    },
+    {
+        "for_inline_array_member_of_const_var",
+        Collection_for_inline_array_member_of_const_var
+    },
+    {
+        "vector_literal_int_float",
+        Collection_vector_literal_int_float
+    },
+    {
+        "vector_literal_float_int",
+        Collection_vector_literal_float_int
+    },
+    {
+        "vector_literal_mixed_int",
+        Collection_vector_literal_mixed_int
+    },
+    {
+        "vector_literal_int_string",
+        Collection_vector_literal_int_string
+    },
+    {
+        "vector_literal_string_int",
+        Collection_vector_literal_string_int
+    },
+    {
+        "vector_literal_float_string",
+        Collection_vector_literal_float_string
+    },
+    {
+        "vector_literal_string_float",
+        Collection_vector_literal_string_float
+    },
+    {
+        "vector_literal_entity_string",
+        Collection_vector_literal_entity_string
+    },
+    {
+        "vector_literal_string_entity",
+        Collection_vector_literal_string_entity
+    },
+    {
+        "vector_literal_bool_int",
+        Collection_vector_literal_bool_int
+    },
+    {
+        "vector_literal_nested",
+        Collection_vector_literal_nested
+    },
+    {
+        "vector_literal_iterate",
+        Collection_vector_literal_iterate
+    },
+    {
+        "vector_literal_typecache_name",
+        Collection_vector_literal_typecache_name
+    },
+    {
+        "vector_literal_typecache_reuse",
+        Collection_vector_literal_typecache_reuse
+    },
+    {
+        "range_literal",
+        Collection_range_literal
+    },
+    {
+        "range_literal_no_spaces",
+        Collection_range_literal_no_spaces
+    },
+    {
+        "range_literal_empty",
+        Collection_range_literal_empty
+    },
+    {
+        "range_literal_reverse_empty",
+        Collection_range_literal_reverse_empty
+    },
+    {
+        "range_literal_negative",
+        Collection_range_literal_negative
+    },
+    {
+        "range_literal_w_vars",
+        Collection_range_literal_w_vars
+    },
+    {
+        "range_literal_w_exprs",
+        Collection_range_literal_w_exprs
+    },
+    {
+        "range_literal_iterate",
+        Collection_range_literal_iterate
+    },
+    {
+        "range_literal_typed_vector",
+        Collection_range_literal_typed_vector
+    },
+    {
+        "range_literal_typed_float_vector",
+        Collection_range_literal_typed_float_vector
+    },
+    {
+        "range_literal_non_vector_type",
+        Collection_range_literal_non_vector_type
+    }
+};
+
+bake_test_case Await_testcases[] = {
+    {
+        "task_new_w_deleted_entity",
+        Await_task_new_w_deleted_entity
+    },
+    {
+        "delete_scope_parent_while_suspended",
+        Await_delete_scope_parent_while_suspended
+    },
+    {
+        "fini_w_alive_task",
+        Await_fini_w_alive_task
+    },
+    {
+        "free_script_w_alive_task",
+        Await_free_script_w_alive_task
+    },
+    {
+        "parse_await_const",
+        Await_parse_await_const
+    },
+    {
+        "parse_await_stmt",
+        Await_parse_await_stmt
+    },
+    {
+        "register_async",
+        Await_register_async
+    },
+    {
+        "register_async_publishes_complete_function",
+        Await_register_async_publishes_complete_function
+    },
+    {
+        "replace_async_function_with_sync",
+        Await_replace_async_function_with_sync
+    },
+    {
+        "await_const_suspend_resume",
+        Await_await_const_suspend_resume
+    },
+    {
+        "await_stmt_sequence",
+        Await_await_stmt_sequence
+    },
+    {
+        "reject",
+        Await_reject
+    },
+    {
+        "cancel",
+        Await_cancel
+    },
+    {
+        "preserve_const_and_using",
+        Await_preserve_const_and_using
+    },
+    {
+        "await_in_if",
+        Await_await_in_if
+    },
+    {
+        "await_in_for",
+        Await_await_in_for
+    },
+    {
+        "await_in_with",
+        Await_await_in_with
+    },
+    {
+        "await_in_entity",
+        Await_await_in_entity
+    },
+    {
+        "await_in_pair_scope",
+        Await_await_in_pair_scope
+    },
+    {
+        "preserve_string_const",
+        Await_preserve_string_const
+    },
+    {
+        "owner_context",
+        Await_owner_context
+    },
+    {
+        "qualified_call",
+        Await_qualified_call
+    },
+    {
+        "haul_single",
+        Await_haul_single
+    },
+    {
+        "haul_loop_3",
+        Await_haul_loop_3
+    },
+    {
+        "haul_loop_count",
+        Await_haul_loop_count
+    },
+    {
+        "haul_loop_forever",
+        Await_haul_loop_forever
+    },
+    {
+        "haul_multiple_owners",
+        Await_haul_multiple_owners
+    },
+    {
+        "loop_once",
+        Await_loop_once
+    },
+    {
+        "loop_count_multiple_owners",
+        Await_loop_count_multiple_owners
+    },
+    {
+        "loop_count_resets_state",
+        Await_loop_count_resets_state
+    },
+    {
+        "loop_count_invalid",
+        Await_loop_count_invalid
+    },
+    {
+        "loop_error_is_terminal",
+        Await_loop_error_is_terminal
+    },
+    {
+        "loop_sync_yields",
+        Await_loop_sync_yields
+    },
+    {
+        "entity_enter_error_restores_state",
+        Await_entity_enter_error_restores_state
+    },
+    {
+        "with_enter_error_restores_state",
+        Await_with_enter_error_restores_state
+    },
+    {
+        "cancel_nested_frames",
+        Await_cancel_nested_frames
+    },
+    {
+        "reject_nested_frames",
+        Await_reject_nested_frames
+    },
+    {
+        "cancel_is_terminal",
+        Await_cancel_is_terminal
+    },
+    {
+        "immediate_resolve",
+        Await_immediate_resolve
+    },
+    {
+        "await_export_const",
+        Await_await_export_const
+    },
+    {
+        "await_export_mut",
+        Await_await_export_mut
+    },
+    {
+        "interleaved_tasks",
+        Await_interleaved_tasks
+    },
+    {
+        "await_method_receiver",
+        Await_await_method_receiver
+    },
+    {
+        "task_component_added_on_task_new",
+        Await_task_component_added_on_task_new
+    },
+    {
+        "task_component_not_added_without_entity",
+        Await_task_component_not_added_without_entity
+    },
+    {
+        "task_component_two_tasks",
+        Await_task_component_two_tasks
+    },
+    {
+        "task_component_entity_delete_cancels_task",
+        Await_task_component_entity_delete_cancels_task
+    },
+    {
+        "task_component_serialize",
+        Await_task_component_serialize
+    },
+    {
+        "task_component_deferred_one_task",
+        Await_task_component_deferred_one_task
+    },
+    {
+        "task_component_deferred_three_tasks",
+        Await_task_component_deferred_three_tasks
+    },
+    {
+        "task_component_deferred_w_existing_task",
+        Await_task_component_deferred_w_existing_task
+    },
+    {
+        "second_task_same_script_while_suspended",
+        Await_second_task_same_script_while_suspended
+    },
+    {
+        "loop_forever_recreate_deleted_entity",
+        Await_loop_forever_recreate_deleted_entity
+    },
+    {
+        "task_component_deferred_new_then_free",
+        Await_task_component_deferred_new_then_free
+    },
+    {
+        "loop_forever_counts_iterations",
+        Await_loop_forever_counts_iterations
+    },
+    {
+        "cancel_task_from_async_callback",
+        Await_cancel_task_from_async_callback
+    },
+    {
+        "resume_from_async_callback",
+        Await_resume_from_async_callback
+    },
+    {
+        "free_task_from_async_callback",
+        Await_free_task_from_async_callback
+    },
+    {
+        "await_in_template_body_fails_task",
+        Await_await_in_template_body_fails_task
+    },
+    {
+        "deep_scope_resume",
+        Await_deep_scope_resume
+    },
+    {
+        "deep_scope_cancel",
+        Await_deep_scope_cancel
+    },
+    {
+        "many_live_strings_resume_and_cancel",
+        Await_many_live_strings_resume_and_cancel
+    }
+};
+
+bake_test_case TryCatch_testcases[] = {
+    {
+        "parse_try_catch_all",
+        TryCatch_parse_try_catch_all
+    },
+    {
+        "parse_try_catch_typed",
+        TryCatch_parse_try_catch_typed
+    },
+    {
+        "parse_try_multiple_catch",
+        TryCatch_parse_try_multiple_catch
+    },
+    {
+        "parse_try_missing_catch",
+        TryCatch_parse_try_missing_catch
+    },
+    {
+        "parse_try_missing_scope",
+        TryCatch_parse_try_missing_scope
+    },
+    {
+        "parse_catch_missing_scope",
+        TryCatch_parse_catch_missing_scope
+    },
+    {
+        "parse_catch_unclosed_paren",
+        TryCatch_parse_catch_unclosed_paren
+    },
+    {
+        "parse_catch_var_error",
+        TryCatch_parse_catch_var_error
+    },
+    {
+        "try_in_plain_eval",
+        TryCatch_try_in_plain_eval
+    },
+    {
+        "catch_all_reject",
+        TryCatch_catch_all_reject
+    },
+    {
+        "catch_typed_match",
+        TryCatch_catch_typed_match
+    },
+    {
+        "catch_typed_no_match_propagates",
+        TryCatch_catch_typed_no_match_propagates
+    },
+    {
+        "catch_typed_falls_through_to_catch_all",
+        TryCatch_catch_typed_falls_through_to_catch_all
+    },
+    {
+        "catch_first_match_wins",
+        TryCatch_catch_first_match_wins
+    },
+    {
+        "plain_reject_not_caught_by_typed",
+        TryCatch_plain_reject_not_caught_by_typed
+    },
+    {
+        "runtime_error_not_caught",
+        TryCatch_runtime_error_not_caught
+    },
+    {
+        "runtime_error_is_terminal",
+        TryCatch_runtime_error_is_terminal
+    },
+    {
+        "await_in_catch",
+        TryCatch_await_in_catch
+    },
+    {
+        "reject_in_catch_propagates",
+        TryCatch_reject_in_catch_propagates
+    },
+    {
+        "nested_try_inner_catches",
+        TryCatch_nested_try_inner_catches
+    },
+    {
+        "nested_try_outer_catches",
+        TryCatch_nested_try_outer_catches
+    },
+    {
+        "try_in_entity_scope",
+        TryCatch_try_in_entity_scope
+    },
+    {
+        "error_in_with_scope_unwinds",
+        TryCatch_error_in_with_scope_unwinds
+    },
+    {
+        "error_in_for_unwinds",
+        TryCatch_error_in_for_unwinds
+    },
+    {
+        "loop_forever_catch_resets",
+        TryCatch_loop_forever_catch_resets
+    },
+    {
+        "loop_count_catch",
+        TryCatch_loop_count_catch
+    },
+    {
+        "loop_uncaught_error_is_terminal",
+        TryCatch_loop_uncaught_error_is_terminal
+    },
+    {
+        "cancel_not_caught",
+        TryCatch_cancel_not_caught
+    },
+    {
+        "resolve_skips_catch",
+        TryCatch_resolve_skips_catch
+    },
+    {
+        "catch_error_from_using_scope",
+        TryCatch_catch_error_from_using_scope
+    },
+    {
+        "reject_id_twice_fails",
+        TryCatch_reject_id_twice_fails
+    },
+    {
+        "reject_id_null_msg",
+        TryCatch_reject_id_null_msg
+    },
+    {
+        "vars_preserved_across_catch",
+        TryCatch_vars_preserved_across_catch
+    },
+    {
+        "free_while_pending_in_try",
+        TryCatch_free_while_pending_in_try
+    },
+    {
+        "free_while_pending_in_catch",
+        TryCatch_free_while_pending_in_catch
+    },
+    {
+        "this_var_in_catch",
+        TryCatch_this_var_in_catch
     }
 };
 
@@ -4407,10 +7074,6 @@ bake_test_case Function_testcases[] = {
         Function_call_in_for_body
     },
     {
-        "call_in_with",
-        Function_call_in_with
-    },
-    {
         "call_in_const_rhs",
         Function_call_in_const_rhs
     },
@@ -4473,10 +7136,58 @@ bake_test_case Function_testcases[] = {
     {
         "const_runtime_error",
         Function_const_runtime_error
+    },
+    {
+        "fn_w_hoisted_var",
+        Function_fn_w_hoisted_var
+    },
+    {
+        "memoized_against_args_ignores_hidden_state",
+        Function_memoized_against_args_ignores_hidden_state
+    },
+    {
+        "fn_w_large_struct_param_no_leak",
+        Function_fn_w_large_struct_param_no_leak
+    },
+    {
+        "entity_lookup_w_null_path",
+        Function_entity_lookup_w_null_path
+    },
+    {
+        "redeclare_function_no_leak",
+        Function_redeclare_function_no_leak
+    },
+    {
+        "redeclare_method_no_leak",
+        Function_redeclare_method_no_leak
+    },
+    {
+        "repeated_nested_calls_with_strings",
+        Function_repeated_nested_calls_with_strings
+    },
+    {
+        "repeated_calls_after_error",
+        Function_repeated_calls_after_error
     }
 };
 
 bake_test_case Template_testcases[] = {
+    {
+        "manual_instantiation",
+        Template_manual_instantiation
+    },
+    {
+        "manual_update_and_remove",
+        Template_manual_update_and_remove
+    },
+    {
+        "manual_managed_script_clear",
+        Template_manual_managed_script_clear
+    },
+    {
+        "instantiate_w_string_prop_no_leak",
+        Template_instantiate_w_string_prop_no_leak
+    },
     {
         "template_no_scope",
         Template_template_no_scope
@@ -4496,6 +7207,10 @@ bake_test_case Template_testcases[] = {
     {
         "template_prop_space_colon",
         Template_template_prop_space_colon
+    },
+    {
+        "template_props_no_member_entities",
+        Template_template_props_no_member_entities
     },
     {
         "template_2_props",
@@ -4666,8 +7381,36 @@ bake_test_case Template_testcases[] = {
         Template_prop_without_using_meta
     },
     {
+        "hoisted_var_from_outer_scope",
+        Template_hoisted_var_from_outer_scope
+    },
+    {
+        "hoisted_var_from_outer_scopes",
+        Template_hoisted_var_from_outer_scopes
+    },
+    {
+        "hoisted_masked_var_from_outer_scope",
+        Template_hoisted_masked_var_from_outer_scope
+    },
+    {
+        "hoisted_var_instantiate_after_run",
+        Template_hoisted_var_instantiate_after_run
+    },
+    {
+        "hoisted_var_w_script_entity",
+        Template_hoisted_var_w_script_entity
+    },
+    {
         "hoist_var",
         Template_hoist_var
+    },
+    {
+        "hoist_non_folded_var",
+        Template_hoist_non_folded_var
+    },
+    {
+        "hoist_component_var",
+        Template_hoist_component_var
     },
     {
         "hoist_vars_nested",
@@ -4720,14 +7463,6 @@ bake_test_case Template_testcases[] = {
     {
         "template_w_prefab_and_instance",
         Template_template_w_prefab_and_instance
-    },
-    {
-        "template_w_with_var",
-        Template_template_w_with_var
-    },
-    {
-        "template_w_with_prop",
-        Template_template_w_with_prop
     },
     {
         "template_w_child_w_var",
@@ -4858,12 +7593,280 @@ bake_test_case Template_testcases[] = {
         Template_template_w_existing_observer
     },
     {
+        "computed_const_skips_dependents_when_unchanged",
+        Template_computed_const_skips_dependents_when_unchanged
+    },
+    {
+        "computed_const_prop_change",
+        Template_computed_const_prop_change
+    },
+    {
+        "computed_const_in_entity_scope",
+        Template_computed_const_in_entity_scope
+    },
+    {
+        "computed_const_not_cached_in_branch",
+        Template_computed_const_not_cached_in_branch
+    },
+    {
+        "computed_const_string",
+        Template_computed_const_string
+    },
+    {
+        "computed_const_instance_deleted",
+        Template_computed_const_instance_deleted
+    },
+    {
+        "deferred_updates_batched",
+        Template_deferred_updates_batched
+    },
+    {
+        "deferred_update_nested_template",
+        Template_deferred_update_nested_template
+    },
+    {
+        "deferred_update_from_system",
+        Template_deferred_update_from_system
+    },
+    {
+        "pair_on_set_observer_exact",
+        Template_pair_on_set_observer_exact
+    },
+    {
+        "pair_on_set_observer_rel_wildcard",
+        Template_pair_on_set_observer_rel_wildcard
+    },
+    {
+        "pair_on_set_observer_tgt_wildcard",
+        Template_pair_on_set_observer_tgt_wildcard
+    },
+    {
+        "pair_on_set_observer_wildcard_pair",
+        Template_pair_on_set_observer_wildcard_pair
+    },
+    {
+        "component_on_set_observer_any",
+        Template_component_on_set_observer_any
+    },
+    {
         "template_w_prop_w_value_name",
         Template_template_w_prop_w_value_name
     },
     {
         "template_w_var_w_value_name",
         Template_template_w_var_w_value_name
+    },
+    {
+        "eval_twice_w_failed_method_call_in_body",
+        Template_eval_twice_w_failed_method_call_in_body
+    },
+    {
+        "eval_twice_w_failed_method_call_in_prop_default",
+        Template_eval_twice_w_failed_method_call_in_prop_default
+    },
+    {
+        "singleton_scope_w_template",
+        Template_singleton_scope_w_template
+    },
+    {
+        "annotation_in_template",
+        Template_annotation_in_template
+    },
+    {
+        "annotation_in_for_in_template",
+        Template_annotation_in_for_in_template
+    },
+    {
+        "annotation_in_if_in_template",
+        Template_annotation_in_if_in_template
+    },
+    {
+        "multiple_templates_dont_leak_child_names",
+        Template_multiple_templates_dont_leak_child_names
+    },
+    {
+        "template_w_module_qualified_entity_ref",
+        Template_template_w_module_qualified_entity_ref
+    },
+    {
+        "injected_child_order_w_ordered_children",
+        Template_injected_child_order_w_ordered_children
+    },
+    {
+        "template_prop_default_from_const",
+        Template_template_prop_default_from_const
+    },
+    {
+        "template_root_component_w_string_mut",
+        Template_template_root_component_w_string_mut
+    },
+    {
+        "template_root_component_after_component_w_mut",
+        Template_template_root_component_after_component_w_mut
+    },
+    {
+        "template_root_component_w_string_mut_in_nested_if",
+        Template_template_root_component_w_string_mut_in_nested_if
+    },
+    {
+        "template_root_component_w_string_mut_in_match_in_if",
+        Template_template_root_component_w_string_mut_in_match_in_if
+    },
+    {
+        "template_props_set_on_multiple_entities_w_bulk_init",
+        Template_template_props_set_on_multiple_entities_w_bulk_init
+    },
+    {
+        "template_in_singleton_scope",
+        Template_template_in_singleton_scope
+    },
+    {
+        "template_instantiated_on_itself",
+        Template_template_instantiated_on_itself
+    },
+    {
+        "template_prop_large_struct_no_leak",
+        Template_template_prop_large_struct_no_leak
+    },
+    {
+        "many_templates_w_props_in_script",
+        Template_many_templates_w_props_in_script
+    },
+    {
+        "tree_parent_prefab_before_template",
+        Template_tree_parent_prefab_before_template
+    },
+    {
+        "template_prop_struct_assign_whole_component",
+        Template_template_prop_struct_assign_whole_component
+    },
+    {
+        "template_prop_struct_assign_whole_component_no_dollar",
+        Template_template_prop_struct_assign_whole_component_no_dollar
+    },
+    {
+        "template_prop_struct_assign_whole_component_default",
+        Template_template_prop_struct_assign_whole_component_default
+    },
+    {
+        "template_prop_struct_in_nested_struct_literal",
+        Template_template_prop_struct_in_nested_struct_literal
+    },
+    {
+        "template_prop_struct_in_nested_struct_literal_default",
+        Template_template_prop_struct_in_nested_struct_literal_default
+    },
+    {
+        "template_prop_struct_in_nested_struct_literal_partial_args",
+        Template_template_prop_struct_in_nested_struct_literal_partial_args
+    },
+    {
+        "template_prop_struct_f32_members_in_nested_struct_literal",
+        Template_template_prop_struct_f32_members_in_nested_struct_literal
+    },
+    {
+        "template_prop_struct_in_struct_literal_same_scope",
+        Template_template_prop_struct_in_struct_literal_same_scope
+    },
+    {
+        "template_prop_struct_in_deeply_nested_child",
+        Template_template_prop_struct_in_deeply_nested_child
+    },
+    {
+        "template_prop_struct_forwarded_to_nested_template",
+        Template_template_prop_struct_forwarded_to_nested_template
+    },
+    {
+        "template_prop_struct_no_default",
+        Template_template_prop_struct_no_default
+    },
+    {
+        "template_prop_typed_no_default_ctor",
+        Template_template_prop_typed_no_default_ctor
+    },
+    {
+        "template_prop_typed_no_default_override",
+        Template_template_prop_typed_no_default_override
+    },
+    {
+        "template_prop_no_default_missing_type",
+        Template_template_prop_no_default_missing_type
+    },
+    {
+        "template_prop_struct_in_nested_struct_literal_w_using",
+        Template_template_prop_struct_in_nested_struct_literal_w_using
+    },
+    {
+        "template_prop_struct_member_expr_in_struct_literal",
+        Template_template_prop_struct_member_expr_in_struct_literal
+    },
+    {
+        "template_prop_w_component_type_in_use",
+        Template_template_prop_w_component_type_in_use
+    },
+    {
+        "template_prop_w_array_of_component_type_in_use",
+        Template_template_prop_w_array_of_component_type_in_use
+    },
+    {
+        "template_prop_w_inline_array_member_in_use",
+        Template_template_prop_w_inline_array_member_in_use
+    },
+    {
+        "template_base_w_inline_array_member_elem_in_if",
+        Template_template_base_w_inline_array_member_elem_in_if
+    },
+    {
+        "template_base_w_inline_array_member_elem_in_for",
+        Template_template_base_w_inline_array_member_elem_in_for
+    },
+    {
+        "template_base_w_inline_array_member_reassign",
+        Template_template_base_w_inline_array_member_reassign
+    },
+    {
+        "template_base_w_inline_array_member_reassign_no_index",
+        Template_template_base_w_inline_array_member_reassign_no_index
+    },
+    {
+        "template_instantiates_itself",
+        Template_template_instantiates_itself
+    },
+    {
+        "template_instantiates_itself_w_stop_condition",
+        Template_template_instantiates_itself_w_stop_condition
+    },
+    {
+        "prop_as_isa_pair_target",
+        Template_prop_as_isa_pair_target
+    },
+    {
+        "prop_as_pair_target",
+        Template_prop_as_pair_target
+    },
+    {
+        "prop_as_pair_target_update",
+        Template_prop_as_pair_target_update
+    },
+    {
+        "prop_as_component",
+        Template_prop_as_component
+    },
+    {
+        "instance_w_props_scope_same_line",
+        Template_instance_w_props_scope_same_line
+    },
+    {
+        "instance_w_props_scope_newline",
+        Template_instance_w_props_scope_newline
+    },
+    {
+        "instance_wo_props_scope_newline",
+        Template_instance_wo_props_scope_newline
+    },
+    {
+        "anonymous_instance_w_props_scope_newline",
+        Template_anonymous_instance_w_props_scope_newline
     }
 };
 
@@ -4953,10 +7956,6 @@ bake_test_case Mut_testcases[] = {
         Mut_composite
     },
     {
-        "with_mut",
-        Mut_with_mut
-    },
-    {
         "entity_pair",
         Mut_entity_pair
     },
@@ -5025,6 +8024,10 @@ bake_test_case Mut_testcases[] = {
         Mut_const_value_name
     },
     {
+        "hoisted_var_from_outer_scope",
+        Mut_hoisted_var_from_outer_scope
+    },
+    {
         "hoist_var",
         Mut_hoist_var
     },
@@ -5067,10 +8070,138 @@ bake_test_case Mut_testcases[] = {
     {
         "redeclare_mut_as_prop",
         Mut_redeclare_mut_as_prop
+    },
+    {
+        "get_i32",
+        Mut_get_i32
+    },
+    {
+        "get_string",
+        Mut_get_string
+    },
+    {
+        "get_string_is_owned",
+        Mut_get_string_is_owned
+    },
+    {
+        "get_struct",
+        Mut_get_struct
+    },
+    {
+        "get_from_script",
+        Mut_get_from_script
+    },
+    {
+        "get_not_found",
+        Mut_get_not_found
+    },
+    {
+        "get_not_a_mut_var",
+        Mut_get_not_a_mut_var
+    },
+    {
+        "get_w_invalid_size",
+        Mut_get_w_invalid_size
+    },
+    {
+        "get_w_invalid_type",
+        Mut_get_w_invalid_type
+    },
+    {
+        "get_i32_as_i64",
+        Mut_get_i32_as_i64
+    },
+    {
+        "set_i32",
+        Mut_set_i32
+    },
+    {
+        "set_string",
+        Mut_set_string
+    },
+    {
+        "set_string_is_copied",
+        Mut_set_string_is_copied
+    },
+    {
+        "set_struct",
+        Mut_set_struct
+    },
+    {
+        "set_not_found",
+        Mut_set_not_found
+    },
+    {
+        "set_not_a_mut_var",
+        Mut_set_not_a_mut_var
+    },
+    {
+        "set_w_invalid_size",
+        Mut_set_w_invalid_size
+    },
+    {
+        "set_w_invalid_type",
+        Mut_set_w_invalid_type
+    },
+    {
+        "set_i32_w_i64",
+        Mut_set_i32_w_i64
+    },
+    {
+        "set_reevaluates_script",
+        Mut_set_reevaluates_script
+    },
+    {
+        "get_from_stage",
+        Mut_get_from_stage
+    },
+    {
+        "get_struct_from_stage",
+        Mut_get_struct_from_stage
+    },
+    {
+        "set_from_stage",
+        Mut_set_from_stage
+    },
+    {
+        "set_struct_from_stage",
+        Mut_set_struct_from_stage
+    },
+    {
+        "modified_from_stage",
+        Mut_modified_from_stage
     }
 };
 
 bake_test_case Error_testcases[] = {
+    {
+        "missing_separator_between_components",
+        Error_missing_separator_between_components
+    },
+    {
+        "missing_separator_between_component_and_tag",
+        Error_missing_separator_between_component_and_tag
+    },
+    {
+        "missing_separator_between_component_and_pair",
+        Error_missing_separator_between_component_and_pair
+    },
+    {
+        "missing_separator_after_scope",
+        Error_missing_separator_after_scope
+    },
+    {
+        "missing_separator_between_const",
+        Error_missing_separator_between_const
+    },
+    {
+        "long_binary_expression",
+        Error_long_binary_expression
+    },
+    {
+        "deeply_chained_else_if",
+        Error_deeply_chained_else_if
+    },
     {
         "multi_line_comment_after_newline_before_newline_scope_open",
         Error_multi_line_comment_after_newline_before_newline_scope_open
@@ -5364,10 +8495,6 @@ bake_test_case Error_testcases[] = {
         Error_component_in_with_scope_after_entity
     },
     {
-        "component_in_with_var_scope",
-        Error_component_in_with_var_scope
-    },
-    {
         "component_in_with_in_template",
         Error_component_in_with_in_template
     },
@@ -5412,6 +8539,14 @@ bake_test_case Error_testcases[] = {
         Error_const_w_old_typed_syntax
     },
     {
+        "struct_member_negative_count",
+        Error_struct_member_negative_count
+    },
+    {
+        "struct_member_huge_count",
+        Error_struct_member_huge_count
+    },
+    {
         "struct_wo_members",
         Error_struct_wo_members
     },
@@ -5430,6 +8565,10 @@ bake_test_case Error_testcases[] = {
     {
         "assign_component_to_entity_syntax",
         Error_assign_component_to_entity_syntax
+    },
+    {
+        "typed_const_w_await",
+        Error_typed_const_w_await
     },
     {
         "match_operator_without_equals_capture_error",
@@ -5576,6 +8715,38 @@ bake_test_case Error_testcases[] = {
         Error_function_unresolved_return_type_error_line
     },
     {
+        "multiple_unresolved_refs",
+        Error_multiple_unresolved_refs
+    },
+    {
+        "multiple_unresolved_refs_w_unresolved_const_type",
+        Error_multiple_unresolved_refs_w_unresolved_const_type
+    },
+    {
+        "unresolved_component_ref",
+        Error_unresolved_component_ref
+    },
+    {
+        "no_unresolved_component_ref_when_component_exists",
+        Error_no_unresolved_component_ref_when_component_exists
+    },
+    {
+        "multiple_unresolved_component_refs",
+        Error_multiple_unresolved_component_refs
+    },
+    {
+        "unresolved_component_ref_w_unresolved_component",
+        Error_unresolved_component_ref_w_unresolved_component
+    },
+    {
+        "unresolved_component_ref_w_unresolved_entity",
+        Error_unresolved_component_ref_w_unresolved_entity
+    },
+    {
+        "unresolved_component_ref_w_unresolved_entity_and_component",
+        Error_unresolved_component_ref_w_unresolved_entity_and_component
+    },
+    {
         "no_error_line_column",
         Error_no_error_line_column
     },
@@ -5586,6 +8757,342 @@ bake_test_case Error_testcases[] = {
     {
         "script_eval_line_column",
         Error_script_eval_line_column
+    },
+    {
+        "using_in_scope",
+        Error_using_in_scope
+    },
+    {
+        "using_after_other_stmt",
+        Error_using_after_other_stmt
+    },
+    {
+        "using_script_defined_entity",
+        Error_using_script_defined_entity
+    },
+    {
+        "using_wildcard_script_defined_entity",
+        Error_using_wildcard_script_defined_entity
+    },
+    {
+        "module_after_other_stmt",
+        Error_module_after_other_stmt
+    },
+    {
+        "module_in_scope",
+        Error_module_in_scope
+    },
+    {
+        "module_after_using",
+        Error_module_after_using
+    },
+    {
+        "include_after_using",
+        Error_include_after_using
+    },
+    {
+        "include_after_other_stmt",
+        Error_include_after_other_stmt
+    },
+    {
+        "using_unresolved_path",
+        Error_using_unresolved_path
+    },
+    {
+        "entity_path_w_scope",
+        Error_entity_path_w_scope
+    },
+    {
+        "entity_path_w_kind_w_scope",
+        Error_entity_path_w_kind_w_scope
+    },
+    {
+        "entity_path_w_scope_on_newline",
+        Error_entity_path_w_scope_on_newline
+    },
+    {
+        "entity_path_w_inherit_w_scope",
+        Error_entity_path_w_inherit_w_scope
+    },
+    {
+        "entity_path_w_kind",
+        Error_entity_path_w_kind
+    },
+    {
+        "entity_path_w_inherit",
+        Error_entity_path_w_inherit
+    },
+    {
+        "entity_path_w_comma",
+        Error_entity_path_w_comma
+    },
+    {
+        "entity_path_after_comma",
+        Error_entity_path_after_comma
+    },
+    {
+        "entity_path_w_string_name",
+        Error_entity_path_w_string_name
+    },
+    {
+        "entity_comma_list",
+        Error_entity_comma_list
+    },
+    {
+        "entity_comma_list_in_scope",
+        Error_entity_comma_list_in_scope
+    },
+    {
+        "entity_comma_list_w_trailing_comma",
+        Error_entity_comma_list_w_trailing_comma
+    },
+    {
+        "oneof_pair_target_shadowed_by_script_entity",
+        Error_oneof_pair_target_shadowed_by_script_entity
+    },
+    {
+        "any_as_pair_first",
+        Error_any_as_pair_first
+    },
+    {
+        "any_as_pair_second",
+        Error_any_as_pair_second
+    },
+    {
+        "any_as_pair_first_from_template_prop",
+        Error_any_as_pair_first_from_template_prop
+    },
+    {
+        "any_as_tag_from_template_prop",
+        Error_any_as_tag_from_template_prop
+    },
+    {
+        "any_as_with_tag_from_template_prop",
+        Error_any_as_with_tag_from_template_prop
+    },
+    {
+        "any_from_interpolated_pair_first",
+        Error_any_from_interpolated_pair_first
+    },
+    {
+        "zero_entity_var_as_pair_second",
+        Error_zero_entity_var_as_pair_second
+    },
+    {
+        "zero_entity_var_as_pair_first_from_template_prop",
+        Error_zero_entity_var_as_pair_first_from_template_prop
+    },
+    {
+        "zero_entity_var_as_with_tag_from_template_prop",
+        Error_zero_entity_var_as_with_tag_from_template_prop
+    },
+    {
+        "unresolved_interpolated_pair_first",
+        Error_unresolved_interpolated_pair_first
+    },
+    {
+        "any_from_interpolated_pair_component",
+        Error_any_from_interpolated_pair_component
+    },
+    {
+        "runtime_any_as_with_tag_from_template_prop",
+        Error_runtime_any_as_with_tag_from_template_prop
+    },
+    {
+        "runtime_any_as_with_component_from_template_prop",
+        Error_runtime_any_as_with_component_from_template_prop
+    },
+    {
+        "runtime_any_as_pair_scope_target",
+        Error_runtime_any_as_pair_scope_target
+    },
+    {
+        "has_question_space_bracket",
+        Error_has_question_space_bracket
+    },
+    {
+        "has_unresolved_component",
+        Error_has_unresolved_component
+    },
+    {
+        "has_unresolved_pair_first",
+        Error_has_unresolved_pair_first
+    },
+    {
+        "has_unresolved_pair_second",
+        Error_has_unresolved_pair_second
+    },
+    {
+        "has_on_non_entity_type",
+        Error_has_on_non_entity_type
+    },
+    {
+        "has_unterminated",
+        Error_has_unterminated
+    },
+    {
+        "has_pair_missing_paren_close",
+        Error_has_pair_missing_paren_close
+    },
+    {
+        "has_pair_missing_second",
+        Error_has_pair_missing_second
+    },
+    {
+        "script_update_failure_is_reported",
+        Error_script_update_failure_is_reported
+    },
+    {
+        "script_init_eval_error_adds_error_tag",
+        Error_script_init_eval_error_adds_error_tag
+    },
+    {
+        "script_init_parse_error_adds_error_tag",
+        Error_script_init_parse_error_adds_error_tag
+    },
+    {
+        "script_init_from_missing_file_returns_0",
+        Error_script_init_from_missing_file_returns_0
+    },
+    {
+        "script_update_clears_error_tag",
+        Error_script_update_clears_error_tag
+    },
+    {
+        "script_init_success_has_no_error_tag",
+        Error_script_init_success_has_no_error_tag
+    },
+    {
+        "script_declares_entity_named_after_script",
+        Error_script_declares_entity_named_after_script
+    },
+    {
+        "if_component_presence_check_on_non_singleton",
+        Error_if_component_presence_check_on_non_singleton
+    },
+    {
+        "this_at_plain_scope_kills_file",
+        Error_this_at_plain_scope_kills_file
+    },
+    {
+        "doc_detail_not_readable_from_script",
+        Error_doc_detail_not_readable_from_script
+    },
+    {
+        "script_declares_entity_named_after_script_w_child",
+        Error_script_declares_entity_named_after_script_w_child
+    },
+    {
+        "component_ref_via_var_entity_zero",
+        Error_component_ref_via_var_entity_zero
+    },
+    {
+        "component_ref_via_var_entity_deleted",
+        Error_component_ref_via_var_entity_deleted
+    },
+    {
+        "failing_script_does_not_delete_shared_module",
+        Error_failing_script_does_not_delete_shared_module
+    },
+    {
+        "failing_script_update_does_not_delete_shared_module",
+        Error_failing_script_update_does_not_delete_shared_module
+    },
+    {
+        "deleted_script_does_not_delete_shared_module",
+        Error_deleted_script_does_not_delete_shared_module
+    },
+    {
+        "failing_script_does_not_delete_shared_scope",
+        Error_failing_script_does_not_delete_shared_scope
+    },
+    {
+        "parse_error_in_large_script_reports_position",
+        Error_parse_error_in_large_script_reports_position
+    },
+    {
+        "interpolated_string_w_struct_value",
+        Error_interpolated_string_w_struct_value
+    },
+    {
+        "function_w_too_many_params",
+        Error_function_w_too_many_params
+    },
+    {
+        "struct_member_count_size_overflow",
+        Error_struct_member_count_size_overflow
+    },
+    {
+        "member_of_tag_component_in_function",
+        Error_member_of_tag_component_in_function
+    },
+    {
+        "collection_literal_for_struct_type_reports_type_name",
+        Error_collection_literal_for_struct_type_reports_type_name
+    },
+    {
+        "template_instantiated_on_own_entity_as_kind",
+        Error_template_instantiated_on_own_entity_as_kind
+    },
+    {
+        "template_instantiated_on_own_entity_as_bare_kind",
+        Error_template_instantiated_on_own_entity_as_bare_kind
+    },
+    {
+        "unary_not_on_struct_value",
+        Error_unary_not_on_struct_value
+    },
+    {
+        "binary_left_operand_struct_vs_entity",
+        Error_binary_left_operand_struct_vs_entity
+    },
+    {
+        "binary_right_operand_struct_vs_entity",
+        Error_binary_right_operand_struct_vs_entity
+    },
+    {
+        "collection_literal_enum_element_vs_entity",
+        Error_collection_literal_enum_element_vs_entity
+    },
+    {
+        "function_argument_struct_value",
+        Error_function_argument_struct_value
+    },
+    {
+        "match_case_enum_vs_entity",
+        Error_match_case_enum_vs_entity
+    },
+    {
+        "match_case_value_struct_vs_entity",
+        Error_match_case_value_struct_vs_entity
+    },
+    {
+        "range_from_struct_value",
+        Error_range_from_struct_value
+    },
+    {
+        "range_to_struct_value",
+        Error_range_to_struct_value
+    },
+    {
+        "component_member_on_missing_entity",
+        Error_component_member_on_missing_entity
+    },
+    {
+        "component_on_missing_entity",
+        Error_component_on_missing_entity
+    },
+    {
+        "component_member_on_entity_without_component",
+        Error_component_member_on_entity_without_component
+    },
+    {
+        "component_member_on_var_w_missing_entity",
+        Error_component_member_on_var_w_missing_entity
+    },
+    {
+        "component_member_on_missing_entity_in_template",
+        Error_component_member_on_missing_entity_in_template
     }
 };
 
@@ -6125,6 +9632,62 @@ bake_test_case Format_testcases[] = {
     {
         "boundary_width_max_literal_value",
         Format_boundary_width_max_literal_value
+    },
+    {
+        "component_member_expression_value_precision",
+        Format_component_member_expression_value_precision
+    },
+    {
+        "component_member_ratio_value_precision",
+        Format_component_member_ratio_value_precision
+    },
+    {
+        "leading_zeros_i32_variable",
+        Format_leading_zeros_i32_variable
+    },
+    {
+        "min_width_i32_variable",
+        Format_min_width_i32_variable
+    },
+    {
+        "min_width_i64_variable",
+        Format_min_width_i64_variable
+    },
+    {
+        "min_width_u32_variable",
+        Format_min_width_u32_variable
+    },
+    {
+        "align_left_string_variable",
+        Format_align_left_string_variable
+    },
+    {
+        "align_left_string_member",
+        Format_align_left_string_member
+    },
+    {
+        "min_width_i32_component_member",
+        Format_min_width_i32_component_member
+    },
+    {
+        "precision_i32_variable_fails",
+        Format_precision_i32_variable_fails
+    },
+    {
+        "scientific_i32_variable_fails",
+        Format_scientific_i32_variable_fails
+    },
+    {
+        "always_sign_i32_variable",
+        Format_always_sign_i32_variable
+    },
+    {
+        "min_width_bool_variable",
+        Format_min_width_bool_variable
+    },
+    {
+        "min_width_char_variable",
+        Format_min_width_char_variable
     }
 };
 
@@ -6446,12 +10009,20 @@ bake_test_case Expr_testcases[] = {
         Expr_var_member_member
     },
     {
+        "var_member_w_dtor_member",
+        Expr_var_member_w_dtor_member
+    },
+    {
         "var_element",
         Expr_var_element
     },
     {
         "var_element_out_of_range",
         Expr_var_element_out_of_range
+    },
+    {
+        "element_on_non_collection",
+        Expr_element_on_non_collection
     },
     {
         "var_element_w_var_index",
@@ -6548,6 +10119,22 @@ bake_test_case Expr_testcases[] = {
     {
         "int_cond_or_bool",
         Expr_int_cond_or_bool
+    },
+    {
+        "cond_and_short_circuit",
+        Expr_cond_and_short_circuit
+    },
+    {
+        "cond_or_short_circuit",
+        Expr_cond_or_short_circuit
+    },
+    {
+        "cond_chained_short_circuit",
+        Expr_cond_chained_short_circuit
+    },
+    {
+        "cond_no_short_circuit_error",
+        Expr_cond_no_short_circuit_error
     },
     {
         "cond_eq_bool",
@@ -6696,6 +10283,18 @@ bake_test_case Expr_testcases[] = {
     {
         "cond_lteq_enum_literal",
         Expr_cond_lteq_enum_literal
+    },
+    {
+        "cond_gt_entity",
+        Expr_cond_gt_entity
+    },
+    {
+        "cond_gt_string",
+        Expr_cond_gt_string
+    },
+    {
+        "cond_gt_large_uint_bool",
+        Expr_cond_gt_large_uint_bool
     },
     {
         "min_lparen_int_rparen",
@@ -7058,6 +10657,14 @@ bake_test_case Expr_testcases[] = {
         Expr_vector_add_struct_struct
     },
     {
+        "vector_add_struct_struct_const_vars",
+        Expr_vector_add_struct_struct_const_vars
+    },
+    {
+        "vector_shift_struct_int",
+        Expr_vector_shift_struct_int
+    },
+    {
         "vector_add_struct_incompatible_struct",
         Expr_vector_add_struct_incompatible_struct
     },
@@ -7068,6 +10675,14 @@ bake_test_case Expr_testcases[] = {
     {
         "interpolate_string_w_string_var",
         Expr_interpolate_string_w_string_var
+    },
+    {
+        "interpolate_string_w_null_string_var",
+        Expr_interpolate_string_w_null_string_var
+    },
+    {
+        "interpolate_string_w_null_string_member",
+        Expr_interpolate_string_w_null_string_member
     },
     {
         "interpolate_string_w_entity_var",
@@ -7226,6 +10841,22 @@ bake_test_case Expr_testcases[] = {
         Expr_component_inline_elem_expr_string
     },
     {
+        "component_member_inline_elem_member_expr",
+        Expr_component_member_inline_elem_member_expr
+    },
+    {
+        "component_member_inline_elem_member_expr_string",
+        Expr_component_member_inline_elem_member_expr_string
+    },
+    {
+        "component_member_inline_elem_member_elem_member_expr",
+        Expr_component_member_inline_elem_member_elem_member_expr
+    },
+    {
+        "var_member_inline_elem_member_expr",
+        Expr_var_member_inline_elem_member_expr
+    },
+    {
         "component_expr_in_object",
         Expr_component_expr_in_object
     },
@@ -7342,8 +10973,16 @@ bake_test_case Expr_testcases[] = {
         Expr_global_const_var
     },
     {
+        "global_mut_var",
+        Expr_global_mut_var
+    },
+    {
         "scoped_global_const_var",
         Expr_scoped_global_const_var
+    },
+    {
+        "scoped_global_mut_var",
+        Expr_scoped_global_mut_var
     },
     {
         "escape_newline",
@@ -7466,6 +11105,26 @@ bake_test_case Expr_testcases[] = {
         Expr_match_i_w_any_f
     },
     {
+        "match_case_expr_runtime_error",
+        Expr_match_case_expr_runtime_error
+    },
+    {
+        "match_f64_i_cases",
+        Expr_match_f64_i_cases
+    },
+    {
+        "match_f32_i_cases",
+        Expr_match_f32_i_cases
+    },
+    {
+        "match_f64_i_cases_no_match",
+        Expr_match_f64_i_cases_no_match
+    },
+    {
+        "match_f64_literal_i_cases",
+        Expr_match_f64_literal_i_cases
+    },
+    {
         "identifier_as_var",
         Expr_identifier_as_var
     },
@@ -7484,6 +11143,10 @@ bake_test_case Expr_testcases[] = {
     {
         "identifier_as_const_var",
         Expr_identifier_as_const_var
+    },
+    {
+        "identifier_as_mut_var",
+        Expr_identifier_as_mut_var
     },
     {
         "expr_w_identifier_as_var",
@@ -7544,6 +11207,126 @@ bake_test_case Expr_testcases[] = {
     {
         "new_entity_w_unterminated_scope",
         Expr_new_entity_w_unterminated_scope
+    },
+    {
+        "has_component",
+        Expr_has_component
+    },
+    {
+        "has_tag",
+        Expr_has_tag
+    },
+    {
+        "has_pair",
+        Expr_has_pair
+    },
+    {
+        "has_singleton",
+        Expr_has_singleton
+    },
+    {
+        "has_singleton_pair",
+        Expr_has_singleton_pair
+    },
+    {
+        "has_not",
+        Expr_has_not
+    },
+    {
+        "has_w_space_before",
+        Expr_has_w_space_before
+    },
+    {
+        "has_question_space_bracket_not_has",
+        Expr_has_question_space_bracket_not_has
+    },
+    {
+        "has_pair_w_enum_constant_target",
+        Expr_has_pair_w_enum_constant_target
+    },
+    {
+        "has_w_entity_var",
+        Expr_has_w_entity_var
+    },
+    {
+        "has_in_binary_expr",
+        Expr_has_in_binary_expr
+    },
+    {
+        "member_of_large_struct_var_no_leak",
+        Expr_member_of_large_struct_var_no_leak
+    },
+    {
+        "match_i32_1_i_case_one_line",
+        Expr_match_i32_1_i_case_one_line
+    },
+    {
+        "match_i32_2_i_cases_one_line",
+        Expr_match_i32_2_i_cases_one_line
+    },
+    {
+        "platform_consts",
+        Expr_platform_consts
+    },
+    {
+        "match_bool_enum_const_var",
+        Expr_match_bool_enum_const_var
+    },
+    {
+        "match_bool_enum_const_var_to_mut_var",
+        Expr_match_bool_enum_const_var_to_mut_var
+    },
+    {
+        "enum_const_var_to_mut_var",
+        Expr_enum_const_var_to_mut_var
+    },
+    {
+        "bool_mul_flt",
+        Expr_bool_mul_flt
+    },
+    {
+        "flt_mul_bool",
+        Expr_flt_mul_bool
+    },
+    {
+        "bool_add_flt",
+        Expr_bool_add_flt
+    },
+    {
+        "bool_sub_flt",
+        Expr_bool_sub_flt
+    },
+    {
+        "bool_div_flt",
+        Expr_bool_div_flt
+    },
+    {
+        "flt_div_bool",
+        Expr_flt_div_bool
+    },
+    {
+        "bool_mul_int",
+        Expr_bool_mul_int
+    },
+    {
+        "bool_mul_bool",
+        Expr_bool_mul_bool
+    },
+    {
+        "bool_var_mul_flt",
+        Expr_bool_var_mul_flt
+    },
+    {
+        "bool_var_mul_flt_lvalue",
+        Expr_bool_var_mul_flt_lvalue
+    },
+    {
+        "iptr_var_mul_flt",
+        Expr_iptr_var_mul_flt
+    },
+    {
+        "uptr_var_mul_flt",
+        Expr_uptr_var_mul_flt
     }
 };
 
@@ -7646,6 +11429,10 @@ bake_test_case Vars_testcases[] = {
     {
         "from_iter_17_fields",
         Vars_from_iter_17_fields
+    },
+    {
+        "define_large_type_no_leak",
+        Vars_define_large_type_no_leak
     }
 };
 
@@ -8013,6 +11800,14 @@ bake_test_case Serialize_testcases[] = {
     {
         "value_roundtrip",
         Serialize_value_roundtrip
+    },
+    {
+        "string_w_interpolation_not_escaped",
+        Serialize_string_w_interpolation_not_escaped
+    },
+    {
+        "string_w_curly_brace_not_escaped",
+        Serialize_string_w_curly_brace_not_escaped
     }
 };
 
@@ -8673,6 +12468,10 @@ bake_test_case Include_testcases[] = {
         Include_include_simple
     },
     {
+        "include_cycle",
+        Include_include_cycle
+    },
+    {
         "include_subdir",
         Include_include_subdir
     },
@@ -8771,6 +12570,122 @@ bake_test_case Include_testcases[] = {
     {
         "include_managed_eval_error_set_on_script",
         Include_include_managed_eval_error_set_on_script
+    },
+    {
+        "include_using_not_visible_in_parent",
+        Include_include_using_not_visible_in_parent
+    },
+    {
+        "include_managed_using_not_visible_in_parent",
+        Include_include_managed_using_not_visible_in_parent
+    },
+    {
+        "include_managed_keeps_implicit_meta_in_parent",
+        Include_include_managed_keeps_implicit_meta_in_parent
+    },
+    {
+        "include_keeps_implicit_meta_in_parent",
+        Include_include_keeps_implicit_meta_in_parent
+    },
+    {
+        "include_forward_ref_to_later_include_is_retried",
+        Include_include_forward_ref_to_later_include_is_retried
+    },
+    {
+        "const_does_not_cross_include",
+        Include_const_does_not_cross_include
+    },
+    {
+        "export_const_in_scope_crosses_include",
+        Include_export_const_in_scope_crosses_include
+    },
+    {
+        "include_forward_ref_to_later_include_inline",
+        Include_include_forward_ref_to_later_include_inline
+    },
+    {
+        "include_forward_ref_to_nested_later_include",
+        Include_include_forward_ref_to_nested_later_include
+    },
+    {
+        "include_forward_ref_from_nested_include",
+        Include_include_forward_ref_from_nested_include
+    },
+    {
+        "include_forward_ref_chain_requires_multiple_passes",
+        Include_include_forward_ref_chain_requires_multiple_passes
+    },
+    {
+        "include_forward_ref_never_resolved_reports_error",
+        Include_include_forward_ref_never_resolved_reports_error
+    },
+    {
+        "include_forward_ref_never_resolved_inline_reports_error",
+        Include_include_forward_ref_never_resolved_inline_reports_error
+    },
+    {
+        "include_diamond_evaluates_shared_once",
+        Include_include_diamond_evaluates_shared_once
+    },
+    {
+        "include_diamond_forward_ref_is_retried",
+        Include_include_diamond_forward_ref_is_retried
+    },
+    {
+        "include_forward_ref_to_struct_in_later_include",
+        Include_include_forward_ref_to_struct_in_later_include
+    },
+    {
+        "include_forward_ref_to_const_in_later_include",
+        Include_include_forward_ref_to_const_in_later_include
+    },
+    {
+        "include_forward_ref_to_entity_in_later_include",
+        Include_include_forward_ref_to_entity_in_later_include
+    },
+    {
+        "include_retried_script_keeps_scope_and_components",
+        Include_include_retried_script_keeps_scope_and_components
+    },
+    {
+        "include_error_reports_failing_file",
+        Include_include_error_reports_failing_file
+    },
+    {
+        "include_parse_error_sets_error_on_parent",
+        Include_include_parse_error_sets_error_on_parent
+    },
+    {
+        "include_parse_error_logs_error",
+        Include_include_parse_error_logs_error
+    },
+    {
+        "include_eval_error_sets_error_on_parent",
+        Include_include_eval_error_sets_error_on_parent
+    },
+    {
+        "include_nested_parse_error_sets_error_on_parent",
+        Include_include_nested_parse_error_sets_error_on_parent
+    },
+    {
+        "include_parse_error_run_file_fails",
+        Include_include_parse_error_run_file_fails
+    },
+    {
+        "include_nested_index_parse_error_sets_error_on_parent",
+        Include_include_nested_index_parse_error_sets_error_on_parent
+    },
+    {
+        "include_nested_error_reports_position",
+        Include_include_nested_error_reports_position
+    },
+    {
+        "include_error_in_large_file_reports_position",
+        Include_include_error_in_large_file_reports_position
+    },
+    {
+        "include_missing_file_managed_sets_error_on_parent",
+        Include_include_missing_file_managed_sets_error_on_parent
     }
 };
 
@@ -9395,76 +13310,80 @@ bake_test_case Refs_testcases[] = {
         Refs_set_after_managed_script_deleted
     },
     {
-        "global_const_var_in_component_initializer",
-        Refs_global_const_var_in_component_initializer
+        "global_mut_var_in_component_initializer",
+        Refs_global_mut_var_in_component_initializer
     },
     {
-        "global_const_var_in_with_initializer",
-        Refs_global_const_var_in_with_initializer
+        "global_mut_var_in_with_initializer",
+        Refs_global_mut_var_in_with_initializer
     },
     {
-        "global_const_var_in_match_expr",
-        Refs_global_const_var_in_match_expr
+        "global_mut_var_in_match_expr",
+        Refs_global_mut_var_in_match_expr
     },
     {
-        "global_const_var_in_if_expr",
-        Refs_global_const_var_in_if_expr
+        "global_mut_var_in_if_expr",
+        Refs_global_mut_var_in_if_expr
     },
     {
-        "global_const_var_in_for_expr",
-        Refs_global_const_var_in_for_expr
+        "global_mut_var_in_for_expr",
+        Refs_global_mut_var_in_for_expr
     },
     {
         "global_const_var_non_managed_script_no_update",
         Refs_global_const_var_non_managed_script_no_update
     },
     {
-        "global_const_var_set_after_managed_script_deleted",
-        Refs_global_const_var_set_after_managed_script_deleted
+        "global_mut_var_non_managed_script_no_update",
+        Refs_global_mut_var_non_managed_script_no_update
     },
     {
-        "global_const_var_modified",
-        Refs_global_const_var_modified
+        "global_mut_var_set_after_managed_script_deleted",
+        Refs_global_mut_var_set_after_managed_script_deleted
+    },
+    {
+        "global_mut_var_modified",
+        Refs_global_mut_var_modified
     },
     {
         "ref_in_function",
         Refs_ref_in_function
     },
     {
-        "global_const_var_in_function",
-        Refs_global_const_var_in_function
+        "global_mut_var_in_function",
+        Refs_global_mut_var_in_function
     },
     {
         "ref_in_new_expr",
         Refs_ref_in_new_expr
     },
     {
-        "global_const_var_in_new_expr",
-        Refs_global_const_var_in_new_expr
+        "global_mut_var_in_new_expr",
+        Refs_global_mut_var_in_new_expr
     },
     {
         "ref_in_function_in_new_expr",
         Refs_ref_in_function_in_new_expr
     },
     {
-        "global_const_var_in_function_in_new_expr",
-        Refs_global_const_var_in_function_in_new_expr
+        "global_mut_var_in_function_in_new_expr",
+        Refs_global_mut_var_in_function_in_new_expr
     },
     {
         "ref_in_script_function_body",
         Refs_ref_in_script_function_body
     },
     {
-        "global_const_var_in_script_function_body",
-        Refs_global_const_var_in_script_function_body
+        "global_mut_var_in_script_function_body",
+        Refs_global_mut_var_in_script_function_body
     },
     {
         "ref_assigned_to_component",
         Refs_ref_assigned_to_component
     },
     {
-        "global_const_var_assigned_to_component",
-        Refs_global_const_var_assigned_to_component
+        "global_mut_var_assigned_to_component",
+        Refs_global_mut_var_assigned_to_component
     },
     {
         "reeval_hierarchy",
@@ -9551,40 +13470,76 @@ bake_test_case Refs_testcases[] = {
         Refs_global_const_var_in_template_component_initializer
     },
     {
+        "global_mut_var_in_template_component_initializer",
+        Refs_global_mut_var_in_template_component_initializer
+    },
+    {
         "global_const_var_in_template_with_initializer",
         Refs_global_const_var_in_template_with_initializer
+    },
+    {
+        "global_mut_var_in_template_with_initializer",
+        Refs_global_mut_var_in_template_with_initializer
     },
     {
         "global_const_var_in_template_match_expr",
         Refs_global_const_var_in_template_match_expr
     },
     {
+        "global_mut_var_in_template_match_expr",
+        Refs_global_mut_var_in_template_match_expr
+    },
+    {
         "global_const_var_in_template_if_expr",
         Refs_global_const_var_in_template_if_expr
+    },
+    {
+        "global_mut_var_in_template_if_expr",
+        Refs_global_mut_var_in_template_if_expr
     },
     {
         "global_const_var_in_template_for_expr",
         Refs_global_const_var_in_template_for_expr
     },
     {
+        "global_mut_var_in_template_for_expr",
+        Refs_global_mut_var_in_template_for_expr
+    },
+    {
         "global_const_var_in_template_function",
         Refs_global_const_var_in_template_function
+    },
+    {
+        "global_mut_var_in_template_function",
+        Refs_global_mut_var_in_template_function
     },
     {
         "global_const_var_in_template_new_expr",
         Refs_global_const_var_in_template_new_expr
     },
     {
+        "global_mut_var_in_template_new_expr",
+        Refs_global_mut_var_in_template_new_expr
+    },
+    {
         "global_const_var_in_template_function_in_new_expr",
         Refs_global_const_var_in_template_function_in_new_expr
     },
     {
-        "global_const_var_in_template_script_function_body",
-        Refs_global_const_var_in_template_script_function_body
+        "global_mut_var_in_template_function_in_new_expr",
+        Refs_global_mut_var_in_template_function_in_new_expr
+    },
+    {
+        "global_mut_var_in_template_script_function_body",
+        Refs_global_mut_var_in_template_script_function_body
     },
     {
         "global_const_var_in_template_assigned_to_component",
         Refs_global_const_var_in_template_assigned_to_component
+    },
+    {
+        "global_mut_var_in_template_assigned_to_component",
+        Refs_global_mut_var_in_template_assigned_to_component
     },
     {
         "this_ref_in_template_component_initializer",
@@ -9675,20 +13630,36 @@ bake_test_case Refs_testcases[] = {
         Refs_global_const_var_declared_in_same_script
     },
     {
+        "global_mut_var_declared_in_same_script",
+        Refs_global_mut_var_declared_in_same_script
+    },
+    {
         "global_const_var_declared_in_same_script_w_fn",
         Refs_global_const_var_declared_in_same_script_w_fn
     },
     {
-        "global_const_var_declared_in_same_script_w_fn_other_script",
-        Refs_global_const_var_declared_in_same_script_w_fn_other_script
+        "global_mut_var_declared_in_same_script_w_fn",
+        Refs_global_mut_var_declared_in_same_script_w_fn
     },
     {
-        "global_const_var_declared_in_same_script_w_fn_other_scripts",
-        Refs_global_const_var_declared_in_same_script_w_fn_other_scripts
+        "global_mut_var_declared_in_same_script_w_fn_other_script",
+        Refs_global_mut_var_declared_in_same_script_w_fn_other_script
     },
     {
-        "global_const_var_in_scoped_function_other_script",
-        Refs_global_const_var_in_scoped_function_other_script
+        "global_mut_var_declared_in_same_script_w_fn_other_script_w_implicit_var",
+        Refs_global_mut_var_declared_in_same_script_w_fn_other_script_w_implicit_var
+    },
+    {
+        "global_mut_var_declared_in_same_script_w_fn_other_scripts",
+        Refs_global_mut_var_declared_in_same_script_w_fn_other_scripts
+    },
+    {
+        "global_mut_var_declared_in_same_script_w_fn_other_scripts_w_implicit_var",
+        Refs_global_mut_var_declared_in_same_script_w_fn_other_scripts_w_implicit_var
+    },
+    {
+        "global_mut_var_in_scoped_function_other_script",
+        Refs_global_mut_var_in_scoped_function_other_script
     },
     {
         "ref_declared_in_same_script",
@@ -9711,8 +13682,691 @@ bake_test_case Refs_testcases[] = {
         Refs_global_const_var_declared_in_same_script_w_template
     },
     {
-        "reeval_instantiates_template_w_global_const_var_ref",
-        Refs_reeval_instantiates_template_w_global_const_var_ref
+        "global_mut_var_declared_in_same_script_w_template",
+        Refs_global_mut_var_declared_in_same_script_w_template
+    },
+    {
+        "reeval_instantiates_template_w_global_mut_var_ref",
+        Refs_reeval_instantiates_template_w_global_mut_var_ref
+    },
+    {
+        "global_mut_var_modified_twice",
+        Refs_global_mut_var_modified_twice
+    },
+    {
+        "global_const_var_and_mut_var_in_same_expr",
+        Refs_global_const_var_and_mut_var_in_same_expr
+    },
+    {
+        "global_mut_var_declared_in_same_script_modified",
+        Refs_global_mut_var_declared_in_same_script_modified
+    },
+    {
+        "global_mut_var_declared_in_same_script_reacts",
+        Refs_global_mut_var_declared_in_same_script_reacts
+    },
+    {
+        "two_global_mut_vars_declared_in_same_script",
+        Refs_two_global_mut_vars_declared_in_same_script
+    },
+    {
+        "global_mut_var_declared_in_same_script_modified_deferred",
+        Refs_global_mut_var_declared_in_same_script_modified_deferred
+    },
+    {
+        "global_mut_var_declared_in_same_script_modified_in_system",
+        Refs_global_mut_var_declared_in_same_script_modified_in_system
+    },
+    {
+        "global_mut_var_modified_in_system_other_script",
+        Refs_global_mut_var_modified_in_system_other_script
+    },
+    {
+        "reeval_during_script_preserves_using",
+        Refs_reeval_during_script_preserves_using
+    },
+    {
+        "has_component_ref",
+        Refs_has_component_ref
+    },
+    {
+        "has_tag_ref",
+        Refs_has_tag_ref
+    },
+    {
+        "has_pair_ref",
+        Refs_has_pair_ref
+    },
+    {
+        "has_singleton_ref",
+        Refs_has_singleton_ref
+    },
+    {
+        "has_singleton_pair_ref",
+        Refs_has_singleton_pair_ref
+    },
+    {
+        "has_ref_in_const_var",
+        Refs_has_ref_in_const_var
+    },
+    {
+        "has_ref_in_template_component_initializer",
+        Refs_has_ref_in_template_component_initializer
+    },
+    {
+        "has_ref_and_value_ref_same_component",
+        Refs_has_ref_and_value_ref_same_component
+    },
+    {
+        "wait_for_unresolved_tag",
+        Refs_wait_for_unresolved_tag
+    },
+    {
+        "wait_for_unresolved_component",
+        Refs_wait_for_unresolved_component
+    },
+    {
+        "wait_for_component_on_entity",
+        Refs_wait_for_component_on_entity
+    },
+    {
+        "wait_for_unresolved_entity_then_component",
+        Refs_wait_for_unresolved_entity_then_component
+    },
+    {
+        "wait_for_unresolved_entity_w_component_set_before_name",
+        Refs_wait_for_unresolved_entity_w_component_set_before_name
+    },
+    {
+        "wait_for_unresolved_const_type",
+        Refs_wait_for_unresolved_const_type
+    },
+    {
+        "wait_for_multiple_unresolved_refs",
+        Refs_wait_for_multiple_unresolved_refs
+    },
+    {
+        "wait_for_unresolved_component_entity_named_first",
+        Refs_wait_for_unresolved_component_entity_named_first
+    },
+    {
+        "delete_script_while_waiting",
+        Refs_delete_script_while_waiting
+    },
+    {
+        "wait_for_has_unresolved_component",
+        Refs_wait_for_has_unresolved_component
+    },
+    {
+        "wait_for_has_unresolved_entity",
+        Refs_wait_for_has_unresolved_entity
+    },
+    {
+        "has_ref_resolve_observer_on_add",
+        Refs_has_ref_resolve_observer_on_add
+    }
+};
+
+bake_test_case Reactivity_testcases[] = {
+    {
+        "external_inputs_are_isolated",
+        Reactivity_external_inputs_are_isolated
+    },
+    {
+        "script_update_recreates_observers",
+        Reactivity_script_update_recreates_observers
+    },
+    {
+        "annotation_follows_dependent_statement",
+        Reactivity_annotation_follows_dependent_statement
+    },
+    {
+        "reentrant_input_change_is_reevaluated",
+        Reactivity_reentrant_input_change_is_reevaluated
+    },
+    {
+        "failed_update_is_atomic",
+        Reactivity_failed_update_is_atomic
+    },
+    {
+        "extern_variables_are_isolated",
+        Reactivity_extern_variables_are_isolated
+    },
+    {
+        "const_dependency_is_transitive",
+        Reactivity_const_dependency_is_transitive
+    },
+    {
+        "if_inherits_branch_dependencies",
+        Reactivity_if_inherits_branch_dependencies
+    },
+    {
+        "if_cleans_up_entities",
+        Reactivity_if_cleans_up_entities
+    },
+    {
+        "if_branch_flip_same_entity",
+        Reactivity_if_branch_flip_same_entity
+    },
+    {
+        "mutual_component_refs_converge",
+        Reactivity_mutual_component_refs_converge
+    },
+    {
+        "cross_referencing_templates_resolve",
+        Reactivity_cross_referencing_templates_resolve
+    },
+    {
+        "if_cleans_up_components",
+        Reactivity_if_cleans_up_components
+    },
+    {
+        "if_cleans_up_singleton_component",
+        Reactivity_if_cleans_up_singleton_component
+    },
+    {
+        "mutually_exclusive_component_owner",
+        Reactivity_mutually_exclusive_component_owner
+    },
+    {
+        "mutually_exclusive_component_owner_three_branches",
+        Reactivity_mutually_exclusive_component_owner_three_branches
+    },
+    {
+        "non_exclusive_component_owner_fails",
+        Reactivity_non_exclusive_component_owner_fails
+    },
+    {
+        "template_non_exclusive_component_owner_fails",
+        Reactivity_template_non_exclusive_component_owner_fails
+    },
+    {
+        "component_in_static_and_interpolated_named_children",
+        Reactivity_component_in_static_and_interpolated_named_children
+    },
+    {
+        "component_in_two_interpolated_named_children",
+        Reactivity_component_in_two_interpolated_named_children
+    },
+    {
+        "component_in_matching_interpolated_named_children_fails",
+        Reactivity_component_in_matching_interpolated_named_children_fails
+    },
+    {
+        "partial_assignment_does_not_own_component",
+        Reactivity_partial_assignment_does_not_own_component
+    },
+    {
+        "same_entity_in_two_non_exclusive_scopes",
+        Reactivity_same_entity_in_two_non_exclusive_scopes
+    },
+    {
+        "partial_component_in_two_non_exclusive_scopes",
+        Reactivity_partial_component_in_two_non_exclusive_scopes
+    },
+    {
+        "for_preserves_named_entities",
+        Reactivity_for_preserves_named_entities
+    },
+    {
+        "nested_for_clears_previous_entities",
+        Reactivity_nested_for_clears_previous_entities
+    },
+    {
+        "inactive_for_cleans_up_entities",
+        Reactivity_inactive_for_cleans_up_entities
+    },
+    {
+        "new_entity_survives_reevaluation",
+        Reactivity_new_entity_survives_reevaluation
+    },
+    {
+        "new_entity_not_duplicated_on_reevaluation",
+        Reactivity_new_entity_not_duplicated_on_reevaluation
+    },
+    {
+        "new_entity_child_reclaimed_on_reevaluation",
+        Reactivity_new_entity_child_reclaimed_on_reevaluation
+    },
+    {
+        "new_entity_survives_skipped_statement",
+        Reactivity_new_entity_survives_skipped_statement
+    },
+    {
+        "with_scope_is_reactive",
+        Reactivity_with_scope_is_reactive
+    },
+    {
+        "with_expression_is_reactive",
+        Reactivity_with_expression_is_reactive
+    },
+    {
+        "pair_scope_is_reactive",
+        Reactivity_pair_scope_is_reactive
+    },
+    {
+        "nested_template_is_reactive",
+        Reactivity_nested_template_is_reactive
+    },
+    {
+        "template_with_scope_is_reactive",
+        Reactivity_template_with_scope_is_reactive
+    },
+    {
+        "try_in_managed_script_fails",
+        Reactivity_try_in_managed_script_fails
+    },
+    {
+        "try_catch_scope_dependencies",
+        Reactivity_try_catch_scope_dependencies
+    },
+    {
+        "await_expression_dependencies",
+        Reactivity_await_expression_dependencies
+    },
+    {
+        "element_expr_is_reactive",
+        Reactivity_element_expr_is_reactive
+    },
+    {
+        "range_expr_is_reactive",
+        Reactivity_range_expr_is_reactive
+    },
+    {
+        "swizzle_expr_is_reactive",
+        Reactivity_swizzle_expr_is_reactive
+    },
+    {
+        "has_expr_is_reactive",
+        Reactivity_has_expr_is_reactive
+    },
+    {
+        "method_expr_is_reactive",
+        Reactivity_method_expr_is_reactive
+    },
+    {
+        "interpolated_string_width_is_reactive",
+        Reactivity_interpolated_string_width_is_reactive
+    },
+    {
+        "interpolated_string_precision_is_reactive",
+        Reactivity_interpolated_string_precision_is_reactive
+    },
+    {
+        "parse_failure_clears_observers",
+        Reactivity_parse_failure_clears_observers
+    },
+    {
+        "script_deleted_while_evaluating",
+        Reactivity_script_deleted_while_evaluating
+    },
+    {
+        "template_props_are_isolated",
+        Reactivity_template_props_are_isolated
+    },
+    {
+        "template_same_prop_value_skips",
+        Reactivity_template_same_prop_value_skips
+    },
+    {
+        "template_muts_are_isolated",
+        Reactivity_template_muts_are_isolated
+    },
+    {
+        "template_const_dependency_is_transitive",
+        Reactivity_template_const_dependency_is_transitive
+    },
+    {
+        "template_if_cleans_up_entities",
+        Reactivity_template_if_cleans_up_entities
+    },
+    {
+        "template_if_cleans_up_components",
+        Reactivity_template_if_cleans_up_components
+    },
+    {
+        "template_owner_cleans_up_instance_state",
+        Reactivity_template_owner_cleans_up_instance_state
+    },
+    {
+        "template_entity_delete_cleans_up_instance_state",
+        Reactivity_template_entity_delete_cleans_up_instance_state
+    },
+    {
+        "template_for_preserves_named_entities",
+        Reactivity_template_for_preserves_named_entities
+    },
+    {
+        "template_inactive_for_cleans_up_entities",
+        Reactivity_template_inactive_for_cleans_up_entities
+    },
+    {
+        "template_instances_have_private_slots",
+        Reactivity_template_instances_have_private_slots
+    },
+    {
+        "template_capture_is_reactive",
+        Reactivity_template_capture_is_reactive
+    },
+    {
+        "sixty_four_inputs",
+        Reactivity_sixty_four_inputs
+    },
+    {
+        "sixty_five_inputs_fail",
+        Reactivity_sixty_five_inputs_fail
+    },
+    {
+        "new_entity_survives_skipped_statement_in_nested_initializer",
+        Reactivity_new_entity_survives_skipped_statement_in_nested_initializer
+    },
+    {
+        "new_entity_survives_skipped_statement_in_function_arg",
+        Reactivity_new_entity_survives_skipped_statement_in_function_arg
+    },
+    {
+        "new_entity_survives_skipped_statement_in_interpolated_string",
+        Reactivity_new_entity_survives_skipped_statement_in_interpolated_string
+    },
+    {
+        "new_entity_survives_skipped_statement_in_component_expr",
+        Reactivity_new_entity_survives_skipped_statement_in_component_expr
+    },
+    {
+        "new_entity_survives_skipped_statement_in_template_prop",
+        Reactivity_new_entity_survives_skipped_statement_in_template_prop
+    },
+    {
+        "new_entity_survives_skipped_statement_in_entity_name",
+        Reactivity_new_entity_survives_skipped_statement_in_entity_name
+    },
+    {
+        "new_entity_survives_skipped_statement_in_if_condition",
+        Reactivity_new_entity_survives_skipped_statement_in_if_condition
+    },
+    {
+        "for_preserves_unchanged_entities",
+        Reactivity_for_preserves_unchanged_entities
+    },
+    {
+        "for_keyed_entity_survives_collection_change",
+        Reactivity_for_keyed_entity_survives_collection_change
+    },
+    {
+        "for_keyed_external_component_survives",
+        Reactivity_for_keyed_external_component_survives
+    },
+    {
+        "for_keyed_removed_key_is_deleted",
+        Reactivity_for_keyed_removed_key_is_deleted
+    },
+    {
+        "for_keyed_new_key_is_added",
+        Reactivity_for_keyed_new_key_is_added
+    },
+    {
+        "for_keyed_reorder_preserves_identity",
+        Reactivity_for_keyed_reorder_preserves_identity
+    },
+    {
+        "for_keyed_unkeyed_entity_is_recreated",
+        Reactivity_for_keyed_unkeyed_entity_is_recreated
+    },
+    {
+        "for_keyed_mixed_external_components",
+        Reactivity_for_keyed_mixed_external_components
+    },
+    {
+        "for_keyed_multiple_keys_per_iteration",
+        Reactivity_for_keyed_multiple_keys_per_iteration
+    },
+    {
+        "for_keyed_multiple_keys_removed_together",
+        Reactivity_for_keyed_multiple_keys_removed_together
+    },
+    {
+        "for_unkeyed_only_entities_are_recreated",
+        Reactivity_for_unkeyed_only_entities_are_recreated
+    },
+    {
+        "for_keyed_outer_condition_toggles_rows",
+        Reactivity_for_keyed_outer_condition_toggles_rows
+    },
+    {
+        "for_keyed_per_item_condition_toggles_row",
+        Reactivity_for_keyed_per_item_condition_toggles_row
+    },
+    {
+        "conditional_component_on_named_entity",
+        Reactivity_conditional_component_on_named_entity
+    },
+    {
+        "conditional_component_on_keyed_for_entity",
+        Reactivity_conditional_component_on_keyed_for_entity
+    },
+    {
+        "conditional_component_on_template_instance",
+        Reactivity_conditional_component_on_template_instance
+    },
+    {
+        "two_conditional_components_toggle_independently",
+        Reactivity_two_conditional_components_toggle_independently
+    },
+    {
+        "conditional_component_on_child_entity",
+        Reactivity_conditional_component_on_child_entity
+    },
+    {
+        "interpolated_name_w_indexed_expr",
+        Reactivity_interpolated_name_w_indexed_expr
+    },
+    {
+        "interpolated_name_w_indexed_expr_in_for",
+        Reactivity_interpolated_name_w_indexed_expr_in_for
+    },
+    {
+        "template_for_keyed_entity_survives_collection_change",
+        Reactivity_template_for_keyed_entity_survives_collection_change
+    },
+    {
+        "template_for_keyed_external_component_survives",
+        Reactivity_template_for_keyed_external_component_survives
+    },
+    {
+        "template_for_keyed_removed_key_is_deleted",
+        Reactivity_template_for_keyed_removed_key_is_deleted
+    },
+    {
+        "template_for_keyed_new_key_is_added",
+        Reactivity_template_for_keyed_new_key_is_added
+    },
+    {
+        "template_for_keyed_reorder_preserves_identity",
+        Reactivity_template_for_keyed_reorder_preserves_identity
+    },
+    {
+        "template_for_keyed_unkeyed_entity_is_recreated",
+        Reactivity_template_for_keyed_unkeyed_entity_is_recreated
+    },
+    {
+        "template_for_keyed_mixed_external_components",
+        Reactivity_template_for_keyed_mixed_external_components
+    },
+    {
+        "template_for_keyed_multiple_keys_per_iteration",
+        Reactivity_template_for_keyed_multiple_keys_per_iteration
+    },
+    {
+        "template_for_keyed_multiple_keys_removed_together",
+        Reactivity_template_for_keyed_multiple_keys_removed_together
+    },
+    {
+        "template_for_unkeyed_only_entities_are_recreated",
+        Reactivity_template_for_unkeyed_only_entities_are_recreated
+    },
+    {
+        "template_for_keyed_outer_condition_toggles_rows",
+        Reactivity_template_for_keyed_outer_condition_toggles_rows
+    },
+    {
+        "template_for_keyed_per_item_condition_toggles_row",
+        Reactivity_template_for_keyed_per_item_condition_toggles_row
+    },
+    {
+        "template_conditional_component_on_keyed_for_entity",
+        Reactivity_template_conditional_component_on_keyed_for_entity
+    },
+    {
+        "component_ref_via_loop_var_entity_is_reactive",
+        Reactivity_component_ref_via_loop_var_entity_is_reactive
+    },
+    {
+        "component_ref_via_var_entity_is_reactive",
+        Reactivity_component_ref_via_var_entity_is_reactive
+    },
+    {
+        "component_ref_via_for_elem_var_entity_is_reactive",
+        Reactivity_component_ref_via_for_elem_var_entity_is_reactive
+    },
+    {
+        "component_presence_via_var_entity_is_reactive",
+        Reactivity_component_presence_via_var_entity_is_reactive
+    },
+    {
+        "component_ref_via_var_entity_in_if_is_reactive",
+        Reactivity_component_ref_via_var_entity_in_if_is_reactive
+    },
+    {
+        "for_keyed_does_not_reorder_children",
+        Reactivity_for_keyed_does_not_reorder_children
+    },
+    {
+        "base_component_w_conditional_override",
+        Reactivity_base_component_w_conditional_override
+    },
+    {
+        "two_dyn_refs_alternating_updates",
+        Reactivity_two_dyn_refs_alternating_updates
+    },
+    {
+        "three_dyn_refs_alternating_updates",
+        Reactivity_three_dyn_refs_alternating_updates
+    },
+    {
+        "static_ref_and_dyn_ref_in_same_script",
+        Reactivity_static_ref_and_dyn_ref_in_same_script
+    },
+    {
+        "dyn_ref_in_nested_scope_is_independent",
+        Reactivity_dyn_ref_in_nested_scope_is_independent
+    },
+    {
+        "dyn_ref_var_retargeting",
+        Reactivity_dyn_ref_var_retargeting
+    },
+    {
+        "dyn_ref_in_if_condition_flips_both_ways",
+        Reactivity_dyn_ref_in_if_condition_flips_both_ways
+    },
+    {
+        "dyn_ref_guarded_by_static_if",
+        Reactivity_dyn_ref_guarded_by_static_if
+    },
+    {
+        "dyn_ref_in_for_rows_are_independent",
+        Reactivity_dyn_ref_in_for_rows_are_independent
+    },
+    {
+        "dyn_ref_in_nested_for",
+        Reactivity_dyn_ref_in_nested_for
+    },
+    {
+        "dyn_ref_in_template_instance_and_script",
+        Reactivity_dyn_ref_in_template_instance_and_script
+    },
+    {
+        "dyn_ref_presence_two_independent_refs",
+        Reactivity_dyn_ref_presence_two_independent_refs
+    },
+    {
+        "dyn_ref_recovers_after_invalid_entity",
+        Reactivity_dyn_ref_recovers_after_invalid_entity
+    },
+    {
+        "template_prop_change_keeps_for_entities",
+        Reactivity_template_prop_change_keeps_for_entities
+    },
+    {
+        "template_i32_prop_change_keeps_for_entities",
+        Reactivity_template_i32_prop_change_keeps_for_entities
+    },
+    {
+        "template_prop_change_keeps_for_entities_in_child_scope",
+        Reactivity_template_prop_change_keeps_for_entities_in_child_scope
+    },
+    {
+        "template_for_range_change_keeps_named_recreates_anonymous",
+        Reactivity_template_for_range_change_keeps_named_recreates_anonymous
+    },
+    {
+        "for_keyed_template_instance_survives_collection_change",
+        Reactivity_for_keyed_template_instance_survives_collection_change
+    },
+    {
+        "component_ref_set_from_system_reevaluates",
+        Reactivity_component_ref_set_from_system_reevaluates
+    },
+    {
+        "template_prop_ensure_modified_from_system_reevaluates",
+        Reactivity_template_prop_ensure_modified_from_system_reevaluates
+    },
+    {
+        "template_prop_set_from_system_reevaluates",
+        Reactivity_template_prop_set_from_system_reevaluates
+    },
+    {
+        "template_first_stmt_conditional_component_on_child",
+        Reactivity_template_first_stmt_conditional_component_on_child
+    },
+    {
+        "template_first_stmt_conditional_pair_on_child",
+        Reactivity_template_first_stmt_conditional_pair_on_child
+    },
+    {
+        "template_first_stmt_conditional_tag_on_child",
+        Reactivity_template_first_stmt_conditional_tag_on_child
+    },
+    {
+        "template_first_stmt_conditional_component_on_root",
+        Reactivity_template_first_stmt_conditional_component_on_root
+    },
+    {
+        "template_after_stmt_conditional_component_on_child",
+        Reactivity_template_after_stmt_conditional_component_on_child
+    },
+    {
+        "conditional_component_w_named_initializer_toggles",
+        Reactivity_conditional_component_w_named_initializer_toggles
+    },
+    {
+        "conditional_pair_w_named_initializer_toggles",
+        Reactivity_conditional_pair_w_named_initializer_toggles
+    },
+    {
+        "conditional_component_w_named_initializer_on_entity",
+        Reactivity_conditional_component_w_named_initializer_on_entity
+    },
+    {
+        "branch_cleanup_deletes_entity_w_child",
+        Reactivity_branch_cleanup_deletes_entity_w_child
+    },
+    {
+        "sparse_blocks_preserve_ownership",
+        Reactivity_sparse_blocks_preserve_ownership
+    },
+    {
+        "sparse_blocks_restore_cached_constants",
+        Reactivity_sparse_blocks_restore_cached_constants
     }
 };
 
@@ -9872,7 +14526,1700 @@ bake_test_case ConstVar_testcases[] = {
     {
         "get_struct_as_other_struct",
         ConstVar_get_struct_as_other_struct
+    },
+    {
+        "nested_const_shadows_export_const",
+        ConstVar_nested_const_shadows_export_const
+    },
+    {
+        "get_from_stage",
+        ConstVar_get_from_stage
+    },
+    {
+        "get_struct_from_stage",
+        ConstVar_get_struct_from_stage
     }
+};
+
+bake_test_case Lenient_testcases[] = {
+    {
+        "unknown_tag",
+        Lenient_unknown_tag
+    },
+    {
+        "unknown_component_w_value",
+        Lenient_unknown_component_w_value
+    },
+    {
+        "unknown_component_w_nested_value",
+        Lenient_unknown_component_w_nested_value
+    },
+    {
+        "unknown_component_in_scope",
+        Lenient_unknown_component_in_scope
+    },
+    {
+        "unknown_pair",
+        Lenient_unknown_pair
+    },
+    {
+        "unknown_member_on_known_component",
+        Lenient_unknown_member_on_known_component
+    },
+    {
+        "unknown_nested_member_on_known_component",
+        Lenient_unknown_nested_member_on_known_component
+    },
+    {
+        "unknown_function_in_expr",
+        Lenient_unknown_function_in_expr
+    },
+    {
+        "unknown_vector_in_for",
+        Lenient_unknown_vector_in_for
+    },
+    {
+        "unknown_function_in_for",
+        Lenient_unknown_function_in_for
+    },
+    {
+        "warn_once_per_name",
+        Lenient_warn_once_per_name
+    },
+    {
+        "warn_per_distinct_name",
+        Lenient_warn_per_distinct_name
+    },
+    {
+        "strict_unknown_tag_errors",
+        Lenient_strict_unknown_tag_errors
+    },
+    {
+        "strict_unknown_member_errors",
+        Lenient_strict_unknown_member_errors
+    },
+    {
+        "lenient_disabled_after_enable",
+        Lenient_lenient_disabled_after_enable
+    },
+    {
+        "no_placeholder_then_strict_load",
+        Lenient_no_placeholder_then_strict_load
+    },
+    {
+        "template_w_unknown_component",
+        Lenient_template_w_unknown_component
+    },
+    {
+        "template_child_w_unknown_component",
+        Lenient_template_child_w_unknown_component
+    },
+    {
+        "isa_unresolved_errors",
+        Lenient_isa_unresolved_errors
+    },
+    {
+        "eval_desc",
+        Lenient_eval_desc
+    },
+    {
+        "managed_script_desc",
+        Lenient_managed_script_desc
+    },
+    {
+        "managed_script_strict_errors",
+        Lenient_managed_script_strict_errors
+    },
+    {
+        "unknown_with_tag",
+        Lenient_unknown_with_tag
+    },
+    {
+        "template_w_unknown_prop_type_w_default",
+        Lenient_template_w_unknown_prop_type_w_default
+    },
+    {
+        "template_w_unknown_prop_type_no_default",
+        Lenient_template_w_unknown_prop_type_no_default
+    },
+    {
+        "template_w_unknown_prop_type_in_for",
+        Lenient_template_w_unknown_prop_type_in_for
+    },
+    {
+        "template_w_unknown_prop_type_in_expr",
+        Lenient_template_w_unknown_prop_type_in_expr
+    },
+    {
+        "template_w_unknown_prop_type_set_at_instantiate",
+        Lenient_template_w_unknown_prop_type_set_at_instantiate
+    },
+    {
+        "template_w_unknown_const_type",
+        Lenient_template_w_unknown_const_type
+    },
+    {
+        "const_w_unresolved_function_initializer",
+        Lenient_const_w_unresolved_function_initializer
+    },
+    {
+        "strict_unknown_prop_type_errors",
+        Lenient_strict_unknown_prop_type_errors
+    },
+    {
+        "managed_script_lenient_after_table_change",
+        Lenient_managed_script_lenient_after_table_change
+    },
+    {
+        "unknown_using",
+        Lenient_unknown_using
+    },
+    {
+        "strict_unknown_using_errors",
+        Lenient_strict_unknown_using_errors
+    },
+    {
+        "unknown_fn_param_type",
+        Lenient_unknown_fn_param_type
+    },
+    {
+        "unknown_fn_return_type",
+        Lenient_unknown_fn_return_type
+    },
+    {
+        "strict_unknown_fn_param_type_errors",
+        Lenient_strict_unknown_fn_param_type_errors
+    },
+    {
+        "unknown_component_read_member_in_expr",
+        Lenient_unknown_component_read_member_in_expr
+    },
+    {
+        "unknown_component_read_member_in_interpolated_string",
+        Lenient_unknown_component_read_member_in_interpolated_string
+    },
+    {
+        "unknown_component_read_member_in_binary_expr",
+        Lenient_unknown_component_read_member_in_binary_expr
+    },
+    {
+        "unknown_component_read_member_in_fn_arg",
+        Lenient_unknown_component_read_member_in_fn_arg
+    },
+    {
+        "unknown_component_read_member_in_if",
+        Lenient_unknown_component_read_member_in_if
+    },
+    {
+        "unknown_component_read_member_in_for",
+        Lenient_unknown_component_read_member_in_for
+    },
+    {
+        "unknown_component_read_member_in_template",
+        Lenient_unknown_component_read_member_in_template
+    },
+    {
+        "template_w_unknown_prop_type_member_in_interpolated_string",
+        Lenient_template_w_unknown_prop_type_member_in_interpolated_string
+    },
+    {
+        "unknown_component_on_known_entity_member",
+        Lenient_unknown_component_on_known_entity_member
+    },
+    {
+        "unknown_component_on_known_entity_member_in_string",
+        Lenient_unknown_component_on_known_entity_member_in_string
+    },
+    {
+        "unknown_member_on_known_component_read",
+        Lenient_unknown_member_on_known_component_read
+    },
+    {
+        "unknown_member_on_known_component_read_in_string",
+        Lenient_unknown_member_on_known_component_read_in_string
+    },
+    {
+        "known_component_read_member_in_string",
+        Lenient_known_component_read_member_in_string
+    },
+    {
+        "strict_unknown_member_on_known_component_read_errors",
+        Lenient_strict_unknown_member_on_known_component_read_errors
+    },
+    {
+        "template_unresolved_base_errors",
+        Lenient_template_unresolved_base_errors
+    },
+    {
+        "warn_once_for_unknown_using",
+        Lenient_warn_once_for_unknown_using
+    }
+};
+
+bake_test_case StructInheritance_testcases[] = {
+    {
+        "block_syntax",
+        StructInheritance_block_syntax
+    },
+    {
+        "paren_syntax",
+        StructInheritance_paren_syntax
+    },
+    {
+        "paren_syntax_space_before_paren",
+        StructInheritance_paren_syntax_space_before_paren
+    },
+    {
+        "mixed_syntax",
+        StructInheritance_mixed_syntax
+    },
+    {
+        "mixed_syntax_block_base",
+        StructInheritance_mixed_syntax_block_base
+    },
+    {
+        "no_own_members",
+        StructInheritance_no_own_members
+    },
+    {
+        "no_own_members_newline_before_scope",
+        StructInheritance_no_own_members_newline_before_scope
+    },
+    {
+        "chain",
+        StructInheritance_chain
+    },
+    {
+        "chain_w_padding",
+        StructInheritance_chain_w_padding
+    },
+    {
+        "two_derived",
+        StructInheritance_two_derived
+    },
+    {
+        "base_w_padding",
+        StructInheritance_base_w_padding
+    },
+    {
+        "set_component",
+        StructInheritance_set_component
+    },
+    {
+        "set_component_partial",
+        StructInheritance_set_component_partial
+    },
+    {
+        "set_component_positional",
+        StructInheritance_set_component_positional
+    },
+    {
+        "set_base_and_derived",
+        StructInheritance_set_base_and_derived
+    },
+    {
+        "entity_to_json",
+        StructInheritance_entity_to_json
+    },
+    {
+        "expr_run",
+        StructInheritance_expr_run
+    },
+    {
+        "add_member_to_base_w_derived",
+        StructInheritance_add_member_to_base_w_derived
+    },
+    {
+        "base_defined_in_c",
+        StructInheritance_base_defined_in_c
+    },
+    {
+        "derived_defined_in_c",
+        StructInheritance_derived_defined_in_c
+    },
+    {
+        "base_in_module",
+        StructInheritance_base_in_module
+    },
+    {
+        "base_w_using",
+        StructInheritance_base_w_using
+    },
+    {
+        "derived_as_member",
+        StructInheritance_derived_as_member
+    },
+    {
+        "base_w_string_member",
+        StructInheritance_base_w_string_member
+    },
+    {
+        "base_w_array_member",
+        StructInheritance_base_w_array_member
+    },
+    {
+        "duplicate_member_paren",
+        StructInheritance_duplicate_member_paren
+    },
+    {
+        "duplicate_member_block",
+        StructInheritance_duplicate_member_block
+    },
+    {
+        "base_not_a_struct",
+        StructInheritance_base_not_a_struct
+    },
+    {
+        "self_inherit",
+        StructInheritance_self_inherit
+    },
+    {
+        "inheritance_cycle",
+        StructInheritance_inheritance_cycle
+    },
+    {
+        "base_is_prefab",
+        StructInheritance_base_is_prefab
+    },
+    {
+        "base_is_enum",
+        StructInheritance_base_is_enum
+    },
+    {
+        "base_is_primitive",
+        StructInheritance_base_is_primitive
+    },
+    {
+        "base_unresolved",
+        StructInheritance_base_unresolved
+    },
+    {
+        "base_declared_after_derived",
+        StructInheritance_base_declared_after_derived
+    },
+    {
+        "run_script_twice",
+        StructInheritance_run_script_twice
+    },
+    {
+        "managed_script_update",
+        StructInheritance_managed_script_update
+    },
+    {
+        "managed_script_update_add_member",
+        StructInheritance_managed_script_update_add_member
+    },
+    {
+        "query_derived",
+        StructInheritance_query_derived
+    },
+    {
+        "derived_in_nested_scope",
+        StructInheritance_derived_in_nested_scope
+    },
+    {
+        "derived_member_access_in_expr",
+        StructInheritance_derived_member_access_in_expr
+    },
+    {
+        "multiple_bases",
+        StructInheritance_multiple_bases
+    },
+    {
+        "assign_derived_to_base_const",
+        StructInheritance_assign_derived_to_base_const
+    },
+    {
+        "assign_derived_to_base_const_member_access",
+        StructInheritance_assign_derived_to_base_const_member_access
+    },
+    {
+        "assign_derived_to_base_const_chain",
+        StructInheritance_assign_derived_to_base_const_chain
+    },
+    {
+        "assign_derived_to_base_const_w_string",
+        StructInheritance_assign_derived_to_base_const_w_string
+    },
+    {
+        "assign_derived_to_base_prop",
+        StructInheritance_assign_derived_to_base_prop
+    },
+    {
+        "assign_derived_to_base_prop_at_instantiate",
+        StructInheritance_assign_derived_to_base_prop_at_instantiate
+    },
+    {
+        "assign_derived_to_base_mut",
+        StructInheritance_assign_derived_to_base_mut
+    },
+    {
+        "assign_derived_to_base_component",
+        StructInheritance_assign_derived_to_base_component
+    },
+    {
+        "assign_derived_to_base_component_in_template",
+        StructInheritance_assign_derived_to_base_component_in_template
+    },
+    {
+        "assign_derived_to_base_nested_member",
+        StructInheritance_assign_derived_to_base_nested_member
+    },
+    {
+        "assign_derived_to_base_nested_member_const",
+        StructInheritance_assign_derived_to_base_nested_member_const
+    },
+    {
+        "assign_derived_to_base_with",
+        StructInheritance_assign_derived_to_base_with
+    },
+    {
+        "assign_derived_to_base_expr_run",
+        StructInheritance_assign_derived_to_base_expr_run
+    },
+    {
+        "assign_base_to_derived_fails",
+        StructInheritance_assign_base_to_derived_fails
+    },
+    {
+        "assign_base_to_derived_component_fails",
+        StructInheritance_assign_base_to_derived_component_fails
+    },
+    {
+        "assign_unrelated_struct_fails",
+        StructInheritance_assign_unrelated_struct_fails
+    },
+    {
+        "assign_unrelated_struct_prop_fails",
+        StructInheritance_assign_unrelated_struct_prop_fails
+    }
+};
+
+bake_test_case TemplateInheritance_testcases[] = {
+    {
+        "base_template_prop",
+        TemplateInheritance_base_template_prop
+    },
+    {
+        "base_template_two_props",
+        TemplateInheritance_base_template_two_props
+    },
+    {
+        "base_template_no_own_props",
+        TemplateInheritance_base_template_no_own_props
+    },
+    {
+        "base_template_prop_default",
+        TemplateInheritance_base_template_prop_default
+    },
+    {
+        "base_template_prop_default_in_body",
+        TemplateInheritance_base_template_prop_default_in_body
+    },
+    {
+        "base_template_prop_set_at_instantiate",
+        TemplateInheritance_base_template_prop_set_at_instantiate
+    },
+    {
+        "base_template_prop_w_expr_default",
+        TemplateInheritance_base_template_prop_w_expr_default
+    },
+    {
+        "base_template_body_not_inherited",
+        TemplateInheritance_base_template_body_not_inherited
+    },
+    {
+        "base_template_string_prop",
+        TemplateInheritance_base_template_string_prop
+    },
+    {
+        "base_template_entity_prop",
+        TemplateInheritance_base_template_entity_prop
+    },
+    {
+        "base_struct",
+        TemplateInheritance_base_struct
+    },
+    {
+        "base_component_defined_in_c",
+        TemplateInheritance_base_component_defined_in_c
+    },
+    {
+        "chain",
+        TemplateInheritance_chain
+    },
+    {
+        "chain_props_in_body",
+        TemplateInheritance_chain_props_in_body
+    },
+    {
+        "chain_partial_defaults",
+        TemplateInheritance_chain_partial_defaults
+    },
+    {
+        "chain_defaults_in_body",
+        TemplateInheritance_chain_defaults_in_body
+    },
+    {
+        "two_derived",
+        TemplateInheritance_two_derived
+    },
+    {
+        "base_prop_change_updates_instance",
+        TemplateInheritance_base_prop_change_updates_instance
+    },
+    {
+        "base_prop_used_by_derived_prop_default",
+        TemplateInheritance_base_prop_used_by_derived_prop_default
+    },
+    {
+        "base_w_mut",
+        TemplateInheritance_base_w_mut
+    },
+    {
+        "derived_w_mut",
+        TemplateInheritance_derived_w_mut
+    },
+    {
+        "derived_prop_same_name_as_base",
+        TemplateInheritance_derived_prop_same_name_as_base
+    },
+    {
+        "base_not_a_struct",
+        TemplateInheritance_base_not_a_struct
+    },
+    {
+        "delete_base_template",
+        TemplateInheritance_delete_base_template
+    },
+    {
+        "mut_shadows_base_prop",
+        TemplateInheritance_mut_shadows_base_prop
+    },
+    {
+        "base_w_anonymous_array_member",
+        TemplateInheritance_base_w_anonymous_array_member
+    },
+    {
+        "base_w_count_one_array_member",
+        TemplateInheritance_base_w_count_one_array_member
+    },
+    {
+        "base_is_prefab",
+        TemplateInheritance_base_is_prefab
+    },
+    {
+        "base_is_enum",
+        TemplateInheritance_base_is_enum
+    },
+    {
+        "base_unresolved",
+        TemplateInheritance_base_unresolved
+    },
+    {
+        "base_declared_after_derived",
+        TemplateInheritance_base_declared_after_derived
+    },
+    {
+        "self_inherit",
+        TemplateInheritance_self_inherit
+    },
+    {
+        "missing_base_name",
+        TemplateInheritance_missing_base_name
+    },
+    {
+        "newline_before_scope",
+        TemplateInheritance_newline_before_scope
+    },
+    {
+        "no_space_around_colon",
+        TemplateInheritance_no_space_around_colon
+    },
+    {
+        "base_in_module",
+        TemplateInheritance_base_in_module
+    },
+    {
+        "base_in_module_path",
+        TemplateInheritance_base_in_module_path
+    },
+    {
+        "base_in_separate_script",
+        TemplateInheritance_base_in_separate_script
+    },
+    {
+        "run_script_twice",
+        TemplateInheritance_run_script_twice
+    },
+    {
+        "managed_script_update",
+        TemplateInheritance_managed_script_update
+    },
+    {
+        "managed_script_update_base_default",
+        TemplateInheritance_managed_script_update_base_default
+    },
+    {
+        "ast_to_str",
+        TemplateInheritance_ast_to_str
+    },
+    {
+        "derived_instance_json",
+        TemplateInheritance_derived_instance_json
+    },
+    {
+        "derived_instance_set_from_c",
+        TemplateInheritance_derived_instance_set_from_c
+    },
+    {
+        "const_before_prop_in_derived",
+        TemplateInheritance_const_before_prop_in_derived
+    },
+    {
+        "const_after_prop_in_derived",
+        TemplateInheritance_const_after_prop_in_derived
+    },
+    {
+        "derived_from_template_w_captured_const",
+        TemplateInheritance_derived_from_template_w_captured_const
+    }
+};
+
+bake_test_case TemplateProp_testcases[] = {
+    {
+        "prop_template_type",
+        TemplateProp_prop_template_type
+    },
+    {
+        "prop_template_type_default",
+        TemplateProp_prop_template_type_default
+    },
+    {
+        "prop_template_type_default_initializer",
+        TemplateProp_prop_template_type_default_initializer
+    },
+    {
+        "prop_template_type_partial_default_initializer",
+        TemplateProp_prop_template_type_partial_default_initializer
+    },
+    {
+        "use_as_tag",
+        TemplateProp_use_as_tag
+    },
+    {
+        "use_as_tag_dollar",
+        TemplateProp_use_as_tag_dollar
+    },
+    {
+        "use_as_tag_default",
+        TemplateProp_use_as_tag_default
+    },
+    {
+        "use_as_tag_on_instance",
+        TemplateProp_use_as_tag_on_instance
+    },
+    {
+        "use_w_initializer_partial",
+        TemplateProp_use_w_initializer_partial
+    },
+    {
+        "use_w_initializer_partial_dollar",
+        TemplateProp_use_w_initializer_partial_dollar
+    },
+    {
+        "use_w_initializer_full",
+        TemplateProp_use_w_initializer_full
+    },
+    {
+        "use_w_initializer_positional",
+        TemplateProp_use_w_initializer_positional
+    },
+    {
+        "use_w_initializer_expr",
+        TemplateProp_use_w_initializer_expr
+    },
+    {
+        "use_w_empty_initializer",
+        TemplateProp_use_w_empty_initializer
+    },
+    {
+        "use_in_with",
+        TemplateProp_use_in_with
+    },
+    {
+        "use_in_with_dollar",
+        TemplateProp_use_in_with_dollar
+    },
+    {
+        "use_in_with_w_initializer",
+        TemplateProp_use_in_with_w_initializer
+    },
+    {
+        "use_in_with_w_positional_initializer",
+        TemplateProp_use_in_with_w_positional_initializer
+    },
+    {
+        "member_access_in_expr",
+        TemplateProp_member_access_in_expr
+    },
+    {
+        "prop_change_updates_children",
+        TemplateProp_prop_change_updates_children
+    },
+    {
+        "prop_change_from_c_updates_children",
+        TemplateProp_prop_change_from_c_updates_children
+    },
+    {
+        "multiple_template_props",
+        TemplateProp_multiple_template_props
+    },
+    {
+        "template_prop_w_other_props",
+        TemplateProp_template_prop_w_other_props
+    },
+    {
+        "template_prop_w_string_member",
+        TemplateProp_template_prop_w_string_member
+    },
+    {
+        "inherited_template_prop",
+        TemplateProp_inherited_template_prop
+    },
+    {
+        "inherited_template_prop_dollar",
+        TemplateProp_inherited_template_prop_dollar
+    },
+    {
+        "inherited_template_prop_chain",
+        TemplateProp_inherited_template_prop_chain
+    },
+    {
+        "prop_of_derived_template_type",
+        TemplateProp_prop_of_derived_template_type
+    },
+    {
+        "nested_template_instantiation",
+        TemplateProp_nested_template_instantiation
+    },
+    {
+        "template_prop_in_for_loop",
+        TemplateProp_template_prop_in_for_loop
+    },
+    {
+        "template_prop_in_if",
+        TemplateProp_template_prop_in_if
+    },
+    {
+        "use_wo_template_keyword",
+        TemplateProp_use_wo_template_keyword
+    },
+    {
+        "prop_wo_template_keyword_as_value",
+        TemplateProp_prop_wo_template_keyword_as_value
+    },
+    {
+        "type_not_a_template",
+        TemplateProp_type_not_a_template
+    },
+    {
+        "type_is_primitive",
+        TemplateProp_type_is_primitive
+    },
+    {
+        "type_unresolved",
+        TemplateProp_type_unresolved
+    },
+    {
+        "type_is_self",
+        TemplateProp_type_is_self
+    },
+    {
+        "mut_template_type",
+        TemplateProp_mut_template_type
+    },
+    {
+        "const_template_type",
+        TemplateProp_const_template_type
+    },
+    {
+        "missing_type_name",
+        TemplateProp_missing_type_name
+    },
+    {
+        "use_as_pair_first",
+        TemplateProp_use_as_pair_first
+    },
+    {
+        "use_as_pair_second",
+        TemplateProp_use_as_pair_second
+    },
+    {
+        "use_as_pair_first_dollar",
+        TemplateProp_use_as_pair_first_dollar
+    },
+    {
+        "use_as_entity_kind",
+        TemplateProp_use_as_entity_kind
+    },
+    {
+        "use_w_wrong_member",
+        TemplateProp_use_w_wrong_member
+    },
+    {
+        "prop_template_type_wo_default_required",
+        TemplateProp_prop_template_type_wo_default_required
+    },
+    {
+        "run_script_twice",
+        TemplateProp_run_script_twice
+    },
+    {
+        "managed_script_update",
+        TemplateProp_managed_script_update
+    },
+    {
+        "ast_to_str",
+        TemplateProp_ast_to_str
+    },
+    {
+        "instance_to_json",
+        TemplateProp_instance_to_json
+    },
+    {
+        "pass_to_child_template_same_type",
+        TemplateProp_pass_to_child_template_same_type
+    },
+    {
+        "pass_to_child_template_same_type_dollar",
+        TemplateProp_pass_to_child_template_same_type_dollar
+    },
+    {
+        "pass_to_child_template_positional",
+        TemplateProp_pass_to_child_template_positional
+    },
+    {
+        "pass_to_child_template_w_expr",
+        TemplateProp_pass_to_child_template_w_expr
+    },
+    {
+        "pass_to_child_template_w_with",
+        TemplateProp_pass_to_child_template_w_with
+    },
+    {
+        "pass_to_child_template_default",
+        TemplateProp_pass_to_child_template_default
+    },
+    {
+        "pass_to_child_template_update",
+        TemplateProp_pass_to_child_template_update
+    },
+    {
+        "pass_to_child_template_from_c",
+        TemplateProp_pass_to_child_template_from_c
+    },
+    {
+        "pass_to_child_template_two_levels",
+        TemplateProp_pass_to_child_template_two_levels
+    },
+    {
+        "pass_to_child_template_and_use_in_outer",
+        TemplateProp_pass_to_child_template_and_use_in_outer
+    },
+    {
+        "pass_derived_to_child_template_base",
+        TemplateProp_pass_derived_to_child_template_base
+    },
+    {
+        "pass_derived_to_child_template_base_positional",
+        TemplateProp_pass_derived_to_child_template_base_positional
+    },
+    {
+        "pass_derived_to_child_template_base_w_with",
+        TemplateProp_pass_derived_to_child_template_base_w_with
+    },
+    {
+        "pass_derived_to_child_template_base_update",
+        TemplateProp_pass_derived_to_child_template_base_update
+    },
+    {
+        "pass_derived_to_child_template_derived",
+        TemplateProp_pass_derived_to_child_template_derived
+    },
+    {
+        "pass_derived_to_child_template_base_two_levels",
+        TemplateProp_pass_derived_to_child_template_base_two_levels
+    },
+    {
+        "pass_base_to_child_template_derived_fails",
+        TemplateProp_pass_base_to_child_template_derived_fails
+    },
+    {
+        "pass_unrelated_to_child_template_fails",
+        TemplateProp_pass_unrelated_to_child_template_fails
+    },
+    {
+        "interface_prop_invalid_value",
+        TemplateProp_interface_prop_invalid_value
+    },
+    {
+        "interface_prop_unrelated_template",
+        TemplateProp_interface_prop_unrelated_template
+    },
+    {
+        "interface_prop_missing_value",
+        TemplateProp_interface_prop_missing_value
+    },
+    {
+        "interface_prop_empty_initializer_fails",
+        TemplateProp_interface_prop_empty_initializer_fails
+    },
+    {
+        "interface_prop_in_with_w_initializer_fails",
+        TemplateProp_interface_prop_in_with_w_initializer_fails
+    },
+    {
+        "interface_prop_dollar_initializer",
+        TemplateProp_interface_prop_dollar_initializer
+    },
+    {
+        "interface_prop_self_template",
+        TemplateProp_interface_prop_self_template
+    },
+    {
+        "interface_prop_instantiates_passed_template",
+        TemplateProp_interface_prop_instantiates_passed_template
+    },
+    {
+        "interface_prop_paren_syntax",
+        TemplateProp_interface_prop_paren_syntax
+    },
+    {
+        "interface_prop_false_branch",
+        TemplateProp_interface_prop_false_branch
+    },
+    {
+        "interface_prop_with_other_components",
+        TemplateProp_interface_prop_with_other_components
+    },
+    {
+        "interface_prop_default_template",
+        TemplateProp_interface_prop_default_template
+    },
+    {
+        "interface_prop_default_overridden",
+        TemplateProp_interface_prop_default_overridden
+    },
+    {
+        "interface_prop_default_overridden_from_c",
+        TemplateProp_interface_prop_default_overridden_from_c
+    },
+    {
+        "interface_prop_as_tag",
+        TemplateProp_interface_prop_as_tag
+    },
+    {
+        "interface_prop_from_c",
+        TemplateProp_interface_prop_from_c
+    },
+    {
+        "interface_prop_change_template",
+        TemplateProp_interface_prop_change_template
+    },
+    {
+        "interface_prop_not_derived_fails",
+        TemplateProp_interface_prop_not_derived_fails
+    },
+    {
+        "interface_prop_not_template_fails",
+        TemplateProp_interface_prop_not_template_fails
+    },
+    {
+        "interface_prop_unset_fails",
+        TemplateProp_interface_prop_unset_fails
+    },
+    {
+        "interface_prop_unknown_member_fails",
+        TemplateProp_interface_prop_unknown_member_fails
+    },
+    {
+        "bool_prop_mul_flt_member",
+        TemplateProp_bool_prop_mul_flt_member
+    },
+    {
+        "bool_prop_in_flt_member_initializer",
+        TemplateProp_bool_prop_in_flt_member_initializer
+    },
+    {
+        "bool_prop_mul_flt_member_const",
+        TemplateProp_bool_prop_mul_flt_member_const
+    }
+};
+
+bake_test_case Scenario_testcases[] = {
+    {
+        "rocket_instantiate",
+        Scenario_rocket_instantiate
+    },
+    {
+        "rocket_partial_loaded",
+        Scenario_rocket_partial_loaded
+    },
+    {
+        "rocket_partial_fuel",
+        Scenario_rocket_partial_fuel
+    },
+    {
+        "rocket_partial_engines",
+        Scenario_rocket_partial_engines
+    },
+    {
+        "rocket_partial_valid_toggle_twice",
+        Scenario_rocket_partial_valid_toggle_twice
+    },
+    {
+        "rocket_many_instances_independent",
+        Scenario_rocket_many_instances_independent
+    },
+    {
+        "bunny_partial_value",
+        Scenario_bunny_partial_value
+    },
+    {
+        "bunny_partial_branch",
+        Scenario_bunny_partial_branch
+    },
+    {
+        "gauge_partial_text_and_frac",
+        Scenario_gauge_partial_text_and_frac
+    },
+    {
+        "nested_template_reeval_keeps_children",
+        Scenario_nested_template_reeval_keeps_children
+    },
+    {
+        "template_tree_annotation_applies_to_instances",
+        Scenario_template_tree_annotation_applies_to_instances
+    },
+    {
+        "ir_and_ast_instances_coexist",
+        Scenario_ir_and_ast_instances_coexist
+    },
+    {
+        "traffic_car_blinkers",
+        Scenario_traffic_car_blinkers
+    },
+    {
+        "traffic_streetlamp_daylight",
+        Scenario_traffic_streetlamp_daylight
+    }
+};
+
+bake_test_case Edit_testcases[] = {
+    {
+        "source_entity",
+        Edit_source_entity
+    },
+    {
+        "source_entity_w_scope",
+        Edit_source_entity_w_scope
+    },
+    {
+        "source_entity_w_kind",
+        Edit_source_entity_w_kind
+    },
+    {
+        "source_entity_w_kind_scope",
+        Edit_source_entity_w_kind_scope
+    },
+    {
+        "source_entity_w_base",
+        Edit_source_entity_w_base
+    },
+    {
+        "source_entity_w_base_scope",
+        Edit_source_entity_w_base_scope
+    },
+    {
+        "source_entity_w_paren",
+        Edit_source_entity_w_paren
+    },
+    {
+        "source_entity_w_paren_scope",
+        Edit_source_entity_w_paren_scope
+    },
+    {
+        "source_anonymous_entity",
+        Edit_source_anonymous_entity
+    },
+    {
+        "source_child_entity",
+        Edit_source_child_entity
+    },
+    {
+        "source_entity_w_trailing_comment",
+        Edit_source_entity_w_trailing_comment
+    },
+    {
+        "source_entity_in_with_scope",
+        Edit_source_entity_in_with_scope
+    },
+    {
+        "source_template_instance",
+        Edit_source_template_instance
+    },
+    {
+        "source_template_body_entity",
+        Edit_source_template_body_entity
+    },
+    {
+        "source_for_loop_entity",
+        Edit_source_for_loop_entity
+    },
+    {
+        "source_foreign_entity",
+        Edit_source_foreign_entity
+    },
+    {
+        "source_unknown_entity",
+        Edit_source_unknown_entity
+    },
+    {
+        "source_entity_declared_twice",
+        Edit_source_entity_declared_twice
+    },
+    {
+        "source_include_entity",
+        Edit_source_include_entity
+    },
+    {
+        "source_managed_script",
+        Edit_source_managed_script
+    },
+    {
+        "source_line_column",
+        Edit_source_line_column
+    },
+    {
+        "source_component_stmt_ends",
+        Edit_source_component_stmt_ends
+    },
+    {
+        "set_named_initializer",
+        Edit_set_named_initializer
+    },
+    {
+        "set_positional_initializer",
+        Edit_set_positional_initializer
+    },
+    {
+        "set_positional_enum_map",
+        Edit_set_positional_enum_map
+    },
+    {
+        "set_empty_initializer",
+        Edit_set_empty_initializer
+    },
+    {
+        "set_partial_initializer",
+        Edit_set_partial_initializer
+    },
+    {
+        "set_multi_line_initializer",
+        Edit_set_multi_line_initializer
+    },
+    {
+        "set_value_form",
+        Edit_set_value_form
+    },
+    {
+        "set_collection_form",
+        Edit_set_collection_form
+    },
+    {
+        "set_paren_initializer",
+        Edit_set_paren_initializer
+    },
+    {
+        "set_preserves_comments",
+        Edit_set_preserves_comments
+    },
+    {
+        "set_preserves_blank_lines_and_indent",
+        Edit_set_preserves_blank_lines_and_indent
+    },
+    {
+        "set_tabs_indent",
+        Edit_set_tabs_indent
+    },
+    {
+        "set_append_to_existing_scope",
+        Edit_set_append_to_existing_scope
+    },
+    {
+        "set_append_to_empty_scope",
+        Edit_set_append_to_empty_scope
+    },
+    {
+        "set_append_no_scope",
+        Edit_set_append_no_scope
+    },
+    {
+        "set_append_w_using",
+        Edit_set_append_w_using
+    },
+    {
+        "set_append_w_module",
+        Edit_set_append_w_module
+    },
+    {
+        "set_expr",
+        Edit_set_expr
+    },
+    {
+        "set_expr_append",
+        Edit_set_expr_append
+    },
+    {
+        "set_nested_child",
+        Edit_set_nested_child
+    },
+    {
+        "set_anonymous_entity",
+        Edit_set_anonymous_entity
+    },
+    {
+        "set_in_with_scope",
+        Edit_set_in_with_scope
+    },
+    {
+        "set_float_roundtrip",
+        Edit_set_float_roundtrip
+    },
+    {
+        "set_template_body_entity",
+        Edit_set_template_body_entity
+    },
+    {
+        "set_for_loop_entity_fails",
+        Edit_set_for_loop_entity_fails
+    },
+    {
+        "set_foreign_entity_fails",
+        Edit_set_foreign_entity_fails
+    },
+    {
+        "set_twice_same_component",
+        Edit_set_twice_same_component
+    },
+    {
+        "remove_component",
+        Edit_remove_component
+    },
+    {
+        "remove_component_multi_line",
+        Edit_remove_component_multi_line
+    },
+    {
+        "remove_missing_component",
+        Edit_remove_missing_component
+    },
+    {
+        "remove_tag",
+        Edit_remove_tag
+    },
+    {
+        "delete_first",
+        Edit_delete_first
+    },
+    {
+        "delete_middle",
+        Edit_delete_middle
+    },
+    {
+        "delete_last",
+        Edit_delete_last
+    },
+    {
+        "delete_nested_child",
+        Edit_delete_nested_child
+    },
+    {
+        "delete_entity_w_edits_inside",
+        Edit_delete_entity_w_edits_inside
+    },
+    {
+        "delete_w_trailing_comment",
+        Edit_delete_w_trailing_comment
+    },
+    {
+        "delete_preserves_preceding_comment",
+        Edit_delete_preserves_preceding_comment
+    },
+    {
+        "multiple_edits_one_apply",
+        Edit_multiple_edits_one_apply
+    },
+    {
+        "apply_twice_same_result",
+        Edit_apply_twice_same_result
+    },
+    {
+        "apply_result_runs",
+        Edit_apply_result_runs
+    },
+    {
+        "apply_deleted_entity_gone",
+        Edit_apply_deleted_entity_gone
+    },
+    {
+        "apply_no_edits",
+        Edit_apply_no_edits
+    },
+    {
+        "set_in_module_script",
+        Edit_set_in_module_script
+    },
+    {
+        "set_replaces_tag_stmt",
+        Edit_set_replaces_tag_stmt
+    },
+    {
+        "set_f32_shortest_repr",
+        Edit_set_f32_shortest_repr
+    },
+    {
+        "set_f32_integral_no_fraction",
+        Edit_set_f32_integral_no_fraction
+    },
+    {
+        "set_f32_negative_zero",
+        Edit_set_f32_negative_zero
+    },
+    {
+        "set_f32_third",
+        Edit_set_f32_third
+    },
+    {
+        "set_f32_small_exponent",
+        Edit_set_f32_small_exponent
+    },
+    {
+        "set_f32_roundtrips_in_script",
+        Edit_set_f32_roundtrips_in_script
+    },
+    {
+        "set_f64_shortest_repr",
+        Edit_set_f64_shortest_repr
+    },
+    {
+        "delete_blank_line_before_and_after",
+        Edit_delete_blank_line_before_and_after
+    },
+    {
+        "delete_blank_line_first_in_file",
+        Edit_delete_blank_line_first_in_file
+    },
+    {
+        "delete_blank_line_last_in_file",
+        Edit_delete_blank_line_last_in_file
+    },
+    {
+        "delete_blank_line_first_in_scope",
+        Edit_delete_blank_line_first_in_scope
+    },
+    {
+        "delete_blank_line_last_in_scope",
+        Edit_delete_blank_line_last_in_scope
+    },
+    {
+        "delete_blank_line_middle_in_scope",
+        Edit_delete_blank_line_middle_in_scope
+    },
+    {
+        "delete_blank_line_only_after",
+        Edit_delete_blank_line_only_after
+    },
+    {
+        "delete_blank_line_only_before",
+        Edit_delete_blank_line_only_before
+    },
+    {
+        "source_two_managed_code_scripts",
+        Edit_source_two_managed_code_scripts
+    },
+    {
+        "edit_two_managed_code_scripts",
+        Edit_edit_two_managed_code_scripts
+    },
+    {
+        "source_two_managed_file_scripts",
+        Edit_source_two_managed_file_scripts
+    },
+    {
+        "include_creates_managed_script",
+        Edit_include_creates_managed_script
+    },
+    {
+        "include_resolves_relative_to_script_dir",
+        Edit_include_resolves_relative_to_script_dir
+    },
+    {
+        "include_edit_applies_to_included_file",
+        Edit_include_edit_applies_to_included_file
+    },
+    {
+        "include_parent_update_keeps_included_script",
+        Edit_include_parent_update_keeps_included_script
+    },
+    {
+        "include_update_included_script",
+        Edit_include_update_included_script
+    },
+    {
+        "include_clear_parent_keeps_included_script",
+        Edit_include_clear_parent_keeps_included_script
+    },
+    {
+        "entity_owner_plain",
+        Edit_entity_owner_plain
+    },
+    {
+        "entity_owner_no_script",
+        Edit_entity_owner_no_script
+    },
+    {
+        "entity_owner_unmanaged_script",
+        Edit_entity_owner_unmanaged_script
+    },
+    {
+        "entity_owner_for_loop_entity",
+        Edit_entity_owner_for_loop_entity
+    },
+    {
+        "delete_recorded_before_entity_deleted",
+        Edit_delete_recorded_before_entity_deleted
+    },
+    {
+        "clear_delete_after_entity_deleted",
+        Edit_clear_delete_after_entity_deleted
+    },
+    {
+        "clear_set",
+        Edit_clear_set
+    },
+    {
+        "clear_unknown_edit",
+        Edit_clear_unknown_edit
+    },
+    {
+        "set_after_clear",
+        Edit_set_after_clear
+    },
+    {
+        "count_edits",
+        Edit_count_edits
+    },
+    {
+        "set_for_recreated_entity_after_clear",
+        Edit_set_for_recreated_entity_after_clear
+    }
+};
+
+bake_test_case EditTemplate_testcases[] = {
+    {
+        "source_body_entity",
+        EditTemplate_source_body_entity
+    },
+    {
+        "source_body_entity_no_scope",
+        EditTemplate_source_body_entity_no_scope
+    },
+    {
+        "source_body_entity_nested",
+        EditTemplate_source_body_entity_nested
+    },
+    {
+        "source_body_entity_anonymous",
+        EditTemplate_source_body_entity_anonymous
+    },
+    {
+        "source_body_entity_in_with_scope",
+        EditTemplate_source_body_entity_in_with_scope
+    },
+    {
+        "source_body_entity_in_if_scope",
+        EditTemplate_source_body_entity_in_if_scope
+    },
+    {
+        "source_body_for_loop_entity",
+        EditTemplate_source_body_for_loop_entity
+    },
+    {
+        "source_body_entity_computed_name",
+        EditTemplate_source_body_entity_computed_name
+    },
+    {
+        "source_instance_stmt_has_no_template",
+        EditTemplate_source_instance_stmt_has_no_template
+    },
+    {
+        "source_body_entity_two_instances",
+        EditTemplate_source_body_entity_two_instances
+    },
+    {
+        "source_nested_template_instance",
+        EditTemplate_source_nested_template_instance
+    },
+    {
+        "source_body_entity_other_script",
+        EditTemplate_source_body_entity_other_script
+    },
+    {
+        "set_body_entity",
+        EditTemplate_set_body_entity
+    },
+    {
+        "set_body_entity_replaces_prop_expr",
+        EditTemplate_set_body_entity_replaces_prop_expr
+    },
+    {
+        "set_body_entity_empty_scope",
+        EditTemplate_set_body_entity_empty_scope
+    },
+    {
+        "set_body_entity_via_either_instance",
+        EditTemplate_set_body_entity_via_either_instance
+    },
+    {
+        "delete_body_entity",
+        EditTemplate_delete_body_entity
+    },
+    {
+        "remove_body_entity_component",
+        EditTemplate_remove_body_entity_component
+    },
+    {
+        "edit_body_for_loop_entity_fails",
+        EditTemplate_edit_body_for_loop_entity_fails
+    },
+    {
+        "apply_update_all_instances",
+        EditTemplate_apply_update_all_instances
+    },
+    {
+        "apply_update_instance_override_wins",
+        EditTemplate_apply_update_instance_override_wins
+    },
+    {
+        "apply_update_delete_removes_from_all",
+        EditTemplate_apply_update_delete_removes_from_all
+    },
+    {
+        "entity_owner_body_entity",
+        EditTemplate_entity_owner_body_entity
+    },
+    {
+        "entity_owner_body_entity_unmanaged",
+        EditTemplate_entity_owner_body_entity_unmanaged
+    },
+    {
+        "source_template_in_included_file",
+        EditTemplate_source_template_in_included_file
+    },
+    {
+        "edit_template_in_included_file",
+        EditTemplate_edit_template_in_included_file
+    },
+    {
+        "body_entity_template_pair_in_nested_scopes",
+        EditTemplate_body_entity_template_pair_in_nested_scopes
+    },
+    {
+        "source_body_entity_nested_in_if_scope",
+        EditTemplate_source_body_entity_nested_in_if_scope
+    },
+    {
+        "source_body_entity_in_else_scope",
+        EditTemplate_source_body_entity_in_else_scope
+    },
+    {
+        "source_body_entity_in_with_scope_nested",
+        EditTemplate_source_body_entity_in_with_scope_nested
+    },
+    {
+        "entity_owner_nested_template_component_assignment",
+        EditTemplate_entity_owner_nested_template_component_assignment
+    },
+    {
+        "entity_owner_body_entity_in_for_loop_rows",
+        EditTemplate_entity_owner_body_entity_in_for_loop_rows
+    },
+    {
+        "source_body_entity_not_in_scene_script",
+        EditTemplate_source_body_entity_not_in_scene_script
+    },
+    {
+        "apply_update_body_entity_in_if_scope",
+        EditTemplate_apply_update_body_entity_in_if_scope
+    },
+    {
+        "delete_body_entity_recorded_before_delete",
+        EditTemplate_delete_body_entity_recorded_before_delete
+    },
+    {
+        "clear_delete_body_entity",
+        EditTemplate_clear_delete_body_entity
+    },
+    {
+        "clear_set_body_entity",
+        EditTemplate_clear_set_body_entity
+    },
+    {
+        "apply_update_delete_body_entity_recorded_before_delete",
+        EditTemplate_apply_update_delete_body_entity_recorded_before_delete
+    }
+};
+
+const char* Eval_ir_param[] = {"disabled", "enabled"};
+bake_test_param Eval_params[] = {
+    {"ir", (char**)Eval_ir_param, 2}
+};
+
+const char* Collection_ir_param[] = {"disabled", "enabled"};
+bake_test_param Collection_params[] = {
+    {"ir", (char**)Collection_ir_param, 2}
+};
+
+const char* Await_ir_param[] = {"disabled", "enabled"};
+bake_test_param Await_params[] = {
+    {"ir", (char**)Await_ir_param, 2}
+};
+
+const char* TryCatch_ir_param[] = {"disabled", "enabled"};
+bake_test_param TryCatch_params[] = {
+    {"ir", (char**)TryCatch_ir_param, 2}
+};
+
+const char* Function_ir_param[] = {"disabled", "enabled"};
+bake_test_param Function_params[] = {
+    {"ir", (char**)Function_ir_param, 2}
+};
+
+const char* Template_ir_param[] = {"disabled", "enabled"};
+bake_test_param Template_params[] = {
+    {"ir", (char**)Template_ir_param, 2}
+};
+
+const char* Mut_ir_param[] = {"disabled", "enabled"};
+bake_test_param Mut_params[] = {
+    {"ir", (char**)Mut_ir_param, 2}
+};
+
+const char* Error_ir_param[] = {"disabled", "enabled"};
+bake_test_param Error_params[] = {
+    {"ir", (char**)Error_ir_param, 2}
 };
 
 const char* Format_folding_param[] = {"enabled", "disabled"};
@@ -9881,8 +16228,15 @@ bake_test_param Format_params[] = {
 };
 
 const char* Expr_folding_param[] = {"enabled", "disabled"};
+const char* Expr_ir_param[] = {"disabled", "enabled"};
 bake_test_param Expr_params[] = {
-    {"folding", (char**)Expr_folding_param, 2}
+    {"folding", (char**)Expr_folding_param, 2},
+    {"ir", (char**)Expr_ir_param, 2}
+};
+
+const char* ExprAst_ir_param[] = {"disabled", "enabled"};
+bake_test_param ExprAst_params[] = {
+    {"ir", (char**)ExprAst_ir_param, 2}
 };
 
 const char* Deserialize_folding_param[] = {"enabled", "disabled"};
@@ -9890,47 +16244,144 @@ bake_test_param Deserialize_params[] = {
     {"folding", (char**)Deserialize_folding_param, 2}
 };
 
+const char* Include_ir_param[] = {"disabled", "enabled"};
+bake_test_param Include_params[] = {
+    {"ir", (char**)Include_ir_param, 2}
+};
+
+const char* Fuzzing_ir_param[] = {"disabled", "enabled"};
+bake_test_param Fuzzing_params[] = {
+    {"ir", (char**)Fuzzing_ir_param, 2}
+};
+
+const char* Refs_ir_param[] = {"disabled", "enabled"};
+bake_test_param Refs_params[] = {
+    {"ir", (char**)Refs_ir_param, 2}
+};
+
+const char* Reactivity_ir_param[] = {"disabled", "enabled"};
+bake_test_param Reactivity_params[] = {
+    {"ir", (char**)Reactivity_ir_param, 2}
+};
+
+const char* ConstVar_ir_param[] = {"disabled", "enabled"};
+bake_test_param ConstVar_params[] = {
+    {"ir", (char**)ConstVar_ir_param, 2}
+};
+
+const char* Lenient_ir_param[] = {"disabled", "enabled"};
+bake_test_param Lenient_params[] = {
+    {"ir", (char**)Lenient_ir_param, 2}
+};
+
+const char* StructInheritance_ir_param[] = {"disabled", "enabled"};
+bake_test_param StructInheritance_params[] = {
+    {"ir", (char**)StructInheritance_ir_param, 2}
+};
+
+const char* TemplateInheritance_ir_param[] = {"disabled", "enabled"};
+bake_test_param TemplateInheritance_params[] = {
+    {"ir", (char**)TemplateInheritance_ir_param, 2}
+};
+
+const char* TemplateProp_ir_param[] = {"disabled", "enabled"};
+bake_test_param TemplateProp_params[] = {
+    {"ir", (char**)TemplateProp_ir_param, 2}
+};
+
+const char* Scenario_ir_param[] = {"disabled", "enabled"};
+bake_test_param Scenario_params[] = {
+    {"ir", (char**)Scenario_ir_param, 2}
+};
+
+const char* Edit_ir_param[] = {"disabled", "enabled"};
+bake_test_param Edit_params[] = {
+    {"ir", (char**)Edit_ir_param, 2}
+};
+
+const char* EditTemplate_ir_param[] = {"disabled", "enabled"};
+bake_test_param EditTemplate_params[] = {
+    {"ir", (char**)EditTemplate_ir_param, 2}
+};
+
 static bake_test_suite suites[] = {
     {
         "Eval",
+        Eval_setup,
         NULL,
+        682,
+        Eval_testcases,
+        1,
+        Eval_params
+    },
+    {
+        "Collection",
+        Collection_setup,
         NULL,
-        540,
-        Eval_testcases
+        102,
+        Collection_testcases,
+        1,
+        Collection_params
+    },
+    {
+        "Await",
+        Await_setup,
+        NULL,
+        62,
+        Await_testcases,
+        1,
+        Await_params
+    },
+    {
+        "TryCatch",
+        TryCatch_setup,
+        NULL,
+        36,
+        TryCatch_testcases,
+        1,
+        TryCatch_params
     },
     {
         "Function",
+        Function_setup,
         NULL,
-        NULL,
-        78,
-        Function_testcases
+        85,
+        Function_testcases,
+        1,
+        Function_params
     },
     {
         "Template",
+        Template_setup,
         NULL,
-        NULL,
-        97,
-        Template_testcases
+        174,
+        Template_testcases,
+        1,
+        Template_params
     },
     {
         "Mut",
+        Mut_setup,
         NULL,
-        NULL,
-        50,
-        Mut_testcases
+        75,
+        Mut_testcases,
+        1,
+        Mut_params
     },
     {
         "Error",
+        Error_setup,
         NULL,
-        NULL,
-        129,
-        Error_testcases
+        230,
+        Error_testcases,
+        1,
+        Error_params
     },
     {
         "Format",
+        Format_setup,
         NULL,
-        NULL,
-        134,
+        148,
         Format_testcases,
         1,
         Format_params
@@ -9939,30 +16390,32 @@ static bake_test_suite suites[] = {
         "Expr",
         Expr_setup,
         NULL,
-        354,
+        409,
         Expr_testcases,
-        1,
+        2,
         Expr_params
     },
     {
         "ExprAst",
-        NULL,
+        ExprAst_setup,
         NULL,
         9,
-        ExprAst_testcases
+        ExprAst_testcases,
+        1,
+        ExprAst_params
     },
     {
         "Vars",
         NULL,
         NULL,
-        15,
+        16,
         Vars_testcases
     },
     {
         "Serialize",
         NULL,
         NULL,
-        91,
+        93,
         Serialize_testcases
     },
     {
@@ -9976,34 +16429,114 @@ static bake_test_suite suites[] = {
     },
     {
         "Include",
+        Include_setup,
         NULL,
-        NULL,
-        26,
-        Include_testcases
+        56,
+        Include_testcases,
+        1,
+        Include_params
     },
     {
         "Fuzzing",
-        NULL,
+        Fuzzing_setup,
         NULL,
         146,
-        Fuzzing_testcases
+        Fuzzing_testcases,
+        1,
+        Fuzzing_params
     },
     {
         "Refs",
+        Refs_setup,
         NULL,
+        132,
+        Refs_testcases,
+        1,
+        Refs_params
+    },
+    {
+        "Reactivity",
+        Reactivity_setup,
         NULL,
-        88,
-        Refs_testcases
+        140,
+        Reactivity_testcases,
+        1,
+        Reactivity_params
     },
     {
         "ConstVar",
+        ConstVar_setup,
         NULL,
+        42,
+        ConstVar_testcases,
+        1,
+        ConstVar_params
+    },
+    {
+        "Lenient",
+        Lenient_setup,
         NULL,
-        39,
-        ConstVar_testcases
+        53,
+        Lenient_testcases,
+        1,
+        Lenient_params
+    },
+    {
+        "StructInheritance",
+        StructInheritance_setup,
+        NULL,
+        59,
+        StructInheritance_testcases,
+        1,
+        StructInheritance_params
+    },
+    {
+        "TemplateInheritance",
+        TemplateInheritance_setup,
+        NULL,
+        47,
+        TemplateInheritance_testcases,
+        1,
+        TemplateInheritance_params
+    },
+    {
+        "TemplateProp",
+        TemplateProp_setup,
+        NULL,
+        92,
+        TemplateProp_testcases,
+        1,
+        TemplateProp_params
+    },
+    {
+        "Scenario",
+        Scenario_setup,
+        NULL,
+        14,
+        Scenario_testcases,
+        1,
+        Scenario_params
+    },
+    {
+        "Edit",
+        Edit_setup,
+        NULL,
+        102,
+        Edit_testcases,
+        1,
+        Edit_params
+    },
+    {
+        "EditTemplate",
+        EditTemplate_setup,
+        NULL,
+        38,
+        EditTemplate_testcases,
+        1,
+        EditTemplate_params
     }
 };
 
 int main(int argc, char *argv[]) {
-    return bake_test_run("script", argc, argv, suites, 15);
+    return bake_test_run("script", argc, argv, suites, 26);
 }

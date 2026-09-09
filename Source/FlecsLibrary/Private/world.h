@@ -18,11 +18,7 @@ typedef struct ecs_world_allocators_t {
     ecs_block_allocator_t graph_edge;
     ecs_block_allocator_t component_record;
     ecs_block_allocator_t pair_record;
-    ecs_block_allocator_t table_diff;
     ecs_block_allocator_t sparse_chunk;
-
-    /* Temporary vectors used for creating table diff id sequences */
-    ecs_table_diff_builder_t diff_builder;
 
     /* Temporary vector for tree spawner */
     ecs_vec_t tree_spawner;
@@ -227,12 +223,6 @@ void flecs_type_info_claim(
 /* Decrease type info refcount, free when it reaches 0. */
 void flecs_type_info_release(
     const ecs_type_info_t *ti);
-
-/* Notify tables with component of event (or all tables if id is 0). */
-void flecs_notify_tables(
-    ecs_world_t *world,
-    ecs_id_t id,
-    ecs_table_event_t *event);
 
 /* Increase table version (used for invalidating ecs_ref_t's). */
 void flecs_increment_table_version(

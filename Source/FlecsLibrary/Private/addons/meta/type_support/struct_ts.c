@@ -59,6 +59,171 @@ static void flecs_set_struct_member(
     member->warning_range = m->warning_range;
 }
 
+static bool flecs_struct_range_equals(
+    const ecs_member_value_range_t *a,
+    const ecs_member_value_range_t *b)
+{
+    return ECS_EQ(a->min, b->min) && ECS_EQ(a->max, b->max);
+}
+
+static bool flecs_struct_member_unchanged(
+    const ecs_member_t *existing,
+    ecs_entity_t member_entity,
+    const ecs_member_t *m,
+    ecs_entity_t unit)
+{
+    if (existing->member != member_entity) {
+        return false;
+    }
+    if (ecs_os_strcmp(existing->name, m->name)) {
+        return false;
+    }
+    if (existing->type != m->type || existing->count != m->count) {
+        return false;
+    }
+    if (existing->unit != unit) {
+        return false;
+    }
+    if (existing->use_offset != m->use_offset) {
+        return false;
+    }
+    if ((m->offset || m->use_offset) && existing->offset != m->offset) {
+        return false;
+    }
+    if (!flecs_struct_range_equals(&existing->range, &m->range) ||
+        !flecs_struct_range_equals(&existing->error_range, &m->error_range) ||
+        !flecs_struct_range_equals(&existing->warning_range, &m->warning_range))
+    {
+        return false;
+    }
+    return true;
+}
+
+static ecs_entity_t flecs_struct_base(
+    ecs_world_t *world,
+    ecs_entity_t struct_type,
+    const EcsStruct **base_struct)
+{
+    int32_t i = 0;
+    ecs_entity_t base;
+    while ((base = ecs_get_target(world, struct_type, EcsIsA, i ++))) {
+        const EcsStruct *bs = ecs_get(world, base, EcsStruct);
+        if (bs) {
+            if (base_struct) {
+                *base_struct = bs;
+            }
+            return base;
+        }
+    }
+    return 0;
+}
+
+bool flecs_struct_is_derived_from(
+    const ecs_world_t *world,
+    ecs_entity_t derived,
+    ecs_entity_t base)
+{
+    if (!ecs_has(world, base, EcsStruct)) {
+        return false;
+    }
+
+    int32_t depth = 0;
+    ecs_entity_t cur = derived;
+    while (cur && cur != base && depth < 64) {
+        if (!ecs_has(world, cur, EcsStruct)) {
+            return false;
+        }
+        cur = flecs_struct_base(ECS_CONST_CAST(ecs_world_t*, world), cur, NULL);
+        depth ++;
+    }
+
+    return cur == base && derived != base;
+}
+
+int32_t flecs_struct_inherited_count(
+    ecs_world_t *world,
+    ecs_entity_t struct_type,
+    const EcsStruct *s)
+{
+    const EcsStruct *base_st = NULL;
+    if (!flecs_struct_base(world, struct_type, &base_st)) {
+        return 0;
+    }
+
+    int32_t count = ecs_vec_count(&base_st->members);
+    int32_t own_count = ecs_vec_count(&s->members);
+    return count < own_count ? count : own_count;
+}
+
+static ecs_size_t flecs_struct_base_size(
+    ecs_world_t *world,
+    ecs_entity_t base,
+    ecs_size_t size)
+{
+    const EcsComponent *base_comp = ecs_get(world, base, EcsComponent);
+    if (base_comp && base_comp->size > size) {
+        return base_comp->size;
+    }
+    return size;
+}
+
+#if !defined(FLECS_NDEBUG) || defined(FLECS_KEEP_ASSERT)
+static bool flecs_struct_has_derived(
+    ecs_world_t *world,
+    ecs_entity_t struct_type)
+{
+    ecs_iter_t it = ecs_each_id(world, ecs_pair(EcsIsA, struct_type));
+    while (ecs_each_next(&it)) {
+        int32_t i;
+        for (i = 0; i < it.count; i ++) {
+            if (ecs_has(world, it.entities[i], EcsStruct)) {
+                ecs_iter_fini(&it);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+#endif
+
+static int32_t flecs_struct_inherit(
+    ecs_world_t *world,
+    ecs_entity_t struct_type,
+    EcsStruct *s)
+{
+    if (ecs_vec_count(&s->members)) {
+        return 0;
+    }
+
+    const EcsStruct *base_st = NULL;
+    if (!flecs_struct_base(world, struct_type, &base_st)) {
+        return 0;
+    }
+
+    const ecs_member_t *base_members = ecs_vec_first_t(
+        &base_st->members, ecs_member_t);
+    int32_t i, count = ecs_vec_count(&base_st->members);
+    if (!count) {
+        return 0;
+    }
+
+    ecs_vec_init_if_t(&s->members, ecs_member_t);
+    for (i = 0; i < count; i ++) {
+        ecs_member_t *elem = ecs_vec_append_t(NULL, &s->members, ecs_member_t);
+        *elem = base_members[i];
+        elem->name = ecs_os_strdup(base_members[i].name);
+    }
+
+    return count;
+}
+
+static int flecs_struct_layout(
+    ecs_world_t *world,
+    ecs_entity_t struct_type,
+    EcsStruct *s,
+    int32_t explicit_member,
+    bool member_unchanged);
+
 static int flecs_add_member_to_struct(
     ecs_world_t *world,
     ecs_entity_t struct_type,
@@ -132,20 +297,45 @@ static int flecs_add_member_to_struct(
     EcsStruct *s = ecs_ensure(world, struct_type, EcsStruct);
     ecs_assert(s != NULL, ECS_INTERNAL_ERROR, NULL);
 
+    flecs_struct_inherit(world, struct_type, s);
+
     /* First check if member is already added to struct */
     ecs_member_t *members = ecs_vec_first_t(&s->members, ecs_member_t);
     int32_t i, count = ecs_vec_count(&s->members);
+    int32_t inherited = flecs_struct_inherited_count(world, struct_type, s);
 
     bool has_member = false;
+    bool unchanged = false;
     for (i = 0; i < count; i ++) {
+        if (i < inherited) {
+            if (!ecs_os_strcmp(name, members[i].name)) {
+                char *path = ecs_get_path(world, struct_type);
+                ecs_err("member '%s.%s' is already defined by base type",
+                    path, name);
+                ecs_os_free(path);
+                return -1;
+            }
+            continue;
+        }
+
         if (member_entity && members[i].member) {
             if (members[i].member == member_entity) {
-                flecs_set_struct_member(&members[i], member_entity, &m, unit);
+                unchanged = flecs_struct_member_unchanged(
+                    &members[i], member_entity, &m, unit);
+                if (!unchanged) {
+                    flecs_set_struct_member(
+                        &members[i], member_entity, &m, unit);
+                }
                 break;
             }
         } else {
             if (!ecs_os_strcmp(name, members[i].name)) {
-                flecs_set_struct_member(&members[i], member_entity, &m, unit);
+                unchanged = flecs_struct_member_unchanged(
+                    &members[i], member_entity, &m, unit);
+                if (!unchanged) {
+                    flecs_set_struct_member(
+                        &members[i], member_entity, &m, unit);
+                }
                 break;
             }
         }
@@ -155,109 +345,87 @@ static int flecs_add_member_to_struct(
 
     /* If member wasn't added yet, add a new element to vector */
     if (!has_member) {
+        ecs_assert(!flecs_struct_has_derived(world, struct_type),
+            ECS_ALREADY_IN_USE, "cannot add member '%s' to struct that is "
+            "the base of other structs", name);
         ecs_vec_init_if_t(&s->members, ecs_member_t);
         ecs_member_t *elem = ecs_vec_append_t(NULL, &s->members, ecs_member_t);
         elem->name = NULL;
         flecs_set_struct_member(elem, member_entity, &m, unit);
-
-        /* Reobtain members array in case it was reallocated */
-        members = ecs_vec_first_t(&s->members, ecs_member_t);
         count ++;
     }
 
     bool explicit_offset = m.offset || m.use_offset;
 
-    /* Compute member offsets and size & alignment of struct */
-    ecs_size_t size = 0;
-    ecs_size_t alignment = 0;
+    return flecs_struct_layout(
+        world, struct_type, s, explicit_offset ? i : -1, unchanged);
+}
 
-    if (!explicit_offset) {
-        for (i = 0; i < count; i ++) {
-            ecs_member_t *elem = &members[i];
-
-            ecs_assert(elem->name != NULL, ECS_INTERNAL_ERROR, NULL);
-            ecs_assert(elem->type != 0, ECS_INTERNAL_ERROR, NULL);
-
-            /* Get component of member type to get its size & alignment */
-            const EcsComponent *mbr_comp = ecs_get(world, elem->type, EcsComponent);
-            if (!mbr_comp) {
-                char *path = ecs_get_path(world, elem->type);
-                ecs_err("member '%s' is not a type", path);
-                ecs_os_free(path);
-                return -1;
-            }
-
-            ecs_size_t member_size = mbr_comp->size;
-            ecs_size_t member_alignment = mbr_comp->alignment;
-
-            if (!member_size || !member_alignment) {
-                char *path = ecs_get_path(world, elem->type);
-                ecs_err("member '%s' has 0 size/alignment", path);
-                ecs_os_free(path);
-                return -1;
-            }
-
-            member_size *= elem->count ? elem->count : 1;
-            size = ECS_ALIGN(size, member_alignment);
-            elem->size = member_size;
-            elem->offset = size;
-
-            /* Synchronize offset with Member component */
-            if (elem->member) {
-                EcsMember *member_data = ecs_ensure(
-                    world, elem->member, EcsMember);
-                member_data->offset = elem->offset;
-            }
-
-            size += member_size;
-
-            if (member_alignment > alignment) {
-                alignment = member_alignment;
-            }
-        }
-    } else {
-        /* If members have explicit offsets, we can't rely on computed 
-         * size/alignment values. Calculate size as if this is the last member
-         * instead, since this will validate if the member fits in the struct.
-         * It doesn't matter if the size is smaller than the actual struct size
-         * because flecs_init_type function compares computed size with actual
-         * (component) size to determine if the type is partial. */
+static int flecs_struct_layout(
+    ecs_world_t *world,
+    ecs_entity_t struct_type,
+    EcsStruct *s,
+    int32_t explicit_member,
+    bool member_unchanged)
+{
+    ecs_member_t *members = ecs_vec_first_t(&s->members, ecs_member_t);
+    int32_t count = ecs_vec_count(&s->members);
+    ecs_size_t size = 0, alignment = 0;
+    bool layout_changed = false;
+    bool explicit_offset = explicit_member != -1;
+    const EcsStruct *base_st = NULL;
+    ecs_entity_t base = explicit_offset ? 0 :
+        flecs_struct_base(world, struct_type, &base_st);
+    int32_t inherited = base_st ? ecs_vec_count(&base_st->members) : 0;
+    if (inherited > count) {
+        inherited = count;
+    }
+    int32_t first = explicit_offset ? explicit_member : 0;
+    int32_t end = explicit_offset ? first + 1 : count;
+    for (int32_t i = first; i < end; i ++) {
         ecs_member_t *elem = &members[i];
-
-        ecs_assert(elem->name != NULL, ECS_INTERNAL_ERROR, NULL);
-        ecs_assert(elem->type != 0, ECS_INTERNAL_ERROR, NULL);
-
-        /* Get component of member type to get its size & alignment */
-        const EcsComponent *mbr_comp = ecs_get(world, elem->type, EcsComponent);
-        if (!mbr_comp) {
-            char *path = ecs_get_path(world, elem->type);
-            ecs_err("member '%s' is not a type", path);
-            ecs_os_free(path);
+        const EcsComponent *comp = ecs_get(world, elem->type, EcsComponent);
+        if (!comp) {
+            ecs_err("member '%s' is not a type",
+                flecs_errstr(ecs_get_path(world, elem->type)));
             return -1;
         }
-
-        ecs_size_t member_size = mbr_comp->size;
-        ecs_size_t member_alignment = mbr_comp->alignment;
-
-        if (!member_size || !member_alignment) {
-            char *path = ecs_get_path(world, elem->type);
-            ecs_err("member '%s' has 0 size/alignment", path);
-            ecs_os_free(path);
+        int64_t member_size = (int64_t)comp->size *
+            (elem->count ? elem->count : 1);
+        if (!member_size || member_size > INT32_MAX || !comp->alignment) {
+            ecs_err("member '%s' has 0 size/alignment",
+                flecs_errstr(ecs_get_path(world, elem->type)));
             return -1;
         }
-
-        member_size *= elem->count ? elem->count : 1;
-        elem->size = member_size;
-        size = elem->offset + member_size;
-
-        const EcsComponent* comp = ecs_get(world, struct_type, EcsComponent);
-        if (comp) {
-            alignment = comp->alignment;
-        } else {
+        ecs_size_t member_alignment = comp->alignment;
+        ecs_size_t offset = elem->offset;
+        if (!explicit_offset) {
+            if (i == inherited && base) {
+                size = flecs_struct_base_size(world, base, size);
+            }
+            offset = i < inherited
+                ? ecs_vec_get_t(&base_st->members, ecs_member_t, i)->offset
+                : ECS_ALIGN(size, member_alignment);
+            if (elem->member && i >= inherited) {
+                ecs_ensure(world, elem->member, EcsMember)->offset = offset;
+            }
+        }
+        layout_changed |= elem->size != member_size || elem->offset != offset;
+        elem->size = (ecs_size_t)member_size;
+        elem->offset = offset;
+        size = offset + elem->size;
+        if (member_alignment > alignment) {
             alignment = member_alignment;
         }
     }
-
+    if (explicit_offset) {
+        const EcsComponent *comp = ecs_get(world, struct_type, EcsComponent);
+        if (comp) {
+            alignment = comp->alignment;
+        }
+    } else if (base && inherited == count) {
+        size = flecs_struct_base_size(world, base, size);
+    }
     if (size == 0) {
         ecs_err("struct '%s' has 0 size", ecs_get_name(world, struct_type));
         return -1;
@@ -270,6 +438,16 @@ static int flecs_add_member_to_struct(
 
     /* Align struct size to struct alignment */
     size = ECS_ALIGN(size, alignment);
+
+    if (member_unchanged && !layout_changed) {
+        const EcsComponent *comp = ecs_get(world, struct_type, EcsComponent);
+        const EcsType *type = ecs_get(world, struct_type, EcsType);
+        if (comp && type && type->kind == EcsStructType &&
+            comp->size == size && comp->alignment == alignment)
+        {
+            return 0;
+        }
+    }
 
     ecs_modified(world, struct_type, EcsStruct);
 
@@ -554,16 +732,22 @@ ecs_entity_t ecs_struct_init(
     }
 
     ecs_set_scope(world, old_scope);
-    flecs_resume_readonly(world, &rs);
 
     if (i == 0) {
         EcsStruct *s = ecs_ensure(world, type, EcsStruct);
         ecs_assert(s != NULL, ECS_INTERNAL_ERROR, NULL);
-        ecs_vec_init_t(NULL, &s->members, ecs_member_t, 0);
+        ecs_vec_init_if_t(&s->members, ecs_member_t);
+        if (flecs_struct_inherit(world, type, s)) {
+            if (flecs_struct_layout(world, type, s, -1, false)) {
+                goto error;
+            }
+        }
         ecs_modified(world, type, EcsStruct);
     } else if (!ecs_has(world, type, EcsStruct)) {
         goto error;
     }
+
+    flecs_resume_readonly(world, &rs);
 
     return type;
 error:
@@ -572,6 +756,40 @@ error:
         ecs_delete(world, type);
     }
     return 0;
+}
+
+static void flecs_struct_on_add_base(ecs_iter_t *it) {
+    ecs_world_t *world = it->world;
+    ecs_entity_t base = ecs_pair_second(world, ecs_field_id(it, 0));
+    if (!ecs_has(world, base, EcsStruct)) {
+        return;
+    }
+
+    int32_t i, count = it->count;
+    for (i = 0; i < count; i ++) {
+        ecs_entity_t e = it->entities[i];
+        if (!ecs_owns(world, e, EcsStruct)) {
+            continue;
+        }
+
+        EcsStruct *s = ecs_ensure(world, e, EcsStruct);
+        ecs_assert(s != NULL, ECS_INTERNAL_ERROR, NULL);
+        if (ecs_vec_count(&s->members)) {
+            char *path = ecs_get_path(world, e);
+            char *base_path = ecs_get_path(world, base);
+            ecs_err("cannot add base type '%s' to struct '%s' that already "
+                "has members", base_path, path);
+            ecs_os_free(path);
+            ecs_os_free(base_path);
+            continue;
+        }
+
+        if (flecs_struct_inherit(world, e, s)) {
+            flecs_struct_layout(world, e, s, -1, false);
+        }
+
+        ecs_modified(world, e, EcsStruct);
+    }
 }
 
 int ecs_struct_add_member(
@@ -697,6 +915,13 @@ void flecs_meta_struct_init(
         .query.terms[0] = { .id = ecs_id(EcsMemberRanges) },
         .events = {EcsOnSet},
         .callback = flecs_set_member_ranges,
+        .global_observer = true
+    });
+
+    ecs_observer(world, {
+        .query.terms[0] = { .id = ecs_pair(EcsIsA, EcsWildcard) },
+        .events = {EcsOnAdd},
+        .callback = flecs_struct_on_add_base,
         .global_observer = true
     });
 

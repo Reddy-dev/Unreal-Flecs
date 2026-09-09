@@ -16,6 +16,10 @@
 bool flecs_meta_valid_digit(
     const char *str);
 
+bool flecs_meta_type_is_integer(
+    const ecs_world_t *world,
+    ecs_entity_t type);
+
 void flecs_meta_type_serializer_init(
     ecs_iter_t *it);
 
@@ -23,6 +27,9 @@ void flecs_type_serializer_dtor(
     EcsTypeSerializer *ptr);
 
 ecs_meta_op_kind_t flecs_meta_primitive_to_op_kind(
+    ecs_primitive_kind_t kind);
+
+ecs_entity_t flecs_meta_primitive_type(
     ecs_primitive_kind_t kind);
 
 ecs_entity_t flecs_meta_op_kind_to_type(
@@ -35,6 +42,22 @@ int flecs_value_blit_u64(
     const ecs_world_t *world,
     const ecs_value_t *key_value,
     uint64_t *key_out);
+
+typedef enum flecs_meta_format_t {
+    EcsMetaStr,
+    EcsMetaExpr,
+    EcsMetaExprPrecise,
+    EcsMetaJson,
+    EcsMetaExprPositional,
+    EcsMetaExprPrecisePositional
+} flecs_meta_format_t;
+
+int flecs_meta_serialize(
+    const ecs_world_t *world,
+    const ecs_vec_t *ops,
+    const void *ptr,
+    ecs_strbuf_t *str,
+    flecs_meta_format_t format);
 
 int flecs_meta_ser_primitive(
     const ecs_world_t *world,
@@ -111,6 +134,16 @@ int flecs_meta_value_type_str(
 
 void flecs_meta_import_definitions(
     ecs_world_t *world);
+
+int32_t flecs_struct_inherited_count(
+    ecs_world_t *world,
+    ecs_entity_t struct_type,
+    const EcsStruct *s);
+
+bool flecs_struct_is_derived_from(
+    const ecs_world_t *world,
+    ecs_entity_t derived,
+    ecs_entity_t base);
 
 #endif
 

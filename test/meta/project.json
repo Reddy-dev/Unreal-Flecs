@@ -110,6 +110,7 @@
             "id": "BitmaskTypes",
             "testcases": [
                 "bitmask_1_constant",
+                "update_constant",
                 "bitmask_2_constants",
                 "bitmask_3_constants",
                 "bitmask_4_constants",
@@ -174,7 +175,10 @@
                 "map_lifecycle",
                 "map_lifecycle_trivial_type",
                 "map_lifecycle_alloc_values",
-                "map_cmp_illegal"
+                "map_cmp_illegal",
+                "existing_struct_w_vector_member_no_hooks",
+                "existing_struct_w_vector_member_shallow_copy",
+                "existing_struct_w_vector_member_not_freed"
             ]
         }, {
             "id": "StructTypes",
@@ -216,7 +220,9 @@
                 "direct_cycle",
                 "indirect_cycle",
                 "use_before_registering_reflection",
-                "use_before_registering_reflection_w_hooks"
+                "use_before_registering_reflection_w_hooks",
+                "redefine_same_members_in_use",
+                "redefine_member_after_nested_type_changed"
             ]
         }, {
             "id": "NestedStructTypes",
@@ -402,6 +408,15 @@
             "testcases": [
                 "set_value_enum_u8_underlying",
                 "get_char",
+                "set_value_derived_to_base",
+                "set_value_base_to_derived_fails",
+                "set_value_grandparent_to_derived_fails",
+                "set_value_derived_to_grandparent",
+                "set_value_base_to_derived_w_string_fails",
+                "set_value_derived_to_base_w_string",
+                "set_value_unrelated_struct_fails",
+                "set_value_base_to_derived_member_fails",
+                "set_value_derived_to_base_member",
                 "set_bool",
                 "set_byte",
                 "set_char",
@@ -508,6 +523,10 @@
                 "vector_i32_3",
                 "vector_i32_empty_after_3",
                 "vector_struct_3",
+                "vector_struct_w_string_grow",
+                "vector_struct_w_string_grow_after_shrink",
+                "vector_struct_w_ctor_grow",
+                "vector_struct_w_dtor_grow_shrink",
                 "vector_move_primitive",
                 "vector_move_struct",
                 "struct_w_vector_i32_3",
@@ -676,6 +695,7 @@
         }, {
             "id": "DeserializeFromJson",
             "testcases": [
+                "restore_removes_trailing_tag_with_observer",
                 "string_w_unknown_escape_large",
                 "u64_max_roundtrip",
                 "f64_nan_roundtrip",
@@ -979,6 +999,7 @@
         }, {
             "id": "SerializeEntityToJson",
             "testcases": [
+                "serialize_more_than_256_components",
                 "serialize_empty",
                 "serialize_w_name",
                 "serialize_w_name_1_tag",
@@ -1083,6 +1104,7 @@
         }, {
             "id": "SerializeIterToJson",
             "testcases": [
+                "table_different_dont_fragment_components",
                 "serialize_1_comps_empty",
                 "serialize_1_comps_2_ents_same_table",
                 "serialize_1_tag_2_ents_same_table",
@@ -1346,7 +1368,12 @@
                 "fwd_decl",
                 "struct_w_vec",
                 "struct_w_map",
-                "struct_w_value"
+                "struct_w_value",
+                "struct_w_non_numeric_array_size",
+                "struct_w_overflow_array_size",
+                "struct_w_array_size_error_no_leak",
+                "struct_w_zero_array_size",
+                "struct_w_numeric_array_size"
             ]
         }, {
             "id": "OpaqueTypes",
@@ -1382,6 +1409,59 @@
                 "anonymous_opaque_as_type_parent",
                 "named_opaque_as_type_parent",
                 "parented_opaque_as_type_parent"
+            ]
+        }, {
+            "id": "StructInheritance",
+            "testcases": [
+                "base_1_derived_1",
+                "base_2_derived_1",
+                "base_1_derived_2",
+                "derived_no_members",
+                "isa_after_empty_struct_init",
+                "isa_after_empty_struct_init_add_member",
+                "add_member_to_derived",
+                "base_w_padding",
+                "derived_alignment_larger_than_base",
+                "chain",
+                "chain_no_own_members",
+                "two_derived_from_same_base",
+                "duplicate_member_add_member",
+                "duplicate_member_struct_init",
+                "isa_after_members_error",
+                "non_struct_base",
+                "non_struct_base_no_members",
+                "isa_non_struct_does_not_add_struct",
+                "multiple_isa_one_struct",
+                "get_member_inherited",
+                "get_nth_member",
+                "inherited_member_entities",
+                "derived_member_entities",
+                "derived_member_entities_duplicate",
+                "ptr_to_expr",
+                "ptr_from_expr",
+                "ptr_from_expr_member_names",
+                "cursor",
+                "cursor_next",
+                "entity_to_json",
+                "entity_from_json",
+                "type_info",
+                "use_as_component",
+                "base_string_member",
+                "base_array_member",
+                "base_unit_member",
+                "base_member_ranges",
+                "base_existing_c_type",
+                "derived_existing_c_type",
+                "derived_existing_c_type_w_padding",
+                "nested_derived_as_member",
+                "derived_from_stage",
+                "deferred_isa",
+                "serializer_ops",
+                "derived_equals",
+                "cursor_set_value_derived",
+                "cursor_set_value_derived_member",
+                "cursor_set_value_base_to_derived_fails",
+                "cursor_set_value_unrelated_fails"
             ]
         }, {
             "id": "Misc",
@@ -1482,12 +1562,16 @@
                 "vector_of_opaque",
                 "struct_with_vector_of_ints_different_length",
                 "map_of_ints",
+                "map_key_order_precedes_values",
                 "map_of_strings",
                 "map_of_struct_with_strings"
             ]
         },{
             "id": "SetRttHooks",
             "testcases": [
+                "set_cmp_on_in_use_w_copy_illegal",
+                "set_hooks_again_keeps_cmp",
+                "set_cmp_then_equals_in_use",
                 "compare_struct_with_ints",
                 "equals_struct_with_ints",
                 "compare_generates_equals",
@@ -1502,7 +1586,11 @@
                 "compare_idempotent",
                 "value_compare",
                 "value_equals",
-                "value_different_types"
+                "value_different_types",
+                "compare_struct_in_use",
+                "equals_struct_in_use",
+                "compare_array_of_struct_in_use",
+                "equals_struct_w_inline_array_in_use"
             ]
         }]
     }

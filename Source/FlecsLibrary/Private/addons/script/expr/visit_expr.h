@@ -6,6 +6,19 @@
 #ifndef FLECS_EXPR_SCRIPT_VISIT_H
 #define FLECS_EXPR_SCRIPT_VISIT_H
 
+typedef struct {
+    ecs_primitive_kind_t kind;
+    ecs_size_t size;
+    int8_t expressiveness;
+    int8_t storage;
+    bool integer;
+    bool signed_integer;
+    bool floating_point;
+} flecs_expr_type_info_t;
+
+const flecs_expr_type_info_t* flecs_expr_type_info(
+    ecs_entity_t type);
+
 void flecs_expr_visit_error_(
     const ecs_script_t *script,
     const void *node,
@@ -17,7 +30,7 @@ void flecs_expr_visit_error_(
 
 int flecs_expr_visit_type(
     ecs_script_t *script,
-    ecs_expr_node_t *node,
+    ecs_expr_node_t **node,
     const ecs_expr_eval_desc_t *desc);
 
 int flecs_expr_visit_fold(
@@ -35,11 +48,26 @@ void flecs_expr_visit_free(
     ecs_script_t *script,
     ecs_expr_node_t *node);
 
+typedef int (*flecs_expr_visit_action_t)(
+    ecs_expr_node_t **node,
+    void *ctx);
+
+int flecs_expr_visit_children(
+    ecs_expr_node_t *node,
+    flecs_expr_visit_action_t action,
+    void *ctx);
+
+struct ecs_script_ref_t;
+
+typedef int (*flecs_expr_ref_action_t)(
+    const struct ecs_script_ref_t *ref,
+    ecs_expr_node_t *dynamic,
+    void *ctx);
+
 int flecs_expr_visit_refs(
     const ecs_script_t *script,
     ecs_expr_node_t *node,
-    ecs_vec_t *refs,
-    ecs_vec_t *dynamic_refs,
-    ecs_vec_t *fn_refs);
+    flecs_expr_ref_action_t action,
+    void *ctx);
 
 #endif

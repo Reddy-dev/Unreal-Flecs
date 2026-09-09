@@ -6,13 +6,13 @@
 #pragma once
 
 #include "../../utils/function_traits.hpp"
-#include "../../utils/node_builder.hpp"
+#include "../../utils/builder.hpp"
 #include "builder_i.hpp"
 
 namespace flecs {
 namespace _ {
     template <typename ... Components>
-    using system_builder_base = node_builder<
+    using system_builder_base = builder<
         system, ecs_system_desc_t, system_builder<Components...>, 
         system_builder_i, Components ...>;
 }
@@ -26,7 +26,7 @@ struct system_builder final : _::system_builder_base<Components...> {
     system_builder(flecs::world_t* world, const char *name = nullptr)
         : _::system_builder_base<Components...>(world, name)
     {
-        _::sig<Components...>(world).populate(this);
+        _::populate_signature<Components...>(world, this);
 
 #ifdef FLECS_PIPELINE
         this->desc_.phase = flecs::OnUpdate;

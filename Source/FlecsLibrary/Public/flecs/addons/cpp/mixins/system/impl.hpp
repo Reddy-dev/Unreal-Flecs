@@ -85,7 +85,7 @@ struct system final : entity
     }
 
     /** Construct from a world and a system descriptor. */
-    explicit system(flecs::world_t *world, ecs_system_desc_t *desc) {
+    explicit system(flecs::world_t *world, const ecs_system_desc_t *desc) {
         world_ = world;
         id_ = ecs_system_init(world, desc);
     }
@@ -108,11 +108,8 @@ struct system final : entity
     system& run(Func&& func) {
         using Delegate = typename _::run_delegate<
             typename std::decay<Func>::type>;
-        auto ctx = FLECS_NEW(Delegate)(FLECS_FWD(func));
         ecs_system_desc_t desc = {};
-        desc.run = Delegate::run;
-        desc.run_ctx = ctx;
-        desc.run_ctx_free = _::free_obj<Delegate>;
+        _::set_callback<Delegate, Delegate::run, true>(desc, FLECS_FWD(func));
         ecs_system_update(world_, id_, &desc);
         return *this;
     }
@@ -122,7 +119,10 @@ struct system final : entity
     system& each(Func&& func) {
         using CallbackComponents =
             typename _::each_callback_args<arg_list_t<Func>>::type;
-        return each_callback(CallbackComponents{}, FLECS_FWD(func));
+        ecs_system_desc_t desc = {};
+        _::set_each_callback<false>(desc, FLECS_FWD(func), CallbackComponents{});
+        ecs_system_update(world_, id_, &desc);
+        return *this;
     }
 
     /** Replace the system's run callback and use an each callback for
@@ -131,7 +131,10 @@ struct system final : entity
     system& run_each(Func&& func) {
         using CallbackComponents =
             typename _::each_callback_args<arg_list_t<Func>>::type;
-        return run_each_callback(CallbackComponents{}, FLECS_FWD(func));
+        ecs_system_desc_t desc = {};
+        _::set_each_callback<true>(desc, FLECS_FWD(func), CallbackComponents{});
+        ecs_system_update(world_, id_, &desc);
+        return *this;
     }
 
     /** Get the query for this system. */
@@ -172,32 +175,6 @@ struct system final : entity
 #   include "../timer/system_mixin.inl"
 #   endif
 
-private:
-    template <typename ... CallbackComponents, typename Func>
-    system& each_callback(_::arg_list<CallbackComponents...>, Func&& func) {
-        using Delegate = typename _::each_delegate<
-            typename std::decay<Func>::type, CallbackComponents...>;
-        auto ctx = FLECS_NEW(Delegate)(FLECS_FWD(func));
-        ecs_system_desc_t desc = {};
-        desc.callback = Delegate::run;
-        desc.callback_ctx = ctx;
-        desc.callback_ctx_free = _::free_obj<Delegate>;
-        ecs_system_update(world_, id_, &desc);
-        return *this;
-    }
-
-    template <typename ... CallbackComponents, typename Func>
-    system& run_each_callback(_::arg_list<CallbackComponents...>, Func&& func) {
-        using Delegate = typename _::each_delegate<
-            typename std::decay<Func>::type, CallbackComponents...>;
-        auto ctx = FLECS_NEW(Delegate)(FLECS_FWD(func));
-        ecs_system_desc_t desc = {};
-        desc.run = Delegate::run_each;
-        desc.run_ctx = ctx;
-        desc.run_ctx_free = _::free_obj<Delegate>;
-        ecs_system_update(world_, id_, &desc);
-        return *this;
-    }
 };
 
 /** Mixin implementation. */
@@ -239,13 +216,8 @@ inline system system_builder<Components...>::each_callback(
 {
     this->template prepend_each_callback_signature<CallbackComponents...>();
 
-    using Delegate = typename _::each_delegate<
-        typename std::decay<Func>::type, CallbackComponents...>;
-
-    auto ctx = FLECS_NEW(Delegate)(FLECS_FWD(func));
-    this->desc_.run = Delegate::run_each;
-    this->desc_.run_ctx = ctx;
-    this->desc_.run_ctx_free = _::free_obj<Delegate>;
+    _::set_each_callback<true>(this->desc_, FLECS_FWD(func),
+        _::arg_list<CallbackComponents...>{});
     return system(this->world_, &this->desc_);
 }
 
@@ -272,7 +244,7 @@ inline void system_builder<Components...>::prepend_each_callback_signature() {
         }
 
         this->term_index_ = 0;
-        _::sig<CallbackComponents...>(this->world_).populate(this);
+        _::populate_signature<CallbackComponents...>(this->world_, this);
         this->term_index_ = existing_term_count + callback_term_count;
     }
 }

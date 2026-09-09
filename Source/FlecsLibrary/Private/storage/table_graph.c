@@ -98,210 +98,88 @@ static int flecs_type_find(
     return -1;
 }
 
-static int flecs_type_find_ignoring_generation(
-    const ecs_type_t *type,
-    ecs_id_t id)
-{
-    ecs_id_t *array = type->array;
-    int32_t i, count = type->count;
-
-    for (i = 0; i < count; i ++) {
-        if ((uint32_t)array[i] == (uint32_t)id) {
-            return i;
-        }
-    }
-
-    return -1;
-}
-
-/* Count number of matching ids */
-static int flecs_type_count_matches(
-    const ecs_type_t *type,
-    ecs_id_t wildcard,
-    int32_t offset)
-{
-    ecs_id_t *array = type->array;
-    int32_t i = offset, count = type->count;
-
-    for (; i < count; i ++) {
-        ecs_id_t cur = array[i];
-        if (!ecs_id_match(cur, wildcard)) {
-            break;
-        }
-    }
-
-    return i - offset;
-}
-
-/* Create type from source type with id */
 static int flecs_type_new_with(
     ecs_world_t *world,
     ecs_type_t *dst,
     const ecs_type_t *src,
     ecs_id_t with)
 {
-    ecs_id_t *src_array = src->array;
     int32_t at = flecs_type_find_insert(src, 0, with);
     if (at == -1) {
         return -1;
     }
 
-    int32_t dst_count = src->count + 1;
-    ecs_id_t *dst_array = flecs_walloc_n(world, ecs_id_t, dst_count);
-    dst->count = dst_count;
-    dst->array = dst_array;
-
-    if (at) {
-        ecs_os_memcpy_n(dst_array, src_array, ecs_id_t, at);
+    int32_t count = src->count;
+    ecs_id_t *array;
+    if (dst == src) {
+        array = flecs_wrealloc_n(world, ecs_id_t, count + 1, count, src->array);
+        ecs_os_memmove_n(array + at + 1, array + at, ecs_id_t, count - at);
+    } else {
+        array = flecs_walloc_n(world, ecs_id_t, count + 1);
+        if (at) {
+            ecs_os_memcpy_n(array, src->array, ecs_id_t, at);
+        }
+        if (count != at) {
+            ecs_os_memcpy_n(array + at + 1, src->array + at, ecs_id_t, count - at);
+        }
     }
-
-    int32_t remain = src->count - at;
-    if (remain) {
-        ecs_os_memcpy_n(&dst_array[at + 1], &src_array[at], ecs_id_t, remain);
-    }
-
-    dst_array[at] = with;
-
+    array[at] = with;
+    *dst = (ecs_type_t){ .array = array, .count = count + 1 };
     return 0;
 }
 
-/* Create type from source type without ids matching wildcard */
-static int flecs_type_new_filtered(
-    ecs_world_t *world,
-    ecs_type_t *dst,
-    const ecs_type_t *src,
-    ecs_id_t wildcard,
-    int32_t at)
-{
-    *dst = flecs_type_copy(world, src);
-    ecs_id_t *dst_array = dst->array;
-    ecs_id_t *src_array = src->array;
-    if (at) {
-        ecs_assert(dst_array != NULL, ECS_INTERNAL_ERROR, NULL);
-        ecs_os_memcpy_n(dst_array, src_array, ecs_id_t, at);
-    }
-
-    int32_t i = at + 1, w = at, count = src->count;
-    for (; i < count; i ++) {
-        ecs_id_t id = src_array[i];
-        if (!ecs_id_match(id, wildcard)) {
-            dst_array[w] = id;
-            w ++;
-        }
-    }
-
-    dst->count = w;
-
-    if (w != count) {
-        if (w) {
-            dst->array = flecs_wrealloc_n(world, ecs_id_t, w, count, dst->array);
-        } else {
-            flecs_wfree_n(world, ecs_id_t, count, dst->array);
-            dst->array = NULL;
-        }
-    }
-
-    return 0;
-}
-
-/* Create type from source type without id */
 static int flecs_type_new_without(
     ecs_world_t *world,
     ecs_type_t *dst,
     const ecs_type_t *src,
     ecs_id_t without)
 {
-    ecs_id_t *src_array = src->array;
-    int32_t count = 1, at = flecs_type_find(src, without);
+    int32_t at = flecs_type_find(src, without);
     if (at == -1) {
         return -1;
     }
-
-    int32_t src_count = src->count;
-    if (src_count == 1) {
-        dst->array = NULL;
-        dst->count = 0;
-        return 0;
-    }
-
-    if (ecs_id_is_wildcard(without)) {
-        if (ECS_IS_PAIR(without)) {
-            ecs_entity_t r = ECS_PAIR_FIRST(without);
-            ecs_entity_t o = ECS_PAIR_SECOND(without);
-            if (r == EcsWildcard && o != EcsWildcard) {
-                return flecs_type_new_filtered(world, dst, src, without, at);
-            }
+    ecs_assert(src->array != NULL, ECS_INTERNAL_ERROR, NULL);
+    int32_t count = src->count, removed = 1;
+    bool wildcard = ecs_id_is_wildcard(without);
+    if (wildcard) {
+        for (int32_t i = at + 1; i < count; i ++) {
+            removed += ecs_id_match(src->array[i], without);
         }
-        count += flecs_type_count_matches(src, without, at + 1);
     }
 
-    int32_t dst_count = src_count - count;
-    dst->count = dst_count;
-    if (!dst_count) {
-        dst->array = NULL;
-        return 0;
+    int32_t dst_count = count - removed;
+    ecs_assert(dst_count >= at, ECS_INTERNAL_ERROR, NULL);
+    ecs_id_t *array = src->array;
+    if (dst != src) {
+        array = dst_count ? flecs_walloc_n(world, ecs_id_t, dst_count) : NULL;
+        if (at && array) {
+            ecs_os_memcpy_n(array, src->array, ecs_id_t, at);
+        }
     }
-
-    ecs_id_t *dst_array = flecs_walloc_n(world, ecs_id_t, dst_count);
-    dst->array = dst_array;
-
-    ecs_assert(dst_array != NULL, ECS_INTERNAL_ERROR, NULL);
-    ecs_assert(src_array != NULL, ECS_INTERNAL_ERROR, NULL);
-
-    if (at) {
-        ecs_os_memcpy_n(dst_array, src_array, ecs_id_t, at);
+    if (dst_count > at) {
+        ecs_assert(array != NULL, ECS_INTERNAL_ERROR, NULL);
+        if (wildcard) {
+            int32_t w = at;
+            for (int32_t i = at + 1; i < count; i ++) {
+                ecs_id_t id = src->array[i];
+                if (!ecs_id_match(id, without)) {
+                    array[w ++] = id;
+                }
+            }
+        } else {
+            ecs_os_memmove_n(array + at, src->array + at + 1,
+                ecs_id_t, dst_count - at);
+        }
     }
-
-    int32_t remain = dst_count - at;
-    if (remain) {
-        ecs_os_memcpy_n(
-            &dst_array[at], &src_array[at + count], ecs_id_t, remain);
+    if (dst == src) {
+        if (dst_count) {
+            array = flecs_wrealloc_n(world, ecs_id_t, dst_count, count, array);
+        } else {
+            flecs_wfree_n(world, ecs_id_t, count, array);
+            array = NULL;
+        }
     }
-
-    return 0;
-}
-
-/* Create type from source type without entity id, ignoring generation */
-static int flecs_type_new_without_ignoring_generation(
-    ecs_world_t *world,
-    ecs_type_t *dst,
-    const ecs_type_t *src,
-    ecs_id_t without)
-{
-    ecs_assert(!ecs_id_is_wildcard(without), ECS_INVALID_PARAMETER, NULL);
-    ecs_assert(!ECS_IS_PAIR(without), ECS_INVALID_PARAMETER, NULL);
-
-    ecs_id_t *src_array = src->array;
-    int32_t at = flecs_type_find_ignoring_generation(src, without);
-    if (at == -1) {
-        return -1;
-    }
-
-    int32_t src_count = src->count;
-    if (src_count == 1) {
-        dst->array = NULL;
-        dst->count = 0;
-        return 0;
-    }
-
-    int32_t dst_count = src_count - 1;
-    ecs_id_t *dst_array = flecs_walloc_n(world, ecs_id_t, dst_count);
-    dst->array = dst_array;
-    dst->count = dst_count;
-
-    ecs_assert(dst_array != NULL, ECS_INTERNAL_ERROR, NULL);
-    ecs_assert(src_array != NULL, ECS_INTERNAL_ERROR, NULL);
-
-    if (at) {
-        ecs_os_memcpy_n(dst_array, src_array, ecs_id_t, at);
-    }
-
-    int32_t remain = dst_count - at;
-    if (remain) {
-        ecs_os_memcpy_n(
-            &dst_array[at], &src_array[at + 1], ecs_id_t, remain);
-    }
-
+    *dst = (ecs_type_t){ .array = array, .count = dst_count };
     return 0;
 }
 
@@ -334,49 +212,34 @@ void flecs_type_free(
     }
 }
 
-/* Add to type */
 void flecs_type_add(
     ecs_world_t *world,
     ecs_type_t *type,
     ecs_id_t add)
 {
-    ecs_type_t new_type;
-    int res = flecs_type_new_with(world, &new_type, type, add);
-    if (res != -1) {
-        flecs_type_free(world, type);
-        type->array = new_type.array;
-        type->count = new_type.count;
-    }
+    flecs_type_new_with(world, type, type, add);
 }
 
-/* Remove from type */
 static void flecs_type_remove(
     ecs_world_t *world,
     ecs_type_t *type,
     ecs_id_t remove)
 {
-    ecs_type_t new_type;
-    int res = flecs_type_new_without(world, &new_type, type, remove);
-    if (res != -1) {
-        flecs_type_free(world, type);
-        type->array = new_type.array;
-        type->count = new_type.count;
-    }
+    flecs_type_new_without(world, type, type, remove);
 }
 
-/* Remove from type while ignoring entity id generation */
 void flecs_type_remove_ignoring_generation(
     ecs_world_t *world,
     ecs_type_t *type,
     ecs_id_t remove)
 {
-    ecs_type_t new_type;
-    int res = flecs_type_new_without_ignoring_generation(
-        world, &new_type, type, remove);
-    if (res != -1) {
-        flecs_type_free(world, type);
-        type->array = new_type.array;
-        type->count = new_type.count;
+    ecs_assert(!ecs_id_is_wildcard(remove), ECS_INVALID_PARAMETER, NULL);
+    ecs_assert(!ECS_IS_PAIR(remove), ECS_INVALID_PARAMETER, NULL);
+    for (int32_t i = 0; i < type->count; i ++) {
+        if ((uint32_t)type->array[i] == (uint32_t)remove) {
+            flecs_type_remove(world, type, type->array[i]);
+            return;
+        }
     }
 }
 
@@ -407,37 +270,6 @@ void flecs_table_diff_builder_clear(
 {
     ecs_vec_clear(&builder->added);
     ecs_vec_clear(&builder->removed);
-}
-
-static void flecs_table_diff_build_type(
-    ecs_world_t *world,
-    ecs_vec_t *vec,
-    ecs_type_t *type,
-    int32_t offset)
-{
-    int32_t count = vec->count - offset;
-    ecs_assert(count >= 0, ECS_INTERNAL_ERROR, NULL);
-    if (count) {
-        type->array = flecs_wdup_n(world, ecs_id_t, count, 
-            ECS_ELEM_T(vec->array, ecs_id_t, offset));
-        type->count = count;
-        ecs_vec_set_count_t(&world->allocator, vec, ecs_id_t, offset);
-    }
-}
-
-static void flecs_table_diff_build(
-    ecs_world_t *world,
-    ecs_table_diff_builder_t *builder,
-    ecs_table_diff_t *diff,
-    int32_t added_offset,
-    int32_t removed_offset)
-{
-    flecs_table_diff_build_type(world, &builder->added, &diff->added, 
-        added_offset);
-    flecs_table_diff_build_type(world, &builder->removed, &diff->removed, 
-        removed_offset);
-    diff->added_flags = builder->added_flags;
-    diff->removed_flags = builder->removed_flags;
 }
 
 void flecs_table_diff_build_noalloc(
@@ -478,13 +310,26 @@ void flecs_table_diff_build_append_table(
     dst->removed_flags |= src->removed_flags;
 }
 
+static ecs_table_diff_t* flecs_table_diff_new(
+    ecs_world_t *world,
+    int32_t added,
+    int32_t removed)
+{
+    ecs_table_diff_t *diff = flecs_wcalloc(world,
+        ECS_SIZEOF(ecs_table_diff_t) + (added + removed) * ECS_SIZEOF(ecs_id_t));
+    ecs_id_t *ids = (ecs_id_t*)(diff + 1);
+    diff->added = (ecs_type_t){ .array = added ? ids : NULL, .count = added };
+    diff->removed = (ecs_type_t){
+        .array = removed ? ids + added : NULL, .count = removed };
+    return diff;
+}
+
 static void flecs_table_diff_free(
     ecs_world_t *world,
-    ecs_table_diff_t *diff) 
+    ecs_table_diff_t *diff)
 {
-    flecs_wfree_n(world, ecs_id_t, diff->added.count, diff->added.array);
-    flecs_wfree_n(world, ecs_id_t, diff->removed.count, diff->removed.array);
-    flecs_bfree(&world->allocators.table_diff, diff);
+    flecs_wfree(world, ECS_SIZEOF(ecs_table_diff_t) +
+        (diff->added.count + diff->removed.count) * ECS_SIZEOF(ecs_id_t), diff);
 }
 
 static ecs_graph_edge_t* flecs_table_ensure_hi_edge(
@@ -526,7 +371,10 @@ static ecs_graph_edge_t* flecs_table_ensure_edge(
         }
         edge = &edges->lo[id];
     } else {
-        edge = flecs_table_ensure_hi_edge(world, edges, id);
+        edge = edges->hi ? ecs_map_get_ptr(edges->hi, id) : NULL;
+        if (!edge) {
+            edge = flecs_table_ensure_hi_edge(world, edges, id);
+        }
     }
 
     return edge;
@@ -541,15 +389,11 @@ static void flecs_table_disconnect_edge(
     ecs_assert(edge->id == id, ECS_INTERNAL_ERROR, NULL);
     (void)id;
 
-    /* Remove backref from destination table */
-    ecs_graph_edge_hdr_t *next = edge->hdr.next;
-    ecs_graph_edge_hdr_t *prev = edge->hdr.prev;
-
-    if (next) {
-        next->prev = prev;
+    if (edge->next) {
+        edge->next->prev = edge->prev;
     }
-    if (prev) {
-        prev->next = next;
+    if (edge->prev) {
+        *edge->prev = edge->next;
     }
 
     /* Remove data associated with edge */
@@ -566,35 +410,6 @@ static void flecs_table_disconnect_edge(
     }
 }
 
-static void flecs_table_remove_edge(
-    ecs_world_t *world,
-    ecs_graph_edges_t *edges,
-    ecs_id_t id,
-    ecs_graph_edge_t *edge)
-{
-    ecs_assert(edges != NULL, ECS_INTERNAL_ERROR, NULL);
-    ecs_assert(edges->hi != NULL, ECS_INTERNAL_ERROR, NULL);
-    if (!edge->id) {
-        return;
-    }
-    flecs_table_disconnect_edge(world, id, edge);
-    ecs_map_remove(edges->hi, id);
-}
-
-static void flecs_table_init_edges(
-    ecs_graph_edges_t *edges)
-{
-    edges->lo = NULL;
-    edges->hi = NULL;
-}
-
-static void flecs_table_init_node(
-    ecs_graph_node_t *node)
-{
-    flecs_table_init_edges(&node->add);
-    flecs_table_init_edges(&node->remove);
-}
-
 static void flecs_init_table(
     ecs_world_t *world,
     ecs_table_t *table,
@@ -605,7 +420,7 @@ static void flecs_init_table(
     table->_->lock = 0;
     table->_->generation = 0;
 
-    flecs_table_init_node(&table->node);
+    ecs_os_zeromem(&table->node);
 
     flecs_table_init(world, table, prev);
 }
@@ -712,23 +527,6 @@ static ecs_table_t* flecs_table_ensure(
     return flecs_table_new(world, &copy, elem, prev);
 }
 
-static void flecs_diff_insert_added(
-    ecs_world_t *world,
-    ecs_table_diff_builder_t *diff,
-    ecs_id_t id)
-{
-    ecs_vec_append_t(&world->allocator, &diff->added, ecs_id_t)[0] = id;
-}
-
-static void flecs_diff_insert_removed(
-    ecs_world_t *world,
-    ecs_table_diff_builder_t *diff,
-    ecs_id_t id)
-{
-    ecs_allocator_t *a = &world->allocator;
-    ecs_vec_append_t(a, &diff->removed, ecs_id_t)[0] = id;
-}
-
 static bool flecs_id_is_alive(
     ecs_world_t *world,
     ecs_id_t id)
@@ -746,6 +544,33 @@ static bool flecs_id_is_alive(
     }
 }
 
+static ecs_flags32_t flecs_table_diff_ids(
+    ecs_world_t *world,
+    const ecs_type_t *src,
+    const ecs_type_t *dst,
+    ecs_type_t *result)
+{
+    ecs_flags32_t flags = 0;
+    int32_t count = 0, j = 0;
+    for (int32_t i = 0; i < dst->count; i ++) {
+        ecs_id_t id = dst->array[i];
+        while (j < src->count && src->array[j] < id) {
+            j ++;
+        }
+        if (j < src->count && src->array[j] == id) {
+            continue;
+        }
+        if (result->array) {
+            result->array[count] = id;
+        } else {
+            flags |= flecs_id_flags_get(world, id);
+        }
+        count ++;
+    }
+    result->count = count;
+    return flags;
+}
+
 static void flecs_compute_table_diff(
     ecs_world_t *world,
     ecs_table_t *node,
@@ -754,151 +579,52 @@ static void flecs_compute_table_diff(
     ecs_id_t id,
     bool is_remove)
 {
-    ecs_type_t node_type = node->type;
-    ecs_type_t next_type = next->type;
-    bool childof = false;
-
-    if (ECS_IS_PAIR(id)) { 
-        childof = ECS_PAIR_FIRST(id) ==  EcsChildOf;
-    }
-
-    ecs_component_record_t *cr = NULL;
-
     if (!flecs_id_is_alive(world, id)) {
         return;
     }
 
-    bool dont_fragment = false;
-    if (id < FLECS_HI_COMPONENT_ID) {
-        dont_fragment = (world->non_trivial_lookup[id] & 
-            EcsNonTrivialIdNonFragmenting) != 0;
-        if (dont_fragment) {
-            cr = flecs_components_ensure(world, id);
-        }
-    } else {
-        cr = flecs_components_ensure(world, id);
-        dont_fragment = cr->flags & EcsIdDontFragment;
-    }
-
-    if (dont_fragment) {
-        ecs_table_diff_t *diff = flecs_bcalloc(
-            &world->allocators.table_diff);
+    ecs_component_record_t *cr = flecs_components_ensure(world, id);
+    if (cr->flags & EcsIdDontFragment) {
+        ecs_table_diff_t *diff = flecs_table_diff_new(world, !is_remove, is_remove);
         if (is_remove) {
-            diff->removed.count = 1;
-            diff->removed.array = flecs_wdup_n(world, ecs_id_t, 1, &id);
+            diff->removed.array[0] = id;
             diff->removed_flags = EcsTableHasDontFragment|EcsTableHasSparse;
         } else {
-            diff->added.count = 1;
-            diff->added.array = flecs_wdup_n(world, ecs_id_t, 1, &id);
+            diff->added.array[0] = id;
             diff->added_flags = EcsTableHasDontFragment|EcsTableHasSparse;
         }
         edge->diff = diff;
-
-        ecs_assert(cr != NULL, ECS_INTERNAL_ERROR, NULL);
-        ecs_vec_append_t(&world->allocator, 
+        ecs_vec_append_t(&world->allocator,
             &cr->dont_fragment_tables, uint64_t)[0] = node->id;
         return;
     }
 
-    ecs_id_t *ids_node = node_type.array;
-    ecs_id_t *ids_next = next_type.array;
-    int32_t i_node = 0, node_count = node_type.count;
-    int32_t i_next = 0, next_count = next_type.count;
-    int32_t added_count = 0;
-    int32_t removed_count = 0;
-    ecs_flags32_t added_flags = 0, removed_flags = 0;
-    bool trivial_edge = !ECS_HAS_RELATION(id, EcsIsA) && !childof;
-
-    /* First do a scan to see how big the diff is, so we don't have to realloc
-     * or alloc more memory than required. */
-    for (; i_node < node_count && i_next < next_count; ) {
-        ecs_id_t id_node = ids_node[i_node];
-        ecs_id_t id_next = ids_next[i_next];
-
-        bool added = id_next < id_node;
-        bool removed = id_node < id_next;
-
-        trivial_edge &= !added || id_next == id;
-        trivial_edge &= !removed || id_node == id;
-
-        if (added) {
-            added_flags |= flecs_id_flags_get(world, id_next) & 
-                EcsTableAddEdgeFlags;
-            added_count ++;
-        }
-
-        if (removed) {
-            removed_flags |= flecs_id_flags_get(world, id_node) & 
-                EcsTableRemoveEdgeFlags;
-            removed_count ++;
-        }
-
-        i_node += id_node <= id_next;
-        i_next += id_next <= id_node;
-    }
-
-    for (; i_next < next_count; i_next ++) {
-        added_flags |= flecs_id_flags_get(world, ids_next[i_next]) & 
-            EcsTableAddEdgeFlags;
-        added_count ++;
-    }
-
-    for (; i_node < node_count; i_node ++) {
-        removed_flags |= flecs_id_flags_get(world, ids_node[i_node]) & 
-            EcsTableRemoveEdgeFlags;
-        removed_count ++;
-    }
-
-    trivial_edge &= (added_count + removed_count) <= 1 && 
-        !ecs_id_is_wildcard(id) && !(added_flags|removed_flags);
-
-    if (trivial_edge) {
-        /* If edge is trivial, there's no need to create a diff element for it */
+    ecs_type_t added = {0}, removed = {0};
+    ecs_flags32_t added_flags = flecs_table_diff_ids(
+        world, &node->type, &next->type, &added) & EcsTableAddEdgeFlags;
+    ecs_flags32_t removed_flags = flecs_table_diff_ids(
+        world, &next->type, &node->type, &removed) & EcsTableRemoveEdgeFlags;
+    bool childof = ECS_HAS_RELATION(id, EcsChildOf);
+    if (!ECS_HAS_RELATION(id, EcsIsA) && !childof &&
+        !ecs_id_is_wildcard(id) && added.count + removed.count <= 1 &&
+        !(added_flags | removed_flags))
+    {
         return;
     }
 
-    ecs_table_diff_builder_t *builder = &world->allocators.diff_builder;
-    int32_t added_offset = builder->added.count;
-    int32_t removed_offset = builder->removed.count;
-
-    for (i_node = 0, i_next = 0; i_node < node_count && i_next < next_count; ) {
-        ecs_id_t id_node = ids_node[i_node];
-        ecs_id_t id_next = ids_next[i_next];
-
-        if (id_next < id_node) {
-            flecs_diff_insert_added(world, builder, id_next);
-        } else if (id_node < id_next) {
-            flecs_diff_insert_removed(world, builder, id_node);
-        }
-
-        i_node += id_node <= id_next;
-        i_next += id_next <= id_node;
-    }
-
-    for (; i_next < next_count; i_next ++) {
-        flecs_diff_insert_added(world, builder, ids_next[i_next]);
-    }
-
-    for (; i_node < node_count; i_node ++) {
-        flecs_diff_insert_removed(world, builder, ids_node[i_node]);
-    }
-
-    ecs_table_diff_t *diff = flecs_bcalloc(&world->allocators.table_diff);
-    edge->diff = diff;
-    flecs_table_diff_build(world, builder, diff, added_offset, removed_offset);
+    ecs_table_diff_t *diff = flecs_table_diff_new(world, added.count, removed.count);
+    flecs_table_diff_ids(world, &node->type, &next->type, &diff->added);
+    flecs_table_diff_ids(world, &next->type, &node->type, &diff->removed);
     diff->added_flags = added_flags;
     diff->removed_flags = removed_flags;
-
-    if (ECS_IS_PAIR(id) && ECS_PAIR_FIRST(id) == EcsChildOf) {
-        if (added_count) {
+    if (childof) {
+        if (added.count) {
             diff->added_flags |= EcsTableEdgeReparent;
-        } else if (removed_count) {
+        } else if (removed.count) {
             diff->removed_flags |= EcsTableEdgeReparent;
         }
     }
-
-    ecs_assert(diff->added.count == added_count, ECS_INTERNAL_ERROR, NULL);
-    ecs_assert(diff->removed.count == removed_count, ECS_INTERNAL_ERROR, NULL);
+    edge->diff = diff;
 }
 
 static void flecs_add_overrides_for_base(
@@ -1138,102 +864,35 @@ static ecs_table_t* flecs_find_table_without(
     return flecs_table_ensure(world, &dst_type, true, node);
 }
 
-static void flecs_table_init_edge(
+static ecs_table_t* flecs_table_create_edge(
+    ecs_world_t *world,
     ecs_table_t *table,
+    ecs_graph_edges_t *edges,
     ecs_graph_edge_t *edge,
     ecs_id_t id,
-    ecs_table_t *to)
+    bool remove)
 {
-    ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
-    ecs_assert(edge != NULL, ECS_INTERNAL_ERROR, NULL);
-    ecs_assert(edge->id == 0, ECS_INTERNAL_ERROR, NULL);
-    ecs_assert(edge->hdr.next == NULL, ECS_INTERNAL_ERROR, NULL);
-    ecs_assert(edge->hdr.prev == NULL, ECS_INTERNAL_ERROR, NULL);
-    
-    edge->from = table;
+    ecs_table_t *to = remove
+        ? flecs_find_table_without(world, table, id)
+        : flecs_find_table_with(world, table, id);
+    edge->from = edges;
     edge->to = to;
     edge->id = id;
-}
-
-static void flecs_init_edge_for_add(
-    ecs_world_t *world,
-    ecs_table_t *table,
-    ecs_graph_edge_t *edge,
-    ecs_id_t id,
-    ecs_table_t *to)
-{
-    flecs_table_init_edge(table, edge, id, to);
 
     if (id < FLECS_HI_COMPONENT_ID) {
-        flecs_table_ensure_hi_edge(world, &table->node.add, id);
+        flecs_table_ensure_hi_edge(world, edges, id);
     }
 
-    if ((table != to) || (table->flags & EcsTableHasDontFragment)) {
-        /* Add edges are appended to refs.next */
-        ecs_graph_edge_hdr_t *to_refs = &to->node.refs;
-        ecs_graph_edge_hdr_t *next = to_refs->next;
-        
-        to_refs->next = &edge->hdr;
-        edge->hdr.prev = to_refs;
-
-        edge->hdr.next = next;
-        if (next) {
-            next->prev = &edge->hdr;
+    if (table != to || (table->flags & EcsTableHasDontFragment)) {
+        ecs_graph_edge_t **incoming = &to->node.incoming[remove];
+        edge->next = *incoming;
+        edge->prev = incoming;
+        if (edge->next) {
+            edge->next->prev = &edge->next;
         }
-
-        flecs_compute_table_diff(world, table, to, edge, id, false);
+        *incoming = edge;
+        flecs_compute_table_diff(world, table, to, edge, id, remove);
     }
-}
-
-static void flecs_init_edge_for_remove(
-    ecs_world_t *world,
-    ecs_table_t *table,
-    ecs_graph_edge_t *edge,
-    ecs_id_t id,
-    ecs_table_t *to)
-{
-    flecs_table_init_edge(table, edge, id, to);
-
-    if (id < FLECS_HI_COMPONENT_ID) {
-        flecs_table_ensure_hi_edge(world, &table->node.remove, id);
-    }
-
-    if ((table != to) || (table->flags & EcsTableHasDontFragment)) {
-        /* Remove edges are appended to refs.prev */
-        ecs_graph_edge_hdr_t *to_refs = &to->node.refs;
-        ecs_graph_edge_hdr_t *prev = to_refs->prev;
-
-        to_refs->prev = &edge->hdr;
-        edge->hdr.next = to_refs;
-
-        edge->hdr.prev = prev;
-        if (prev) {
-            prev->next = &edge->hdr;
-        }
-
-        flecs_compute_table_diff(world, table, to, edge, id, true);
-    }
-}
-
-static ecs_table_t* flecs_create_edge_for_remove(
-    ecs_world_t *world,
-    ecs_table_t *node,
-    ecs_graph_edge_t *edge,
-    ecs_id_t id)
-{
-    ecs_table_t *to = flecs_find_table_without(world, node, id);
-    flecs_init_edge_for_remove(world, node, edge, id, to);
-    return to;   
-}
-
-static ecs_table_t* flecs_create_edge_for_add(
-    ecs_world_t *world,
-    ecs_table_t *node,
-    ecs_graph_edge_t *edge,
-    ecs_id_t id)
-{
-    ecs_table_t *to = flecs_find_table_with(world, node, id);
-    flecs_init_edge_for_add(world, node, edge, id, to);
     return to;
 }
 
@@ -1246,7 +905,7 @@ ecs_table_t* flecs_table_traverse_remove(
     flecs_poly_assert(world, ecs_world_t);
     ecs_assert(node != NULL, ECS_INTERNAL_ERROR, NULL);
 
-    /* Removing 0 from an entity is not valid */
+
     ecs_check(id_ptr != NULL, ECS_INVALID_PARAMETER, NULL);
     ecs_check(id_ptr[0] != 0, ECS_INVALID_PARAMETER, NULL);
 
@@ -1255,7 +914,7 @@ ecs_table_t* flecs_table_traverse_remove(
     ecs_table_t *to = edge->to;
 
     if (!to) {
-        to = flecs_create_edge_for_remove(world, node, edge, id);
+        to = flecs_table_create_edge(world, node, &node->node.remove, edge, id, true);
         ecs_assert(to != NULL, ECS_INTERNAL_ERROR, NULL);
         ecs_assert(edge->to != NULL, ECS_INTERNAL_ERROR, NULL);
     }
@@ -1285,7 +944,7 @@ ecs_table_t* flecs_table_traverse_add(
     ecs_assert(diff != NULL, ECS_INTERNAL_ERROR, NULL);
     ecs_assert(node != NULL, ECS_INTERNAL_ERROR, NULL);
 
-    /* Adding 0 to an entity is not valid */
+
     ecs_check(id_ptr != NULL, ECS_INVALID_PARAMETER, NULL);
     ecs_check(id_ptr[0] != 0, ECS_INVALID_PARAMETER, NULL);
 
@@ -1294,7 +953,7 @@ ecs_table_t* flecs_table_traverse_add(
     ecs_table_t *to = edge->to;
 
     if (!to) {
-        to = flecs_create_edge_for_add(world, node, edge, id);
+        to = flecs_table_create_edge(world, node, &node->node.add, edge, id, false);
         ecs_assert(to != NULL, ECS_INTERNAL_ERROR, NULL);
         ecs_assert(edge->to != NULL, ECS_INTERNAL_ERROR, NULL);
     }
@@ -1343,26 +1002,17 @@ void flecs_table_edges_add_flags(
     ecs_id_t id,
     ecs_flags32_t flags)
 {
-    ecs_graph_node_t *table_node = &table->node;
-    ecs_graph_edge_hdr_t *node_refs = &table_node->refs;
-
-    /* Add flags to incoming matching add edges */
     if ((flags == EcsTableHasOnAdd) || (flags == EcsTableHasUpNotify)) {
-        ecs_graph_edge_hdr_t *next, *cur = node_refs->next;
-        if (cur) {
-            do {
-                ecs_graph_edge_t *edge = (ecs_graph_edge_t*)cur;
-                if ((id == EcsAny) || ecs_id_match(edge->id, id)) {
-                    if (!edge->diff) {
-                        edge->diff = flecs_bcalloc(&world->allocators.table_diff);
-                        edge->diff->added.array = flecs_walloc_t(world, ecs_id_t);
-                        edge->diff->added.count = 1;
-                        edge->diff->added.array[0] = edge->id;
-                    }
-                    edge->diff->added_flags |= flags;
+        for (ecs_graph_edge_t *edge = table->node.incoming[0];
+            edge; edge = edge->next)
+        {
+            if ((id == EcsAny) || ecs_id_match(edge->id, id)) {
+                if (!edge->diff) {
+                    edge->diff = flecs_table_diff_new(world, 1, 0);
+                    edge->diff->added.array[0] = edge->id;
                 }
-                next = cur->next;
-            } while ((cur = next));
+                edge->diff->added_flags |= flags;
+            }
         }
     }
 
@@ -1374,9 +1024,7 @@ void flecs_table_edges_add_flags(
             if ((id == EcsAny) || ecs_id_match(edge_id, id)) {
                 ecs_graph_edge_t *edge = ecs_map_ptr(&it);
                 if (!edge->diff) {
-                    edge->diff = flecs_bcalloc(&world->allocators.table_diff);
-                    edge->diff->removed.array = flecs_walloc_t(world, ecs_id_t);
-                    edge->diff->removed.count = 1;
+                    edge->diff = flecs_table_diff_new(world, 0, 1);
                     edge->diff->removed.array[0] = edge->id;
                 }
                 edge->diff->removed_flags |= flags;
@@ -1385,75 +1033,32 @@ void flecs_table_edges_add_flags(
     }
 }
 
+static void flecs_table_clear_edge_set(
+    ecs_world_t *world,
+    ecs_graph_edges_t *edges,
+    ecs_graph_edge_t **incoming)
+{
+    ecs_map_iter_t it = ecs_map_iter(edges->hi);
+    while (ecs_map_next(&it)) {
+        flecs_table_disconnect_edge(world, ecs_map_key(&it), ecs_map_ptr(&it));
+    }
+    while (*incoming) {
+        ecs_graph_edge_t *edge = *incoming;
+        ecs_map_remove(edge->from->hi, edge->id);
+        flecs_table_disconnect_edge(world, edge->id, edge);
+    }
+    flecs_bfree(&world->allocators.graph_edge_lo, edges->lo);
+    ecs_map_fini(edges->hi);
+    flecs_free_t(&world->allocator, ecs_map_t, edges->hi);
+    ecs_os_zeromem(edges);
+}
+
 void flecs_table_clear_edges(
     ecs_world_t *world,
     ecs_table_t *table)
 {
-    (void)world;
-    flecs_poly_assert(world, ecs_world_t);
-
-    ecs_log_push_1();
-
-    ecs_map_iter_t it;
-    ecs_graph_node_t *table_node = &table->node;
-    ecs_graph_edges_t *node_add = &table_node->add;
-    ecs_graph_edges_t *node_remove = &table_node->remove;
-    ecs_map_t *add_hi = node_add->hi;
-    ecs_map_t *remove_hi = node_remove->hi;
-    ecs_graph_edge_hdr_t *node_refs = &table_node->refs;
-
-    /* Cleanup outgoing edges */
-    it = ecs_map_iter(add_hi);
-    while (ecs_map_next(&it)) {
-        flecs_table_disconnect_edge(world, ecs_map_key(&it), ecs_map_ptr(&it));
-    }
-
-    it = ecs_map_iter(remove_hi);
-    while (ecs_map_next(&it)) {
-        flecs_table_disconnect_edge(world, ecs_map_key(&it), ecs_map_ptr(&it));
-    }
-
-    /* Cleanup incoming add edges */
-    ecs_graph_edge_hdr_t *next, *cur = node_refs->next;
-    if (cur) {
-        do {
-            ecs_graph_edge_t *edge = (ecs_graph_edge_t*)cur;
-            ecs_assert(edge->to == table, ECS_INTERNAL_ERROR, NULL);
-            ecs_assert(edge->from != NULL, ECS_INTERNAL_ERROR, NULL);
-            next = cur->next;
-            flecs_table_remove_edge(world, &edge->from->node.add, edge->id, edge);
-        } while ((cur = next));
-    }
-
-    /* Cleanup incoming remove edges */
-    cur = node_refs->prev;
-    if (cur) {
-        do {
-            ecs_graph_edge_t *edge = (ecs_graph_edge_t*)cur;
-            ecs_assert(edge->to == table, ECS_INTERNAL_ERROR, NULL);
-            ecs_assert(edge->from != NULL, ECS_INTERNAL_ERROR, NULL);
-            next = cur->prev;
-            flecs_table_remove_edge(world, &edge->from->node.remove, edge->id, edge);
-        } while ((cur = next));
-    }
-
-    if (node_add->lo) {
-        flecs_bfree(&world->allocators.graph_edge_lo, node_add->lo);
-    }
-    if (node_remove->lo) {
-        flecs_bfree(&world->allocators.graph_edge_lo, node_remove->lo);
-    }
-
-    ecs_map_fini(add_hi);
-    ecs_map_fini(remove_hi);
-    flecs_free_t(&world->allocator, ecs_map_t, add_hi);
-    flecs_free_t(&world->allocator, ecs_map_t, remove_hi);
-    table_node->add.lo = NULL;
-    table_node->remove.lo = NULL;
-    table_node->add.hi = NULL;
-    table_node->remove.hi = NULL;
-
-    ecs_log_pop_1();
+    flecs_table_clear_edge_set(world, &table->node.add, &table->node.incoming[0]);
+    flecs_table_clear_edge_set(world, &table->node.remove, &table->node.incoming[1]);
 }
 
 void flecs_table_clear_edges_for_id(
@@ -1461,39 +1066,14 @@ void flecs_table_clear_edges_for_id(
     ecs_table_t *table,
     ecs_id_t component)
 {
-    if (component < FLECS_HI_COMPONENT_ID) {
-        if (table->node.add.lo) {
-            ecs_graph_edge_t *add_edge = &table->node.add.lo[component];
-            if (add_edge->id) {
-                flecs_table_disconnect_edge(world, component, add_edge);
-                ecs_map_remove(table->node.add.hi, component);
-            }
-        }
-
-        if (table->node.remove.lo) {
-            ecs_graph_edge_t *remove_edge = &table->node.remove.lo[component];
-            if (remove_edge->id) {
-                flecs_table_disconnect_edge(world, component, remove_edge);
-                ecs_map_remove(table->node.remove.hi, component);
-            }
-        }
-    } else {
-        if (table->node.add.hi) {
-            ecs_graph_edge_t *add_edge = ecs_map_get_ptr(
-                table->node.add.hi, component);
-            if (add_edge) {
-                flecs_table_disconnect_edge(world, component, add_edge);
-                ecs_map_remove(table->node.add.hi, component);
-            }
-        }
-
-        if (table->node.remove.hi) {
-            ecs_graph_edge_t *remove_edge = ecs_map_get_ptr(
-                table->node.remove.hi, component);
-            if (remove_edge) {
-                flecs_table_disconnect_edge(world, component, remove_edge);
-                ecs_map_remove(table->node.remove.hi, component);
-            }
+    ecs_graph_edges_t *sets[2] = { &table->node.add, &table->node.remove };
+    for (int32_t i = 0; i < 2; i ++) {
+        ecs_graph_edges_t *edges = sets[i];
+        ecs_graph_edge_t *edge = edges->hi
+            ? ecs_map_get_ptr(edges->hi, component) : NULL;
+        if (edge) {
+            ecs_map_remove(edges->hi, component);
+            flecs_table_disconnect_edge(world, component, edge);
         }
     }
 }

@@ -514,6 +514,39 @@ error:
     return false;
 }
 
+static bool flecs_query_table_has_self_ids(
+    const ecs_query_t *q,
+    const ecs_table_t *table)
+{
+    if (!flecs_table_bloom_filter_test(table, q->bloom_filter)) {
+        return false;
+    }
+
+    const ecs_term_t *terms = q->terms;
+    int32_t i, count = q->term_count;
+    for (i = 0; i < count; i ++) {
+        const ecs_term_t *term = &terms[i];
+
+        if (!(term->flags_ & EcsTermIsTrivial)) {
+            continue;
+        }
+
+        if ((term->src.id & EcsTraverseFlags) != EcsSelf) {
+            continue;
+        }
+
+        if (ecs_id_is_wildcard(term->id)) {
+            continue;
+        }
+
+        if (ecs_table_get_type_index(q->real_world, table, term->id) == -1) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool ecs_query_has_table(
     const ecs_query_t *q,
     ecs_table_t *table,
@@ -522,7 +555,7 @@ bool ecs_query_has_table(
     flecs_poly_assert(q, ecs_query_t);
     ecs_check(q->flags & EcsQueryMatchThis, ECS_INVALID_PARAMETER, NULL);
 
-    if (!flecs_table_bloom_filter_test(table, q->bloom_filter)) {
+    if (!flecs_query_table_has_self_ids(q, table)) {
         /* Safe, only used for statistics */
         ECS_CONST_CAST(ecs_query_t*, q)->eval_count ++;
         return false;
@@ -553,7 +586,7 @@ bool ecs_query_has_range(
         }
     }
 
-    if (!flecs_table_bloom_filter_test(table, q->bloom_filter)) {
+    if (!flecs_query_table_has_self_ids(q, table)) {
         /* Safe, only used for statistics */
         ECS_CONST_CAST(ecs_query_t*, q)->eval_count ++;
         return false;
@@ -568,21 +601,78 @@ bool ecs_query_has_range(
     return ecs_query_next(it);
 }
 
+#ifdef FLECS_CACHED_QUERIES
+/* Counting a query that is fully served by a trivial cache does not need an
+ * iterator: the cache already stores the matched tables, and a trivial cache
+ * yields one result per non-empty table. This matters for the stats addon,
+ * which counts every system query every collection interval. */
+static
+bool flecs_query_count_trivial_cache(
+    const ecs_query_t *q,
+    ecs_query_count_t *out)
+{
+    ecs_query_impl_t *impl = flecs_query_impl(q);
+    ecs_query_cache_t *cache = impl->cache;
+
+    if (!cache || !(q->flags & EcsQueryIsCacheable) ||
+        (q->flags & (EcsQueryCacheWithFilter|EcsQueryHasChangeDetection)) ||
+        cache->order_by_callback ||
+        !(cache->query->flags & EcsQueryTrivialCache))
+    {
+        return false;
+    }
+
+#ifdef FLECS_QUERY_PLANS
+    if (impl->ops) {
+        return false;
+    }
+#endif
+
+    bool match_empty = (q->flags & EcsQueryMatchEmptyTables) != 0;
+    ecs_query_cache_group_t *group = cache->first_group;
+
+    while (group) {
+        ecs_vec_t *tables = &group->tables;
+        int32_t i, count = ecs_vec_count(tables);
+        ecs_query_triv_cache_match_t *elems = ecs_vec_first_t(
+            tables, ecs_query_triv_cache_match_t);
+
+        for (i = 0; i < count; i ++) {
+            int32_t entities = ecs_table_count(elems[i].table);
+            if (!entities && !match_empty) {
+                continue;
+            }
+            out->results ++;
+            out->entities += entities;
+        }
+
+        group = group->next;
+    }
+
+    return true;
+}
+#endif
+
 ecs_query_count_t ecs_query_count(
     const ecs_query_t *q)
 {
     flecs_poly_assert(q, ecs_query_t);
     ecs_query_count_t result = {0};
 
-    ecs_iter_t it = flecs_query_iter(q->world, q);
-    it.flags |= EcsIterNoData;
-
-    while (ecs_query_next(&it)) {
-        result.results ++;
-        result.entities += it.count;
 #ifdef FLECS_CACHED_QUERIES
-        ecs_iter_skip(&it);
+    if (!flecs_query_count_trivial_cache(q, &result))
 #endif
+    {
+        ecs_iter_t it = flecs_query_iter(q->world, q);
+        it.flags |= EcsIterNoData;
+
+        while (ecs_query_next(&it)) {
+            result.results ++;
+            result.entities += it.count;
+#ifdef FLECS_CACHED_QUERIES
+            ecs_iter_skip(&it);
+#endif
+        }
     }
 
     if ((q->flags & EcsQueryMatchOnlySelf) && 

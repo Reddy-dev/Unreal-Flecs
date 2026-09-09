@@ -16,6 +16,7 @@ static int flecs_expr_precedence[] = {
     [EcsTokParenOpen] = 1,
     [EcsTokMember] = 1,
     [EcsTokBracketOpen] = 1,
+    [EcsTokHasBracketOpen] = 1,
     [EcsTokNot] = 2,
     [EcsTokMul] = 3,
     [EcsTokDiv] = 3,
@@ -58,6 +59,26 @@ static bool flecs_has_precedence(
         return false;
     }
     return flecs_expr_precedence[first] <= flecs_expr_precedence[second];
+}
+
+static void flecs_expr_script_append_using(
+    ecs_script_scope_t *scope,
+    ecs_strbuf_t *buf)
+{
+    if (scope->parent) {
+        flecs_expr_script_append_using(scope->parent, buf);
+    }
+
+    int32_t i, count = ecs_vec_count(&scope->stmts);
+    ecs_script_node_t **stmts = ecs_vec_first(&scope->stmts);
+    for (i = 0; i < count; i ++) {
+        if (stmts[i]->kind == EcsAstUsing) {
+            ecs_script_using_t *using_node = (ecs_script_using_t*)stmts[i];
+            ecs_strbuf_appendlit(buf, "using ");
+            ecs_strbuf_appendstr(buf, using_node->name);
+            ecs_strbuf_appendch(buf, '\n');
+        }
+    }
 }
 
 static ecs_entity_t flecs_script_default_lookup(
@@ -112,6 +133,14 @@ static const char* flecs_script_parse_match_elems(
                 goto error;
             }
 
+            {
+                LookAhead_1('}', {
+                    pos = lookahead - 1;
+                    parser->significant_newline = old_significant_newline;
+                    EndOfRule;
+                })
+            }
+
             Parse(
                 case ';':
                 case '\n': {
@@ -131,11 +160,12 @@ const char* flecs_script_parse_initializer(
     ecs_parser_t *parser,
     const char *pos,
     char until,
-    ecs_expr_initializer_t **node_out)
+    ecs_expr_node_t **node_out)
 {
     bool first = true;
 
-    ecs_expr_initializer_t *node = *node_out = flecs_expr_initializer(parser);
+    ecs_expr_initializer_t *node = flecs_expr_initializer(parser);
+    *node_out = (ecs_expr_node_t*)node;
     ecs_allocator_t *a = &parser->script->allocator;
 
     do {
@@ -143,6 +173,7 @@ const char* flecs_script_parse_initializer(
 
         /* End of initializer */
         LookAhead(
+            case ']':
             case ')':
             case '}': {
                 if ((char)lookahead_token.kind != until) {
@@ -161,37 +192,76 @@ const char* flecs_script_parse_initializer(
             a, &node->elements, ecs_expr_initializer_element_t);
         ecs_os_zeromem(elem);
 
-        /* Parse member name */
-        {
-            LookAhead_2(EcsTokIdentifier, ':', {
-                elem->member = Token(0);
-                LookAhead_Keep();
+        if (until != ']') {
+            LookAhead_1(EcsTokIdentifier,
+                const char *old_pos = pos;
                 pos = lookahead;
-                break;
-            })
-        }
-        {
-            LookAhead_2(EcsTokIdentifier, EcsTokAddAssign, {
-                elem->member = Token(0);
-                elem->operator = EcsTokAddAssign;
-                LookAhead_Keep();
-                pos = lookahead;
-                break;
-            })
-        }
-        {
-            LookAhead_2(EcsTokIdentifier, EcsTokMulAssign, {
-                elem->member = Token(0);
-                elem->operator = EcsTokMulAssign;
-                LookAhead_Keep();
-                pos = lookahead;
-                break;
-            })
+                LookAhead(
+                    case ':':
+                    case EcsTokAddAssign:
+                    case EcsTokMulAssign:
+                        elem->member = Token(0);
+                        elem->operator = lookahead_token.kind == ':'
+                            ? 0 : lookahead_token.kind;
+                        LookAhead_Keep();
+                        break;
+                )
+                if (!elem->member) {
+                    pos = old_pos;
+                }
+            )
         }
 
         pos = flecs_script_parse_expr(parser, pos, 0, &elem->value);
         if (!pos) {
             goto error;
+        }
+
+        if (until == ']') {
+            bool is_key = false;
+
+            LookAhead_1(':', {
+                pos = lookahead;
+                is_key = true;
+                break;
+            })
+
+            if (is_key) {
+                elem->key = elem->value;
+                elem->value = NULL;
+
+                pos = flecs_script_parse_expr(parser, pos, 0, &elem->value);
+                if (!pos) {
+                    goto error;
+                }
+            }
+        }
+
+        if (until == ']' && !elem->key && ecs_vec_count(&node->elements) == 1) {
+            bool is_range = false;
+
+            LookAhead_1(EcsTokRange, {
+                pos = lookahead;
+                is_range = true;
+                break;
+            })
+
+            /* [expr .. expr] is a range expression */
+            if (is_range) {
+                ecs_expr_range_t *range = flecs_expr_range(parser);
+                range->from = elem->value;
+                elem->value = NULL;
+                ecs_vec_remove_last(&node->elements);
+                flecs_script_parser_expr_free(parser, (ecs_expr_node_t*)node);
+                *node_out = (ecs_expr_node_t*)range;
+
+                pos = flecs_script_parse_expr(parser, pos, 0, &range->to);
+                if (!pos) {
+                    goto error;
+                }
+
+                EndOfRule;
+            }
         }
 
         if (elem->member) {
@@ -212,9 +282,9 @@ const char* flecs_script_parse_initializer(
                     break;
                 }
 
+                case ']':
                 case ')':
                 case '}':
-                    /* Return last character of initializer */
                     pos = lookahead - 1;
 
                 case '\n': {
@@ -225,84 +295,11 @@ const char* flecs_script_parse_initializer(
                 }
 
                 case '\0':
+                    if (until == ']') {
+                        Error("expected ']'");
+                    }
                     pos = lookahead;
                     EndOfRule;
-            )
-        }
-    } while (true);
-
-    ParserEnd;
-}
-
-static const char* flecs_script_parse_collection_initializer(
-    ecs_parser_t *parser,
-    const char *pos,
-    ecs_expr_initializer_t **node_out)
-{
-    bool first = true;
-    
-    ecs_expr_initializer_t *node = *node_out = flecs_expr_initializer(parser);
-    ecs_allocator_t *a = &parser->script->allocator;
-
-    do {
-        ParserBegin;
-
-        /* End of initializer */
-        LookAhead_1(']', {
-            if (first) {                
-                node->node.kind = EcsExprEmptyInitializer;
-            }
-            pos = lookahead - 1;
-            EndOfRule;
-        })
-
-        first = false;
-
-        ecs_expr_initializer_element_t *elem = ecs_vec_append_t(
-            a, &node->elements, ecs_expr_initializer_element_t);
-        ecs_os_zeromem(elem);
-
-        pos = flecs_script_parse_expr(parser, pos, 0, &elem->value);
-        if (!pos) {
-            goto error;
-        }
-
-        {
-            bool is_key = false;
-
-            LookAhead_1(':', {
-                pos = lookahead;
-                is_key = true;
-                break;
-            })
-
-            if (is_key) {
-                elem->key = elem->value;
-                elem->value = NULL;
-
-                pos = flecs_script_parse_expr(parser, pos, 0, &elem->value);
-                if (!pos) {
-                    goto error;
-                }
-            }
-        }
-
-        if (elem->value && elem->value->kind == EcsExprInitializer &&
-            ((ecs_expr_initializer_t*)elem->value)->is_partial)
-        {
-            node->is_partial = true;
-        }
-
-        {
-            /* Parse next element or end of initializer */
-            LookAhead(
-                case ',': {
-                    pos = lookahead;
-                    break;
-                }
-                case ']': {
-                    EndOfRule;
-                }
             )
         }
     } while (true);
@@ -318,8 +315,9 @@ static const char* flecs_script_parse_function(
     ecs_expr_function_t *result = flecs_expr_function(parser);
     result->left = *out;
 
-    pos = flecs_script_parse_initializer(
-        parser, pos, ')', &result->args);
+    ecs_expr_node_t *args = NULL;
+    pos = flecs_script_parse_initializer(parser, pos, ')', &args);
+    result->args = (ecs_expr_initializer_t*)args;
     if (!pos) {
         goto error;
     }
@@ -379,8 +377,9 @@ static const char* flecs_script_parse_rhs(
             case EcsTokAnd:
             case EcsTokOr:
             case EcsTokShiftLeft:
-            case EcsTokShiftRight: 
+            case EcsTokShiftRight:
             case EcsTokBracketOpen:
+            case EcsTokHasBracketOpen:
             case EcsTokMember:
             {
                 ecs_token_kind_t oper = lookahead_token.kind;
@@ -404,6 +403,51 @@ static const char* flecs_script_parse_rhs(
                         parser, pos, tokenizer, 0, &result->index);
                     if (!pos) {
                         goto error;
+                    }
+
+                    Parse_1(']', {
+                        break;
+                    });
+
+                    break;
+                }
+
+                case EcsTokHasBracketOpen: {
+                    ecs_expr_has_t *result = flecs_expr_has(parser);
+                    result->left = *out;
+
+                    *out = (ecs_expr_node_t*)result;
+
+                    bool is_pair = false;
+
+                    {
+                        LookAhead_1('(', {
+                            pos = lookahead;
+                            is_pair = true;
+                            break;
+                        })
+                    }
+
+                    Parse_1(EcsTokIdentifier, {
+                        result->first = (ecs_expr_node_t*)
+                            flecs_expr_identifier(parser, t->value);
+                        break;
+                    });
+
+                    if (is_pair) {
+                        Parse_1(',', {
+                            break;
+                        });
+
+                        Parse_1(EcsTokIdentifier, {
+                            result->second = (ecs_expr_node_t*)
+                                flecs_expr_identifier(parser, t->value);
+                            break;
+                        });
+
+                        Parse_1(')', {
+                            break;
+                        });
                     }
 
                     Parse_1(']', {
@@ -678,6 +722,28 @@ static const char* flecs_script_parse_lhs(
             break;
         }
 
+        case EcsTokKeywordScript: {
+            ecs_expr_script_t *node = flecs_expr_script(parser);
+            *out = (ecs_expr_node_t*)node;
+
+            Parse_1('{', {
+                ecs_strbuf_t buf = ECS_STRBUF_INIT;
+                flecs_expr_script_append_using(parser->scope, &buf);
+                char *using_code = ecs_strbuf_get(&buf);
+                node->script = flecs_script_parse_nested(
+                    parser->script->pub.world, parser->name,
+                    using_code, pos, &pos);
+                ecs_os_free(using_code);
+                if (!node->script) {
+                    goto error;
+                }
+                break;
+            })
+
+            can_have_rhs = false;
+            break;
+        }
+
         case '(': {
             pos = flecs_script_parse_expr(parser, pos, 0, out);
             if (!pos) {
@@ -691,39 +757,31 @@ static const char* flecs_script_parse_lhs(
             break;
         }
 
-        case '{': {
-            ecs_expr_initializer_t *node = NULL;
-            pos = flecs_script_parse_initializer(parser, pos, '}', &node);
-            if (!pos) {
-                flecs_script_parser_expr_free(parser, (ecs_expr_node_t*)node);
-                goto error;
-            }
-
-            *out = (ecs_expr_node_t*)node;
-
-            Parse_1('}', {
-                break;
-            })
-
-            can_have_rhs = false;
-            break;
-        }
-
+        case '{':
         case '[': {
-            ecs_expr_initializer_t *node = NULL;
-            pos = flecs_script_parse_collection_initializer(parser, pos, &node);
+            char until = tokenizer->tokens[0].kind == '{' ? '}' : ']';
+            ecs_expr_node_t *node = NULL;
+            pos = flecs_script_parse_initializer(parser, pos, until, &node);
             if (!pos) {
-                flecs_script_parser_expr_free(parser, (ecs_expr_node_t*)node);
+                flecs_script_parser_expr_free(parser, node);
                 goto error;
             }
 
-            node->is_collection = true;
-            *out = (ecs_expr_node_t*)node;
+            if (until == ']' && (node->kind == EcsExprInitializer ||
+                node->kind == EcsExprEmptyInitializer))
+            {
+                ((ecs_expr_initializer_t*)node)->is_collection = true;
+            }
+            *out = node;
 
-            Parse_1(']', {
-                break;
-            })
-
+            Parse(
+                case '}':
+                case ']':
+                    if (t->kind != (ecs_token_kind_t)until) {
+                        Error("expected '%c'", until);
+                    }
+                    break;
+            )
             can_have_rhs = false;
             break;
         }
@@ -777,6 +835,11 @@ const char* flecs_script_parse_expr(
     }
 
     parser->expr_depth --;
+
+    if (out && *out && !(*out)->end) {
+        (*out)->end = flecs_parser_stmt_end(parser, pos);
+    }
+
     return pos;
 }
 
@@ -823,7 +886,7 @@ ecs_script_t* ecs_expr_parse(
     impl->next_token = &expr[ptr - script->code];
     impl->token_remaining = parser.token_cur;
 
-    if (flecs_expr_visit_type(script, impl->expr, &priv_desc)) {
+    if (flecs_expr_visit_type(script, &impl->expr, &priv_desc)) {
         goto error;
     }
 

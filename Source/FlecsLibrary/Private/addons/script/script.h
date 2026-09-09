@@ -12,26 +12,9 @@
 #ifdef FLECS_SCRIPT
 
 typedef struct ecs_script_entity_t ecs_script_entity_t;
+typedef struct ecs_script_ir_t ecs_script_ir_t;
 
 #define flecs_script_impl(script) ((ecs_script_impl_t*)script)
-
-typedef struct ecs_script_ref_t {
-    ecs_entity_t entity;
-    const char *name;
-    ecs_id_t component;
-    ecs_entity_t observer;
-} ecs_script_ref_t;
-
-typedef struct ecs_script_ref_ctx_t {
-    ecs_entity_t script;
-    ecs_entity_t instance;
-} ecs_script_ref_ctx_t;
-
-typedef struct EcsScriptUpdateEvent {
-    ecs_entity_t script;
-} EcsScriptUpdateEvent;
-
-extern ECS_COMPONENT_DECLARE(EcsScriptUpdateEvent);
 
 /* Context passed to script visitor callbacks. */
 typedef struct ecs_script_visitor_ctx_t {
@@ -61,8 +44,163 @@ typedef struct EcsScriptVisitor {
 
 FLECS_API extern ECS_COMPONENT_DECLARE(EcsScriptVisitor);
 
+typedef enum flecs_script_symbol_kind_t {
+    FlecsScriptSymbolNone,
+    FlecsScriptSymbolEntity,
+    FlecsScriptSymbolEntitySlot,
+    FlecsScriptSymbolVariable,
+    FlecsScriptSymbolGlobalVariable
+} flecs_script_symbol_kind_t;
+
+typedef struct flecs_script_symbol_t {
+    flecs_script_symbol_kind_t kind;
+    ecs_entity_t entity;
+    int32_t slot;
+    int32_t sp;
+} flecs_script_symbol_t;
+
+typedef enum flecs_script_lookup_kind_t {
+    FlecsScriptLookupEntity = 1,
+    FlecsScriptLookupVariable = 2,
+    FlecsScriptLookupAll = 3,
+    FlecsScriptLookupDynamic = 4
+} flecs_script_lookup_kind_t;
+
+typedef enum flecs_script_unresolved_kind_t {
+    FlecsScriptUnresolvedEntity,
+    FlecsScriptUnresolvedComponent,
+    FlecsScriptUnresolvedVariable
+} flecs_script_unresolved_kind_t;
+
+typedef struct ecs_script_unresolved_ref_t {
+    const char *name;
+    flecs_script_unresolved_kind_t kind;
+    int32_t line;
+    int32_t column;
+    int32_t offset;
+} ecs_script_unresolved_ref_t;
+
+typedef struct ecs_script_unresolved_component_ref_t {
+    ecs_entity_t entity;
+    ecs_id_t component;
+    bool is_has;
+    int32_t line;
+    int32_t column;
+} ecs_script_unresolved_component_ref_t;
+
+typedef struct ecs_script_symbol_slot_t {
+    ecs_entity_t entity;
+    int32_t scope_slot;
+} ecs_script_symbol_slot_t;
+
+typedef struct ecs_script_component_slot_t {
+    int32_t entity_slot;
+    ecs_id_t component;
+    int32_t scope_slot;
+} ecs_script_component_slot_t;
+
+/* Cached value of a computed template const, stored on the instance root */
+typedef struct ecs_script_computed_t {
+    void *ptr;
+    const ecs_type_info_t *ti;
+    bool valid;
+} ecs_script_computed_t;
+
+typedef struct ecs_script_for_component_t {
+    ecs_id_t component;
+    int32_t visit;
+} ecs_script_for_component_t;
+
+typedef struct ecs_script_for_entry_t {
+    int32_t visit;
+    ecs_vec_t components; /* vec<ecs_script_for_component_t> */
+} ecs_script_for_entry_t;
+
+typedef struct ecs_script_for_slot_t {
+    ecs_vec_t entities; /* vec<ecs_entity_t>, anonymous entities */
+    ecs_map_t named;
+    ecs_entity_t cache_entity;
+    ecs_script_for_entry_t *cache_entry;
+    int32_t scope_slot;
+} ecs_script_for_slot_t;
+
+void flecs_script_for_slots_init(
+    ecs_vec_t *for_slots,
+    int32_t count);
+
+void flecs_script_for_slots_fini(
+    ecs_vec_t *for_slots);
+
+void flecs_script_for_slot_clear(
+    ecs_world_t *world,
+    ecs_script_for_slot_t *slot,
+    bool delete_named);
+
+void flecs_script_for_slot_purge(
+    ecs_world_t *world,
+    ecs_script_for_slot_t *slot,
+    int32_t visit);
+
+void flecs_script_for_slot_mark(
+    ecs_script_for_slot_t *slot,
+    int32_t visit);
+
+void flecs_script_for_slot_track(
+    ecs_world_t *world,
+    ecs_script_for_slot_t *slot,
+    ecs_entity_t entity,
+    int32_t visit,
+    bool *named);
+
+void flecs_script_for_slot_track_component(
+    ecs_script_for_slot_t *slot,
+    ecs_entity_t entity,
+    ecs_id_t component,
+    int32_t visit);
+
+typedef struct ecs_script_region_t {
+    int32_t scope_first;
+    int32_t scope_count;
+    int32_t for_first;
+    int32_t for_count;
+} ecs_script_region_t;
+
+typedef struct ecs_script_state_t {
+    ecs_vec_t symbol_slots;
+    ecs_vec_t component_slots;
+    ecs_vec_t scope_slots;
+    ecs_vec_t for_slots;
+    ecs_vec_t computed;
+    int32_t visit;
+    bool initialized;
+} ecs_script_state_t;
+
+void flecs_script_state_init(
+    ecs_script_state_t *state);
+
+void flecs_script_state_fini(
+    ecs_script_state_t *state);
+
+void flecs_script_state_clear_computed(
+    ecs_script_state_t *state);
+
+void flecs_script_state_resize(
+    ecs_script_state_t *state,
+    int32_t scope_count,
+    int32_t component_count,
+    int32_t for_count);
+
+int32_t flecs_script_state_next(
+    ecs_script_state_t *state);
+
+void flecs_script_state_mark(
+    ecs_script_state_t *state,
+    const ecs_script_region_t *region,
+    int32_t visit);
+
 struct ecs_script_impl_t {
     ecs_script_t pub;
+    ecs_entity_t entity; /* Set if script is managed (has EcsScript) */
     ecs_allocator_t allocator;
     ecs_script_scope_t *root;
     ecs_expr_node_t *expr; /* Only set if script is just an expression */
@@ -71,9 +209,32 @@ struct ecs_script_impl_t {
     const char *next_token; /* First character after expression */
     int32_t token_buffer_size;
     int32_t refcount;
+    int32_t task_refcount;
     ecs_vec_t refs;
+    ecs_vec_t run_refs;
+    ecs_script_state_t state;
+    ecs_vec_t regions;
+    ecs_vec_t unresolved_refs;
+    ecs_vec_t unresolved_component_refs;
+    ecs_vec_t lenient_warned; /* vec<const char*> */
+    ecs_script_ir_t *ir;
+    ecs_map_t entity_index;
+    int32_t entity_index_visit;
+    bool entity_index_valid;
+    int32_t input_count;
     bool evaluating;
+    bool compiled;
+    bool lenient;
+    bool ir_enabled;
 };
+
+#define flecs_script_is_lenient(script)\
+    (flecs_script_impl(script)->lenient)
+
+void flecs_script_lenient_warn(
+    ecs_script_t *script,
+    const char *name,
+    const char *msg);
 
 typedef struct ecs_function_calldata_t {
     ecs_entity_t function;
@@ -82,55 +243,47 @@ typedef struct ecs_function_calldata_t {
         ecs_vector_function_callback_t vector_callback;
     } is;
     int32_t vector_elem_count;
+#ifdef FLECS_SCRIPT_ASYNC
+    ecs_async_function_callback_t async_callback;
+    ecs_async_function_cancel_t async_cancel;
+#endif
     void *ctx;
 } ecs_function_calldata_t;
 
 #include "ast.h"
 #include "expr/expr_expr.h"
 #include "visit.h"
-#include "visit_eval.h"
-#include "template.h"
-
-struct ecs_script_runtime_t {
-    ecs_allocator_t allocator;
-    ecs_expr_stack_t expr_stack;
-    ecs_stack_t stack;
-    ecs_vec_t using;
-    ecs_vec_t with;
-    ecs_vec_t with_type_info;
-    ecs_vec_t annot;
-
-    /* Tag added to entities created by the currently evaluating managed
-     * script. Carried on the world runtime so evaluation triggered from hooks
-     * (such as template instantiation) inherits it. */
-    ecs_id_t current_tag;
-
-    char *error_name;
-    int32_t include_depth;
-    bool error;
-};
+#include "eval/eval.h"
+#include "reactivity/refs.h"
+#include "reactivity/template.h"
+#include "reactivity/deps.h"
+#include "ir/ir.h"
 
 ecs_script_t* flecs_script_new(
     ecs_world_t *world);
 
-ecs_entity_t flecs_script_create_ref_observer(
-    ecs_world_t *world,
-    ecs_entity_t script,
-    ecs_entity_t instance,
-    ecs_entity_t entity,
-    ecs_id_t component,
-    ecs_iter_action_t callback);
+void flecs_script_pos_to_line_col(
+    const char *code,
+    const char *pos,
+    int32_t *line,
+    int32_t *column);
 
-void flecs_script_update_ref_observers(
+int flecs_script_update(
     ecs_world_t *world,
-    ecs_entity_t script,
+    ecs_entity_t e,
     ecs_entity_t instance,
-    ecs_vec_t *refs,
-    ecs_vec_t *observers,
-    ecs_iter_action_t callback);
+    const char *code,
+    ecs_script_runtime_t *eval_runtime);
 
 ecs_script_scope_t* flecs_script_scope_new(
     ecs_parser_t *parser);
+
+typedef int (*flecs_script_scope_action_t)(ecs_script_scope_t *scope, void *ctx);
+
+int flecs_script_visit_scopes(
+    ecs_script_node_t *node,
+    flecs_script_scope_action_t action,
+    void *ctx);
 
 int flecs_script_visit_free(
     ecs_script_t *script);
@@ -144,21 +297,56 @@ ecs_script_vars_t* flecs_script_vars_push(
     ecs_stack_t *stack,
     ecs_allocator_t *allocator);
 
-ecs_script_runtime_t* flecs_script_runtime_get(
-    ecs_world_t *world);
-
-void flecs_script_runtime_error_reset(
-    ecs_script_runtime_t *r);
-
 void flecs_script_register_builtin_functions(
     ecs_world_t *world);
 
 void flecs_function_import(
     ecs_world_t *world);
 
+/* Returns the value of a global variable, which is either a const or a mut
+ * variable. When component is provided it is set to the component that stores
+ * the value, which tells const and mut variables apart. */
+ecs_value_t flecs_script_global_var_get(
+    const ecs_world_t *world,
+    ecs_entity_t var,
+    ecs_id_t *component);
+
+ecs_entity_t flecs_script_array_type(
+    ecs_world_t *world,
+    ecs_entity_t elem_type,
+    int32_t count);
+
+ecs_entity_t flecs_script_vector_type(
+    ecs_world_t *world,
+    ecs_entity_t elem_type);
+
 const char* flecs_script_stmt(
     ecs_parser_t *parser,
     const char *pos);
+
+void flecs_script_entity_index_fini(
+    ecs_script_impl_t *impl);
+
+/* Write the shortest decimal string that parses back to the same value. */
+
+/* Same as ecs_ptr_to_expr(), but writes floating point members with the
+ * shortest decimal string that roundtrips to the same value. */
+char* flecs_script_ptr_to_expr_precise(
+    const ecs_world_t *world,
+    ecs_entity_t type,
+    const void *ptr,
+    bool positional);
+
+const char* flecs_script_stmt_w_separator(
+    ecs_parser_t *parser,
+    const char *pos);
+
+ecs_script_t* flecs_script_parse_nested(
+    ecs_world_t *world,
+    const char *name,
+    const char *using_code,
+    const char *code,
+    const char **next);
 
 int ecs_script_ast_node_to_buf(
     const ecs_script_t *script,
@@ -167,50 +355,11 @@ int ecs_script_ast_node_to_buf(
     bool colors,
     int32_t depth);
 
-void ecs_script_runtime_clear(
-    ecs_script_runtime_t *r);
-
-int flecs_script_apply_annot(
-    ecs_script_eval_visitor_t *v,
-    ecs_script_entity_t *node,
-    ecs_script_annot_t *annot);
-
-/* Type visitors (implement struct/enum/bitmask initializer syntax) */
-
-int flecs_script_struct_visit(
-    const ecs_script_visitor_ctx_t *ctx);
-
-int flecs_script_enum_visit(
-    const ecs_script_visitor_ctx_t *ctx);
-
-int flecs_script_bitmask_visit(
-    const ecs_script_visitor_ctx_t *ctx);
-
 /* Script functions */
 double flecs_lerp(
     double a,
     double b,
     double t);
-
-typedef struct ecs_script_user_function_t {
-    ecs_script_t *script;
-    ecs_script_function_node_t *node;
-    ecs_vec_t refs;
-    ecs_vec_t using;
-} ecs_script_user_function_t;
-
-void flecs_script_user_function_callback(
-    const ecs_function_ctx_t *ctx,
-    int32_t argc,
-    const ecs_value_t *argv,
-    ecs_value_t *result);
-
-void flecs_script_user_function_ctx_free(
-    void *ctx);
-
-int flecs_script_eval_function(
-    ecs_script_eval_visitor_t *v,
-    ecs_script_function_node_t *node);
 
 void FlecsScriptMathPerlinImport(
     ecs_world_t *world);

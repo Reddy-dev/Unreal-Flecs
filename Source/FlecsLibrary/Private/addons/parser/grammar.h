@@ -57,9 +57,11 @@
 
 /* Push/pop token frame (allows token stack reuse in recursive functions) */
 #define TokenFramePush() \
+    int32_t _token_frame = tokenizer->stack.count;\
     tokenizer->tokens = &tokenizer->stack.tokens[tokenizer->stack.count];
 
 #define TokenFramePop() \
+    tokenizer->stack.count = _token_frame;\
     tokenizer->tokens = tokenizer->stack.tokens;
 
 /* Error */
@@ -86,10 +88,12 @@
             }\
         }\
         parser->significant_newline = false;\
+        parser->expr_pos = pos;\
         if (!(pos = flecs_script_parse_expr(parser, pos, 0, &EXPR))) {\
             goto error;\
         }\
         parser->significant_newline = true;\
+        parser->expr_end = pos;\
         __VA_ARGS__\
     }
 
@@ -97,15 +101,15 @@
 #define Initializer(until, ...)\
     {\
         ecs_expr_node_t *INITIALIZER = NULL;\
-        ecs_expr_initializer_t *_initializer = NULL;\
         if (until != '\n') {\
             parser->significant_newline = false;\
         }\
+        parser->expr_pos = (until == '\n') ? pos : pos - 1;\
         if (!(pos = flecs_script_parse_initializer(\
-            parser, pos, until, &_initializer))) \
+            parser, pos, until, &INITIALIZER))) \
         {\
             flecs_expr_visit_free(\
-                &parser->script->pub, (ecs_expr_node_t*)_initializer);\
+                &parser->script->pub, INITIALIZER);\
             goto error;\
         }\
         parser->significant_newline = true;\
@@ -117,8 +121,13 @@
                 pos --;\
             }\
         }\
-        INITIALIZER = (ecs_expr_node_t*)_initializer;\
         pos ++;\
+        parser->expr_end = (until == '\n')\
+            ? flecs_parser_stmt_end(parser, pos)\
+            : pos;\
+        if (INITIALIZER && !INITIALIZER->end) {\
+            INITIALIZER->end = parser->expr_end;\
+        }\
         __VA_ARGS__\
     }
 
@@ -245,13 +254,15 @@
 #define LookAhead_2(tok1, tok2, ...)\
     LookAhead_1(tok1, \
         const char *old_ptr = pos;\
+        bool lookahead_matched = false;\
         pos = lookahead;\
         LookAhead(\
             case tok2: {\
+                lookahead_matched = true;\
                 __VA_ARGS__\
             }\
         )\
-        if (pos != lookahead) {\
+        if (!lookahead_matched || pos != lookahead) {\
             pos = old_ptr;\
         }\
     )
@@ -259,13 +270,15 @@
 #define LookAhead_3(tok1, tok2, tok3, ...)\
     LookAhead_2(tok1, tok2, \
         const char *old_ptr = pos;\
+        bool lookahead_matched = false;\
         pos = lookahead;\
         LookAhead(\
             case tok3: {\
+                lookahead_matched = true;\
                 __VA_ARGS__\
             }\
         )\
-        if (pos != lookahead) {\
+        if (!lookahead_matched || pos != lookahead) {\
             pos = old_ptr;\
         }\
     )

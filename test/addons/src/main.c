@@ -470,6 +470,8 @@ void Http_teardown_stopped(void);
 void Http_stop_start(void);
 void Http_decode_plus(void);
 void Http_query_params_max(void);
+void Http_headers_and_body(void);
+void Http_headers_max_with_body(void);
 
 // Testsuite 'Rest'
 void Rest_teardown(void);
@@ -479,8 +481,12 @@ void Rest_get_cached_invalid(void);
 void Rest_try_query(void);
 void Rest_query(void);
 void Rest_named_query(void);
+void Rest_query_error_restores_log(void);
 void Rest_call(void);
 void Rest_call_string(void);
+void Rest_call_zero_arguments(void);
+void Rest_call_invalid_argument_after_string(void);
+void Rest_call_argument_expression(void);
 void Rest_call_missing_argument(void);
 void Rest_call_not_found(void);
 void Rest_entity_not_found_w_dot_sep(void);
@@ -499,6 +505,7 @@ void Rest_script_error(void);
 void Rest_script_error_new_script_deferred(void);
 void Rest_script_update(void);
 void Rest_script_update_w_body(void);
+void Rest_script_update_new_script(void);
 void Rest_import_rest_after_mini(void);
 void Rest_get_pipeline_stats_after_delete_system(void);
 void Rest_request_world_summary_before_monitor_sys_run(void);
@@ -2319,6 +2326,14 @@ bake_test_case Http_testcases[] = {
     {
         "query_params_max",
         Http_query_params_max
+    },
+    {
+        "headers_and_body",
+        Http_headers_and_body
+    },
+    {
+        "headers_max_with_body",
+        Http_headers_max_with_body
     }
 };
 
@@ -2352,12 +2367,28 @@ bake_test_case Rest_testcases[] = {
         Rest_named_query
     },
     {
+        "query_error_restores_log",
+        Rest_query_error_restores_log
+    },
+    {
         "call",
         Rest_call
     },
     {
         "call_string",
         Rest_call_string
+    },
+    {
+        "call_zero_arguments",
+        Rest_call_zero_arguments
+    },
+    {
+        "call_invalid_argument_after_string",
+        Rest_call_invalid_argument_after_string
+    },
+    {
+        "call_argument_expression",
+        Rest_call_argument_expression
     },
     {
         "call_missing_argument",
@@ -2430,6 +2461,10 @@ bake_test_case Rest_testcases[] = {
     {
         "script_update_w_body",
         Rest_script_update_w_body
+    },
+    {
+        "script_update_new_script",
+        Rest_script_update_new_script
     },
     {
         "import_rest_after_mini",
@@ -2951,14 +2986,14 @@ static bake_test_suite suites[] = {
         "Http",
         NULL,
         NULL,
-        6,
+        8,
         Http_testcases
     },
     {
         "Rest",
         NULL,
         NULL,
-        44,
+        49,
         Rest_testcases
     },
     {

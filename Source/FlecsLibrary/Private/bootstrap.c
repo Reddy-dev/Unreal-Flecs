@@ -469,8 +469,10 @@ static void flecs_bootstrap_builtin(
     symbol_col[row].value = ecs_os_strdup(symbol);
     symbol_col[row].length = symbol_length;
     symbol_col[row].hash = flecs_hash(symbol, symbol_length);    
-    symbol_col[row].index_hash = 0;
-    symbol_col[row].index = NULL;
+    symbol_col[row].index_hash = symbol_col[row].hash;
+    symbol_col[row].index = &world->symbols;
+    flecs_name_index_ensure(&world->symbols, entity, symbol_col[row].value,
+        symbol_length, symbol_col[row].hash);
 }
 
 /** Initialize component table. This table is manually constructed to bootstrap
@@ -521,29 +523,9 @@ static ecs_table_t* flecs_bootstrap_component_table(
     ecs_vec_t v_entities = ecs_vec_from_entities(result);
     ecs_vec_init_t(NULL, &v_entities, ecs_entity_t, EcsFirstUserComponentId);
     
-    {
-        ecs_column_t *column = &result->data.columns[0];
-        ecs_vec_t v = ecs_vec_from_column_t(column, result, EcsComponent);
-        ecs_vec_init_t(NULL, &v, EcsComponent, EcsFirstUserComponentId);
-        ecs_assert(v.count == v_entities.count, ECS_INTERNAL_ERROR, NULL);
-        ecs_assert(v.size == v_entities.size, ECS_INTERNAL_ERROR, NULL);
-        column->data = v.array;
-    }
-    {
-        ecs_column_t *column = &result->data.columns[1];
-        ecs_vec_t v = ecs_vec_from_column_t(column, result, EcsIdentifier);
-        ecs_vec_init_t(NULL, &v, EcsIdentifier, EcsFirstUserComponentId);
-        ecs_assert(v.count == v_entities.count, ECS_INTERNAL_ERROR, NULL);
-        ecs_assert(v.size == v_entities.size, ECS_INTERNAL_ERROR, NULL);
-        column->data = v.array;
-    }
-    {
-        ecs_column_t *column = &result->data.columns[2];
-        ecs_vec_t v = ecs_vec_from_column_t(column, result, EcsIdentifier);
-        ecs_vec_init_t(NULL, &v, EcsIdentifier, EcsFirstUserComponentId);
-        ecs_assert(v.count == v_entities.count, ECS_INTERNAL_ERROR, NULL);
-        ecs_assert(v.size == v_entities.size, ECS_INTERNAL_ERROR, NULL);
-        column->data = v.array;
+    for (int32_t i = 0; i < result->column_count; i ++) {
+        ecs_column_t *column = &result->data.columns[i];
+        column->data = ecs_os_malloc(column->ti->size * v_entities.size);
     }
 
     result->data.entities = v_entities.array;
@@ -964,7 +946,6 @@ void flecs_bootstrap(
     ecs_add_id(world, EcsDependsOn, EcsTraversable);
 
     /* Run bootstrap functions for other parts of the code */
-    flecs_bootstrap_entity_name(world);
     flecs_bootstrap_parent_component(world);
     flecs_bootstrap_prefab(world);
 #ifdef FLECS_CACHED_QUERIES

@@ -66,7 +66,6 @@ typedef enum {
     EcsQueryIdsLeft,        /* Find ids in use that match (*, T) wildcard */
     EcsQueryIdsAll,         /* Find all non-pair ids in use that match (*) */
     EcsQueryEach,           /* Iterate entities in table, populate entity variable */
-    EcsQueryStore,          /* Store table or entity in variable */
     EcsQueryReset,          /* Reset value of variable to wildcard (*) */
     EcsQueryOr,             /* Or operator */
     EcsQueryOptional,       /* Optional operator */
@@ -92,8 +91,6 @@ typedef enum {
     EcsQueryTree,
     EcsQueryTreeWildcard,
     EcsQueryTreeWith,       /* Evaluate (ChildOf, tgt) against fixed or variable source */
-    EcsQueryTreeUp,         /* Return union of up(ChildOf) and tables with Parent */
-    EcsQueryTreeSelfUp,
     EcsQueryTreePre,        /* Tree instruction that doesn't filter Parent component / returns entire tables. */
     EcsQueryTreePost,       /* Tree instruction that applies filter to Parent component. */
     EcsQueryTreeUpPre,      /* Up traversal for ChildOf that doesn't filter Parent component / returns entire tables */
@@ -190,7 +187,6 @@ typedef struct {
     ecs_id_t id;
     int32_t cur;
     bool self;
-    bool exclusive;
 
     ecs_component_record_t *cr;
     ecs_table_range_t prev_range;
