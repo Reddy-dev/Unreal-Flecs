@@ -106,7 +106,7 @@ void UFlecsSystemObject::InitializeSystem(const TSolidNotNull<const UFlecsWorldI
 	
 	SystemHandle = SystemBuilder.run([this](flecs::iter& InIterator)
 	{
-		UFlecsWorldInterfaceObject* IteratorWorld = nullptr;
+		UFlecsWorldInterfaceObject* IteratorWorld;
 		
 		if (InIterator.world().is_stage())
 		{
