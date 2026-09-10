@@ -12,6 +12,12 @@
 
 #include "FlecsEntityRange.generated.h"
 
+/**
+ * UObject wrapper around a native Flecs entity range.
+ *
+ * This type exposes range metadata to both C++ and Blueprint consumers while
+ * keeping ownership/initialization controlled by UFlecsWorld.
+ */
 UCLASS(BlueprintType, NotBlueprintable)
 class UNREALFLECS_API UFlecsEntityRange final : public UObject
 {
@@ -48,7 +54,8 @@ public:
 		return MakeTuple(GetMinimum(), GetMaximum());
 	}
 	
-	NO_DISCARD FORCEINLINE FName GetRangeName() const
+	UFUNCTION(BlueprintCallable, Category = "Flecs | Entity Range")
+	FORCEINLINE FName GetRangeName() const
 	{
 		return RangeName;
 	}
