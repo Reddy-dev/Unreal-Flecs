@@ -15,6 +15,7 @@ typedef struct ecs_script_eval_visitor_t {
     ecs_script_template_t *template; /* Set when creating template */
     ecs_script_template_t *instance_template;
     ecs_entity_t template_entity; /* Set when creating template instance */
+    ecs_entity_t template_instance;
     ecs_entity_t body_template; /* Template of the body being instantiated. Set
                                  * for the entire body, at any scope depth. */
     ecs_entity_t script_entity;
@@ -256,6 +257,11 @@ int flecs_script_eval_expr(
     ecs_script_eval_visitor_t *v,
     ecs_expr_node_t **expr_ptr,
     ecs_value_t *value);
+
+int flecs_script_assign_value(
+    ecs_script_eval_visitor_t *v,
+    ecs_script_assign_t *node,
+    const void *src);
 
 int flecs_script_eval_id_elem(
     ecs_script_eval_visitor_t *v,

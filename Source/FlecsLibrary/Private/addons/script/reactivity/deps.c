@@ -80,10 +80,38 @@ static bool flecs_script_dep_scopes_exclusive(
 
 static bool flecs_script_dep_id_elem_static(
     ecs_expr_node_t *expr,
-    int32_t symbol,
     int32_t sp)
 {
-    return !expr && symbol == -1 && sp == -1;
+    return !expr && sp == -1;
+}
+
+static const char* flecs_script_dep_name_last_elem(
+    const char *name)
+{
+    const char *last = strrchr(name, '.');
+    return last ? last + 1 : name;
+}
+
+static bool flecs_script_dep_static_elems_differ(
+    const char *first_name,
+    ecs_entity_t first_eval,
+    int32_t first_symbol,
+    const char *second_name,
+    ecs_entity_t second_eval,
+    int32_t second_symbol)
+{
+    if (first_symbol != -1 && second_symbol != -1) {
+        return first_symbol != second_symbol;
+    }
+    if (first_eval && second_eval) {
+        return first_eval != second_eval;
+    }
+    if (!first_name || !second_name) {
+        return false;
+    }
+    return ecs_os_strcmp(
+        flecs_script_dep_name_last_elem(first_name),
+        flecs_script_dep_name_last_elem(second_name)) != 0;
 }
 
 static bool flecs_script_dep_ids_may_match(
@@ -101,20 +129,22 @@ static bool flecs_script_dep_ids_may_match(
         return first->eval == second->eval;
     }
     if (flecs_script_dep_id_elem_static(
-            first->first_expr, first->first_symbol, first->first_sp) &&
+            first->first_expr, first->first_sp) &&
         flecs_script_dep_id_elem_static(
-            second->first_expr, second->first_symbol, second->first_sp) &&
-        first->first_eval && second->first_eval &&
-        first->first_eval != second->first_eval)
+            second->first_expr, second->first_sp) &&
+        flecs_script_dep_static_elems_differ(
+            first->first, first->first_eval, first->first_symbol,
+            second->first, second->first_eval, second->first_symbol))
     {
         return false;
     }
     if (first->second && flecs_script_dep_id_elem_static(
-            first->second_expr, first->second_symbol, first->second_sp) &&
+            first->second_expr, first->second_sp) &&
         flecs_script_dep_id_elem_static(
-            second->second_expr, second->second_symbol, second->second_sp) &&
-        first->second_eval && second->second_eval &&
-        first->second_eval != second->second_eval)
+            second->second_expr, second->second_sp) &&
+        flecs_script_dep_static_elems_differ(
+            first->second, first->second_eval, first->second_symbol,
+            second->second, second->second_eval, second->second_symbol))
     {
         return false;
     }
@@ -806,6 +836,46 @@ static int flecs_script_dep_node_impl(
         node->internal = node->direct_internal;
         break;
     }
+    case EcsAstAsync: {
+        ecs_script_async_t *n = (ecs_script_async_t*)node;
+        ctx->conditional ++;
+        if (flecs_script_dep_scope(ctx, n->scope)) {
+            ctx->conditional --;
+            return -1;
+        }
+        ctx->conditional --;
+        node->input = ctx->template ? ctx->template->async_input : 0;
+        node->internal = 0;
+        break;
+    }
+    case EcsAstWhile: {
+        ecs_script_while_t *n = (ecs_script_while_t*)node;
+        if (flecs_script_dep_expr(ctx, n->expr, &node->direct_input,
+            &node->direct_internal))
+        {
+            return -1;
+        }
+        ctx->conditional ++;
+        if (flecs_script_dep_scope(ctx, n->scope)) {
+            ctx->conditional --;
+            return -1;
+        }
+        ctx->conditional --;
+        node->input = node->direct_input | n->scope->node.input;
+        node->internal = node->direct_internal | n->scope->node.internal;
+        break;
+    }
+    case EcsAstAssign: {
+        ecs_script_assign_t *n = (ecs_script_assign_t*)node;
+        if (flecs_script_dep_expr(ctx, n->expr, &node->direct_input,
+            &node->direct_internal))
+        {
+            return -1;
+        }
+        node->input = node->direct_input;
+        node->internal = node->direct_internal;
+        break;
+    }
     case EcsAstTry: {
         ecs_script_try_t *n = (ecs_script_try_t*)node;
         ctx->conditional ++;
@@ -909,6 +979,7 @@ static int flecs_script_dep_template_init(
     flecs_script_dep_ctx_t *outer)
 {
     template->input_count = 0;
+    template->async_input = UINT64_MAX;
     ctx->input_count = &template->input_count;
     ecs_script_template_member_t *members = ecs_vec_first(&template->members);
     int32_t i, count = ecs_vec_count(&template->members);
@@ -916,6 +987,9 @@ static int flecs_script_dep_template_init(
         members[i].input = 0;
         if (flecs_script_dep_input_new(ctx, &members[i].input)) {
             return -1;
+        }
+        if (members[i].is_mut) {
+            template->async_input &= ~members[i].input;
         }
     }
     if (flecs_script_dep_assign_refs(ctx, &template->refs) ||

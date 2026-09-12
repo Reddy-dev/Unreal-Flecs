@@ -74,6 +74,7 @@ struct ecs_script_template_t {
 
     ecs_vec_t dynamic_refs;
 
+    uint64_t async_input;
     int32_t symbol_offset;
     int32_t symbol_count;
     int32_t root_symbol;
@@ -111,9 +112,17 @@ typedef struct ecs_script_template_pending_t {
 void flecs_script_template_pending_fini(
     ecs_vec_t *pending);
 
+typedef struct ecs_script_async_block_t {
+    ecs_entity_t entity;
+    ecs_script_scope_t *scope;
+    int32_t scope_slot;
+} ecs_script_async_block_t;
+
 typedef struct EcsScriptTemplateRoot {
     ecs_script_state_t state;
     ecs_vec_t observers;
+    ecs_vec_t tasks; /* vec<ecs_script_task_t*>, owned. Created by async blocks */
+    ecs_vec_t async_blocks;
     uint64_t changed;
 } EcsScriptTemplateRoot;
 
@@ -135,6 +144,11 @@ int flecs_script_template_eval_var(
 ecs_entity_t flecs_script_template_member_interface(
     const ecs_script_template_t *template,
     int32_t sp);
+
+bool flecs_script_template_interface_accepts(
+    const ecs_world_t *world,
+    ecs_entity_t value,
+    ecs_entity_t interface);
 
 bool flecs_script_template_member_is_template(
     const ecs_script_template_t *template,

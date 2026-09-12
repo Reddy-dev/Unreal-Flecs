@@ -97,6 +97,8 @@ void Eval_with_after_with(void);
 void Eval_scope_inside_with_inside_scope(void);
 void Eval_with_inside_scope(void);
 void Eval_with_tag_core_name(void);
+void Eval_pair_w_target_from_with(void);
+void Eval_pair_w_target_from_with_in_scope(void);
 void Eval_inherit(void);
 void Eval_inherit_newline(void);
 void Eval_inherit_w_colon(void);
@@ -305,6 +307,7 @@ void Eval_const_bool_and_short_circuit(void);
 void Eval_const_bool_or_short_circuit(void);
 void Eval_if_true_in_scope(void);
 void Eval_if_false_in_scope(void);
+void Eval_if_false_var_in_scope_after_component(void);
 void Eval_if_lt(void);
 void Eval_if_lt_const(void);
 void Eval_if_f64_eq_f64(void);
@@ -692,6 +695,75 @@ void Eval_ir_eval_desc(void);
 void Eval_ir_to_str(void);
 void Eval_ir_managed_script_update_keeps_runtime(void);
 void Eval_string_interpolation_of_scalar_types(void);
+void Eval_while_count(void);
+void Eval_while_count_vars(void);
+void Eval_while_count_1_4(void);
+void Eval_while_count_min_1_2(void);
+void Eval_while_newline_before_scope(void);
+void Eval_while_paren_cond(void);
+void Eval_while_false(void);
+void Eval_while_bool_cond(void);
+void Eval_while_continue(void);
+void Eval_while_continue_same_line(void);
+void Eval_while_continue_nested_scope(void);
+void Eval_while_continue_nested_while(void);
+void Eval_while_continue_nested_for(void);
+void Eval_for_continue_nested_while(void);
+void Eval_while_w_await(void);
+void Eval_while_true_in_script_block(void);
+void Eval_while_updates_managed_script(void);
+void Eval_while_two_instances(void);
+void Eval_while_cond_struct_fails(void);
+void Eval_while_outside_async_fails(void);
+void Eval_while_in_script_root_fails(void);
+void Eval_while_in_entity_scope_fails(void);
+void Eval_while_in_for_fails(void);
+void Eval_while_missing_scope_fails(void);
+void Eval_while_missing_cond_fails(void);
+void Eval_while_continue_outside_loop_fails(void);
+void Eval_while_entity_in_body_fails(void);
+void Eval_while_to_str(void);
+void Eval_mut_assign_int(void);
+void Eval_mut_assign_typed_i32(void);
+void Eval_mut_assign_f32_from_int(void);
+void Eval_mut_assign_f32_from_f64_expr(void);
+void Eval_mut_assign_int_from_f32(void);
+void Eval_mut_assign_bool(void);
+void Eval_mut_assign_string(void);
+void Eval_mut_assign_string_interpolated(void);
+void Eval_mut_assign_entity(void);
+void Eval_mut_assign_this(void);
+void Eval_mut_assign_struct(void);
+void Eval_mut_assign_struct_from_var(void);
+void Eval_mut_assign_from_prop(void);
+void Eval_mut_assign_from_mut(void);
+void Eval_mut_assign_from_const(void);
+void Eval_mut_assign_from_local_const(void);
+void Eval_mut_assign_twice(void);
+void Eval_mut_assign_two_muts(void);
+void Eval_mut_assign_updates_child(void);
+void Eval_mut_assign_updates_conditional(void);
+void Eval_mut_assign_same_value_no_update(void);
+void Eval_mut_assign_after_await(void);
+void Eval_mut_assign_in_if(void);
+void Eval_mut_assign_in_for(void);
+void Eval_mut_assign_in_try_catch(void);
+void Eval_mut_assign_two_instances(void);
+void Eval_mut_assign_then_set_from_c(void);
+void Eval_mut_assign_to_str(void);
+void Eval_mut_assign_to_prop_fails(void);
+void Eval_mut_assign_to_const_fails(void);
+void Eval_mut_assign_to_local_const_fails(void);
+void Eval_mut_assign_to_this_fails(void);
+void Eval_mut_assign_outside_async_fails(void);
+void Eval_mut_assign_in_script_root_fails(void);
+void Eval_mut_assign_in_script_async_fails(void);
+void Eval_mut_assign_unknown_var_fails(void);
+void Eval_mut_assign_member_fails(void);
+void Eval_mut_assign_string_to_int_fails(void);
+void Eval_mut_assign_int_to_string_fails(void);
+void Eval_mut_assign_struct_to_int_fails(void);
+void Eval_mut_assign_missing_expr_fails(void);
 
 // Testsuite 'Collection'
 void Collection_setup(void);
@@ -862,6 +934,136 @@ void Await_await_in_template_body_fails_task(void);
 void Await_deep_scope_resume(void);
 void Await_deep_scope_cancel(void);
 void Await_many_live_strings_resume_and_cancel(void);
+
+// Testsuite 'AsyncBlock'
+void AsyncBlock_setup(void);
+void AsyncBlock_template_outer_capture_restarts_block(void);
+void AsyncBlock_template_mut_string_external_update(void);
+void AsyncBlock_template_sixty_four_muts_manual_restart(void);
+void AsyncBlock_template_unrelated_prop_restarts_all_blocks(void);
+void AsyncBlock_template_prop_change_before_progress(void);
+void AsyncBlock_template_static_ref_restarts_block(void);
+void AsyncBlock_template_dynamic_ref_restarts_block(void);
+void AsyncBlock_template_mut_shared_between_blocks(void);
+void AsyncBlock_template_mut_incremented_by_two_blocks(void);
+void AsyncBlock_template_child_mut_after_reset(void);
+void AsyncBlock_template_mut_sparse_external_update(void);
+void AsyncBlock_template_resolved_block_cancelled_before_resume(void);
+void AsyncBlock_parse_async_block(void);
+void AsyncBlock_parse_while(void);
+void AsyncBlock_script_block_runs_on_progress(void);
+void AsyncBlock_script_two_blocks(void);
+void AsyncBlock_script_no_blocks(void);
+void AsyncBlock_script_block_no_await(void);
+void AsyncBlock_script_block_captures_const(void);
+void AsyncBlock_script_block_for_loop(void);
+void AsyncBlock_script_block_if(void);
+void AsyncBlock_script_block_try_catch(void);
+void AsyncBlock_script_update_cancels_block(void);
+void AsyncBlock_script_delete_cancels_block(void);
+void AsyncBlock_unmanaged_script_eval(void);
+void AsyncBlock_script_run_frees_block(void);
+void AsyncBlock_script_progress_from_pipeline(void);
+void AsyncBlock_template_block_assign_mut(void);
+void AsyncBlock_template_block_this(void);
+void AsyncBlock_template_child_this(void);
+void AsyncBlock_template_child_scopes_and_instances(void);
+void AsyncBlock_template_child_assign_mut(void);
+void AsyncBlock_template_child_delete_cancels(void);
+void AsyncBlock_template_child_instance_delete_cancels(void);
+void AsyncBlock_template_child_remove_cancels(void);
+void AsyncBlock_template_child_update_cancels(void);
+void AsyncBlock_template_child_delete_before_progress(void);
+void AsyncBlock_template_child_prop_change_restarts_block(void);
+void AsyncBlock_template_child_condition(void);
+void AsyncBlock_template_child_loop(void);
+void AsyncBlock_template_child_completed_block_restarts(void);
+void AsyncBlock_template_child_nested_template_owner(void);
+void AsyncBlock_template_child_anonymous(void);
+void AsyncBlock_template_child_branch_keeps_entity(void);
+void AsyncBlock_template_child_delete_from_callback(void);
+void AsyncBlock_template_child_script_update_cancels(void);
+void AsyncBlock_template_child_computed_name(void);
+void AsyncBlock_template_child_this_shadows_local(void);
+void AsyncBlock_template_child_assign_removes_self(void);
+void AsyncBlock_template_block_reads_component_via_this(void);
+void AsyncBlock_template_block_captures_consts(void);
+void AsyncBlock_template_two_blocks(void);
+void AsyncBlock_template_two_instances(void);
+void AsyncBlock_template_no_block(void);
+void AsyncBlock_template_instance_delete_cancels(void);
+void AsyncBlock_template_remove_cancels(void);
+void AsyncBlock_template_script_update_cancels(void);
+void AsyncBlock_template_update_restarts_block(void);
+void AsyncBlock_template_prop_change_restarts_block(void);
+void AsyncBlock_template_block_while(void);
+void AsyncBlock_template_block_while_no_await(void);
+void AsyncBlock_template_block_while_continue(void);
+void AsyncBlock_template_block_while_false(void);
+void AsyncBlock_template_block_try_catch_assign(void);
+void AsyncBlock_template_block_assign_updates_local(void);
+void AsyncBlock_template_instance_reactive_after_block_done(void);
+void AsyncBlock_template_nested_in_template_instance(void);
+void AsyncBlock_template_block_error_frees_task(void);
+void AsyncBlock_error_while_outside_async(void);
+void AsyncBlock_error_while_in_script_root(void);
+void AsyncBlock_error_assign_outside_async(void);
+void AsyncBlock_error_assign_to_prop(void);
+void AsyncBlock_error_assign_to_const(void);
+void AsyncBlock_error_assign_in_script_block(void);
+void AsyncBlock_error_assign_unknown_var(void);
+void AsyncBlock_error_assign_type_mismatch(void);
+void AsyncBlock_error_nested_async(void);
+void AsyncBlock_error_async_in_entity_scope(void);
+void AsyncBlock_error_async_in_if(void);
+void AsyncBlock_error_entity_in_async(void);
+void AsyncBlock_error_component_in_async(void);
+void AsyncBlock_error_mut_in_async(void);
+void AsyncBlock_error_parse_async_missing_scope(void);
+void AsyncBlock_error_parse_while_missing_scope(void);
+
+// Testsuite 'Event'
+void Event_setup(void);
+void Event_import(void);
+void Event_press(void);
+void Event_press_other_target(void);
+void Event_press_no_target(void);
+void Event_press_bubbles_to_parent(void);
+void Event_press_two_listeners(void);
+void Event_press_two_widgets(void);
+void Event_press_while_other_button_held(void);
+void Event_drag(void);
+void Event_no_drag_without_button(void);
+void Event_release(void);
+void Event_click(void);
+void Event_no_click_when_released_elsewhere(void);
+void Event_move(void);
+void Event_delta_from_event(void);
+void Event_button_and_modifiers(void);
+void Event_key_down_up(void);
+void Event_key_modifiers(void);
+void Event_key_focus_follows_press(void);
+void Event_key_bubbles_to_parent(void);
+void Event_slider(void);
+void Event_wrong_arg_fails(void);
+void Event_delete_listener(void);
+void Event_delete_listener_while_pressed(void);
+void Event_fini_w_pending_listener(void);
+void Event_script_update_w_pending_listener(void);
+void Event_mouse_event_w_stage(void);
+void Event_mouse_event_in_progress(void);
+void Event_import_enter_leave(void);
+void Event_enter_leave(void);
+void Event_enter_leave_between_children(void);
+void Event_enter_leave_children_listen(void);
+void Event_enter_leave_while_dragging(void);
+void Event_leave_deleted_hover_target(void);
+void Event_returns_true(void);
+void Event_no_propagation_without_host(void);
+void Event_propagation_translates_coordinates(void);
+void Event_propagation_keeps_deltas(void);
+void Event_propagation_press_once_per_level(void);
+void Event_drag_not_propagated_to_unrelated_target(void);
 
 // Testsuite 'TryCatch'
 void TryCatch_setup(void);
@@ -1633,6 +1835,15 @@ void Format_min_width_char_variable(void);
 
 // Testsuite 'Expr'
 void Expr_setup(void);
+void Expr_count_w_arguments(void);
+void Expr_count_non_collection(void);
+void Expr_count_array(void);
+void Expr_count_inline_array(void);
+void Expr_count_vector_empty(void);
+void Expr_count_vector(void);
+void Expr_count_collection_literal(void);
+void Expr_count_map_empty(void);
+void Expr_count_map(void);
 void Expr_add_2_int_literals(void);
 void Expr_add_2_int_literals_twice(void);
 void Expr_sub_2_int_literals(void);
@@ -2678,6 +2889,12 @@ void Refs_has_ref_resolve_observer_on_add(void);
 
 // Testsuite 'Reactivity'
 void Reactivity_setup(void);
+void Reactivity_count_array_is_reactive(void);
+void Reactivity_count_inline_array_is_reactive(void);
+void Reactivity_count_range_is_reactive(void);
+void Reactivity_count_vector_is_reactive(void);
+void Reactivity_count_map_is_reactive(void);
+void Reactivity_count_template_prop_is_reactive(void);
 void Reactivity_external_inputs_are_isolated(void);
 void Reactivity_script_update_recreates_observers(void);
 void Reactivity_annotation_follows_dependent_statement(void);
@@ -3065,6 +3282,9 @@ void TemplateProp_inherited_template_prop(void);
 void TemplateProp_inherited_template_prop_dollar(void);
 void TemplateProp_inherited_template_prop_chain(void);
 void TemplateProp_prop_of_derived_template_type(void);
+void TemplateProp_struct_prop_default_to_struct(void);
+void TemplateProp_struct_prop_explicit_struct_default(void);
+void TemplateProp_struct_prop_default_and_derived_template(void);
 void TemplateProp_nested_template_instantiation(void);
 void TemplateProp_template_prop_in_for_loop(void);
 void TemplateProp_template_prop_in_if(void);
@@ -3107,7 +3327,7 @@ void TemplateProp_pass_base_to_child_template_derived_fails(void);
 void TemplateProp_pass_unrelated_to_child_template_fails(void);
 void TemplateProp_interface_prop_invalid_value(void);
 void TemplateProp_interface_prop_unrelated_template(void);
-void TemplateProp_interface_prop_missing_value(void);
+void TemplateProp_interface_prop_missing_value_defaults_to_interface(void);
 void TemplateProp_interface_prop_empty_initializer_fails(void);
 void TemplateProp_interface_prop_in_with_w_initializer_fails(void);
 void TemplateProp_interface_prop_dollar_initializer(void);
@@ -3124,7 +3344,7 @@ void TemplateProp_interface_prop_from_c(void);
 void TemplateProp_interface_prop_change_template(void);
 void TemplateProp_interface_prop_not_derived_fails(void);
 void TemplateProp_interface_prop_not_template_fails(void);
-void TemplateProp_interface_prop_unset_fails(void);
+void TemplateProp_interface_prop_unset_defaults_to_interface(void);
 void TemplateProp_interface_prop_unknown_member_fails(void);
 void TemplateProp_bool_prop_mul_flt_member(void);
 void TemplateProp_bool_prop_in_flt_member_initializer(void);
@@ -3641,6 +3861,14 @@ bake_test_case Eval_testcases[] = {
     {
         "with_tag_core_name",
         Eval_with_tag_core_name
+    },
+    {
+        "pair_w_target_from_with",
+        Eval_pair_w_target_from_with
+    },
+    {
+        "pair_w_target_from_with_in_scope",
+        Eval_pair_w_target_from_with_in_scope
     },
     {
         "inherit",
@@ -4473,6 +4701,10 @@ bake_test_case Eval_testcases[] = {
     {
         "if_false_in_scope",
         Eval_if_false_in_scope
+    },
+    {
+        "if_false_var_in_scope_after_component",
+        Eval_if_false_var_in_scope_after_component
     },
     {
         "if_lt",
@@ -6021,6 +6253,282 @@ bake_test_case Eval_testcases[] = {
     {
         "string_interpolation_of_scalar_types",
         Eval_string_interpolation_of_scalar_types
+    },
+    {
+        "while_count",
+        Eval_while_count
+    },
+    {
+        "while_count_vars",
+        Eval_while_count_vars
+    },
+    {
+        "while_count_1_4",
+        Eval_while_count_1_4
+    },
+    {
+        "while_count_min_1_2",
+        Eval_while_count_min_1_2
+    },
+    {
+        "while_newline_before_scope",
+        Eval_while_newline_before_scope
+    },
+    {
+        "while_paren_cond",
+        Eval_while_paren_cond
+    },
+    {
+        "while_false",
+        Eval_while_false
+    },
+    {
+        "while_bool_cond",
+        Eval_while_bool_cond
+    },
+    {
+        "while_continue",
+        Eval_while_continue
+    },
+    {
+        "while_continue_same_line",
+        Eval_while_continue_same_line
+    },
+    {
+        "while_continue_nested_scope",
+        Eval_while_continue_nested_scope
+    },
+    {
+        "while_continue_nested_while",
+        Eval_while_continue_nested_while
+    },
+    {
+        "while_continue_nested_for",
+        Eval_while_continue_nested_for
+    },
+    {
+        "for_continue_nested_while",
+        Eval_for_continue_nested_while
+    },
+    {
+        "while_w_await",
+        Eval_while_w_await
+    },
+    {
+        "while_true_in_script_block",
+        Eval_while_true_in_script_block
+    },
+    {
+        "while_updates_managed_script",
+        Eval_while_updates_managed_script
+    },
+    {
+        "while_two_instances",
+        Eval_while_two_instances
+    },
+    {
+        "while_cond_struct_fails",
+        Eval_while_cond_struct_fails
+    },
+    {
+        "while_outside_async_fails",
+        Eval_while_outside_async_fails
+    },
+    {
+        "while_in_script_root_fails",
+        Eval_while_in_script_root_fails
+    },
+    {
+        "while_in_entity_scope_fails",
+        Eval_while_in_entity_scope_fails
+    },
+    {
+        "while_in_for_fails",
+        Eval_while_in_for_fails
+    },
+    {
+        "while_missing_scope_fails",
+        Eval_while_missing_scope_fails
+    },
+    {
+        "while_missing_cond_fails",
+        Eval_while_missing_cond_fails
+    },
+    {
+        "while_continue_outside_loop_fails",
+        Eval_while_continue_outside_loop_fails
+    },
+    {
+        "while_entity_in_body_fails",
+        Eval_while_entity_in_body_fails
+    },
+    {
+        "while_to_str",
+        Eval_while_to_str
+    },
+    {
+        "mut_assign_int",
+        Eval_mut_assign_int
+    },
+    {
+        "mut_assign_typed_i32",
+        Eval_mut_assign_typed_i32
+    },
+    {
+        "mut_assign_f32_from_int",
+        Eval_mut_assign_f32_from_int
+    },
+    {
+        "mut_assign_f32_from_f64_expr",
+        Eval_mut_assign_f32_from_f64_expr
+    },
+    {
+        "mut_assign_int_from_f32",
+        Eval_mut_assign_int_from_f32
+    },
+    {
+        "mut_assign_bool",
+        Eval_mut_assign_bool
+    },
+    {
+        "mut_assign_string",
+        Eval_mut_assign_string
+    },
+    {
+        "mut_assign_string_interpolated",
+        Eval_mut_assign_string_interpolated
+    },
+    {
+        "mut_assign_entity",
+        Eval_mut_assign_entity
+    },
+    {
+        "mut_assign_this",
+        Eval_mut_assign_this
+    },
+    {
+        "mut_assign_struct",
+        Eval_mut_assign_struct
+    },
+    {
+        "mut_assign_struct_from_var",
+        Eval_mut_assign_struct_from_var
+    },
+    {
+        "mut_assign_from_prop",
+        Eval_mut_assign_from_prop
+    },
+    {
+        "mut_assign_from_mut",
+        Eval_mut_assign_from_mut
+    },
+    {
+        "mut_assign_from_const",
+        Eval_mut_assign_from_const
+    },
+    {
+        "mut_assign_from_local_const",
+        Eval_mut_assign_from_local_const
+    },
+    {
+        "mut_assign_twice",
+        Eval_mut_assign_twice
+    },
+    {
+        "mut_assign_two_muts",
+        Eval_mut_assign_two_muts
+    },
+    {
+        "mut_assign_updates_child",
+        Eval_mut_assign_updates_child
+    },
+    {
+        "mut_assign_updates_conditional",
+        Eval_mut_assign_updates_conditional
+    },
+    {
+        "mut_assign_same_value_no_update",
+        Eval_mut_assign_same_value_no_update
+    },
+    {
+        "mut_assign_after_await",
+        Eval_mut_assign_after_await
+    },
+    {
+        "mut_assign_in_if",
+        Eval_mut_assign_in_if
+    },
+    {
+        "mut_assign_in_for",
+        Eval_mut_assign_in_for
+    },
+    {
+        "mut_assign_in_try_catch",
+        Eval_mut_assign_in_try_catch
+    },
+    {
+        "mut_assign_two_instances",
+        Eval_mut_assign_two_instances
+    },
+    {
+        "mut_assign_then_set_from_c",
+        Eval_mut_assign_then_set_from_c
+    },
+    {
+        "mut_assign_to_str",
+        Eval_mut_assign_to_str
+    },
+    {
+        "mut_assign_to_prop_fails",
+        Eval_mut_assign_to_prop_fails
+    },
+    {
+        "mut_assign_to_const_fails",
+        Eval_mut_assign_to_const_fails
+    },
+    {
+        "mut_assign_to_local_const_fails",
+        Eval_mut_assign_to_local_const_fails
+    },
+    {
+        "mut_assign_to_this_fails",
+        Eval_mut_assign_to_this_fails
+    },
+    {
+        "mut_assign_outside_async_fails",
+        Eval_mut_assign_outside_async_fails
+    },
+    {
+        "mut_assign_in_script_root_fails",
+        Eval_mut_assign_in_script_root_fails
+    },
+    {
+        "mut_assign_in_script_async_fails",
+        Eval_mut_assign_in_script_async_fails
+    },
+    {
+        "mut_assign_unknown_var_fails",
+        Eval_mut_assign_unknown_var_fails
+    },
+    {
+        "mut_assign_member_fails",
+        Eval_mut_assign_member_fails
+    },
+    {
+        "mut_assign_string_to_int_fails",
+        Eval_mut_assign_string_to_int_fails
+    },
+    {
+        "mut_assign_int_to_string_fails",
+        Eval_mut_assign_int_to_string_fails
+    },
+    {
+        "mut_assign_struct_to_int_fails",
+        Eval_mut_assign_struct_to_int_fails
+    },
+    {
+        "mut_assign_missing_expr_fails",
+        Eval_mut_assign_missing_expr_fails
     }
 };
 
@@ -6683,6 +7191,508 @@ bake_test_case Await_testcases[] = {
     {
         "many_live_strings_resume_and_cancel",
         Await_many_live_strings_resume_and_cancel
+    }
+};
+
+bake_test_case AsyncBlock_testcases[] = {
+    {
+        "template_outer_capture_restarts_block",
+        AsyncBlock_template_outer_capture_restarts_block
+    },
+    {
+        "template_mut_string_external_update",
+        AsyncBlock_template_mut_string_external_update
+    },
+    {
+        "template_sixty_four_muts_manual_restart",
+        AsyncBlock_template_sixty_four_muts_manual_restart
+    },
+    {
+        "template_unrelated_prop_restarts_all_blocks",
+        AsyncBlock_template_unrelated_prop_restarts_all_blocks
+    },
+    {
+        "template_prop_change_before_progress",
+        AsyncBlock_template_prop_change_before_progress
+    },
+    {
+        "template_static_ref_restarts_block",
+        AsyncBlock_template_static_ref_restarts_block
+    },
+    {
+        "template_dynamic_ref_restarts_block",
+        AsyncBlock_template_dynamic_ref_restarts_block
+    },
+    {
+        "template_mut_shared_between_blocks",
+        AsyncBlock_template_mut_shared_between_blocks
+    },
+    {
+        "template_mut_incremented_by_two_blocks",
+        AsyncBlock_template_mut_incremented_by_two_blocks
+    },
+    {
+        "template_child_mut_after_reset",
+        AsyncBlock_template_child_mut_after_reset
+    },
+    {
+        "template_mut_sparse_external_update",
+        AsyncBlock_template_mut_sparse_external_update
+    },
+    {
+        "template_resolved_block_cancelled_before_resume",
+        AsyncBlock_template_resolved_block_cancelled_before_resume
+    },
+    {
+        "parse_async_block",
+        AsyncBlock_parse_async_block
+    },
+    {
+        "parse_while",
+        AsyncBlock_parse_while
+    },
+    {
+        "script_block_runs_on_progress",
+        AsyncBlock_script_block_runs_on_progress
+    },
+    {
+        "script_two_blocks",
+        AsyncBlock_script_two_blocks
+    },
+    {
+        "script_no_blocks",
+        AsyncBlock_script_no_blocks
+    },
+    {
+        "script_block_no_await",
+        AsyncBlock_script_block_no_await
+    },
+    {
+        "script_block_captures_const",
+        AsyncBlock_script_block_captures_const
+    },
+    {
+        "script_block_for_loop",
+        AsyncBlock_script_block_for_loop
+    },
+    {
+        "script_block_if",
+        AsyncBlock_script_block_if
+    },
+    {
+        "script_block_try_catch",
+        AsyncBlock_script_block_try_catch
+    },
+    {
+        "script_update_cancels_block",
+        AsyncBlock_script_update_cancels_block
+    },
+    {
+        "script_delete_cancels_block",
+        AsyncBlock_script_delete_cancels_block
+    },
+    {
+        "unmanaged_script_eval",
+        AsyncBlock_unmanaged_script_eval
+    },
+    {
+        "script_run_frees_block",
+        AsyncBlock_script_run_frees_block
+    },
+    {
+        "script_progress_from_pipeline",
+        AsyncBlock_script_progress_from_pipeline
+    },
+    {
+        "template_block_assign_mut",
+        AsyncBlock_template_block_assign_mut
+    },
+    {
+        "template_block_this",
+        AsyncBlock_template_block_this
+    },
+    {
+        "template_child_this",
+        AsyncBlock_template_child_this
+    },
+    {
+        "template_child_scopes_and_instances",
+        AsyncBlock_template_child_scopes_and_instances
+    },
+    {
+        "template_child_assign_mut",
+        AsyncBlock_template_child_assign_mut
+    },
+    {
+        "template_child_delete_cancels",
+        AsyncBlock_template_child_delete_cancels
+    },
+    {
+        "template_child_instance_delete_cancels",
+        AsyncBlock_template_child_instance_delete_cancels
+    },
+    {
+        "template_child_remove_cancels",
+        AsyncBlock_template_child_remove_cancels
+    },
+    {
+        "template_child_update_cancels",
+        AsyncBlock_template_child_update_cancels
+    },
+    {
+        "template_child_delete_before_progress",
+        AsyncBlock_template_child_delete_before_progress
+    },
+    {
+        "template_child_prop_change_restarts_block",
+        AsyncBlock_template_child_prop_change_restarts_block
+    },
+    {
+        "template_child_condition",
+        AsyncBlock_template_child_condition
+    },
+    {
+        "template_child_loop",
+        AsyncBlock_template_child_loop
+    },
+    {
+        "template_child_completed_block_restarts",
+        AsyncBlock_template_child_completed_block_restarts
+    },
+    {
+        "template_child_nested_template_owner",
+        AsyncBlock_template_child_nested_template_owner
+    },
+    {
+        "template_child_anonymous",
+        AsyncBlock_template_child_anonymous
+    },
+    {
+        "template_child_branch_keeps_entity",
+        AsyncBlock_template_child_branch_keeps_entity
+    },
+    {
+        "template_child_delete_from_callback",
+        AsyncBlock_template_child_delete_from_callback
+    },
+    {
+        "template_child_script_update_cancels",
+        AsyncBlock_template_child_script_update_cancels
+    },
+    {
+        "template_child_computed_name",
+        AsyncBlock_template_child_computed_name
+    },
+    {
+        "template_child_this_shadows_local",
+        AsyncBlock_template_child_this_shadows_local
+    },
+    {
+        "template_child_assign_removes_self",
+        AsyncBlock_template_child_assign_removes_self
+    },
+    {
+        "template_block_reads_component_via_this",
+        AsyncBlock_template_block_reads_component_via_this
+    },
+    {
+        "template_block_captures_consts",
+        AsyncBlock_template_block_captures_consts
+    },
+    {
+        "template_two_blocks",
+        AsyncBlock_template_two_blocks
+    },
+    {
+        "template_two_instances",
+        AsyncBlock_template_two_instances
+    },
+    {
+        "template_no_block",
+        AsyncBlock_template_no_block
+    },
+    {
+        "template_instance_delete_cancels",
+        AsyncBlock_template_instance_delete_cancels
+    },
+    {
+        "template_remove_cancels",
+        AsyncBlock_template_remove_cancels
+    },
+    {
+        "template_script_update_cancels",
+        AsyncBlock_template_script_update_cancels
+    },
+    {
+        "template_update_restarts_block",
+        AsyncBlock_template_update_restarts_block
+    },
+    {
+        "template_prop_change_restarts_block",
+        AsyncBlock_template_prop_change_restarts_block
+    },
+    {
+        "template_block_while",
+        AsyncBlock_template_block_while
+    },
+    {
+        "template_block_while_no_await",
+        AsyncBlock_template_block_while_no_await
+    },
+    {
+        "template_block_while_continue",
+        AsyncBlock_template_block_while_continue
+    },
+    {
+        "template_block_while_false",
+        AsyncBlock_template_block_while_false
+    },
+    {
+        "template_block_try_catch_assign",
+        AsyncBlock_template_block_try_catch_assign
+    },
+    {
+        "template_block_assign_updates_local",
+        AsyncBlock_template_block_assign_updates_local
+    },
+    {
+        "template_instance_reactive_after_block_done",
+        AsyncBlock_template_instance_reactive_after_block_done
+    },
+    {
+        "template_nested_in_template_instance",
+        AsyncBlock_template_nested_in_template_instance
+    },
+    {
+        "template_block_error_frees_task",
+        AsyncBlock_template_block_error_frees_task
+    },
+    {
+        "error_while_outside_async",
+        AsyncBlock_error_while_outside_async
+    },
+    {
+        "error_while_in_script_root",
+        AsyncBlock_error_while_in_script_root
+    },
+    {
+        "error_assign_outside_async",
+        AsyncBlock_error_assign_outside_async
+    },
+    {
+        "error_assign_to_prop",
+        AsyncBlock_error_assign_to_prop
+    },
+    {
+        "error_assign_to_const",
+        AsyncBlock_error_assign_to_const
+    },
+    {
+        "error_assign_in_script_block",
+        AsyncBlock_error_assign_in_script_block
+    },
+    {
+        "error_assign_unknown_var",
+        AsyncBlock_error_assign_unknown_var
+    },
+    {
+        "error_assign_type_mismatch",
+        AsyncBlock_error_assign_type_mismatch
+    },
+    {
+        "error_nested_async",
+        AsyncBlock_error_nested_async
+    },
+    {
+        "error_async_in_entity_scope",
+        AsyncBlock_error_async_in_entity_scope
+    },
+    {
+        "error_async_in_if",
+        AsyncBlock_error_async_in_if
+    },
+    {
+        "error_entity_in_async",
+        AsyncBlock_error_entity_in_async
+    },
+    {
+        "error_component_in_async",
+        AsyncBlock_error_component_in_async
+    },
+    {
+        "error_mut_in_async",
+        AsyncBlock_error_mut_in_async
+    },
+    {
+        "error_parse_async_missing_scope",
+        AsyncBlock_error_parse_async_missing_scope
+    },
+    {
+        "error_parse_while_missing_scope",
+        AsyncBlock_error_parse_while_missing_scope
+    }
+};
+
+bake_test_case Event_testcases[] = {
+    {
+        "import",
+        Event_import
+    },
+    {
+        "press",
+        Event_press
+    },
+    {
+        "press_other_target",
+        Event_press_other_target
+    },
+    {
+        "press_no_target",
+        Event_press_no_target
+    },
+    {
+        "press_bubbles_to_parent",
+        Event_press_bubbles_to_parent
+    },
+    {
+        "press_two_listeners",
+        Event_press_two_listeners
+    },
+    {
+        "press_two_widgets",
+        Event_press_two_widgets
+    },
+    {
+        "press_while_other_button_held",
+        Event_press_while_other_button_held
+    },
+    {
+        "drag",
+        Event_drag
+    },
+    {
+        "no_drag_without_button",
+        Event_no_drag_without_button
+    },
+    {
+        "release",
+        Event_release
+    },
+    {
+        "click",
+        Event_click
+    },
+    {
+        "no_click_when_released_elsewhere",
+        Event_no_click_when_released_elsewhere
+    },
+    {
+        "move",
+        Event_move
+    },
+    {
+        "delta_from_event",
+        Event_delta_from_event
+    },
+    {
+        "button_and_modifiers",
+        Event_button_and_modifiers
+    },
+    {
+        "key_down_up",
+        Event_key_down_up
+    },
+    {
+        "key_modifiers",
+        Event_key_modifiers
+    },
+    {
+        "key_focus_follows_press",
+        Event_key_focus_follows_press
+    },
+    {
+        "key_bubbles_to_parent",
+        Event_key_bubbles_to_parent
+    },
+    {
+        "slider",
+        Event_slider
+    },
+    {
+        "wrong_arg_fails",
+        Event_wrong_arg_fails
+    },
+    {
+        "delete_listener",
+        Event_delete_listener
+    },
+    {
+        "delete_listener_while_pressed",
+        Event_delete_listener_while_pressed
+    },
+    {
+        "fini_w_pending_listener",
+        Event_fini_w_pending_listener
+    },
+    {
+        "script_update_w_pending_listener",
+        Event_script_update_w_pending_listener
+    },
+    {
+        "mouse_event_w_stage",
+        Event_mouse_event_w_stage
+    },
+    {
+        "mouse_event_in_progress",
+        Event_mouse_event_in_progress
+    },
+    {
+        "import_enter_leave",
+        Event_import_enter_leave
+    },
+    {
+        "enter_leave",
+        Event_enter_leave
+    },
+    {
+        "enter_leave_between_children",
+        Event_enter_leave_between_children
+    },
+    {
+        "enter_leave_children_listen",
+        Event_enter_leave_children_listen
+    },
+    {
+        "enter_leave_while_dragging",
+        Event_enter_leave_while_dragging
+    },
+    {
+        "leave_deleted_hover_target",
+        Event_leave_deleted_hover_target
+    },
+    {
+        "returns_true",
+        Event_returns_true
+    },
+    {
+        "no_propagation_without_host",
+        Event_no_propagation_without_host
+    },
+    {
+        "propagation_translates_coordinates",
+        Event_propagation_translates_coordinates
+    },
+    {
+        "propagation_keeps_deltas",
+        Event_propagation_keeps_deltas
+    },
+    {
+        "propagation_press_once_per_level",
+        Event_propagation_press_once_per_level
+    },
+    {
+        "drag_not_propagated_to_unrelated_target",
+        Event_drag_not_propagated_to_unrelated_target
     }
 };
 
@@ -9705,6 +10715,42 @@ bake_test_case Format_testcases[] = {
 };
 
 bake_test_case Expr_testcases[] = {
+    {
+        "count_w_arguments",
+        Expr_count_w_arguments
+    },
+    {
+        "count_non_collection",
+        Expr_count_non_collection
+    },
+    {
+        "count_array",
+        Expr_count_array
+    },
+    {
+        "count_inline_array",
+        Expr_count_inline_array
+    },
+    {
+        "count_vector_empty",
+        Expr_count_vector_empty
+    },
+    {
+        "count_vector",
+        Expr_count_vector
+    },
+    {
+        "count_collection_literal",
+        Expr_count_collection_literal
+    },
+    {
+        "count_map_empty",
+        Expr_count_map_empty
+    },
+    {
+        "count_map",
+        Expr_count_map
+    },
     {
         "add_2_int_literals",
         Expr_add_2_int_literals
@@ -13822,6 +14868,30 @@ bake_test_case Refs_testcases[] = {
 
 bake_test_case Reactivity_testcases[] = {
     {
+        "count_array_is_reactive",
+        Reactivity_count_array_is_reactive
+    },
+    {
+        "count_inline_array_is_reactive",
+        Reactivity_count_inline_array_is_reactive
+    },
+    {
+        "count_range_is_reactive",
+        Reactivity_count_range_is_reactive
+    },
+    {
+        "count_vector_is_reactive",
+        Reactivity_count_vector_is_reactive
+    },
+    {
+        "count_map_is_reactive",
+        Reactivity_count_map_is_reactive
+    },
+    {
+        "count_template_prop_is_reactive",
+        Reactivity_count_template_prop_is_reactive
+    },
+    {
         "external_inputs_are_isolated",
         Reactivity_external_inputs_are_isolated
     },
@@ -15325,6 +16395,18 @@ bake_test_case TemplateProp_testcases[] = {
         TemplateProp_prop_of_derived_template_type
     },
     {
+        "struct_prop_default_to_struct",
+        TemplateProp_struct_prop_default_to_struct
+    },
+    {
+        "struct_prop_explicit_struct_default",
+        TemplateProp_struct_prop_explicit_struct_default
+    },
+    {
+        "struct_prop_default_and_derived_template",
+        TemplateProp_struct_prop_default_and_derived_template
+    },
+    {
         "nested_template_instantiation",
         TemplateProp_nested_template_instantiation
     },
@@ -15493,8 +16575,8 @@ bake_test_case TemplateProp_testcases[] = {
         TemplateProp_interface_prop_unrelated_template
     },
     {
-        "interface_prop_missing_value",
-        TemplateProp_interface_prop_missing_value
+        "interface_prop_missing_value_defaults_to_interface",
+        TemplateProp_interface_prop_missing_value_defaults_to_interface
     },
     {
         "interface_prop_empty_initializer_fails",
@@ -15561,8 +16643,8 @@ bake_test_case TemplateProp_testcases[] = {
         TemplateProp_interface_prop_not_template_fails
     },
     {
-        "interface_prop_unset_fails",
-        TemplateProp_interface_prop_unset_fails
+        "interface_prop_unset_defaults_to_interface",
+        TemplateProp_interface_prop_unset_defaults_to_interface
     },
     {
         "interface_prop_unknown_member_fails",
@@ -16222,6 +17304,16 @@ bake_test_param Await_params[] = {
     {"ir", (char**)Await_ir_param, 2}
 };
 
+const char* AsyncBlock_ir_param[] = {"disabled", "enabled"};
+bake_test_param AsyncBlock_params[] = {
+    {"ir", (char**)AsyncBlock_ir_param, 2}
+};
+
+const char* Event_ir_param[] = {"disabled", "enabled"};
+bake_test_param Event_params[] = {
+    {"ir", (char**)Event_ir_param, 2}
+};
+
 const char* TryCatch_ir_param[] = {"disabled", "enabled"};
 bake_test_param TryCatch_params[] = {
     {"ir", (char**)TryCatch_ir_param, 2}
@@ -16334,7 +17426,7 @@ static bake_test_suite suites[] = {
         "Eval",
         Eval_setup,
         NULL,
-        682,
+        754,
         Eval_testcases,
         1,
         Eval_params
@@ -16356,6 +17448,24 @@ static bake_test_suite suites[] = {
         Await_testcases,
         1,
         Await_params
+    },
+    {
+        "AsyncBlock",
+        AsyncBlock_setup,
+        NULL,
+        84,
+        AsyncBlock_testcases,
+        1,
+        AsyncBlock_params
+    },
+    {
+        "Event",
+        Event_setup,
+        NULL,
+        40,
+        Event_testcases,
+        1,
+        Event_params
     },
     {
         "TryCatch",
@@ -16415,7 +17525,7 @@ static bake_test_suite suites[] = {
         "Expr",
         Expr_setup,
         NULL,
-        409,
+        418,
         Expr_testcases,
         2,
         Expr_params
@@ -16483,7 +17593,7 @@ static bake_test_suite suites[] = {
         "Reactivity",
         Reactivity_setup,
         NULL,
-        143,
+        149,
         Reactivity_testcases,
         1,
         Reactivity_params
@@ -16528,7 +17638,7 @@ static bake_test_suite suites[] = {
         "TemplateProp",
         TemplateProp_setup,
         NULL,
-        92,
+        95,
         TemplateProp_testcases,
         1,
         TemplateProp_params
@@ -16563,5 +17673,5 @@ static bake_test_suite suites[] = {
 };
 
 int main(int argc, char *argv[]) {
-    return bake_test_run("script", argc, argv, suites, 26);
+    return bake_test_run("script", argc, argv, suites, 28);
 }
