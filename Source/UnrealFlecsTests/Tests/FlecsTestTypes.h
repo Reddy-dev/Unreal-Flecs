@@ -81,6 +81,8 @@ USTRUCT()
 struct FFlecsTestStruct_Tag_Inherited
 {
 	GENERATED_BODY()
+	
+	static constexpr flecs::on_instantiate OnInstantiate = flecs::on_instantiate::inherit;
 }; // struct FFlecsTestStruct
 
 template <>
