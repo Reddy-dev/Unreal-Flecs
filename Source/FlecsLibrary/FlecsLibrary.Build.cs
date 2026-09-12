@@ -87,7 +87,6 @@ public class FlecsLibrary : ModuleRules
                     "FLECS_DOC",
                     "FLECS_LOG", // @TODO: maybe shouldnt only be Test and below?
                     "FLECS_PERF_TRACE",
-                    "FLECS_ACCURATE_COUNTERS",
                     "FLECS_UNITS", // @TODO: maybe shouldnt only be Test and below?
                     "FLECS_ALERTS",
                 }
@@ -98,7 +97,6 @@ public class FlecsLibrary : ModuleRules
             PublicDefinitions.AddRange(
                 new string[]
                 {
-                    "FLECS_DISABLE_COUNTERS",
                 }
             );
         }

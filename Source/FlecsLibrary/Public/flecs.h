@@ -48,6 +48,11 @@
 #include "flecs_config.h"
 #endif
 
+// Elie - Overriden by FlecsLibraryConfigMacros.h
+#if FLECS_LIBRARY_WITH_SANITIZE && !defined(FLECS_SANITIZE)
+#define FLECS_SANITIZE
+#endif // FLECS_LIBRARY_WITH_SANITIZE && !defined(FLECS_SANITIZE)
+
 /** @def ecs_float_t
  * Customizable precision for floating-point operations. */
 #ifndef ecs_float_t
@@ -72,7 +77,10 @@
  * allocation counters in the OS API) are accurate in multithreaded
  * applications, at the cost of increased overhead.
  */
-// #define FLECS_ACCURATE_COUNTERS
+// Elie - Overriden by FlecsLibraryConfigMacros.h
+#if FLECS_LIBRARY_WITH_ACCURATE_COUNTERS && !defined(FLECS_ACCURATE_COUNTERS)
+#define FLECS_ACCURATE_COUNTERS
+#endif // FLECS_LIBRARY_WITH_ACCURATE_COUNTERS && !defined(FLECS_ACCURATE_COUNTERS)
 
 #if (!defined(FLECS_DEBUG)) && WITH_EDITOR
    #define FLECS_DEBUG
@@ -85,7 +93,10 @@
  * will prevent some features that rely on statistics from working,
  * like the statistics pages in the explorer.
  */
-// #define FLECS_DISABLE_COUNTERS
+// Elie - Overriden by FlecsLibraryConfigMacros.h
+#if FLECS_LIBRARY_DISABLE_COUNTERS && !defined(FLECS_DISABLE_COUNTERS)
+#define FLECS_DISABLE_COUNTERS
+#endif // FLECS_LIBRARY_DISABLE_COUNTERS && !defined(FLECS_DISABLE_COUNTERS)
 
 /* Make sure provided configuration is valid */
 #if defined(FLECS_DEBUG) && defined(FLECS_NDEBUG)
@@ -168,7 +179,10 @@
  * applications at the cost of performance. Queries that use features which
  * require caching, such as group_by and order_by, will still use caching.
  */
-// #define FLECS_DEFAULT_TO_UNCACHED_QUERIES
+// Elie - Overriden by FlecsLibraryConfigMacros.h
+#if FLECS_LIBRARY_DEFAULT_TO_UNCACHED_QUERIES && !defined(FLECS_DEFAULT_TO_UNCACHED_QUERIES)
+#define FLECS_DEFAULT_TO_UNCACHED_QUERIES
+#endif // FLECS_LIBRARY_DEFAULT_TO_UNCACHED_QUERIES && !defined(FLECS_DEFAULT_TO_UNCACHED_QUERIES)
 
 /** @def FLECS_CREATE_MEMBER_ENTITIES 
  * By default, Flecs does not create entities for component members when they 
