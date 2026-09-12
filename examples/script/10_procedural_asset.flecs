@@ -1,0 +1,66 @@
+// This example shows how to use script templates to create a procedural forest
+
+// This lets us type "math.Rng" instead of "flecs.script.math.Rng"
+using flecs.script
+
+// Define a few components
+struct Position(x: f32, y: f32, z: f32)
+struct Box(x: f32, y: f32, z: f32)
+struct Rgb(r: u8, g: u8, b: u8)
+
+// Rng for random placement of trees
+const rng: math.Rng = {}
+
+template Trunk {
+  prop height = 1
+
+  Rgb: {50, 25, 0}
+  Box: {0.5, height, 0.5}
+}
+
+template Canopy {
+  prop height = 3
+  
+  Rgb: {50, 100, 20}
+  Box: {1, height, 1}
+}
+
+// A template for a tree with a configurable height
+template Tree {
+  prop height = 1
+
+  const trunkY = 1
+  const canopyY = height - trunkY
+
+  Trunk(height: trunkY) {
+    Position: {0, trunkY / 2, 0}
+  }
+  Canopy(height: canopyY) {
+    Position: {y: trunkY + canopyY / 2}
+  }
+}
+
+// A template for a forest with a configurable tree count and size
+template Forest {
+  prop treeCount = 5
+  prop width = 10
+  prop height = 10
+  
+  ground {
+    Position: {0, -0.05, 0}
+    Rgb: {20, 15}
+    Box: {width * 1.1, 0.1, height * 1.1}
+  }
+  
+  trees {
+    Position: {-width / 2, -0.05, -height / 2}
+    for i in 0..treeCount {
+      Tree(rng.f(3) + 2) {
+        Position: {rng.f(width), 0, rng.f(height)}
+      }
+    }
+  }
+}
+
+// Instantiate the forest with 100 trees
+Forest my_forest(treeCount: 20)

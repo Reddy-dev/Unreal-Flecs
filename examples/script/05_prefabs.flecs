@@ -1,0 +1,26 @@
+// A script that shows how to use prefabs and inheritance.
+
+// Create a few component types
+struct Attack(value: f32)
+struct Defense(value: f32)
+
+// To create a prefab, you can create an entity with the Prefab tag:
+SpaceShip {
+  Prefab
+}
+
+// ... or use this shorthand syntax
+prefab SpaceShip {
+  Attack: {50}
+  Defense: {50}
+}
+
+// To create a prefab that inherits from SpaceShip, we can use the : operator
+prefab Freighter : SpaceShip {
+  Defense: {100}
+}
+
+// We can create a prefab instance with the same : operator.
+my_spaceship : Freighter {
+  Attack: {75} // Override component from SpaceShip
+}

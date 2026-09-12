@@ -6,7 +6,6 @@
 
 #include "flecs.h"
 
-
 #include "UObject/Object.h"
 
 #include "SolidMacros/Macros.h"

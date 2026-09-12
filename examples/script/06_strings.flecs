@@ -1,0 +1,29 @@
+// This script shows how to use regular and multiline strings.
+
+// Create tags
+Vertex { }
+Fragment { }
+
+struct Shader(filename: string, code: string)
+
+// Create component values with strings
+my_pipeline {
+  (Shader, Vertex): {
+    // Normal string
+    filename: "vert.glsl",
+
+    // Multiline string
+    code: `
+      void main() \{
+        gl_Position = pos;
+      }`
+    }
+
+  (Shader, Fragment): {
+    filename: "frag.glsl",
+    code: `
+      void main() \{
+        frag_color = color;
+      }`
+    }
+}
