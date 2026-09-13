@@ -14,22 +14,30 @@ UE::Flecs::FFlecsModuleRegistry& UE::Flecs::FFlecsModuleRegistry::Get()
 	return Singleton;
 }
 
-void UE::Flecs::FFlecsModuleRegistry::RegisterUnrealFlecsModule(const FName& ModuleName)
+void UE::Flecs::FFlecsModuleRegistry::RegisterUnrealFlecsModule(const FName& ModuleName,
+	const EUnrealFlecsRegistrationScopeType InScopeType)
 {
 	solid_checkf(!ModuleName.IsNone(), TEXT("ModuleName cannot be None when registering an Unreal Flecs module"));
-	solid_checkf(!RegisteredModules.Contains(ModuleName), 
+	
+	FFlecsModuleRegistryRegisteredItem RegisteredItem{.Name = ModuleName, .DefaultScopeType = InScopeType};
+	
+	solid_checkf(!RegisteredModules.Contains(RegisteredItem), 
 		TEXT("Module %s is already registered in the Unreal Flecs module registry"), *ModuleName.ToString());
 	
-	RegisteredModules.Add(ModuleName);
+	RegisteredModules.Add(MoveTemp(RegisteredItem));
 }
 
-void UE::Flecs::FFlecsModuleRegistry::RegisterUnrealFlecsPlugin(const FName& InPluginName)
+void UE::Flecs::FFlecsModuleRegistry::RegisterUnrealFlecsPlugin(const FName& InPluginName,
+	const EUnrealFlecsRegistrationScopeType InScopeType)
 {
-	solid_checkf(!InPluginName.IsNone(), TEXT("ModuleName cannot be None when registering an Unreal Flecs module"));
-	solid_checkf(!RegisteredModules.Contains(InPluginName), 
+	solid_checkf(!InPluginName.IsNone(), TEXT("PluginName cannot be None when registering an Unreal Flecs plugin"));
+	
+	FFlecsModuleRegistryRegisteredItem RegisteredItem{.Name = InPluginName, .DefaultScopeType = InScopeType};
+	
+	solid_checkf(!RegisteredModules.Contains(RegisteredItem), 
 		TEXT("Module %s is already registered in the Unreal Flecs module registry"), *InPluginName.ToString());
 	
-	RegisteredPlugins.Add(InPluginName);
+	RegisteredModules.Add(MoveTemp(RegisteredItem));
 }
 
 void UE::Flecs::FFlecsModuleRegistry::InitializeRegisteredModules(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld) const
@@ -40,15 +48,27 @@ void UE::Flecs::FFlecsModuleRegistry::InitializeRegisteredModules(const TSolidNo
 	InFlecsWorld->RegisterComponentType<FUnrealFlecsPluginTag>(true, false)
 		.AddPair(flecs::With, flecs::Module);
 	
-	for (const FName& PluginName : RegisteredPlugins)
+	for (const auto& [Name, DefaultScopeType] : RegisteredPlugins)
 	{
-		InFlecsWorld->CreateEntity(PluginName.ToString())
+		InFlecsWorld->CreateEntity(Name.ToString())
 			.Add<FUnrealFlecsPluginTag>();
 	}
 	
-	for (const FName& ModuleName : RegisteredModules)
+	for (const auto& [Name, DefaultScopeType] : RegisteredModules)
 	{
-		InFlecsWorld->CreateEntity(ModuleName.ToString())
+		InFlecsWorld->CreateEntity(Name.ToString())
 			.Add<FUnrealFlecsModuleTag>();
 	}
+}
+
+const FFlecsModuleRegistryRegisteredItem* UE::Flecs::FFlecsModuleRegistry::FindRegisteredModule(
+	const FName& InModuleName) const
+{
+	return RegisteredModules.Find(FFlecsModuleRegistryRegisteredItem{.Name = InModuleName});
+}
+
+const FFlecsModuleRegistryRegisteredItem* UE::Flecs::FFlecsModuleRegistry::FindRegisteredPlugin(
+	const FName& InPluginName) const
+{
+	return RegisteredPlugins.Find(FFlecsModuleRegistryRegisteredItem{.Name = InPluginName});
 }

@@ -49,7 +49,7 @@ public:
 	
 	virtual NO_DISCARD EUnrealFlecsRegistrationScopeType GetRegistrationScopeType() const
 	{
-		return EUnrealFlecsRegistrationScopeType::Module;
+		return EUnrealFlecsRegistrationScopeType::Unset;
 	}
 	
 #if WITH_EDITORONLY_DATA

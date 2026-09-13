@@ -2,6 +2,7 @@
 
 #include "General/UnrealFlecsRegistrationScopeType.h"
 
+#include "General/FlecsModuleRegistry.h"
 #include "Interfaces/IPluginManager.h"
 
 #include "Logs/FlecsCategories.h"
@@ -9,7 +10,7 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(UnrealFlecsRegistrationScopeType)
 
-FString UE::Flecs::Registration::ResolveScopeTypeName(
+TTuple<FString, EUnrealFlecsRegistrationScopeType> UE::Flecs::Registration::ResolveScopeTypeName(
 	const TSolidNotNull<const UObject*> InObject, 
 	const EUnrealFlecsRegistrationScopeType InScopeType)
 {
@@ -19,7 +20,7 @@ FString UE::Flecs::Registration::ResolveScopeTypeName(
 	{
 		case EUnrealFlecsRegistrationScopeType::Module:
 			{
-				return ModuleName;
+				return MakeTuple(ModuleName, InScopeType);
 				break;
 			}
 		case EUnrealFlecsRegistrationScopeType::Plugin:
@@ -41,10 +42,10 @@ FString UE::Flecs::Registration::ResolveScopeTypeName(
 					UE_LOGFMT(LogFlecsCore, Warning,
 						"Could not infer a plugin scope for registered object {ObjectName}: native module {ModuleName} has no owning plugin. Set an explicit scope name or use another scope type.",
 						InObject->GetFName(), ModuleName);
-					return "";
+					return MakeTuple("", InScopeType);
 				}
-
-				return (*OwningPlugin)->GetName();
+				
+				return MakeTuple((*OwningPlugin)->GetName(), InScopeType);
 			}
 
 		case EUnrealFlecsRegistrationScopeType::CustomNameIdentifier:
@@ -53,15 +54,24 @@ FString UE::Flecs::Registration::ResolveScopeTypeName(
 				"Registered object {ObjectName} uses scope type {ScopeType}, which requires an explicit scope name.",
 				InObject->GetFName(), StaticEnum<EUnrealFlecsRegistrationScopeType>()->GetNameStringByValue(static_cast<int64>(InScopeType)));
 				
-			return "";
+			return MakeTuple("", InScopeType);
 
 		case EUnrealFlecsRegistrationScopeType::None:
-			return "";
+			return MakeTuple("", InScopeType);
+		case EUnrealFlecsRegistrationScopeType::Unset:
+			if LIKELY_IF(const FFlecsModuleRegistryRegisteredItem* Item 
+				= FFlecsModuleRegistry::Get().FindRegisteredModule(FName(ModuleName)))
+			{
+				return ResolveScopeTypeName(InObject, Item->DefaultScopeType);
+			}
+			
+			return MakeTuple("", InScopeType);
+		default: ;
 	}
 	
 	
 	// @TODO: error?
-	return "";
+	return MakeTuple("", EUnrealFlecsRegistrationScopeType::Unset);
 }
 
 FFlecsId UE::Flecs::Registration::ResolveRegistrationScopeToId(
@@ -89,6 +99,7 @@ FFlecsId UE::Flecs::Registration::ResolveRegistrationScopeToId(
 			return InFlecsWorld->LookupEntity(ScopeName);
 		case EUnrealFlecsRegistrationScopeType::CustomSymbolIdentifier:
 			return InFlecsWorld->LookupEntityBySymbol_Internal(ScopeName);
+		case EUnrealFlecsRegistrationScopeType::Unset:
 		case EUnrealFlecsRegistrationScopeType::None: 
 		default:
 			return FFlecsId::Null();

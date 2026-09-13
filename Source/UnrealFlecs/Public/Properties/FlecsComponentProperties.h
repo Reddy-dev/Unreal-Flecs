@@ -195,7 +195,7 @@ public:
 	
 	static constexpr bool UseLowId = true;
 	
-	static constexpr EUnrealFlecsRegistrationScopeType RegistrationScopeType = EUnrealFlecsRegistrationScopeType::Module;
+	static constexpr EUnrealFlecsRegistrationScopeType RegistrationScopeType = EUnrealFlecsRegistrationScopeType::Unset;
 
 	static FString GetRegistrationScopeName()
 	{
@@ -699,7 +699,7 @@ namespace UE::Flecs::Private
 			{
 				FFlecsComponentPropertiesDefinition Definition = FFlecsComponentPropertiesDefinition::Make<T>();
 				
-				const bool bIsScopeTypeNone = Definition.RegistrationScopeType == EUnrealFlecsRegistrationScopeType::None;
+				const bool bIsScopeTypeNone = Definition.RegistrationScopeType <= EUnrealFlecsRegistrationScopeType::None;
 				
 				if (!bIsScopeTypeNone)
 				{
@@ -717,9 +717,12 @@ namespace UE::Flecs::Private
 				{
 					if (const UField* FieldObject = UE::Flecs::internal::GetMetaTypeIf<T>())
 					{
-						Definition.RegistrationScopeName = UE::Flecs::Registration::ResolveScopeTypeName(
+						auto[OutScopeName, OutScopeType] = UE::Flecs::Registration::ResolveScopeTypeName(
 								FieldObject, 
 								Definition.RegistrationScopeType);
+						
+						Definition.RegistrationScopeName = OutScopeName;
+						Definition.RegistrationScopeType = OutScopeType;
 					}
 				}
 

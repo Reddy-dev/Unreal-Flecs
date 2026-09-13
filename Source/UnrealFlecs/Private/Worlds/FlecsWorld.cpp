@@ -349,12 +349,15 @@ void UFlecsWorld::ExecuteInRegistrationScope(
 	const TSolidNotNull<const IFlecsObjectRegistrationInterface*> InObjectRegistrationInterface,
 	TFunctionRef<void()> InFunction)
 {
-	const EUnrealFlecsRegistrationScopeType ScopeType = InObjectRegistrationInterface->GetRegistrationScopeType();
+	EUnrealFlecsRegistrationScopeType ScopeType = InObjectRegistrationInterface->GetRegistrationScopeType();
 	
 	FString ResolvedName = InObjectRegistrationInterface->GetScopeName();
 	if (ResolvedName.IsEmpty())
 	{
-		ResolvedName = UE::Flecs::Registration::ResolveScopeTypeName(InObject, ScopeType);
+		auto [OutName, OutScopeType] 
+			= UE::Flecs::Registration::ResolveScopeTypeName(InObject, ScopeType);
+		ResolvedName = OutName;
+		ScopeType = OutScopeType;
 	}
 	
 	const FFlecsId ScopeId = UE::Flecs::Registration::ResolveRegistrationScopeToId(this, 
