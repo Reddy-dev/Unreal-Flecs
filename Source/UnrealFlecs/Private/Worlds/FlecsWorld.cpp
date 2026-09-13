@@ -363,9 +363,17 @@ void UFlecsWorld::ExecuteInRegistrationScope(
 	const FFlecsId ScopeId = UE::Flecs::Registration::ResolveRegistrationScopeToId(this, 
 		ResolvedName, ScopeType);
 	
-	const FFlecsEntityHandle ScopeEntity = ScopeId.IsValid() ?
-		ScopeId.ToHandle<FFlecsEntityHandle>(GetNativeFlecsWorld()) : FFlecsEntityHandle::GetNullHandle();
+	FFlecsEntityHandle ScopeEntity;
 	
+	if (ScopeId.IsValid())
+	{
+		ScopeEntity = ScopeId.ToHandle<FFlecsEntityHandle>(GetNativeFlecsWorld());
+	}
+	else
+	{
+		ScopeEntity = FFlecsEntityHandle::GetNullHandle();
+	}
+
 	const FFlecsId OldScope = ScopeEntity.IsValid() ? SetScope(ScopeEntity) : FFlecsId::Null();
 
 	InFunction();

@@ -2,6 +2,7 @@
 
 #include "Properties/FlecsComponentProperties.h"
 
+#include "General/FlecsModuleRegistry.h"
 #include "Properties/FlecsTypeRegistryEngineSubsystem.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsComponentProperties)
@@ -50,4 +51,16 @@ namespace UE::Flecs::Private
 		PendingDefinitions.Add(InDefinition);
 	}
 	
+	EUnrealFlecsRegistrationScopeType FixupUnsetScopeType(const FFlecsComponentPropertiesDefinition& InDefinition,
+		const FString& InModuleName, const FString& InPluginName)
+	{
+		if (const FFlecsModuleRegistryRegisteredItem* RegisteredItem
+			= FFlecsModuleRegistry::Get().FindRegisteredModule(FName(InModuleName)))
+		{
+			return RegisteredItem->DefaultScopeType;
+		}
+
+		return EUnrealFlecsRegistrationScopeType::None;
+	}
+
 } // namespace UE::Flecs::Private

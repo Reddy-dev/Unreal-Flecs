@@ -2,9 +2,9 @@
 
 #include "General/UnrealFlecsRegistrationScopeType.h"
 
-#include "General/FlecsModuleRegistry.h"
 #include "Interfaces/IPluginManager.h"
 
+#include "General/FlecsModuleRegistry.h"
 #include "Logs/FlecsCategories.h"
 #include "Worlds/FlecsWorld.h"
 

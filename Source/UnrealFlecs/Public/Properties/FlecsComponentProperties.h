@@ -192,7 +192,7 @@ public:
 
 	static constexpr bool WithAddReferencedObjects = false;
 	static constexpr bool RegisterMemberProperties = true;
-	
+
 	static constexpr bool UseLowId = true;
 	
 	static constexpr EUnrealFlecsRegistrationScopeType RegistrationScopeType = EUnrealFlecsRegistrationScopeType::Unset;
@@ -625,7 +625,8 @@ public:
 
 		if constexpr (TFlecsComponentTraits<T>::AutoRegister)
 		{
-			Definition.RegistrationFunction = [](const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsComponentPropertiesDefinition& ComponentProperties)
+			Definition.RegistrationFunction = []
+			(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld, const FFlecsComponentPropertiesDefinition& ComponentProperties)
 			{
 				FFlecsId ScopeId = FFlecsId::Null();
 				
@@ -641,7 +642,9 @@ public:
 
 				if constexpr (Solid::IsScriptStruct<T>())
 				{
-					RegisteredComponentHandle = InFlecsWorld->RegisterComponentType<T>(ComponentProperties.bRegisterMemberProperties, ComponentProperties.bUseLowId);
+					RegisteredComponentHandle = InFlecsWorld->RegisterComponentType<T>(
+						ComponentProperties.bRegisterMemberProperties, 
+						ComponentProperties.bUseLowId);
 				}
 				else
 				{
@@ -677,6 +680,11 @@ namespace UE::Flecs::Private
 	UNREALFLECS_API NO_DISCARD TArray<FFlecsComponentPropertiesDefinition>& GetPendingRegisteredComponents();
 	UNREALFLECS_API void AddRegisteredComponentProperties_Static(const FFlecsComponentPropertiesDefinition& InDefinition);
 
+	UNREALFLECS_API EUnrealFlecsRegistrationScopeType FixupUnsetScopeType(
+		const FFlecsComponentPropertiesDefinition& InDefinition,
+		const FString& InModuleName,
+		const FString& InPluginName);
+
 	template <typename T>
 	struct TFlecsComponentPropertiesRegistrar
 	{
@@ -699,10 +707,15 @@ namespace UE::Flecs::Private
 			{
 				FFlecsComponentPropertiesDefinition Definition = FFlecsComponentPropertiesDefinition::Make<T>();
 				
-				const bool bIsScopeTypeNone = Definition.RegistrationScopeType <= EUnrealFlecsRegistrationScopeType::None;
+				const bool bIsScopeTypeNone = Definition.RegistrationScopeType == EUnrealFlecsRegistrationScopeType::None;
 				
 				if (!bIsScopeTypeNone)
 				{
+					if (Definition.RegistrationScopeType == EUnrealFlecsRegistrationScopeType::Unset)
+					{
+						Definition.RegistrationScopeType = FixupUnsetScopeType(Definition, InModuleName, InPluginName);
+					}
+
 					if (Definition.RegistrationScopeType == EUnrealFlecsRegistrationScopeType::Module && !InModuleName.IsEmpty())
 					{
 						Definition.RegistrationScopeName = InModuleName;
@@ -713,6 +726,7 @@ namespace UE::Flecs::Private
 					}
 				}
 
+				// @TODO: shoudl we still ever reach here?
 				if (!bIsScopeTypeNone && Definition.RegistrationScopeName.IsEmpty())
 				{
 					if (const UField* FieldObject = UE::Flecs::internal::GetMetaTypeIf<T>())

@@ -169,6 +169,11 @@ void UFlecsTypeRegistryEngineSubsystem::RegisterAllTypes(const TSolidNotNull<con
 		{
 			const FFlecsComponentPropertiesDefinition& Definition = FoundEntry->ComponentDefinition;
 			
+			if (!FoundEntry->ComponentDefinition.bAutoRegister)
+			{
+				continue;
+			}
+			
 			if LIKELY_IF(ensureMsgf(Definition.RegistrationFunction, 
 				TEXT("UFlecsTypeRegistryEngineSubsystem::RegisterAllTypes: RegistrationFunction is null for component %s"), *ComponentName))
 			{
