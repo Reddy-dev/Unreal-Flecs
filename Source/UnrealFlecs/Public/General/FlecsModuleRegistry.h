@@ -18,6 +18,8 @@ struct UNREALFLECS_API FFlecsModuleRegistryRegisteredItem
 		return GetTypeHash(InItem.Name);
 	}
 	
+	NO_DISCARD friend bool operator==(const FFlecsModuleRegistryRegisteredItem&, const FFlecsModuleRegistryRegisteredItem&) = default;
+	
 	FName Name;
 	EUnrealFlecsRegistrationScopeType DefaultScopeType = EUnrealFlecsRegistrationScopeType::Module;
 }; // struct FFlecsModuleRegistryRegisteredItem
