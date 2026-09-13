@@ -47,15 +47,23 @@ FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsRegistrationScopeTests,
 		const UFlecsExplicitModuleRegistrationScopeTestObject* Object
 			= GetDefault<UFlecsExplicitModuleRegistrationScopeTestObject>();
 
-		const FString ModuleName = UE::Flecs::Registration::ResolveScopeTypeName(Object,
+		const auto [ModuleName, ModuleScopeType] = UE::Flecs::Registration::ResolveScopeTypeName(Object,
 			EUnrealFlecsRegistrationScopeType::Module);
-		const FString PluginName = UE::Flecs::Registration::ResolveScopeTypeName(Object,
+		const auto [PluginName, PluginScopeType] = UE::Flecs::Registration::ResolveScopeTypeName(Object,
 			EUnrealFlecsRegistrationScopeType::Plugin);
+		const auto [NoneName, NoneScopeType] = UE::Flecs::Registration::ResolveScopeTypeName(Object,
+			EUnrealFlecsRegistrationScopeType::None);
+		const auto [DefaultName, DefaultScopeType] = UE::Flecs::Registration::ResolveScopeTypeName(Object,
+			EUnrealFlecsRegistrationScopeType::Unset);
 
 		ASSERT_THAT(IsTrue(ModuleName == TEXT("UnrealFlecsTests")));
+		ASSERT_THAT(IsTrue(ModuleScopeType == EUnrealFlecsRegistrationScopeType::Module));
 		ASSERT_THAT(IsTrue(PluginName == TEXT("UnrealFlecs")));
-		ASSERT_THAT(IsTrue(UE::Flecs::Registration::ResolveScopeTypeName(Object,
-			EUnrealFlecsRegistrationScopeType::None).IsEmpty()));
+		ASSERT_THAT(IsTrue(PluginScopeType == EUnrealFlecsRegistrationScopeType::Plugin));
+		ASSERT_THAT(IsTrue(NoneName.IsEmpty()));
+		ASSERT_THAT(IsTrue(NoneScopeType == EUnrealFlecsRegistrationScopeType::None));
+		ASSERT_THAT(IsTrue(DefaultName == TEXT("UnrealFlecsTests")));
+		ASSERT_THAT(IsTrue(DefaultScopeType == EUnrealFlecsRegistrationScopeType::Module));
 	}
 
 	TEST_METHOD(ResolveRegistrationScopeToId_ResolvesEveryIdentifierKind)
