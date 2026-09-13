@@ -726,7 +726,6 @@ namespace UE::Flecs::Private
 					}
 				}
 
-				// @TODO: shoudl we still ever reach here?
 				if (!bIsScopeTypeNone && Definition.RegistrationScopeName.IsEmpty())
 				{
 					if (const UField* FieldObject = UE::Flecs::internal::GetMetaTypeIf<T>())
