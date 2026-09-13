@@ -101,6 +101,33 @@ FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsComponentTraitTests,
 		ASSERT_THAT(IsTrue(Component.HasPair(flecs::With, RequirementA.GetFlecsId())));
 		ASSERT_THAT(IsTrue(Component.HasPair(flecs::With, RequirementB.GetFlecsId())));
 	}
+
+	TEST_METHOD(CustomTraits_CPPAPI)
+	{
+		const FFlecsComponentPropertiesDefinition ComponentProperties = FFlecsComponentPropertiesDefinition::Make<FFlecsTestStruct_WithCustomTraits>();
+		ASSERT_THAT(IsTrue(ComponentProperties.CustomTraits.Num() == 2));
+
+		const FFlecsComponentHandle CustomTraitA = World()->RegisterComponentType<FFlecsTestStruct_CustomTraitA>();
+		const FFlecsComponentHandle CustomTraitB = World()->RegisterComponentType<FFlecsTestStruct_CustomTraitB>();
+		const FFlecsComponentHandle Component = World()->RegisterComponentType<FFlecsTestStruct_WithCustomTraits>();
+
+		ASSERT_THAT(IsTrue(CustomTraitA.Has(flecs::Trait)));
+		ASSERT_THAT(IsTrue(CustomTraitB.Has(flecs::Trait)));
+		ASSERT_THAT(IsTrue(Component.Has(CustomTraitA.GetFlecsId())));
+		ASSERT_THAT(IsTrue(Component.Has(CustomTraitB.GetFlecsId())));
+	}
+
+	TEST_METHOD(CustomTraits_StaticStructAPI)
+	{
+		const FFlecsEntityHandle CustomTraitA = World()->RegisterComponentType(FFlecsTestStruct_CustomTraitA::StaticStruct());
+		const FFlecsEntityHandle CustomTraitB = World()->RegisterComponentType(FFlecsTestStruct_CustomTraitB::StaticStruct());
+		const FFlecsEntityHandle Component = World()->RegisterComponentType(FFlecsTestStruct_WithCustomTraits::StaticStruct());
+
+		ASSERT_THAT(IsTrue(CustomTraitA.Has(flecs::Trait)));
+		ASSERT_THAT(IsTrue(CustomTraitB.Has(flecs::Trait)));
+		ASSERT_THAT(IsTrue(Component.Has(CustomTraitA.GetFlecsId())));
+		ASSERT_THAT(IsTrue(Component.Has(CustomTraitB.GetFlecsId())));
+	}
 	
 }; // FlecsComponentTraitTests
 

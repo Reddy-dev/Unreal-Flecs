@@ -15,6 +15,8 @@ START_SOLID_ASSET_VERSION(UFlecsGameLoopObject)
 
 END_SOLID_ASSET_VERSION() // UFlecsGameLoopObject
 
+// @TODO: make compatible with flecs modules maybe?
+
 UCLASS(Abstract, EditInlineNew, BlueprintType, NotBlueprintable, Category = "Flecs|GameLoop")
 class UNREALFLECS_API UFlecsGameLoopObject : public UObject, public IFlecsGameLoopInterface
 {

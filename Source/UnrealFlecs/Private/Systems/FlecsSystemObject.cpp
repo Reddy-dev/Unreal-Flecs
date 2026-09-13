@@ -53,6 +53,21 @@ void UFlecsSystemObject::RunSystem(const double InDeltaTime, void* InParams) con
 	GetSystemHandle().Run(InDeltaTime, InParams);
 }
 
+void UFlecsSystemObject::EnableSystem() const
+{
+	GetSystemHandle().Enable();
+}
+
+void UFlecsSystemObject::DisableSystem() const
+{
+	GetSystemHandle().Disable();
+}
+
+bool UFlecsSystemObject::IsSystemEnabled() const
+{
+	return GetSystemHandle().IsEnabled();
+}
+
 void UFlecsSystemObject::SetContext(void* InContext) const
 {
 	GetSystemHandle().SetContext(InContext);
@@ -96,6 +111,17 @@ void UFlecsSystemObject::ApplySystemDefinitionOverrides(FFlecsSystemDefinition& 
 	}
 }
 
+void UFlecsSystemObject::OnBuildSystem(const FFlecsSystemHandle& InSystemHandle) const
+{
+	InSystemHandle.SetPair<FFlecsUObjectComponent, FFlecsUObjectTag>(
+		FFlecsUObjectComponent(const_cast<UFlecsSystemObject*>(this)));
+	
+	if (bStartsDisabled)
+	{
+		DisableSystem();
+	}
+}
+
 void UFlecsSystemObject::InitializeSystem(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld)
 {
 	const FString SystemName = GetName();
@@ -122,10 +148,5 @@ void UFlecsSystemObject::InitializeSystem(const TSolidNotNull<const UFlecsWorldI
 		this->RunIterator(IteratorWorld, InIterator);
 	});
 	
-	SystemHandle.SetPair<FFlecsUObjectComponent, FFlecsUObjectTag>(FFlecsUObjectComponent(this));
-	
-	if (bStartsDisabled)
-	{
-		SystemHandle.Disable();
-	}
+	OnBuildSystem(SystemHandle);
 }

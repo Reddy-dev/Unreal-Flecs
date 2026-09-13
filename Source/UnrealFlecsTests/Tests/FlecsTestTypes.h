@@ -268,6 +268,46 @@ struct TFlecsComponentTraits<FFlecsTestStruct_WithTypes> : public TFlecsComponen
 }; // struct TFlecsComponentTraits<FFlecsTestStruct_WithTypes>
 
 USTRUCT()
+struct FFlecsTestStruct_CustomTraitA
+{
+	GENERATED_BODY()
+}; // struct FFlecsTestStruct_CustomTraitA
+
+template <>
+struct TFlecsComponentTraits<FFlecsTestStruct_CustomTraitA> : public TFlecsComponentTraitsBase<FFlecsTestStruct_CustomTraitA>
+{
+	static constexpr bool AutoRegister = false;
+	static constexpr bool Trait = true;
+}; // struct TFlecsComponentTraits<FFlecsTestStruct_CustomTraitA>
+
+USTRUCT()
+struct FFlecsTestStruct_CustomTraitB
+{
+	GENERATED_BODY()
+}; // struct FFlecsTestStruct_CustomTraitB
+
+template <>
+struct TFlecsComponentTraits<FFlecsTestStruct_CustomTraitB> : public TFlecsComponentTraitsBase<FFlecsTestStruct_CustomTraitB>
+{
+	static constexpr bool AutoRegister = false;
+	static constexpr bool Trait = true;
+}; // struct TFlecsComponentTraits<FFlecsTestStruct_CustomTraitB>
+
+USTRUCT()
+struct FFlecsTestStruct_WithCustomTraits
+{
+	GENERATED_BODY()
+}; // struct FFlecsTestStruct_WithCustomTraits
+
+template <>
+struct TFlecsComponentTraits<FFlecsTestStruct_WithCustomTraits> : public TFlecsComponentTraitsBase<FFlecsTestStruct_WithCustomTraits>
+{
+	static constexpr bool AutoRegister = false;
+
+	using CustomTraits = TTuple<FFlecsTestStruct_CustomTraitA, FFlecsTestStruct_CustomTraitB>;
+}; // struct TFlecsComponentTraits<FFlecsTestStruct_WithCustomTraits>
+
+USTRUCT()
 struct FFlecsTestStruct_Toggleable
 {
 	GENERATED_BODY()

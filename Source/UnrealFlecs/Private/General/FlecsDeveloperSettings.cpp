@@ -46,7 +46,7 @@ void UFlecsDeveloperSettings::PostInitProperties()
 		FProperty* Property = *It;
 		solid_checkf(Property, TEXT("Failed to get property from iterator for class %s"), *GetClass()->GetName());
 
-		if (Property->HasAnyPropertyFlags(CPF_Config) && Property->HasMetaData(TEXT("ConsoleVariable")))
+		if (Property->HasAnyPropertyFlags(CPF_Config) && Property->HasMetaData(FName("ConsoleVariable")))
 		{
 			ExportValuesToConsoleVariables(Property);
 		}

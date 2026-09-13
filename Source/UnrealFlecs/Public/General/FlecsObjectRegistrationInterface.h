@@ -32,6 +32,7 @@ public:
 	virtual void UnregisterObject(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld);
 	virtual void FlecsWorldBeginPlay(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld);
 	
+	// @TODO: currently unused
 	virtual void SetFlecsObjectState(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld, const EFlecsObjectRegistrationStateType InState);
 	
 	virtual NO_DISCARD EFlecsObjectRegistrationStateType GetObjectRegistrationState() const

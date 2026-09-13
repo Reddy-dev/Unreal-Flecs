@@ -161,13 +161,20 @@ public:
 	using WithTypes = TTuple<>;
 	using ChildOf = void;
 	using DependsOn = TTuple<>;
+	
+	// Applies the flecs::IsA relation
 	using InheritsFrom = void;
+	
+	// Typed added traits (for untyped use the registration functions)
+	using CustomTraits = TTuple<>;
 
 	static constexpr EFlecsOnInstantiate OnInstantiate = ConvertToFlecsOnInstantiate<flecs::on_instantiate_trait<T>::value>();
 	static constexpr EFlecsOnDelete OnDelete = EFlecsOnDelete::Remove;
 	static constexpr EFlecsOnDelete OnDeleteTarget = EFlecsOnDelete::Remove;
 
 	static constexpr bool Singleton = false;
+	
+	// also auto adds the Singleton Component
 	static constexpr bool CustomSingletonValue = false;
 
 	static constexpr bool Trait = false;
@@ -323,6 +330,9 @@ public:
 
 	UPROPERTY()
 	TOptional<FFlecsQueryGeneratorInput> InheritsFrom;
+	
+	UPROPERTY()
+	TArray<FFlecsQueryGeneratorInput> CustomTraits;
 
 	UPROPERTY()
 	TArray<FString> CustomTypeDependencies;
@@ -373,7 +383,8 @@ public:
 			.RegistrationScopeName = TFlecsComponentTraits<T>::GetRegistrationScopeName(),
 		};
 
-		UE::Flecs::internal::ForEachInTuple<typename TFlecsComponentTraits<T>::WithTypes>([&Definition]<typename TWithType>()
+		UE::Flecs::internal::ForEachInTuple<typename TFlecsComponentTraits<T>::WithTypes>([&Definition]
+			<Solid::TScriptStructConcept TWithType>()
 		{
 			using FTypeValue = TWithType;
 
@@ -397,7 +408,8 @@ public:
 			Definition.InheritsFrom = Input;
 		}
 
-		UE::Flecs::internal::ForEachInTuple<typename TFlecsComponentTraits<T>::DependsOn>([&Definition]<typename TDependsOn>(TDependsOn Type)
+		UE::Flecs::internal::ForEachInTuple<typename TFlecsComponentTraits<T>::DependsOn>([&Definition]
+			<Solid::TScriptStructConcept TDependsOn>(TDependsOn Type)
 		{
 			using FTypeValue = TDependsOn;
 
@@ -411,7 +423,8 @@ public:
 
 		if constexpr (!std::is_same_v<void, typename TFlecsComponentTraits<T>::ChildOf>)
 		{
-			UE::Flecs::internal::ForEachInTuple<typename TFlecsComponentTraits<T>::ChildOf>([&Definition]<typename TChildOf>(TChildOf Type)
+			UE::Flecs::internal::ForEachInTuple<typename TFlecsComponentTraits<T>::ChildOf>([&Definition]
+				<Solid::TScriptStructConcept TChildOf>(TChildOf Type)
 			{
 				using FTypeValue = TChildOf;
 
@@ -423,6 +436,20 @@ public:
 				Definition.ChildOf = Input;
 			});
 		}
+		
+		UE::Flecs::internal::ForEachInTuple<typename TFlecsComponentTraits<T>::CustomTraits>([&Definition]
+			<Solid::TScriptStructConcept TCustomTraitType>()
+		{
+			using FTypeValue = TCustomTraitType;
+
+			FFlecsQueryGeneratorInput Input;
+			Input.bPair = false;
+			Input.First.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
+			Input.First.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = FString(nameof(FTypeValue).data());
+
+			Definition.CustomTraits.Add(Input);
+		});
+
 
 		const TArray<FString> CustomTypeDependencies = TFlecsComponentTraits<T>::CustomTypeDependencies();
 		Definition.CustomTypeDependencies.Append(CustomTypeDependencies);
@@ -553,7 +580,8 @@ public:
 
 				
 				const TValueOrError<void, FString> RegistrationResult 
-					= UE::Flecs::FFlecsComponentRegistrationHooks::RegisterReplicatedComponent(InFlecsWorld, ReplicationDefinition);
+					= UE::Flecs::FFlecsComponentRegistrationHooks
+					::RegisterReplicatedComponent(InFlecsWorld, ReplicationDefinition);
 
 				if UNLIKELY_IF(RegistrationResult.HasError())
 				{
@@ -618,6 +646,11 @@ public:
 			{
 				ComponentHandle.AddPair(flecs::IsA,
 					ComponentProperties.InheritsFrom.GetValue().GetFirstTermRef(WorldInterface).Get<FFlecsId>());
+			}
+			
+			for (const FFlecsQueryGeneratorInput& CustomTrait : ComponentProperties.CustomTraits)
+			{
+				ComponentHandle.Add(CustomTrait.GetFirstTermRef(WorldInterface).Get<FFlecsId>());
 			}
 
 			TFlecsComponentTraits<T>::PostRegister(ComponentHandle);

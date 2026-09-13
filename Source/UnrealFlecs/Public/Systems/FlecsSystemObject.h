@@ -84,7 +84,16 @@ public:
 	{
 		return SystemDefinition;
 	}
-
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs|System")
+	void EnableSystem() const;
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs|System")
+	void DisableSystem() const;
+	
+	UFUNCTION(BlueprintCallable, Category = "Flecs|System")
+	bool IsSystemEnabled() const;
+	
 #if WITH_EDITORONLY_DATA
 	
 	virtual NO_DISCARD bool ShouldShowInSettings() const override
@@ -109,10 +118,12 @@ protected:
 	FFlecsSystemDefinition SystemDefinition;
 	
 	// Used for systems that are only rly manually run
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flecs", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Config, Category = "Flecs", meta = (AllowPrivateAccess = "true"))
 	uint8 bStartsDisabled : 1 = false;
 	
 	void ApplySystemDefinitionOverrides(FFlecsSystemDefinition& InOutDefinition) const;
+	
+	virtual void OnBuildSystem(const FFlecsSystemHandle& InSystemHandle) const;
 	
 private:
 	void InitializeSystem(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld);
