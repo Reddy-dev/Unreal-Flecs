@@ -123,7 +123,7 @@ protected:
 	
 	void ApplySystemDefinitionOverrides(FFlecsSystemDefinition& InOutDefinition) const;
 	
-	virtual void OnBuildSystem(const FFlecsSystemHandle& InSystemHandle) const;
+	virtual void OnBuildSystem(const FFlecsSystemHandle& InSystemHandle);
 	
 private:
 	void InitializeSystem(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld);

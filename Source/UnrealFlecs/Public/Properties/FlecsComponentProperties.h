@@ -746,7 +746,8 @@ namespace UE::Flecs::Private
 				{
 					if (Definition.RegistrationScopeType == EUnrealFlecsRegistrationScopeType::Unset)
 					{
-						Definition.RegistrationScopeType = FixupUnsetScopeType(Definition, InModuleName, InPluginName);
+						Definition.RegistrationScopeType = FixupUnsetScopeType(
+							Definition, InModuleName, InPluginName);
 					}
 
 					if (Definition.RegistrationScopeType == EUnrealFlecsRegistrationScopeType::Module && !InModuleName.IsEmpty())
@@ -801,5 +802,6 @@ namespace UE::Flecs::Private
 #define INTERNAL_REGISTER_FLECS_COMPONENT_IMPL(Name) \
 	UE_IF(_INTERNAL_FLECS_HAS_PLUGIN_NAME, _INTERNAL_REGISTER_FLECS_COMPONENT_2, _INTERNAL_REGISTER_FLECS_COMPONENT_1)(Name)
 
+// Use this
 #define REGISTER_FLECS_COMPONENT(ComponentType, ...) \
 	INTERNAL_REGISTER_FLECS_COMPONENT_IMPL(ComponentType)

@@ -111,7 +111,7 @@ void UFlecsSystemObject::ApplySystemDefinitionOverrides(FFlecsSystemDefinition& 
 	}
 }
 
-void UFlecsSystemObject::OnBuildSystem(const FFlecsSystemHandle& InSystemHandle) const
+void UFlecsSystemObject::OnBuildSystem(const FFlecsSystemHandle& InSystemHandle)
 {
 	InSystemHandle.SetPair<FFlecsUObjectComponent, FFlecsUObjectTag>(
 		FFlecsUObjectComponent(const_cast<UFlecsSystemObject*>(this)));
