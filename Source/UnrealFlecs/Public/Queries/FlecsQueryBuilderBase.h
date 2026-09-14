@@ -1178,7 +1178,8 @@ public:
 		UpExpr.InitializeAs<FFlecsQueryUpExpression>();
 		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = FFlecsQueryGeneratorInput();
 		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_FlecsId>();
-		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InId;
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First
+			.GetMutable<FFlecsQueryGeneratorInputType_FlecsId>().FlecsId = InId;
 		
 		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(UpExpr);
 		return GetSelf();
@@ -1191,7 +1192,8 @@ public:
 		UpExpr.InitializeAs<FFlecsQueryUpExpression>();
 		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = FFlecsQueryGeneratorInput();
 		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_ScriptStruct>();
-		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First
+			.GetMutable<FFlecsQueryGeneratorInputType_ScriptStruct>().ScriptStruct = InStruct;
 		
 		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(UpExpr);
 		return GetSelf();
@@ -1204,7 +1206,8 @@ public:
 		UpExpr.InitializeAs<FFlecsQueryUpExpression>();
 		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = FFlecsQueryGeneratorInput();
 		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnum>();
-		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum;
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First
+			.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnum>().ScriptEnum = InEnum;
 		
 		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(UpExpr);
 		return GetSelf();
@@ -1218,7 +1221,8 @@ public:
 		UpExpr.InitializeAs<FFlecsQueryUpExpression>();
 		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = FFlecsQueryGeneratorInput();
 		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_CPPType>();
-		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = InCppTypeName;
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First
+			.GetMutable<FFlecsQueryGeneratorInputType_CPPType>().SymbolString = InCppTypeName;
 		
 		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(UpExpr);
 		return GetSelf();
@@ -1231,7 +1235,8 @@ public:
 		UpExpr.InitializeAs<FFlecsQueryUpExpression>();
 		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = FFlecsQueryGeneratorInput();
 		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_ScriptEnumConstant>();
-		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnumConstant>().EnumValue = InEnumSelector;
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First
+			.GetMutable<FFlecsQueryGeneratorInputType_ScriptEnumConstant>().EnumValue = InEnumSelector;
 		
 		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(UpExpr);
 		return GetSelf();
@@ -1244,7 +1249,8 @@ public:
 		UpExpr.InitializeAs<FFlecsQueryUpExpression>();
 		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = FFlecsQueryGeneratorInput();
 		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_GameplayTag>();
-		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_GameplayTag>().GameplayTag = InGameplayTag;
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First
+			.GetMutable<FFlecsQueryGeneratorInputType_GameplayTag>().GameplayTag = InGameplayTag;
 		
 		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(UpExpr);
 		return GetSelf();
@@ -1257,7 +1263,8 @@ public:
 		UpExpr.InitializeAs<FFlecsQueryUpExpression>();
 		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal = FFlecsQueryGeneratorInput();
 		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.InitializeAs<FFlecsQueryGeneratorInputType_GameplayTag>();
-		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First.GetMutable<FFlecsQueryGeneratorInputType_GameplayTag>().GameplayTag = InNativeGameplayTag.GetTag();
+		UpExpr.GetMutable<FFlecsQueryUpExpression>().Traversal.GetValue().First
+			.GetMutable<FFlecsQueryGeneratorInputType_GameplayTag>().GameplayTag = InNativeGameplayTag.GetTag();
 		
 		this->GetQueryDefinition().Terms[LastTermIndex].Children.Add(UpExpr);
 		return GetSelf();

@@ -239,6 +239,14 @@ public:
 		return GetSelfInterface_Internal();
 	}
 	
+	template <typename E>
+	requires (std::is_enum<E>::value)
+	UFlecsWorldInterfaceObject* Add(const E InValue)
+	{
+		GetNativeFlecsWorld_Internal()->add<E>(InValue);
+		return GetSelfInterface_Internal();
+	}
+	
 	/**
 	 * @brief Set the value of a singleton component in the world, if the singleton does not exist, it will be created
 	 * @tparam T The component type

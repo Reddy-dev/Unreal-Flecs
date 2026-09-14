@@ -40,3 +40,17 @@ TSharedStruct<FFlecsTickFunction> UFlecsGameLoopObject::GetTickFunction() const
 {
 	return TickFunction;
 }
+
+UFlecsWorld* UFlecsGameLoopObject::GetFlecsWorld() const
+{
+	return GetTypedOuter<UFlecsWorld>();
+}
+
+TSolidNotNull<UFlecsWorld*> UFlecsGameLoopObject::GetFlecsWorldChecked() const
+{
+	UFlecsWorld* FlecsWorld = GetFlecsWorld();
+	solid_cassume(FlecsWorld);
+	solid_check(IsValid(FlecsWorld));
+	
+	return FlecsWorld;
+}

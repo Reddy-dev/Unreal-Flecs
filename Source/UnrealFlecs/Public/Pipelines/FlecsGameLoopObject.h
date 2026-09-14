@@ -35,6 +35,11 @@ public:
 	
 	virtual NO_DISCARD TSharedStruct<FFlecsTickFunction> GetTickFunction() const override;
 	
+	UFUNCTION(BlueprintCallable, Category = "Flecs | GameLoop")
+	UFlecsWorld* GetFlecsWorld() const;
+	
+	NO_DISCARD TSolidNotNull<UFlecsWorld*> GetFlecsWorldChecked() const;
+	
 protected:
 	TSharedStruct<FFlecsTickFunction> TickFunction;
 
