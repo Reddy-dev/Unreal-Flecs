@@ -10,11 +10,23 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(UnrealFlecsRegistrationScopeType)
 
+static FName GetOwningPluginName(const TSolidNotNull<const UPackage*> Package)
+{
+	const FString PackageName = !Package->GetLoadedPath().IsEmpty()
+			? Package->GetLoadedPath().GetPackageName()
+			: Package->GetName();
+
+	const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPluginFromPath(PackageName);
+
+	return Plugin.IsValid() ? FName(*Plugin->GetName()) : NAME_None;
+}
+
 TTuple<FString, EUnrealFlecsRegistrationScopeType> UE::Flecs::Registration::ResolveScopeTypeName(
 	const TSolidNotNull<const UObject*> InObject, 
 	const EUnrealFlecsRegistrationScopeType InScopeType)
 {
 	const FString ModuleName = FPackageName::GetShortName(InObject->GetClass()->GetOuterUPackage()->GetName());
+	const FName OwningPluginName = GetOwningPluginName(InObject->GetClass()->GetOuterUPackage());
 
 	switch (InScopeType)
 	{
@@ -52,17 +64,40 @@ TTuple<FString, EUnrealFlecsRegistrationScopeType> UE::Flecs::Registration::Reso
 		case EUnrealFlecsRegistrationScopeType::CustomSymbolIdentifier:
 			UE_LOGFMT(LogFlecsCore, Warning,
 				"Registered object {ObjectName} uses scope type {ScopeType}, which requires an explicit scope name.",
-				InObject->GetFName(), StaticEnum<EUnrealFlecsRegistrationScopeType>()->GetNameStringByValue(static_cast<int64>(InScopeType)));
+				InObject->GetFName(), StaticEnum<EUnrealFlecsRegistrationScopeType>()
+				->GetNameStringByValue(static_cast<int64>(InScopeType)));
 				
 			return MakeTuple("", InScopeType);
 
 		case EUnrealFlecsRegistrationScopeType::None:
 			return MakeTuple("", InScopeType);
 		case EUnrealFlecsRegistrationScopeType::Unset:
-			if LIKELY_IF(const FFlecsModuleRegistryRegisteredItem* Item 
+			if (const FFlecsModuleRegistryRegisteredItem* ModuleItem 
 				= FFlecsModuleRegistry::Get().FindRegisteredModule(FName(ModuleName)))
 			{
-				return ResolveScopeTypeName(InObject, Item->DefaultScopeType);
+				if (ModuleItem->DefaultScopeType != EUnrealFlecsRegistrationScopeType::Unset)
+				{
+					return ResolveScopeTypeName(InObject, ModuleItem->DefaultScopeType);
+				}
+				else
+				{
+					if (const FFlecsModuleRegistryRegisteredItem* PluginItem 
+						= FFlecsModuleRegistry::Get().FindRegisteredPlugin(FName(OwningPluginName)))
+					{
+						if (PluginItem->DefaultScopeType != EUnrealFlecsRegistrationScopeType::Unset)
+						{
+							return ResolveScopeTypeName(InObject, PluginItem->DefaultScopeType);
+						} 
+					} 
+				}
+			}
+			else if (const FFlecsModuleRegistryRegisteredItem* PluginItem 
+				= FFlecsModuleRegistry::Get().FindRegisteredPlugin(FName(OwningPluginName)))
+			{
+				if (PluginItem->DefaultScopeType != EUnrealFlecsRegistrationScopeType::Unset)
+				{
+					return ResolveScopeTypeName(InObject, PluginItem->DefaultScopeType);
+				} 
 			}
 			
 			return MakeTuple("", InScopeType);
