@@ -19,22 +19,24 @@ FFlecsPipelineHandle::FFlecsPipelineHandle(const TSolidNotNull<const UFlecsWorld
 const FFlecsPipelineHandle& FFlecsPipelineHandle::RunPipeline(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld,
 	const double InDeltaTime) const
 {
+	if UNLIKELY_IF(!ensureAlways(!InFlecsWorld->IsDeferred()))
+	{
+		return *this;
+	}
+	
 	InFlecsWorld->RunPipeline(*this, InDeltaTime);
 	return *this;
 }
 
 const FFlecsPipelineHandle& FFlecsPipelineHandle::RunPipeline(const double InDeltaTime) const
 {
-	if UNLIKELY_IF(!ensureAlways(!GetFlecsWorld()->IsDeferred()))
-	{
-		return *this;
-	}
-	
 	if UNLIKELY_IF(!ensureAlways(!GetFlecsWorld()->IsStage()))
 	{
 		return *this;
 	}
 	
-	const TSolidNotNull<const UFlecsWorld*> MainFlecsWorld = GetFlecsWorld()->GetFlecsWorld();
+	solid_check(IsUnrealFlecsWorld());
+	
+	const TSolidNotNull<const UFlecsWorld*> MainFlecsWorld = GetFlecsWorldChecked()->GetFlecsWorld();
 	return RunPipeline(MainFlecsWorld, InDeltaTime);
 }
