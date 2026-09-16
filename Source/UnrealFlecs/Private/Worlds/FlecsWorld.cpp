@@ -151,7 +151,7 @@ void UFlecsWorld::InitializeDefaultComponents() const
 	//World.component<FFlecsEntityHandle>()
 	//	.disable();
 		
-	RegisterComponentType<FString>()
+	RegisterComponentType<FString>(false)
 		.Opaque(flecs::String)
 		.serialize([](const flecs::serializer* Serializer, const FString* Data)
 		 {
@@ -175,7 +175,7 @@ void UFlecsWorld::InitializeDefaultComponents() const
 		     *Data = String;
 	     });*/
 
-	RegisterComponentType<FName>()
+	RegisterComponentType<FName>(false)
 	     .Opaque(flecs::String)
 	     .serialize([](const flecs::serializer* Serializer, const FName* Data)
 	     {
@@ -189,7 +189,7 @@ void UFlecsWorld::InitializeDefaultComponents() const
 		     *Data = FName(String);
 	     });
 
-	RegisterComponentType<FText>()
+	RegisterComponentType<FText>(false)
 	     .Opaque(flecs::String)
 	     .serialize([](const flecs::serializer* Serializer, const FText* Data)
 	     {
@@ -203,7 +203,7 @@ void UFlecsWorld::InitializeDefaultComponents() const
 		     *Data = FText::FromString(String);
 	     });
 
-	RegisterComponentType<std::string>()
+	RegisterComponentType<std::string>(false)
 		 .Opaque(flecs::String)
 		 .serialize([](const flecs::serializer* Serializer, const std::string* Data)
 		 {
@@ -230,7 +230,7 @@ void UFlecsWorld::InitializeDefaultComponents() const
 		     return Serializer->value(flecs::Entity, &TagEntity);
 	     });
 		
-	RegisterComponentType<FObjectPtr>()
+	RegisterComponentType<FObjectPtr>(false)
 	     .Opaque(flecs::Uptr)
 	     .serialize([](const flecs::serializer* Serializer, const FObjectPtr* Data)
 	     {
@@ -238,7 +238,7 @@ void UFlecsWorld::InitializeDefaultComponents() const
 		     return Serializer->value(flecs::Uptr, std::addressof(Object));
 	     });
 		
-	RegisterComponentType<FWeakObjectPtr>()
+	RegisterComponentType<FWeakObjectPtr>(false)
 	     .Opaque(flecs::Uptr)
 	     .serialize([](const flecs::serializer* Serializer, const FWeakObjectPtr* Data)
 	     {
@@ -250,7 +250,7 @@ void UFlecsWorld::InitializeDefaultComponents() const
 		     Data->Reset();
 	     });
 
-	RegisterComponentType<FSoftObjectPtr>()
+	RegisterComponentType<FSoftObjectPtr>(false)
 	     .Opaque(flecs::Uptr)
 	     .serialize([](const flecs::serializer* Serializer, const FSoftObjectPtr* Data)
 	     {
@@ -262,7 +262,7 @@ void UFlecsWorld::InitializeDefaultComponents() const
 		     Data->Reset();
 	     });
 
-	RegisterComponentType<TSubclassOf<UObject>>()
+	RegisterComponentType<TSubclassOf<UObject>>(false)
 	     .Opaque(flecs::Uptr)
 	     .serialize([](const flecs::serializer* Serializer, const TSubclassOf<UObject>* Data)
 	     {
@@ -383,68 +383,68 @@ void UFlecsWorld::ExecuteInRegistrationScope(
 
 void UFlecsWorld::RegisterUnrealTypes() const
 {
-	RegisterComponentType<FGameplayTagContainer>();
+	RegisterComponentType<FGameplayTagContainer>(false);
 	
-	RegisterComponentType<FVector>();
-	RegisterComponentType<FQuat>();
-	RegisterComponentType<FRotator>();
-	RegisterComponentType<FTransform>();
+	RegisterComponentType<FVector>(false);
+	RegisterComponentType<FQuat>(false);
+	RegisterComponentType<FRotator>(false);
+	RegisterComponentType<FTransform>(false);
 	
-	RegisterComponentType<FBox>();
-	RegisterComponentType<FBoxSphereBounds>();
-	RegisterComponentType<FCapsuleShape>();
-	RegisterComponentType<FRay>();
-	RegisterComponentType<FPlane>();
-	RegisterComponentType<FMatrix>();
+	RegisterComponentType<FBox>(false);
+	RegisterComponentType<FBoxSphereBounds>(false);
+	RegisterComponentType<FCapsuleShape>(false);
+	RegisterComponentType<FRay>(false);
+	RegisterComponentType<FPlane>(false);
+	RegisterComponentType<FMatrix>(false);
 
-	RegisterComponentType<FVector4>();
+	RegisterComponentType<FVector4>(false);
 		
-	RegisterComponentType<FVector2D>();
-	RegisterComponentType<FQuat2D>();
-	RegisterComponentType<FTransform2D>();
-	RegisterComponentType<FBox2D>();
+	RegisterComponentType<FVector2D>(false);
+	RegisterComponentType<FQuat2D>(false);
+	RegisterComponentType<FTransform2D>(false);
+	RegisterComponentType<FBox2D>(false);
 	
-	RegisterComponentType<FIntVector>();
-	RegisterComponentType<FIntVector4>();
-	RegisterComponentType<FIntPoint>();
-	RegisterComponentType<FIntRect>();
+	RegisterComponentType<FIntVector>(false);
+	RegisterComponentType<FIntVector4>(false);
+	RegisterComponentType<FIntPoint>(false);
+	RegisterComponentType<FIntRect>(false);
 	
-	RegisterComponentType<FRandomStream>();
+	RegisterComponentType<FRandomStream>(false);
 
-	RegisterComponentType<FColor>();
-	RegisterComponentType<FLinearColor>();
+	RegisterComponentType<FColor>(false);
+	RegisterComponentType<FLinearColor>(false);
 
-	RegisterComponentType<FPrimaryAssetType>();
-	RegisterComponentType<FPrimaryAssetId>();
+	RegisterComponentType<FPrimaryAssetType>(false);
+	RegisterComponentType<FPrimaryAssetId>(false);
 
-	RegisterComponentType<FTopLevelAssetPath>();
-	RegisterComponentType<FSoftClassPath>();
-	RegisterComponentType<FSoftObjectPath>();
+	RegisterComponentType<FTopLevelAssetPath>(false);
+	RegisterComponentType<FSoftClassPath>(false);
+	RegisterComponentType<FSoftObjectPath>(false);
 
-	RegisterComponentType<FAssetData>();
-	RegisterComponentType<FAssetBundleData>();
+	RegisterComponentType<FAssetData>(false);
+	RegisterComponentType<FAssetBundleData>(false);
 
-	RegisterComponentType<FGuid>();
-	RegisterComponentType<FTimespan>();
-	RegisterComponentType<FDateTime>();
+	RegisterComponentType<FGuid>(false);
+	RegisterComponentType<FTimespan>(false);
+	RegisterComponentType<FDateTime>(false);
 
-	RegisterComponentType<FFloatRangeBound>();
-	RegisterComponentType<FInt8RangeBound>();
-	RegisterComponentType<FInt16RangeBound>();
-	RegisterComponentType<FInt32RangeBound>();
-	RegisterComponentType<FInt64RangeBound>();
+	RegisterComponentType<FFloatRangeBound>(false);
+	RegisterComponentType<FInt8RangeBound>(false);
+	RegisterComponentType<FInt16RangeBound>(false);
+	RegisterComponentType<FInt32RangeBound>(false);
+	RegisterComponentType<FInt64RangeBound>(false);
 	
-	RegisterComponentType<FFloatRange>();
-	RegisterComponentType<FInt32Range>();
-	RegisterComponentType<FInt64Range>();
+	RegisterComponentType<FFloatRange>(false);
+	RegisterComponentType<FInt32Range>(false);
+	RegisterComponentType<FInt64Range>(false);
 	
-	RegisterComponentType<FFrameNumber>();
-	RegisterComponentType<FFrameRate>();
+	RegisterComponentType<FFrameNumber>(false);
+	RegisterComponentType<FFrameRate>(false);
 
 	// @TODO: make this opaque?
-	RegisterComponentType<FInstancedStruct>();
-	RegisterComponentType<FInstancedStructContainer>();
-	RegisterComponentType<FSharedStruct>();
+	RegisterComponentType<FInstancedStruct>(false);
+	RegisterComponentType<FInstancedStructContainer>(false);
+	RegisterComponentType<FSharedStruct>(false);
 }
 
 void UFlecsWorld::InitializeComponentPropertyObserver()
