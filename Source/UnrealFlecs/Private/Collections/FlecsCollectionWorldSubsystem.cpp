@@ -32,10 +32,6 @@ void UFlecsCollectionWorldSubsystem::OnFlecsWorldInitialized(const TSolidNotNull
 {
 	Super::OnFlecsWorldInitialized(InWorld);
 
-	const TSolidNotNull<const UFlecsWorld*> FlecsWorld = GetFlecsWorldChecked();
-
-	InWorld->RegisterComponentType<FFlecsCollectionSubsystemSingleton>();
-
 	InWorld->Set<FFlecsCollectionSubsystemSingleton>({ .WorldSubsystem = this });
 	
 	UE_LOG(LogFlecsCollections, Verbose, TEXT("UCollectionsModule registered"));
