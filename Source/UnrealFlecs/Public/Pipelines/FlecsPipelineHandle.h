@@ -9,7 +9,7 @@
 #include "FlecsPipelineHandle.generated.h"
 
 USTRUCT(BlueprintType)
-struct UNREALFLECS_API FFlecsPipelineHandle : public FFlecsEntityHandle
+struct UNREALFLECS_API FFlecsPipelineHandle final : public FFlecsEntityHandle
 {
 	GENERATED_BODY()
 	
