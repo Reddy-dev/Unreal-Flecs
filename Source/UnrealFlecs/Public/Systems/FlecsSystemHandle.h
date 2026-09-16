@@ -28,10 +28,11 @@ public:
 	{
 	}
 	
-	FORCEINLINE const FFlecsSystemHandle& SetContext(void* InContext) const
+	template <typename TSelf>
+	FORCEINLINE const TSelf& SetContext(this const TSelf& InSelf, void* InContext)
 	{
-		GetSystem().ctx(InContext);
-		return *this;
+		InSelf.GetSystem().ctx(InContext);
+		return InSelf;
 	}
 	
 	NO_DISCARD FORCEINLINE void* GetContext() const
@@ -60,23 +61,25 @@ public:
 		return flecs::system(GetNativeFlecsWorld(), GetFlecsId());
 	}
 	
-	FORCEINLINE const FFlecsSystemHandle& SetGroup(const uint64 InGroupId) const
+	template <typename TSelf>
+	FORCEINLINE const TSelf& SetGroup(this const TSelf& InSelf, const uint64 InGroupId)
 	{
-		GetSystem().set_group(InGroupId);
-		return *this;
+		InSelf.GetSystem().set_group(InGroupId);
+		return InSelf;
 	}
 	
-	template <typename T>
-	FORCEINLINE const FFlecsSystemHandle& SetGroup() const
+	template <typename T, typename TSelf>
+	FORCEINLINE const TSelf& SetGroup(this const TSelf& InSelf)
 	{
-		GetSystem().set_group<T>();
-		return *this;
+		InSelf.GetSystem().template set_group<T>();
+		return InSelf;
 	}
 	
-	FORCEINLINE const FFlecsSystemHandle& SetInterval(const double InInterval) const
+	template <typename TSelf>
+	FORCEINLINE const TSelf& SetInterval(this const TSelf& InSelf, const double InInterval)
 	{
-		GetSystem().interval(InInterval);
-		return *this;
+		InSelf.GetSystem().interval(InInterval);
+		return InSelf;
 	}
 	
 	NO_DISCARD FORCEINLINE double GetInterval() const
@@ -84,10 +87,11 @@ public:
 		return GetSystem().interval();
 	}
 	
-	FORCEINLINE const FFlecsSystemHandle& SetTimeout(const double InTimeout) const
+	template <typename TSelf>
+	FORCEINLINE const TSelf& SetTimeout(this const TSelf& InSelf, const double InTimeout)
 	{
-		GetSystem().timeout(InTimeout);
-		return *this;
+		InSelf.GetSystem().timeout(InTimeout);
+		return InSelf;
 	}
 	
 	NO_DISCARD FORCEINLINE double GetTimeout() const
@@ -95,35 +99,39 @@ public:
 		return GetSystem().timeout();
 	}
 	
-	FORCEINLINE const FFlecsSystemHandle& SetRate(const int32 InRate) const
+	template <typename TSelf>
+	FORCEINLINE const TSelf& SetRate(this const TSelf& InSelf, const int32 InRate)
 	{
-		GetSystem().rate(InRate);
-		return *this;
+		InSelf.GetSystem().rate(InRate);
+		return InSelf;
 	}
 	
-	FORCEINLINE const FFlecsSystemHandle& StartTimer() const
+	template <typename TSelf>
+	FORCEINLINE const TSelf& StartTimer(this const TSelf& InSelf)
 	{
-		GetSystem().start();
-		return *this;
+		InSelf.GetSystem().start();
+		return InSelf;
 	}
 	
-	FORCEINLINE const FFlecsSystemHandle& StopTimer() const
+	template <typename TSelf>
+	FORCEINLINE const TSelf& StopTimer(this const TSelf& InSelf)
 	{
-		GetSystem().stop();
-		return *this;
+		InSelf.GetSystem().stop();
+		return InSelf;
 	}
 	
-	FORCEINLINE const FFlecsSystemHandle& SetTickSource(const FFlecsId InTickSource) const
+	template <typename TSelf>
+	FORCEINLINE const TSelf& SetTickSource(this const TSelf& InSelf, const FFlecsId InTickSource)
 	{
-		GetSystem().set_tick_source(InTickSource);
-		return *this;
+		InSelf.GetSystem().set_tick_source(InTickSource);
+		return InSelf;
 	}
 	
-	template <typename T>
-	FORCEINLINE const FFlecsSystemHandle& SetTickSource() const
+	template <typename T, typename TSelf>
+	FORCEINLINE const TSelf& SetTickSource(this const TSelf& InSelf)
 	{
-		GetSystem().set_tick_source<T>();
-		return *this;
+		InSelf.GetSystem().template set_tick_source<T>();
+		return InSelf;
 	}
 	
 }; // struct FFlecsSystemHandle
