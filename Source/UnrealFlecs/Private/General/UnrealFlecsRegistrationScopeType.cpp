@@ -95,7 +95,7 @@ TTuple<FString, EUnrealFlecsRegistrationScopeType> UE::Flecs::Registration::Reso
 			else if (const TSharedRef<IPlugin>* PluginRef = GetPluginFromObject(InObject, ModuleName))
 			{
 				if (const FFlecsModuleRegistryRegisteredItem* PluginItem 
-					= FFlecsModuleRegistry::Get().FindRegisteredPlugin(FName(ModuleName)))
+					= FFlecsModuleRegistry::Get().FindRegisteredPlugin(FName(PluginRef->Get().GetName())))
 				{
 					if (PluginItem->DefaultScopeType != EUnrealFlecsRegistrationScopeType::Unset)
 					{
