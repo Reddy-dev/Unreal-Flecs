@@ -19,5 +19,7 @@ struct TFlecsComponentTraits<FUnrealFlecsPluginTag> : public TFlecsComponentTrai
 	static constexpr bool AutoRegister = false;
 	
 	static constexpr bool RegisterWithUnrealModule = false;
+	
+	static constexpr bool UseLowId = false;
 }; // struct TFlecsComponentTraits<FUnrealFlecsPluginTag>
 

@@ -64,7 +64,7 @@ TValueOrError<void, FString> UE::Flecs::FFlecsComponentRegistrationHooks::Regist
 	
 	if (!Hooks.Register)
 	{
-		return MakeError(TEXT("No Networking Module loaded"));
+		return MakeError("No Networking Module loaded");
 	}
 
 	return Hooks.Register(InWorld, InDefinition);
