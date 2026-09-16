@@ -67,7 +67,7 @@ struct TStructOpsTypeTraits<FFlecsGroupByCallbackDefinition> : public TStructOps
 {
 	enum
 	{
-		WithCopy = true
+		//WithCopy = true
 	}; // enum
 	
 }; // struct TStructOpsTypeTraits<FFlecsGroupByCallbackDefinition>

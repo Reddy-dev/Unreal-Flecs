@@ -127,6 +127,45 @@ public:
 	
 }; // struct FFlecsQueryGeneratorInputType_CPPType
 
+USTRUCT(NotBlueprintType)
+struct UNREALFLECS_API FFlecsQueryGeneratorInputType_CPPEnum final : public FFlecsQueryGeneratorInputType
+{
+	GENERATED_BODY()
+
+public:
+	FFlecsQueryGeneratorInputType_CPPEnum()
+	{
+		ReturnType = EFlecsQueryGeneratorReturnType::FlecsId;
+	}
+
+	UPROPERTY()
+	FString SymbolString;
+
+	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const override;
+
+}; // struct FFlecsQueryGeneratorInputType_CPPEnum
+
+USTRUCT(NotBlueprintType)
+struct UNREALFLECS_API FFlecsQueryGeneratorInputType_CPPEnumConstant final : public FFlecsQueryGeneratorInputType
+{
+	GENERATED_BODY()
+
+public:
+	FFlecsQueryGeneratorInputType_CPPEnumConstant()
+	{
+		ReturnType = EFlecsQueryGeneratorReturnType::FlecsId;
+	}
+
+	UPROPERTY()
+	FString EnumSymbolString;
+
+	UPROPERTY()
+	int64 EnumValue = 0;
+
+	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const override;
+
+}; // struct FFlecsQueryGeneratorInputType_CPPEnumConstant
+
 USTRUCT(BlueprintType, meta = (DisplayName = "Query: Flecs Id"))
 struct UNREALFLECS_API FFlecsQueryGeneratorInputType_FlecsId final : public FFlecsQueryGeneratorInputType
 {
@@ -162,7 +201,6 @@ public:
 	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const override;
 	
 }; // struct FFlecsQueryGeneratorInputType_ScriptEnumConstant
-
 
 USTRUCT(BlueprintType, meta = (DisplayName = "Query: Wildcard"))
 struct UNREALFLECS_API FFlecsQueryGeneratorInputType_Wildcard final : public FFlecsQueryGeneratorInputType

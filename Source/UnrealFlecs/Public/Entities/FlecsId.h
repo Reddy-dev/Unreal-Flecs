@@ -243,12 +243,18 @@ static_assert(sizeof(FFlecsId) == sizeof(flecs::entity_t), "FFlecsId must have t
 static_assert(alignof(FFlecsId) == alignof(flecs::entity_t), "FFlecsId must have the same alignment as flecs::id_t");
 static_assert(std::is_trivially_copyable_v<FFlecsId>, "FFlecsId must be trivially copyable.");
 
+template <>
+struct TIsPODType<FFlecsId>
+{
+    enum { Value = true };
+}; // struct TIsPODType<FFlecsId>
+
 template<>
 struct TStructOpsTypeTraits<FFlecsId> : public TStructOpsTypeTraitsBase2<FFlecsId>
 {
     enum
     {
-        WithCopy = true,
+       // WithCopy = true,
         WithIdenticalViaEquality = true,
         WithImportTextItem = true,
         WithExportTextItem = true,

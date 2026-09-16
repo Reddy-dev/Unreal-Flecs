@@ -26,14 +26,16 @@ FFlecsTermRef FFlecsQueryGeneratorInputType::GetTermRefOutput(const TSolidNotNul
 
 FFlecsId FFlecsQueryGeneratorInputType_ScriptStruct::GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const
 {
-	solid_cassumef(ScriptStruct != nullptr, TEXT("FFlecsQueryGeneratorInputType_ScriptStruct::GetFlecsIdOutput: ScriptStruct is null!"));
+	solid_cassumef(ScriptStruct != nullptr, 
+		TEXT("FFlecsQueryGeneratorInputType_ScriptStruct::GetFlecsIdOutput: ScriptStruct is null!"));
 	
 	return InWorld->GetScriptStructEntity(ScriptStruct);
 }
 
 FFlecsId FFlecsQueryGeneratorInputType_ScriptEnum::GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const
 {
-	solid_cassumef(ScriptEnum != nullptr, TEXT("FFlecsQueryGeneratorInputType_ScriptEnum::GetFlecsIdOutput: ScriptEnum is null!"));
+	solid_cassumef(ScriptEnum != nullptr, 
+		TEXT("FFlecsQueryGeneratorInputType_ScriptEnum::GetFlecsIdOutput: ScriptEnum is null!"));
 	
 	return InWorld->GetScriptEnumEntity(ScriptEnum);
 }
@@ -46,6 +48,29 @@ FString FFlecsQueryGeneratorInputType_String::GetStringOutput() const
 FFlecsId FFlecsQueryGeneratorInputType_CPPType::GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const
 {
 	return InWorld->LookupEntityBySymbol_Internal(SymbolString);
+}
+
+FFlecsId FFlecsQueryGeneratorInputType_CPPEnum::GetFlecsIdOutput(
+	const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const
+{
+	return InWorld->LookupEntityBySymbol_Internal(SymbolString);
+}
+
+FFlecsId FFlecsQueryGeneratorInputType_CPPEnumConstant::GetFlecsIdOutput(
+	const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const
+{
+	const FFlecsId EnumId = InWorld->LookupEntityBySymbol_Internal(EnumSymbolString);
+	solid_checkf(EnumId.IsValid(),
+		TEXT("FFlecsQueryGeneratorInputType_CPPEnumConstant::GetFlecsIdOutput: Could not find C++ enum %s!"),
+		*EnumSymbolString);
+
+	const flecs::world NativeWorld = InWorld->GetNativeFlecsWorld();
+	const FFlecsId EnumConstantId = ecs_constant_to_entity_id(NativeWorld.c_ptr(), EnumId.GetId(), EnumValue);
+	solid_checkf(EnumConstantId.IsValid(),
+		TEXT("FFlecsQueryGeneratorInputType_CPPEnumConstant::GetFlecsIdOutput: Could not find constant value %lld in C++ enum %s!"),
+		EnumValue, *EnumSymbolString);
+
+	return EnumConstantId;
 }
 
 FFlecsId FFlecsQueryGeneratorInputType_FlecsId::GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const

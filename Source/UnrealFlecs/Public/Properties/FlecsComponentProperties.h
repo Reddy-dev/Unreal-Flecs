@@ -127,6 +127,12 @@ namespace UE::Flecs
 				return !OutName.IsEmpty();
 			}
 
+			if LIKELY_IF(const FFlecsQueryGeneratorInputType_CPPEnum* CPPEnum = Input.First.GetPtr<FFlecsQueryGeneratorInputType_CPPEnum>())
+			{
+				OutName = CPPEnum->SymbolString;
+				return !OutName.IsEmpty();
+			}
+
 			if LIKELY_IF(const FFlecsQueryGeneratorInputType_ScriptStruct* ScriptStructType = Input.First.GetPtr<FFlecsQueryGeneratorInputType_ScriptStruct>())
 			{
 				if (ScriptStructType->ScriptStruct)

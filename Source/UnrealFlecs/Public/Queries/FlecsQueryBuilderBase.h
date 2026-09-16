@@ -129,14 +129,14 @@ public:
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
 		return GetSelf();
 	}
-	
+
 	FORCEINLINE_DEBUGGABLE FInheritedType& TermAt(const int32 InTermIndex)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
 		LastTermIndex = InTermIndex;
 		return GetSelf();
 	}
-	
+
 	/*FORCEINLINE_DEBUGGABLE FInheritedType& TermAt(*/
 	
 #pragma region QueryDefinitionProperties
@@ -288,10 +288,10 @@ private:
 		
 		this->GetQueryDefinition().AddQueryTerm(Expr);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
-		
+
 		return GetSelf();
 	}
-	
+
 	FORCEINLINE_DEBUGGABLE FInheritedType& WithoutCppType_Internal(const std::string_view TypeName)
 	{
 		WithCppType_Internal(TypeName);
@@ -322,10 +322,10 @@ public:
 		
 		this->GetQueryDefinition().AddQueryTerm(Expr);
 		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
-		
+
 		return GetSelf();
 	}
-	
+
 	FORCEINLINE_DEBUGGABLE FInheritedType& With(const TSolidNotNull<const UScriptStruct*> InStruct)
 	{
 		FFlecsQueryTermExpression Expr;
@@ -412,8 +412,14 @@ public:
 		}
 		else if constexpr (std::is_enum<T>::value)
 		{
-			const std::string_view TypeName = nameof(T);
-			this->WithCppType_Internal(TypeName);
+			FFlecsQueryTermExpression Expr;
+			Expr.Term.Input.bPair = true;
+			Expr.Term.Input.First.InitializeAs<FFlecsQueryGeneratorInputType_CPPEnum>();
+			Expr.Term.Input.First.GetMutable<FFlecsQueryGeneratorInputType_CPPEnum>().SymbolString = FString(nameof(T).data());
+			Expr.Term.Input.Second.InitializeAs<FFlecsQueryGeneratorInputType_Wildcard>();
+
+			this->GetQueryDefinition().AddQueryTerm(Expr);
+			LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
 		}
 		else
 		{
@@ -424,6 +430,14 @@ public:
 			this->InOutExpression(UE::Flecs::Queries::TypeToInOut<T>(), false);
 		}
 		
+		return GetSelf();
+	}
+
+	template <typename E>
+	requires (std::is_enum<E>::value)
+	FORCEINLINE_DEBUGGABLE FInheritedType& With(const E InEnumValue)
+	{
+		this->WithPair<E>(InEnumValue);
 		return GetSelf();
 	}
 
@@ -578,12 +592,25 @@ public:
 		{
 			this->Without(StaticEnum<T>());
 		}
+		else if constexpr (std::is_enum<T>::value)
+		{
+			this->With<T>();
+			this->Not();
+		}
 		else
 		{
 			const std::string_view TypeName = nameof(T);
 			this->WithoutCppType_Internal(TypeName);
 		}
 		
+		return GetSelf();
+	}
+	
+	template <typename E>
+	requires (std::is_enum<E>::value)
+	FORCEINLINE_DEBUGGABLE FInheritedType& Without(const E InEnumValue)
+	{
+		this->template WithoutPair<E>(InEnumValue);
 		return GetSelf();
 	}
 	
@@ -694,6 +721,15 @@ public:
 		{
 			this->Second(StaticEnum<T>());
 		}
+		else if constexpr (std::is_enum<T>::value)
+		{
+			solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
+
+			FFlecsQueryTermExpression& TermExpr = this->GetQueryDefinition().Terms[LastTermIndex];
+			TermExpr.Term.Input.bPair = true;
+			TermExpr.Term.Input.Second.InitializeAs<FFlecsQueryGeneratorInputType_CPPEnum>();
+			TermExpr.Term.Input.Second.GetMutable<FFlecsQueryGeneratorInputType_CPPEnum>().SymbolString = FString(nameof(T).data());
+		}
 		else
 		{
 			using TNoCVRef = std::remove_cv_t<std::remove_reference_t<T>>;
@@ -761,6 +797,26 @@ public:
 		return GetSelf();
 	}
 	
+	template <typename E>
+	requires (std::is_enum<E>::value)
+	FORCEINLINE_DEBUGGABLE FInheritedType& WithPair(const E InEnumValue)
+	{
+		FFlecsQueryTermExpression Expr;
+		Expr.Term.Input.bPair = true;
+		Expr.Term.Input.First.InitializeAs<FFlecsQueryGeneratorInputType_CPPEnum>();
+		Expr.Term.Input.First.GetMutable<FFlecsQueryGeneratorInputType_CPPEnum>().SymbolString = FString(nameof(E).data());
+		Expr.Term.Input.Second.InitializeAs<FFlecsQueryGeneratorInputType_CPPEnumConstant>();
+		FFlecsQueryGeneratorInputType_CPPEnumConstant& EnumConstant =
+			Expr.Term.Input.Second.GetMutable<FFlecsQueryGeneratorInputType_CPPEnumConstant>();
+		EnumConstant.EnumSymbolString = FString(nameof(E).data());
+		EnumConstant.EnumValue = static_cast<int64>(InEnumValue);
+
+		this->GetQueryDefinition().AddQueryTerm(Expr);
+		LastTermIndex = this->GetQueryDefinition().GetLastTermIndex();
+
+		return GetSelf();
+	}
+
 	template <typename TFirst, typename TSecond>
 	FORCEINLINE_DEBUGGABLE FInheritedType& WithoutPair()
 	{
@@ -848,7 +904,8 @@ public:
 		else
 		{
 			const std::string_view TypeName = nameof(T);
-			return OrderBy(FString(TypeName.data()), UE::Flecs::Queries::FOrderByFunctionType(InFunction));
+			return OrderBy(FString(TypeName.data()), 
+				UE::Flecs::Queries::FOrderByFunctionType(InFunction));
 		}
 	}
 	

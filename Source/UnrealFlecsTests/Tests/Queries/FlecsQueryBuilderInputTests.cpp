@@ -28,6 +28,51 @@ protected:
 	}
 
 public:
+	TEST_METHOD(BuilderConstruction_WithCPPEnumType_UsesCPPEnumInput)
+	{
+		FFlecsQueryBuilder Builder = World()->CreateQueryBuilder()
+			.With<ETestEnum>();
+
+		const FFlecsQueryDefinition& Definition = Builder.GetQueryDefinition();
+		ASSERT_THAT(IsTrue(Definition.Terms.Num() == 1));
+
+		const FFlecsQueryGeneratorInputType_CPPEnum* EnumInput =
+			Definition.Terms[0].Term.Input.First.GetPtr<FFlecsQueryGeneratorInputType_CPPEnum>();
+		ASSERT_THAT(IsNotNull(EnumInput));
+		ASSERT_THAT(AreEqual(EnumInput->SymbolString, FString(TEXT("ETestEnum"))));
+
+		FFlecsQuery Query = Builder.Build();
+		World()->CreateEntity().Add<ETestEnum>(ETestEnum::One);
+		World()->CreateEntity().Add<ETestEnum>(ETestEnum::Two);
+		ASSERT_THAT(IsTrue(Query.count() == 2));
+	}
+
+	TEST_METHOD(BuilderConstruction_WithCPPEnumConstant_UsesCPPEnumInputs)
+	{
+		FFlecsQueryBuilder Builder = World()->CreateQueryBuilder()
+			.With(ETestEnum::One);
+
+		const FFlecsQueryDefinition& Definition = Builder.GetQueryDefinition();
+		ASSERT_THAT(IsTrue(Definition.Terms.Num() == 1));
+		ASSERT_THAT(IsTrue(Definition.Terms[0].Term.Input.bPair));
+
+		const FFlecsQueryGeneratorInputType_CPPEnum* EnumInput =
+			Definition.Terms[0].Term.Input.First.GetPtr<FFlecsQueryGeneratorInputType_CPPEnum>();
+		ASSERT_THAT(IsNotNull(EnumInput));
+		ASSERT_THAT(AreEqual(EnumInput->SymbolString, FString(TEXT("ETestEnum"))));
+
+		const FFlecsQueryGeneratorInputType_CPPEnumConstant* ConstantInput =
+			Definition.Terms[0].Term.Input.Second.GetPtr<FFlecsQueryGeneratorInputType_CPPEnumConstant>();
+		ASSERT_THAT(IsNotNull(ConstantInput));
+		ASSERT_THAT(AreEqual(ConstantInput->EnumSymbolString, FString(TEXT("ETestEnum"))));
+		ASSERT_THAT(IsTrue(ConstantInput->EnumValue == static_cast<int64>(ETestEnum::One)));
+
+		FFlecsQuery Query = Builder.Build();
+		World()->CreateEntity().Add<ETestEnum>(ETestEnum::One);
+		World()->CreateEntity().Add<ETestEnum>(ETestEnum::Two);
+		ASSERT_THAT(IsTrue(Query.count() == 1));
+	}
+
 	TEST_METHOD(BuilderConstruction_ReadWriteVariants_AddStagedTerms_CPPAPI)
 	{
 		FFlecsQueryBuilder Builder = World()->CreateQueryBuilder();
