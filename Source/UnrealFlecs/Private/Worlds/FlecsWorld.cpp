@@ -1034,7 +1034,7 @@ void UFlecsWorld::ImportStatsModule()
 void UFlecsWorld::AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector)
 {
 	Super::AddReferencedObjects(InThis, Collector);
-
+	
 	const TSolidNotNull<UFlecsWorld*> This = CastChecked<UFlecsWorld>(InThis);
 	solid_check(IsValid(This));
 	
