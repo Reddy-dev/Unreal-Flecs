@@ -34,13 +34,14 @@ void FFlecsQueryOrderByExpression::Apply(const TSolidNotNull<const UFlecsWorldIn
 		UE::Flecs::Queries::MakeOrderByFunction(OrderByCallback.Get<FFlecsOrderByCallbackDefinition>().GetOrderByFunction()));
 }
 
-FFlecsQueryOrderByCPPExpressionWrapper::FFlecsQueryOrderByCPPExpressionWrapper() 
+FFlecsQueryOrderByCPPExpressionWrapper::FFlecsQueryOrderByCPPExpressionWrapper()
 	: Super(false /* bInAllowsChildExpressions */)
+	, OrderByFunction(nullptr)
 {
 }
 
 void FFlecsQueryOrderByCPPExpressionWrapper::Apply(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld,
-	FFlecsQueryBuilderView& InQueryBuilder) const
+                                                   FFlecsQueryBuilderView& InQueryBuilder) const
 {
 	FFlecsId OrderByComponentId;
 	
