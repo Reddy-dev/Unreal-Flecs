@@ -16,5 +16,5 @@ struct UNREALFLECS_API FFlecsOutsideOfMainLoopTag
 template <>
 struct TFlecsComponentTraits<FFlecsOutsideOfMainLoopTag> : public TFlecsComponentTraitsBase<FFlecsOutsideOfMainLoopTag>
 {
-	
+	static constexpr bool UseLowId = true;
 }; // struct TFlecsComponentTraits

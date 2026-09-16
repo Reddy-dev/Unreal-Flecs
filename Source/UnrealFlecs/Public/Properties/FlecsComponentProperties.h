@@ -685,9 +685,8 @@ public:
 
 				if constexpr (Solid::IsScriptStruct<T>())
 				{
-					RegisteredComponentHandle = InFlecsWorld->RegisterComponentType<T>(
-						ComponentProperties.bRegisterMemberProperties, 
-						ComponentProperties.bUseLowId);
+					RegisteredComponentHandle = InFlecsWorld->RegisterComponentType<T>(ComponentProperties.bUseLowId,
+						ComponentProperties.bRegisterMemberProperties);
 				}
 				else
 				{

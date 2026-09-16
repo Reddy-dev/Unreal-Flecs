@@ -12,3 +12,7 @@ struct UNREALFLECS_API FFlecsGameLoopTag
 	GENERATED_BODY()
 }; // struct FFlecsGameLoopTag
 
+FLECS_COMPONENT_TRAITS(FFlecsGameLoopTag)
+{
+	static constexpr bool UseLowId = false;
+}; // FLECS_COMPONENT_TRAITS(FFlecsGameLoopTag)

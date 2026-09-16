@@ -397,7 +397,7 @@ public:
 	void RegisterMemberProperties(const TSolidNotNull<const UStruct*> InStruct, const FFlecsComponentHandle& InComponent) const;
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
-	FFlecsEntityHandle RegisterScriptStruct(const UScriptStruct* ScriptStruct, const bool bComponent = true, const bool bRegisterMemberProperties = true, const bool bUseLowId = true) const;
+	FFlecsEntityHandle RegisterScriptStruct(const UScriptStruct* ScriptStruct, const bool bComponent = true, const bool bUseLowId = true, const bool bRegisterMemberProperties = true) const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
 	FFlecsEntityHandle RegisterScriptEnum(const UEnum* ScriptEnum, const bool bUseLowId = true) const;
@@ -428,7 +428,7 @@ public:
 	}
 	
 	template <Solid::TScriptStructConcept T>
-	TFlecsComponentHandle<T> RegisterComponentType(const bool bRegisterMemberProperties = true, const bool bUseLowId = true) const
+	TFlecsComponentHandle<T> RegisterComponentType(const bool bUseLowId = true, const bool bRegisterMemberProperties = true) const
 	{
 		solid_checkf(!IsDeferred(), TEXT("Cannot register component while deferred"));
 		
@@ -469,10 +469,10 @@ public:
 		return Component;
 	}*/
 	
-	FFlecsEntityHandle RegisterComponentType(const TSolidNotNull<const UScriptStruct*> ScriptStruct,
+	FFlecsComponentHandle RegisterComponentType(const TSolidNotNull<const UScriptStruct*> ScriptStruct,
 		const bool bRegisterMemberProperties = true, const bool bUseLowId = true) const;
 
-	FFlecsEntityHandle RegisterComponentType(const TSolidNotNull<const UEnum*> ScriptEnum, const bool bUseLowId = true) const;
+	FFlecsComponentHandle RegisterComponentType(const TSolidNotNull<const UEnum*> ScriptEnum, const bool bUseLowId = true) const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
 	FFlecsEntityHandle GetScriptStructEntity(const UScriptStruct* ScriptStruct) const;

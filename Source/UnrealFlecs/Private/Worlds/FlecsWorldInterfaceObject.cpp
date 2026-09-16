@@ -475,7 +475,7 @@ void UFlecsWorldInterfaceObject::RegisterMemberProperties(const TSolidNotNull<co
 }
 
 FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterScriptStruct(const UScriptStruct* ScriptStruct,
-                                                                    const bool bComponent, const bool bRegisterMemberProperties, const bool bUseLowId) const
+                                                                    const bool bComponent, const bool bUseLowId, const bool bRegisterMemberProperties) const
 {
 	solid_cassume(ScriptStruct);
 	solid_checkf(!IsDeferred(), TEXT("Registering script structs while deferred is not allowed"));
@@ -911,31 +911,32 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterScriptClassType(TSolidNot
 	return ScriptClassEntity;
 }
 
-FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterComponentType(
+FFlecsComponentHandle UFlecsWorldInterfaceObject::RegisterComponentType(
 	const TSolidNotNull<const UScriptStruct*> ScriptStruct,
-	const bool bRegisterMemberProperties, 
-	const bool bUseLowId) const
+	const bool bUseLowId,
+	const bool bRegisterMemberProperties) const
 {
 	solid_checkf(!IsDeferred(), TEXT("Cannot register component while deferred"));
 	
 	if (HasScriptStruct(ScriptStruct))
 	{
-		return GetScriptStructEntity(ScriptStruct);
+		return GetScriptStructEntity(ScriptStruct).ToHandle<FFlecsComponentHandle>();
 	}
 
-	return RegisterScriptStruct(ScriptStruct, true, bRegisterMemberProperties, bUseLowId);
+	return RegisterScriptStruct(ScriptStruct, true, 
+		bUseLowId, bRegisterMemberProperties).ToHandle<FFlecsComponentHandle>();
 }
 
-FFlecsEntityHandle UFlecsWorldInterfaceObject::RegisterComponentType(const TSolidNotNull<const UEnum*> ScriptEnum, const bool bUseLowId) const
+FFlecsComponentHandle UFlecsWorldInterfaceObject::RegisterComponentType(const TSolidNotNull<const UEnum*> ScriptEnum, const bool bUseLowId) const
 {
 	solid_checkf(!IsDeferred(), TEXT("Cannot register component while deferred"));
 	
 	if (HasScriptEnum(ScriptEnum))
 	{
-		return GetScriptEnumEntity(ScriptEnum);
+		return GetScriptEnumEntity(ScriptEnum).ToHandle<FFlecsComponentHandle>();
 	}
 
-	return RegisterScriptEnum(ScriptEnum, bUseLowId);
+	return RegisterScriptEnum(ScriptEnum, bUseLowId).ToHandle<FFlecsComponentHandle>();
 }
 
 FFlecsEntityHandle UFlecsWorldInterfaceObject::GetScriptStructEntity(const UScriptStruct* ScriptStruct) const

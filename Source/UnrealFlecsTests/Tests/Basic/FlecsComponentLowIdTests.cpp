@@ -172,9 +172,9 @@ TEST_CLASS_WITH_BASE_AND_FLAGS_AND_TAGS(FlecsComponentLowIdTests,
 	TEST_METHOD(ComponentRegistration_Manual_StaticScriptStructAPI_UsesLowId)
 	{
 		const FFlecsEntityHandle LowIdComponent
-			= World()->RegisterComponentType(FUStructTestComponent_NonTagUSTRUCT::StaticStruct(), false, true);
+			= World()->RegisterComponentType(FUStructTestComponent_NonTagUSTRUCT::StaticStruct(), true, false);
 		const FFlecsEntityHandle HighIdComponent
-			= World()->RegisterComponentType(FFlecsTestStruct_Value::StaticStruct(), false, false);
+			= World()->RegisterComponentType(FFlecsTestStruct_Value::StaticStruct(), true, false);
 
 		ASSERT_THAT(IsTrue(LowIdComponent.IsValid()));
 		ASSERT_THAT(IsTrue(LowIdComponent.IsComponent()));

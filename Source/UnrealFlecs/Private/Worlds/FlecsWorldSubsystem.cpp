@@ -29,7 +29,6 @@
 
 #include "Pipelines/FlecsGameLoopInterface.h"
 #include "Pipelines/TickFunctions/FlecsTickFunction.h"
-#include "Pipelines/TickFunctions/FlecsTickFunctionPrerequisite.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsWorldSubsystem)
 
@@ -166,13 +165,13 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	
 	DefaultWorld->Scope(DefaultWorld->GetFlecsModule("UnrealFlecs"), [this]()
 	{
-		DefaultWorld->RegisterComponentType<FUnrealFlecsWorldTag>(true, false)
+		DefaultWorld->RegisterComponentType<FUnrealFlecsWorldTag>(false, true)
 				.Add(flecs::Singleton);
 		
-		DefaultWorld->RegisterComponentType<FFlecsWorldPtrComponent>()
+		DefaultWorld->RegisterComponentType<FFlecsWorldPtrComponent>(false)
 				.Add(flecs::Singleton);
 		
-		DefaultWorld->RegisterComponentType<FUWorldPtrComponent>()
+		DefaultWorld->RegisterComponentType<FUWorldPtrComponent>(false)
 				.Add(flecs::Singleton);
 	});
 

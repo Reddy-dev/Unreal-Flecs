@@ -42,10 +42,10 @@ void UE::Flecs::FFlecsModuleRegistry::RegisterUnrealFlecsPlugin(const FName& InP
 
 void UE::Flecs::FFlecsModuleRegistry::InitializeRegisteredModules(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld) const
 {
-	InFlecsWorld->RegisterComponentType<FUnrealFlecsModuleTag>(true, false)
+	InFlecsWorld->RegisterComponentType<FUnrealFlecsModuleTag>(false, true)
 		.AddPair(flecs::With, flecs::Module);
 	
-	InFlecsWorld->RegisterComponentType<FUnrealFlecsPluginTag>(true, false)
+	InFlecsWorld->RegisterComponentType<FUnrealFlecsPluginTag>(false, true)
 		.AddPair(flecs::With, flecs::Module);
 	
 	for (const auto& [Name, DefaultScopeType] : RegisteredPlugins)
