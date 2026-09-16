@@ -1,4 +1,4 @@
-﻿// Elie Wiese-Namir © 2025. All Rights Reserved.
+// Elie Wiese-Namir © 2025. All Rights Reserved.
 
 #include "Misc/AutomationTest.h"
 #include "UnrealFlecsTests/Tests/FlecsTestTypes.h"
@@ -13,6 +13,22 @@ FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(UnrealFlecsEnumRegistrationTests,
                                | EAutomationTestFlags::CriticalPriority,
                                "[Flecs][Component][Pair][Enum][CPP-API][StaticEnum-API]")
 {
+	TEST_METHOD_WITH_TAGS(WorldInterfaceAddEnumSingleton,
+		"[Flecs][Component][Enum][Singleton][CPP-API]")
+	{
+		const FFlecsComponentHandle TestEnumEntity = World()->RegisterComponentType<EFlecsTestEnum_UENUM>();
+		TestEnumEntity.Add(flecs::Singleton);
+
+		UFlecsWorldInterfaceObject* const ReturnedWorld = World()->Add(EFlecsTestEnum_UENUM::One);
+		ASSERT_THAT(IsTrue(ReturnedWorld == World()));
+		ASSERT_THAT(IsTrue(World()->GetNativeFlecsWorld().has(EFlecsTestEnum_UENUM::One)));
+		ASSERT_THAT(IsFalse(World()->GetNativeFlecsWorld().has(EFlecsTestEnum_UENUM::Two)));
+
+		World()->Add(EFlecsTestEnum_UENUM::Two);
+		ASSERT_THAT(IsFalse(World()->GetNativeFlecsWorld().has(EFlecsTestEnum_UENUM::One)));
+		ASSERT_THAT(IsTrue(World()->GetNativeFlecsWorld().has(EFlecsTestEnum_UENUM::Two)));
+	}
+
 	TEST_METHOD_WITH_TAGS(RegisterStaticEnumAPI_AddRemoveReplaceStaticEnumAPI,
 								   "[Flecs][Component][Enum][StaticEnum-API]")
 	{
