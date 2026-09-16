@@ -231,6 +231,10 @@ struct TFlecsComponentTraits : public TFlecsComponentTraitsBase<T>
 
 }; // struct TFlecsComponentTraits
 
+#define FLECS_COMPONENT_TRAITS(ComponentType) \
+	template <> \
+	struct TFlecsComponentTraits<ComponentType> : public TFlecsComponentTraitsBase<ComponentType>
+
 USTRUCT()
 struct UNREALFLECS_API FFlecsComponentPropertiesDefinition
 {
