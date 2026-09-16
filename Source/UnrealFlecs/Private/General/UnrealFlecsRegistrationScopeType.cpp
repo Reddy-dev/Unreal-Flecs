@@ -10,23 +10,29 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(UnrealFlecsRegistrationScopeType)
 
-static FName GetOwningPluginName(const TSolidNotNull<const UPackage*> Package)
-{
-	const FString PackageName = !Package->GetLoadedPath().IsEmpty()
-			? Package->GetLoadedPath().GetPackageName()
-			: Package->GetName();
-
-	const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPluginFromPath(PackageName);
-
-	return Plugin.IsValid() ? FName(*Plugin->GetName()) : NAME_None;
-}
-
 TTuple<FString, EUnrealFlecsRegistrationScopeType> UE::Flecs::Registration::ResolveScopeTypeName(
 	const TSolidNotNull<const UObject*> InObject, 
 	const EUnrealFlecsRegistrationScopeType InScopeType)
 {
 	const FString ModuleName = FPackageName::GetShortName(InObject->GetClass()->GetOuterUPackage()->GetName());
-	const FName OwningPluginName = GetOwningPluginName(InObject->GetClass()->GetOuterUPackage());
+	
+	auto GetPluginFromObject 
+		= [](const TSolidNotNull<const UObject*> Object, const FString& InModuleName) -> const TSharedRef<IPlugin>*
+	{
+		const TArray<TSharedRef<IPlugin>> DiscoveredPlugins = IPluginManager::Get().GetDiscoveredPlugins();
+		
+		const TSharedRef<IPlugin>* OwningPlugin = DiscoveredPlugins.FindByPredicate(
+					[InModuleName](const TSharedRef<IPlugin>& Plugin)
+					{
+						return Plugin->GetDescriptor().Modules.ContainsByPredicate(
+							[InModuleName](const FModuleDescriptor& Module)
+							{
+								return Module.Name == InModuleName;
+							});
+					});
+		
+		return OwningPlugin;
+	};
 
 	switch (InScopeType)
 	{
@@ -39,15 +45,7 @@ TTuple<FString, EUnrealFlecsRegistrationScopeType> UE::Flecs::Registration::Reso
 			{
 				const TArray<TSharedRef<IPlugin>> DiscoveredPlugins = IPluginManager::Get().GetDiscoveredPlugins();
 				
-				const TSharedRef<IPlugin>* OwningPlugin = DiscoveredPlugins.FindByPredicate(
-					[ModuleName](const TSharedRef<IPlugin>& Plugin)
-					{
-						return Plugin->GetDescriptor().Modules.ContainsByPredicate(
-							[ModuleName](const FModuleDescriptor& Module)
-							{
-								return Module.Name == ModuleName;
-							});
-					});
+				const TSharedRef<IPlugin>* OwningPlugin = GetPluginFromObject(InObject, ModuleName);
 
 				if UNLIKELY_IF(!OwningPlugin)
 				{
@@ -81,23 +79,29 @@ TTuple<FString, EUnrealFlecsRegistrationScopeType> UE::Flecs::Registration::Reso
 				}
 				else
 				{
-					if (const FFlecsModuleRegistryRegisteredItem* PluginItem 
-						= FFlecsModuleRegistry::Get().FindRegisteredPlugin(FName(OwningPluginName)))
+					if (const TSharedRef<IPlugin>* PluginRef = GetPluginFromObject(InObject, ModuleName))
 					{
-						if (PluginItem->DefaultScopeType != EUnrealFlecsRegistrationScopeType::Unset)
+						if (const FFlecsModuleRegistryRegisteredItem* PluginItem 
+						= FFlecsModuleRegistry::Get().FindRegisteredPlugin(FName(PluginRef->Get().GetName())))
 						{
-							return ResolveScopeTypeName(InObject, PluginItem->DefaultScopeType);
+							if (PluginItem->DefaultScopeType != EUnrealFlecsRegistrationScopeType::Unset)
+							{
+								return ResolveScopeTypeName(InObject, PluginItem->DefaultScopeType);
+							} 
 						} 
-					} 
+					}
 				}
 			}
-			else if (const FFlecsModuleRegistryRegisteredItem* PluginItem 
-				= FFlecsModuleRegistry::Get().FindRegisteredPlugin(FName(OwningPluginName)))
+			else if (const TSharedRef<IPlugin>* PluginRef = GetPluginFromObject(InObject, ModuleName))
 			{
-				if (PluginItem->DefaultScopeType != EUnrealFlecsRegistrationScopeType::Unset)
+				if (const FFlecsModuleRegistryRegisteredItem* PluginItem 
+					= FFlecsModuleRegistry::Get().FindRegisteredPlugin(FName(ModuleName)))
 				{
-					return ResolveScopeTypeName(InObject, PluginItem->DefaultScopeType);
-				} 
+					if (PluginItem->DefaultScopeType != EUnrealFlecsRegistrationScopeType::Unset)
+					{
+						return ResolveScopeTypeName(InObject, PluginItem->DefaultScopeType);
+					} 
+				}
 			}
 			
 			return MakeTuple("", InScopeType);
