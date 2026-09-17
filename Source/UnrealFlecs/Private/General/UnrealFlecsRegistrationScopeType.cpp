@@ -14,6 +14,7 @@ TTuple<FString, EUnrealFlecsRegistrationScopeType> UE::Flecs::Registration::Reso
 	const TSolidNotNull<const UObject*> InObject, 
 	const EUnrealFlecsRegistrationScopeType InScopeType)
 {
+	FFlecsModuleRegistry& ModuleRegistry = FFlecsModuleRegistry::Get();
 	const FString ModuleName = FPackageName::GetShortName(InObject->GetClass()->GetOuterUPackage()->GetName());
 	
 	auto GetPluginFromObject 
@@ -71,7 +72,7 @@ TTuple<FString, EUnrealFlecsRegistrationScopeType> UE::Flecs::Registration::Reso
 			return MakeTuple("", InScopeType);
 		case EUnrealFlecsRegistrationScopeType::Unset:
 			if (const FFlecsModuleRegistryRegisteredItem* ModuleItem 
-				= FFlecsModuleRegistry::Get().FindRegisteredModule(FName(ModuleName)))
+				= ModuleRegistry.FindRegisteredModule(FName(ModuleName)))
 			{
 				if (ModuleItem->DefaultScopeType != EUnrealFlecsRegistrationScopeType::Unset)
 				{
@@ -82,7 +83,7 @@ TTuple<FString, EUnrealFlecsRegistrationScopeType> UE::Flecs::Registration::Reso
 					if (const TSharedRef<IPlugin>* PluginRef = GetPluginFromObject(InObject, ModuleName))
 					{
 						if (const FFlecsModuleRegistryRegisteredItem* PluginItem 
-						= FFlecsModuleRegistry::Get().FindRegisteredPlugin(FName(PluginRef->Get().GetName())))
+						= ModuleRegistry.FindRegisteredPlugin(FName(PluginRef->Get().GetName())))
 						{
 							if (PluginItem->DefaultScopeType != EUnrealFlecsRegistrationScopeType::Unset)
 							{
@@ -95,7 +96,7 @@ TTuple<FString, EUnrealFlecsRegistrationScopeType> UE::Flecs::Registration::Reso
 			else if (const TSharedRef<IPlugin>* PluginRef = GetPluginFromObject(InObject, ModuleName))
 			{
 				if (const FFlecsModuleRegistryRegisteredItem* PluginItem 
-					= FFlecsModuleRegistry::Get().FindRegisteredPlugin(FName(PluginRef->Get().GetName())))
+					= ModuleRegistry.FindRegisteredPlugin(FName(PluginRef->Get().GetName())))
 				{
 					if (PluginItem->DefaultScopeType != EUnrealFlecsRegistrationScopeType::Unset)
 					{
