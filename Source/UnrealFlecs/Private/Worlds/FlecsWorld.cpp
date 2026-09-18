@@ -215,7 +215,7 @@ void UFlecsWorld::InitializeDefaultComponents() const
 			 *Data = String;
 		 });
 
-	RegisterComponentType<FGameplayTag>(false)
+	RegisterComponentType<FGameplayTag>(true, false)
 	     .Opaque(flecs::Entity)
 	     .serialize([](const flecs::serializer* Serializer, const FGameplayTag* Data)
 	     {
