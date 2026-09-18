@@ -415,20 +415,20 @@ public:
 	FFlecsEntityHandle RegisterScriptClassType(TSolidNotNull<UClass*> ScriptClass) const;
 	
 	// @TODO: Update these function variations to be more clear to the caller
-	template <typename T>
+	template <typename T, UE::Flecs::TFlecsEntityHandleTypeConcept THandle = TFlecsComponentHandle<T>>
 	requires (!Solid::TScriptStructConcept<T>)
-	TFlecsComponentHandle<T> RegisterComponentType(const bool bUseLowId = true) const
+	THandle RegisterComponentType(const bool bUseLowId = true) const
 	{
 		solid_checkf(!IsDeferred(), TEXT("Cannot register component while deferred"));
 		
-		TFlecsComponentHandle<T> Component = GetNativeFlecsWorld_Internal()->component<T>(nullptr, true, 0, bUseLowId);
+		THandle Component = GetNativeFlecsWorld_Internal()->component<T>(nullptr, true, 0, bUseLowId);
 		solid_check(Component.IsValid());
 
 		return Component;
 	}
 	
-	template <Solid::TScriptStructConcept T>
-	TFlecsComponentHandle<T> RegisterComponentType(const bool bUseLowId = true, const bool bRegisterMemberProperties = true) const
+	template <Solid::TScriptStructConcept T, UE::Flecs::TFlecsEntityHandleTypeConcept THandle = TFlecsComponentHandle<T>>
+	THandle RegisterComponentType(const bool bUseLowId = true, const bool bRegisterMemberProperties = true) const
 	{
 		solid_checkf(!IsDeferred(), TEXT("Cannot register component while deferred"));
 		
@@ -437,10 +437,10 @@ public:
 		// avoid calling RegisterMemberProperties if the component is already registered, as it would be redundant and potentially cause issues if the component was registered with different member properties settings
 		if (AlreadyRegisteredId.IsValid())
 		{
-			return AlreadyRegisteredId.ToHandle<TFlecsComponentHandle<T>>(GetNativeFlecsWorld());
+			return AlreadyRegisteredId.ToHandle<THandle>(GetNativeFlecsWorld());
 		}
 		
-		TFlecsComponentHandle<T> Component = GetNativeFlecsWorld_Internal()->component<T>(nullptr, true, 0, bUseLowId);
+		THandle Component = GetNativeFlecsWorld_Internal()->component<T>(nullptr, true, 0, bUseLowId);
 		solid_check(Component.IsValid());
 		
 		if (bRegisterMemberProperties)
