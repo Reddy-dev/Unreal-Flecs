@@ -6,6 +6,8 @@
 #include "Entities/FlecsId.h"
 
 using FFlecsTermRef = TVariant<FFlecsId, FString>;
+
+// pretty sure the reason we needed this extremely unsafe impl was because we needed flecs to have ownership
 using FFlecsTermRefAtom_Internal = TVariant<FFlecsId, char*>;
 
 namespace UE::Flecs::Queries
