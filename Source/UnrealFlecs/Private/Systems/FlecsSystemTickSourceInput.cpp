@@ -19,7 +19,7 @@ void FFlecsSystemTickSourceInput::ApplyToSystemDefinition(const TSolidNotNull<co
 		solid_checkf(TypeInput.IsValid(), TEXT("TickType input must be set when InputType is set to Type."));
 		solid_checkf(!TypeInput.IsPair(), TEXT("TickType input cannot be a pair when InputType is set to Type."));\
 	
-		const FFlecsTermRefAtom_Internal TickSourceAtom = TypeInput.GetFirstTermRef(InFlecsWorld);
+		const FFlecsTermRefAtom_Internal TickSourceAtom = TypeInput.GetFirstTermRef<false>(InFlecsWorld);
 		solid_checkf(!TickSourceAtom.IsType<char*>(), TEXT("TickType input cannot be a string when InputType is set to Type."));
 		
 		const FFlecsId TickSourceId = TickSourceAtom.Get<FFlecsId>();

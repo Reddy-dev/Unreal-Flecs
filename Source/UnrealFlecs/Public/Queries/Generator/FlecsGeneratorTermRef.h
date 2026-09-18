@@ -2,7 +2,6 @@
 
 #pragma once
 
-
 #include "Entities/FlecsId.h"
 
 using FFlecsTermRef = TVariant<FFlecsId, FString>;
@@ -12,6 +11,7 @@ using FFlecsTermRefAtom_Internal = TVariant<FFlecsId, char*>;
 
 namespace UE::Flecs::Queries
 {
+	template <bool bAllowAllocation>
 	NO_DISCARD FORCEINLINE FFlecsTermRefAtom_Internal ToTermRefAtom(const FFlecsTermRef& InTermRef)
 	{
 		if (InTermRef.IsType<FFlecsId>())
@@ -20,6 +20,12 @@ namespace UE::Flecs::Queries
 		}
 		else
 		{
+			if constexpr (!bAllowAllocation)
+			{
+				solid_cassumef(false, 
+					TEXT("Attempted to convert FString to char* without allowing allocation. This is not allowed because it would result in a dangling pointer."));
+			}
+			
 			const FString& StringRef = InTermRef.Get<FString>();
 			
 			FTCHARToUTF8 UTF8String(*StringRef);

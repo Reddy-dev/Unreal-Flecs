@@ -24,14 +24,14 @@ void FFlecsSystemPhaseInput::ApplyToSystemDefinition(const TSolidNotNull<const U
 	{
 		solid_checkf(PhaseInput.IsValid(), TEXT("Invalid phase input for system phase input of type 'Type'."));
 		
-		const FFlecsTermRefAtom_Internal FirstAtom = PhaseInput.GetFirstTermRef(InFlecsWorld);
+		const FFlecsTermRefAtom_Internal FirstAtom = PhaseInput.GetFirstTermRef<false>(InFlecsWorld);
 		
 		solid_checkf(!FirstAtom.IsType<char*>(), TEXT("String identifiers are not supported for system phase input of type 'Type'."));
 		
 		FFlecsTermRefAtom_Internal SecondAtom;
 		if (PhaseInput.IsPair())
 		{
-			SecondAtom = PhaseInput.GetSecondTermRef(InFlecsWorld);
+			SecondAtom = PhaseInput.GetSecondTermRef<false>(InFlecsWorld);
 			solid_checkf(!SecondAtom.IsType<char*>(), TEXT("String identifiers are not supported for system phase input of type 'Type'."));
 		}
 		

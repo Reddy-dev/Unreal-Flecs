@@ -68,8 +68,8 @@ void FFlecsObserverEventInput::ApplyToObserver(const TSolidNotNull<const UFlecsW
 		{
 			if (CustomEventType.bPair)
 			{
-				FFlecsTermRefAtom_Internal FirstAtom = CustomEventType.GetFirstTermRef(InFlecsWorld);
-				FFlecsTermRefAtom_Internal SecondAtom = CustomEventType.GetSecondTermRef(InFlecsWorld);
+				FFlecsTermRefAtom_Internal FirstAtom = CustomEventType.GetFirstTermRef<false>(InFlecsWorld);
+				FFlecsTermRefAtom_Internal SecondAtom = CustomEventType.GetSecondTermRef<false>(InFlecsWorld);
 				
 				solid_checkf(!FirstAtom.IsType<char*>(), TEXT("Custom event type cannot be a string literal. It must be a valid flecs ID."));
 				solid_checkf(!SecondAtom.IsType<char*>(), TEXT("Custom event type cannot be a string literal. It must be a valid flecs ID."));
@@ -78,7 +78,7 @@ void FFlecsObserverEventInput::ApplyToObserver(const TSolidNotNull<const UFlecsW
 			}
 			else
 			{
-				FFlecsTermRefAtom_Internal TermAtom = CustomEventType.GetFirstTermRef(InFlecsWorld);
+				FFlecsTermRefAtom_Internal TermAtom = CustomEventType.GetFirstTermRef<false>(InFlecsWorld);
 				solid_checkf(!TermAtom.IsType<char*>(), TEXT("Custom event type cannot be a string literal. It must be a valid flecs ID."));
 				
 				InObserverBuilder.event(TermAtom.Get<FFlecsId>());

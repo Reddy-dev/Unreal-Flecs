@@ -19,7 +19,9 @@ void FFlecsQueryCascadeExpression::Apply(const TSolidNotNull<const UFlecsWorldIn
 	if (Traversal.IsSet())
 	{
 		const FFlecsQueryGeneratorInput& TraversalInput = Traversal.GetValue();
-		const FFlecsTermRefAtom_Internal TraversalTermRef = TraversalInput.GetFirstTermRef(InWorld);
+		
+		// true because we handle freeing the memory
+		const FFlecsTermRefAtom_Internal TraversalTermRef = TraversalInput.GetFirstTermRef<true>(InWorld);
 		
 		if UNLIKELY_IF(TraversalTermRef.IsType<char*>())
 		{

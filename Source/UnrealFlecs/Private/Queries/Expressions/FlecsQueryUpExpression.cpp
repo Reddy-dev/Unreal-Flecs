@@ -19,7 +19,9 @@ void FFlecsQueryUpExpression::Apply(const TSolidNotNull<const UFlecsWorldInterfa
 	if (Traversal.IsSet())
 	{
 		const FFlecsQueryGeneratorInput& TraversalInput = Traversal.GetValue();
-		const FFlecsTermRefAtom_Internal TraversalTermRef = TraversalInput.GetFirstTermRef(InWorld);
+		
+		// allocation is true because we handle deallocating
+		const FFlecsTermRefAtom_Internal TraversalTermRef = TraversalInput.GetFirstTermRef<true>(InWorld);
 		
 		if UNLIKELY_IF(TraversalTermRef.IsType<char*>())
 		{

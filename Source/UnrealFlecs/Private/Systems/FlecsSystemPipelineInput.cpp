@@ -22,14 +22,14 @@ void FFlecsSystemPipelineInput::ApplyToSystemEntity(const TSolidNotNull<const UF
 	}
 	else if (InputType == EFlecsSystemPipelineInputType::Type)
 	{
-		const FFlecsTermRefAtom_Internal FirstAtom = TypeInput.GetFirstTermRef(InWorld);
+		const FFlecsTermRefAtom_Internal FirstAtom = TypeInput.GetFirstTermRef<false>(InWorld);
 		solid_checkf(!FirstAtom.IsType<char*>(),
 			TEXT("Invalid type provided when applying pipeline input to system entity, expected a component or tag type but got a string."));
 		
 		FFlecsTermRefAtom_Internal SecondAtom;
 		if (TypeInput.IsPair())
 		{
-			SecondAtom = TypeInput.GetSecondTermRef(InWorld);
+			SecondAtom = TypeInput.GetSecondTermRef<false>(InWorld);
 			solid_checkf(!SecondAtom.IsType<char*>(),
 				TEXT("Invalid type provided when applying pipeline input to system entity, expected a component or tag type but got a string."));
 		}

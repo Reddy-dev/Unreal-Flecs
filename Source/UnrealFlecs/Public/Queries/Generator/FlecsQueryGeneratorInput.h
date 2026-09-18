@@ -9,6 +9,7 @@
 #include "Types/SolidNotNull.h"
 
 #include "FlecsGeneratorTermRef.h"
+#include "FlecsQueryGeneratorInputType.h"
 
 #include "FlecsQueryGeneratorInput.generated.h"
 
@@ -41,9 +42,34 @@ public:
 		return bPair;
 	}
 	
+	template <bool bAllowAllocation>
 	NO_DISCARD FFlecsTermRefAtom_Internal GetFirstTermRef(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const;
+	
+	template <bool bAllowAllocation>
 	NO_DISCARD FFlecsTermRefAtom_Internal GetSecondTermRef(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const;
 	
 private:
 	
 }; // struct FFlecsQueryGeneratorInput
+
+template <bool bAllowAllocation>
+FFlecsTermRefAtom_Internal FFlecsQueryGeneratorInput::GetFirstTermRef(
+	const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const
+{
+	solid_checkf(First.IsValid(), TEXT("First term ref must be valid."));
+
+	const FFlecsTermRef TermRef = First.Get().GetTermRefOutput(InWorld);
+	
+	return UE::Flecs::Queries::ToTermRefAtom<bAllowAllocation>(TermRef);
+}
+
+template <bool bAllowAllocation>
+FFlecsTermRefAtom_Internal FFlecsQueryGeneratorInput::GetSecondTermRef(
+	const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const
+{
+	solid_checkf(Second.IsValid(), TEXT("Second term ref must be valid."));
+
+	const FFlecsTermRef TermRef = Second.Get().GetTermRefOutput(InWorld);
+	
+	return UE::Flecs::Queries::ToTermRefAtom<bAllowAllocation>(TermRef);
+}

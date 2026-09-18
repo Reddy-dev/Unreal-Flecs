@@ -158,74 +158,202 @@ namespace UE::Flecs
 
 } // namespace UE::Flecs
 
+/**
+ * Compile-time registration properties for an Unreal-Flecs component type.
+ *
+ * Specialize TFlecsComponentTraits with FLECS_COMPONENT_TRAITS and override only the
+ * properties required by the component. Every component must also be registered with
+ * REGISTER_FLECS_COMPONENT in a source file.
+ *
+ * Flecs traits are applied to the component entity when it is registered. See the
+ * Flecs component-traits manual for their behavior and limitations:
+ * https://www.flecs.dev/flecs/ComponentTraits.html
+ *
+ * @code
+ * FLECS_COMPONENT_TRAITS(FHealthComponent)
+ * {
+ *     static constexpr bool Replicate = true;
+ *     static constexpr bool CanToggle = true;
+ * };
+ *
+ * // In one source file:
+ * REGISTER_FLECS_COMPONENT(FHealthComponent);
+ * @endcode
+ */
 template <typename T>
 struct TFlecsComponentTraitsBase
 {
 public:
+	/** Automatically register the component type during Unreal-Flecs startup. */
 	static constexpr bool AutoRegister = true;
 
+	/**
+	 * Components and tags added to the registered component entity through Flecs' With trait.
+	 * @see https://www.flecs.dev/flecs/ComponentTraits.html#with-trait
+	 */
 	using WithTypes = TTuple<>;
+
+	/** Optional parent type for the registered component entity. */
 	using ChildOf = void;
+
+	/** Types that the registered component entity depends on through flecs::DependsOn. */
 	using DependsOn = TTuple<>;
 	
-	// Applies the flecs::IsA relation
+	/** Optional base type applied to the registered component entity through flecs::IsA. */
 	using InheritsFrom = void;
 	
-	// Typed added traits (for untyped use the registration functions)
+	/** Additional typed traits added to the registered component entity. */
 	using CustomTraits = TTuple<>;
 
+	/**
+	 * Controls whether a component is copied, inherited, or omitted when an IsA instance is created.
+	 * The native `static constexpr auto on_instantiate` Flecs trait is detected automatically.
+	 * @see https://www.flecs.dev/flecs/ComponentTraits.html#oninstantiate-trait
+	 */
 	static constexpr EFlecsOnInstantiate OnInstantiate = ConvertToFlecsOnInstantiate<flecs::on_instantiate_trait<T>::value>();
+
+	/**
+	 * Cleanup action when the component entity is deleted.
+	 * @see https://www.flecs.dev/flecs/ComponentTraits.html#cleanup-traits
+	 */
 	static constexpr EFlecsOnDelete OnDelete = EFlecsOnDelete::Remove;
+
+	/**
+	 * Cleanup action when this relationship's target is deleted.
+	 * @see https://www.flecs.dev/flecs/ComponentTraits.html#cleanup-traits
+	 */
 	static constexpr EFlecsOnDelete OnDeleteTarget = EFlecsOnDelete::Remove;
 
+	/**
+	 * Marks the component as a Flecs singleton.
+	 * @see https://www.flecs.dev/flecs/ComponentTraits.html#singleton-trait
+	 */
 	static constexpr bool Singleton = false;
 	
-	// also auto adds the Singleton Component
+	/** Calls SetSingletonDefaultValue after registration and ensures that a singleton value exists. */
 	static constexpr bool CustomSingletonValue = false;
 
+	/**
+	 * Marks this component as a trait that may be added to other component entities.
+	 * @see https://www.flecs.dev/flecs/ComponentTraits.html#trait-trait
+	 */
 	static constexpr bool Trait = false;
 
+	/**
+	 * Stores values outside archetype tables without fragmenting those tables.
+	 * The native `static constexpr bool dont_fragment` Flecs trait is detected automatically.
+	 * @see https://www.flecs.dev/flecs/ComponentTraits.html#dontfragment-trait
+	 */
 	static constexpr bool DontFragment = flecs::dont_fragment<T>::value;
+
+	/**
+	 * Stores values in sparse storage while retaining the component in entity table types.
+	 * The native `static constexpr bool sparse` Flecs trait is detected automatically.
+	 * @see https://www.flecs.dev/flecs/ComponentTraits.html#sparse-trait
+	 */
 	static constexpr bool Sparse = flecs::sparse<T>::value;
 
+	/**
+	 * Constrains this component to the relationship position of a pair.
+	 * @see https://www.flecs.dev/flecs/ComponentTraits.html#relationship-trait
+	 */
 	static constexpr bool Relationship = false;
+
+	/**
+	 * Constrains this component to the target position of a pair.
+	 * @see https://www.flecs.dev/flecs/ComponentTraits.html#target-trait
+	 */
 	static constexpr bool Target = false;
+
+	/**
+	 * Prevents pairs with this relationship from storing data from either pair element.
+	 * @see https://www.flecs.dev/flecs/ComponentTraits.html#pairistag-trait
+	 */
 	static constexpr bool PairIsTag = false;
+
+	/**
+	 * Makes (Relationship, Entity) implicitly true for an entity with this relationship.
+	 * @see https://www.flecs.dev/flecs/ComponentTraits.html#reflexive-trait
+	 */
 	static constexpr bool Reflexive = false;
+
+	/**
+	 * Declares that this relationship must not contain cycles.
+	 * @see https://www.flecs.dev/flecs/ComponentTraits.html#acyclic-trait
+	 */
 	static constexpr bool Acyclic = false;
+
+	/**
+	 * Allows queries and events to traverse this relationship.
+	 * @see https://www.flecs.dev/flecs/ComponentTraits.html#traversable-trait
+	 */
 	static constexpr bool Traversable = false;
+
+	/**
+	 * Enables transitive query matching for this relationship.
+	 * @see https://www.flecs.dev/flecs/ComponentTraits.html#transitive-trait
+	 */
 	static constexpr bool Transitive = false;
+
+	/**
+	 * Requires targets of this relationship to be children of the relationship entity.
+	 * @see https://www.flecs.dev/flecs/ComponentTraits.html#oneof-trait
+	 */
 	static constexpr bool OneOf = false;
 
+	/**
+	 * Allows component instances to be enabled and disabled without removing them.
+	 * @see https://www.flecs.dev/flecs/ComponentTraits.html#cantoggle-trait
+	 */
 	static constexpr bool CanToggle = false;
+
+	/**
+	 * Marks the component as inheritable so queries account for IsA inheritance.
+	 * @see https://www.flecs.dev/flecs/ComponentTraits.html#inheritable-trait
+	 */
 	static constexpr bool Inheritable = false;
+
+	/**
+	 * Prevents the component entity from being used as an IsA target.
+	 * @see https://www.flecs.dev/flecs/ComponentTraits.html#final-trait
+	 */
 	static constexpr bool Final = false;
 
+	/** Registers this component with the configured Unreal-Flecs replication backend. */
 	static constexpr bool Replicate = false;
 
+	/** Enables Unreal UObject reference collection for values stored in this component. */
 	static constexpr bool WithAddReferencedObjects = false;
+
+	/** Registers reflected USTRUCT members with Flecs meta when T is a UScriptStruct. */
 	static constexpr bool RegisterMemberProperties = true;
 
+	/** Requests an ID from Flecs' low component-ID range. */
 	static constexpr bool UseLowId = true;
 	
+	/** Selects the module, plugin, explicit scope, or root scope used for registration. */
 	static constexpr EUnrealFlecsRegistrationScopeType RegistrationScopeType = EUnrealFlecsRegistrationScopeType::Unset;
 
+	/** Returns the explicit registration scope name, when one is required. */
 	static FString GetRegistrationScopeName()
 	{
 		return "";
 	}
 
-	// use this function for when you need another type that is auto registered, to be auto registered prior to this type
+	/** Returns auto-registered type names that must be registered before this component. */
 	static const TArray<FString>& CustomTypeDependencies()
 	{
 		static const TArray<FString> EmptyArray;
 		return EmptyArray;
 	}
 
-	// Only get called with Auto-Registration with Typed Components
+	/** Called before built-in properties are applied to an auto-registered typed component. */
 	static void PrePropertiesRegistration(const FFlecsComponentHandle& ComponentHandle) {}
+
+	/** Called after all built-in and custom properties are applied. */
 	static void PostRegister(const FFlecsComponentHandle& ComponentHandle) {}
 
+	/** Initializes the singleton value when CustomSingletonValue is enabled. */
 	static void SetSingletonDefaultValue(const TSolidNotNull<const UFlecsWorld*> World, OUT T& OutValue)
 	{
 	}
@@ -638,30 +766,30 @@ public:
 
 			for (const FFlecsQueryGeneratorInput& WithType : ComponentProperties.WithTypes)
 			{
-				ComponentHandle.AddWith(WithType.GetFirstTermRef(WorldInterface).Get<FFlecsId>());
+				ComponentHandle.AddWith(WithType.GetFirstTermRef<false>(WorldInterface).Get<FFlecsId>());
 			}
 
 			for (const FFlecsQueryGeneratorInput& DependsOn : ComponentProperties.DependsOn)
 			{
 				ComponentHandle.AddPair(flecs::DependsOn,
-					DependsOn.GetFirstTermRef(WorldInterface).Get<FFlecsId>());
+					DependsOn.GetFirstTermRef<false>(WorldInterface).Get<FFlecsId>());
 			}
 
 			if (ComponentProperties.ChildOf.IsSet())
 			{
 				ComponentHandle.AddPair(flecs::ChildOf,
-					ComponentProperties.ChildOf.GetValue().GetFirstTermRef(WorldInterface).Get<FFlecsId>());
+					ComponentProperties.ChildOf.GetValue().GetFirstTermRef<false>(WorldInterface).Get<FFlecsId>());
 			}
 
 			if (ComponentProperties.InheritsFrom.IsSet())
 			{
 				ComponentHandle.AddPair(flecs::IsA,
-					ComponentProperties.InheritsFrom.GetValue().GetFirstTermRef(WorldInterface).Get<FFlecsId>());
+					ComponentProperties.InheritsFrom.GetValue().GetFirstTermRef<false>(WorldInterface).Get<FFlecsId>());
 			}
 			
 			for (const FFlecsQueryGeneratorInput& CustomTrait : ComponentProperties.CustomTraits)
 			{
-				ComponentHandle.Add(CustomTrait.GetFirstTermRef(WorldInterface).Get<FFlecsId>());
+				ComponentHandle.Add(CustomTrait.GetFirstTermRef<false>(WorldInterface).Get<FFlecsId>());
 			}
 
 			TFlecsComponentTraits<T>::PostRegister(ComponentHandle);

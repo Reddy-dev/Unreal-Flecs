@@ -19,7 +19,7 @@ void FFlecsQueryTermExpression::Apply(TSolidNotNull<const UFlecsWorldInterfaceOb
 	
 	if (Source.IsValid())
 	{
-		FFlecsTermRefAtom_Internal SourceAtom = Source.GetFirstTermRef(InWorld);
+		FFlecsTermRefAtom_Internal SourceAtom = Source.GetFirstTermRef<true>(InWorld);
 		if (SourceAtom.IsType<FFlecsId>())
 		{
 			InQueryBuilder.src(SourceAtom.Get<FFlecsId>());
