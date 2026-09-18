@@ -10,10 +10,12 @@ Many Features are not complete
 
 Only tested on Version: UE 5.8 MSVC/partially Clang
 
+Requires C++23
+
 ### Contributors to Unreal-Flecs:
 
 @Megafunk \
-@ronaldburns 
+@ronaldburns
 
 
 ### For Full Performance benefits make sure to use LTO/PGO in shipping builds.
