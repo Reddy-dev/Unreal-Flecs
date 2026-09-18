@@ -469,8 +469,8 @@ public:
 		return Component;
 	}*/
 	
-	FFlecsComponentHandle RegisterComponentType(const TSolidNotNull<const UScriptStruct*> ScriptStruct,
-		const bool bRegisterMemberProperties = true, const bool bUseLowId = true) const;
+	FFlecsComponentHandle RegisterComponentType(const TSolidNotNull<const UScriptStruct*> ScriptStruct, const bool bUseLowId = true,
+		const bool bRegisterMemberProperties = true) const;
 
 	FFlecsComponentHandle RegisterComponentType(const TSolidNotNull<const UEnum*> ScriptEnum, const bool bUseLowId = true) const;
 	

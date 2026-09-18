@@ -156,7 +156,7 @@ TEST_CLASS_WITH_BASE_AND_FLAGS_AND_TAGS(FlecsComponentLowIdTests,
 	TEST_METHOD(ComponentRegistration_Manual_ScriptStructType_UsesLowId)
 	{
 		const FFlecsEntityHandle LowIdComponent
-			= World()->RegisterComponentType<FUStructTestComponent_NonTagUSTRUCT>(false, true);
+			= World()->RegisterComponentType<FUStructTestComponent_NonTagUSTRUCT>(true, true);
 		const FFlecsEntityHandle HighIdComponent
 			= World()->RegisterComponentType<FFlecsTestStruct_Value>(false, false);
 
@@ -174,7 +174,7 @@ TEST_CLASS_WITH_BASE_AND_FLAGS_AND_TAGS(FlecsComponentLowIdTests,
 		const FFlecsEntityHandle LowIdComponent
 			= World()->RegisterComponentType(FUStructTestComponent_NonTagUSTRUCT::StaticStruct(), true, false);
 		const FFlecsEntityHandle HighIdComponent
-			= World()->RegisterComponentType(FFlecsTestStruct_Value::StaticStruct(), true, false);
+			= World()->RegisterComponentType(FFlecsTestStruct_Value::StaticStruct(), false, false);
 
 		ASSERT_THAT(IsTrue(LowIdComponent.IsValid()));
 		ASSERT_THAT(IsTrue(LowIdComponent.IsComponent()));
@@ -188,7 +188,7 @@ TEST_CLASS_WITH_BASE_AND_FLAGS_AND_TAGS(FlecsComponentLowIdTests,
 	TEST_METHOD(ComponentRegistration_Manual_RegisterScriptStructAPI_UsesLowId)
 	{
 		const FFlecsEntityHandle LowIdComponent
-			= World()->RegisterScriptStruct(FUStructTestComponent_NonTagUSTRUCT::StaticStruct(), true, false, true);
+			= World()->RegisterScriptStruct(FUStructTestComponent_NonTagUSTRUCT::StaticStruct(), true, true, true);
 		const FFlecsEntityHandle HighIdComponent
 			= World()->RegisterScriptStruct(FFlecsTestStruct_Value::StaticStruct(), true, false, false);
 
