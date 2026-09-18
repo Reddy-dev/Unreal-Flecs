@@ -35,6 +35,7 @@ public:
 	// @TODO: currently unused
 	virtual void SetFlecsObjectState(const TSolidNotNull<UFlecsWorldInterfaceObject*> InFlecsWorld, const EFlecsObjectRegistrationStateType InState);
 	
+	// @TODO: unused
 	virtual NO_DISCARD EFlecsObjectRegistrationStateType GetObjectRegistrationState() const
 	{
 		return EFlecsObjectRegistrationStateType::Active;

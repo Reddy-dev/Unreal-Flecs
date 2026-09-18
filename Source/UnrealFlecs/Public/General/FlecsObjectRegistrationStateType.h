@@ -4,6 +4,7 @@
 
 #include "FlecsObjectRegistrationStateType.generated.h"
 
+// @TODO: unimplemented
 UENUM(BlueprintType)
 enum class EFlecsObjectRegistrationStateType : uint8
 {
