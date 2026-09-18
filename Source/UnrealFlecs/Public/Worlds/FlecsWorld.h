@@ -357,6 +357,10 @@ public:
 	UPROPERTY()
 	TOptional<double> PrePauseTimeScale;
 	
+	// @TOOD: currently unimplemented
+	UPROPERTY()
+	TOptional<double> TimeScale;
+	
 	UPROPERTY()
 	TArray<TObjectPtr<UFlecsStage>> Stages;
 
