@@ -40,7 +40,6 @@ TTuple<FString, EUnrealFlecsRegistrationScopeType> UE::Flecs::Registration::Reso
 		case EUnrealFlecsRegistrationScopeType::Module:
 			{
 				return MakeTuple(ModuleName, InScopeType);
-				break;
 			}
 		case EUnrealFlecsRegistrationScopeType::Plugin:
 			{
