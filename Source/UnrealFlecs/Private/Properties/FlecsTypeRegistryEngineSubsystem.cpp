@@ -45,6 +45,8 @@ TArray<FString> UFlecsTypeRegistryEngineSubsystem::SortComponentsByDependencies(
     	
         AddInputDependencies(Definition.WithTypes);
     	
+    	AddInputDependencies(Definition.CustomTraits);
+    	
         if (Definition.ChildOf.IsSet())
         {
             FString DependencyName;
@@ -65,7 +67,7 @@ TArray<FString> UFlecsTypeRegistryEngineSubsystem::SortComponentsByDependencies(
     	
         for (const FString& Dependency : Dependencies)
         {
-            if (!NameToDefinition.Contains(Dependency))
+            if UNLIKELY_IF(!NameToDefinition.Contains(Dependency))
             {
                 UE_LOG(LogFlecsCore, Error,
                     TEXT("Component %s depends on %s which is not registered. Skipping dependency."),
