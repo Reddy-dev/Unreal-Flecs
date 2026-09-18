@@ -18,9 +18,9 @@ struct UNREALFLECS_API FFlecsModuleRegistryRegisteredItem
 		return GetTypeHash(InItem.Name);
 	}
 	
-	NO_DISCARD friend bool operator==(const FFlecsModuleRegistryRegisteredItem& LHS, const FFlecsModuleRegistryRegisteredItem& RHS)
+	NO_DISCARD FORCEINLINE bool UEOpEquals(const FFlecsModuleRegistryRegisteredItem& RHS) const
 	{
-		return LHS.Name == RHS.Name;
+		return Name == RHS.Name;
 	}
 	
 	FName Name;
