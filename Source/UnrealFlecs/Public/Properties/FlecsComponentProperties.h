@@ -215,6 +215,7 @@ public:
 		return "";
 	}
 
+	// use this function for when you need another type that is auto registered, to be auto registered prior to this type
 	static const TArray<FString>& CustomTypeDependencies()
 	{
 		static const TArray<FString> EmptyArray;
