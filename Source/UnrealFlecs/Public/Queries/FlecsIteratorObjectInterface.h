@@ -91,7 +91,7 @@ public:
 	 *
 	 * @code
 	 * // BuildSystem appends Position as term 0 and optional Velocity as term 1.
-	 * InBuilder.With<const FPosition>().In()
+	 * InBuilder.With<const FPosition>() ( can also use InBuilder.With<FPosition>().In() )
 	 *     .With<FVelocity>().Optional();
 	 *
 	 * const FPosition& Position = InIterator.field_at<const FPosition>(0, InIndex);
