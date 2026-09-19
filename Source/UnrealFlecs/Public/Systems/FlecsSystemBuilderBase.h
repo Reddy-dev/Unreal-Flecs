@@ -178,12 +178,35 @@ public:
 		return this->GetSelf();
 	}
 	
+	/**
+	 * Allows the Flecs scheduler to divide matched entities across worker stages.
+	 *
+	 * The world must be configured with worker threads for this to execute in
+	 * parallel. Callbacks can then run concurrently and receive a stage-backed
+	 * world interface. Query access annotations coordinate ECS component access,
+	 * but the callback remains responsible for synchronizing external state and
+	 * must not use game-thread-only Unreal APIs. Immediate systems are always
+	 * scheduled single-threaded.
+	 *
+	 * @see https://www.flecs.dev/flecs/Systems.html#threading
+	 */
 	FORCEINLINE TInherited& MultiThreaded(const bool bInMultiThreaded = true)
 	{
 		GetSystemDefinition().bMultiThreaded = bInMultiThreaded;
 		return this->GetSelf();
 	}
 	
+	/**
+	 * Requests scheduled execution outside the world's readonly mode.
+	 *
+	 * This makes structural changes to other entities immediately visible, but
+	 * operations on an entity in the table currently being iterated remain
+	 * deferred to avoid invalidating the iterator. Immediate systems are always
+	 * scheduled single-threaded. Explicit RunSystem calls use Flecs' manual run
+	 * path, which opens its own defer scope.
+	 *
+	 * @see https://www.flecs.dev/flecs/Systems.html#immediate-systems
+	 */
 	FORCEINLINE TInherited& Immediate(const bool bInImmediate = true)
 	{
 		GetSystemDefinition().bImmediate = bInImmediate;

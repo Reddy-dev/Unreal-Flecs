@@ -25,7 +25,7 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 	FFlecsSystemPhaseInput PhaseInput;
-		
+	
 	UPROPERTY(EditAnywhere)
 	double Interval = 0.0;
 	
@@ -35,9 +35,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FFlecsSystemTickSourceInput TickSourceInput;
 	
+	/**
+	 * Allows scheduled work to be split across configured Flecs worker stages.
+	 * Callbacks may run in parallel and must use only thread-safe external state
+	 * and Unreal APIs.
+	 */
 	UPROPERTY(EditAnywhere)
 	bool bMultiThreaded = false;
 	
+	/**
+	 * Runs the scheduled system outside Flecs readonly mode.
+	 * Immediate systems are single-threaded. Structural changes to the currently
+	 * iterated entity remain deferred so that its storage is not invalidated.
+	 */
 	UPROPERTY(EditAnywhere)
 	bool bImmediate = false;
 	
