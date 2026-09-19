@@ -704,7 +704,7 @@ public:
 
 			if constexpr (TFlecsComponentTraits<T>::Inheritable)
 			{
-				ComponentHandle.Add(flecs::Inherit);
+				ComponentHandle.Add(flecs::Inheritable);
 			}
 
 			if constexpr (TFlecsComponentTraits<T>::Final)
