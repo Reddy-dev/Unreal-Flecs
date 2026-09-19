@@ -902,7 +902,7 @@ namespace UE::Flecs::Private
 				{
 					if (const UField* FieldObject = UE::Flecs::internal::GetMetaTypeIf<T>())
 					{
-						auto[OutScopeName, OutScopeType] = UE::Flecs::Registration::ResolveScopeTypeName(
+						auto [OutScopeName, OutScopeType] = Registration::ResolveScopeTypeName(
 								FieldObject, 
 								Definition.RegistrationScopeType);
 						
