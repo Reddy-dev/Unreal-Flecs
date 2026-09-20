@@ -195,11 +195,6 @@ bool UFlecsWorldInterfaceObject::BeginDefer() const
 	return GetNativeFlecsWorld_Internal()->defer_begin();
 }
 
-FFlecsScopedDeferWindow UFlecsWorldInterfaceObject::DeferWindow() const
-{
-	return FFlecsScopedDeferWindow(this);
-}
-
 bool UFlecsWorldInterfaceObject::EndDefer() const
 {
 	return GetNativeFlecsWorld_Internal()->defer_end();

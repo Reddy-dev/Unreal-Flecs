@@ -302,10 +302,7 @@ void UFlecsWorld::InitializeFlecsRegistrationObjects()
 {
 	for (const UFlecsObjectRegistrationProviderBase* Provider : UFlecsObjectRegistrationProviderBase::IterateProviders())
 	{
-		if UNLIKELY_IF(!IsValid(Provider))
-		{
-			return;
-		}
+		solid_cassume(Provider);
 		
 		for (const TSubclassOf<UObject>& RegisteredClass : Provider->GetClassesToRegister())
 		{

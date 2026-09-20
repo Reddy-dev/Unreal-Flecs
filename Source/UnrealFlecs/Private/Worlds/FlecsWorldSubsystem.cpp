@@ -120,30 +120,31 @@ UFlecsWorld* UFlecsWorldSubsystem::CreateWorld(const FString& Name, const FFlecs
 	DuplicatedGameLoops.Reserve(InGameLoops.Num());
 
 	{
-		FFlecsScopedDeferWindow ScopedDeferWindow(DefaultWorld.Get());
-		
-		for (TObjectPtr<UObject> GameLoop : InGameLoops)
+		DefaultWorld->Defer([this, &InGameLoops, &DuplicatedGameLoops]()
 		{
-			solid_checkf(GameLoop,
-						 TEXT("GameLoop is nullptr in world %s"), *DefaultWorld->GetName());
+			for (TObjectPtr<UObject> GameLoop : InGameLoops)
+			{
+				solid_checkf(GameLoop,
+							 TEXT("GameLoop is nullptr in world %s"), *DefaultWorld->GetName());
 		
-			solid_checkf(GameLoop->GetClass()->ImplementsInterface(UFlecsGameLoopInterface::StaticClass()),
-						 TEXT("GameLoop %s does not implement UFlecsGameLoopInterface"), *GameLoop->GetName());
+				solid_checkf(GameLoop->GetClass()->ImplementsInterface(UFlecsGameLoopInterface::StaticClass()),
+							 TEXT("GameLoop %s does not implement UFlecsGameLoopInterface"), *GameLoop->GetName());
 			
-			UObject* DuplicatedGameLoop = DuplicateObject<UObject>(GameLoop, DefaultWorld);
+				UObject* DuplicatedGameLoop = DuplicateObject<UObject>(GameLoop, DefaultWorld);
 		
-			solid_cassumef(DuplicatedGameLoop, TEXT("Failed to duplicate GameLoop %s for world %s"),
-						  *GameLoop->GetName(), *DefaultWorld->GetName());
+				solid_cassumef(DuplicatedGameLoop, TEXT("Failed to duplicate GameLoop %s for world %s"),
+							  *GameLoop->GetName(), *DefaultWorld->GetName());
 		
-			solid_checkf(IsValid(DuplicatedGameLoop),
-							TEXT("Failed to duplicate GameLoop %s for world %s"),
-							*GameLoop->GetName(), *DefaultWorld->GetName());
+				solid_checkf(IsValid(DuplicatedGameLoop),
+								TEXT("Failed to duplicate GameLoop %s for world %s"),
+								*GameLoop->GetName(), *DefaultWorld->GetName());
 		
-			DuplicatedGameLoops.Add(DuplicatedGameLoop);
-			const TSolidNotNull<IFlecsGameLoopInterface*> GameLoopInterface = CastChecked<IFlecsGameLoopInterface>(DuplicatedGameLoop);
-			TSharedStruct<FFlecsTickFunction> TickFunction = GameLoopInterface->InitializeTickFunction(DefaultWorld);
+				DuplicatedGameLoops.Add(DuplicatedGameLoop);
+				const TSolidNotNull<IFlecsGameLoopInterface*> GameLoopInterface = CastChecked<IFlecsGameLoopInterface>(DuplicatedGameLoop);
+				TSharedStruct<FFlecsTickFunction> TickFunction = GameLoopInterface->InitializeTickFunction(DefaultWorld);
 			
-		}
+			}
+		});
 		
 		
 	}

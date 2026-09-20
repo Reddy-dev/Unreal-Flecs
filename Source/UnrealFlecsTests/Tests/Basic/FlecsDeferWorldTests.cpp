@@ -144,35 +144,6 @@ public:
 		TestEntity.Remove<FFlecsTestStruct_Value>();
 		ASSERT_THAT(IsFalse(TestEntity.Has<FFlecsTestStruct_Value>()));
 	}
-
-	TEST_METHOD(ScopedDeferWindow_Add_CPPAPI_Remove_CPPAPI)
-	{
-		{
-			FFlecsScopedDeferWindow DeferWindow(World());
-			solid_checkf(DeferWindow.IsValid(), TEXT("DeferWindow is not valid!"));
-
-			TestEntity.Add<FFlecsTestStruct_Value>();
-			// 
-			ASSERT_THAT(IsFalse(TestEntity.Has<FFlecsTestStruct_Value>(),
-				"TestEntity should not have the component yet!"));
-		}
-
-		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Value>(),
-			"TestEntity should have the component after the deferred context is applied!"));
-
-		{
-			FFlecsScopedDeferWindow DeferWindow(World());
-			solid_checkf(DeferWindow.IsValid(), TEXT("DeferWindow is not valid!"));
-
-			TestEntity.Remove<FFlecsTestStruct_Value>();
-			
-			ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Value>(),
-				"TestEntity should have the component before the deferred context is applied!"));
-		}
-
-		ASSERT_THAT(IsFalse(TestEntity.Has<FFlecsTestStruct_Value>(),
-			"TestEntity should not have the component after the deferred context is applied!"));
-	}
 	
 }; // DeferWorldTests
 

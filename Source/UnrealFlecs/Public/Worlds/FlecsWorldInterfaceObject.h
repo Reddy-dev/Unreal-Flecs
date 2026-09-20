@@ -10,7 +10,6 @@
 
 #include "SolidMacros/Macros.h"
 
-#include "FlecsScopedDeferWindow.h"
 #include "Entities/FlecsEntityHandle.h"
 #include "Entities/FlecsComponentHandle.h"
 #include "Entities/FlecsId.h"
@@ -77,8 +76,6 @@ public:
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
 	bool BeginDefer() const;
-
-	NO_DISCARD FFlecsScopedDeferWindow DeferWindow() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
 	bool EndDefer() const;
