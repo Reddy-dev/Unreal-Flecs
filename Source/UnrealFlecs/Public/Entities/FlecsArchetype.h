@@ -100,7 +100,8 @@ public:
      */
     NO_DISCARD FORCEINLINE FFlecsId GetAtIndex(const int32 InIndex) const
     {
-        solid_checkf(InIndex >= 0 && InIndex < Type.count(),
+        solid_cassume(InIndex >= 0);
+        solid_checkf(InIndex < Type.count(),
             TEXT("Index %d is out of bounds for archetype with %d components"), InIndex, Type.count());
         return FFlecsId(Type.get(InIndex));
     }
