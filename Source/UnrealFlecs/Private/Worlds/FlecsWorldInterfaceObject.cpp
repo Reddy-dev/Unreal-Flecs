@@ -2,6 +2,7 @@
 
 #include "Worlds/FlecsWorldInterfaceObject.h"
 
+#include "Components/UnrealFlecsModuleTag.h"
 #include "Components/UnrealFlecsPluginTag.h"
 #include "Types/SolidCppStructOps.h"
 
@@ -1258,7 +1259,7 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::GetFlecsModule(const FName& InMod
 {
 	const FFlecsEntityHandle ModuleEntity = LookupEntity(InModuleName.ToString());
 	
-	if UNLIKELY_IF(!ModuleEntity.IsValid() || !ModuleEntity.Has(flecs::Module))
+	if UNLIKELY_IF(!ModuleEntity.IsValid() || !ModuleEntity.Has<FUnrealFlecsModuleTag>())
 	{
 		UE_LOGFMT(LogFlecsWorld, Warning,
 			"Module {ModuleName} does not exist or is not a valid flecs module",
@@ -1274,7 +1275,7 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::GetFlecsPlugin(const FName& InPlu
 {
 	const FFlecsEntityHandle PluginEntity = LookupEntity(InPluginName.ToString());
 	
-	if UNLIKELY_IF(!PluginEntity.IsValid() || !PluginEntity.Has(flecs::Module) || !PluginEntity.Has<FUnrealFlecsPluginTag>())
+	if UNLIKELY_IF(!PluginEntity.IsValid() || !PluginEntity.Has<FUnrealFlecsPluginTag>())
 	{
 		UE_LOGFMT(LogFlecsWorld, Warning,
 			"Module {ModuleName} does not exist or is not a valid flecs module",
