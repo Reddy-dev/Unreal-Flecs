@@ -439,7 +439,7 @@ public:
 		solid_checkf(!InSelf.GetNativeFlecsWorld().is_deferred(),
 					 TEXT("Cannot add member to component while in deferred mode."));
 		
-		InSelf.GetUntypedComponent().template member<TMember, TComponent>(StringCast<char>(*InName).Get(), MemberPtr);
+		InSelf.GetUntypedComponent().template member<TMember, TComponent>(MemberPtr, StringCast<char>(*InName).Get());
 		return InSelf;
 	}
 
@@ -449,7 +449,7 @@ public:
 		solid_checkf(!InSelf.GetNativeFlecsWorld().is_deferred(),
 					 TEXT("Cannot add member to component while in deferred mode."));
 		
-		InSelf.GetUntypedComponent().template member<TUnit, TMember, TComponent>(StringCast<char>(*InName).Get(), MemberPtr);
+		InSelf.GetUntypedComponent().template member<TUnit, TMember, TComponent>(MemberPtr, StringCast<char>(*InName).Get());
 		return InSelf;
 	}
 
