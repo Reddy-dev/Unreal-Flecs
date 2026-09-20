@@ -39,6 +39,8 @@ UCLASS(BlueprintType, NotBlueprintable)
 class UNREALFLECS_API UFlecsWorld final : public UFlecsWorldInterfaceObject
 {
 	GENERATED_BODY()
+	
+	friend class UFlecsWorldSubsystem;
 
 public:
 	UFlecsWorld(const FObjectInitializer& ObjectInitializer);
@@ -144,8 +146,6 @@ public:
 		std::invoke(SOLID_FWD(Function));
 		EndReadOnly();
 	}
-
-	void SetContext(void* InContext) const;
 
 	void HandleWorldPause();
 
@@ -373,6 +373,8 @@ protected:
 	{
 		return const_cast<flecs::world*>(&World);
 	}
+	
+	void SetContext(void* InContext) const;
 
 private:
 	flecs::world World;
