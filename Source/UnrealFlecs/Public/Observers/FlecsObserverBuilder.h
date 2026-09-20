@@ -18,7 +18,7 @@ class UFlecsWorldInterfaceObject;
  *
  * @tparam TComponents Component field types passed to each() and run_each().
  * @see TFlecsObserverBuilderBase
- * @see https://www.flecs.dev/flecs/Observers.html
+ * @see https://www.flecs.dev/flecs/ObserversManual.html
  */
 template <typename ...TComponents>
 struct TFlecsObserverBuilder : public TFlecsObserverBuilderBase<TFlecsObserverBuilder<TComponents...>, FFlecsObserverHandle, TComponents...>
