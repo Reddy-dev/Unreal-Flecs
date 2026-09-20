@@ -758,3 +758,13 @@ namespace Solid
 #ifndef SOLID_SELECT_ANY
 #define SOLID_SELECT_ANY UE_SELECT_ANY
 #endif // SOLID_SELECT_ANY
+
+#ifndef SOLID_MOV
+#define SOLID_MOV(...) \
+  static_cast<flecs::remove_reference_t<decltype(__VA_ARGS__)>&&>(__VA_ARGS__)
+#endif // SOLID_MOV
+
+#ifndef SOLID_FWD
+#define SOLID_FWD(...) \
+  static_cast<decltype(__VA_ARGS__)&&>(__VA_ARGS__)
+#endif // SOLID_FWD

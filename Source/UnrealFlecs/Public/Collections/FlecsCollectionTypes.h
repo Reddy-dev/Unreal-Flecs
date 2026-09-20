@@ -193,7 +193,7 @@ public:
 	template <Solid::TScriptStructConcept T, typename FuncType>
 	void SetApplyParametersFunction(FuncType&& InFunction)
 	{
-		ApplyParametersFunction = [InFunction = std::forward<FuncType>(InFunction)]
+		ApplyParametersFunction = [InFunction = SOLID_FWD(InFunction)]
 			(const FFlecsEntityHandle& InEntityHandle, const FInstancedStruct& InParameters)
 		{
 			std::invoke(InFunction, InEntityHandle,

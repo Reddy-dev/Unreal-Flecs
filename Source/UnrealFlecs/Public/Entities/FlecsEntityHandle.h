@@ -323,7 +323,7 @@ public:
 	template <typename T, typename ... Args, typename TActual = flecs::actual_type_t<T>, typename TSelf>
 	SOLID_INLINE const TSelf& Emplace(this const TSelf& InSelf, Args&& ... InArgs)
 	{
-		InSelf.GetEntity().template emplace<T>(std::forward<Args>(InArgs)...);
+		InSelf.GetEntity().template emplace<T>(SOLID_FWD(InArgs)...);
 		return InSelf;
 	}
 
@@ -331,14 +331,14 @@ public:
 	requires (std::is_same<TFirst, TActual>::value)
 	SOLID_INLINE const TSelf& EmplaceFirst(this const TSelf& InSelf, Args&& ... InArgs)
 	{
-		InSelf.GetEntity().template emplace<TFirst, TSecond>(std::forward<Args>(InArgs)...);
+		InSelf.GetEntity().template emplace<TFirst, TSecond>(SOLID_FWD(InArgs)...);
 		return InSelf;
 	}
 
 	template <typename TFirst, UE::Flecs::TFlecsEntityFunctionInputTypeConcept TSecond, typename ... Args, typename TSelf>
 	SOLID_INLINE const TSelf& EmplaceFirst(this const TSelf& InSelf, const TSecond& InSecondType, Args&& ... InArgs)
 	{
-		InSelf.GetEntity().template emplace_first<TFirst>(FFlecsEntityHandle::GetInputId(InSelf, InSecondType), std::forward<Args>(InArgs)...);
+		InSelf.GetEntity().template emplace_first<TFirst>(FFlecsEntityHandle::GetInputId(InSelf, InSecondType), SOLID_FWD(InArgs)...);
 		return InSelf;
 	}
 
@@ -346,14 +346,14 @@ public:
 	requires (std::is_same<TSecond, TActual>::value)
 	SOLID_INLINE const TSelf& EmplaceSecond(this const TSelf& InSelf, Args&& ... InArgs)
 	{
-		InSelf.GetEntity().template emplace<TFirst, TSecond>(std::forward<Args>(InArgs)...);
+		InSelf.GetEntity().template emplace<TFirst, TSecond>(SOLID_FWD(InArgs)...);
 		return InSelf;
 	}
 
 	template <typename TSecond, UE::Flecs::TFlecsEntityFunctionInputTypeConcept TFirst, typename ... Args, typename TSelf>
 	SOLID_INLINE const TSelf& EmplaceSecond(this const TSelf& InSelf, const TFirst& InFirstType, Args&& ... InArgs)
 	{
-		InSelf.GetEntity().template emplace_second<TSecond>(FFlecsEntityHandle::GetInputId(InSelf, InFirstType), std::forward<Args>(InArgs)...);
+		InSelf.GetEntity().template emplace_second<TSecond>(FFlecsEntityHandle::GetInputId(InSelf, InFirstType), SOLID_FWD(InArgs)...);
 		return InSelf;
 	}
 
@@ -596,14 +596,14 @@ public:
 	template <typename TEvent, typename FunctionType, typename TSelf>
 	SOLID_INLINE const TSelf& Observe(this const TSelf& InSelf, FunctionType&& InFunction)
 	{
-		InSelf.GetEntity().template observe<TEvent>(std::forward<FunctionType>(InFunction));
+		InSelf.GetEntity().template observe<TEvent>(SOLID_FWD(InFunction));
 		return InSelf;
 	}
 
 	template <UE::Flecs::TFlecsEntityFunctionInputTypeConcept T, typename FunctionType, typename TSelf>
 	SOLID_INLINE const TSelf& Observe(this const TSelf& InSelf, const T& InValue, FunctionType&& InFunction)
 	{
-		InSelf.GetEntity().observe(FFlecsEntityHandle::GetInputId(InSelf, InValue), std::forward<FunctionType>(InFunction));
+		InSelf.GetEntity().observe(FFlecsEntityHandle::GetInputId(InSelf, InValue), SOLID_FWD(InFunction));
 		return InSelf;
 	}
 	

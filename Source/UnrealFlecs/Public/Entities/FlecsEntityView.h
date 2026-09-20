@@ -201,7 +201,7 @@ public:
 	requires (flecs::is_callable<TFunction>::value)
 	SOLID_INLINE bool GetLambda(TFunction&& InFunction) const
 	{
-		return GetEntityView().get(std::forward<TFunction>(InFunction));
+		return GetEntityView().get(SOLID_FWD(InFunction));
 	}
 
 	template <typename T>
@@ -478,58 +478,58 @@ public:
 	template <typename FunctionType>
 	SOLID_INLINE void Iterate(FunctionType&& InFunction) const
 	{
-		GetEntityView().each(std::forward<FunctionType>(InFunction));
+		GetEntityView().each(SOLID_FWD(InFunction));
 	}
 
 	template <typename TFirst, typename FunctionType>
 	SOLID_INLINE void Iterate(FunctionType&& InFunction) const
 	{
-		GetEntityView().each<TFirst, FunctionType>(std::forward<FunctionType>(InFunction));
+		GetEntityView().each<TFirst, FunctionType>(SOLID_FWD(InFunction));
 	}
 
 	template <UE::Flecs::TFlecsEntityFunctionInputDataTypeConcept TFirst, typename FunctionType>
 	SOLID_INLINE void Iterate(const TFirst& InFirstTypeValue, FunctionType&& InFunction) const
 	{
 		GetEntityView().each(FFlecsEntityView::GetInputId(*this, InFirstTypeValue),
-			std::forward<FunctionType>(InFunction));
+			SOLID_FWD(InFunction));
 	}
 	
 	template <typename FunctionType>
 	SOLID_INLINE void Each(FunctionType&& InFunction) const
 	{
-		GetEntityView().each(std::forward<FunctionType>(InFunction));
+		GetEntityView().each(SOLID_FWD(InFunction));
 	}
 
 	template <typename TFirst, typename FunctionType>
 	SOLID_INLINE void Each(FunctionType&& InFunction) const
 	{
-		GetEntityView().each<TFirst, FunctionType>(std::forward<FunctionType>(InFunction));
+		GetEntityView().each<TFirst, FunctionType>(SOLID_FWD(InFunction));
 	}
 
 	template <UE::Flecs::TFlecsEntityFunctionInputDataTypeConcept TFirst, typename FunctionType>
 	SOLID_INLINE void Each(const TFirst& InFirstTypeValue, FunctionType&& InFunction) const
 	{
 		GetEntityView().each(FFlecsEntityView::GetInputId(*this, InFirstTypeValue),
-			std::forward<FunctionType>(InFunction));
+			SOLID_FWD(InFunction));
 	}
 
 	template <typename FunctionType>
 	SOLID_INLINE void IterateChildren(FunctionType&& InFunction) const
 	{
-		GetEntityView().children(std::forward<FunctionType>(InFunction));
+		GetEntityView().children(SOLID_FWD(InFunction));
 	}
 
 	template <typename TFirst, typename FunctionType>
 	SOLID_INLINE void IterateChildren(FunctionType&& InFunction) const
 	{
-		GetEntityView().children<TFirst, FunctionType>(std::forward<FunctionType>(InFunction));
+		GetEntityView().children<TFirst, FunctionType>(SOLID_FWD(InFunction));
 	}
 
 	template <UE::Flecs::TFlecsEntityFunctionInputDataTypeConcept TFirst, typename FunctionType>
 	SOLID_INLINE void IterateChildren(const TFirst& InFirstTypeValue, FunctionType&& InFunction) const
 	{
 		GetEntityView().children(FFlecsEntityView::GetInputId(*this, InFirstTypeValue),
-			std::forward<FunctionType>(InFunction));
+			SOLID_FWD(InFunction));
 	}
 
 	template <typename TEnum>

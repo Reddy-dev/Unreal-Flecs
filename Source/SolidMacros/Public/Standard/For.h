@@ -8,6 +8,8 @@
 
 #include "CoreTypes.h"
 
+#include "SolidMacros/Macros.h"
+
 
 namespace Solid
 {
@@ -88,7 +90,7 @@ namespace Solid
     template <typename Tuple, typename FunctionType, std::size_t... Indices>
     FORCEINLINE constexpr void ForEachTupleImpl(Tuple&& InTuple, FunctionType Function, std::index_sequence<Indices...>)
     {
-        (Function(std::get<Indices>(std::forward<Tuple>(InTuple))), ...);
+        (Function(std::get<Indices>(SOLID_FWD(InTuple))), ...);
     }
 
     template <uint32 Start, uint32 End, typename Tuple, typename FunctionType, std::size_t... Indices>
@@ -100,7 +102,7 @@ namespace Solid
     template <typename Tuple, typename FunctionType>
     FORCEINLINE constexpr void ForEachTuple(Tuple&& InTuple, FunctionType Function)
     {
-        ForEachTupleImpl<decltype(InTuple), FunctionType>(std::forward<Tuple>(InTuple),
+        ForEachTupleImpl<decltype(InTuple), FunctionType>(SOLID_FWD(InTuple),
             Function, std::make_index_sequence<std::tuple_size_v<std::remove_reference_t<Tuple>>>{});
     }
 

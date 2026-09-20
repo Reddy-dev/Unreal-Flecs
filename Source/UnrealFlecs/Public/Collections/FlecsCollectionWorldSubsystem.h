@@ -87,7 +87,7 @@ public:
 
 		FFlecsCollectionBuilder Builder = FFlecsCollectionBuilder::Create(Definition);
 
-		std::invoke(std::forward<FuncType>(InBuildFunc), Builder);
+		std::invoke(SOLID_FWD(InBuildFunc), Builder);
 
 		return RegisterCollectionDefinition(Builder.IdName, Definition);
 	}
@@ -101,7 +101,7 @@ public:
 		FFlecsCollectionDefinition Definition;
 		
 		FFlecsCollectionBuilder Builder = FFlecsCollectionBuilder::Create(Definition);
-		std::invoke(std::forward<FuncType>(InBuildFunc), Builder);
+		std::invoke(SOLID_FWD(InBuildFunc), Builder);
 		
 		return RegisterCollectionClass(InClass, Builder);
 	}

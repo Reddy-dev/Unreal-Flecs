@@ -415,7 +415,7 @@ public:
 
 		FFlecsCollectionParametersComponent ParametersComponent;
 		ParametersComponent.ParameterType = FInstancedStruct::Make<T>(InParameters);
-		ParametersComponent.ApplyParametersFunction = [InApplyFunction = std::forward<TApplyFunction>(InApplyFunction)]
+		ParametersComponent.ApplyParametersFunction = [InApplyFunction = SOLID_FWD(InApplyFunction)]
 			(FFlecsEntityHandle TargetEntity, const FInstancedStruct& Parameters)
 			{
 				InApplyFunction(TargetEntity, Parameters.Get<T>());

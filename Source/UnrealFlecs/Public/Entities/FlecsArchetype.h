@@ -81,14 +81,14 @@ public:
         {
             if constexpr (std::is_same_v<ReturnType, bool>)
             {
-                if (std::invoke(std::forward<FunctionType>(InFunction), Component))
+                if (std::invoke(SOLID_FWD(InFunction), Component))
                 {
                     break;
                 }
             }
             else
             {
-                std::invoke(std::forward<FunctionType>(InFunction), Component);
+                std::invoke(SOLID_FWD(InFunction), Component);
             }
         }
     }

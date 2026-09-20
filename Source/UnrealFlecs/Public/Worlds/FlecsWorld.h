@@ -116,13 +116,13 @@ public:
 	template <typename FunctionType>
 	void ForEach(FunctionType&& Function) const
 	{
-		World.each(std::forward<FunctionType>(Function));
+		World.each(SOLID_FWD(Function));
 	}
 
 	template <typename T, typename FunctionType>
 	void ForEach(FunctionType&& Function) const
 	{
-		World.each<T>(std::forward<FunctionType>(Function));
+		World.each<T>(SOLID_FWD(Function));
 	}
 
 	template <typename FunctionType>
@@ -141,7 +141,7 @@ public:
 	void ReadOnly(TFunction&& Function) const
 	{
 		BeginReadOnly();
-		std::invoke(std::forward<TFunction>(Function));
+		std::invoke(SOLID_FWD(Function));
 		EndReadOnly();
 	}
 
