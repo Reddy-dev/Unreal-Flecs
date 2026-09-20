@@ -7,6 +7,7 @@
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsTestTypes)
 
 REGISTER_FLECS_COMPONENT(FFlecsTest_CPPStruct_Traits);
+REGISTER_FLECS_COMPONENT(FFlecsTest_CPPStructValue_ManualMember);
 REGISTER_FLECS_COMPONENT(FFlecsTest_CPPStructValue_Traits_WithTypedComponentHandleInLambda);
 REGISTER_FLECS_COMPONENT(FFlecsTestStruct_Tag);
 REGISTER_FLECS_COMPONENT(FFlecsTestStruct_Tag_Inherited);

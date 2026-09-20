@@ -24,6 +24,23 @@ struct FFlecsTest_CPPStructValue
 	int32 Value = 1;
 }; // struct FFlecsTest_CPPStructWithNameAndValue
 
+struct FFlecsTest_CPPStructValue_ManualMember
+{
+	int32 Value = 0;
+}; // struct FFlecsTest_CPPStructValue_ManualMember
+
+template <>
+struct TFlecsComponentTraits<FFlecsTest_CPPStructValue_ManualMember>
+	: public TFlecsComponentTraitsBase<FFlecsTest_CPPStructValue_ManualMember>
+{
+	static constexpr bool AutoRegister = false;
+
+	static void PostRegister(const FFlecsComponentHandle& ComponentHandle)
+	{
+		ComponentHandle.AddMember(TEXT("Value"), &FFlecsTest_CPPStructValue_ManualMember::Value);
+	}
+}; // struct TFlecsComponentTraits<FFlecsTest_CPPStructValue_ManualMember>
+
 struct FFlecsTest_CPPStruct_Traits
 {
 }; // struct FFlecsTest_CppStruct_Traits

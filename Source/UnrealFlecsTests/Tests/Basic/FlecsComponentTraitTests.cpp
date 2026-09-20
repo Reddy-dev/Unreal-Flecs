@@ -38,6 +38,26 @@ FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsComponentTraitTests,
 		ASSERT_THAT(IsTrue(StructEntity.Has(flecs::Trait)));
 	}
 
+	TEST_METHOD(ManualMemberRegistration_CPPOnlyType_CPPAPI)
+	{
+		const FFlecsComponentHandle Component = World()->RegisterComponentType<FFlecsTest_CPPStructValue_ManualMember>();
+		ASSERT_THAT(IsTrue(Component.IsValid()));
+
+		const FFlecsMemberHandle Member = Component.GetLastMember();
+		ASSERT_THAT(IsTrue(Member.IsValid()));
+
+		if (!Member.IsValid())
+		{
+			return;
+		}
+
+		const flecs::member_t* FlecsMember = Member.GetFlecsMember();
+		ASSERT_THAT(IsNotNull(FlecsMember));
+		ASSERT_THAT(IsTrue(FlecsMember->name != nullptr));
+		ASSERT_THAT(IsTrue(FCStringAnsi::Strcmp(FlecsMember->name, "Value") == 0));
+		ASSERT_THAT(IsTrue(FlecsMember->offset == offsetof(FFlecsTest_CPPStructValue_ManualMember, Value)));
+	}
+
 	TEST_METHOD(GetComponentWithEmptyRegistrationFunctionNoTraits_StaticStructAPI)
 	{
 		const FFlecsEntityHandle StaticStructEntity = World()->RegisterComponentType(FFlecsTestStruct_EmptyRegistrationFunction::StaticStruct());
