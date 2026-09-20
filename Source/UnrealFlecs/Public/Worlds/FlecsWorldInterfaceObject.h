@@ -95,7 +95,7 @@ public:
 	template <typename TFunction>
 	void Defer(TFunction&& Function) const
 	{
-		GetNativeFlecsWorld_Internal()->defer<TFunction>(std::forward<TFunction>(Function));
+		GetNativeFlecsWorld_Internal()->defer<TFunction>(FLECS_FWD(Function));
 	}
 
 	/**
@@ -120,7 +120,7 @@ public:
 			}
 		}
 
-		std::invoke(std::forward<TFunction>(Function));
+		std::invoke(FLECS_FWD(Function));
 
 		if (bIsDeferred)
 		{
@@ -187,13 +187,13 @@ public:
 	template <typename T, typename FunctionType>
 	void Scope(FunctionType&& Function) const
 	{
-		GetNativeFlecsWorld_Internal()->scope<T>(std::forward<FunctionType>(Function));
+		GetNativeFlecsWorld_Internal()->scope<T>(FLECS_FWD(Function));
 	}
 
 	template <typename FunctionType>
 	void Scope(FFlecsId InId, FunctionType&& Function) const
 	{
-		GetNativeFlecsWorld_Internal()->scope(InId, std::forward<FunctionType>(Function));
+		GetNativeFlecsWorld_Internal()->scope(InId, FLECS_FWD(Function));
 	}
 
 	template <typename FunctionType>
@@ -201,7 +201,7 @@ public:
 	{
 		const flecs::entity OldScope = GetNativeFlecsWorld_Internal()->set_scope(0);
 
-		std::invoke(std::forward<FunctionType>(Function));
+		std::invoke(FLECS_FWD(Function));
 
 		GetNativeFlecsWorld_Internal()->set_scope(OldScope);
 	}
@@ -559,19 +559,19 @@ public:
 	template <typename FunctionType>
 	void ForEachChild(FunctionType&& Function) const
 	{
-		GetNativeFlecsWorld_Internal()->children(std::forward<FunctionType>(Function));
+		GetNativeFlecsWorld_Internal()->children(FLECS_FWD(Function));
 	}
 
 	template <typename T, typename FunctionType>
 	void ForEachChild(FunctionType&& Function) const
 	{
-		GetNativeFlecsWorld_Internal()->children<T>(std::forward<FunctionType>(Function));
+		GetNativeFlecsWorld_Internal()->children<T>(FLECS_FWD(Function));
 	}
 
 	template <typename FunctionType>
 	void ForEachChild(const FFlecsId& InRelationId, FunctionType&& Function) const
 	{
-		GetNativeFlecsWorld_Internal()->children(InRelationId, std::forward<FunctionType>(Function));
+		GetNativeFlecsWorld_Internal()->children(InRelationId, FLECS_FWD(Function));
 	}
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
