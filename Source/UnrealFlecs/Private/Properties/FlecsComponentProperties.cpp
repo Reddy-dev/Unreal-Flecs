@@ -59,6 +59,11 @@ namespace UE::Flecs::Private
 		{
 			return RegisteredItem->DefaultScopeType;
 		}
+		else if (const FFlecsModuleRegistryRegisteredItem* PluginRegisteredItem
+			= FFlecsModuleRegistry::Get().FindRegisteredPlugin(FName(InPluginName)))
+		{
+			return PluginRegisteredItem->DefaultScopeType;
+		}
 
 		return EUnrealFlecsRegistrationScopeType::None;
 	}
