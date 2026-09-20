@@ -82,6 +82,21 @@ namespace UE::Flecs::Queries
 	
 } // namespace UE::Flecs::Queries
 
+/**
+ * @brief CRTP base for fluent Unreal-Flecs query-definition builders.
+ *
+ * This base stores query terms and options in the derived builder's
+ * FFlecsQueryDefinition. The query, system, observer, and pipeline builders
+ * share this API; their concrete types decide how the definition is
+ * materialized.
+ *
+ * Term modifiers operate on the most recently added term, tracked by
+ * LastTermIndex. Add a term with With(), Without(), or a pair helper before
+ * applying operators, access modes, sources, or traversal expressions.
+ *
+ * @tparam TInherited Concrete builder type used for fluent return values.
+ * @see https://www.flecs.dev/flecs/Queries.html
+ */
 template <typename TInherited>
 struct TFlecsQueryBuilderBase
 {
@@ -116,13 +131,21 @@ protected:
 	
 public:
 	
+	/** Returns the mutable query definition owned by the derived builder. */
 	FORCEINLINE_DEBUGGABLE FFlecsQueryDefinition& GetQueryDefinition() const
 	{
 		return this->GetSelf().GetQueryDefinition_Impl();
 	}
 	
+	/** Index of the term targeted by the next term modifier. */
 	mutable int32 LastTermIndex = -1;
 	
+	/**
+	 * @brief Appends a pre-built term expression and selects it as the current term.
+	 *
+	 * @param InTerm Term expression to append.
+	 * @return The derived builder for fluent chaining.
+	 */
 	FORCEINLINE_DEBUGGABLE FInheritedType& AddTerm(const FFlecsQueryTermExpression& InTerm)
 	{
 		this->GetQueryDefinition().AddQueryTerm(InTerm);
@@ -130,6 +153,15 @@ public:
 		return GetSelf();
 	}
 
+	/**
+	 * @brief Selects an existing term as the current term.
+	 *
+	 * Subsequent term modifiers such as Oper(), In(), Src(), or Up() apply to
+	 * this term.
+	 *
+	 * @param InTermIndex Zero-based index of the term to select.
+	 * @return The derived builder for fluent chaining.
+	 */
 	FORCEINLINE_DEBUGGABLE FInheritedType& TermAt(const int32 InTermIndex)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
@@ -139,14 +171,31 @@ public:
 
 	/*FORCEINLINE_DEBUGGABLE FInheritedType& TermAt(*/
 	
+/**
+ * @name Query-definition properties
+ * @brief Configures cache behavior and native query flags.
+ * @{
+ */
 #pragma region QueryDefinitionProperties
 	
+	/**
+	 * @brief Selects the cache policy used when the query is built.
+	 *
+	 * @param InCacheType Cache policy. Default lets Flecs choose.
+	 * @return The derived builder for fluent chaining.
+	 */
 	FORCEINLINE_DEBUGGABLE FInheritedType& Cache(const EFlecsQueryCacheType InCacheType = EFlecsQueryCacheType::Default)
 	{
 		this->GetQueryDefinition().CacheType = InCacheType;
 		return GetSelf();
 	}
 	
+	/**
+	 * @brief Enables or disables query change detection.
+	 *
+	 * @param bInDetectChanges Whether the query should track changed tables.
+	 * @return The derived builder for fluent chaining.
+	 */
 	FORCEINLINE_DEBUGGABLE FInheritedType& DetectChanges(const bool bInDetectChanges = true)
 	{
 		if (bInDetectChanges)
@@ -161,12 +210,19 @@ public:
 		return GetSelf();
 	}
 	
+	/**
+	 * @brief Replaces the query flags with a raw bitmask.
+	 *
+	 * @param InFlags Query flags represented as a 32-bit mask.
+	 * @return The derived builder for fluent chaining.
+	 */
 	FORCEINLINE_DEBUGGABLE FInheritedType& Flags(const uint32 InFlags)
 	{
 		this->GetQueryDefinition().Flags = InFlags;
 		return GetSelf();
 	}
 	
+	/** Replaces the query flags using the strongly typed enum value. */
 	FORCEINLINE_DEBUGGABLE FInheritedType& Flags(const EFlecsQueryFlags InFlags)
 	{
 		this->GetQueryDefinition().Flags = static_cast<uint32>(InFlags);
@@ -174,9 +230,24 @@ public:
 	}
 	
 #pragma endregion QueryDefinitionProperties
+/** @} */
 	
+/**
+ * @name Term operators
+ * @brief Sets the operator for the current term.
+ *
+ * The current term is the most recently added term unless TermAt() was used to
+ * select another term.
+ * @{
+ */
 #pragma region TermOperatorExpressions
 	
+	/**
+	 * @brief Sets the operator for the current term.
+	 *
+	 * @param InOperator Operator applied when matching the term.
+	 * @return The derived builder for fluent chaining.
+	 */
 	FORCEINLINE_DEBUGGABLE FInheritedType& Oper(const EFlecsQueryOperator InOperator)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
@@ -185,45 +256,68 @@ public:
 		return GetSelf();
 	}
 	
+	/** Sets the current term to the required And operator. */
 	FORCEINLINE_DEBUGGABLE FInheritedType& And()
 	{
 		return Oper(EFlecsQueryOperator::And);
 	}
 	
+	/** Sets the current term to the Or operator. */
 	FORCEINLINE_DEBUGGABLE FInheritedType& Or()
 	{
 		return Oper(EFlecsQueryOperator::Or);
 	}
 	
+	/** Sets the current term to the Not operator. */
 	FORCEINLINE_DEBUGGABLE FInheritedType& Not()
 	{
 		return Oper(EFlecsQueryOperator::Not);
 	}
 	
+	/** Sets the current term to the Optional operator. */
 	FORCEINLINE_DEBUGGABLE FInheritedType& Optional()
 	{
 		return Oper(EFlecsQueryOperator::Optional);
 	}
 	
+	/** Sets the current term to the AndFrom operator. */
 	FORCEINLINE_DEBUGGABLE FInheritedType& AndFrom()
 	{
 		return Oper(EFlecsQueryOperator::AndFrom);
 	}
 	
+	/** Sets the current term to the OrFrom operator. */
 	FORCEINLINE_DEBUGGABLE FInheritedType& OrFrom()
 	{
 		return Oper(EFlecsQueryOperator::OrFrom);
 	}
 	
+	/** Sets the current term to the NotFrom operator. */
 	FORCEINLINE_DEBUGGABLE FInheritedType& NotFrom()
 	{
 		return Oper(EFlecsQueryOperator::NotFrom);
 	}
 	
 #pragma endregion TermOperatorExpressions
+/** @} */
 	
+/**
+ * @name Term access modes
+ * @brief Sets read/write access and staging behavior for the current term.
+ *
+ * In() and Out() describe direct access. Read(), Write(), and ReadWrite()
+ * additionally mark the term as stage-aware for systems.
+ * @{
+ */
 #pragma region ReadWriteInOutExpressions
 	
+	/**
+	 * @brief Sets the access mode and optional stage-awareness of the current term.
+	 *
+	 * @param InInOut Access mode to record.
+	 * @param bStage Whether the term uses stage-aware access.
+	 * @return The derived builder for fluent chaining.
+	 */
 	FORCEINLINE_DEBUGGABLE FInheritedType& InOutExpression(const EFlecsQueryInOut InInOut, const bool bStage = false)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
@@ -233,48 +327,63 @@ public:
 		return GetSelf();
 	}
 	
+	/** Marks the current term as read-only direct access. */
 	FORCEINLINE_DEBUGGABLE FInheritedType& In()
 	{
 		return InOutExpression(EFlecsQueryInOut::Read, false);
 	}
 	
+	/** Marks the current term as write-only direct access. */
 	FORCEINLINE_DEBUGGABLE FInheritedType& Out()
 	{
 		return InOutExpression(EFlecsQueryInOut::Write, false);
 	}
 	
+	/** Marks the current term as read/write direct access. */
 	FORCEINLINE_DEBUGGABLE FInheritedType& InOut()
 	{
 		return InOutExpression(EFlecsQueryInOut::ReadWrite, false);
 	}
 	
+	/** Marks the current term as stage-aware read access. */
 	FORCEINLINE_DEBUGGABLE FInheritedType& Read()
 	{
 		return InOutExpression(EFlecsQueryInOut::Read, true);
 	}
 	
+	/** Marks the current term as stage-aware write access. */
 	FORCEINLINE_DEBUGGABLE FInheritedType& Write()
 	{
 		return InOutExpression(EFlecsQueryInOut::Write, true);
 	}
 	
+	/** Marks the current term as stage-aware read/write access. */
 	FORCEINLINE_DEBUGGABLE FInheritedType& ReadWrite()
 	{
 		return InOutExpression(EFlecsQueryInOut::ReadWrite, true);
 	}
 	
+	/** Marks the current term as a filter that does not access component data. */
 	FORCEINLINE_DEBUGGABLE FInheritedType& Filter()
 	{
 		return InOutExpression(EFlecsQueryInOut::Filter, false);
 	}
 	
+	/** Marks the current term as neither read nor write access. */
 	FORCEINLINE_DEBUGGABLE FInheritedType& InOutNone()
 	{
 		return InOutExpression(EFlecsQueryInOut::None, false);
 	}
 	
 #pragma endregion ReadWriteInOutExpressions
+/** @} */
 	
+/**
+ * @name Term and query-expression helpers
+ * @brief Adds terms, pair terms, ordering, grouping, sources, and traversal
+ * expressions to the query definition.
+ * @{
+ */
 #pragma region TermHelperFunctions
 	
 private:
@@ -313,7 +422,17 @@ private:
 	
 public:
 	
-	// Also handles pairs
+	/**
+	 * @brief Adds a term that must match.
+	 *
+	 * The overload family accepts a Flecs id, reflected struct or enum, C++
+	 * type symbol, gameplay tag, or native gameplay tag. The added term becomes
+	 * the current term for subsequent modifiers. A Flecs pair id can be passed
+	 * directly; use Second() or WithPair() when the pair parts are separate.
+	 *
+	 * @param InId Component, tag, or pair id to match.
+	 * @return The derived builder for fluent chaining.
+	 */
 	FORCEINLINE_DEBUGGABLE FInheritedType& With(const FFlecsId InId)
 	{
 		FFlecsQueryTermExpression Expr;
@@ -398,6 +517,12 @@ public:
 		return GetSelf();
 	}
 	
+	/**
+	 * @brief Adds a term from a C++ type.
+	 *
+	 * @tparam T Component, enum, or other registered type to match.
+	 * @return The derived builder for fluent chaining.
+	 */
 	template <typename T>
 	FORCEINLINE_DEBUGGABLE FInheritedType& With()
 	{
@@ -433,6 +558,7 @@ public:
 		return GetSelf();
 	}
 
+	/** Adds a pair term for an enum value. */
 	template <typename E>
 	requires (std::is_enum<E>::value)
 	FORCEINLINE_DEBUGGABLE FInheritedType& With(const E InEnumValue)
@@ -441,6 +567,13 @@ public:
 		return GetSelf();
 	}
 
+	/**
+	 * @brief Adds a term with stage-aware read access.
+	 *
+	 * @tparam T Input type accepted by With().
+	 * @param InInput Component or id input to match.
+	 * @return The derived builder for fluent chaining.
+	 */
 	template <UE::Flecs::Queries::CQueryDefinitionRecordInputType T>
 	FORCEINLINE_DEBUGGABLE FInheritedType& Read(const T& InInput)
 	{
@@ -448,6 +581,7 @@ public:
 		return InOutExpression(EFlecsQueryInOut::Read, true);
 	}
 
+	/** Adds a C++ type term with stage-aware read access. */
 	template <typename T>
 	FORCEINLINE_DEBUGGABLE FInheritedType& Read()
 	{
@@ -455,6 +589,7 @@ public:
 		return InOutExpression(EFlecsQueryInOut::Read, true);
 	}
 
+	/** Adds a term with stage-aware write access. */
 	template <UE::Flecs::Queries::CQueryDefinitionRecordInputType T>
 	FORCEINLINE_DEBUGGABLE FInheritedType& Write(const T& InInput)
 	{
@@ -462,6 +597,7 @@ public:
 		return InOutExpression(EFlecsQueryInOut::Write, true);
 	}
 
+	/** Adds a C++ type term with stage-aware write access. */
 	template <typename T>
 	FORCEINLINE_DEBUGGABLE FInheritedType& Write()
 	{
@@ -469,6 +605,7 @@ public:
 		return InOutExpression(EFlecsQueryInOut::Write, true);
 	}
 
+	/** Adds a term with stage-aware read/write access. */
 	template <UE::Flecs::Queries::CQueryDefinitionRecordInputType T>
 	FORCEINLINE_DEBUGGABLE FInheritedType& ReadWrite(const T& InInput)
 	{
@@ -476,6 +613,7 @@ public:
 		return InOutExpression(EFlecsQueryInOut::ReadWrite, true);
 	}
 
+	/** Adds a C++ type term with stage-aware read/write access. */
 	template <typename T>
 	FORCEINLINE_DEBUGGABLE FInheritedType& ReadWrite()
 	{
@@ -483,6 +621,15 @@ public:
 		return InOutExpression(EFlecsQueryInOut::ReadWrite, true);
 	}
 	
+	/**
+	 * @brief Adds a term that must not match.
+	 *
+	 * The overload family accepts the same reflected and runtime input forms
+	 * as With(). The added term is automatically assigned the Not operator.
+	 *
+	 * @param InId Component, tag, or pair id to exclude.
+	 * @return The derived builder for fluent chaining.
+	 */
 	FORCEINLINE_DEBUGGABLE FInheritedType& Without(const FFlecsId InId)
 	{
 		FFlecsQueryTermExpression Expr;
@@ -581,6 +728,7 @@ public:
 		return GetSelf();
 	}
 	
+	/** Adds a C++ type term with the Not operator. */
 	template <typename T>
 	FORCEINLINE_DEBUGGABLE FInheritedType& Without()
 	{
@@ -606,6 +754,7 @@ public:
 		return GetSelf();
 	}
 	
+	/** Adds an enum-value pair term with the Not operator. */
 	template <typename E>
 	requires (std::is_enum<E>::value)
 	FORCEINLINE_DEBUGGABLE FInheritedType& Without(const E InEnumValue)
@@ -614,6 +763,16 @@ public:
 		return GetSelf();
 	}
 	
+	/**
+	 * @brief Sets the second element of the current term as a pair target.
+	 *
+	 * Call this after With() or Without(). The overload family accepts Flecs
+	 * ids, reflected types and enums, C++ type symbols, gameplay tags, and
+	 * native gameplay tags.
+	 *
+	 * @param InId Pair target id.
+	 * @return The derived builder for fluent chaining.
+	 */
 	FORCEINLINE_DEBUGGABLE FInheritedType& Second(const FFlecsId InId)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
@@ -710,6 +869,7 @@ public:
 		return GetSelf();
 	}
 	
+	/** Sets the pair target from a C++ type. */
 	template <typename T>
 	FORCEINLINE_DEBUGGABLE FInheritedType& Second()
 	{
@@ -741,6 +901,15 @@ public:
 		return GetSelf();
 	}
 	
+	/**
+	 * @brief Adds a matching pair term from two runtime or reflected inputs.
+	 *
+	 * @tparam TFirst Pair relation input type.
+	 * @tparam TSecond Pair target input type.
+	 * @param InFirst Pair relation.
+	 * @param InSecond Pair target.
+	 * @return The derived builder for fluent chaining.
+	 */
 	template <UE::Flecs::Queries::CQueryDefinitionRecordInputType TFirst, UE::Flecs::Queries::CQueryDefinitionRecordInputType TSecond>
 	FORCEINLINE_DEBUGGABLE FInheritedType& WithPair(const TFirst& InFirst, const TSecond& InSecond)
 	{
@@ -749,6 +918,7 @@ public:
 		return GetSelf();
 	}
 	
+	/** Adds a pair term with the Not operator. */
 	template <UE::Flecs::Queries::CQueryDefinitionRecordInputType TFirst, UE::Flecs::Queries::CQueryDefinitionRecordInputType TSecond>
 	FORCEINLINE_DEBUGGABLE FInheritedType& WithoutPair(const TFirst& InFirst, const TSecond& InSecond)
 	{
@@ -757,6 +927,7 @@ public:
 		return GetSelf();
 	}
 	
+	/** Adds a pair with the relation supplied as a C++ type. */
 	template <typename T, UE::Flecs::Queries::CQueryDefinitionRecordInputType TSecond>
 	FORCEINLINE_DEBUGGABLE FInheritedType& WithPair(const TSecond& InSecond)
 	{
@@ -765,6 +936,7 @@ public:
 		return GetSelf();
 	}
 	
+	/** Adds a negated pair with the relation supplied as a C++ type. */
 	template <typename T, UE::Flecs::Queries::CQueryDefinitionRecordInputType TSecond>
 	FORCEINLINE_DEBUGGABLE FInheritedType& WithoutPair(const TSecond& InSecond)
 	{
@@ -773,6 +945,7 @@ public:
 		return GetSelf();
 	}
 	
+	/** Adds a pair with the target supplied as a C++ type. */
 	template <typename T, UE::Flecs::Queries::CQueryDefinitionRecordInputType TFirst>
 	FORCEINLINE_DEBUGGABLE FInheritedType& WithPairSecond(const TFirst& InFirst)
 	{
@@ -781,6 +954,7 @@ public:
 		return GetSelf();
 	}
 	
+	/** Adds a negated pair with the target supplied as a C++ type. */
 	template <typename T, UE::Flecs::Queries::CQueryDefinitionRecordInputType TFirst>
 	FORCEINLINE_DEBUGGABLE FInheritedType& WithoutPairSecond(const TFirst& InFirst)
 	{
@@ -789,6 +963,7 @@ public:
 		return GetSelf();
 	}
 	
+	/** Adds a pair from two compile-time C++ types. */
 	template <typename TFirst, typename TSecond>
 	FORCEINLINE_DEBUGGABLE FInheritedType& WithPair()
 	{
@@ -797,6 +972,7 @@ public:
 		return GetSelf();
 	}
 	
+	/** Adds a pair whose target is an enum constant. */
 	template <typename E>
 	requires (std::is_enum<E>::value)
 	FORCEINLINE_DEBUGGABLE FInheritedType& WithPair(const E InEnumValue)
@@ -817,6 +993,7 @@ public:
 		return GetSelf();
 	}
 
+	/** Adds a negated pair from two compile-time C++ types. */
 	template <typename TFirst, typename TSecond>
 	FORCEINLINE_DEBUGGABLE FInheritedType& WithoutPair()
 	{
@@ -825,12 +1002,14 @@ public:
 		return GetSelf();
 	}
 	
+	/** Adds a pair from a reflected enum selector. */
 	FORCEINLINE_DEBUGGABLE FInheritedType& WithPair(const FSolidEnumSelector& InPair)
 	{
 		WithPair(InPair.Class, InPair.Value);
 		return GetSelf();
 	}
 	
+	/** Adds a negated pair from a reflected enum selector. */
 	FORCEINLINE_DEBUGGABLE FInheritedType& WithoutPair(const FSolidEnumSelector& InPair)
 	{
 		WithoutPair(InPair.Class, InPair.Value);
@@ -838,9 +1017,27 @@ public:
 	}
 	
 #pragma endregion TermHelperFunctions
+/** @} */
 	
+/**
+ * @name Ordering
+ * @brief Adds an order-by expression to the query definition.
+ * @{
+ */
 #pragma region OrderByFunctions
 	
+	/**
+	 * @brief Orders matched tables using a comparison callback.
+	 *
+	 * The overload family accepts a Flecs id, reflected type, enum, or exact
+	 * C++ type symbol. The callback compares two component values and returns
+	 * the ordering result expected by Flecs.
+	 *
+	 * @param InId Component id used for ordering.
+	 * @param InFunction Comparison callback.
+	 * @return The derived builder for fluent chaining.
+	 * @see https://www.flecs.dev/flecs/Queries.html#order-by
+	 */
 	FORCEINLINE_DEBUGGABLE FInheritedType& OrderBy(const FFlecsId InId, UE::Flecs::Queries::FOrderByFunctionType InFunction)
 	{
 		TInstancedStruct<FFlecsQueryExpression> OrderByExpr;
@@ -890,6 +1087,7 @@ public:
 		return GetSelf();
 	}
 	
+	/** Adds an order-by expression for a C++ type and typed callback. */
 	template <typename T>
 	FORCEINLINE_DEBUGGABLE FInheritedType& OrderBy(const UE::Flecs::Queries::TOrderByFunction<T>& InFunction)
 	{
@@ -909,6 +1107,13 @@ public:
 		}
 	}
 	
+	/**
+	 * @brief Adds an order-by expression backed by a reflected callback definition.
+	 *
+	 * @param InId Component id used for ordering.
+	 * @param InCallbackDefinition Callback definition to store.
+	 * @return The derived builder for fluent chaining.
+	 */
 	FORCEINLINE_DEBUGGABLE FInheritedType& OrderByCallbackDefinition(const FFlecsId InId, const TInstancedStruct<FFlecsOrderByCallbackDefinition>& InCallbackDefinition)
 	{
 		TInstancedStruct<FFlecsQueryExpression> OrderByExpr;
@@ -979,9 +1184,26 @@ public:
 	}
 	
 #pragma endregion OrderByFunctions
+/** @} */
 	
+/**
+ * @name Grouping
+ * @brief Configures table grouping and optional group lifecycle callbacks.
+ * @{
+ */
 #pragma region GroupByFunctions
 	
+	/**
+	 * @brief Groups matched tables by an id or type.
+	 *
+	 * The overload family accepts a Flecs id, reflected struct or enum, or
+	 * exact C++ type symbol. Passing an invalid or empty input disables
+	 * grouping.
+	 *
+	 * @param InId Id used to select the group value.
+	 * @return The derived builder for fluent chaining.
+	 * @see https://www.flecs.dev/flecs/Queries.html#group-by
+	 */
 	FORCEINLINE_DEBUGGABLE FInheritedType& GroupBy(const FFlecsId InId)
 	{
 		if (InId.IsValid())
@@ -1055,6 +1277,7 @@ public:
 		return GetSelf();
 	}
 	
+	/** Groups matched tables by a C++ type. */
 	template <typename T>
 	FORCEINLINE_DEBUGGABLE FInheritedType& GroupBy()
 	{
@@ -1062,6 +1285,13 @@ public:
 		return GroupBy(FString(TypeName.data()));
 	}
 	
+	/**
+	 * @brief Groups matched tables with a custom group-id callback.
+	 *
+	 * @param InId Id used to select the group value.
+	 * @param InCallbackDefinition Function that computes each group id.
+	 * @return The derived builder for fluent chaining.
+	 */
 	FORCEINLINE_DEBUGGABLE FInheritedType& GroupBy(const FFlecsId InId, UE::Flecs::Queries::FGroupByFunctionType InCallbackDefinition)
 	{
 		this->GroupBy(InId);
@@ -1101,6 +1331,13 @@ public:
 		return GroupBy(FString(TypeName.data()), UE::Flecs::Queries::FGroupByFunctionType(InCallbackDefinition));
 	}
 	
+	/**
+	 * @brief Supplies a complete reflected group callback definition.
+	 *
+	 * @param InId Id used to select the group value.
+	 * @param InCallbackDefinition Group-id and lifecycle callbacks.
+	 * @return The derived builder for fluent chaining.
+	 */
 	FORCEINLINE_DEBUGGABLE FInheritedType& GroupByCallbackDefinition(const FFlecsId InId, const TInstancedStruct<FFlecsGroupByCallbackDefinition>& InCallbackDefinition)
 	{
 		this->GroupBy(InId);
@@ -1133,12 +1370,14 @@ public:
 		return GetSelf();
 	}
 	
+	/** Sets the callback invoked when Flecs creates a group. */
 	FORCEINLINE_DEBUGGABLE FInheritedType& OnGroupCreated(const UE::Flecs::Queries::FGroupByCreateGroupFunctionType& InCallback)
 	{
 		GetMutableGroupByCallbackDefinition().CreateGroupFunctionPtr = InCallback;
 		return GetSelf();	
 	}
 	
+	/** Sets the callback invoked when Flecs destroys a group. */
 	FORCEINLINE_DEBUGGABLE FInheritedType& OnGroupDestroyed(const UE::Flecs::Queries::FGroupByDeleteGroupFunctionType& InCallback)
 	{
 		GetMutableGroupByCallbackDefinition().DeleteGroupFunctionPtr = InCallback;
@@ -1146,7 +1385,23 @@ public:
 	}
 
 #pragma endregion GroupByFunctions
+/** @} */
 	
+/**
+ * @name Sources and traversal
+ * @brief Selects term sources and relationship traversal expressions.
+ * @{
+ */
+/**
+ * @brief Sets the source of the current term.
+ *
+ * The overload family accepts a Flecs id, reflected struct or enum, C++ type
+ * symbol, gameplay tag, or native gameplay tag. The source must be configured
+ * after a term has been added or selected.
+ *
+ * @param InSource Entity or type that supplies the current term.
+ * @return The derived builder for fluent chaining.
+ */
 	FORCEINLINE_DEBUGGABLE FInheritedType& Src(const FFlecsId InSource)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
@@ -1179,6 +1434,7 @@ public:
 		return GetSelf();
 	}
 	
+	/** Sets the current term source from an exact C++ type symbol. */
 	FORCEINLINE_DEBUGGABLE FInheritedType& SrcCppType(const FString& InCppTypeName)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
@@ -1218,6 +1474,12 @@ public:
 		return SrcCppType(FString(TypeName.data()));
 	}
 	
+	/**
+	 * @brief Adds an upward relationship traversal to the current term.
+	 *
+	 * @return The derived builder for fluent chaining.
+	 * @see https://www.flecs.dev/flecs/Relationships.html#traversal
+	 */
 	FORCEINLINE_DEBUGGABLE FInheritedType& Up()
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
@@ -1327,6 +1589,7 @@ public:
 		return GetSelf();
 	}
 	
+	/** Adds an upward traversal using a C++ relationship type. */
 	template <typename TTraversal>
 	FORCEINLINE_DEBUGGABLE FInheritedType& Up()
 	{
@@ -1345,6 +1608,12 @@ public:
 		}
 	}
 	
+	/**
+	 * @brief Adds a cascading relationship traversal to the current term.
+	 *
+	 * @return The derived builder for fluent chaining.
+	 * @see https://www.flecs.dev/flecs/Relationships.html#traversal
+	 */
 	FORCEINLINE_DEBUGGABLE FInheritedType& Cascade()
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
@@ -1447,6 +1716,7 @@ public:
 		return GetSelf();
 	}
 	
+	/** Adds a cascading traversal using a C++ relationship type. */
 	template <typename TTraversal>
 	FORCEINLINE_DEBUGGABLE FInheritedType& Cascade()
 	{
@@ -1465,6 +1735,7 @@ public:
 		}
 	}
 	
+	/** Adds descending traversal to the current term. */
 	FORCEINLINE_DEBUGGABLE FInheritedType& Desc()
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
@@ -1477,6 +1748,12 @@ public:
 	}
 	
 	
+	/**
+	 * @brief Adds a Flecs Script expression as a child of the current term.
+	 *
+	 * @param InExpression Script expression to append.
+	 * @return The derived builder for fluent chaining.
+	 */
 	FORCEINLINE_DEBUGGABLE FInheritedType& ScriptExpr(const FFlecsQueryScriptExpr& InExpression)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
@@ -1489,6 +1766,12 @@ public:
 		return GetSelf();
 	}
 	
+	/**
+	 * @brief Mutates the complete current term expression.
+	 *
+	 * @param InModifier Function that edits the selected term.
+	 * @return The derived builder for fluent chaining.
+	 */
 	FORCEINLINE_DEBUGGABLE FInheritedType& ModifyLastTerm(const TFunctionRef<void(FFlecsQueryTermExpression&)>& InModifier)
 	{
 		solid_checkf(this->GetQueryDefinition().IsValidTermIndex(LastTermIndex), TEXT("Invalid term index provided"));
@@ -1496,11 +1779,18 @@ public:
 		return GetSelf();
 	}
 	
+	/**
+	 * @brief Adds a custom query expression to the definition.
+	 *
+	 * @tparam TExpression Type derived from FFlecsQueryExpression.
+	 * @param InExpression Expression to append.
+	 * @return The derived builder for fluent chaining.
+	 */
 	template <UE::Flecs::Queries::TQueryExpressionConcept TExpression>
 	FORCEINLINE_DEBUGGABLE FInheritedType& AddExpression(const TExpression& InExpression)
 	{
 		this->GetQueryDefinition().AddAdditionalExpression(InExpression);
 		return GetSelf();
 	}
-	
+/** @} */
 }; // struct TFlecsQueryBuilderBase

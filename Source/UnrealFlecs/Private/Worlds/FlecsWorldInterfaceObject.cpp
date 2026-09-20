@@ -1033,38 +1033,6 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::CreateEntityWithId(const FFlecsId
 	return MakeAlive(InId);
 }
 
-FFlecsEntityHandle UFlecsWorldInterfaceObject::CreateEntityWithRecord(const FFlecsEntityRecord& InRecord,
-                                                                      const FString& Name) const
-{
-	const FFlecsEntityHandle Entity = CreateEntity(Name);
-	InRecord.ApplyRecordToEntity(this, Entity);
-	return Entity;
-}
-
-FFlecsEntityHandle UFlecsWorldInterfaceObject::CreateEntityWithRecordWithId(const FFlecsEntityRecord& InRecord,
-	const FFlecsId InId) const
-{
-	const FFlecsEntityHandle Entity = CreateEntityWithId(InId);
-	InRecord.ApplyRecordToEntity(this, Entity);
-	return Entity;
-}
-
-void UFlecsWorldInterfaceObject::DestroyEntityByName(const FString& InName) const
-{
-	solid_checkf(!InName.IsEmpty(), TEXT("Name is empty"));
-
-	const FFlecsEntityHandle Handle = LookupEntity(InName);
-		
-	if LIKELY_IF(Handle.IsValid())
-	{
-		Handle.Destroy();
-	}
-	else
-	{
-		UE_LOGFMT(LogFlecsWorld, Warning, "Entity {EntityName} not found", InName);
-	}
-}
-
 FFlecsEntityHandle UFlecsWorldInterfaceObject::GetTagEntity(const FGameplayTag& Tag) const
 {
 	solid_checkf(Tag.IsValid(), TEXT("Tag is not valid"));

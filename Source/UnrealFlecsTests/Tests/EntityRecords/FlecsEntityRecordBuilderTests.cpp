@@ -34,8 +34,10 @@ public:
 			.Enum(EFlecsTestEnum_UENUM::Two)
 			.Build();
 
-		const FFlecsEntityHandle Entity = World()->CreateEntityWithRecord(Record);
+		const FFlecsEntityHandle Entity = World()->CreateEntity();
 		ASSERT_THAT(IsTrue(Entity.IsValid()));
+		
+		Record.ApplyRecordToEntity(Entity);
 		
 		ASSERT_THAT(IsTrue(Entity.HasName()));
 		ASSERT_THAT(AreEqual(TEXT("BuilderAPITestEntity"), Entity.GetName()));

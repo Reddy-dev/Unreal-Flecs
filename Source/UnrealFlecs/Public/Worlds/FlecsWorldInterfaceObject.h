@@ -554,14 +554,6 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
 	FFlecsEntityHandle CreateEntityWithId(const FFlecsId InId) const;
 	
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	FFlecsEntityHandle CreateEntityWithRecord(const FFlecsEntityRecord& InRecord,
-											  const FString& Name = "") const;
-
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	FFlecsEntityHandle CreateEntityWithRecordWithId(const FFlecsEntityRecord& InRecord,
-													const FFlecsId InId) const;
-	
 	/**
 	 * @brief Iterate over all Child Entities of the 0 Entity
 	 * @tparam FunctionType The function type
@@ -584,13 +576,6 @@ public:
 	{
 		GetNativeFlecsWorld_Internal()->children(InRelationId, std::forward<FunctionType>(Function));
 	}
-	
-	/**
-	 * @brief Destroy an entity by its handle, if the entity does not exist, nothing happens
-	 * @param InName The name of the entity to destroy
-	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
-	void DestroyEntityByName(const FString& InName) const;
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
 	FFlecsEntityHandle GetTagEntity(const FGameplayTag& Tag) const;

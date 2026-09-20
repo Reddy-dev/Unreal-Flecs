@@ -1009,6 +1009,7 @@ public:
 		return TConstStructView<TFragmentType>();
 	}*/
 
+	void ApplyRecordToEntity(const FFlecsEntityHandle& InEntityHandle) const;
 	void ApplyRecordToEntity(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InFlecsWorld, const FFlecsEntityHandle& InEntityHandle) const;
 
 }; // struct FFlecsEntityRecord

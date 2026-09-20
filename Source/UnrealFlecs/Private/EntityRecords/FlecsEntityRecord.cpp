@@ -132,6 +132,11 @@ void FFlecsRecordPair::AddToEntity(const FFlecsEntityHandle& InEntityHandle) con
 	}
 }
 
+void FFlecsEntityRecord::ApplyRecordToEntity(const FFlecsEntityHandle& InEntityHandle) const
+{
+	ApplyRecordToEntity(InEntityHandle.GetFlecsWorldChecked(), InEntityHandle);
+}
+
 void FFlecsEntityRecord::ApplyRecordToEntity(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InFlecsWorld, const FFlecsEntityHandle& InEntityHandle) const
 {
 	solid_checkf(InEntityHandle.IsValid(), TEXT("Entity Handle is not valid"));

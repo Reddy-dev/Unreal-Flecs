@@ -9,20 +9,48 @@
 #include "Queries/FlecsQueryBuilderBase.h"
 #include "FlecsSystemDefinition.h"
 
+/**
+ * @brief CRTP extension of the query builder for Flecs systems.
+ *
+ * This base adds phase, pipeline-input, scheduling, tick-source, rate, and
+ * callback configuration to TFlecsQueryBuilderBase. A system is materialized
+ * when one of the callback methods run(), each(), or run_each() is called.
+ *
+ * @tparam TInherited Concrete system builder type used for fluent returns.
+ * @tparam THandleType Handle returned after the system is materialized.
+ * @tparam TComponents Component field types exposed to each callbacks.
+ * @see https://www.flecs.dev/flecs/Systems.html
+ */
 template <typename TInherited, typename THandleType, typename ...TComponents>
 struct TFlecsSystemBuilderBase : public TFlecsQueryBuilderBase<TInherited>
 {
 public:
+	/** Returns the mutable system definition owned by the derived builder. */
 	FORCEINLINE FFlecsSystemDefinition& GetSystemDefinition() const
 	{
 		return this->GetSelf().GetSystemDefinition_Impl();
 	}
 	
+	/** Returns the query definition embedded in the system definition. */
 	FORCEINLINE FFlecsQueryDefinition& GetQueryDefinition_Impl() const
 	{
 		return const_cast<FFlecsQueryDefinition&>(GetSystemDefinition().QueryDefinition);
 	}
 	
+	/**
+	 * @name Phase and pipeline configuration
+	 * @brief Selects the system phase and the pipeline input that gates execution.
+	 * @{
+	 */
+	/**
+	 * @brief Sets the system phase or kind from a Flecs phase input.
+	 *
+	 * The overload family accepts a phase enum, Flecs id, reflected struct,
+	 * reflected enum selector, or exact C++ type symbol.
+	 *
+	 * @param InKind Phase entity or type that owns the system.
+	 * @return The derived builder for fluent chaining.
+	 */
 	FORCEINLINE TInherited& Kind(const EFlecsPhaseType InKind)
 	{
 		GetSystemDefinition().PhaseInput.Type = EFlecsSystemPhaseInputType::FlecsPhase;
@@ -77,6 +105,12 @@ public:
 		return this->GetSelf();
 	}
 
+	/**
+	 * @brief Alias for Kind() that sets the system phase.
+	 *
+	 * @param InPhase Phase entity or type that owns the system.
+	 * @return The derived builder for fluent chaining.
+	 */
 	FORCEINLINE TInherited& Phase(const EFlecsPhaseType InPhase)
 	{
 		return Kind(InPhase);
@@ -108,6 +142,16 @@ public:
 		return Kind<T>();
 	}
 
+	/**
+	 * @brief Sets the pipeline input that gates system execution.
+	 *
+	 * The overload family accepts a complete pipeline-input definition,
+	 * gameplay tag, Flecs id, reflected struct or enum selector, or exact C++
+	 * type symbol.
+	 *
+	 * @param InPipelineInput Pipeline input definition.
+	 * @return The derived builder for fluent chaining.
+	 */
 	FORCEINLINE TInherited& PipelineInput(const FFlecsSystemPipelineInput& InPipelineInput)
 	{
 		GetSystemDefinition().PipelineInput = InPipelineInput;

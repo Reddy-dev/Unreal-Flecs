@@ -42,7 +42,8 @@ public:
 		EntityRecord.AddFragment<FFlecsCollectionsEntityRecordFragment>(FFlecsCollectionsEntityRecordFragment({CollectionRef}));
 		ASSERT_THAT(IsTrue(EntityRecord.HasFragment<FFlecsCollectionsEntityRecordFragment>()));
 		
-		const FFlecsEntityHandle TestEntity = World()->CreateEntityWithRecord(EntityRecord, "TestEntity_WithCollectionInRecord");
+		const FFlecsEntityHandle TestEntity = World()->CreateEntity("TestEntity_WithCollectionInRecord");
+		EntityRecord.ApplyRecordToEntity(TestEntity);
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
 		ASSERT_THAT(IsTrue(TestEntity.HasCollection(CollectionPrefab)));
 		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Tag_Inherited>()));
@@ -172,7 +173,8 @@ public:
 		EntityRecord.AddFragment<FFlecsCollectionsEntityRecordFragment>(FFlecsCollectionsEntityRecordFragment({CollectionRef}));
 		ASSERT_THAT(IsTrue(EntityRecord.HasFragment<FFlecsCollectionsEntityRecordFragment>()));
 		
-		const FFlecsEntityHandle TestEntity = World()->CreateEntityWithRecord(EntityRecord, "TestEntity_WithCollectionInRecord_ClassInterface_Parameterized_Explicit");
+		const FFlecsEntityHandle TestEntity = World()->CreateEntity("TestEntity_WithCollectionInRecord_ClassInterface_Parameterized_Explicit");
+		EntityRecord.ApplyRecordToEntity(TestEntity);
 		ASSERT_THAT(IsTrue(TestEntity.IsValid()));
 		ASSERT_THAT(IsTrue(TestEntity.HasCollection(CollectionPrefab)));
 		ASSERT_THAT(IsTrue(TestEntity.Has<FFlecsTestStruct_Tag>()));
