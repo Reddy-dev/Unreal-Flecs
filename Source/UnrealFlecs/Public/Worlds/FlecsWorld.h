@@ -14,7 +14,6 @@
 #include "Types/SolidNotNull.h"
 #include "Concepts/SolidConcepts.h"
 
-#include "FlecsScopedDeferWindow.h"
 #include "FlecsWorldInterfaceObject.h"
 #include "Entities/FlecsComponentHandle.h"
 #include "Entities/FlecsEntityRange.h"
