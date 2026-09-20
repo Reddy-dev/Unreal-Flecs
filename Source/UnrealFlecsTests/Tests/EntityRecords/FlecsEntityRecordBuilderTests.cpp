@@ -70,9 +70,11 @@ public:
 			.Enum(FSolidEnumSelector::Make<EFlecsTestEnum_UENUM>(EFlecsTestEnum_UENUM::Three))
 			.Build();
 
-		const FFlecsEntityHandle Entity = World()->CreateEntityWithRecord(Record);
+		const FFlecsEntityHandle Entity = World()->CreateEntity();
 		ASSERT_THAT(IsTrue(Entity.IsValid()));
 		
+		Record.ApplyRecordToEntity(Entity);
+
 		ASSERT_THAT(IsTrue(Entity.HasName()));
 		ASSERT_THAT(AreEqual(TEXT("BuilderAPITestEntity_ScriptStructAPI"), Entity.GetName()));
 		
@@ -104,8 +106,10 @@ public:
 			.Enum(FSolidEnumSelector::Make<EFlecsTestEnum_UENUM>(EFlecsTestEnum_UENUM::Three))
 			.Build();
 
-		const FFlecsEntityHandle Entity = World()->CreateEntityWithRecord(Record);
+		const FFlecsEntityHandle Entity = World()->CreateEntity();
 		ASSERT_THAT(IsTrue(Entity.IsValid()));
+		
+		Record.ApplyRecordToEntity(Entity);
 		
 		ASSERT_THAT(IsTrue(Entity.HasName()));
 		ASSERT_THAT(AreEqual(TEXT("BuilderAPITestEntity_CustomBuilder"), Entity.GetName()));
