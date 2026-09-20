@@ -61,7 +61,7 @@ void SFlecsIdSelector::Construct(const FArguments& InArgs)
 		if (PropertyHandle->GetValueAsFormattedString(CurrentValue) == FPropertyAccess::Success)
 		{
 			CurrentValue = UE::Flecs::IdSelector::ExtractNumericValue(
-				MoveTemp(CurrentValue));
+				SOLID_MOV(CurrentValue));
 			const uint64 Id = FCString::Strtoui64(*CurrentValue, nullptr, 10);
 			const FFlecsId CurrentEntity(Id);
 			for (int32 Index = 0; Index < EntityOptions.Num(); Index++)

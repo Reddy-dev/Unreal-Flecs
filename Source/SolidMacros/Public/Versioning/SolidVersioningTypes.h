@@ -82,7 +82,7 @@ namespace Solid
 		void Register(const TSolidNotNull<const UClass*> ForClass, const int32 ToVersion, FStepFunctionType Func)
 		{
 			TArray<FAssetMigrationStep>& Array = Steps.FindOrAdd(ForClass);
-			Array.Add({ .ToVersion = ToVersion, .StepFunction = MoveTemp(Func) });
+			Array.Add({ .ToVersion = ToVersion, .StepFunction = SOLID_MOV(Func) });
 			
 			Array.Sort([](const FAssetMigrationStep& Left, const FAssetMigrationStep& Right)
 			{

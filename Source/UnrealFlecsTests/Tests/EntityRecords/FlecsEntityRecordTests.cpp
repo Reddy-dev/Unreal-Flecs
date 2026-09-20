@@ -65,7 +65,7 @@ public:
 		Pair.First = FFlecsRecordPairSlot::Make<FUSTRUCTPairTestComponent>();
 		Pair.Second = FFlecsRecordPairSlot::Make<FUSTRUCTPairTestComponent_Second>();
 		Pair.PairValueType = EFlecsValuePairType::None;
-		Record.AddComponent(MoveTemp(Pair));
+		Record.AddComponent(SOLID_MOV(Pair));
 
 		const FFlecsEntityHandle Entity = World()->CreateEntity();
 		ASSERT_THAT(IsTrue(Entity.IsValid()));
@@ -85,7 +85,7 @@ public:
 		Pair.First = FFlecsRecordPairSlot::Make<FUSTRUCTPairTestComponent_Data>(FUSTRUCTPairTestComponent_Data{ .Value = 123 });
 		Pair.Second = FFlecsRecordPairSlot::Make<FUSTRUCTPairTestComponent>();
 		Pair.PairValueType = EFlecsValuePairType::First;
-		Record.AddComponent(MoveTemp(Pair));
+		Record.AddComponent(SOLID_MOV(Pair));
 
 		const FFlecsEntityHandle Entity = World()->CreateEntity();
 		ASSERT_THAT(IsTrue(Entity.IsValid()));
@@ -111,7 +111,7 @@ public:
 		Pair.First = FFlecsRecordPairSlot::Make<FUSTRUCTPairTestComponent>();
 		Pair.Second = FFlecsRecordPairSlot::Make<FUSTRUCTPairTestComponent_Data>(FUSTRUCTPairTestComponent_Data{ .Value = 456 });
 		Pair.PairValueType = EFlecsValuePairType::Second;
-		Record.AddComponent(MoveTemp(Pair));
+		Record.AddComponent(SOLID_MOV(Pair));
 
 		const FFlecsEntityHandle Entity = World()->CreateEntity();
 		ASSERT_THAT(IsTrue(Entity.IsValid()));
@@ -155,7 +155,7 @@ public:
 		Pair.First = FFlecsRecordPairSlot::Make<FUSTRUCTPairTestComponent>();
 		Pair.Second = FFlecsRecordPairSlot::Make<FUSTRUCTPairTestComponent_Second>();
 		Pair.PairValueType = EFlecsValuePairType::None;
-		Record.AddComponent(MoveTemp(Pair));
+		Record.AddComponent(SOLID_MOV(Pair));
 
 		const FFlecsEntityHandle Entity = World()->CreateEntity();
 		ASSERT_THAT(IsTrue(Entity.IsValid()));

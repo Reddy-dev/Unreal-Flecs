@@ -77,7 +77,7 @@ struct UNREALFLECS_API FFlecsRecordPairSlot
 		FInstancedStruct NewInstancedStruct;
 		NewInstancedStruct.InitializeAs(InStructType);
 		
-		OutSlot.PairScriptStruct = MoveTemp(NewInstancedStruct);
+		OutSlot.PairScriptStruct = SOLID_MOV(NewInstancedStruct);
 		return OutSlot;
 	}
 

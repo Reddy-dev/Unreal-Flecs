@@ -24,7 +24,7 @@ void UE::Flecs::FFlecsModuleRegistry::RegisterUnrealFlecsModule(const FName& Mod
 	solid_checkf(!RegisteredModules.Contains(RegisteredItem), 
 		TEXT("Module %s is already registered in the Unreal Flecs module registry"), *ModuleName.ToString());
 	
-	RegisteredModules.Add(MoveTemp(RegisteredItem));
+	RegisteredModules.Add(SOLID_MOV(RegisteredItem));
 }
 
 void UE::Flecs::FFlecsModuleRegistry::RegisterUnrealFlecsPlugin(const FName& InPluginName,
@@ -37,7 +37,7 @@ void UE::Flecs::FFlecsModuleRegistry::RegisterUnrealFlecsPlugin(const FName& InP
 	solid_checkf(!RegisteredPlugins.Contains(RegisteredItem), 
 		TEXT("Module %s is already registered in the Unreal Flecs module registry"), *InPluginName.ToString());
 	
-	RegisteredPlugins.Add(MoveTemp(RegisteredItem));
+	RegisteredPlugins.Add(SOLID_MOV(RegisteredItem));
 }
 
 void UE::Flecs::FFlecsModuleRegistry::InitializeRegisteredModules(const TSolidNotNull<const UFlecsWorld*> InFlecsWorld) const

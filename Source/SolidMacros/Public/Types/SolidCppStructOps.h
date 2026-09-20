@@ -7,7 +7,7 @@
 
 #include "UObject/Class.h"
 
-#include "SolidMacros.h"
+#include "SolidMacros/Macros.h"
 #include "SolidNotNull.h"
 #include "Concepts/SolidConcepts.h"
 
@@ -42,7 +42,7 @@ struct SOLIDMACROS_API FSolidMoveableStructRegistry : public FNoncopyable
 				TStructType* SrcStruct  = static_cast<TStructType*>(Src);
 				solid_cassume(SrcStruct);
 			
-				new (Dest) TStructType(MoveTemp(*SrcStruct));
+				new (Dest) TStructType(SOLID_MOV(*SrcStruct));
 			};
 
 			TypeHookInfo.MoveConstructor = MoveConstructorFunction;
@@ -55,7 +55,7 @@ struct SOLIDMACROS_API FSolidMoveableStructRegistry : public FNoncopyable
 		solid_cassumef(TypeHookInfo.MoveConstructor,
 			TEXT("At least one of MoveConstructor or MoveAssignment must be valid for moveable struct registration!"));
 
-		MoveableStructs.Add(ScriptStruct, MoveTemp(TypeHookInfo));
+		MoveableStructs.Add(ScriptStruct, SOLID_MOV(TypeHookInfo));
 	}
 
 	template <Solid::TScriptStructConcept TStructType>

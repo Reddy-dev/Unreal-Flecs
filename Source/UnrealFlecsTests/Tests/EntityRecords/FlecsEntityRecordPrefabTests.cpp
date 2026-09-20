@@ -70,7 +70,7 @@ public:
 		Pair.First = FFlecsRecordPairSlot::Make<FUSTRUCTPairTestComponent>();
 		Pair.Second = FFlecsRecordPairSlot::Make<FUSTRUCTPairTestComponent_Second>();
 		Pair.PairValueType = EFlecsValuePairType::None;
-		Record.AddComponent(MoveTemp(Pair));
+		Record.AddComponent(SOLID_MOV(Pair));
 
 		const FFlecsEntityHandle PrefabEntity = World()->CreatePrefabWithRecord(Record);
 		ASSERT_THAT(IsTrue(PrefabEntity.IsValid()));
@@ -93,7 +93,7 @@ public:
 		Pair.First = FFlecsRecordPairSlot::Make<FUSTRUCTPairTestComponent>();
 		Pair.Second = FFlecsRecordPairSlot::Make<FUSTRUCTPairTestComponent_Second>();
 		Pair.PairValueType = EFlecsValuePairType::None;
-		Record.AddComponent(MoveTemp(Pair));
+		Record.AddComponent(SOLID_MOV(Pair));
 
 		const FFlecsEntityHandle PrefabEntity = World()->CreatePrefabWithRecord(Record);
 		ASSERT_THAT(IsTrue(PrefabEntity.IsValid()));

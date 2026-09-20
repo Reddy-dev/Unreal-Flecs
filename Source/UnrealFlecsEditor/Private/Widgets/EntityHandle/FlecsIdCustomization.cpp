@@ -55,7 +55,7 @@ void FFlecsIdCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> Struct
 	if (StructPropertyHandle->GetValueAsFormattedString(CurrentRawVal) == FPropertyAccess::Success)
 	{
 		CurrentRawVal = UE::Flecs::IdCustomization::ExtractNumericValue(
-			MoveTemp(CurrentRawVal));
+			SOLID_MOV(CurrentRawVal));
 		InitialIdText = FText::FromString(CurrentRawVal);
 	}
 

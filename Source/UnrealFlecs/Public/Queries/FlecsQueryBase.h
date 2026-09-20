@@ -43,7 +43,7 @@ public:
 	}
 
 	FORCEINLINE FFlecsQueryBase(FFlecsQueryBase&& Other) noexcept
-		: QueryBase(MoveTemp(Other.QueryBase))
+		: QueryBase(SOLID_MOV(Other.QueryBase))
 	{
 	}
 	
@@ -51,7 +51,7 @@ public:
 	{
 		if (this != &Other)
 		{
-			QueryBase = MoveTemp(Other.QueryBase);
+			QueryBase = SOLID_MOV(Other.QueryBase);
 		}
 		
 		return *this;

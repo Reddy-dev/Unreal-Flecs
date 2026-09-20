@@ -191,7 +191,7 @@ void SFlecsExplorer::RefreshTargets()
 			FText::FromString(URLSettings.Host),
 			FText::AsNumber(InstancePort)
 			);
-		Targets.Add(MoveTemp(Target));
+		Targets.Add(SOLID_MOV(Target));
 	}
 
 	PreviousInstanceIndex = FMath::Min<uint16>(
@@ -323,7 +323,7 @@ FReply SFlecsExplorer::SelectTarget(TSharedPtr<FFlecsExplorerTarget> InTarget)
 		return FReply::Handled();
 	}
 
-	SelectedTarget = MoveTemp(InTarget);
+	SelectedTarget = SOLID_MOV(InTarget);
 	RebuildTargetTabs();
 	ShowSelectedTarget();
 	return FReply::Handled();

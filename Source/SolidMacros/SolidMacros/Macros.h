@@ -761,7 +761,7 @@ namespace Solid
 
 #ifndef SOLID_MOV
 #define SOLID_MOV(...) \
-  static_cast<flecs::remove_reference_t<decltype(__VA_ARGS__)>&&>(__VA_ARGS__)
+  static_cast<std::remove_reference_t<decltype(__VA_ARGS__)>&&>(__VA_ARGS__)
 #endif // SOLID_MOV
 
 #ifndef SOLID_FWD
