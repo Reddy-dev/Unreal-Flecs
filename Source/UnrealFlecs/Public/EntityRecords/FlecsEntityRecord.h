@@ -682,13 +682,13 @@ public:
 			return *this;
 		}
 		
-		template <Solid::TStaticEnumConcept TEnum>
 		/**
 		 * @brief Adds a native enum value as a component.
 		 * @tparam TEnum Registered native enum type.
 		 * @param InEnumValue Enum value to add.
 		 * @return This builder.
 		 */
+		template <Solid::TStaticEnumConcept TEnum>
 		FORCEINLINE FBuilder& Enum(const TEnum InEnumValue)
 		{
 			EntityRecord.AddComponent<TEnum>(InEnumValue);
