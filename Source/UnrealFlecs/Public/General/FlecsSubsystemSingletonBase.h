@@ -59,6 +59,11 @@ public:
 		return Subsystem;
 	}
 	
+	NO_DISCARD FORCEINLINE bool UEOpEquals(const FFlecsSubsystemSingletonBase& Other) const
+	{
+		return Subsystem == Other.Subsystem;
+	}
+	
 private:
 	UPROPERTY()
 	TObjectPtr<UFlecsAbstractWorldSubsystem> Subsystem;
