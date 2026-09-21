@@ -9,6 +9,7 @@
 
 #if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
 
+#include "Components/UnrealFlecsModuleTag.h"
 #include "Components/UnrealFlecsPluginTag.h"
 #include "General/UnrealFlecsRegistrationScopeType.h"
 #include "Properties/FlecsComponentProperties.h"
@@ -20,7 +21,8 @@ namespace UE::Flecs::Tests::RegistrationScope
 		const FName InScopeName)
 	{
 		return InWorld->CreateEntity(InScopeName.ToString())
-			.Add(flecs::Module);
+			.Add(flecs::Module)
+			.Add<FUnrealFlecsModuleTag>();
 	}
 
 } // namespace UE::Flecs::Tests::RegistrationScope
