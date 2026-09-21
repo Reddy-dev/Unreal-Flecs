@@ -6,6 +6,11 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsId)
 
+const ecs_type_info_t* FFlecsId::GetTypeInfo(const flecs::world& World) const
+{
+	return ecs_get_type_info(World.c_ptr(), GetId());
+}
+
 const ecs_type_info_t* FFlecsId::GetTypeInfo(const TSolidNotNull<const UFlecsWorldInterfaceObject*> World) const
 {
 	return GetTypeInfo(World->GetNativeFlecsWorld());
