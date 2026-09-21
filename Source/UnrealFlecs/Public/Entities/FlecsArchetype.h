@@ -42,14 +42,9 @@ public:
     FORCEINLINE flecs::type* operator->() { return &Type; }
     FORCEINLINE const flecs::type* operator->() const { return &Type; }
 
-    NO_DISCARD FORCEINLINE bool operator==(const FFlecsArchetype& Other) const
+    NO_DISCARD FORCEINLINE bool UEOpEquals(const FFlecsArchetype& Other) const
     {
         return Type == Other.Type;
-    }
-
-    NO_DISCARD FORCEINLINE bool operator!=(const FFlecsArchetype& Other) const
-    {
-        return Type != Other.Type;
     }
 
     NO_DISCARD FORCEINLINE int32 GetComponentCount() const

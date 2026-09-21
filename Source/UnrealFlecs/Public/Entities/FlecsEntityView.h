@@ -768,3 +768,12 @@ public:
 private:
 	
 }; // struct FFlecsEntityView
+
+template <>
+struct TStructOpsTypeTraits<FFlecsEntityView> : public TStructOpsTypeTraitsBase2<FFlecsEntityView>
+{
+	enum
+	{
+		WithIdenticalViaEquality = true,
+	};
+};

@@ -362,19 +362,14 @@ public:
 		return THandle(GetNativeFlecsWorld(), GetFlecsId());
 	}
 	
-	NO_DISCARD SOLID_INLINE bool operator==(const FFlecsCommonHandle& Other) const
+	NO_DISCARD SOLID_INLINE bool UEOpEquals(const FFlecsCommonHandle& Other) const
 	{
 		return GetEntity() == Other.GetEntity();
 	}
 	
-	NO_DISCARD SOLID_INLINE bool operator==(const FFlecsId& Other) const
+	NO_DISCARD SOLID_INLINE bool UEOpEquals(const FFlecsId& Other) const
 	{
 		return GetFlecsId() == Other;
-	}
-
-	NO_DISCARD SOLID_INLINE bool operator!=(const FFlecsId& Other) const
-	{
-		return GetFlecsId() != Other;
 	}
 
 protected:

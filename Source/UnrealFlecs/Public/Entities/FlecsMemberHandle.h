@@ -45,7 +45,7 @@ public:
 		return Member;
 	}
 
-	FORCEINLINE bool operator==(const FFlecsMemberHandle& Other) const
+	FORCEINLINE bool UEOpEquals(const FFlecsMemberHandle& Other) const
 	{
 		return Member == Other.Member;
 	}
@@ -58,3 +58,13 @@ public:
 	const flecs::member_t* Member = nullptr;
 	
 }; // struct FFlecsMemberHandle
+
+template <>
+struct TStructOpsTypeTraits<FFlecsMemberHandle> : public TStructOpsTypeTraitsBase2<FFlecsMemberHandle>
+{
+	enum
+	{
+		WithIdenticalViaEquality = true
+	}; // enum
+	
+}; // struct TStructOpsTypeTraitsBase<FFlecsMemberHandle
