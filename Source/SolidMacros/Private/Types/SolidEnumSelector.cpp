@@ -2,6 +2,8 @@
 
 #include "Types/SolidEnumSelector.h"
 
+#include "UObject/Class.h"
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(SolidEnumSelector)
 
 FText FSolidEnumSelector::GetDisplayName() const
