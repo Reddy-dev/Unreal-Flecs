@@ -27,16 +27,4 @@ public:
 	UPROPERTY()
 	FFlecsPipelineHandle MainLoopPipeline;
 	
-	/*UPROPERTY()
-	FFlecsPipelineHandle PrePhysicsPipeline;
-
-	UPROPERTY()
-	FFlecsPipelineHandle DuringPhysicsPipeline;
-
-	UPROPERTY()
-	FFlecsPipelineHandle PostPhysicsPipeline;
-
-	UPROPERTY()
-	FFlecsPipelineHandle PostUpdateWorkPipeline;*/
-	
 }; // class UFlecsDefaultGameLoop
