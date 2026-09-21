@@ -686,17 +686,32 @@ public:
 		return FFlecsArchetype(GetEntityView().type());
 	}
 
+	/**
+	 * @brief Tests whether this entity inherits a Collection prefab.
+	 * @param InCollection Raw id of the Collection prefab.
+	 * @return True when the entity has the Collection through IsA.
+	 */
 	NO_DISCARD SOLID_INLINE bool HasCollection(const FFlecsId InCollection) const
 	{
 		return IsA(InCollection);
 	}
 
+	/**
+	 * @brief Tests whether this entity inherits a class-defined Collection.
+	 * @param InCollection Collection class used during registration.
+	 * @return True when the entity has the Collection through IsA.
+	 */
 	NO_DISCARD SOLID_INLINE bool HasCollection(UClass* InCollection) const
 	{
 		return HasCollection(ObtainTypeClass(InCollection));
 	}
 
 	template <Solid::TStaticClassConcept T>
+	/**
+	 * @brief Tests whether this entity inherits a typed Collection.
+	 * @tparam T Collection class used during registration.
+	 * @return True when the entity has the Collection through IsA.
+	 */
 	NO_DISCARD SOLID_INLINE bool HasCollection() const
 	{
 		return HasCollection(T::StaticClass());

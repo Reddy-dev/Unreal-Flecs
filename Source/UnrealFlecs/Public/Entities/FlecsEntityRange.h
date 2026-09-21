@@ -13,10 +13,15 @@
 #include "FlecsEntityRange.generated.h"
 
 /**
- * UObject wrapper around a native Flecs entity range.
+ * @brief UObject wrapper around a native Flecs entity-id range.
  *
- * This type exposes range metadata to both C++ and Blueprint consumers while
- * keeping ownership/initialization controlled by UFlecsWorld.
+ * UFlecsWorld owns the native range and its lifetime. The wrapper exposes the
+ * inclusive minimum/maximum bounds and the world-managed range name to C++
+ * and Blueprint consumers. Its native pointer becomes invalid when the owning
+ * world resets or is destroyed.
+ *
+ * @see UFlecsWorld::CreateEntityRange()
+ * @see UFlecsWorld::SetActiveEntityRange()
  */
 UCLASS(BlueprintType, NotBlueprintable)
 class UNREALFLECS_API UFlecsEntityRange final : public UObject
@@ -26,35 +31,67 @@ class UNREALFLECS_API UFlecsEntityRange final : public UObject
 	friend class UFlecsWorld;
 	
 public:
+	/**
+	 * @brief Constructs a range wrapper owned by UFlecsWorld.
+	 * @param ObjectInitializer Unreal object initialization data.
+	 */
 	UFlecsEntityRange(const FObjectInitializer& ObjectInitializer);
 	
+	/**
+	 * @brief Invalidates the wrapped native range pointer.
+	 *
+	 * Called by the owning world during reset and teardown. The wrapper must
+	 * not be used for range queries after invalidation.
+	 */
 	void InvalidateNativeEntityRange();
 	
+	/**
+	 * @brief Returns the wrapped native Flecs range.
+	 * @return The native range, or nullptr after world teardown/reset.
+	 */
 	NO_DISCARD FORCEINLINE const ecs_entity_range_t* GetNativeEntityRange() const
 	{
 		return NativeRange;
 	}
 	
+	/** Converts this wrapper to its native Flecs range pointer. */
 	FORCEINLINE operator const ecs_entity_range_t*() const
 	{
 		return GetNativeEntityRange();
 	}
 	
+	/**
+	 * @brief Returns the first entity id in the range.
+	 * @return Inclusive minimum id.
+	 * @warning The native range must still be valid.
+	 */
 	NO_DISCARD uint32 GetMinimum() const;
+	/**
+	 * @brief Returns the last entity id in the range.
+	 * @return Inclusive maximum id; zero means unbounded.
+	 * @warning The native range must still be valid.
+	 */
 	NO_DISCARD uint32 GetMaximum() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Flecs | Entity Range", meta = (DisplayName = "Get Minimum"))
+	/** Blueprint wrapper for GetMinimum(). */
 	int32 K2_GetMinimum() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Flecs | Entity Range", meta = (DisplayName = "Get Maximum"))
+	/** Blueprint wrapper for GetMaximum(). */
 	int32 K2_GetMaximum() const;
 	
+	/**
+	 * @brief Returns both inclusive range bounds.
+	 * @return Tuple containing minimum and maximum; maximum zero is unbounded.
+	 */
 	NO_DISCARD FORCEINLINE TTuple<uint32, uint32> GetRange() const
 	{
 		return MakeTuple(GetMinimum(), GetMaximum());
 	}
 	
 	UFUNCTION(BlueprintCallable, Category = "Flecs | Entity Range")
+	/** Returns the name assigned when the world created this range. */
 	FORCEINLINE FName GetRangeName() const
 	{
 		return RangeName;

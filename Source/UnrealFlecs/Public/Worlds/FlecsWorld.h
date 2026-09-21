@@ -176,17 +176,49 @@ public:
 	void SetTaskThreads(const int32 InThreadCount);
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
+	/**
+	 * @brief Creates and tracks a named entity-id range for this world.
+	 * @param InRangeName Non-None name used to track the range.
+	 * @param InMinimum Inclusive first entity id; must be greater than zero.
+	 * @param InMaximum Inclusive last entity id; zero creates an unbounded range.
+	 * @return UObject wrapper for the world-owned native range.
+	 *
+	 * New and recycled entity ids allocated while this range is active remain
+	 * within its bounds.
+	 */
 	UFlecsEntityRange* CreateEntityRange(const FName& InRangeName, const int32 InMinimum, const int32 InMaximum);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs | World")
+	/**
+	 * @brief Activates a world-owned entity range for new entity allocation.
+	 * @param InEntityRange Range created by this world.
+	 *
+	 * New and recycled entity ids are constrained to the active range. When
+	 * the range has no ids available, native Flecs creation operations assert.
+	 */
 	void SetActiveEntityRange(UFlecsEntityRange* InEntityRange) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
+	/**
+	 * @brief Returns the currently active entity range.
+	 * @return The active range, or nullptr when allocation is unrestricted.
+	 */
 	UFlecsEntityRange* GetActiveEntityRange() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
+	/**
+	 * @brief Returns all tracked entity ranges owned by this world.
+	 * @return A snapshot array of valid range wrappers.
+	 */
 	TArray<UFlecsEntityRange*> GetEntityRanges() const;
 	
+	/**
+	 * @brief Lazily yields all tracked entity ranges.
+	 * @return A C++ generator over world-owned range wrappers.
+	 *
+	 * The yielded pointers remain owned by the world and must not be retained
+	 * past world reset or teardown.
+	 */
 	std::generator<UFlecsEntityRange*> GetEntityRangesGenerator() const;
 
 	// @TODO: Re-implement bitmask registration

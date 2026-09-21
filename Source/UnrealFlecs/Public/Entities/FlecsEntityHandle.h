@@ -935,9 +935,22 @@ public:
 		return FFlecsEntityView(GetEntity().view());
 	}
 
+	/**
+	 * @brief Adds a registered Collection prefab by raw Flecs id.
+	 * @param InCollection Raw id of the Collection prefab.
+	 * @param InParams Explicit Collection parameters.
+	 * @return This entity handle for chaining.
+	 */
 	const FSelfType& AddCollection(const FFlecsId InCollection, const FInstancedStruct& InParams = FInstancedStruct()) const;
 
 	template <Solid::TScriptStructConcept TCollectionParams, typename TSelf>
+	/**
+	 * @brief Adds a raw-id Collection with typed parameters.
+	 * @tparam TCollectionParams Script-struct type of the parameters.
+	 * @param InCollection Raw id of the Collection prefab.
+	 * @param InParams Parameters applied to the instance.
+	 * @return The original handle for chaining.
+	 */
 	SOLID_INLINE const TSelf& AddCollection(this const TSelf& InSelf, const FFlecsId InCollection, const TCollectionParams& InParams)
 	{
 		InSelf.AddCollection(InCollection, FInstancedStruct::Make<TCollectionParams>(InParams));
@@ -945,6 +958,12 @@ public:
 	}
 
 	template <typename TSelf>
+	/**
+	 * @brief Adds a class-defined Collection.
+	 * @param InCollection Collection class implementing IFlecsCollectionInterface.
+	 * @param InParams Explicit Collection parameters.
+	 * @return The original handle for chaining.
+	 */
 	SOLID_INLINE const TSelf& AddCollection(this const TSelf& InSelf, UClass* InCollection, const FInstancedStruct& InParams = FInstancedStruct())
 	{
 		InSelf.AddCollection(InSelf.ObtainTypeClass(InCollection), InParams);
@@ -952,6 +971,13 @@ public:
 	}
 
 	template <Solid::TScriptStructConcept TCollectionParams, typename TSelf>
+	/**
+	 * @brief Adds a class-defined Collection with typed parameters.
+	 * @tparam TCollectionParams Script-struct type of the parameters.
+	 * @param InCollection Collection class implementing IFlecsCollectionInterface.
+	 * @param InParams Parameters applied to the instance.
+	 * @return The original handle for chaining.
+	 */
 	SOLID_INLINE const TSelf& AddCollection(this const TSelf& InSelf, UClass* InCollection, const TCollectionParams& InParams)
 	{
 		InSelf.AddCollection(InCollection, FInstancedStruct::Make<TCollectionParams>(InParams));
@@ -959,6 +985,12 @@ public:
 	}
 
 	template <Solid::TStaticClassConcept T, typename TSelf>
+	/**
+	 * @brief Adds a typed class-defined Collection.
+	 * @tparam T Collection class implementing IFlecsCollectionInterface.
+	 * @param InParams Explicit Collection parameters.
+	 * @return The original handle for chaining.
+	 */
 	SOLID_INLINE const TSelf& AddCollection(this const TSelf& InSelf, const FInstancedStruct& InParams = FInstancedStruct())
 	{
 		InSelf.AddCollection(T::StaticClass(), InParams);
@@ -966,20 +998,54 @@ public:
 	}
 
 	template <Solid::TStaticClassConcept T, Solid::TScriptStructConcept TCollectionParams, typename TSelf>
+	/**
+	 * @brief Adds a typed class-defined Collection with typed parameters.
+	 * @tparam T Collection class implementing IFlecsCollectionInterface.
+	 * @tparam TCollectionParams Script-struct type of the parameters.
+	 * @param InParams Parameters applied to the instance.
+	 * @return The original handle for chaining.
+	 */
 	SOLID_INLINE const TSelf& AddCollection(this const TSelf& InSelf, const TCollectionParams& InParams)
 	{
 		InSelf.AddCollection(T::StaticClass(), FInstancedStruct::Make<TCollectionParams>(InParams));
 		return InSelf;
 	}
 
+	/**
+	 * @brief Adds a Collection resolved from a reference.
+	 * @param InCollectionRef Asset, id, or class reference.
+	 * @param InParams Explicit Collection parameters.
+	 * @return This entity handle for chaining.
+	 */
 	const FSelfType& AddCollection(const FFlecsCollectionReference& InCollectionRef, const FInstancedStruct& InParams = FInstancedStruct()) const;
+	/**
+	 * @brief Adds an instanced Collection reference.
+	 * @param InCollectionRef Reference and parameters to apply.
+	 * @return This entity handle for chaining.
+	 */
 	const FSelfType& AddCollection(const FFlecsCollectionInstancedReference& InCollectionRef) const;
 
 	// Note this doesnt remove overridden components
+	/**
+	 * @brief Removes a Collection prefab by raw Flecs id.
+	 * @param InCollection Raw id of the Collection prefab.
+	 * @return This entity handle for chaining.
+	 *
+	 * Removing the Collection does not remove components overridden on the
+	 * entity.
+	 */
 	const FSelfType& RemoveCollection(const FFlecsId InCollection) const;
 
 	// Note this doesnt remove overridden components
 	template <typename TSelf>
+	/**
+	 * @brief Removes a class-defined Collection.
+	 * @param InCollection Collection class used during registration.
+	 * @return The original handle for chaining.
+	 *
+	 * Removing the Collection does not remove components overridden on the
+	 * entity.
+	 */
 	SOLID_INLINE const TSelf& RemoveCollection(this const TSelf& InSelf, UClass* InCollection)
 	{
 		InSelf.RemoveCollection(InSelf.ObtainTypeClass(InCollection));
@@ -988,6 +1054,14 @@ public:
 
 	// Note this doesnt remove overridden components
 	template <Solid::TStaticClassConcept T, typename TSelf>
+	/**
+	 * @brief Removes a typed class-defined Collection.
+	 * @tparam T Collection class used during registration.
+	 * @return The original handle for chaining.
+	 *
+	 * Removing the Collection does not remove components overridden on the
+	 * entity.
+	 */
 	SOLID_INLINE const TSelf& RemoveCollection(this const TSelf& InSelf)
 	{
 		InSelf.RemoveCollection(T::StaticClass());
