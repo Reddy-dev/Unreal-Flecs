@@ -846,19 +846,52 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 		return RegisteredObjectTypes[InClass].GetObject();
 	}
 	
+	auto AreAllDependantsRegistered = [this](const TSubclassOf<UObject>& InClass) -> bool
+	{
+		const TSolidNotNull<const UObject*> CDO = InClass.GetDefaultObject();
+		const TSolidNotNull<const IFlecsObjectRegistrationInterface*> CDOInterface 
+			= CastChecked<const IFlecsObjectRegistrationInterface>(CDO);
+		
+		TArray<TSubclassOf<UObject>> DependentRegisteredObjectTypes = CDOInterface->GetDependentRegistrationClasses();
+		
+		for (const TSubclassOf<UObject>& DependentClass : DependentRegisteredObjectTypes)
+		{
+			if UNLIKELY_IF(!IsFlecsObjectRegistered(DependentClass))
+			{
+				return false;
+			}
+		}
+		
+		return true;
+	};
+	
+	auto GetAllUnregisteredDependents
+		= [this](const TSubclassOf<UObject>& InClass) -> std::generator<TSubclassOf<UObject>>
+	{
+		const TSolidNotNull<const UObject*> CDO = InClass.GetDefaultObject();
+		const TSolidNotNull<const IFlecsObjectRegistrationInterface*> CDOInterface 
+			= CastChecked<const IFlecsObjectRegistrationInterface>(CDO);
+		
+		TArray<TSubclassOf<UObject>> DependentRegisteredObjectTypes = CDOInterface->GetDependentRegistrationClasses();
+		TArray<TSubclassOf<UObject>> UnregisteredDependents;
+		
+		for (const TSubclassOf<UObject>& DependentClass : DependentRegisteredObjectTypes)
+		{
+			if UNLIKELY_IF(!IsFlecsObjectRegistered(DependentClass))
+			{
+				co_yield DependentClass;
+			}
+		}
+	};
+	
 	const TSolidNotNull<const UObject*> CDO = InClass.GetDefaultObject();
 	const TSolidNotNull<const IFlecsObjectRegistrationInterface*> CDOInterface = CastChecked<const IFlecsObjectRegistrationInterface>(CDO);
 	
 	TArray<TSubclassOf<UObject>> DependentRegisteredObjectTypes = CDOInterface->GetDependentRegistrationClasses();
-	for (const TSubclassOf<UObject>& DependentClass : DependentRegisteredObjectTypes)
+	for (const TSubclassOf<UObject>& DependentClass : GetAllUnregisteredDependents(InClass))
 	{
-		solid_check(DependentClass != InClass);
-		
-		if (!IsFlecsObjectRegistered(DependentClass))
-		{
-			AddDeferredRegisteredObject(InClass, DependentRegisteredObjectTypes);
-			return nullptr;
-		}
+		AddDeferredRegisteredObject(InClass, DependentRegisteredObjectTypes);
+		return nullptr;
 	}
 	
 	const TSolidNotNull<UObject*> FlecsObject = NewObject<UObject>(this, InClass);
@@ -905,6 +938,11 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 				continue;
 			}
 			
+			if (!AreAllDependantsRegistered(Dependent))
+			{
+				continue;
+			}
+
 			RegisterFlecsObject(Dependent);
 		}
 	}
