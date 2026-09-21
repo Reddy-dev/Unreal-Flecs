@@ -22,17 +22,13 @@ namespace
 } // namespace
 
 void UE::Flecs::FFlecsComponentRegistrationHooks::InstallReplicationHooks(
-	const void* InOwner,
-	const FFlecsReplicationComponentRegistrationFunction InRegister,
-	const FFlecsReplicationComponentMarkerFunction InMark)
+	const TSolidNotNull<const void*> InOwner,
+	const TSolidNotNull<FFlecsReplicationComponentRegistrationFunction> InRegister,
+	const TSolidNotNull<FFlecsReplicationComponentMarkerFunction> InMark)
 {
-	solid_cassume(InOwner);
-	
-	solid_cassume(InRegister);
-	solid_cassume(InMark);
 
 	FReplicationHooks& Hooks = GetReplicationHooks();
-	solid_cassumef(!Hooks.Owner || Hooks.Owner == InOwner,
+	solid_checkf(!Hooks.Owner || Hooks.Owner == InOwner,
 		TEXT("Replication component hooks are already installed by another module"));
 
 	Hooks.Owner = InOwner;

@@ -19,9 +19,9 @@ namespace UE::Flecs
 	struct UNREALFLECS_API FFlecsComponentRegistrationHooks
 	{
 		static void InstallReplicationHooks(
-			const void* InOwner,
-			FFlecsReplicationComponentRegistrationFunction InRegister,
-			FFlecsReplicationComponentMarkerFunction InMark);
+			const TSolidNotNull<const void*> InOwner,
+			const TSolidNotNull<FFlecsReplicationComponentRegistrationFunction> InRegister,
+			const TSolidNotNull<FFlecsReplicationComponentMarkerFunction> InMark);
 
 		static void UninstallReplicationHooks(const void* InOwner);
 
