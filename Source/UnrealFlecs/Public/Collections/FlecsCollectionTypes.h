@@ -139,7 +139,8 @@ struct TFlecsComponentTraits<FFlecsCollectionPrefabTag> : public TFlecsComponent
 	
 	static void PostRegister(const FFlecsComponentHandle& ComponentHandle)
 	{
-		ComponentHandle.AddPair(flecs::With, flecs::Prefab);
+		ComponentHandle
+			.AddPair(flecs::With, flecs::Prefab);
 	}
 };
 
