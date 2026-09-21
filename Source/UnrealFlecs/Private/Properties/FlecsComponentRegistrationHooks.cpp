@@ -58,7 +58,7 @@ TValueOrError<void, FString> UE::Flecs::FFlecsComponentRegistrationHooks::Regist
 {
 	const FReplicationHooks& Hooks = GetReplicationHooks();
 	
-	if (!Hooks.Register)
+	if UNLIKELY_IF(!Hooks.Register)
 	{
 		return MakeError("No Networking Module loaded");
 	}
