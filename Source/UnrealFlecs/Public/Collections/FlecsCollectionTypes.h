@@ -10,10 +10,10 @@
 class UFlecsCollectionDataAsset;
 class UFlecsCollectionClass;
 
-UENUM(BlueprintType)
 /**
  * @brief Selects the source used to resolve a Collection reference.
  */
+UENUM(BlueprintType)
 enum class EFlecsCollectionReferenceMode : uint8
 {
 	/** Resolve the Collection from a UFlecsCollectionDataAsset. */
@@ -25,7 +25,6 @@ enum class EFlecsCollectionReferenceMode : uint8
 
 }; // enum class EFlecsCollectionReferenceMode
 
-USTRUCT(BlueprintType)
 /**
  * @brief Identifies a Collection by asset, identifier, or interface class.
  *
@@ -33,6 +32,7 @@ USTRUCT(BlueprintType)
  * Use the FromAsset(), FromId(), or FromClass() factories to construct a
  * reference with the matching mode and payload.
  */
+USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsCollectionReference
 {
 	GENERATED_BODY()
@@ -91,35 +91,35 @@ public:
 		return FromId(FFlecsCollectionId(InIdString));
 	}
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	/** Resolution mode and source payload selected by this reference. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	EFlecsCollectionReferenceMode Mode = EFlecsCollectionReferenceMode::Asset;
 
+	/** Collection asset used when Mode is Asset. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly,
 		meta = (EditCondition = "Mode == EFlecsCollectionReferenceMode::Asset", EditConditionHides))
-	/** Collection asset used when Mode is Asset. */
 	TObjectPtr<const UFlecsCollectionDataAsset> Asset;
 
+	/** Collection interface class used when Mode is UClass. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly,
 		meta = (EditCondition = "Mode == EFlecsCollectionReferenceMode::UClass", EditConditionHides,
 			MustImplement = "/Script/UnrealFlecs.FlecsCollectionInterface"))
-	/** Collection interface class used when Mode is UClass. */
 	TSubclassOf<UObject> Class;
 
+	/** Registered Collection identifier used when Mode is Id. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly,
 		meta = (EditCondition = "Mode == EFlecsCollectionReferenceMode::Id", EditConditionHides))
-	/** Registered Collection identifier used when Mode is Id. */
 	FFlecsCollectionId Id;
 
 }; // struct FFlecsCollectionReference
 
-USTRUCT(BlueprintType)
 /**
  * @brief A Collection reference paired with parameters for instantiation.
  *
  * The parameters are passed to the Collection's parameter application
  * callback when the reference is added to an entity.
  */
+USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsCollectionInstancedReference
 {
 	GENERATED_BODY()
@@ -141,24 +141,25 @@ public:
 	{
 	}
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flecs", meta = (ShowOnlyInnerProperties))
 	/** Collection reference to resolve. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flecs", meta = (ShowOnlyInnerProperties))
 	FFlecsCollectionReference Collection;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flecs")
 	/** Optional parameters passed to the Collection during application. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flecs")
 	FInstancedStruct Parameters;
 
 }; // struct FFlecsCollectionInstancedReference
 
-/** compose another Collection by reference (adds (IsA, @param Collection) in compile-time and then removes itself). */
-USTRUCT(BlueprintType)
 /**
  * @brief Stores Collection references that should be expanded on an entity.
  *
  * The Collection subsystem consumes this component while recursively
  * expanding references on Collection child entities.
+ * A reference composes another Collection by adding `(IsA, Collection)`
+ * during application and then removing the temporary reference.
  */
+USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsCollectionReferenceComponent
 {
 	GENERATED_BODY()
@@ -169,8 +170,8 @@ struct UNREALFLECS_API FFlecsCollectionReferenceComponent
 public:
 	FORCEINLINE FFlecsCollectionReferenceComponent() = default;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flecs")
 	/** Collection references pending expansion on the owning entity. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flecs")
 	TArray<FFlecsCollectionInstancedReference> Collections;
 
 }; // struct FFlecsCollectionReferenceComponent
@@ -182,13 +183,13 @@ FLECS_COMPONENT_TRAITS(FFlecsCollectionReferenceComponent)
 	static constexpr bool Sparse = true;
 }; // struct FLECS_COMPONENT_TRAITS(FFlecsCollectionReferenceComponent)
 
-USTRUCT(BlueprintType)
 /**
  * @brief Tags an entity as a registered Collection prefab.
  *
  * The Collection subsystem uses this tag to distinguish Collection prefabs
  * from arbitrary Flecs entities when resolving raw entity ids.
  */
+USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsCollectionPrefabTag
 {
 	GENERATED_BODY()
@@ -221,18 +222,18 @@ struct TFlecsComponentTraits<FFlecsCollectionSlotTag> : public TFlecsComponentTr
 }; // struct TFlecsComponentTraits<FFlecsCollectionSlotTag>*/
 
 // @TODO: Add Ordered Children
-USTRUCT(BlueprintType)
 /**
  * @brief Stores the source index of a Collection sub-entity.
  */
+USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsSubEntityIndex
 {
 	GENERATED_BODY()
 
 	static constexpr bool Sparse = true;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs")
 	/** Index of the sub-entity in the owning FFlecsEntityRecord. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs")
 	int32 Index = INDEX_NONE;
 }; // struct FFlecsSubEntityIndex
 
@@ -244,8 +245,6 @@ FLECS_COMPONENT_TRAITS(FFlecsSubEntityIndex)
 }; // struct FLECS_COMPONENT_TRAITS(FFlecsSubEntityIndex)
 
 // @TODO: maybe add an OnSet Event like in templates
-
-USTRUCT()
 /**
  * @brief Describes how typed parameters are applied to a Collection instance.
  *
@@ -253,6 +252,7 @@ USTRUCT()
  * added to an entity, the subsystem selects explicit parameters or the
  * stored default and invokes ApplyParametersFunction.
  */
+USTRUCT()
 struct UNREALFLECS_API FFlecsCollectionParametersComponent
 {
 	GENERATED_BODY()
@@ -263,8 +263,8 @@ struct UNREALFLECS_API FFlecsCollectionParametersComponent
 	static constexpr flecs::on_instantiate OnInstantiate = flecs::on_instantiate::dont_inherit;
 
 public:
-	UPROPERTY()
 	/** Default parameter value and type expected by the Collection. */
+	UPROPERTY()
 	FInstancedStruct ParameterType;
 
 	FApplyParametersFunction ApplyParametersFunction;
