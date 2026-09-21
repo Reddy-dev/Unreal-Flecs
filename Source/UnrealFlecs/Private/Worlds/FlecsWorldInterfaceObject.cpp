@@ -171,6 +171,16 @@ UFlecsStage* UFlecsWorldInterfaceObject::AsStage() const
 	return CastChecked<UFlecsStage>(const_cast<UFlecsWorldInterfaceObject*>(this));
 }
 
+UFlecsWorld* UFlecsWorldInterfaceObject::AsWorld() const
+{
+	if UNLIKELY_IF(!ensure(!IsStage()))
+	{
+		return nullptr;
+	}
+	
+	return CastChecked<UFlecsWorld>(const_cast<UFlecsWorldInterfaceObject*>(this));
+}
+
 flecs::world UFlecsWorldInterfaceObject::GetNativeFlecsWorld() const
 {
 	return *GetNativeFlecsWorld_Internal();

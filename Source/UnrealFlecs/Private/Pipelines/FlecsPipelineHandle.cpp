@@ -37,6 +37,6 @@ const FFlecsPipelineHandle& FFlecsPipelineHandle::RunPipeline(const double InDel
 	
 	solid_check(IsUnrealFlecsWorld());
 	
-	const TSolidNotNull<const UFlecsWorld*> MainFlecsWorld = GetFlecsWorldChecked()->GetFlecsWorld();
+	const TSolidNotNull<const UFlecsWorld*> MainFlecsWorld = GetFlecsWorldChecked()->AsWorld();
 	return RunPipeline(MainFlecsWorld, InDeltaTime);
 }

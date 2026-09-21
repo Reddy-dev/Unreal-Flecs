@@ -49,6 +49,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
 	UFlecsStage* AsStage() const;
 	
+	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
+	UFlecsWorld* AsWorld() const;
+	
 	NO_DISCARD flecs::world GetNativeFlecsWorld() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
