@@ -61,6 +61,45 @@ FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsRegisteredObjectDependencyTests,
 		ASSERT_THAT(IsTrue(DependentObject->WasDependencyRegistered()));
 		ASSERT_THAT(IsTrue(TransitiveDependentObject->WasDependencyRegistered()));
 	}
+
+	TEST_METHOD(RegisteringOneOfMultipleDependencies_KeepsOtherDependencyDeferred)
+	{
+		World()->RegisterFlecsObject<UFlecsRegisteredObjectMultipleDependencyTestObject>();
+
+		World()->RegisterFlecsObject<UFlecsRegisteredObjectDependencyTestObject>();
+
+		ASSERT_THAT(IsFalse(World()->IsFlecsObjectRegistered<UFlecsRegisteredObjectMultipleDependencyTestObject>()));
+
+		World()->RegisterFlecsObject<UFlecsRegisteredObjectSecondDependencyTestObject>();
+
+		UFlecsRegisteredObjectMultipleDependencyTestObject* MultipleDependencyObject
+			= World()->GetRegisteredFlecsObject<UFlecsRegisteredObjectMultipleDependencyTestObject>();
+
+		ASSERT_THAT(IsNotNull(MultipleDependencyObject));
+		ASSERT_THAT(AreEqual(1, MultipleDependencyObject->GetRegisterObjectCallCount()));
+	}
+
+	TEST_METHOD(CyclicDependencies_RejectRegistration)
+	{
+		World()->RegisterFlecsObject<UFlecsRegisteredObjectCycleATestObject>();
+		World()->RegisterFlecsObject<UFlecsRegisteredObjectCycleBTestObject>();
+
+		ASSERT_THAT(IsFalse(World()->IsFlecsObjectRegistered<UFlecsRegisteredObjectCycleATestObject>()));
+		ASSERT_THAT(IsFalse(World()->IsFlecsObjectRegistered<UFlecsRegisteredObjectCycleBTestObject>()));
+
+		World()->RegisterFlecsObject<UFlecsRegisteredObjectCycleATestObject>();
+		ASSERT_THAT(IsFalse(World()->IsFlecsObjectRegistered<UFlecsRegisteredObjectCycleATestObject>()));
+	}
+
+	TEST_METHOD(UnregisteringDependency_RequiresRegisteredDependentsToBeRemovedFirst)
+	{
+		World()->RegisterFlecsObject<UFlecsRegisteredObjectDependentTestObject>();
+		World()->RegisterFlecsObject<UFlecsRegisteredObjectDependencyTestObject>();
+
+		ASSERT_THAT(IsFalse(World()->UnregisterFlecsObject<UFlecsRegisteredObjectDependencyTestObject>()));
+		ASSERT_THAT(IsTrue(World()->UnregisterFlecsObject<UFlecsRegisteredObjectDependentTestObject>()));
+		ASSERT_THAT(IsTrue(World()->UnregisterFlecsObject<UFlecsRegisteredObjectDependencyTestObject>()));
+	}
 }; // FlecsRegisteredObjectDependencyTests
 
 #endif // #if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS

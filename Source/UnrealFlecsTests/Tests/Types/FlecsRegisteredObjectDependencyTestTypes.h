@@ -48,6 +48,14 @@ class UNREALFLECSTESTS_API UFlecsRegisteredObjectDependencyTestObject final
 }; // class UFlecsRegisteredObjectDependencyTestObject
 
 UCLASS()
+class UNREALFLECSTESTS_API UFlecsRegisteredObjectSecondDependencyTestObject final
+	: public UFlecsRegisteredObjectDependencyTestBase
+{
+	GENERATED_BODY()
+
+}; // class UFlecsRegisteredObjectSecondDependencyTestObject
+
+UCLASS()
 class UNREALFLECSTESTS_API UFlecsRegisteredObjectDependentTestObject final
 	: public UFlecsRegisteredObjectDependencyTestBase
 {
@@ -102,3 +110,43 @@ private:
 	bool bDependencyWasRegistered = false;
 
 }; // class UFlecsRegisteredObjectTransitiveDependentTestObject
+
+UCLASS()
+class UNREALFLECSTESTS_API UFlecsRegisteredObjectMultipleDependencyTestObject final
+	: public UFlecsRegisteredObjectDependencyTestBase
+{
+	GENERATED_BODY()
+
+public:
+	virtual TArray<TSubclassOf<UObject>> GetDependentRegistrationClasses() const override
+	{
+		return
+		{
+			UFlecsRegisteredObjectDependencyTestObject::StaticClass(),
+			UFlecsRegisteredObjectSecondDependencyTestObject::StaticClass()
+		};
+	}
+
+}; // class UFlecsRegisteredObjectMultipleDependencyTestObject
+
+UCLASS()
+class UNREALFLECSTESTS_API UFlecsRegisteredObjectCycleATestObject final
+	: public UFlecsRegisteredObjectDependencyTestBase
+{
+	GENERATED_BODY()
+
+public:
+	virtual TArray<TSubclassOf<UObject>> GetDependentRegistrationClasses() const override;
+
+}; // class UFlecsRegisteredObjectCycleATestObject
+
+UCLASS()
+class UNREALFLECSTESTS_API UFlecsRegisteredObjectCycleBTestObject final
+	: public UFlecsRegisteredObjectDependencyTestBase
+{
+	GENERATED_BODY()
+
+public:
+	virtual TArray<TSubclassOf<UObject>> GetDependentRegistrationClasses() const override;
+
+}; // class UFlecsRegisteredObjectCycleBTestObject
