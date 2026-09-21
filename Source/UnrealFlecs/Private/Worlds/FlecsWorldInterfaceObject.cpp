@@ -311,12 +311,12 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::LookupEntityBySymbol_Internal(con
 		bRecursive));
 }
 
-int32 UFlecsWorldInterfaceObject::Count(const FFlecsId InComponentId) const
+int32 UFlecsWorldInterfaceObject::GetCount(const FFlecsId InComponentId) const
 {
 	return GetNativeFlecsWorld_Internal()->count(InComponentId);
 }
 
-int32 UFlecsWorldInterfaceObject::CountPair(const FFlecsId InFirstId, const FFlecsId InSecondId) const
+int32 UFlecsWorldInterfaceObject::GetCountPair(const FFlecsId InFirstId, const FFlecsId InSecondId) const
 {
 	return GetNativeFlecsWorld_Internal()->count(InFirstId, InSecondId);
 }
@@ -947,7 +947,10 @@ FFlecsComponentHandle UFlecsWorldInterfaceObject::RegisterComponentType(const TS
 
 FFlecsEntityHandle UFlecsWorldInterfaceObject::GetScriptStructEntity(const UScriptStruct* ScriptStruct) const
 {
-	solid_cassume(ScriptStruct)
+	if UNLIKELY_IF(!ensure(ScriptStruct))
+	{
+		return FFlecsEntityHandle::GetNullHandle();
+	}
 
 	solid_checkf(HasScriptStruct(ScriptStruct),
 		TEXT("Script struct %s is not registered"), *ScriptStruct->GetStructCPPName());
@@ -960,7 +963,10 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::GetScriptStructEntity(const UScri
 
 FFlecsEntityHandle UFlecsWorldInterfaceObject::GetScriptEnumEntity(const UEnum* ScriptEnum) const
 {
-	solid_cassume(ScriptEnum);
+	if UNLIKELY_IF(!ensure(ScriptEnum))
+	{
+		return FFlecsEntityHandle::GetNullHandle();
+	}
 	
 	solid_checkf(HasScriptEnum(ScriptEnum),
 		TEXT("Script enum %s is not registered"), *ScriptEnum->GetName());
@@ -972,7 +978,10 @@ FFlecsEntityHandle UFlecsWorldInterfaceObject::GetScriptEnumEntity(const UEnum* 
 
 bool UFlecsWorldInterfaceObject::HasScriptStruct(const UScriptStruct* ScriptStruct) const
 {
-	solid_cassume(ScriptStruct);
+	if UNLIKELY_IF(!ensure(ScriptStruct))
+	{
+		return false;
+	}
 		
 	if (GetTypeMapComponent()->ScriptStructMap.contains(ScriptStruct))
 	{
@@ -985,7 +994,10 @@ bool UFlecsWorldInterfaceObject::HasScriptStruct(const UScriptStruct* ScriptStru
 
 bool UFlecsWorldInterfaceObject::HasScriptEnum(const UEnum* ScriptEnum) const
 {
-	solid_cassume(ScriptEnum);
+	if UNLIKELY_IF(!ensure(ScriptEnum))
+	{
+		return false;
+	}
 		
 	if (GetTypeMapComponent()->ScriptEnumMap.contains(ScriptEnum))
 	{
@@ -998,7 +1010,10 @@ bool UFlecsWorldInterfaceObject::HasScriptEnum(const UEnum* ScriptEnum) const
 
 bool UFlecsWorldInterfaceObject::HasScriptClass(const TSubclassOf<UObject> InClass) const
 {
-	solid_check(InClass);
+	if UNLIKELY_IF(!ensure(InClass))
+	{
+		return FFlecsEntityHandle::GetNullHandle();
+	}
 		
 	if (GetTypeMapComponent()->ScriptClassMap.contains(FFlecsScriptClassComponent(InClass)))
 	{
@@ -1011,7 +1026,10 @@ bool UFlecsWorldInterfaceObject::HasScriptClass(const TSubclassOf<UObject> InCla
 
 FFlecsEntityHandle UFlecsWorldInterfaceObject::GetScriptClassEntity(const TSubclassOf<UObject> InClass) const
 {
-	solid_check(InClass);
+	if UNLIKELY_IF(!ensure(InClass))
+	{
+		return FFlecsEntityHandle::GetNullHandle();
+	}
 		
 	const FFlecsId Component = GetTypeMapComponent()->ScriptClassMap.at(FFlecsScriptClassComponent(InClass));
 	solid_checkf(IsAlive(Component), TEXT("Entity is not alive"));
@@ -1237,9 +1255,12 @@ bool UFlecsWorldInterfaceObject::UsingTaskThreads() const
 	return GetNativeFlecsWorld_Internal()->using_task_threads();
 }
 
-UObject* UFlecsWorldInterfaceObject::GetRegisteredFlecsObject(const TSubclassOf<UObject> InClass) const
+UObject* UFlecsWorldInterfaceObject::GetRegisteredFlecsObject(const TSubclassOf<UObject>& InClass) const
 {
-	solid_check(InClass);
+	if UNLIKELY_IF(!ensure(IsValid(InClass)))
+	{
+		return nullptr;
+	}
 	
 	if (!GetFlecsWorld()->RegisteredObjectTypes.Contains(InClass))
 	{
@@ -1249,9 +1270,12 @@ UObject* UFlecsWorldInterfaceObject::GetRegisteredFlecsObject(const TSubclassOf<
 	return GetFlecsWorld()->RegisteredObjectTypes[InClass].GetObject();
 }
 
-UObject* UFlecsWorldInterfaceObject::GetRegisteredFlecsObjectChecked(const TSubclassOf<UObject> InClass) const
+UObject* UFlecsWorldInterfaceObject::GetRegisteredFlecsObjectChecked(const TSubclassOf<UObject>& InClass) const
 {
-	solid_check(InClass);
+	if UNLIKELY_IF(!ensure(IsValid(InClass)))
+	{
+		return nullptr;
+	}
 	
 	solid_checkf(GetFlecsWorld()->RegisteredObjectTypes.Contains(InClass),
 		TEXT("Class %s is not registered as a flecs object"), *InClass->GetName());
@@ -1259,9 +1283,13 @@ UObject* UFlecsWorldInterfaceObject::GetRegisteredFlecsObjectChecked(const TSubc
 	return GetFlecsWorld()->RegisteredObjectTypes[InClass].GetObject();
 }
 
-bool UFlecsWorldInterfaceObject::IsFlecsObjectRegistered(const TSubclassOf<UObject> InClass) const
+bool UFlecsWorldInterfaceObject::IsFlecsObjectRegistered(const TSubclassOf<UObject>& InClass) const
 {
-	solid_check(InClass);
+	if UNLIKELY_IF(!ensure(IsValid(InClass)))
+	{
+		return false;
+	}
+	
 	return GetFlecsWorld()->RegisteredObjectTypes.Contains(InClass);
 }
 

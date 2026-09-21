@@ -7,6 +7,7 @@
 #include "Worlds/FlecsStage.h"
 #include "Worlds/FlecsWorldInterfaceObject.h"
 #include "Worlds/FlecsWorld.h"
+#include "Worlds/FlecsWorldConverter.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsObserverObject)
 
@@ -78,27 +79,15 @@ void UFlecsObserverObject::ApplyObserverDefinitionOverrides(FFlecsObserverDefini
 
 void UFlecsObserverObject::InitializeObserver(const TSolidNotNull<UFlecsWorldInterfaceObject*> InWorld)
 {
-	const FString ObserverName = GetName();
+	const FFlecsEntityHandle ScriptClassEntity = InWorld->RegisterScriptClassType(this->GetClass());
 	
-	TFlecsObserverBuilder<> ObserverBuilder = InWorld->CreateObserverWithDefinition(ObserverDefinition, ObserverName);
+	TFlecsObserverBuilder<> ObserverBuilder = InWorld->CreateObserverWithDefinition(ObserverDefinition, ScriptClassEntity.GetName());
 	BuildObserver(InWorld, ObserverBuilder);
 	ApplyObserverDefinitionOverrides(ObserverBuilder.GetObserverDefinition());
 	
 	ObserverHandle = ObserverBuilder.run([this](flecs::iter& InIterator)
 	{
-		UFlecsWorldInterfaceObject* IteratorWorld;
-		
-		if (InIterator.world().is_stage())
-		{
-			IteratorWorld = GetFlecsWorld()->GetStage(InIterator.world().get_stage_id());
-		}
-		else
-		{
-			IteratorWorld = GetFlecsWorld();
-		}
-		
-		solid_cassume(IteratorWorld);
-		
+		const TSolidNotNull<UFlecsWorldInterfaceObject*> IteratorWorld = UE::Flecs::ToUnrealFlecsWorldInterface(InIterator.world());
 		this->RunIterator(IteratorWorld, InIterator);
 	});
 	

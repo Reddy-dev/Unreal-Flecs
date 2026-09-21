@@ -183,5 +183,8 @@ public:
 	 * @return Explicit registration scope name, or an empty string to use the default.
 	 */
 	virtual NO_DISCARD FString GetScopeName() const { return ""; }
+	
+	// Called on the CDO
+	virtual NO_DISCARD TArray<TSubclassOf<UObject>> GetDependentRegistrationClasses() const { return {}; }
 
 }; // class IFlecsObjectRegistrationInterface

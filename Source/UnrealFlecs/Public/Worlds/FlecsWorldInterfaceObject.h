@@ -359,25 +359,25 @@ public:
 	}
 	
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	int32 Count(const FFlecsId InComponentId) const;
+	int32 GetCount(const FFlecsId InComponentId) const;
 	
 	template <typename T>
-	NO_DISCARD int32 Count() const
+	NO_DISCARD int32 GetCount() const
 	{
 		return GetNativeFlecsWorld_Internal()->count<T>();
 	}
 	
 	UFUNCTION(BlueprintCallable, Category = "Flecs | World")
-	int32 CountPair(const FFlecsId InFirstId, const FFlecsId InSecondId) const;
+	int32 GetCountPair(const FFlecsId InFirstId, const FFlecsId InSecondId) const;
 	
 	template <typename TFirst>
-	NO_DISCARD int32 CountPair(const FFlecsId InSecondId) const
+	NO_DISCARD int32 GetCountPair(const FFlecsId InSecondId) const
 	{
 		return GetNativeFlecsWorld_Internal()->count<TFirst>(InSecondId);
 	}
 	
 	template <typename TFirst, typename TSecond>
-	NO_DISCARD int32 CountPair() const
+	NO_DISCARD int32 GetCountPair() const
 	{
 		return GetNativeFlecsWorld_Internal()->count<TFirst, TSecond>();
 	}
@@ -720,7 +720,7 @@ public:
 	bool UsingTaskThreads() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	UObject* GetRegisteredFlecsObject(const TSubclassOf<UObject> InClass) const;
+	UObject* GetRegisteredFlecsObject(const TSubclassOf<UObject>& InClass) const;
 	
 	template <Solid::TStaticClassConcept T>
 	NO_DISCARD FORCEINLINE T* GetRegisteredFlecsObject() const
@@ -729,7 +729,7 @@ public:
 	}
 	
 	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	UObject* GetRegisteredFlecsObjectChecked(const TSubclassOf<UObject> InClass) const;
+	UObject* GetRegisteredFlecsObjectChecked(const TSubclassOf<UObject>& InClass) const;
 	
 	template <Solid::TStaticClassConcept T>
 	NO_DISCARD FORCEINLINE T* GetRegisteredFlecsObjectChecked() const
@@ -738,7 +738,7 @@ public:
 	}
 	
 	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	bool IsFlecsObjectRegistered(const TSubclassOf<UObject> InClass) const;
+	bool IsFlecsObjectRegistered(const TSubclassOf<UObject>& InClass) const;
 	
 	template <Solid::TStaticClassConcept T>
 	NO_DISCARD FORCEINLINE bool IsFlecsObjectRegistered() const

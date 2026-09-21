@@ -6,6 +6,7 @@
 #include "Components/ObjectTypes/FFlecsUObjectTag.h"
 #include "Worlds/FlecsStage.h"
 #include "Worlds/FlecsWorld.h"
+#include "Worlds/FlecsWorldConverter.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlecsSystemObject)
 
@@ -113,8 +114,7 @@ void UFlecsSystemObject::ApplySystemDefinitionOverrides(FFlecsSystemDefinition& 
 
 void UFlecsSystemObject::OnBuildSystem(const FFlecsSystemHandle& InSystemHandle)
 {
-	InSystemHandle.SetPair<FFlecsUObjectComponent, FFlecsUObjectTag>(
-		FFlecsUObjectComponent(const_cast<UFlecsSystemObject*>(this)));
+	InSystemHandle.SetPair<FFlecsUObjectComponent, FFlecsUObjectTag>(FFlecsUObjectComponent(this));
 	
 	if (bStartsDisabled)
 	{
@@ -124,27 +124,15 @@ void UFlecsSystemObject::OnBuildSystem(const FFlecsSystemHandle& InSystemHandle)
 
 void UFlecsSystemObject::InitializeSystem(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld)
 {
-	const FString SystemName = GetName();
+	const FFlecsEntityHandle ScriptClassType = InWorld->RegisterScriptClassType(this->GetClass());
 	
-	TFlecsSystemBuilder<> SystemBuilder = InWorld->CreateSystemWithDefinition(SystemDefinition, SystemName);
+	TFlecsSystemBuilder<> SystemBuilder = InWorld->CreateSystemWithDefinition(SystemDefinition, ScriptClassType.GetName());
 	BuildSystem(InWorld, SystemBuilder);
 	ApplySystemDefinitionOverrides(SystemBuilder.GetSystemDefinition());
 	
 	SystemHandle = SystemBuilder.run([this](flecs::iter& InIterator)
 	{
-		UFlecsWorldInterfaceObject* IteratorWorld;
-		
-		if (InIterator.world().is_stage())
-		{
-			IteratorWorld = GetFlecsWorld()->GetStage(InIterator.world().get_stage_id());
-		}
-		else
-		{
-			IteratorWorld = GetFlecsWorld();
-		}
-		
-		solid_cassumef(IteratorWorld, TEXT("FlecsSystemObject '%s' is not contained within a UFlecsWorld."), *GetName());
-		
+		const TSolidNotNull<UFlecsWorldInterfaceObject*> IteratorWorld = UE::Flecs::ToUnrealFlecsWorldInterface(InIterator.world());
 		this->RunIterator(IteratorWorld, InIterator);
 	});
 	

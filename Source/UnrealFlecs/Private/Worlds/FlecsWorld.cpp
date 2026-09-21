@@ -314,7 +314,7 @@ void UFlecsWorld::InitializeFlecsRegistrationObjects()
 		
 			if UNLIKELY_IF(IsFlecsObjectRegistered(RegisteredClass))
 			{
-				UE_LOGFMT(LogFlecsWorld, Warning,
+				UE_LOGFMT(LogFlecsWorld, Error,
 						  "Flecs World {WorldName} Object class {ClassName} is already registered, skipping",
 						  *GetName(),
 						  *RegisteredClass->GetName());
@@ -601,6 +601,16 @@ void UFlecsWorld::SetContext(void* InContext) const
 	GetNativeFlecsWorld().set_ctx(InContext);
 }
 
+void UFlecsWorld::AddDeferredRegisteredObject(const TSubclassOf<UObject>& InClass,
+	const TArray<TSubclassOf<UObject>>& InDependencies)
+{
+	for (const TSubclassOf<UObject>& Dependency : InDependencies)
+	{
+		TArray<TSubclassOf<UObject>>& Dependents = DeferredRegisteredObjectsDependants.FindOrAdd(Dependency);
+		Dependents.Add(InClass);
+	}
+}
+
 void UFlecsWorld::HandleWorldPause()
 {
 	const bool bIsPaused = GetWorld()->IsPaused();
@@ -815,7 +825,10 @@ int32 UFlecsWorld::DeleteEmptyTables(const double TimeBudgetSeconds,
 
 UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 {
-	solid_check(InClass);
+	if UNLIKELY_IF(!ensureAlwaysMsgf(IsValid(InClass), TEXT("Invalid class to register")))
+	{
+		return nullptr;
+	}
 	
 	if UNLIKELY_IF(!InClass->ImplementsInterface(UFlecsObjectRegistrationInterface::StaticClass()))
 	{
@@ -832,7 +845,22 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 			*InClass->GetName());
 		return RegisteredObjectTypes[InClass].GetObject();
 	}
+	
+	const TSolidNotNull<const UObject*> CDO = InClass.GetDefaultObject();
+	const TSolidNotNull<const IFlecsObjectRegistrationInterface*> CDOInterface = CastChecked<const IFlecsObjectRegistrationInterface>(CDO);
+	
+	TArray<TSubclassOf<UObject>> DependentRegisteredObjectTypes = CDOInterface->GetDependentRegistrationClasses();
+	for (const TSubclassOf<UObject>& DependentClass : DependentRegisteredObjectTypes)
+	{
+		solid_check(DependentClass != InClass);
 		
+		if (!IsFlecsObjectRegistered(DependentClass))
+		{
+			AddDeferredRegisteredObject(InClass, DependentRegisteredObjectTypes);
+			return nullptr;
+		}
+	}
+	
 	const TSolidNotNull<UObject*> FlecsObject = NewObject<UObject>(this, InClass);
 	const TSolidNotNull<IFlecsObjectRegistrationInterface*> FlecsObjectInterface = CastChecked<IFlecsObjectRegistrationInterface>(FlecsObject);
 	
@@ -862,12 +890,37 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 				FlecsObjectInterface->FlecsWorldBeginPlay(this);
 			}
 		});
+
+	if (TArray<TSubclassOf<UObject>>* Dependents = DeferredRegisteredObjectsDependants.Find(InClass))
+	{
+		for (const TSubclassOf<UObject>& Dependent : *Dependents)
+		{
+			solid_check(Dependent != InClass);
+			
+			if UNLIKELY_IF(IsFlecsObjectRegistered(Dependent))
+			{
+				UE_LOGFMT(LogFlecsWorld, Warning,
+					"Dependent class {DependentClassName} is already registered, skipping",
+					*Dependent->GetName());
+				continue;
+			}
+			
+			RegisterFlecsObject(Dependent);
+		}
+	}
+	
+	DeferredRegisteredObjectsDependants.Remove(InClass);
 	
 	return FlecsObject;
 }
 
 bool UFlecsWorld::UnregisterFlecsObject(const TSubclassOf<UObject>& InClass)
 {
+	if UNLIKELY_IF(!ensureAlwaysMsgf(IsValid(InClass), TEXT("Invalid class to unregister")))
+	{
+		return false;
+	}
+	
 	for (int32 Index = RegisteredObjects.Num() - 1; Index >= 0; --Index)
 	{
 		const TScriptInterface<IFlecsObjectRegistrationInterface> RegisteredObject = RegisteredObjects[Index];

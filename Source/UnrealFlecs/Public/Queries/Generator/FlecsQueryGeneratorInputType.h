@@ -66,7 +66,7 @@ public:
 		ReturnType = EFlecsQueryGeneratorReturnType::FlecsId;
 	}
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Query Generator")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<const UScriptStruct> ScriptStruct;
 	
 	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const override;
@@ -84,7 +84,7 @@ public:
 		ReturnType = EFlecsQueryGeneratorReturnType::FlecsId;
 	}
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Query Generator")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<const UEnum> ScriptEnum;
 	
 	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const override;
@@ -102,7 +102,7 @@ public:
 		ReturnType = EFlecsQueryGeneratorReturnType::String;
 	}
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Query Generator")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString InputString;
 	
 	virtual NO_DISCARD FString GetStringOutput() const override;
@@ -177,7 +177,7 @@ public:
 		ReturnType = EFlecsQueryGeneratorReturnType::FlecsId;
 	}
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Query Generator")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FFlecsId FlecsId;
 	
 	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const override;
@@ -195,7 +195,7 @@ public:
 		ReturnType = EFlecsQueryGeneratorReturnType::FlecsId;
 	}
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Query Generator")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FSolidEnumSelector EnumValue;
 	
 	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const override;
@@ -249,7 +249,7 @@ public:
 		ReturnType = EFlecsQueryGeneratorReturnType::FlecsId;
 	}
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs | Query Generator")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTag GameplayTag;
 	
 	virtual NO_DISCARD FFlecsId GetFlecsIdOutput(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld) const override;

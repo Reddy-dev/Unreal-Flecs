@@ -400,6 +400,8 @@ public:
 
 	robin_hood::unordered_flat_map<FGameplayTag, FFlecsId> TagEntityMap;
 	
+	TMap<TSubclassOf<UObject>, TArray<TSubclassOf<UObject>>> DeferredRegisteredObjectsDependants;
+
 protected:
 	virtual flecs::world* GetNativeFlecsWorld_Internal() const override
 	{
@@ -407,6 +409,8 @@ protected:
 	}
 	
 	void SetContext(void* InContext) const;
+	
+	void AddDeferredRegisteredObject(const TSubclassOf<UObject>& InClass, const TArray<TSubclassOf<UObject>>& InDependencies);
 
 private:
 	flecs::world World;

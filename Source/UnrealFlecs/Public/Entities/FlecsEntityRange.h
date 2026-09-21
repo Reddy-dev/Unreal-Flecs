@@ -66,6 +66,7 @@ public:
 	 * @warning The native range must still be valid.
 	 */
 	NO_DISCARD uint32 GetMinimum() const;
+	
 	/**
 	 * @brief Returns the last entity id in the range.
 	 * @return Inclusive maximum id; zero means unbounded.
@@ -73,11 +74,21 @@ public:
 	 */
 	NO_DISCARD uint32 GetMaximum() const;
 	
-	/** Blueprint wrapper for GetMinimum(). */
+	/**
+	 * @brief Returns the first entity id in the range.
+	 * @return Inclusive minimum id.
+	 * @warning The native range must still be valid.
+	 * @see GetMaximum()
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Flecs | Entity Range", meta = (DisplayName = "Get Minimum"))
 	int32 K2_GetMinimum() const;
 	
-	/** Blueprint wrapper for GetMaximum(). */
+	/**
+	 * @brief Returns the last entity id in the range.
+	 * @return Inclusive maximum id; zero means unbounded.
+	 * @warning The native range must still be valid.
+	 * @see GetMaximum()
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Flecs | Entity Range", meta = (DisplayName = "Get Maximum"))
 	int32 K2_GetMaximum() const;
 	

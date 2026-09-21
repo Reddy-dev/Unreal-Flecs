@@ -74,6 +74,12 @@ public:
 		return this->GetSelf();
 	}
 	
+	FORCEINLINE TInherited& Kind(const TSubclassOf<UObject>& InKind)
+	{
+		const FString ClassSymbol = InKind.Get()->GetPrefixCPP() + InKind.Get()->GetName();
+		return Kind(ClassSymbol);
+	}
+	
 	FORCEINLINE TInherited& Kind(const FSolidEnumSelector& InKind)
 	{
 		GetSystemDefinition().PhaseInput.Type = EFlecsSystemPhaseInputType::Type;
@@ -122,6 +128,11 @@ public:
 	}
 
 	FORCEINLINE TInherited& Phase(const TSolidNotNull<const UScriptStruct*> InPhase)
+	{
+		return Kind(InPhase);
+	}
+	
+	FORCEINLINE TInherited& Phase(const TSubclassOf<UObject>& InPhase)
 	{
 		return Kind(InPhase);
 	}
