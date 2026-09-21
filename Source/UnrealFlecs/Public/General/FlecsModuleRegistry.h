@@ -31,7 +31,7 @@ namespace UE::Flecs
 {
 	struct UNREALFLECS_API FFlecsModuleRegistry
 	{
-		static FFlecsModuleRegistry& Get();
+		static NO_DISCARD FFlecsModuleRegistry& Get();
 
 	public:
 		void RegisterUnrealFlecsModule(const FName& ModuleName, 
