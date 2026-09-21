@@ -46,7 +46,9 @@ namespace UE::Flecs::Queries
 	{
 		if (InTermRefAtom.IsType<char*>())
 		{
-			const TSolidNotNull<char*> CharPtr = InTermRefAtom.Get<char*>();
+			char* CharPtr = InTermRefAtom.Get<char*>();
+			solid_cassume(CharPtr != nullptr);
+			
 			FMemory::Free(CharPtr);
 		}
 		else UNLIKELY_ATTRIBUTE
