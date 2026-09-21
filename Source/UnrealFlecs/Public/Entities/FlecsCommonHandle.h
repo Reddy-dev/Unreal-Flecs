@@ -367,11 +367,6 @@ public:
 		return GetEntity() == Other.GetEntity();
 	}
 	
-	NO_DISCARD SOLID_INLINE bool operator!=(const FFlecsCommonHandle& Other) const
-	{
-		return GetEntity() != Other.GetEntity();
-	}
-	
 	NO_DISCARD SOLID_INLINE bool operator==(const FFlecsId& Other) const
 	{
 		return GetFlecsId() == Other;
@@ -386,3 +381,12 @@ protected:
 	flecs::id Entity;
 	
 }; // struct FFlecsCommonHandle
+
+template <>
+struct TStructOpsTypeTraits<FFlecsCommonHandle> : public TStructOpsTypeTraitsBase2<FFlecsCommonHandle>
+{
+	enum
+	{
+		WithIdenticalViaEquality = true,
+	};
+};

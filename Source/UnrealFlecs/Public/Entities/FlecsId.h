@@ -115,34 +115,14 @@ public:
         return true;
     }
     
-    NO_DISCARD FORCEINLINE bool operator==(const FFlecsId& Other) const
+    NO_DISCARD FORCEINLINE bool UEOpEquals(const FFlecsId& Other) const
     {
         return Id == Other.Id;
     }
-
-    NO_DISCARD FORCEINLINE bool operator!=(const FFlecsId& Other) const
-    {
-        return Id != Other.Id;
-    }
     
-    NO_DISCARD FORCEINLINE bool operator<(const FFlecsId& Other) const
+    NO_DISCARD FORCEINLINE bool UEOpLessThan(const FFlecsId& Other) const
     {
         return GetId() < Other.GetId();
-    }
-
-    NO_DISCARD FORCEINLINE bool operator>(const FFlecsId& Other) const
-    {
-        return GetId() > Other.GetId();
-    }
-
-    NO_DISCARD FORCEINLINE bool operator<=(const FFlecsId& Other) const
-    {
-        return GetId() <= Other.GetId();
-    }
-
-    NO_DISCARD FORCEINLINE bool operator>=(const FFlecsId& Other) const
-    {
-        return GetId() >= Other.GetId();
     }
 
     NO_DISCARD FORCEINLINE bool IsPair() const
@@ -255,7 +235,6 @@ struct TStructOpsTypeTraits<FFlecsId> : public TStructOpsTypeTraitsBase2<FFlecsI
     enum
     {
        // WithCopy = true,
-        WithIdenticalViaEquality = true,
         WithImportTextItem = true,
         WithExportTextItem = true,
     }; // enum

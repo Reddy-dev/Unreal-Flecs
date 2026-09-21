@@ -110,14 +110,9 @@ public:
         Object.Reset();
     }
 
-    FORCEINLINE bool operator==(const FFlecsUObjectComponent& Other) const
+    FORCEINLINE bool UEOpEquals(const FFlecsUObjectComponent& Other) const
     {
         return Object == Other.Object;
-    }
-
-    FORCEINLINE bool operator!=(const FFlecsUObjectComponent& Other) const
-    {
-        return !(*this == Other);
     }
     
     UPROPERTY()

@@ -54,24 +54,14 @@ public:
 		return *this;
 	}
 
-	FORCEINLINE bool operator==(const UFlecsWorld* InWorld) const
+	NO_DISCARD FORCEINLINE bool UEOpEquals(const UFlecsWorld* InWorld) const
 	{
 		return World == InWorld;
 	}
 
-	FORCEINLINE bool operator!=(const UFlecsWorld* InWorld) const
-	{
-		return World != InWorld;
-	}
-
-	FORCEINLINE bool operator==(const FFlecsWorldPtrComponent& InComponent) const
+	NO_DISCARD FORCEINLINE bool UEOpEquals(const FFlecsWorldPtrComponent& InComponent) const
 	{
 		return World == InComponent.World;
-	}
-
-	FORCEINLINE bool operator!=(const FFlecsWorldPtrComponent& InComponent) const
-	{
-		return World != InComponent.World;
 	}
 
 	UPROPERTY(BlueprintReadOnly, Category = "Flecs")

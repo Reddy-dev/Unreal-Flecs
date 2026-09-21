@@ -33,15 +33,10 @@ public:
 	{
 	}
 	
-	FORCEINLINE bool operator==(const FFlecsCollectionId& Other) const
+	FORCEINLINE bool UEOpEquals(const FFlecsCollectionId& Other) const
 	{
     	return NameId == Other.NameId;
     }
-    
-    FORCEINLINE bool operator!=(const FFlecsCollectionId& Other) const
-	{
-		return !(*this == Other);
-	}
 
 	UPROPERTY(EditAnywhere)
 	FString NameId;

@@ -26,14 +26,9 @@ struct UNREALFLECS_API FFlecsDefaultMetaEntity
 	UPROPERTY()
 	FFlecsId SetId = 0;
 
-	NO_DISCARD FORCEINLINE bool operator==(const FFlecsDefaultMetaEntity& Other) const
+	NO_DISCARD FORCEINLINE bool UEOpEquals(const FFlecsDefaultMetaEntity& Other) const
 	{
 		return EntityName == Other.EntityName && EntityId == Other.EntityId;
-	}
-
-	NO_DISCARD FORCEINLINE bool operator!=(const FFlecsDefaultMetaEntity& Other) const
-	{
-		return !(*this == Other);
 	}
 
 	FFlecsDefaultMetaEntity() = default;

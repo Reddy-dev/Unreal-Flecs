@@ -77,14 +77,9 @@ public:
     {
     }
 
-    NO_DISCARD FORCEINLINE bool operator==(const FFlecsWorldSettingsInfo& Other) const
+    NO_DISCARD FORCEINLINE bool UEOpEquals(const FFlecsWorldSettingsInfo& Other) const
     {
         return WorldName == Other.WorldName;
-    }
-
-    NO_DISCARD FORCEINLINE bool operator!=(const FFlecsWorldSettingsInfo& Other) const
-    {
-        return !(*this == Other);
     }
 
     UPROPERTY(EditAnywhere, Category = "World")
@@ -105,3 +100,12 @@ public:
 }; // struct FFlecsWorldSettingsInfo
 
 DEFINE_STD_HASH(FFlecsWorldSettingsInfo);
+
+template <>
+struct TStructOpsTypeTraits<FFlecsWorldSettingsInfo> : public TStructOpsTypeTraitsBase2<FFlecsWorldSettingsInfo>
+{
+    enum
+    {
+        WithIdenticalViaEquality = true,
+    };
+}; // struct TStructOpsTypeTraits<FFlecsWorldSettingsInfo

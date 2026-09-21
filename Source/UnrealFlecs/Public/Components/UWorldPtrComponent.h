@@ -49,34 +49,19 @@ public:
 		return *this;
 	}
 
-	FORCEINLINE bool operator==(const FUWorldPtrComponent& InComponent) const
+	NO_DISCARD FORCEINLINE bool UEOpEquals(const FUWorldPtrComponent& InComponent) const
 	{
 		return World == InComponent.World;
 	}
 
-	FORCEINLINE bool operator!=(const FUWorldPtrComponent& InComponent) const
-	{
-		return !(*this == InComponent);
-	}
-
-	FORCEINLINE bool operator==(const UWorld* InWorld) const
+	NO_DISCARD FORCEINLINE bool UEOpEquals(const UWorld* InWorld) const
 	{
 		return World == InWorld;
 	}
 
-	FORCEINLINE bool operator!=(const UWorld* InWorld) const
-	{
-		return !(*this == InWorld);
-	}
-
-	FORCEINLINE bool operator==(const TWeakObjectPtr<UWorld>& InWorld) const
+	NO_DISCARD FORCEINLINE bool UEOpEquals(const TWeakObjectPtr<UWorld>& InWorld) const
 	{
 		return World == InWorld;
-	}
-
-	FORCEINLINE bool operator!=(const TWeakObjectPtr<UWorld>& InWorld) const
-	{
-		return !(*this == InWorld);
 	}
 
 	UPROPERTY(BlueprintReadOnly, Category = "Flecs")

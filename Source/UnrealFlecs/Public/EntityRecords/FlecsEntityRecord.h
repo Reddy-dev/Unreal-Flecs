@@ -134,7 +134,7 @@ struct UNREALFLECS_API FFlecsRecordPairSlot
 		meta = (EditCondition = "PairNodeType == EFlecsPairNodeType::FGameplayTag", EditConditionHides))
 	FGameplayTag GameplayTag;
 
-	NO_DISCARD FORCEINLINE bool operator==(const FFlecsRecordPairSlot& Other) const
+	NO_DISCARD FORCEINLINE bool UEOpEquals(const FFlecsRecordPairSlot& Other) const
 	{
 		switch (PairNodeType)
 		{
@@ -153,11 +153,6 @@ struct UNREALFLECS_API FFlecsRecordPairSlot
 		}
 
 		return false;
-	}
-
-	NO_DISCARD FORCEINLINE bool operator!=(const FFlecsRecordPairSlot& Other) const
-	{
-		return !(*this == Other);
 	}
 	
 }; // struct FFlecsPairSlot
@@ -192,14 +187,9 @@ public:
 		EditConditionHides))
 	EFlecsValuePairType PairValueType = EFlecsValuePairType::None;
 
-	NO_DISCARD FORCEINLINE bool operator==(const FFlecsRecordPair& Other) const
+	NO_DISCARD FORCEINLINE bool UEOpEquals(const FFlecsRecordPair& Other) const
 	{
 		return First == Other.First && Second == Other.Second;
-	}
-
-	NO_DISCARD FORCEINLINE bool operator!=(const FFlecsRecordPair& Other) const
-	{
-		return !(*this == Other);
 	}
 	
 	void AddToEntity(const FFlecsEntityHandle& InEntityHandle) const;
@@ -264,7 +254,7 @@ struct UNREALFLECS_API FFlecsComponentTypeInfo final
 		meta = (EditCondition = "NodeType == EFlecsComponentNodeType::Pair", EditConditionHides))
 	FFlecsRecordPair Pair;
 
-	NO_DISCARD FORCEINLINE bool operator==(const FFlecsComponentTypeInfo& Other) const
+	NO_DISCARD FORCEINLINE bool UEOpEquals(const FFlecsComponentTypeInfo& Other) const
 	{
 		switch (NodeType)
 		{
@@ -292,11 +282,6 @@ struct UNREALFLECS_API FFlecsComponentTypeInfo final
 		}
 
 		return false;
-	}
-
-	NO_DISCARD FORCEINLINE bool operator!=(const FFlecsComponentTypeInfo& Other) const
-	{
-		return !(*this == Other);
 	}
 	
 }; // struct FFlecsComponentTypeInfo
@@ -350,15 +335,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Entity Record")
 	TInstancedStruct<FFlecsEntityRecord> Record;
 	
-	NO_DISCARD FORCEINLINE bool operator==(const FFlecsSubEntityRecord& Other) const
+	NO_DISCARD FORCEINLINE bool UEOpEquals(const FFlecsSubEntityRecord& Other) const
 	{
 		return bDontFragmentParentChildRelationship == Other.bDontFragmentParentChildRelationship
 			&& Record == Other.Record;
-	}
-	
-	NO_DISCARD FORCEINLINE bool operator!=(const FFlecsSubEntityRecord& Other) const
-	{
-		return !(*this == Other);
 	}
 	
 }; // struct FFlecsSubEntityRecord
@@ -613,14 +593,9 @@ public:
 		return FBuilder(*this);
 	}
 
-	NO_DISCARD FORCEINLINE bool operator==(const FFlecsEntityRecord& Other) const
+	NO_DISCARD FORCEINLINE bool UEOpEquals(const FFlecsEntityRecord& Other) const
 	{
 		return Components == Other.Components && SubEntities == Other.SubEntities && Fragments == Other.Fragments;
-	}
-
-	NO_DISCARD FORCEINLINE bool operator!=(const FFlecsEntityRecord& Other) const
-	{
-		return !(*this == Other);
 	}
 	
 	FORCEINLINE FFlecsEntityRecord& AddComponent(const TSolidNotNull<const UScriptStruct*> InStructType)

@@ -23,14 +23,9 @@ struct UNREALFLECS_API FFlecsRegisteredComponentEntry
 		return GetTypeHash(InEntry.ComponentDefinition.Name);
 	}
 	
-	FORCEINLINE bool operator==(const FFlecsRegisteredComponentEntry& Other) const
+	FORCEINLINE bool UEOpEquals(const FFlecsRegisteredComponentEntry& Other) const
 	{
 		return ComponentDefinition.Name == Other.ComponentDefinition.Name;
-	}
-	
-	FORCEINLINE bool operator!=(const FFlecsRegisteredComponentEntry& Other) const
-	{
-		return !(*this == Other);
 	}
 	
 public:
@@ -53,6 +48,15 @@ public:
 	TOptional<FName> ModuleName;
 	
 }; // struct FFlecsRegisteredComponentEntry
+
+template <>
+struct TStructOpsTypeTraits<FFlecsRegisteredComponentEntry> : public TStructOpsTypeTraitsBase2<FFlecsRegisteredComponentEntry>
+{
+	enum
+	{
+		WithIdenticalViaEquality = true,
+	};
+}; // struct TStructOpsTypeTraits<FFlecsRegisteredComponentEntry
 
 UCLASS()
 class UNREALFLECS_API UFlecsTypeRegistryEngineSubsystem : public UEngineSubsystem

@@ -109,3 +109,12 @@ public:
     flecs::type Type;
     
 }; // struct FFlecsArchetype
+
+template <>
+struct TStructOpsTypeTraits<FFlecsArchetype> : public TStructOpsTypeTraitsBase2<FFlecsArchetype>
+{
+    enum
+    {
+        WithIdenticalViaEquality = true
+    };
+};
