@@ -982,7 +982,7 @@ bool UFlecsWorld::UnregisterFlecsObject(const TSubclassOf<UObject>& InClass, con
 					
 					if UNLIKELY_IF(!UnregisterFlecsObject(DependentClass, bUnregisterDependents))
 					{
-						UE_LOGFMT(LogFlecsWorld, Warning,
+						UE_LOGFMT(LogFlecsWorld, Error,
 							"Failed to unregister dependent class {DependentClassName} of {ClassName}",
 							*DependentClass->GetName(),
 							*InClass->GetName());

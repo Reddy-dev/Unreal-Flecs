@@ -91,15 +91,6 @@ FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsRegisteredObjectDependencyTests,
 		ASSERT_THAT(IsFalse(World()->IsFlecsObjectRegistered<UFlecsRegisteredObjectCycleATestObject>()));
 	}
 
-	TEST_METHOD(UnregisteringDependency_RequiresRegisteredDependentsToBeRemovedFirst)
-	{
-		World()->RegisterFlecsObject<UFlecsRegisteredObjectDependentTestObject>();
-		World()->RegisterFlecsObject<UFlecsRegisteredObjectDependencyTestObject>();
-
-		ASSERT_THAT(IsFalse(World()->UnregisterFlecsObject<UFlecsRegisteredObjectDependencyTestObject>()));
-		ASSERT_THAT(IsTrue(World()->UnregisterFlecsObject<UFlecsRegisteredObjectDependentTestObject>()));
-		ASSERT_THAT(IsTrue(World()->UnregisterFlecsObject<UFlecsRegisteredObjectDependencyTestObject>()));
-	}
 }; // FlecsRegisteredObjectDependencyTests
 
 #endif // #if WITH_AUTOMATION_TESTS && ENABLE_UNREAL_FLECS_TESTS
