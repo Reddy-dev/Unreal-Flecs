@@ -268,13 +268,13 @@ public:
 
 	FApplyParametersFunction ApplyParametersFunction;
 
-	template <Solid::TScriptStructConcept T, typename FuncType>
 	/**
 	 * @brief Stores a typed parameter application callback.
 	 * @tparam T Script-struct type of the Collection parameters.
 	 * @tparam FuncType Callable accepting a target entity and T.
 	 * @param InFunction Callback invoked when the Collection is applied.
 	 */
+	template <Solid::TScriptStructConcept T, typename FuncType>
 	void SetApplyParametersFunction(FuncType&& InFunction)
 	{
 		ApplyParametersFunction = [InFunction = SOLID_FWD(InFunction)]

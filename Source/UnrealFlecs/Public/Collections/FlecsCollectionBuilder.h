@@ -29,11 +29,11 @@ struct UNREALFLECS_API FFlecsCollectionPairBuilder
 		return *this;
 	}
 
-	template <Solid::TScriptStructConcept T>
 	/**
 	 * @brief Sets the first pair slot to a script-struct type.
 	 * @tparam T Non-utility script-struct type used as the first slot.
 	 */
+	template <Solid::TScriptStructConcept T>
 	FORCEINLINE const FFlecsCollectionPairBuilder& First() const
 	{
 		Pair.First.PairNodeType = EFlecsPairNodeType::ScriptStruct;
@@ -42,12 +42,12 @@ struct UNREALFLECS_API FFlecsCollectionPairBuilder
 		return *this;
 	}
 	
-	template <Solid::TScriptStructConcept T>
 	/**
 	 * @brief Sets the first pair slot to a script-struct value.
 	 * @tparam T Non-utility script-struct type used as the first slot.
 	 * @param ScriptStructValue Value stored in the first slot.
 	 */
+	template <Solid::TScriptStructConcept T>
 	FORCEINLINE const FFlecsCollectionPairBuilder& First(const T& ScriptStructValue) const
 	{
 		Pair.First.PairNodeType = EFlecsPairNodeType::ScriptStruct;
@@ -74,12 +74,12 @@ struct UNREALFLECS_API FFlecsCollectionPairBuilder
 		return *this;
 	}
 	
-	template <Solid::TScriptStructConcept T>
 	/**
 	 * @brief Sets the second pair slot to a script-struct value.
 	 * @tparam T Non-utility script-struct type used as the second slot.
 	 * @param ScriptStructValue Value stored in the second slot.
 	 */
+	template <Solid::TScriptStructConcept T>
 	FORCEINLINE const FFlecsCollectionPairBuilder& Second(const T& ScriptStructValue) const
 	{
 		Pair.Second.PairNodeType = EFlecsPairNodeType::ScriptStruct;
@@ -142,25 +142,25 @@ public:
 		return *this;
 	}
 
-	template <Solid::TScriptStructConcept T>
 	/**
 	 * @brief Adds a default-constructed script-struct component.
 	 * @tparam T Script-struct component type.
 	 * @return This sub-entity builder for chaining.
 	 */
+	template <Solid::TScriptStructConcept T>
 	FORCEINLINE FFlecsSubEntityCollectionBuilder& Add()
 	{
 		GetRecord().AddComponent<T>();
 		return *this;
 	}
 
-	template <Solid::TScriptStructConcept T>
 	/**
 	 * @brief Adds a script-struct component value.
 	 * @tparam T Script-struct component type.
 	 * @param InComponent Component value to store in the child record.
 	 * @return This sub-entity builder for chaining.
 	 */
+	template <Solid::TScriptStructConcept T>
 	FORCEINLINE FFlecsSubEntityCollectionBuilder& Add(const T& InComponent)
 	{
 		GetRecord().AddComponent<T>(InComponent);
@@ -181,12 +181,12 @@ public:
 		return *this;
 	}
 
-	template <Solid::TStaticEnumConcept TEnum>
 	/**
 	 * @brief Adds a native enum component value to the child record.
 	 * @tparam TEnum Static enum type.
 	 * @param InEnumValue Enum value to store.
 	 */
+	template <Solid::TStaticEnumConcept TEnum>
 	FORCEINLINE FFlecsSubEntityCollectionBuilder& Add(const TEnum InEnumValue)
 	{
 		GetRecord().AddComponent<TEnum>(InEnumValue);
@@ -221,12 +221,12 @@ public:
 		return *this;
 	}
 
-	template <UE::Flecs::CNonStructUtilScriptStructType TFirst, UE::Flecs::CNonStructUtilScriptStructType TSecond>
 	/**
 	 * @brief Adds a pair made from two script-struct types.
 	 * @tparam TFirst Type used for the first pair slot.
 	 * @tparam TSecond Type used for the second pair slot.
 	 */
+	template <UE::Flecs::CNonStructUtilScriptStructType TFirst, UE::Flecs::CNonStructUtilScriptStructType TSecond>
 	FORCEINLINE FFlecsSubEntityCollectionBuilder& AddPair()
 	{
 		FFlecsRecordPair Pair;
@@ -262,13 +262,13 @@ public:
 	FFlecsSubEntityCollectionBuilder& ReferenceCollection(const UClass* InClass,
 	                                                      const FInstancedStruct& InParameters = FInstancedStruct());
 
-	template <Solid::TStaticClassConcept T>
 	/**
 	 * @brief Composes the Collection represented by a typed interface class.
 	 * @tparam T Collection class implementing IFlecsCollectionInterface.
 	 * @param InParameters Optional Collection parameters.
 	 * @return This sub-entity builder for chaining.
 	 */
+	template <Solid::TStaticClassConcept T>
 	FORCEINLINE FFlecsSubEntityCollectionBuilder& ReferenceCollection(const FInstancedStruct& InParameters = FInstancedStruct())
 	{
 		return ReferenceCollection(T::StaticClass(), InParameters);
@@ -347,12 +347,12 @@ public:
 	{
 	}
 
-	template <Solid::TScriptStructConcept T>
 	/**
 	 * @brief Adds a default-constructed script-struct component to the root.
 	 * @tparam T Script-struct component type.
 	 * @return This Collection builder for chaining.
 	 */
+	template <Solid::TScriptStructConcept T>
 	FORCEINLINE const FFlecsCollectionBuilder& Add() const
 	{
 		solid_cassume(CollectionDefinition);
@@ -362,13 +362,13 @@ public:
 		return *this;
 	}
 	
-	template <Solid::TScriptStructConcept T>
 	/**
 	 * @brief Adds a script-struct component value to the root.
 	 * @tparam T Script-struct component type.
 	 * @param InComponent Component value to store.
 	 * @return This Collection builder for chaining.
 	 */
+	template <Solid::TScriptStructConcept T>
 	FORCEINLINE const FFlecsCollectionBuilder& Add(const T& InComponent) const
 	{
 		solid_cassume(CollectionDefinition);
@@ -398,12 +398,12 @@ public:
 		return *this;
 	}
 
-	template <Solid::TStaticEnumConcept TEnum>
 	/**
 	 * @brief Adds a native enum component value to the root record.
 	 * @tparam TEnum Static enum type.
 	 * @param InEnumValue Enum value to store.
 	 */
+	template <Solid::TStaticEnumConcept TEnum>
 	FORCEINLINE const FFlecsCollectionBuilder& Add(const TEnum InEnumValue) const
 	{
 		solid_cassume(CollectionDefinition);
@@ -453,12 +453,12 @@ public:
 		return *this;
 	}
 
-	template <UE::Flecs::CNonStructUtilScriptStructType TFirst, UE::Flecs::CNonStructUtilScriptStructType TSecond>
 	/**
 	 * @brief Adds a pair made from two script-struct types.
 	 * @tparam TFirst Type used for the first pair slot.
 	 * @tparam TSecond Type used for the second pair slot.
 	 */
+	template <UE::Flecs::CNonStructUtilScriptStructType TFirst, UE::Flecs::CNonStructUtilScriptStructType TSecond>
 	FORCEINLINE const FFlecsCollectionBuilder& AddPair() const
 	{
 		FFlecsRecordPair Pair;
@@ -529,13 +529,13 @@ public:
 		return *this;
 	}
 
-	template <Solid::TStaticClassConcept T>
 	/**
 	 * @brief Composes the Collection represented by a typed interface class.
 	 * @tparam T Collection class implementing IFlecsCollectionInterface.
 	 * @param InParameters Optional Collection parameters.
 	 * @return This Collection builder for chaining.
 	 */
+	template <Solid::TStaticClassConcept T>
 	FORCEINLINE const FFlecsCollectionBuilder& ReferenceCollection(const FInstancedStruct& InParameters = FInstancedStruct()) const
 	{
 		FFlecsCollectionInstancedReference Ref;
@@ -576,8 +576,6 @@ public:
 		return *this;
 	}
 
-	template <Solid::TScriptStructConcept T, typename TApplyFunction>
-	requires (!std::is_same<T, FInstancedStruct>::value)
 	/**
 	 * @brief Defines typed parameters and a typed application callback.
 	 * @tparam T Script-struct type of the Collection parameters.
@@ -586,6 +584,8 @@ public:
 	 * @param InApplyFunction Callback invoked for each Collection instance.
 	 * @return This Collection builder for chaining.
 	 */
+	template <Solid::TScriptStructConcept T, typename TApplyFunction>
+	requires (!std::is_same<T, FInstancedStruct>::value)
 	FORCEINLINE const FFlecsCollectionBuilder& Parameters(const T& InParameters, TApplyFunction&& InApplyFunction) const
 	{
 		solid_cassume(CollectionDefinition);

@@ -43,30 +43,30 @@ enum class EFlecsPairNodeType : uint8
 
 namespace UE::Flecs
 {
-	template <typename T>
 	/**
 	 * @brief Constrains values that can be stored in a record-pair slot.
 	 * @tparam T Candidate slot value type.
 	 */
+	template <typename T>
 	concept CRecordPairSlotType = std::is_convertible<T, FFlecsId>::value
 		|| std::is_convertible<T, FGameplayTag>::value
 		|| std::is_convertible<T, FInstancedStruct>::value;
 	
-	template <typename T>
 	/**
 	 * @brief Constrains script-struct types that are not StructUtils types.
 	 * @tparam T Candidate script-struct type.
 	 */
+	template <typename T>
 	concept CNonStructUtilScriptStructType = Solid::TScriptStructConcept<T> && !Solid::TStructUtilsTypeConcept<T>;
 		
 	namespace Entity::Records
 	{
-		template <typename TParentBuilder, typename TFragmentType>
 		/**
 		 * @brief Detects whether a fragment provides its own scoped builder.
 		 * @tparam TParentBuilder Parent entity-record builder type.
 		 * @tparam TFragmentType Fragment type being configured.
 		 */
+		template <typename TParentBuilder, typename TFragmentType>
 		concept CHasCustomFragmentBuilder = requires(TParentBuilder& Parent, TFragmentType& InFragment)
 		{
 			typename TFragmentType::FBuilder;
@@ -119,12 +119,12 @@ struct UNREALFLECS_API FFlecsRecordPairSlot
 		return OutSlot;
 	}
 
-	template <UE::Flecs::CNonStructUtilScriptStructType T>
 	/**
 	 * @brief Creates a default-initialized script-struct slot.
 	 * @tparam T Script-struct type to initialize.
 	 * @return A pair slot containing a default value of type T.
 	 */
+	template <UE::Flecs::CNonStructUtilScriptStructType T>
 	static NO_DISCARD FFlecsRecordPairSlot Make()
 	{
 		FFlecsRecordPairSlot OutSlot;
@@ -133,13 +133,13 @@ struct UNREALFLECS_API FFlecsRecordPairSlot
 		return OutSlot;
 	}
 
-	template <UE::Flecs::CNonStructUtilScriptStructType T>
 	/**
 	 * @brief Creates a script-struct slot containing a typed value.
 	 * @tparam T Script-struct type stored by the slot.
 	 * @param InValue Value to copy into the slot.
 	 * @return A pair slot containing the supplied value.
 	 */
+	template <UE::Flecs::CNonStructUtilScriptStructType T>
 	static NO_DISCARD FFlecsRecordPairSlot Make(const T& InValue)
 	{
 		FFlecsRecordPairSlot OutSlot;
@@ -556,38 +556,38 @@ public:
 			return EntityRecord;
 		}
 		
-		template <UE::Flecs::CNonStructUtilScriptStructType T>
 		/**
 		 * @brief Adds a default-initialized script-struct component.
 		 * @tparam T Script-struct component type.
 		 * @return This builder.
 		 */
+		template <UE::Flecs::CNonStructUtilScriptStructType T>
 		FORCEINLINE FBuilder& Component()
 		{
 			EntityRecord.AddComponent<T>();
 			return *this;
 		}
 
-		template <UE::Flecs::CNonStructUtilScriptStructType T>
 		/**
 		 * @brief Adds a copied typed script-struct component.
 		 * @tparam T Script-struct component type.
 		 * @param InValue Component value to copy.
 		 * @return This builder.
 		 */
+		template <UE::Flecs::CNonStructUtilScriptStructType T>
 		FORCEINLINE FBuilder& Component(const T& InValue)
 		{
 			EntityRecord.AddComponent<T>(InValue);
 			return *this;
 		}
 
-		template <UE::Flecs::CNonStructUtilScriptStructType T>
 		/**
 		 * @brief Adds a moved typed script-struct component.
 		 * @tparam T Script-struct component type.
 		 * @param InValue Component value to move.
 		 * @return This builder.
 		 */
+		template <UE::Flecs::CNonStructUtilScriptStructType T>
 		FORCEINLINE FBuilder& Component(T&& InValue)
 		{
 			EntityRecord.AddComponent<T>(MoveTemp(InValue));
@@ -717,8 +717,6 @@ public:
 			return *this;
 		}
 		
-		template <UE::Flecs::CNonStructUtilScriptStructType TFragmentType, typename... TArgs>
-		requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 		/**
 		 * @brief Adds a typed record fragment constructed from arguments.
 		 * @tparam TFragmentType Fragment type derived from FFlecsEntityRecordFragment.
@@ -726,6 +724,8 @@ public:
 		 * @param InArgs Arguments forwarded to the fragment constructor.
 		 * @return This builder.
 		 */
+		template <UE::Flecs::CNonStructUtilScriptStructType TFragmentType, typename... TArgs>
+		requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 		FORCEINLINE FBuilder& Fragment(TArgs&&... InArgs)
 		{
 			EntityRecord.AddFragment<TFragmentType>(Forward<TArgs>(InArgs)...);
@@ -744,12 +744,12 @@ public:
 			return *this;
 		}
 		
-		template <UE::Flecs::CNonStructUtilScriptStructType TFragmentType>
-		requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 		/**
 		 * @brief Default scoped builder for a record fragment.
 		 * @tparam TFragmentType Fragment type being edited.
 		 */
+		template <UE::Flecs::CNonStructUtilScriptStructType TFragmentType>
+		requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 		struct TFragmentBuilderBase
 		{
 		public:
@@ -791,8 +791,6 @@ public:
 			
 		}; // struct TFragmentBuilderBase
 		
-		template <UE::Flecs::CNonStructUtilScriptStructType TFragmentType, typename... TArgs>
-		requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 		/**
 		 * @brief Opens a scope for configuring a record fragment.
 		 *
@@ -804,6 +802,8 @@ public:
 		 * @param InArgs Arguments forwarded to the fragment or custom builder.
 		 * @return A scoped fragment builder.
 		 */
+		template <UE::Flecs::CNonStructUtilScriptStructType TFragmentType, typename... TArgs>
+		requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 		FORCEINLINE auto FragmentScope(TArgs&&... InArgs)
 		{
 			TFragmentType& Fragment = EntityRecord.GetOrAddFragment<TFragmentType>(Forward<TArgs>(InArgs)...);
@@ -893,11 +893,11 @@ public:
 		
 	}; // struct FBuilder
 	
-	template <UE::Flecs::CNonStructUtilScriptStructType TFragmentType>
 	/**
 	 * @brief Convenience alias for the default builder of a fragment type.
 	 * @tparam TFragmentType Fragment type being configured.
 	 */
+	template <UE::Flecs::CNonStructUtilScriptStructType TFragmentType>
 	using TFragmentBuilderType = FBuilder::TFragmentBuilderBase<TFragmentType>;
 	
 	/**
@@ -968,13 +968,13 @@ public:
 		return *this;
 	}
 
-	template <UE::Flecs::CNonStructUtilScriptStructType T>
-	requires (!std::is_enum_v<T>)
 	/**
 	 * @brief Adds a default-initialized typed script-struct component.
 	 * @tparam T Script-struct component type.
 	 * @return This record.
 	 */
+	template <UE::Flecs::CNonStructUtilScriptStructType T>
+	requires (!std::is_enum_v<T>)
 	FORCEINLINE FFlecsEntityRecord& AddComponent()
 	{
 		FFlecsComponentTypeInfo NewComponent;
@@ -985,14 +985,14 @@ public:
 		return *this;
 	}
 
-	template <UE::Flecs::CNonStructUtilScriptStructType T>
-	requires (!std::is_enum_v<T>)
 	/**
 	 * @brief Adds a copied typed script-struct component.
 	 * @tparam T Script-struct component type.
 	 * @param InComponent Component value to copy.
 	 * @return This record.
 	 */
+	template <UE::Flecs::CNonStructUtilScriptStructType T>
+	requires (!std::is_enum_v<T>)
 	FORCEINLINE FFlecsEntityRecord& AddComponent(const T& InComponent)
 	{
 		FFlecsComponentTypeInfo NewComponent;
@@ -1003,14 +1003,14 @@ public:
 		return *this;
 	}
 
-	template <UE::Flecs::CNonStructUtilScriptStructType T>
-	requires (!std::is_enum_v<T>)
 	/**
 	 * @brief Adds a moved typed script-struct component.
 	 * @tparam T Script-struct component type.
 	 * @param InComponent Component value to move.
 	 * @return This record.
 	 */
+	template <UE::Flecs::CNonStructUtilScriptStructType T>
+	requires (!std::is_enum_v<T>)
 	FORCEINLINE FFlecsEntityRecord& AddComponent(T&& InComponent)
 	{
 		FFlecsComponentTypeInfo NewComponent;
@@ -1096,14 +1096,14 @@ public:
 		return *this;
 	}
 	
-	template <Solid::TStaticEnumConcept TEnum>
-	requires (std::is_enum_v<TEnum>)
 	/**
 	 * @brief Adds a native enum value as a component.
 	 * @tparam TEnum Registered native enum type.
 	 * @param InEnumValue Enum value to add.
 	 * @return This record.
 	 */
+	template <Solid::TStaticEnumConcept TEnum>
+	requires (std::is_enum_v<TEnum>)
 	FORCEINLINE FFlecsEntityRecord& AddComponent(const TEnum InEnumValue)
 	{
 		FFlecsComponentTypeInfo NewComponent;
@@ -1213,14 +1213,14 @@ public:
 		return SubEntities[InIndex].Record;
 	}
 
-	template <UE::Flecs::CNonStructUtilScriptStructType TFragmentType>
-	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 	/**
 	 * @brief Adds a copy of a typed record fragment.
 	 * @tparam TFragmentType Fragment type derived from FFlecsEntityRecordFragment.
 	 * @param InFragment Fragment value to copy.
 	 * @return Index of the new fragment, or INDEX_NONE when a duplicate exists.
 	 */
+	template <UE::Flecs::CNonStructUtilScriptStructType TFragmentType>
+	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 	FORCEINLINE int32 AddFragment(const TFragmentType& InFragment)
 	{
 		if UNLIKELY_IF(!ensureAlwaysMsgf(!HasFragment<TFragmentType>(),
@@ -1233,8 +1233,6 @@ public:
 		return Fragments.Add(TInstancedStruct<FFlecsEntityRecordFragment>::Make<TFragmentType>(InFragment));
 	}
 
-	template <UE::Flecs::CNonStructUtilScriptStructType TFragmentType, typename... TArgs>
-	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 	/**
 	 * @brief Constructs and adds a typed record fragment.
 	 * @tparam TFragmentType Fragment type derived from FFlecsEntityRecordFragment.
@@ -1242,6 +1240,8 @@ public:
 	 * @param InArgs Arguments forwarded to the fragment constructor.
 	 * @return Index of the new fragment, or INDEX_NONE when a duplicate exists.
 	 */
+	template <UE::Flecs::CNonStructUtilScriptStructType TFragmentType, typename... TArgs>
+	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 	FORCEINLINE int32 AddFragment(TArgs&&... InArgs)
 	{
 		if UNLIKELY_IF(!ensureAlwaysMsgf(!HasFragment<TFragmentType>(),
@@ -1254,13 +1254,13 @@ public:
 		return Fragments.Add(TInstancedStruct<FFlecsEntityRecordFragment>::Make<TFragmentType>(Forward<TArgs>(InArgs)...));
 	}
 
-	template <UE::Flecs::CNonStructUtilScriptStructType TFragmentType>
-	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 	/**
 	 * @brief Default-constructs and adds a typed record fragment.
 	 * @tparam TFragmentType Fragment type derived from FFlecsEntityRecordFragment.
 	 * @return Index of the new fragment, or INDEX_NONE when a duplicate exists.
 	 */
+	template <UE::Flecs::CNonStructUtilScriptStructType TFragmentType>
+	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 	FORCEINLINE int32 AddFragment()
 	{
 		if UNLIKELY_IF(!ensureAlwaysMsgf(!HasFragment<TFragmentType>(),
@@ -1292,13 +1292,13 @@ public:
 		return Fragments.Add(InFragment);
 	}
 	
-	template <Solid::TScriptStructConcept TFragmentType>
-	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 	/**
 	 * @brief Gets an existing typed fragment or adds a default one.
 	 * @tparam TFragmentType Fragment type derived from FFlecsEntityRecordFragment.
 	 * @return Mutable reference to the fragment.
 	 */
+	template <Solid::TScriptStructConcept TFragmentType>
+	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 	FORCEINLINE TFragmentType& GetOrAddFragment()
 	{
 		for (TInstancedStruct<FFlecsEntityRecordFragment>& Fragment : Fragments)
@@ -1315,8 +1315,6 @@ public:
 		return Fragments[NewIndex].GetMutable<TFragmentType>();
 	}
 	
-	template <Solid::TScriptStructConcept TFragmentType, typename... TArgs>
-	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 	/**
 	 * @brief Gets an existing typed fragment or constructs one.
 	 * @tparam TFragmentType Fragment type derived from FFlecsEntityRecordFragment.
@@ -1324,6 +1322,8 @@ public:
 	 * @param InArgs Arguments forwarded when a new fragment is created.
 	 * @return Mutable reference to the fragment.
 	 */
+	template <Solid::TScriptStructConcept TFragmentType, typename... TArgs>
+	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 	FORCEINLINE TFragmentType& GetOrAddFragment(TArgs&&... InArgs)
 	{
 		for (TInstancedStruct<FFlecsEntityRecordFragment>& Fragment : Fragments)
@@ -1354,13 +1354,13 @@ public:
 			});
 	}
 
-	template <Solid::TScriptStructConcept TFragmentType>
-	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 	/**
 	 * @brief Tests whether a typed fragment is present.
 	 * @tparam TFragmentType Fragment type to find.
 	 * @return True when the record contains that fragment type.
 	 */
+	template <Solid::TScriptStructConcept TFragmentType>
+	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 	NO_DISCARD FORCEINLINE bool HasFragment() const
 	{
 		return HasFragment(TBaseStructure<TFragmentType>::Get());
@@ -1400,14 +1400,14 @@ public:
 		return Fragments[InIndex];
 	}
 	
-	template <Solid::TScriptStructConcept TFragmentType>
-	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 	/**
 	 * @brief Gets a mutable typed fragment by index.
 	 * @tparam TFragmentType Expected fragment type.
 	 * @param InIndex Fragment index.
 	 * @return Mutable reference to the selected fragment.
 	 */
+	template <Solid::TScriptStructConcept TFragmentType>
+	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 	NO_DISCARD FORCEINLINE TFragmentType& GetFragment(const int32 InIndex)
 	{
 		solid_checkf(Fragments.IsValidIndex(InIndex), TEXT("Index is out of bounds"));
@@ -1420,14 +1420,14 @@ public:
 		return Fragment.GetMutable<TFragmentType>();
 	}
 	
-	template <Solid::TScriptStructConcept TFragmentType>
-	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 	/**
 	 * @brief Gets a const typed fragment by index.
 	 * @tparam TFragmentType Expected fragment type.
 	 * @param InIndex Fragment index.
 	 * @return Const reference to the selected fragment.
 	 */
+	template <Solid::TScriptStructConcept TFragmentType>
+	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
 	NO_DISCARD FORCEINLINE const TFragmentType& GetFragment(const int32 InIndex) const
 	{
 		solid_checkf(Fragments.IsValidIndex(InIndex), TEXT("Index is out of bounds"));

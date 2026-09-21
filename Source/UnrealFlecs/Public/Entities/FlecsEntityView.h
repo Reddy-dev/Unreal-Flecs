@@ -706,12 +706,12 @@ public:
 		return HasCollection(ObtainTypeClass(InCollection));
 	}
 
-	template <Solid::TStaticClassConcept T>
 	/**
 	 * @brief Tests whether this entity inherits a typed Collection.
 	 * @tparam T Collection class used during registration.
 	 * @return True when the entity has the Collection through IsA.
 	 */
+	template <Solid::TStaticClassConcept T>
 	NO_DISCARD SOLID_INLINE bool HasCollection() const
 	{
 		return HasCollection(T::StaticClass());

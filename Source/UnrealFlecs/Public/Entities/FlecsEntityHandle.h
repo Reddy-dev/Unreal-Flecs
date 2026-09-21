@@ -943,7 +943,6 @@ public:
 	 */
 	const FSelfType& AddCollection(const FFlecsId InCollection, const FInstancedStruct& InParams = FInstancedStruct()) const;
 
-	template <Solid::TScriptStructConcept TCollectionParams, typename TSelf>
 	/**
 	 * @brief Adds a raw-id Collection with typed parameters.
 	 * @tparam TCollectionParams Script-struct type of the parameters.
@@ -951,26 +950,26 @@ public:
 	 * @param InParams Parameters applied to the instance.
 	 * @return The original handle for chaining.
 	 */
+	template <Solid::TScriptStructConcept TCollectionParams, typename TSelf>
 	SOLID_INLINE const TSelf& AddCollection(this const TSelf& InSelf, const FFlecsId InCollection, const TCollectionParams& InParams)
 	{
 		InSelf.AddCollection(InCollection, FInstancedStruct::Make<TCollectionParams>(InParams));
 		return InSelf;
 	}
 
-	template <typename TSelf>
 	/**
 	 * @brief Adds a class-defined Collection.
 	 * @param InCollection Collection class implementing IFlecsCollectionInterface.
 	 * @param InParams Explicit Collection parameters.
 	 * @return The original handle for chaining.
 	 */
+	template <typename TSelf>
 	SOLID_INLINE const TSelf& AddCollection(this const TSelf& InSelf, UClass* InCollection, const FInstancedStruct& InParams = FInstancedStruct())
 	{
 		InSelf.AddCollection(InSelf.ObtainTypeClass(InCollection), InParams);
 		return InSelf;
 	}
 
-	template <Solid::TScriptStructConcept TCollectionParams, typename TSelf>
 	/**
 	 * @brief Adds a class-defined Collection with typed parameters.
 	 * @tparam TCollectionParams Script-struct type of the parameters.
@@ -978,26 +977,26 @@ public:
 	 * @param InParams Parameters applied to the instance.
 	 * @return The original handle for chaining.
 	 */
+	template <Solid::TScriptStructConcept TCollectionParams, typename TSelf>
 	SOLID_INLINE const TSelf& AddCollection(this const TSelf& InSelf, UClass* InCollection, const TCollectionParams& InParams)
 	{
 		InSelf.AddCollection(InCollection, FInstancedStruct::Make<TCollectionParams>(InParams));
 		return InSelf;
 	}
 
-	template <Solid::TStaticClassConcept T, typename TSelf>
 	/**
 	 * @brief Adds a typed class-defined Collection.
 	 * @tparam T Collection class implementing IFlecsCollectionInterface.
 	 * @param InParams Explicit Collection parameters.
 	 * @return The original handle for chaining.
 	 */
+	template <Solid::TStaticClassConcept T, typename TSelf>
 	SOLID_INLINE const TSelf& AddCollection(this const TSelf& InSelf, const FInstancedStruct& InParams = FInstancedStruct())
 	{
 		InSelf.AddCollection(T::StaticClass(), InParams);
 		return InSelf;
 	}
 
-	template <Solid::TStaticClassConcept T, Solid::TScriptStructConcept TCollectionParams, typename TSelf>
 	/**
 	 * @brief Adds a typed class-defined Collection with typed parameters.
 	 * @tparam T Collection class implementing IFlecsCollectionInterface.
@@ -1005,6 +1004,7 @@ public:
 	 * @param InParams Parameters applied to the instance.
 	 * @return The original handle for chaining.
 	 */
+	template <Solid::TStaticClassConcept T, Solid::TScriptStructConcept TCollectionParams, typename TSelf>
 	SOLID_INLINE const TSelf& AddCollection(this const TSelf& InSelf, const TCollectionParams& InParams)
 	{
 		InSelf.AddCollection(T::StaticClass(), FInstancedStruct::Make<TCollectionParams>(InParams));
@@ -1037,7 +1037,6 @@ public:
 	const FSelfType& RemoveCollection(const FFlecsId InCollection) const;
 
 	// Note this doesnt remove overridden components
-	template <typename TSelf>
 	/**
 	 * @brief Removes a class-defined Collection.
 	 * @param InCollection Collection class used during registration.
@@ -1046,6 +1045,7 @@ public:
 	 * Removing the Collection does not remove components overridden on the
 	 * entity.
 	 */
+	template <typename TSelf>
 	SOLID_INLINE const TSelf& RemoveCollection(this const TSelf& InSelf, UClass* InCollection)
 	{
 		InSelf.RemoveCollection(InSelf.ObtainTypeClass(InCollection));
@@ -1053,7 +1053,6 @@ public:
 	}
 
 	// Note this doesnt remove overridden components
-	template <Solid::TStaticClassConcept T, typename TSelf>
 	/**
 	 * @brief Removes a typed class-defined Collection.
 	 * @tparam T Collection class used during registration.
@@ -1062,6 +1061,7 @@ public:
 	 * Removing the Collection does not remove components overridden on the
 	 * entity.
 	 */
+	template <Solid::TStaticClassConcept T, typename TSelf>
 	SOLID_INLINE const TSelf& RemoveCollection(this const TSelf& InSelf)
 	{
 		InSelf.RemoveCollection(T::StaticClass());

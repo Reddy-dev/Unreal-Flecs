@@ -16,11 +16,11 @@ class UFlecsCollectionDataAsset;
 
 namespace UE::Flecs::Collections
 {
-	template <typename FuncType>
 	/**
 	 * @brief Constraint for callbacks that configure a Collection builder.
 	 * @tparam FuncType Callable accepting FFlecsCollectionBuilder& and returning void.
 	 */
+	template <typename FuncType>
 	concept TCollectionBuilderFunc = requires(FuncType Func, FFlecsCollectionBuilder& Builder)
 	{
 		{ Func(Builder) } -> std::same_as<void>;
@@ -107,12 +107,12 @@ public:
 	 */
 	FFlecsEntityHandle RegisterCollectionInterfaceClass(const TSolidNotNull<UClass*> InInterfaceObject);
 
-	template <Solid::TStaticClassConcept T>
 	/**
 	 * @brief Builds and registers a typed Collection interface class.
 	 * @tparam T UObject class implementing IFlecsCollectionInterface.
 	 * @return The registered Collection prefab entity.
 	 */
+	template <Solid::TStaticClassConcept T>
 	FORCEINLINE FFlecsEntityHandle RegisterCollectionInterfaceClass()
 	{
 		static_assert(TIsDerivedFrom<T, IFlecsCollectionInterface>::Value,
@@ -148,13 +148,13 @@ public:
 	 */
 	FFlecsEntityHandle GetPrefabByClass(const TSubclassOf<UObject> InClass) const;
 
-	template <UE::Flecs::Collections::TCollectionBuilderFunc FuncType>
 	/**
 	 * @brief Builds and registers a Collection from a callback.
 	 * @tparam FuncType Callable that configures an FFlecsCollectionBuilder.
 	 * @param InBuildFunc Builder callback.
 	 * @return The registered Collection prefab entity.
 	 */
+	template <UE::Flecs::Collections::TCollectionBuilderFunc FuncType>
 	FFlecsEntityHandle RegisterCollectionBuilder(FuncType&& InBuildFunc)
 	{
 		FFlecsCollectionDefinition Definition;
@@ -166,7 +166,6 @@ public:
 		return RegisterCollectionDefinition(Builder.IdName, Definition);
 	}
 
-	template <UE::Flecs::Collections::TCollectionBuilderFunc FuncType>
 	/**
 	 * @brief Builds and registers a class-owned Collection from a callback.
 	 * @tparam FuncType Callable that configures an FFlecsCollectionBuilder.
@@ -174,6 +173,7 @@ public:
 	 * @param InBuildFunc Builder callback.
 	 * @return The registered Collection prefab entity.
 	 */
+	template <UE::Flecs::Collections::TCollectionBuilderFunc FuncType>
 	FFlecsEntityHandle RegisterCollectionClass(const TSolidNotNull<UClass*> InClass, FuncType&& InBuildFunc)
 	{
 		checkf(!ClassImplementsCollectionInterface(InClass),
@@ -222,12 +222,12 @@ public:
 	void AddCollectionToEntity(const FFlecsEntityHandle& InEntity, const TSubclassOf<UObject> InClass,
 		const FInstancedStruct& InParameters = FInstancedStruct());
 
-	template <Solid::TStaticClassConcept T>
 	/**
 	 * @brief Adds a typed interface Collection to an entity.
 	 * @tparam T UObject class implementing IFlecsCollectionInterface.
 	 * @param InEntity Target entity receiving the Collection.
 	 */
+	template <Solid::TStaticClassConcept T>
 	FORCEINLINE void AddCollectionToEntity(const FFlecsEntityHandle& InEntity)
 	{
 		static_assert(TIsDerivedFrom<T, IFlecsCollectionInterface>::Value,
@@ -253,12 +253,12 @@ public:
 	/** Removes a Collection prefab identified by a raw Flecs id. */
 	void RemoveCollectionFromEntity(const FFlecsEntityHandle& InEntity, const FFlecsId InCollectionId);
 
-	template <Solid::TStaticClassConcept T>
 	/**
 	 * @brief Removes a typed interface Collection from an entity.
 	 * @tparam T UObject class implementing IFlecsCollectionInterface.
 	 * @param InEntity Target entity.
 	 */
+	template <Solid::TStaticClassConcept T>
 	FORCEINLINE void RemoveCollectionFromEntity(const FFlecsEntityHandle& InEntity)
 	{
 		static_assert(TIsDerivedFrom<T, IFlecsCollectionInterface>::Value,

@@ -81,7 +81,6 @@ public:
 		return *this;
 	}
 	
-	template <Solid::TScriptStructConcept TCollectionParams>
 	/**
 	 * @brief Adds a Collection reference with typed parameters.
 	 * @tparam TCollectionParams Script-struct type of the parameters.
@@ -89,6 +88,7 @@ public:
 	 * @param InParameters Parameters supplied when the fragment is applied.
 	 * @return This fragment builder for chaining.
 	 */
+	template <Solid::TScriptStructConcept TCollectionParams>
 	FORCEINLINE FBuilder& ReferenceCollection(const FFlecsCollectionReference& InCollectionReference,
 		const TCollectionParams& InParameters)
 	{
