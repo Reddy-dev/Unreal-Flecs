@@ -14,7 +14,6 @@
 struct SOLIDMACROS_API FSolidMoveableStructRegistry : public FNoncopyable
 {
 	using FMoveFunc = void(*)(void* Dest, void* Src);
-	using FCopyFunc = void(*)(void* Dest, const void* Src);
 
 	// @TODO: not used yet, but may be useful in the future
 	struct FStructTypeHookInfo
