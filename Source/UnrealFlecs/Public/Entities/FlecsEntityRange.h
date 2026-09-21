@@ -73,12 +73,12 @@ public:
 	 */
 	NO_DISCARD uint32 GetMaximum() const;
 	
-	UFUNCTION(BlueprintCallable, Category = "Flecs | Entity Range", meta = (DisplayName = "Get Minimum"))
 	/** Blueprint wrapper for GetMinimum(). */
+	UFUNCTION(BlueprintCallable, Category = "Flecs | Entity Range", meta = (DisplayName = "Get Minimum"))
 	int32 K2_GetMinimum() const;
 	
-	UFUNCTION(BlueprintCallable, Category = "Flecs | Entity Range", meta = (DisplayName = "Get Maximum"))
 	/** Blueprint wrapper for GetMaximum(). */
+	UFUNCTION(BlueprintCallable, Category = "Flecs | Entity Range", meta = (DisplayName = "Get Maximum"))
 	int32 K2_GetMaximum() const;
 	
 	/**
@@ -90,8 +90,8 @@ public:
 		return MakeTuple(GetMinimum(), GetMaximum());
 	}
 	
-	UFUNCTION(BlueprintCallable, Category = "Flecs | Entity Range")
 	/** Returns the name assigned when the world created this range. */
+	UFUNCTION(BlueprintCallable, Category = "Flecs | Entity Range")
 	FORCEINLINE FName GetRangeName() const
 	{
 		return RangeName;

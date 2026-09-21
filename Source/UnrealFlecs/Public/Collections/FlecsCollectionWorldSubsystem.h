@@ -73,7 +73,6 @@ public:
 	/** Releases subsystem state during world teardown. */
 	virtual void Deinitialize() override;
 
-	UFUNCTION(BlueprintCallable, Category = "Flecs|Collections")
 	/**
 	 * @brief Registers a data asset as a Collection prefab.
 	 * @param InAsset Asset containing the Collection definition.
@@ -81,6 +80,7 @@ public:
 	 *
 	 * The asset name is used as the Collection identifier.
 	 */
+	UFUNCTION(BlueprintCallable, Category = "Flecs|Collections")
 	FFlecsEntityHandle RegisterCollectionAsset(const UFlecsCollectionDataAsset* InAsset);
 
 	/**
@@ -120,32 +120,32 @@ public:
 		return RegisterCollectionInterfaceClass(T::StaticClass());
 	}
 	
-	UFUNCTION(BlueprintCallable, Category = "Flecs|Collections")
 	/** Returns the prefab registered for a Collection data asset. */
+	UFUNCTION(BlueprintCallable, Category = "Flecs|Collections")
 	FFlecsEntityHandle GetPrefabByAsset(const UFlecsCollectionDataAsset* Asset) const;
 
-	UFUNCTION(BlueprintCallable, Category = "Flecs|Collections")
 	/**
 	 * @brief Resolves a raw Flecs id if it identifies a Collection prefab.
 	 * @param Id Native Flecs id of the candidate prefab.
 	 * @return The Collection prefab handle, or an invalid handle.
 	 */
+	UFUNCTION(BlueprintCallable, Category = "Flecs|Collections")
 	FFlecsEntityHandle GetPrefabByIdRaw(const FFlecsId& Id) const;
 
-	UFUNCTION(BlueprintCallable, Category = "Flecs|Collections")
 	/**
 	 * @brief Finds a registered Collection prefab by name identifier.
 	 * @param Id Collection identifier used for lookup.
 	 * @return The Collection prefab handle, or an invalid handle.
 	 */
+	UFUNCTION(BlueprintCallable, Category = "Flecs|Collections")
 	FFlecsEntityHandle GetPrefabByCollectionId(const FFlecsCollectionId& Id) const;
 
-	UFUNCTION(BlueprintCallable, Category = "Flecs|Collections")
 	/**
 	 * @brief Finds the prefab registered for a Collection class.
 	 * @param InClass Class used when the Collection was registered.
 	 * @return The Collection prefab handle, or an invalid handle.
 	 */
+	UFUNCTION(BlueprintCallable, Category = "Flecs|Collections")
 	FFlecsEntityHandle GetPrefabByClass(const TSubclassOf<UObject> InClass) const;
 
 	/**
