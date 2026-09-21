@@ -13,3 +13,14 @@ FFlecsObserverHandle::FFlecsObserverHandle(const TSolidNotNull<const UFlecsWorld
 	InObserverBuilder.ApplyToObserver(InWorld, Builder);
 	Entity = Builder.build();
 }
+
+FFlecsObserverHandle::FFlecsObserverHandle(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld,
+	const FFlecsObserverDefinition& InObserverBuilder, const FFlecsId InExistingEntity)
+{
+	solid_checkf(InWorld->IsAlive(InExistingEntity), TEXT("Existing observer entity is not alive."));
+
+	flecs::observer_builder<> Builder(InWorld->GetNativeFlecsWorld());
+	Builder._internal_get_desc()->entity = InExistingEntity.GetId();
+	InObserverBuilder.ApplyToObserver(InWorld, Builder);
+	Entity = Builder.build();
+}

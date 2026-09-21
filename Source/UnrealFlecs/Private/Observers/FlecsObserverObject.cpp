@@ -81,7 +81,7 @@ void UFlecsObserverObject::InitializeObserver(const TSolidNotNull<UFlecsWorldInt
 {
 	const FFlecsEntityHandle ScriptClassEntity = InWorld->RegisterScriptClassType(this->GetClass());
 	
-	TFlecsObserverBuilder<> ObserverBuilder = InWorld->CreateObserverWithDefinition(ObserverDefinition, ScriptClassEntity.GetName());
+	TFlecsObserverBuilder<> ObserverBuilder = InWorld->CreateObserverWithDefinition(ObserverDefinition, ScriptClassEntity.GetFlecsId());
 	BuildObserver(InWorld, ObserverBuilder);
 	ApplyObserverDefinitionOverrides(ObserverBuilder.GetObserverDefinition());
 	

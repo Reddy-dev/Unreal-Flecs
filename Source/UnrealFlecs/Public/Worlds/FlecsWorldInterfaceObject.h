@@ -636,6 +636,12 @@ public:
 		return TFlecsObserverBuilder<>(GetSelfInterface_Internal(), Name, InDefinition);
 	}
 	
+	NO_DISCARD FORCEINLINE TFlecsObserverBuilder<> CreateObserverWithDefinition(
+		const FFlecsObserverDefinition& InDefinition, const FFlecsId InExistingEntity) const
+	{
+		return TFlecsObserverBuilder<>(GetSelfInterface_Internal(), InExistingEntity, InDefinition);
+	}
+
 	template <typename ...TComponents>
 	NO_DISCARD TFlecsSystemBuilder<TComponents...> CreateSystem(const FString& InName = "") const
 	{
@@ -647,6 +653,12 @@ public:
 		return TFlecsSystemBuilder<>(this, InName, InDefinition);
 	}
 	
+	NO_DISCARD FORCEINLINE TFlecsSystemBuilder<> CreateSystemWithDefinition(
+		const FFlecsSystemDefinition& InDefinition, const FFlecsId InExistingEntity) const
+	{
+		return TFlecsSystemBuilder<>(GetSelfInterface_Internal(), InExistingEntity, InDefinition);
+	}
+
 	template <typename ...TArgs>
 	TFlecsPipelineBuilder<TArgs...> CreatePipeline(const FString& InPipelineName = FString()) const
 	{

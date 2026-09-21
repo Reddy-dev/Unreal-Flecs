@@ -126,7 +126,7 @@ void UFlecsSystemObject::InitializeSystem(const TSolidNotNull<const UFlecsWorldI
 {
 	const FFlecsEntityHandle ScriptClassType = InWorld->RegisterScriptClassType(this->GetClass());
 	
-	TFlecsSystemBuilder<> SystemBuilder = InWorld->CreateSystemWithDefinition(SystemDefinition, ScriptClassType.GetName());
+	TFlecsSystemBuilder<> SystemBuilder = InWorld->CreateSystemWithDefinition(SystemDefinition, ScriptClassType.GetFlecsId());
 	BuildSystem(InWorld, SystemBuilder);
 	ApplySystemDefinitionOverrides(SystemBuilder.GetSystemDefinition());
 	

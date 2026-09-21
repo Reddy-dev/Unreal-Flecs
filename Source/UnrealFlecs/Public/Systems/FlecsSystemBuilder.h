@@ -51,6 +51,23 @@ public:
 	{
 		UE::Flecs::Queries::TAddInputTypes<TFlecsSystemBuilder, TComponents...>::Apply(*this);
 	}
+
+	/**
+	 * @brief Creates a system builder for an existing entity.
+	 *
+	 * @param InWorld World that owns the system entity.
+	 * @param InExistingEntity Existing entity to configure as the system.
+	 * @param InSystemDefinition Initial definition to copy into the builder.
+	 */
+	FORCEINLINE TFlecsSystemBuilder(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, const FFlecsId InExistingEntity,
+		const FFlecsSystemDefinition& InSystemDefinition = FFlecsSystemDefinition())
+									: SystemDefinition(InSystemDefinition)
+									, FlecsWorld(InWorld)
+									, OptionalName()
+									, OptionalExistingId(InExistingEntity)
+	{
+		UE::Flecs::Queries::TAddInputTypes<TFlecsSystemBuilder, TComponents...>::Apply(*this);
+	}
 	
 	/** Unreal-owned system definition accumulated by the fluent API. */
 	FFlecsSystemDefinition SystemDefinition;
@@ -61,6 +78,9 @@ public:
 	/** Optional name used when creating the system entity. */
 	FString OptionalName;
 	
+	/** Existing entity used when updating a system entity. */
+	FFlecsId OptionalExistingId;
+
 protected:
 	
 	/** Materializes the configured system and returns its handle. */
@@ -68,6 +88,11 @@ protected:
 	{
 		solid_checkf(FlecsWorld.IsValid(), TEXT("World is not valid."));
 		
+		if (OptionalExistingId.IsValid())
+		{
+			return FFlecsSystemHandle(FlecsWorld.Get(), SystemDefinition, OptionalExistingId);
+		}
+
 		return FFlecsSystemHandle(FlecsWorld.Get(), SystemDefinition, OptionalName);
 	}
 	

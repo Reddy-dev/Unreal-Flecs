@@ -23,6 +23,9 @@ public:
 	FFlecsSystemHandle(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, 
 		const FFlecsSystemDefinition& InSystemBuilder, const FString& InSystemName);
 	
+	FFlecsSystemHandle(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld,
+		const FFlecsSystemDefinition& InSystemBuilder, const FFlecsId InExistingEntity);
+
 	FORCEINLINE FFlecsSystemHandle(const flecs::system& InSystem)
 		: FFlecsEntityHandle(InSystem.world(), InSystem.id())
 	{
@@ -135,4 +138,3 @@ public:
 	}
 	
 }; // struct FFlecsSystemHandle
-

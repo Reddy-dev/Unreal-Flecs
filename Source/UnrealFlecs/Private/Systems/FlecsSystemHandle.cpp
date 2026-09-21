@@ -13,6 +13,19 @@ FFlecsSystemHandle::FFlecsSystemHandle(const TSolidNotNull<const UFlecsWorldInte
 	flecs::system_builder<> Builder(InWorld->GetNativeFlecsWorld(), TCHAR_TO_UTF8(*InSystemName));
 	InSystemBuilder.ApplyToSystem(InWorld, Builder);
 	Entity = Builder.build();
+
+	InSystemBuilder.PipelineInput.ApplyToSystemEntity(InWorld, *this);
+}
+
+FFlecsSystemHandle::FFlecsSystemHandle(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld,
+	const FFlecsSystemDefinition& InSystemBuilder, const FFlecsId InExistingEntity)
+{
+	solid_checkf(InWorld->IsAlive(InExistingEntity), TEXT("Existing system entity is not alive."));
+
+	flecs::system_builder<> Builder(InWorld->GetNativeFlecsWorld());
+	Builder._internal_get_desc()->entity = InExistingEntity.GetId();
+	InSystemBuilder.ApplyToSystem(InWorld, Builder);
+	Entity = Builder.build();
 	
 	InSystemBuilder.PipelineInput.ApplyToSystemEntity(InWorld, *this);
 }

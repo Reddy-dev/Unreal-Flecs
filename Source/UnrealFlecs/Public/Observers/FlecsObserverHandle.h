@@ -20,6 +20,9 @@ public:
 	FFlecsObserverHandle(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, 
 		const FFlecsObserverDefinition& InObserverBuilder, const FString& InObserverName);
 	
+	FFlecsObserverHandle(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld,
+		const FFlecsObserverDefinition& InObserverBuilder, const FFlecsId InExistingEntity);
+
 	FORCEINLINE FFlecsObserverHandle(const flecs::observer& InObserver)
 		: FFlecsEntityHandle(InObserver.world(), InObserver.id())
 	{

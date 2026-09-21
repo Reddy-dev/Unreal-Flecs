@@ -53,6 +53,23 @@ public:
 		UE::Flecs::Queries::TAddInputTypes<TFlecsObserverBuilder, TComponents...>::Apply(*this);
 	}
 
+	/**
+	 * @brief Creates an observer builder for an existing entity.
+	 *
+	 * @param InWorld World that owns the observer entity.
+	 * @param InExistingEntity Existing entity to configure as the observer.
+	 * @param InObserverDefinition Initial definition to copy into the builder.
+	 */
+	FORCEINLINE TFlecsObserverBuilder(const TSolidNotNull<const UFlecsWorldInterfaceObject*> InWorld, const FFlecsId InExistingEntity,
+		const FFlecsObserverDefinition& InObserverDefinition = FFlecsObserverDefinition())
+									: ObserverDefinition(InObserverDefinition)
+									, FlecsWorld(InWorld)
+									, OptionalName()
+									, OptionalExistingId(InExistingEntity)
+	{
+		UE::Flecs::Queries::TAddInputTypes<TFlecsObserverBuilder, TComponents...>::Apply(*this);
+	}
+
 	/** Unreal-owned observer definition accumulated by the fluent API. */
 	FFlecsObserverDefinition ObserverDefinition;
 	
@@ -61,7 +78,10 @@ public:
 	
 	/** Optional name used when creating the observer entity. */
 	FString OptionalName;
-	
+
+	/** Existing entity used when updating an observer entity. */
+	FFlecsId OptionalExistingId;
+
 protected:
 	
 	/** Materializes the configured observer and returns its handle. */
@@ -69,6 +89,11 @@ protected:
 	{
 		solid_checkf(FlecsWorld.IsValid(), TEXT("World is not valid."));
 		
+		if (OptionalExistingId.IsValid())
+		{
+			return FFlecsObserverHandle(FlecsWorld.Get(), ObserverDefinition, OptionalExistingId);
+		}
+
 		return FFlecsObserverHandle(FlecsWorld.Get(), ObserverDefinition, OptionalName);
 	}
 	
