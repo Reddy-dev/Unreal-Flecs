@@ -13,7 +13,7 @@ namespace
 		UE::Flecs::FFlecsReplicationComponentMarkerFunction Mark = nullptr;
 	}; // struct FReplicationHooks
 
-	FReplicationHooks& GetReplicationHooks()
+	NO_DISCARD FReplicationHooks& GetReplicationHooks()
 	{
 		static FReplicationHooks Hooks;
 		return Hooks;
