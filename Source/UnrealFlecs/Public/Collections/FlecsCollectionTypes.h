@@ -22,7 +22,7 @@ enum class EFlecsCollectionReferenceMode : uint8
 	Id = 1,
 	/** Resolve the Collection from a UClass implementing IFlecsCollectionInterface. */
 	UClass = 2,
-	
+
 }; // enum class EFlecsCollectionReferenceMode
 
 USTRUCT(BlueprintType)
@@ -38,15 +38,15 @@ struct UNREALFLECS_API FFlecsCollectionReference
 	GENERATED_BODY()
 
 public:
-		/** Creates an empty reference with Asset mode selected. */
-FORCEINLINE FFlecsCollectionReference() = default;
+	/** Creates an empty reference with Asset mode selected. */
+	FORCEINLINE FFlecsCollectionReference() = default;
 
-		/**
+	/**
 	 * @brief Creates a reference to a Collection data asset.
 	 * @param InAsset Asset containing the Collection definition.
 	 * @return A reference configured with Asset mode.
 	 */
-static NO_DISCARD FFlecsCollectionReference FromAsset(const TSolidNotNull<const UFlecsCollectionDataAsset*> InAsset)
+	static NO_DISCARD FFlecsCollectionReference FromAsset(const TSolidNotNull<const UFlecsCollectionDataAsset*> InAsset)
 	{
 		FFlecsCollectionReference Ref;
 		Ref.Mode = EFlecsCollectionReferenceMode::Asset;
@@ -55,12 +55,12 @@ static NO_DISCARD FFlecsCollectionReference FromAsset(const TSolidNotNull<const 
 	}
 
 	// @TODO: maybe validate param?
-		/**
+	/**
 	 * @brief Creates a reference to a Collection interface class.
 	 * @param InClass Class that implements IFlecsCollectionInterface.
 	 * @return A reference configured with UClass mode.
 	 */
-static NO_DISCARD FFlecsCollectionReference FromClass(const TSubclassOf<UObject> InClass)
+	static NO_DISCARD FFlecsCollectionReference FromClass(const TSubclassOf<UObject> InClass)
 	{
 		FFlecsCollectionReference Ref;
 		Ref.Mode = EFlecsCollectionReferenceMode::UClass;
@@ -68,12 +68,12 @@ static NO_DISCARD FFlecsCollectionReference FromClass(const TSubclassOf<UObject>
 		return Ref;
 	}
 
-		/**
+	/**
 	 * @brief Creates a reference to a registered Collection identifier.
 	 * @param InId Identifier used to find the registered Collection.
 	 * @return A reference configured with Id mode.
 	 */
-static NO_DISCARD FFlecsCollectionReference FromId(const FFlecsCollectionId& InId)
+	static NO_DISCARD FFlecsCollectionReference FromId(const FFlecsCollectionId& InId)
 	{
 		FFlecsCollectionReference Ref;
 		Ref.Mode = EFlecsCollectionReferenceMode::Id;
@@ -81,16 +81,16 @@ static NO_DISCARD FFlecsCollectionReference FromId(const FFlecsCollectionId& InI
 		return Ref;
 	}
 
-		/**
+	/**
 	 * @brief Creates a reference from a string identifier.
 	 * @param InIdString Name key of the registered Collection.
 	 * @return A reference configured with Id mode.
 	 */
-static NO_DISCARD FFlecsCollectionReference FromId(const FString& InIdString)
+	static NO_DISCARD FFlecsCollectionReference FromId(const FString& InIdString)
 	{
 		return FromId(FFlecsCollectionId(InIdString));
 	}
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	/** Resolution mode and source payload selected by this reference. */
 	EFlecsCollectionReferenceMode Mode = EFlecsCollectionReferenceMode::Asset;
@@ -110,8 +110,9 @@ static NO_DISCARD FFlecsCollectionReference FromId(const FString& InIdString)
 		meta = (EditCondition = "Mode == EFlecsCollectionReferenceMode::Id", EditConditionHides))
 	/** Registered Collection identifier used when Mode is Id. */
 	FFlecsCollectionId Id;
-	
+
 }; // struct FFlecsCollectionReference
+
 USTRUCT(BlueprintType)
 /**
  * @brief A Collection reference paired with parameters for instantiation.
@@ -124,29 +125,30 @@ struct UNREALFLECS_API FFlecsCollectionInstancedReference
 	GENERATED_BODY()
 
 public:
-		/** Creates an empty instanced reference. */
-FORCEINLINE FFlecsCollectionInstancedReference() = default;
+	/** Creates an empty instanced reference. */
+	FORCEINLINE FFlecsCollectionInstancedReference() = default;
 
-		/**
+	/**
 	 * @brief Creates an instanced reference from a Collection reference.
 	 * @param InCollection Collection to resolve.
 	 * @param InParameters Parameters supplied when the Collection is applied.
 	 */
-FORCEINLINE FFlecsCollectionInstancedReference(
-			const FFlecsCollectionReference& InCollection, const FInstancedStruct& InParameters = FInstancedStruct())
+	FORCEINLINE FFlecsCollectionInstancedReference(
+		const FFlecsCollectionReference& InCollection,
+		const FInstancedStruct& InParameters = FInstancedStruct())
 		: Collection(InCollection)
 		, Parameters(InParameters)
 	{
 	}
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flecs", meta = (ShowOnlyInnerProperties))
 	/** Collection reference to resolve. */
 	FFlecsCollectionReference Collection;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flecs")
 	/** Optional parameters passed to the Collection during application. */
 	FInstancedStruct Parameters;
-	
+
 }; // struct FFlecsCollectionInstancedReference
 
 /** compose another Collection by reference (adds (IsA, @param Collection) in compile-time and then removes itself). */
@@ -160,24 +162,23 @@ USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsCollectionReferenceComponent
 {
 	GENERATED_BODY()
-	
+
 	static constexpr bool Sparse = true;
 	static constexpr flecs::on_instantiate OnInstantiate = flecs::on_instantiate::dont_inherit;
 
 public:
-
 	FORCEINLINE FFlecsCollectionReferenceComponent() = default;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flecs")
 	/** Collection references pending expansion on the owning entity. */
 	TArray<FFlecsCollectionInstancedReference> Collections;
-	
+
 }; // struct FFlecsCollectionReferenceComponent
 
 FLECS_COMPONENT_TRAITS(FFlecsCollectionReferenceComponent)
 {
 	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::DontInherit;
-	
+
 	static constexpr bool Sparse = true;
 }; // struct FLECS_COMPONENT_TRAITS(FFlecsCollectionReferenceComponent)
 
@@ -191,15 +192,15 @@ USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsCollectionPrefabTag
 {
 	GENERATED_BODY()
-	
+
 	static constexpr flecs::on_instantiate OnInstantiate = flecs::on_instantiate::dont_inherit;
-	
+
 }; // struct FFlecsCollectionPrefabTag
 
 FLECS_COMPONENT_TRAITS(FFlecsCollectionPrefabTag)
 {
 	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::DontInherit;
-	
+
 	static void PostRegister(const FFlecsComponentHandle& ComponentHandle)
 	{
 		ComponentHandle
@@ -227,7 +228,7 @@ USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsSubEntityIndex
 {
 	GENERATED_BODY()
-	
+
 	static constexpr bool Sparse = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flecs")
@@ -238,7 +239,7 @@ struct UNREALFLECS_API FFlecsSubEntityIndex
 FLECS_COMPONENT_TRAITS(FFlecsSubEntityIndex)
 {
 	static constexpr bool AutoRegister = false;
-	
+
 	static constexpr bool Sparse = true;
 }; // struct FLECS_COMPONENT_TRAITS(FFlecsSubEntityIndex)
 
@@ -258,7 +259,7 @@ struct UNREALFLECS_API FFlecsCollectionParametersComponent
 
 	/** Callback that applies parameters to a target entity. */
 	using FApplyParametersFunction = std::function<void(const FFlecsEntityHandle&, const FInstancedStruct&)>;
-	
+
 	static constexpr flecs::on_instantiate OnInstantiate = flecs::on_instantiate::dont_inherit;
 
 public:
@@ -292,11 +293,11 @@ public:
 	 * @warning The entity, parameters, and callback must all be valid.
 	 */
 	void ApplyParameters(const FFlecsEntityHandle& InEntityHandle, const FInstancedStruct& InParameters) const;
-	
+
 }; // struct FFlecsCollectionParametersComponent
 
 FLECS_COMPONENT_TRAITS(FFlecsCollectionParametersComponent)
-{	
+{
 	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::DontInherit;
 }; // struct FLECS_COMPONENT_TRAITS(FFlecsCollectionParametersComponent)
 
