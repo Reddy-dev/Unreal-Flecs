@@ -115,13 +115,12 @@ public:
 	
 }; // struct FFlecsCollectionReferenceComponent
 
-template <>
-struct TFlecsComponentTraits<FFlecsCollectionReferenceComponent> : public TFlecsComponentTraitsBase<FFlecsCollectionReferenceComponent>
+FLECS_COMPONENT_TRAITS(FFlecsCollectionReferenceComponent)
 {
 	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::DontInherit;
 	
 	static constexpr bool Sparse = true;
-}; // struct TFlecsComponentTraits<FFlecsCollectionReferenceComponent>
+}; // struct FLECS_COMPONENT_TRAITS(FFlecsCollectionReferenceComponent)
 
 USTRUCT(BlueprintType)
 struct UNREALFLECS_API FFlecsCollectionPrefabTag
@@ -132,8 +131,7 @@ struct UNREALFLECS_API FFlecsCollectionPrefabTag
 	
 }; // struct FFlecsCollectionPrefabTag
 
-template <>
-struct TFlecsComponentTraits<FFlecsCollectionPrefabTag> : public TFlecsComponentTraitsBase<FFlecsCollectionPrefabTag>
+FLECS_COMPONENT_TRAITS(FFlecsCollectionPrefabTag)
 {
 	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::DontInherit;
 	
@@ -168,11 +166,12 @@ struct UNREALFLECS_API FFlecsSubEntityIndex
 	int32 Index = INDEX_NONE;
 }; // struct FFlecsSubEntityIndex
 
-template <>
-struct TFlecsComponentTraits<FFlecsSubEntityIndex> : public TFlecsComponentTraitsBase<FFlecsSubEntityIndex>
+FLECS_COMPONENT_TRAITS(FFlecsSubEntityIndex)
 {
+	static constexpr bool AutoRegister = false;
+	
 	static constexpr bool Sparse = true;
-}; // struct TFlecsComponentTraits<FFlecsSubEntityIndex>
+}; // struct FLECS_COMPONENT_TRAITS(FFlecsSubEntityIndex)
 
 // @TODO: maybe add an OnSet Event like in templates
 
@@ -206,11 +205,10 @@ public:
 	
 }; // struct FFlecsCollectionParametersComponent
 
-template <>
-struct TFlecsComponentTraits<FFlecsCollectionParametersComponent> : public TFlecsComponentTraitsBase<FFlecsCollectionParametersComponent>
+FLECS_COMPONENT_TRAITS(FFlecsCollectionParametersComponent)
 {	
 	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::DontInherit;
-}; // struct TFlecsComponentTraits<FFlecsCollectionParametersComponent>
+}; // struct FLECS_COMPONENT_TRAITS(FFlecsCollectionParametersComponent)
 
 /*
 USTRUCT(BlueprintType)

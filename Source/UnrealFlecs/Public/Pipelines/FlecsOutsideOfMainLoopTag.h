@@ -13,8 +13,7 @@ struct UNREALFLECS_API FFlecsOutsideOfMainLoopTag
 	GENERATED_BODY()
 }; // struct FFlecsOutsideOfMainLoopTag
 
-template <>
-struct TFlecsComponentTraits<FFlecsOutsideOfMainLoopTag> : public TFlecsComponentTraitsBase<FFlecsOutsideOfMainLoopTag>
+FLECS_COMPONENT_TRAITS(FFlecsOutsideOfMainLoopTag)
 {
 	static constexpr bool UseLowId = true;
-}; // struct TFlecsComponentTraits
+}; // struct FLECS_COMPONENT_TRAITS(FFlecsOutsideOfMainLoopTag)

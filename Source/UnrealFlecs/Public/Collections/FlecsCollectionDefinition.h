@@ -54,8 +54,7 @@ public:
 	
 }; // struct FFlecsCollectionDefinitionComponent
 
-template<>
-struct TFlecsComponentTraits<FFlecsCollectionDefinitionComponent> : public TFlecsComponentTraitsBase<FFlecsCollectionDefinitionComponent>
+FLECS_COMPONENT_TRAITS(FFlecsCollectionDefinitionComponent)
 {
 	static constexpr EFlecsOnInstantiate OnInstantiate = EFlecsOnInstantiate::DontInherit;
 }; // struct TFlecsComponentTraits<FFlecsCollectionDefinitionComponent>
