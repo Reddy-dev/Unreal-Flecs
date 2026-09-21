@@ -339,7 +339,7 @@ public:
 	}
 	
 	UFUNCTION(BlueprintCallable, Category = "Flecs")
-	bool UnregisterFlecsObject(const TSubclassOf<UObject>& InClass);
+	bool UnregisterFlecsObject(const TSubclassOf<UObject>& InClass, const bool bUnregisterDependents = true);
 	
 	template <Solid::TStaticClassConcept T>
 	FORCEINLINE bool UnregisterFlecsObject()

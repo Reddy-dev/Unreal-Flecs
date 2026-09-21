@@ -947,12 +947,10 @@ UObject* UFlecsWorld::RegisterFlecsObject(const TSubclassOf<UObject> InClass)
 		}
 	}
 	
-	DeferredRegisteredObjectsDependants.Remove(InClass);
-	
 	return FlecsObject;
 }
 
-bool UFlecsWorld::UnregisterFlecsObject(const TSubclassOf<UObject>& InClass)
+bool UFlecsWorld::UnregisterFlecsObject(const TSubclassOf<UObject>& InClass, const bool bUnregisterDependents)
 {
 	if UNLIKELY_IF(!ensureAlwaysMsgf(IsValid(InClass), TEXT("Invalid class to unregister")))
 	{
@@ -968,8 +966,30 @@ bool UFlecsWorld::UnregisterFlecsObject(const TSubclassOf<UObject>& InClass)
 			continue;
 		}
 		
-		if (RegisteredObject.GetObject()->GetClass() == InClass)
+		const TSolidNotNull<const UClass*> RegisteredObjectClass = RegisteredObject.GetObject()->GetClass();
+		
+		if (RegisteredObjectClass == InClass)
 		{
+			const TArray<TSubclassOf<UObject>>* DependentRegisteredObjectTypes = DeferredRegisteredObjectsDependants.Find(InClass);
+			if (DependentRegisteredObjectTypes)
+			{
+				for (const TSubclassOf<UObject>& DependentClass : *DependentRegisteredObjectTypes)
+				{
+					if UNLIKELY_IF(!IsFlecsObjectRegistered(DependentClass))
+					{
+						continue;
+					}
+					
+					if UNLIKELY_IF(!UnregisterFlecsObject(DependentClass, bUnregisterDependents))
+					{
+						UE_LOGFMT(LogFlecsWorld, Warning,
+							"Failed to unregister dependent class {DependentClassName} of {ClassName}",
+							*DependentClass->GetName(),
+							*InClass->GetName());
+					}
+				}
+			}
+				
 			RegisteredObject->UnregisterObject(this);
 			
 			RegisteredObjects.RemoveAt(Index);
