@@ -23,6 +23,7 @@ public:
 
 	flecs::entity CreateDefaultEntity(const FFlecsDefaultMetaEntity& DefaultEntity, const flecs::world& World);
 	
+	// unused by unreal-flecs code, but anyone else could try using it. should still work
 	FFlecsId AddDefaultEntity(const FFlecsDefaultMetaEntity& DefaultEntity);
 	
 	TMap<FString, FFlecsId> DefaultEntityOptions;
