@@ -19,14 +19,9 @@ struct FLECSLIBRARY_API FFlecsScriptClassComponent
         return GetTypeHash(InScriptStructComponent.ScriptClass);
     }
 
-    NO_DISCARD FORCEINLINE friend bool operator==(const FFlecsScriptClassComponent& Lhs, const FFlecsScriptClassComponent& Rhs)
+    NO_DISCARD FORCEINLINE bool UEOpEquals(const FFlecsScriptClassComponent& Other) const
     {
-        return Lhs.ScriptClass == Rhs.ScriptClass;
-    }
-
-    NO_DISCARD FORCEINLINE friend bool operator!=(const FFlecsScriptClassComponent& Lhs, const FFlecsScriptClassComponent& Rhs)
-    {
-        return !(Lhs == Rhs);
+        return ScriptClass == Other.ScriptClass;
     }
 
     FORCEINLINE operator UClass*() const { return ScriptClass.Get(); }

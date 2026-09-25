@@ -14,15 +14,10 @@ struct FLECSLIBRARY_API FFlecsScriptEnumComponent
 	{
 		return GetTypeHash(InScriptEnumComponent.ScriptEnum);
 	}
-
-	NO_DISCARD FORCEINLINE friend bool operator==(const FFlecsScriptEnumComponent& Lhs, const FFlecsScriptEnumComponent& Rhs)
+	
+	NO_DISCARD FORCEINLINE bool UEOpEquals(const FFlecsScriptEnumComponent& Other) const
 	{
-		return Lhs.ScriptEnum == Rhs.ScriptEnum;
-	}
-
-	NO_DISCARD FORCEINLINE friend bool operator!=(const FFlecsScriptEnumComponent& Lhs, const FFlecsScriptEnumComponent& Rhs)
-	{
-		return !(Lhs == Rhs);
+		return ScriptEnum == Other.ScriptEnum;
 	}
 
 	FORCEINLINE operator UEnum*() const { return ScriptEnum.Get(); }
