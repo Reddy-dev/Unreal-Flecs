@@ -49,11 +49,6 @@ public:
 	{
 		return Member == Other.Member;
 	}
-
-	FORCEINLINE bool operator!=(const FFlecsMemberHandle& Other) const
-	{
-		return !(*this == Other);
-	}
 	
 	const flecs::member_t* Member = nullptr;
 	
