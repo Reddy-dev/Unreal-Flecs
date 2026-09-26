@@ -45,6 +45,8 @@ class UNREALFLECS_API IFlecsIteratorObjectInterface
 {
 	GENERATED_BODY()
 
+	// IF YOU IMPLEMENT THESE RIGHT, THEY SHOULD BE ABLE TO BE DEVIRTUALIZED
+	
 public:
 	/**
 	 * Receives the unadvanced iterator for one system or observer invocation.
