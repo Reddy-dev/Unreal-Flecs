@@ -50,6 +50,7 @@ public:
 	UFUNCTION()
 	UFlecsWorld* CreateWorld(const FString& Name, const FFlecsWorldSettingsInfo& Settings);
 
+	// Internal use only, left public in case someone wants to be weird and override it
 	void SetWorld(const TSolidNotNull<UFlecsWorld*> InFlecsWorld);
 
 	UFUNCTION(BlueprintCallable, Category = "Flecs")

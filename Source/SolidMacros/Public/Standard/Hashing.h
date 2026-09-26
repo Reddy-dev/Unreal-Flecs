@@ -38,30 +38,6 @@
 		\
 	}; // struct std::hash<x>
 
-#define DEFINE_STD_HASH_TEMPLATED(x, ...) \
-	template <##__VA_ARGS__> \
-	struct std::hash<x<##__VA_ARGS__>> \
-	{ \
-	public: \
-		SOLID_INLINE std::size_t operator()(const x<T>& Value) const noexcept \
-		{ \
-			return GetTypeHash(Value); \
-		} \
-		\
-	}; // struct std::hash<x<T>>
-
-#define DEFINE_STD_HASH_TEMPLATED_CUSTOM_FUNC(x, FUNC, ...) \
-	template <__VA_ARGS__> \
-	struct std::hash<x<__VA_ARGS__>> \
-	{ \
-	public: \
-		SOLID_INLINE std::size_t operator()(const x<T>& Value) const noexcept \
-		{ \
-			return FUNC(Value); \
-		} \
-		\
-	}; // struct std::hash<x<T>>
-
 DEFINE_STD_HASH(FName)
 DEFINE_STD_HASH(FString);
 DEFINE_STD_HASH(FStringView);
