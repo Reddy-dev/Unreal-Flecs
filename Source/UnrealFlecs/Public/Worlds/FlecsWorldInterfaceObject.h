@@ -16,6 +16,7 @@
 #include "Observers/FlecsObserverBuilder.h"
 #include "Pipelines/FlecsPipelineBuilder.h"
 #include "Pipelines/FlecsPipelineHandle.h"
+#include "Queries/FlecsSparseQuery.h"
 #include "Systems/FlecsSystemBuilder.h"
 #include "Timers/FlecsTimerHandle.h"
 
@@ -610,6 +611,22 @@ public:
 	NO_DISCARD TFlecsQueryBuilder<TComponents...> CreateQueryBuilder(const FString& InName = "")
 	{
 		return TFlecsQueryBuilder<TComponents...>(GetSelfInterface_Internal(), InName);
+	}
+
+	/**
+	 * Creates a C++ sparse query that iterates registered DontFragment components directly.
+	 *
+	 * All component types must have Flecs' compile-time `dont_fragment` trait and must not
+	 * declare `on_instantiate::inherit`. Sparse queries only support their typed component
+	 * fields; use CreateQueryBuilder for queries with additional terms or expressions.
+	 *
+	 * @tparam TComponents Component field types passed to `flecs::sparse_query`.
+	 * @return A sparse query bound to this world.
+	 */
+	template <typename ...TComponents>
+	NO_DISCARD TFlecsSparseQuery<TComponents...> CreateSparseQuery() const
+	{
+		return TFlecsSparseQuery<TComponents...>(GetNativeFlecsWorld_Internal()->c_ptr());
 	}
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "Flecs")
