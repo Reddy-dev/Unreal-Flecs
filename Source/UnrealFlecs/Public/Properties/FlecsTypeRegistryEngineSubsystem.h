@@ -78,8 +78,6 @@ public:
 	UPROPERTY()
 	TSet<FFlecsRegisteredComponentEntry> RegisteredComponentEntries;
 	
-	TMultiMap<FName, FString> ComponentNameToModuleNameMap;
-	
 	static TWeakObjectPtr<UFlecsTypeRegistryEngineSubsystem> Singleton;
 	
 private:
