@@ -15,7 +15,6 @@ namespace UE::Flecs
 
 	using FFlecsReplicationComponentMarkerFunction = void(*)(const FFlecsComponentHandle& InComponent);
 
-	/** Optional core hook installed by UnrealFlecsNetworking. */
 	struct UNREALFLECS_API FFlecsComponentRegistrationHooks
 	{
 		static void InstallReplicationHooks(
