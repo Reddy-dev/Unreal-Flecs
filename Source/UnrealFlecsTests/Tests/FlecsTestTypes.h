@@ -24,6 +24,24 @@ struct FFlecsTest_CPPStructValue
 	int32 Value = 1;
 }; // struct FFlecsTest_CPPStructWithNameAndValue
 
+struct FFlecsSparseQueryTestPosition
+{
+	static constexpr bool DontFragment = true;
+	int32 Value = 0;
+}; // struct FFlecsSparseQueryTestPosition
+
+struct FFlecsSparseQueryTestVelocity
+{
+	static constexpr bool DontFragment = true;
+	int32 Value = 0;
+}; // struct FFlecsSparseQueryTestVelocity
+
+struct FFlecsSparseQueryTestSparseComponent
+{
+	static constexpr bool Sparse = true;
+	int32 Value = 0;
+}; // struct FFlecsSparseQueryTestSparseComponent
+
 struct FFlecsTest_CPPStructValue_ManualMember
 {
 	int32 Value = 0;
