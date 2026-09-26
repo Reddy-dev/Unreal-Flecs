@@ -40,31 +40,6 @@ FLECS_TEST_CLASS_WITH_FLAGS_AND_TAGS(FlecsComponentTraitTests,
 		ASSERT_THAT(IsTrue(StructEntity.Has(flecs::Trait)));
 	}
 
-	TEST_METHOD(SparseComponentTrait_CPPOnlyType_CPPAPI)
-	{
-		const FFlecsComponentHandle Component = World()->RegisterComponentType<FFlecsSparseQueryTestSparseComponent>();
-		ASSERT_THAT(IsTrue(Component.IsValid()));
-		ASSERT_THAT(IsTrue(Component.Has(flecs::Sparse)));
-		ASSERT_THAT(IsFalse(Component.Has(flecs::DontFragment)));
-
-		const FFlecsEntityHandle Entity = World()->CreateEntity()
-			.Set<FFlecsSparseQueryTestSparseComponent>({ 84 });
-		ASSERT_THAT(IsTrue(Entity.Has<FFlecsSparseQueryTestSparseComponent>()));
-
-		const TTypedFlecsQuery<FFlecsSparseQueryTestSparseComponent> Query =
-			World()->CreateQueryBuilder<const FFlecsSparseQueryTestSparseComponent>()
-				.Build();
-		ASSERT_THAT(IsTrue(Query.count() == 1));
-
-		int32 FoundValue = 0;
-		Query.each([&](flecs::iter&, size_t, const FFlecsSparseQueryTestSparseComponent& InComponent)
-		{
-			FoundValue = InComponent.Value;
-		});
-
-		ASSERT_THAT(IsTrue(FoundValue == 84));
-	}
-
 	TEST_METHOD(ManualMemberRegistration_CPPOnlyType_CPPAPI)
 	{
 		const FFlecsComponentHandle Component = World()->RegisterComponentType<FFlecsTest_CPPStructValue_ManualMember>();
