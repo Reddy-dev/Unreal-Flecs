@@ -4,7 +4,6 @@
 
 #include "flecs.h"
 
-
 #include "SolidMacros/Macros.h"
 
 // @TODO: Meant to only be used internally
