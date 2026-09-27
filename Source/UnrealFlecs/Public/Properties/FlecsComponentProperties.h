@@ -204,7 +204,7 @@ public:
 
 	/**
 	 * Controls whether a component is copied, inherited, or omitted when an IsA instance is created.
-	 * The native `static constexpr auto on_instantiate` Flecs trait is detected automatically.
+	 * The native `static constexpr auto OnInstantiate` Flecs trait is detected automatically.
 	 * @see https://www.flecs.dev/flecs/ComponentTraits.html#oninstantiate-trait
 	 */
 	static constexpr EFlecsOnInstantiate OnInstantiate = ConvertToFlecsOnInstantiate<flecs::on_instantiate_trait<T>::value>();
@@ -238,14 +238,14 @@ public:
 
 	/**
 	 * Stores values outside archetype tables without fragmenting those tables.
-	 * The native `static constexpr bool dont_fragment` Flecs trait is detected automatically.
+	 * The native `static constexpr bool DontFragment` Flecs trait is detected automatically.
 	 * @see https://www.flecs.dev/flecs/ComponentTraits.html#dontfragment-trait
 	 */
 	static constexpr bool DontFragment = flecs::dont_fragment<T>::value;
 
 	/**
 	 * Stores values in sparse storage while retaining the component in entity table types.
-	 * The native `static constexpr bool sparse` Flecs trait is detected automatically.
+	 * The native `static constexpr bool Sparse` Flecs trait is detected automatically.
 	 * @see https://www.flecs.dev/flecs/ComponentTraits.html#sparse-trait
 	 */
 	static constexpr bool Sparse = flecs::sparse<T>::value;
