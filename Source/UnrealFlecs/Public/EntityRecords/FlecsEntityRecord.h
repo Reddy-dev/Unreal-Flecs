@@ -1196,7 +1196,7 @@ public:
 	 * @param InIndex Child-record index.
 	 * @return Const view of the selected child record.
 	 */
-	NO_DISCARD FORCEINLINE TConstStructView<FFlecsEntityRecord> GetSubEntity(const int32 InIndex) const
+	NO_DISCARD FORCEINLINE TConstStructView<FFlecsEntityRecord> GetSubEntity(const int32 InIndex) const UE_LIFETIMEBOUND
 	{
 		solid_checkf(SubEntities.IsValidIndex(InIndex), TEXT("Index is out of bounds"));
 		return SubEntities[InIndex].Record;
@@ -1207,7 +1207,7 @@ public:
 	 * @param InIndex Child-record index.
 	 * @return Mutable view of the selected child record.
 	 */
-	NO_DISCARD FORCEINLINE TStructView<FFlecsEntityRecord> GetSubEntity(const int32 InIndex)
+	NO_DISCARD FORCEINLINE TStructView<FFlecsEntityRecord> GetSubEntity(const int32 InIndex) UE_LIFETIMEBOUND
 	{
 		solid_checkf(SubEntities.IsValidIndex(InIndex), TEXT("Index is out of bounds"));
 		return SubEntities[InIndex].Record;
@@ -1299,7 +1299,7 @@ public:
 	 */
 	template <Solid::TScriptStructConcept TFragmentType>
 	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
-	FORCEINLINE TFragmentType& GetOrAddFragment()
+	FORCEINLINE TFragmentType& GetOrAddFragment() UE_LIFETIMEBOUND
 	{
 		for (TInstancedStruct<FFlecsEntityRecordFragment>& Fragment : Fragments)
 		{
@@ -1324,7 +1324,7 @@ public:
 	 */
 	template <Solid::TScriptStructConcept TFragmentType, typename... TArgs>
 	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
-	FORCEINLINE TFragmentType& GetOrAddFragment(TArgs&&... InArgs)
+	FORCEINLINE TFragmentType& GetOrAddFragment(TArgs&&... InArgs) UE_LIFETIMEBOUND
 	{
 		for (TInstancedStruct<FFlecsEntityRecordFragment>& Fragment : Fragments)
 		{
@@ -1383,7 +1383,7 @@ public:
 	 * @param InIndex Fragment index.
 	 * @return Const view of the selected fragment.
 	 */
-	NO_DISCARD FORCEINLINE TConstStructView<FFlecsEntityRecordFragment> GetFragment(const int32 InIndex) const
+	NO_DISCARD FORCEINLINE TConstStructView<FFlecsEntityRecordFragment> GetFragment(const int32 InIndex) const UE_LIFETIMEBOUND
 	{
 		solid_checkf(Fragments.IsValidIndex(InIndex), TEXT("Index is out of bounds"));
 		return Fragments[InIndex];
@@ -1394,7 +1394,7 @@ public:
 	 * @param InIndex Fragment index.
 	 * @return Mutable view of the selected fragment.
 	 */
-	NO_DISCARD FORCEINLINE TStructView<FFlecsEntityRecordFragment> GetFragment(const int32 InIndex)
+	NO_DISCARD FORCEINLINE TStructView<FFlecsEntityRecordFragment> GetFragment(const int32 InIndex) UE_LIFETIMEBOUND
 	{
 		solid_checkf(Fragments.IsValidIndex(InIndex), TEXT("Index is out of bounds"));
 		return Fragments[InIndex];
@@ -1408,7 +1408,7 @@ public:
 	 */
 	template <Solid::TScriptStructConcept TFragmentType>
 	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
-	NO_DISCARD FORCEINLINE TFragmentType& GetFragment(const int32 InIndex)
+	NO_DISCARD FORCEINLINE TFragmentType& GetFragment(const int32 InIndex) UE_LIFETIMEBOUND
 	{
 		solid_checkf(Fragments.IsValidIndex(InIndex), TEXT("Index is out of bounds"));
 		
@@ -1428,7 +1428,7 @@ public:
 	 */
 	template <Solid::TScriptStructConcept TFragmentType>
 	requires (std::is_base_of_v<FFlecsEntityRecordFragment, TFragmentType>)
-	NO_DISCARD FORCEINLINE const TFragmentType& GetFragment(const int32 InIndex) const
+	NO_DISCARD FORCEINLINE const TFragmentType& GetFragment(const int32 InIndex) const UE_LIFETIMEBOUND
 	{
 		solid_checkf(Fragments.IsValidIndex(InIndex), TEXT("Index is out of bounds"));
 		

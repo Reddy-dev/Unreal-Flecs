@@ -2,6 +2,8 @@
 
 #pragma once
 
+#pragma warning(default: CPPCORECHECK_LIFETIME_WARNINGS)
+
 #include "flecs.h"
 
 #include "SolidMacros/Macros.h"
@@ -33,11 +35,25 @@ public:
     void SetType(const flecs::type& InType);
     void SetType(const flecs::type* InType);
 
-    NO_DISCARD FORCEINLINE flecs::type& GetFlecsType() { return Type; }
-    NO_DISCARD FORCEINLINE const flecs::type& GetFlecsType() const { return Type; }
+    NO_DISCARD FORCEINLINE flecs::type& GetFlecsType() UE_LIFETIMEBOUND
+    {
+        return Type;
+    }
+    
+    NO_DISCARD FORCEINLINE const flecs::type& GetFlecsType() const UE_LIFETIMEBOUND
+    {
+        return Type;
+    }
 
-    FORCEINLINE operator flecs::type&() { return GetFlecsType(); }
-    FORCEINLINE operator const flecs::type&() const { return GetFlecsType(); }
+    FORCEINLINE operator flecs::type&()
+    { 
+        return GetFlecsType(); 
+    }
+    
+    FORCEINLINE operator const flecs::type&() const
+    {
+        return GetFlecsType();
+    }
 
     FORCEINLINE flecs::type* operator->() { return &Type; }
     FORCEINLINE const flecs::type* operator->() const { return &Type; }

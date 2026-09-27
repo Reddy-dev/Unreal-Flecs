@@ -49,25 +49,25 @@ public:
 		return Terms.Num() - 1;
 	}
 	
-	NO_DISCARD FORCEINLINE const FFlecsQueryTermExpression& GetTermAt(const int32 InIndex) const
+	NO_DISCARD FORCEINLINE const FFlecsQueryTermExpression& GetTermAt(const int32 InIndex) const UE_LIFETIMEBOUND
 	{
 		solid_checkf(IsValidTermIndex(InIndex), TEXT("Invalid term index %d provided to GetTermAt"), InIndex);
 		return Terms[InIndex];
 	}
 	
-	NO_DISCARD FORCEINLINE FFlecsQueryTermExpression& GetTermAt(const int32 InIndex)
+	NO_DISCARD FORCEINLINE FFlecsQueryTermExpression& GetTermAt(const int32 InIndex) UE_LIFETIMEBOUND
 	{
 		solid_checkf(IsValidTermIndex(InIndex), TEXT("Invalid term index %d provided to GetTermAt"), InIndex);
 		return Terms[InIndex];
 	}
 	
-	NO_DISCARD FORCEINLINE const FFlecsQueryTermExpression& GetLastTerm() const
+	NO_DISCARD FORCEINLINE const FFlecsQueryTermExpression& GetLastTerm() const UE_LIFETIMEBOUND
 	{
 		solid_checkf(!Terms.IsEmpty(), TEXT("No terms available to get last term from"));
 		return Terms.Last();
 	}
 	
-	NO_DISCARD FORCEINLINE FFlecsQueryTermExpression& GetLastTerm()
+	NO_DISCARD FORCEINLINE FFlecsQueryTermExpression& GetLastTerm() UE_LIFETIMEBOUND
 	{
 		solid_checkf(!Terms.IsEmpty(), TEXT("No terms available to get last term from"));
 		return Terms.Last();
