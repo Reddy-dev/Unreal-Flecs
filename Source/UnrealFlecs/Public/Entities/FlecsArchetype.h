@@ -2,8 +2,6 @@
 
 #pragma once
 
-#pragma warning(default: CPPCORECHECK_LIFETIME_WARNINGS)
-
 #include "flecs.h"
 
 #include "SolidMacros/Macros.h"
